@@ -54,10 +54,10 @@
                             <label for="amount" class="form-label">Withdrawal Amount <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text">₹</span>
-                                <input type="number" 
-                                       class="form-control @error('amount') is-invalid @enderror" 
-                                       id="amount" 
-                                       name="amount" 
+                                <input type="number"
+                                       class="form-control @error('amount') is-invalid @enderror"
+                                       id="amount"
+                                       name="amount"
                                        step="0.01"
                                        min="1"
                                        max="{{ $availableBalance }}"
@@ -68,14 +68,14 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <small class="form-text text-muted">Maximum withdrawal amount: ₹{{ number_format($availableBalance, 2) }}</small>
+                            <small class="form-text text-muted">Once your balance meets ₹{{ number_format($minimumWithdrawal, 2) }}, you can withdraw any amount up to ₹{{ number_format($availableBalance, 2) }}.</small>
                         </div>
 
                         <div class="mb-3">
                             <label for="payment_method" class="form-label">Payment Method <span class="text-danger">*</span></label>
-                            <select class="form-select @error('payment_method') is-invalid @enderror" 
-                                    id="payment_method" 
-                                    name="payment_method" 
+                            <select class="form-select @error('payment_method') is-invalid @enderror"
+                                    id="payment_method"
+                                    name="payment_method"
                                     required>
                                 <option value="">Select Payment Method</option>
                                 <option value="bank_transfer" {{ old('payment_method') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
@@ -88,9 +88,9 @@
 
                         <div class="mb-3">
                             <label for="remarks" class="form-label">Remarks (Optional)</label>
-                            <textarea class="form-control @error('remarks') is-invalid @enderror" 
-                                      id="remarks" 
-                                      name="remarks" 
+                            <textarea class="form-control @error('remarks') is-invalid @enderror"
+                                      id="remarks"
+                                      name="remarks"
                                       rows="3"
                                       maxlength="500"
                                       placeholder="Any additional information...">{{ old('remarks') }}</textarea>
@@ -119,13 +119,14 @@
 document.addEventListener('DOMContentLoaded', function() {
     const amountInput = document.getElementById('amount');
     const maxAmount = {{ $availableBalance }};
-    
+    const minAmount = 1;
+
     amountInput.addEventListener('input', function() {
         const value = parseFloat(this.value);
         if (value > maxAmount) {
             this.setCustomValidity('Amount cannot exceed available balance');
-        } else if (value <= 0) {
-            this.setCustomValidity('Amount must be greater than 0');
+        } else if (value < minAmount) {
+            this.setCustomValidity(`Amount must be at least ₹${minAmount}`);
         } else {
             this.setCustomValidity('');
         }

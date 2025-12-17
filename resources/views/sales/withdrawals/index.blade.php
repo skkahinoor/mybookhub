@@ -16,7 +16,7 @@
                         <i class="bi bi-plus-circle me-1"></i> Request Withdrawal
                     </a>
                 @else
-                    <button class="btn btn-secondary" disabled title="You need at least ₹50 in total earnings to request withdrawal">
+                    <button class="btn btn-secondary" disabled title="You need at least ₹{{ number_format($minimumWithdrawal, 2) }} available to request withdrawal">
                         <i class="bi bi-lock me-1"></i> Request Withdrawal
                     </button>
                 @endif
@@ -85,7 +85,7 @@
     @if(!$canWithdraw)
         <div class="alert alert-warning mb-4">
             <i class="bi bi-exclamation-triangle me-2"></i>
-            <strong>Minimum Earning Required:</strong> You need at least ₹50 in total earnings before you can request a withdrawal. Your current total earning is ₹{{ number_format($totalEarning, 2) }}.
+            <strong>Minimum Balance Required:</strong> You need at least ₹{{ number_format($minimumWithdrawal, 2) }} available before you can request a withdrawal. Your current available balance is ₹{{ number_format($availableBalance, 2) }}.
         </div>
     @endif
 

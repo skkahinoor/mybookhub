@@ -8,6 +8,7 @@ use App\Models\Withdrawal;
 use App\Models\Student;
 use App\Models\SalesExecutive;
 use App\Models\Notification;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -34,16 +35,18 @@ class WithdrawalController extends Controller
         $totalStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)->count();
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
-        
+
+        $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
+
         // Calculate total withdrawn amount
         $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecutiveId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
-        
+
         $availableBalance = $totalEarning - $totalWithdrawn;
 
-        // Check if total earning is >= ₹50 to allow withdrawal
-        $canWithdraw = $totalEarning >= 50;
+        // Check if available balance meets the minimum withdrawal threshold
+        $canWithdraw = $availableBalance >= $minimumWithdrawal;
 
         return view('sales.withdrawals.index', compact(
             'withdrawals',
@@ -51,6 +54,7 @@ class WithdrawalController extends Controller
             'totalEarning',
             'totalWithdrawn',
             'canWithdraw',
+            'minimumWithdrawal',
             'logos',
             'headerLogo'
         ));
@@ -69,20 +73,22 @@ class WithdrawalController extends Controller
         $salesExecutiveId = $salesExecutive->id;
 
         // Calculate available balance
-        $totalStudents = Student::where('added_by', $salesExecutiveId)->count();
+        $totalStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)->count();
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
-        
+
+        $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
+
         $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecutiveId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
-        
+
         $availableBalance = $totalEarning - $totalWithdrawn;
 
-        // Check if total earning is >= ₹50 to allow withdrawal
-        if ($totalEarning < 50) {
+        // Check if available balance meets the minimum withdrawal threshold
+        if ($availableBalance < $minimumWithdrawal) {
             return redirect()->route('sales.withdrawals.index')
-                ->with('error_message', 'You must have at least ₹50 in total earnings before requesting a withdrawal.');
+                ->with('error_message', "You must have at least ₹{$minimumWithdrawal} available before requesting a withdrawal.");
         }
 
         // Check if there's a pending withdrawal
@@ -98,6 +104,7 @@ class WithdrawalController extends Controller
         return view('sales.withdrawals.create', compact(
             'availableBalance',
             'salesExecutive',
+            'minimumWithdrawal',
             'logos',
             'headerLogo'
         ));
@@ -112,24 +119,27 @@ class WithdrawalController extends Controller
         $salesExecutiveId = $salesExecutive->id;
 
         // Calculate available balance
-        $totalStudents = Student::where('added_by', $salesExecutiveId)->count();
+        $totalStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)->count();
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
-        
+
+        $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
+
         $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecutiveId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
-        
+
         $availableBalance = $totalEarning - $totalWithdrawn;
 
-        // Check if total earning is >= ₹50 to allow withdrawal
-        if ($totalEarning < 50) {
+        // Check if available balance meets the minimum withdrawal threshold
+        if ($availableBalance < $minimumWithdrawal) {
             return redirect()->route('sales.withdrawals.index')
-                ->with('error_message', 'You must have at least ₹50 in total earnings before requesting a withdrawal.');
+                ->with('error_message', "You must have at least ₹{$minimumWithdrawal} available before requesting a withdrawal.");
         }
 
         // Validate request
         $request->validate([
+            // Once threshold is reached, allow withdrawing any positive amount up to available balance
             'amount' => 'required|numeric|min:1|max:' . $availableBalance,
             'payment_method' => 'required|string|in:bank_transfer,upi',
             'remarks' => 'nullable|string|max:500',

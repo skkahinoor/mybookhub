@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
 use App\Models\HeaderLogo;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Carbon\Carbon;
@@ -19,6 +20,8 @@ class WithdrawalController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'withdrawals');
+
+        $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
 
         $withdrawals = Withdrawal::with('salesExecutive')
             ->orderBy('created_at', 'desc')
@@ -40,6 +43,7 @@ class WithdrawalController extends Controller
             'rejectedCount',
             'totalAmount',
             'pendingAmount',
+            'minimumWithdrawal',
             'logos',
             'headerLogo'
         ));
@@ -72,10 +76,10 @@ class WithdrawalController extends Controller
 
         $withdrawal = Withdrawal::findOrFail($id);
         $oldStatus = $withdrawal->status;
-        
+
         $withdrawal->status = $request->status;
         $withdrawal->remarks = $request->remarks;
-        
+
         if ($request->status == 'completed' || $request->status == 'approved') {
             $withdrawal->processed_at = Carbon::now();
             if ($request->filled('transaction_id')) {
@@ -94,5 +98,20 @@ class WithdrawalController extends Controller
 
         return redirect()->route('admin.withdrawals.index')
             ->with('success_message', $statusMessages[$request->status] ?? 'Status updated successfully.');
+    }
+
+    /**
+     * Update minimum withdrawal amount managed by admin.
+     */
+    public function updateMinimum(Request $request)
+    {
+        $request->validate([
+            'minimum_withdrawal_amount' => 'required|numeric|min:1',
+        ]);
+
+        Setting::setValue('min_withdrawal_amount', $request->minimum_withdrawal_amount);
+
+        return redirect()->route('admin.withdrawals.index')
+            ->with('success_message', 'Minimum withdrawal amount updated successfully.');
     }
 }

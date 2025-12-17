@@ -8,7 +8,7 @@
                 <div class="card">
                     <div class="card-body">
                         <h4 class="card-title">Withdrawal Requests Management</h4>
-                        
+
                         @if(Session::has('success_message'))
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
                                 <strong>Success:</strong> {{ Session::get('success_message') }}
@@ -26,6 +26,30 @@
                                 </button>
                             </div>
                         @endif
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <form method="POST" action="{{ route('admin.withdrawals.minimum.update') }}" class="card">
+                                    @csrf
+                                    <div class="card-body">
+                                        <h6 class="card-title mb-3">Minimum Withdrawal Amount</h6>
+                                        <div class="form-group mb-3">
+                                            <label for="minimum_withdrawal_amount" class="form-label">Amount (₹)</label>
+                                            <input type="number"
+                                                   step="0.01"
+                                                   min="1"
+                                                   class="form-control"
+                                                   id="minimum_withdrawal_amount"
+                                                   name="minimum_withdrawal_amount"
+                                                   value="{{ old('minimum_withdrawal_amount', $minimumWithdrawal) }}"
+                                                   required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                                        <small class="text-muted d-block mt-2">Current minimum: ₹{{ number_format($minimumWithdrawal, 2) }}</small>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
 
                         <!-- Statistics Cards -->
                         <div class="row mb-4">
@@ -108,7 +132,7 @@
                                         <td>{{ $withdrawal->created_at->format('d M Y, h:i A') }}</td>
                                         <td>{{ $withdrawal->processed_at ? $withdrawal->processed_at->format('d M Y, h:i A') : 'N/A' }}</td>
                                         <td>
-                                            <a href="{{ route('admin.withdrawals.show', $withdrawal->id) }}" 
+                                            <a href="{{ route('admin.withdrawals.show', $withdrawal->id) }}"
                                                class="btn btn-sm btn-primary" title="View Details">
                                                 <i class="mdi mdi-eye"></i>
                                             </a>

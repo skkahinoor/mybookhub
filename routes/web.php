@@ -178,6 +178,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('withdrawals', 'WithdrawalController@index')->name('admin.withdrawals.index');
         Route::get('withdrawals/{id}', 'WithdrawalController@show')->name('admin.withdrawals.show');
         Route::post('withdrawals/{id}/update-status', 'WithdrawalController@updateStatus')->name('admin.withdrawals.updateStatus');
+        Route::post('withdrawals/minimum/update', 'WithdrawalController@updateMinimum')->name('admin.withdrawals.minimum.update');
 
 // AJAX route for getting classes based on institution type (outside admin middleware for AJAX access)
         Route::get('institution-classes', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getClasses'])->name('institution_classes');
