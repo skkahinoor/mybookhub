@@ -10,14 +10,15 @@ use App\Http\Controllers\Api\SalesController;
 use App\Http\Controllers\Api\SalesDashboardController;
 use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\WithdrawalApiController;
+use App\Http\Controllers\Api\VendorController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. 
-| These routes are loaded by the RouteServiceProvider within a group 
+| Here is where you can register API routes for your application.
+| These routes are loaded by the RouteServiceProvider within a group
 | which is assigned the "api" middleware group. Enjoy building your API!
 |
 */
@@ -26,6 +27,8 @@ use App\Http\Controllers\Api\WithdrawalApiController;
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/sales/register', [AuthController::class, 'register']);
 Route::post('/sales/verify-otp', [AuthController::class, 'verifyOtp']);
+
+Route::post('/vendor/register', [VendorController::class, 'register']);
 
 // Protected routes: logout (requires valid Sanctum token)
 Route::middleware('auth:sanctum')->group(function () {
@@ -46,7 +49,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/institutions', [InstitutionController::class, 'store']);
     Route::put('/institutions/{id}', [InstitutionController::class, 'update']);
     Route::delete('/institutions/{id}', [InstitutionController::class, 'destroy']);
-    Route::get('/book/lookup', [BookController::class, 'lookupByIsbn']);
+    Route::post('/book/lookup', [BookController::class, 'lookupByIsbn']);
 });
 
 // Student
