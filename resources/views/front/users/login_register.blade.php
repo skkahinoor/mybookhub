@@ -129,20 +129,12 @@
                                 <p id="register-name" class="text-danger small mt-1"></p>
                             </div>
                             <div class="form-group mb-3">
-                                <label for="usermobile" class="font-weight-bold">
-                                    <i class="fas fa-mobile-alt mr-2 text-muted"></i>Mobile
+                                <label for="userphone" class="font-weight-bold">
+                                    <i class="fas fa-phone mr-2 text-muted"></i>Phone
                                 </label>
-                                <input type="number" id="user-mobile" class="form-control"
-                                    placeholder="Enter your mobile number" name="mobile">
-                                <p id="register-mobile" class="text-danger small mt-1"></p>
-                            </div>
-                            <div class="form-group mb-3">
-                                <label for="useremail" class="font-weight-bold">
-                                    <i class="fas fa-envelope mr-2 text-muted"></i>Email
-                                </label>
-                                <input type="email" id="user-email" class="form-control"
-                                    placeholder="Enter your email" name="email">
-                                <p id="register-email" class="text-danger small mt-1"></p>
+                                <input type="number" id="user-phone" class="form-control"
+                                    placeholder="Enter your mobile number" name="phone">
+                                <p id="register-phone" class="text-danger small mt-1"></p>
                             </div>
                             <div class="form-group mb-4">
                                 <label for="userpassword" class="font-weight-bold">

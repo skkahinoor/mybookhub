@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
 use App\Models\SalesExecutive;
 use App\Models\InstitutionManagement;
-use App\Models\Student;
+use App\Models\User;
 use App\Models\InstitutionClass;
 use App\Models\Notification;
 use Carbon\Carbon;
@@ -249,10 +249,10 @@ class SalesExecutiveAuthController extends Controller
         $totalInstitutions = InstitutionManagement::where('added_by', $salesExecutiveId)->count();
 
         // Calculate total students
-        $totalStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
 
         // Calculate today's students
-        $todayStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)
+        $todayStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)
             ->whereDate('created_at', Carbon::today())
             ->count();
 
@@ -282,7 +282,7 @@ class SalesExecutiveAuthController extends Controller
             $dateKeys[] = $date->format('Y-m-d');
         }
 
-        $studentData = Student::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+        $studentData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesExecutiveId)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')

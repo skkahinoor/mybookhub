@@ -7,8 +7,8 @@
                 <div class="col-md-12 grid-margin">
                     <div class="row">
                         <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                            <h3 class="font-weight-bold">Add New Admin</h3>
-                            <h6 class="font-weight-normal mb-0"><a href="{{ url('admin/admins') }}">Back to Admins</a></h6>
+                            <h3 class="font-weight-bold">Add New Vendor</h3>
+                            <h6 class="font-weight-normal mb-0"><a href="{{ url('admin/admins/vendor') }}">Back to vendors</a></h6>
                         </div>
                     </div>
                 </div>
@@ -18,7 +18,7 @@
                 <div class="col-lg-12 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Admin Information</h4>
+                            <h4 class="card-title">Vendor Information</h4>
 
                             {{-- Error Messages --}}
                             @if (Session::has('error_message'))
@@ -56,13 +56,13 @@
                                 <div class="form-group">
                                     <label>Name <span class="text-danger">*</span></label>
                                     <input type="text" name="name" class="form-control" value="{{ old('name') }}"
-                                           placeholder="Enter admin name" required>
+                                           placeholder="Enter vendor name" required>
                                 </div>
 
                                 <div class="form-group">
                                     <label>Email <span class="text-danger">*</span></label>
                                     <input type="email" name="email" class="form-control" value="{{ old('email') }}"
-                                           placeholder="Enter admin email" required>
+                                           placeholder="Enter vendor email" required>
                                     @if ($errors->has('email'))
                                         <span class="text-danger">{{ $errors->first('email') }}</span>
                                     @endif
@@ -122,8 +122,8 @@
                                     </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary mr-2">Add Admin</button>
-                                <a href="{{ url('admin/admins') }}" class="btn btn-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-primary mr-2">Add Vendor</button>
+                                <a href="{{ url('admin/admins/vendor') }}" class="btn btn-secondary">Cancel</a>
                             </form>
                         </div>
                     </div>

@@ -576,10 +576,6 @@
                                                 <td>${data.name || 'N/A'}</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Email:</strong></td>
-                                                <td>${data.email || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
                                                 <td><strong>Phone:</strong></td>
                                                 <td>${data.phone || 'N/A'}</td>
                                             </tr>

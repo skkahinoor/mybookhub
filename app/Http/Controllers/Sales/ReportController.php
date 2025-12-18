@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
 use App\Models\Student;
 use App\Models\SalesExecutive;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -28,7 +29,7 @@ class ReportController extends Controller
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
 
         // Only count approved students (status = 1) for stats/earnings
-        $approvedStudents = Student::where('added_by', $salesExecutiveId)
+        $approvedStudents = User::where('added_by', $salesExecutiveId)
             ->where('status', 1);
 
         // Calculate today's students
@@ -68,7 +69,7 @@ class ReportController extends Controller
             $dateKeys[] = $date->format('Y-m-d');
         }
 
-        $studentData = Student::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+        $studentData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesExecutiveId)
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)

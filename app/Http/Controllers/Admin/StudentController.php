@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
-use App\Models\Student;
+use App\Models\User;
 use App\Models\InstitutionManagement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +18,7 @@ class StudentController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'students');
 
-        $students = Student::with('institution')->orderBy('id', 'desc')->get();
+        $students = User::where('user_type', 'student')->with('institution')->orderBy('id', 'desc')->get();
 
         return view('admin.students.index')->with(compact('students', 'logos', 'headerLogo'));
     }
@@ -53,9 +53,10 @@ class StudentController extends Controller
 
 
         $data['status'] = 1;
+        $data['user_type'] = 'student';
         $data['added_by'] = Auth::guard('admin')->user()->id;
 
-        Student::create($data);
+        User::create($data);
 
         return redirect('admin/students')->with('success_message', 'Student has been added successfully', 'logos');
         return view('admin.students.index', compact('students', 'logos', 'headerLogo'));
@@ -67,7 +68,7 @@ class StudentController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'students');
 
-        $student = Student::findOrFail($id);
+        $student = User::findOrFail($id);
         $institutions = InstitutionManagement::orderBy('name')->get();
 
         return view('admin.students.edit')->with(compact('student', 'institutions', 'logos', 'headerLogo'));
@@ -89,7 +90,7 @@ class StudentController extends Controller
             'status' => 'nullable|boolean'
         ]);
 
-        $student = Student::findOrFail($id);
+        $student = User::findOrFail($id);
         $data = $request->all();
         $data['status'] = $request->has('status')
             ? ($request->boolean('status') ? 1 : 0)
@@ -105,7 +106,7 @@ class StudentController extends Controller
     {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        $student = Student::findOrFail($id);
+        $student = User::findOrFail($id);
         $student->delete();
 
         return redirect('admin/students')->with('success_message', 'Student has been deleted successfully', 'logos');
@@ -117,14 +118,13 @@ class StudentController extends Controller
      */
     public function details($id)
     {
-        $student = Student::with('institution')->findOrFail($id);
+        $student = User::with('institution')->findOrFail($id);
 
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $student->id,
                 'name' => $student->name,
-                'email' => $student->email,
                 'phone' => $student->phone,
                 'class' => $student->class,
                 'gender' => $student->gender,
@@ -146,7 +146,7 @@ class StudentController extends Controller
             'status' => 'required|in:0,1',
         ]);
 
-        $student = Student::findOrFail($id);
+        $student = User::where('user_type', 'student')->findOrFail($id);
         $student->status = (int) $data['status'];
         $student->save();
 

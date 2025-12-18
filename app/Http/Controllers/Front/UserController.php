@@ -52,7 +52,7 @@ class UserController extends Controller
         // Validation
         $validator = Validator::make($data, [
             'name'     => 'required|string|max:100',
-            'mobile'   => 'required|numeric|digits:10',
+            'phone'   => 'required|numeric|digits:10',
             'email'    => 'required|email|max:150|unique:users,email',
             'password' => 'required|min:6',
         ], [
@@ -65,9 +65,9 @@ class UserController extends Controller
 
         // Save the user
         $user           = new User;
+        $user->user_type = 'user';
         $user->name     = $data['name'];
-        $user->mobile   = $data['mobile'];
-        $user->email    = $data['email'];
+        $user->phone   = $data['mobile'];
         $user->password = bcrypt($data['password']);
         $user->status   = 0; // inactive until email confirmed
         $user->save();
@@ -76,7 +76,7 @@ class UserController extends Controller
         $email       = $data['email'];
         $messageData = [
             'name'  => $data['name'],
-            'email' => $data['email'],
+            'phone' => $data['mobile'],
             'code'  => base64_encode($data['email']),
         ];
 

@@ -18,6 +18,7 @@ use App\Models\VendorsBankDetail;
 use App\Models\VendorsBusinessDetail;
 use App\Models\ContactUs;
 use App\Models\ContactReply;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -656,10 +657,23 @@ class AdminController extends Controller
             // Get the admin_id from the form if it exists, otherwise use route parameter
             $adminId = $data['admin_id'] ?? $id ?? null;
 
+            // Get related vendor_id if this admin already exists (for unique email validation on vendors table)
+            $vendorId = null;
+            if (! empty($adminId)) {
+                $vendorId = Admin::where('id', $adminId)->value('vendor_id');
+            }
+
             // Laravel's Validation
             $rules = [
                 'name'   => 'required|regex:/^[\pL\s\-]+$/u',
-                'email'  => 'required|email|unique:admins,email,' . ($adminId ?? '') . ',id',
+                'email'  => [
+                    'required',
+                    'email',
+                    // Unique in admins table except for current admin (when updating)
+                    Rule::unique('admins', 'email')->ignore($adminId),
+                    // Also unique in vendors table except for linked vendor (when updating)
+                    Rule::unique('vendors', 'email')->ignore($vendorId),
+                ],
                 'mobile' => 'required|numeric',
 
             ];
@@ -710,7 +724,7 @@ class AdminController extends Controller
                 $imageName = '';
             }
 
-            // Prepare admin data
+            // Prepare admin data (common for add & edit)
             $adminData = [
                 'name'   => $data['name'],
                 'email'  => $data['email'],
@@ -719,8 +733,9 @@ class AdminController extends Controller
                 'image'  => $imageName,
             ];
 
-            if (empty($id)) {
-                // Add mode
+            // Decide between Add vs Edit using resolved $adminId
+            if (empty($adminId)) {
+                // ADD mode
 
                 // First, insert into vendors table
                 $vendorData = [
@@ -741,7 +756,7 @@ class AdminController extends Controller
 
                 // Then, insert into admins table with the vendor_id
                 $adminData['vendor_id'] = $vendorId;
-                $adminData['password'] = bcrypt($data['password']);
+                $adminData['password'] = Hash::make($data['password']);
                 $adminData['confirm'] = 'Yes';
                 $adminData['status'] = isset($data['status']) ? 1 : 0;
 
@@ -749,7 +764,7 @@ class AdminController extends Controller
 
                 return redirect('admin/admins')->with('success_message', 'Admin added successfully!');
             } else {
-                // Edit mode: update existing admin
+                // EDIT mode: update existing admin
                 $admin = Admin::where('id', $adminId)->first();
                 Admin::where('id', $adminId)->update($adminData);
 
@@ -762,7 +777,7 @@ class AdminController extends Controller
                     ]);
                 }
 
-                return redirect('admin/admins')->with('success_message', 'Admin updated successfully!');
+                return redirect('admin/admins')->with('success_message', 'Vendor updated successfully!');
             }
         }
 

@@ -151,99 +151,101 @@ class VendorController extends Controller
 
     public function showRegister()
     {
-        $headerLogo = HeaderLogo::first();
-        $logos = $headerLogo;
+        // $headerLogo = HeaderLogo::first();
+        // $logos = $headerLogo;
 
-        return view('vendor.register', compact('logos', 'headerLogo'));
+        return view('admin.register-vendor');
     }
 
-    public function register(Request $request)
+    public function register(Request $request, $id = null)
     {
-        $request->validate([
-            'name'                  => 'required|string|max:150',
-            'email'                 => 'required|email|unique:admins,email|unique:vendors,email',
-            'mobile'                => 'required|digits:10|unique:admins,mobile|unique:vendors,mobile',
-            'password'              => 'required|min:6|confirmed',
-            'vendor_image'          => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-
-        $name   = $request->name;
-        $email  = $request->email;
-        $mobile = $request->mobile;
-
-        DB::beginTransaction();
-
-        try {
-            // Handle image upload
-            $imageName = '';
-            if ($request->hasFile('vendor_image')) {
-                $image_tmp = $request->file('vendor_image');
-
-                if ($image_tmp->isValid()) {
-                    // Get the image extension
-                    $extension = $image_tmp->getClientOriginalExtension();
-
-                    // Generate a random name for the uploaded image
-                    $imageName = rand(111, 99999) . '.' . $extension;
-
-                    // Assigning the uploaded images path inside the 'public' folder
-                    $imagePath = 'admin/images/photos/' . $imageName;
-
-                    // Upload the image using the Intervention package
-                    Image::make($image_tmp)->save($imagePath);
-                }
-            }
-
-            // Create Vendor record
-            $vendor = Vendor::create([
-                'name'   => $name,
-                'mobile' => $mobile,
-                'email'  => $email,
-                'status' => 0,
-                'confirm' => 'No',
-            ]);
-
-            // Create Admin record for vendor
-            $admin = Admin::create([
-                'type'      => 'vendor',
-                'vendor_id' => $vendor->id,
-                'name'      => $name,
-                'mobile'    => $mobile,
-                'email'     => $email,
-                'password'  => Hash::make($request->password),
-                'status'    => 0,
-                'confirm'   => 'No',
-                'image'     => $imageName,
-            ]);
-
-            // Create notification for admin
-            Notification::create([
-                'type' => 'vendor_registration',
-                'title' => 'New Vendor Registration',
-                'message' => "A new vendor '{$name}' has registered and is waiting for approval.",
-                'related_id' => $vendor->id,
-                'related_type' => 'App\Models\Vendor',
-                'is_read' => false,
-            ]);
-
-            // Send confirmation email
-            $messageData = [
-                'email' => $email,
-                'name'  => $name,
-                'code'  => base64_encode($email)
+        
+        if ($request->isMethod('post')) {
+            $data = $request->all();
+            // dd($data);
+            $adminId = $data['admin_id'] ?? $id ?? null;
+    
+            // Validation
+            $rules = [
+                'name'   => 'required|regex:/^[\pL\s\-]+$/u',
+                'email'  => 'required|email|unique:admins,email,' . ($adminId ?? '') . ',id',
+                'mobile' => 'required|numeric',
             ];
-
-            \Illuminate\Support\Facades\Mail::send('emails.vendor_confirmation', $messageData, function ($message) use ($email) {
-                $message->to($email)->subject('Confirm your Vendor Account');
-            });
-
-            DB::commit();
-
-            return redirect()->route('vendor.login-register')
-                ->with('success_message', 'Registration successful! Please confirm your email to activate your account.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Registration failed. Please try again.');
+    
+            $customMessages = [
+                'name.required'   => 'Name is required',
+                'name.regex'      => 'Valid Name is required',
+                'email.required'  => 'Email is required',
+                'email.email'     => 'Valid Email is required',
+                'email.unique'    => 'Email already exists',
+                'mobile.required' => 'Mobile is required',
+                'mobile.numeric'  => 'Valid Mobile is required',
+            ];
+    
+            // Add mode password validation
+            if (empty($adminId)) {
+                $rules['password'] = 'required|min:6|confirmed';
+                $rules['password_confirmation'] = 'required';
+            }
+    
+            $this->validate($request, $rules, $customMessages);
+    
+            // Prepare Admin Data (NO IMAGE)
+            $adminData = [
+                'name'   => $data['name'],
+                'email'  => $data['email'],
+                'mobile' => $data['mobile'],
+                'type'   => 'vendor',
+            ];
+    
+            if (empty($id)) {
+                // ================= ADD MODE =================
+    
+                // Insert Vendor
+                $vendorId = Vendor::insertGetId([
+                    'name'    => $data['name'],
+                    'email'   => $data['email'],
+                    'mobile'  => $data['mobile'],
+                    'confirm' => 'Yes',
+                    'status'  => isset($data['status']) ? 1 : 0,
+                ]);
+    
+                // Insert Admin
+                $adminData['vendor_id'] = $vendorId;
+                $adminData['password']  = Hash::make($data['password']);
+                $adminData['confirm']   = 'Yes';
+                $adminData['status']    = isset($data['status']) ? 1 : 0;
+    
+                Admin::insert($adminData);
+    
+                return redirect('admin/admins')
+                    ->with('success_message', 'Vendor registered successfully!');
+            } else {
+                // ================= EDIT MODE =================
+    
+                $admin = Admin::where('id', $adminId)->first();
+                Admin::where('id', $adminId)->update($adminData);
+    
+                if ($admin && $admin->type === 'vendor' && $admin->vendor_id) {
+                    Vendor::where('id', $admin->vendor_id)->update([
+                        'name'   => $data['name'],
+                        'email'  => $data['email'],
+                        'mobile' => $data['mobile'],
+                    ]);
+                }
+    
+                return redirect('admin/admins')
+                    ->with('success_message', 'Vendor updated successfully!');
+            }
         }
+    
+        // GET request
+        if (!empty($id)) {
+            $admin = Admin::where('id', $id)->first()->toArray();
+            return view('admin/login', compact('admin'));
+        }
+    
+        return view('admin/login');
     }
+    
 }

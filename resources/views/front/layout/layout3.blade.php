@@ -663,8 +663,8 @@
                     <div class="modal-body">
                         <!-- Email or Mobile -->
                         <div class="mb-3">
-                            <label>Email or Mobile</label>
-                            <input type="text" name="login" class="form-control" placeholder="Enter email or 10-digit mobile" required>
+                            <label>Phone</label>
+                            <input type="text" name="login" class="form-control" placeholder="Enter 10-digit mobile" required>
                         </div>
                         <!-- Password -->
                         <div class="mb-3">
@@ -699,20 +699,15 @@
                             <label>Name</label>
                             <input type="text" name="name" class="form-control" required>
                         </div>
-                        <!-- Email -->
-                        <div class="mb-3">
-                            <label>Email</label>
-                            <input type="email" name="email" class="form-control" required>
-                        </div>
                         <!-- Password -->
                         <div class="mb-3">
                             <label>Password</label>
                             <input type="password" name="password" class="form-control" required>
                         </div>
-                        <!-- Mobile -->
+                        <!-- Phone -->
                         <div class="mb-3">
-                            <label>Mobile</label>
-                            <input type="text" name="mobile" class="form-control" required>
+                            <label>Phone</label>
+                            <input type="number" name="phone" class="form-control" required>
                         </div>
                     </div>
                     <div class="modal-footer">

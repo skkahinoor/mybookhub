@@ -19,7 +19,7 @@ class UserController extends Controller
         Session::put('page', 'users');
 
 
-        $users = User::get()->toArray();
+        $users = User::where('user_type', 'user')->get()->toArray();
         // dd($users);
 
 
@@ -42,7 +42,7 @@ class UserController extends Controller
                 $status = 1;
             }
 
-            User::where('id', $data['user_id'])->update(['status' => $status]); // $data['user_id'] comes from the 'data' object inside the $.ajax() method
+            User::where('id', $data['user_id'])->where('user_type', 'user')->update(['status' => $status]); // $data['user_id'] comes from the 'data' object inside the $.ajax() method
 
             return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
                 'status'  => $status,

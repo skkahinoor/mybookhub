@@ -80,6 +80,14 @@
                                             </label>
                                         </div>
                                     </div>
+                                    <div class="text-center mt-3">
+                                        <p class="text-dark mb-0">
+                                            Are you a vendor?
+                                            <a href="{{ route('vendor.register') }}" class="font-weight-bold text-primary">
+                                                Sign up here
+                                            </a>
+                                        </p>
+                                    </div>                                    
                                 </form>
                             </div>
                         </div>

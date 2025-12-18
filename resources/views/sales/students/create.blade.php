@@ -215,11 +215,32 @@
                                 <i class="fas fa-layer-group form-icon"></i>
                                 Class <span class="required">*</span>
                             </label>
-                            <input type="text" name="class" class="form-control" value="{{ old('class') }}" placeholder="Enter class/grade" required>
+
+                            <select name="class" class="form-control" required>
+                                <option value="">Select Class</option>
+                                <option value="Nursery" {{ old('class')=='Nursery' ? 'selected' : '' }}>Nursery</option>
+                                <option value="LKG" {{ old('class')=='LKG' ? 'selected' : '' }}>LKG</option>
+                                <option value="UKG" {{ old('class')=='UKG' ? 'selected' : '' }}>UKG</option>
+                                <option value="Class 1" {{ old('class')=='Class 1' ? 'selected' : '' }}>Class 1</option>
+                                <option value="Class 2" {{ old('class')=='Class 2' ? 'selected' : '' }}>Class 2</option>
+                                <option value="Class 3" {{ old('class')=='Class 3' ? 'selected' : '' }}>Class 3</option>
+                                <option value="Class 4" {{ old('class')=='Class 4' ? 'selected' : '' }}>Class 4</option>
+                                <option value="Class 5" {{ old('class')=='Class 5' ? 'selected' : '' }}>Class 5</option>
+                                <option value="Class 6" {{ old('class')=='Class 6' ? 'selected' : '' }}>Class 6</option>
+                                <option value="Class 7" {{ old('class')=='Class 7' ? 'selected' : '' }}>Class 7</option>
+                                <option value="Class 8" {{ old('class')=='Class 8' ? 'selected' : '' }}>Class 8</option>
+                                <option value="Class 9" {{ old('class')=='Class 9' ? 'selected' : '' }}>Class 9</option>
+                                <option value="Class 10" {{ old('class')=='Class 10' ? 'selected' : '' }}>Class 10</option>
+                                <option value="Class 11" {{ old('class')=='Class 11' ? 'selected' : '' }}>Class 11</option>
+                                <option value="Class 12" {{ old('class')=='Class 12' ? 'selected' : '' }}>Class 12</option>
+                            </select>
+
                             @error('class')
                                 <div class="error-message">{{ $message }}</div>
                             @enderror
                         </div>
+
+
 
                         <div class="form-group">
                             <label class="form-label">
@@ -515,5 +536,7 @@
         }
     });
 </script> --}}
+
+
 
 @endsection

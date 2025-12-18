@@ -67,48 +67,6 @@ class NotificationController extends Controller
     /**
      * Show all notifications page
      */
-    // public function index()
-    // {
-    //     Session::put('page', 'notifications');
-    //     $headerLogo = HeaderLogo::first();
-    //     $logos = HeaderLogo::first();
-    //     $title = 'All Notifications';
-
-    //     $notifications = Notification::orderBy('created_at', 'desc')
-    //         ->paginate(20);
-
-    //     return view('admin.notifications.index', compact('notifications', 'title', 'logos', 'headerLogo'));
-    // }
-
-    // public function index(Request $request)
-    // {
-    //     Session::put('page', 'notifications');
-    //         $headerLogo = HeaderLogo::first();
-    //         $logos = HeaderLogo::first();
-    //         $title = 'All Notifications';
-    //     if ($request->ajax()) {
-    //         $query = Notification::latest();
-
-    //         return DataTables::of($query)
-    //             ->addIndexColumn()
-    //             ->editColumn('message', function ($row) {
-    //                 return Str::limit($row->message, 50);
-    //             })
-    //             ->editColumn('status', function ($row) {
-    //                 return $row->is_read
-    //                     ? '<span class="badge badge-success">Read</span>'
-    //                     : '<span class="badge badge-warning">Unread</span>';
-    //             })
-    //             ->rawColumns(['status'])
-    //             ->make(true);
-    //     }
-
-    //     return view('admin.notifications.index', [
-    //         'title' => 'Notifications',
-    //         'headerLogo' => $headerLogo,
-    //         'logos' => $logos,
-    //     ]);
-    // }
 
     public function index(Request $request)
     {
@@ -189,7 +147,7 @@ class NotificationController extends Controller
                     }
 
                     // Student
-                    if ($n->related_type === 'App\Models\Student' && $n->related_id) {
+                    if ($n->related_type === 'App\Models\User' && $n->related_id) {
                         $html .= '
                         <a href="#" class="view-student"
                            data-id="' . $n->related_id . '"

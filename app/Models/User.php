@@ -21,10 +21,23 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'email',
-        'mobile',
-        'status',
+        'father_names',
+        'institution_id',
+        'class',
+        'roll_number',
+        'gender',
+        'dob',
+        'added_by',
+        'phone',
         'password',
+        'status',
+        'country_id',
+        'state_id',
+        'district_id',
+        'block_id',
+        'address',
+        'pincode',
+        'user_type',
     ];
 
     /**
@@ -45,4 +58,25 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function institution()
+    {
+        return $this->belongsTo(InstitutionManagement::class, 'institution_id');
+    }
+    public function country()
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
+    public function state()
+    {
+        return $this->belongsTo(State::class, 'state_id');
+    }
+    public function district()
+    {
+        return $this->belongsTo(District::class, 'district_id');
+    }
+    public function block()
+    {
+        return $this->belongsTo(Block::class, 'block_id');
+    }
 }

@@ -73,8 +73,8 @@ class StudentApiController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'father_name' => 'required|string|max:255',
-                'email' => 'nullable|email|max:255|unique:students,email|unique:users,email',
-                'phone' => 'required|string|min:10|max:15|unique:students,phone|unique:users,mobile',
+                'email' => 'nullable|email|max:255|unique:users,email',
+                'phone' => 'required|string|min:10|max:15|unique:users,phone',
                 'institution_id' => 'nullable|exists:institution_managements,id',
                 'class' => 'required|string|max:255',
                 'gender' => 'required|string|in:male,female,other',
@@ -85,7 +85,7 @@ class StudentApiController extends Controller
                     'nullable',
                     'string',
                     'max:255',
-                    Rule::unique('students', 'roll_number')
+                    Rule::unique('users', 'roll_number')
                         ->where('institution_id', $request->institution_id)
                 ],
             ]);
@@ -112,18 +112,9 @@ class StudentApiController extends Controller
         $studentStatus = ($type === 'superadmin') ? 1 : 0;
         $validated['status']   = $studentStatus;
         $validated['added_by'] = $user->id;
-
+        $validated['password'] = Hash::make('12345678');
         // Save student
-        $student = Student::create($validated);
-
-        // Create user login entry
-        User::create([
-            'name'   => $validated['name'],
-            'email'  => $validated['email'] ?? null,      // email not required
-            'mobile' => $validated['phone'],              // ALWAYS INSERT MOBILE
-            'status' => $studentStatus,
-            'password' => Hash::make('12345678'),
-        ]);
+        $users = User::create($validated);
 
         // Create notification for admin
         Notification::create([
@@ -131,16 +122,16 @@ class StudentApiController extends Controller
             'title' => 'New Student Added',
             // 'message' => "Sales executive '" . Auth::guard('sales')->user()->name . "' has added a new student '{$validated['name']}' and is waiting for approval.",
             'message' => "User '" . ($user->name ?? 'Unknown') . "' has added a new student '{$validated['name']}' and is waiting for approval.",
-            'related_id' => $student->id,
+            'related_id' => $users->id,
             'related_type' => 'App\Models\Student',
             'is_read' => false,
         ]);
-        
+
 
         return response()->json([
             'status' => true,
             'message' => ucfirst($type) . ' added student successfully.',
-            'data' => $student
+            'data' => $users
         ], 201);
     }
 
@@ -156,9 +147,9 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        $student = Student::find($id);
+        $users = User::find($id);
 
-        if (!$student) {
+        if (!$users) {
             return response()->json([
                 'status' => false,
                 'message' => 'Student not found.'
@@ -166,7 +157,7 @@ class StudentApiController extends Controller
         }
 
         // Sales can edit only their students
-        if ($type === 'sales' && $student->added_by !== $user->id) {
+        if ($type === 'sales' && $users->added_by !== $user->id) {
             return response()->json([
                 'status' => false,
                 'message' => 'Access denied! You can only update students added by you.'
@@ -174,8 +165,8 @@ class StudentApiController extends Controller
         }
 
         // Get linked user account
-        $linkedUserID = User::where('mobile', $student->phone)
-            ->orWhere('email', $student->email)
+        $linkedUserID = User::where('phone', $users->phone)
+            ->orWhere('email', $users->email)
             ->value('id');
 
         // Validation rules
@@ -186,7 +177,6 @@ class StudentApiController extends Controller
                 'nullable',
                 'email',
                 'max:255',
-                Rule::unique('students', 'email')->ignore($student->id),
                 Rule::unique('users', 'email')->ignore($linkedUserID)
             ],
             'phone' => [
@@ -194,8 +184,7 @@ class StudentApiController extends Controller
                 'string',
                 'min:10',
                 'max:15',
-                Rule::unique('students', 'phone')->ignore($student->id),
-                Rule::unique('users', 'mobile')->ignore($linkedUserID)
+                Rule::unique('users', 'phone')->ignore($linkedUserID)
             ],
             'institution_id' => 'nullable|exists:institution_managements,id',
             'class'          => 'required|string|max:255',
@@ -211,9 +200,9 @@ class StudentApiController extends Controller
             //             return $q->where('institution_id', $request->institution_id);
             //         }),
             // ],
-            'roll_number' => Rule::unique('students')
+            'roll_number' => Rule::unique('users')
                 ->where('institution_id', $request->institution_id)
-                ->ignore($student->id),
+                ->ignore($users->id),
         ];
 
         // Superadmin can update status
@@ -240,26 +229,13 @@ class StudentApiController extends Controller
         }
 
         // Update student
-        $student->update($validated);
+        $users->update($validated);
 
-        // Update linked user record
-        if ($linkedUserID) {
-            $userRecord = User::find($linkedUserID);
-
-            if ($userRecord) {
-                $userRecord->update([
-                    'name'   => $validated['name'],
-                    'email'  => $validated['email'] ?? $userRecord->email,
-                    'mobile' => $validated['phone'],   // Always update mobile
-                    'status' => $validated['status'] ?? $userRecord->status,
-                ]);
-            }
-        }
 
         return response()->json([
             'status' => true,
             'message' => ucfirst($type) . ' updated student successfully.',
-            'data' => $student
+            'data' => $users
         ], 200);
     }
 

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Sales;
 use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
 use App\Models\Withdrawal;
-use App\Models\Student;
+use App\Models\User;
 use App\Models\SalesExecutive;
 use App\Models\Notification;
 use App\Models\Setting;
@@ -32,7 +32,7 @@ class WithdrawalController extends Controller
             ->get();
 
         // Calculate available balance
-        $totalStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 
@@ -73,7 +73,7 @@ class WithdrawalController extends Controller
         $salesExecutiveId = $salesExecutive->id;
 
         // Calculate available balance
-        $totalStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 
@@ -119,7 +119,7 @@ class WithdrawalController extends Controller
         $salesExecutiveId = $salesExecutive->id;
 
         // Calculate available balance
-        $totalStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 
