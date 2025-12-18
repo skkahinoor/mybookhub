@@ -10,18 +10,22 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\HeaderLogo;
 use App\Models\Vendor;
 use App\Models\Admin;
+use App\Models\Language;
 use App\Models\Notification;
+use App\Models\Section;
 use Intervention\Image\Facades\Image;
 
 class VendorController extends Controller
 {
     public function loginRegister(Request $request) {
         $condition = session('condition', 'new');
-
+        $logos     = HeaderLogo::all();
+        $sections  = Section::all();
+        $language  = Language::get();
         if (!in_array($condition, ['new', 'old'])) {
             $condition = 'new';
         }
-        return view('front.vendors.login_register',compact('condition'));
+        return view('front.vendors.login_register',compact('condition', 'logos', 'sections', 'language'));
     }
 
     public function vendorRegister(Request $request) {

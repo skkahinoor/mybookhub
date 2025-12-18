@@ -205,6 +205,7 @@ class SalesExecutiveAuthController extends Controller
             'email'    => $email,
             'phone'    => $phone,
             'status'   => 0,
+            'income_per_target' => 10,
             'password' => Hash::make($request->password),
         ]);
 
