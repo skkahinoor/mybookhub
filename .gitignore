@@ -4,7 +4,7 @@
 # /public/storage
 /storage/*.key
 /vendor
-/ .env
+.env
 # .env.backup
 /Postman Collection of API Endpoints/
 .phpunit.result.cache
