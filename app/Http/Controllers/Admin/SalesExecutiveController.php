@@ -66,8 +66,8 @@ class SalesExecutiveController extends Controller
                 'upi_id' => $data['upi_id'] ?? null,
                 'total_target' => $data['total_target'] ?? null,
                 'completed_target' => $data['completed_target'] ?? null,
-                'income_per_target' => $data['income_per_target'] ?? null,
-                'status' => 0,
+                'income_per_target' => $data['income_per_target'] ?? 10,
+                'status' => 1,
             ];
 
             if (! $isEdit) {
