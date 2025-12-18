@@ -24,20 +24,20 @@
                             @endif
 
                             <div class="table-responsive pt-3">
-                                @if ($notifications->count() > 0)
-                                    <table id="notificationsTable" class="table table-bordered table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>#</th>
-                                                <th>Title</th>
-                                                <th>Message</th>
-                                                <th>Type</th>
-                                                <th>Date</th>
-                                                <th>Status</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
+                                {{-- @if ($notifications->count() > 0) --}}
+                                <table id="notificationsTable" class="table table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Title</th>
+                                            <th>Message</th>
+                                            <th>Type</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    {{-- <tbody>
                                             @foreach ($notifications as $notification)
                                                 <tr class="{{ $notification->is_read ? '' : 'table-warning' }}">
                                                     <td>{{ $loop->iteration + ($notifications->currentPage() - 1) * $notifications->perPage() }}
@@ -109,19 +109,19 @@
                                                     </td>
                                                 </tr>
                                             @endforeach
-                                        </tbody>
-                                    </table>
+                                        </tbody> --}}
+                                </table>
 
-                                    <div class="mt-3">
+                                {{-- <div class="mt-3">
                                         {{ $notifications->links() }}
-                                    </div>
-                                @else
+                                    </div> --}}
+                                {{-- @else
                                     <div class="text-center py-5">
                                         <i class="mdi mdi-bell-off" style="font-size: 64px; color: #ccc;"></i>
                                         <h4 class="mt-3">No Notifications</h4>
                                         <p class="text-muted">You're all caught up! No notifications to display.</p>
                                     </div>
-                                @endif
+                                @endif --}}
                             </div>
                         </div>
                     </div>
@@ -257,22 +257,49 @@
     @push('scripts')
         <script>
             $('#notificationsTable').DataTable({
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                responsive: true,
-                pageLength: 10,
-                lengthMenu: [10, 25, 50, 100],
+                processing: true,
+                serverSide: true,
+                ajax: '{{ route('notifications.index') }}',
                 order: [
                     [4, 'desc']
-                ], // Order by Date column
-                columnDefs: [{
+                ],
+                columns: [{
+                        data: 'DT_RowIndex',
+                        name: 'DT_RowIndex',
+                        orderable: false
+                    },
+                    {
+                        data: 'title',
+                        name: 'title'
+                    },
+                    {
+                        data: 'message',
+                        name: 'message'
+                    },
+                    {
+                        data: 'type',
+                        name: 'type',
+                        orderable: false
+                    },
+                    {
+                        data: 'created_at',
+                        name: 'created_at'
+                    },
+                    {
+                        data: 'is_read',
+                        name: 'is_read',
+                        orderable: false
+                    },
+                    {
+                        data: 'action',
+                        name: 'action',
                         orderable: false,
-                        targets: [6]
-                    } // Disable sorting for Actions column
+                        searchable: false
+                    }
                 ]
             });
+
+
 
             $(document).ready(function() {
                 var currentSalesExecutiveId = null;
@@ -325,7 +352,7 @@
                     currentInstitutionNotificationId = null;
                     $('#institutionModalBody').html(
                         '<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>'
-                        );
+                    );
                 });
 
                 // View Student Details Modal
@@ -351,7 +378,7 @@
                     currentStudentNotificationId = null;
                     $('#studentModalBody').html(
                         '<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>'
-                        );
+                    );
                 });
 
                 function loadInstitutionDetails(id, notificationId) {
@@ -360,7 +387,7 @@
                     }
                     $('#institutionModalBody').html(
                         '<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>'
-                        );
+                    );
 
                     $.ajax({
                         url: 'institution-management/' + id + '/details',
@@ -455,7 +482,7 @@
                                     $('#approveInstitutionBtn').show().off('click').on('click', function() {
                                         if (!confirm(
                                                 'Are you sure you want to approve (activate) this institution?'
-                                                )) {
+                                            )) {
                                             return;
                                         }
                                         updateInstitutionStatus(1, id,
@@ -467,7 +494,7 @@
                                     $('#rejectInstitutionBtn').show().off('click').on('click', function() {
                                         if (!confirm(
                                                 'Are you sure you want to reject (deactivate) this institution?'
-                                                )) {
+                                            )) {
                                             return;
                                         }
                                         updateInstitutionStatus(0, id,
@@ -479,7 +506,7 @@
                         error: function(xhr) {
                             $('#institutionModalBody').html(
                                 '<div class="alert alert-danger">Error loading institution details.</div>'
-                                );
+                            );
                             console.error('Error loading institution details:', xhr);
                         }
                     });
@@ -524,7 +551,7 @@
                     }
                     $('#studentModalBody').html(
                         '<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>'
-                        );
+                    );
 
                     $.ajax({
                         url: 'students/' + id + '/details',
@@ -676,13 +703,13 @@
                     currentNotificationId = null;
                     $('#salesExecutiveModalBody').html(
                         '<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>'
-                        );
+                    );
                 });
 
                 function loadSalesExecutiveDetails(id) {
                     $('#salesExecutiveModalBody').html(
                         '<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>'
-                        );
+                    );
 
                     $.ajax({
                         url: '{{ url('admin/sales-executive') }}/' + id + '/details',
@@ -744,7 +771,7 @@
                         error: function(xhr) {
                             $('#salesExecutiveModalBody').html(
                                 '<div class="alert alert-danger">Error loading sales executive details.</div>'
-                                );
+                            );
                             console.error('Error loading sales executive details:', xhr);
                         }
                     });
