@@ -136,4 +136,4 @@ All application routes & API endpoints are defined in both the **[web.php](route
 > 3) User (to access the Frontend): Email: **ibrahim@gmail.com**, Password: **123456**
 
 ## Contribution:
-Contributions to my Multi-vendor E-commerce Laravel application are most welcome! If you find any issues or have suggestions for improvements or want to add new features, please open an issue or submit a pull request.
+Contributions to my Multi-vendor E-commerce Laravel application are most welcome! If you find any issues or have suggestions for improvements or want to add new features, please open an issue or submit a pull request.ssss
