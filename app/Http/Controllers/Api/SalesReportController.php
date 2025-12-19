@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Student;
+use App\Models\User;
 use App\Models\SalesExecutive;
 use Carbon\Carbon;
 
@@ -29,10 +29,10 @@ class SalesReportController extends Controller
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        $todayStudents     = Student::where('added_by', $salesId)->where('status', 1)->whereDate('created_at', $today)->count();
-        $weeklyStudents    = Student::where('added_by', $salesId)->where('status', 1)->whereDate('created_at', '>=', $startOfWeek)->count();
-        $monthlyStudents   = Student::where('added_by', $salesId)->where('status', 1)->whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->count();
-        $totalStudents     = Student::where('added_by', $salesId)->where('status', 1)->count();
+        $todayStudents     = User::where('added_by', $salesId)->where('status', 1)->whereDate('created_at', $today)->count();
+        $weeklyStudents    = User::where('added_by', $salesId)->where('status', 1)->whereDate('created_at', '>=', $startOfWeek)->count();
+        $monthlyStudents   = User::where('added_by', $salesId)->where('status', 1)->whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->count();
+        $totalStudents     = User::where('added_by', $salesId)->where('status', 1)->count();
 
         $todayEarning   = $incomePerTarget * $todayStudents;
         $weeklyEarning  = $incomePerTarget * $weeklyStudents;
@@ -52,7 +52,7 @@ class SalesReportController extends Controller
         }
 
         // Students per Day
-        $studentGraph = Student::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+        $studentGraph = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesId)
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)

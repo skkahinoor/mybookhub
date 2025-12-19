@@ -5,6 +5,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Admin;
 use App\Models\Category;
 use App\Models\Country;
+use App\Models\State;
+use App\Models\District;
+use App\Models\Block;
 use App\Models\Coupon;
 use App\Models\HeaderLogo;
 use App\Models\Order;
@@ -32,7 +35,7 @@ class AdminController extends Controller
 
         Session::put('page', 'dashboard');
 
-        
+
         $vendorsCount     = Vendor::count();;
         $usersCount      = User::count();
         $salesExecutivesCount = SalesExecutive::count();
@@ -82,8 +85,8 @@ class AdminController extends Controller
                 if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->confirm == 'No') {
                     return redirect()->back()->with('error_message', 'Please confirm your email to activate your Vendor Account');
 
-                } else if (Auth::guard('admin')->user()->type != 'vendor' && Auth::guard('admin')->user()->status == '0') {
-                    return redirect()->back()->with('error_message', 'Your admin account is not active');
+                } else if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->status == '0') {
+                    return redirect()->back()->with('error_message', 'Your vendor account is not active');
 
                 } else {
                     return redirect('/admin/dashboard');
@@ -233,14 +236,15 @@ class AdminController extends Controller
                 // Laravel's Validation    // Customizing Laravel's Validation Error Messages: https://laravel.com/docs/9.x/validation#customizing-the-error-messages    // Customizing Validation Rules: https://laravel.com/docs/9.x/validation#custom-validation-rules
                 $rules = [
                     'vendor_name'   => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
-                    'vendor_city'   => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                     'vendor_mobile' => 'required|numeric',
+                    'country_id'    => 'nullable|exists:countries,id',
+                    'state_id'      => 'nullable|exists:states,id',
+                    'district_id'   => 'nullable|exists:districts,id',
+                    'block_id'      => 'nullable|exists:blocks,id',
                 ];
 
                 $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
                     'vendor_name.required'   => 'Name is required',
-                    'vendor_city.required'   => 'City is required',
-                    'vendor_city.regex'      => 'Valid City alphabetical is required',
                     'vendor_name.regex'      => 'Valid Name is required',
                     'vendor_mobile.required' => 'Mobile is required',
                     'vendor_mobile.numeric'  => 'Valid Mobile is required',
@@ -284,13 +288,14 @@ class AdminController extends Controller
 
                                                                                        // Update Vendor Details in 'vendors' table
                 Vendor::where('id', Auth::guard('admin')->user()->vendor_id)->update([ // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-                    'name'    => $data['vendor_name'],
-                    'mobile'  => $data['vendor_mobile'],
-                    'address' => $data['vendor_address'],
-                    'city'    => $data['vendor_city'],
-                    'state'   => $data['vendor_state'],
-                    'country' => $data['vendor_country'],
-                    'pincode' => $data['vendor_pincode'],
+                    'name'        => $data['vendor_name'],
+                    'mobile'      => $data['vendor_mobile'],
+                    'address'     => $data['vendor_address'] ?? null,
+                    'country_id' => $data['country_id'] ?? null,
+                    'state_id'    => $data['state_id'] ?? null,
+                    'district_id' => $data['district_id'] ?? null,
+                    'block_id'    => $data['block_id'] ?? null,
+                    'pincode'     => $data['vendor_pincode'] ?? null,
                 ]);
 
                 return redirect()->back()->with('success_message', 'Vendor details updated successfully!');
@@ -460,12 +465,49 @@ class AdminController extends Controller
         }
 
                                                                     // Fetch all of the world countries from the database table `countries`
-        $countries = Country::where('status', 1)->get()->toArray(); // get the countries which have `status` = 1 (to ignore the blacklisted countries, in case)
+        $countries = Country::where('status', true)->get()->toArray(); // get the countries which have `status` = true (to ignore the blacklisted countries, in case)
                                                                     // dd($countries);
 
         // The 'GET' request: to show the update_vendor_details.blade.php page
         // We'll create one view (not 3) for the 3 pages, but parts inside it will change depending on the $slug value
         return view('admin/settings/update_vendor_details', compact('slug', 'vendorDetails', 'countries', 'logos', 'headerLogo'));
+    }
+
+    // AJAX methods for cascading location dropdowns (for vendor personal details)
+    public function getVendorStates(Request $request)
+    {
+        $countryId = $request->input('country');
+
+        $states = State::where('country_id', $countryId)
+            ->where('status', true)
+            ->pluck('name', 'id')
+            ->toArray();
+
+        return response()->json($states);
+    }
+
+    public function getVendorDistricts(Request $request)
+    {
+        $stateId = $request->input('state');
+
+        $districts = District::where('state_id', $stateId)
+            ->where('status', true)
+            ->pluck('name', 'id')
+            ->toArray();
+
+        return response()->json($districts);
+    }
+
+    public function getVendorBlocks(Request $request)
+    {
+        $districtId = $request->input('district');
+
+        $blocks = Block::where('district_id', $districtId)
+            ->where('status', true)
+            ->pluck('name', 'id')
+            ->toArray();
+
+        return response()->json($blocks);
     }
 
     // Update the vendor's commission percentage (by the Admin) in `vendors` table (for every vendor on their own) in the Admin Panel in admin/admins/view_vendor_details.blade.php (Commissions module: Every vendor must pay a certain commission (that may vary from a vendor to another) for the website owner (admin) on every item sold, and it's defined by the website owner (admin))
@@ -540,10 +582,9 @@ class AdminController extends Controller
                 $status = 1;
             }
 
-            // Note: Vendor CONFIRMATION occurs automatically through vendor clicking on the confirmation link sent in the email, but vendor ACTIVATION (active/inactive/disabled) occurs manually where 'superadmin' or 'admin' activates the `status` from the Admin Panel in 'Admin Management' tab, then clicks Status. Also, Vendor CONFIRMATION is related to the `confirm` columns in BOTH `admins` and `vendors` tables, but vendor ACTIVATION (active/inactive/disabled) is related to the `status` columns in BOTH `admins` and `vendors` tables!
-            // Note: Vendor receives THREE emails: the first one when they register (please click on the confirmation link mail (in emails/vendor_confirmation.blade.php)), the second one when they click on the confirmation link sent in the first email (telling them that they have been confirmed and asking them to complete filling in their personal, business and bank details to get ACTIVATED/APPROVED (`status gets 1) (in emails/vendor_confirmed.blade.php)), the third email when the 'admin' or 'superadmin' manually activates (`status` becomes 1) the vendor from the Admin Panel from 'Admin Management' tab, then clicks Status (the email tells them they have been approved (activated and `status` became 1) and asks them to add their products on the website (in emails/vendor_approved.blade.php))
 
-                                                                                  // (!! Database Transaction !!) UPDATE the `status` columns in BOTH `admins` and `vendors` tables (I did the code of `vendors` myself!) (!! Database Transaction !!)
+
+
             Admin::where('id', $data['admin_id'])->update(['status' => $status]); // $data['admin_id'] comes from the 'data' object inside the $.ajax() method
                                                                                   // echo '<pre>', var_dump($data), '</pre>';
 

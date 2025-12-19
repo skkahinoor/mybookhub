@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use App\Models\HeaderLogo;
 use App\Models\Vendor;
 use App\Models\Admin;
@@ -14,6 +15,7 @@ use App\Models\Language;
 use App\Models\Notification;
 use App\Models\Section;
 use Intervention\Image\Facades\Image;
+use GuzzleHttp\Client;
 
 class VendorController extends Controller
 {
@@ -113,6 +115,97 @@ class VendorController extends Controller
         }
     }
 
+    /**
+     * Send SMS using MSG91 (same pattern as Sales OTP)
+     */
+    public function sendSMS($phone, $otp)
+    {
+        // Normalize to Indian format with country code 91 (same as sales)
+        $to = '91' . preg_replace('/[^0-9]/', '', $phone);
+
+        try {
+            $client = new Client();
+
+            $payload = [
+                "template_id" => env('MSG91_TEMPLATE_ID'),
+                "recipients"  => [
+                    [
+                        "mobiles" => $to,
+                        "OTP"     => $otp,
+                    ],
+                ],
+            ];
+
+            Log::info("Vendor MSG91 Payload:", $payload);
+
+            $response = $client->post("https://control.msg91.com/api/v5/flow/", [
+                'json' => $payload,
+                'headers' => [
+                    'accept' => 'application/json',
+                    'authkey' => env('MSG91_AUTH_KEY'),
+                    'content-type' => 'application/json',
+                ],
+            ]);
+
+            Log::info("Vendor MSG91 Response:", [
+                'status' => $response->getStatusCode(),
+                'body'   => $response->getBody()->getContents(),
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Vendor MSG91 ERROR: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * AJAX: Send OTP for vendor registration (like sales.register)
+     */
+    public function sendOtp(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name'   => 'required|string|max:150',
+            'email'  => 'required|email|unique:admins,email|unique:vendors,email',
+            'mobile' => 'required|digits:10|unique:admins,mobile|unique:vendors,mobile',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $otp = rand(100000, 999999);
+
+        DB::table('otps')->updateOrInsert(
+            ['phone' => $request->mobile],
+            ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+        );
+
+        // Store basic data in session (optional, similar to sales)
+        session([
+            'vendor_reg_name'   => $request->name,
+            'vendor_reg_email'  => $request->email,
+            'vendor_reg_mobile' => $request->mobile,
+        ]);
+
+        $sent = $this->sendSMS($request->mobile, $otp);
+
+        if (!$sent) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'OTP failed to send. Try again.',
+            ], 500);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'OTP sent successfully!',
+        ]);
+    }
+
     public function confirmVendor($email,Request $request) {
         $condition = session('condition', 'new');
 
@@ -159,19 +252,19 @@ class VendorController extends Controller
 
     public function register(Request $request, $id = null)
     {
-        
+
         if ($request->isMethod('post')) {
             $data = $request->all();
             // dd($data);
             $adminId = $data['admin_id'] ?? $id ?? null;
-    
+
             // Validation
             $rules = [
                 'name'   => 'required|regex:/^[\pL\s\-]+$/u',
                 'email'  => 'required|email|unique:admins,email,' . ($adminId ?? '') . ',id',
                 'mobile' => 'required|numeric',
             ];
-    
+
             $customMessages = [
                 'name.required'   => 'Name is required',
                 'name.regex'      => 'Valid Name is required',
@@ -181,15 +274,30 @@ class VendorController extends Controller
                 'mobile.required' => 'Mobile is required',
                 'mobile.numeric'  => 'Valid Mobile is required',
             ];
-    
+
             // Add mode password validation
             if (empty($adminId)) {
                 $rules['password'] = 'required|min:6|confirmed';
                 $rules['password_confirmation'] = 'required';
+                $rules['otp'] = 'required';
             }
-    
+
             $this->validate($request, $rules, $customMessages);
-    
+
+            // If ADD MODE with OTP, verify the OTP (only when coming from register-vendor page)
+            if (empty($adminId)) {
+                $otpRecord = DB::table('otps')
+                    ->where('phone', $data['mobile'])
+                    ->where('otp', $data['otp'])
+                    ->first();
+
+                if (!$otpRecord) {
+                    return back()
+                        ->withErrors(['otp' => 'Invalid OTP'])
+                        ->withInput();
+                }
+            }
+
             // Prepare Admin Data (NO IMAGE)
             $adminData = [
                 'name'   => $data['name'],
@@ -197,10 +305,10 @@ class VendorController extends Controller
                 'mobile' => $data['mobile'],
                 'type'   => 'vendor',
             ];
-    
+
             if (empty($id)) {
                 // ================= ADD MODE =================
-    
+
                 // Insert Vendor
                 $vendorId = Vendor::insertGetId([
                     'name'    => $data['name'],
@@ -209,23 +317,27 @@ class VendorController extends Controller
                     'confirm' => 'Yes',
                     'status'  => isset($data['status']) ? 1 : 0,
                 ]);
-    
+
                 // Insert Admin
                 $adminData['vendor_id'] = $vendorId;
                 $adminData['password']  = Hash::make($data['password']);
                 $adminData['confirm']   = 'Yes';
                 $adminData['status']    = isset($data['status']) ? 1 : 0;
-    
+
                 Admin::insert($adminData);
-    
+
+                // Clear OTP and session after successful registration
+                DB::table('otps')->where('phone', $data['mobile'])->delete();
+                session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile']);
+
                 return redirect('admin/admins')
                     ->with('success_message', 'Vendor registered successfully!');
             } else {
                 // ================= EDIT MODE =================
-    
+
                 $admin = Admin::where('id', $adminId)->first();
                 Admin::where('id', $adminId)->update($adminData);
-    
+
                 if ($admin && $admin->type === 'vendor' && $admin->vendor_id) {
                     Vendor::where('id', $admin->vendor_id)->update([
                         'name'   => $data['name'],
@@ -233,19 +345,19 @@ class VendorController extends Controller
                         'mobile' => $data['mobile'],
                     ]);
                 }
-    
+
                 return redirect('admin/admins')
                     ->with('success_message', 'Vendor updated successfully!');
             }
         }
-    
+
         // GET request
         if (!empty($id)) {
             $admin = Admin::where('id', $id)->first()->toArray();
             return view('admin/login', compact('admin'));
         }
-    
+
         return view('admin/login');
     }
-    
+
 }

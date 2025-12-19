@@ -8,6 +8,9 @@ use App\Models\Category;
 use App\Models\ContactUs;
 use App\Models\ContactReply;
 use App\Models\Country;
+use App\Models\State;
+use App\Models\District;
+use App\Models\Block;
 use App\Models\HeaderLogo;
 use App\Models\Language;
 use App\Models\Product;
@@ -258,8 +261,8 @@ class UserController extends Controller
         $language       = Language::get();
         $requestedBooks = BookRequest::where('requested_by_user', Auth::id())->orderBy('created_at', 'desc')->get();
         $contactQueries = ContactUs::with('replies')->where('email', Auth::user()->email)->orderBy('created_at', 'desc')->get();
-        $countries = Country::all();
-        $user           = Auth::user();
+        $countries = Country::where('status', true)->get();
+        $user = User::with(['country', 'state', 'district', 'block'])->find(Auth::id());
 
         // ----- THIS HANDLES POST from the FORM -----
         if ($request->isMethod('post')) {
@@ -267,25 +270,27 @@ class UserController extends Controller
 
             // Validation
             $request->validate([
-                'email'   => 'required|email|max:100|unique:users,email,' . Auth::id(),
-                'name'    => 'required|string|max:100',
-                'city'    => 'required|string|max:100',
-                'state'   => 'required|string|max:100',
-                'address' => 'required|string|max:100',
-                'country' => 'required|string|max:100',
-                'mobile'  => 'required|numeric|digits:10',
-                'pincode' => 'required|digits:6',
+                'email'      => 'required|email|max:100|unique:users,email,' . Auth::id(),
+                'name'       => 'required|string|max:100',
+                'address'    => 'nullable|string|max:100',
+                'country_id' => 'nullable|exists:countries,id',
+                'state_id'   => 'nullable|exists:states,id',
+                'district_id' => 'nullable|exists:districts,id',
+                'block_id'   => 'nullable|exists:blocks,id',
+                'mobile'     => 'required|numeric|digits:10',
+                'pincode'    => 'required|digits:6',
             ]);
 
             User::where('id', Auth::id())->update([
-                'email'   => $data['email'],
-                'name'    => $data['name'],
-                'mobile'  => $data['mobile'],
-                'city'    => $data['city'],
-                'state'   => $data['state'],
-                'country' => $data['country'],
-                'pincode' => $data['pincode'],
-                'address' => $data['address'],
+                'email'      => $data['email'],
+                'name'       => $data['name'],
+                'phone'     => $data['mobile'],
+                'country_id' => $data['country_id'] ?? null,
+                'state_id'   => $data['state_id'] ?? null,
+                'district_id' => $data['district_id'] ?? null,
+                'block_id'   => $data['block_id'] ?? null,
+                'pincode'    => $data['pincode'],
+                'address'    => $data['address'],
             ]);
 
             // Redirect back with success message
@@ -390,6 +395,43 @@ class UserController extends Controller
         $language  = Language::get();
 
         return view('front.pages.sales', compact('condition', 'sections', 'logos', 'language'));
+    }
+
+    // AJAX methods for cascading location dropdowns (for user account)
+    public function getUserStates(Request $request)
+    {
+        $countryId = $request->input('country');
+
+        $states = State::where('country_id', $countryId)
+            ->where('status', true)
+            ->pluck('name', 'id')
+            ->toArray();
+
+        return response()->json($states);
+    }
+
+    public function getUserDistricts(Request $request)
+    {
+        $stateId = $request->input('state');
+
+        $districts = District::where('state_id', $stateId)
+            ->where('status', true)
+            ->pluck('name', 'id')
+            ->toArray();
+
+        return response()->json($districts);
+    }
+
+    public function getUserBlocks(Request $request)
+    {
+        $districtId = $request->input('district');
+
+        $blocks = Block::where('district_id', $districtId)
+            ->where('status', true)
+            ->pluck('name', 'id')
+            ->toArray();
+
+        return response()->json($blocks);
     }
 
 }

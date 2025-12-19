@@ -29,6 +29,7 @@ Route::post('/sales/register', [AuthController::class, 'register']);
 Route::post('/sales/verify-otp', [AuthController::class, 'verifyOtp']);
 
 Route::post('/vendor/register', [VendorController::class, 'register']);
+Route::post('/vendor/verify-otp', [VendorController::class, 'verifyOtp']);
 
 // Protected routes: logout (requires valid Sanctum token)
 Route::middleware('auth:sanctum')->group(function () {
@@ -79,4 +80,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sales/report', [SalesReportController::class, 'getSalesReport']);
     Route::get('/sales/withdrawal-dashboard', [WithdrawalApiController::class, 'dashboard']);
     Route::post('/sales/withdraw-request', [WithdrawalApiController::class, 'requestWithdraw']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/vendor/profile', [VendorController::class, 'getprofile']);
+    Route::post('/vendor/profile', [VendorController::class, 'updateprofile']);
+    Route::post('/vendor/business-details', [VendorController::class, 'saveBusinessDetails']);
+    Route::post('/vendor/bank-details', [VendorController::class, 'saveBankDetails']);
+    Route::get('/vendor/business-details', [VendorController::class, 'getBusinessDetails']);
+    Route::get('/vendor/bank-details', [VendorController::class, 'getBankDetails']);
+
 });

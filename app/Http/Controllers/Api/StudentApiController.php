@@ -42,9 +42,9 @@ class StudentApiController extends Controller
         }
 
         if ($type === 'superadmin') {
-            $students = Student::with('institution')->orderBy('id', 'desc')->get();
+            $students = User::with('institution')->orderBy('id', 'desc')->get();
         } else {
-            $students = Student::with('institution')
+            $students = User::with('institution')
                 ->where('added_by', $user->id)
                 ->orderBy('id', 'desc')
                 ->get();
@@ -110,6 +110,7 @@ class StudentApiController extends Controller
 
         // Status: superadmin=1, sales=0
         $studentStatus = ($type === 'superadmin') ? 1 : 0;
+        $validated['user_type']   = "student";
         $validated['status']   = $studentStatus;
         $validated['added_by'] = $user->id;
         $validated['password'] = Hash::make('12345678');
@@ -239,9 +240,6 @@ class StudentApiController extends Controller
         ], 200);
     }
 
-
-
-
     public function destroy(Request $request, $id)
     {
         $user = $request->user();
@@ -255,9 +253,9 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        $student = Student::find($id);
+        $users = User::find($id);
 
-        if (!$student) {
+        if (!$users) {
             return response()->json([
                 'status' => false,
                 'message' => 'Student not found.'
@@ -265,20 +263,21 @@ class StudentApiController extends Controller
         }
 
 
-        if ($type === 'sales' && $student->added_by !== $user->id) {
+        if ($type === 'sales' && $users->added_by !== $user->id) {
             return response()->json([
                 'status' => false,
                 'message' => 'Access denied! You can only delete students added by you.'
             ], 403);
         }
 
-        $student->delete();
+        $users->delete();
 
         return response()->json([
             'status' => true,
             'message' => ucfirst($type) . ' deleted student successfully.'
         ], 200);
     }
+
     public function getStudentByClass(Request $request)
     {
         $user = $request->user();
@@ -291,20 +290,15 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        $query = Student::query();
+        $query = User::query();
 
-        // 🔐 Superadmin = view all
         if ($type === 'superadmin') {
-            // no restrictions
+
         }
-        // 🔐 Sales = only view his own added students
+
         elseif ($type === 'sales') {
             $query->where('added_by', $user->id);
         }
-
-        // -------------------------------
-        // 🔍 Filters
-        // -------------------------------
 
         // Institution filter
         if ($request->filled('institution_id')) {

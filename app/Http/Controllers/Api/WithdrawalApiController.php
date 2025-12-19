@@ -4,7 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Student;
+use App\Models\User;
 use App\Models\Notification;
 use App\Models\Withdrawal;
 use App\Models\SalesExecutive;
@@ -28,7 +28,7 @@ class WithdrawalApiController extends Controller
 
         $salesExecutiveId = $sales->id;
 
-        $totalStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
         $incomePerTarget = $sales->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 
@@ -60,7 +60,7 @@ class WithdrawalApiController extends Controller
         $sales = $request->user();
         $salesExecutiveId = $sales->id;
 
-        $totalStudents = Student::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
         $incomePerTarget = $sales->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 

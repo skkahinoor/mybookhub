@@ -538,26 +538,30 @@
                                                 </div>
                                                 <div class="info-item">
                                                     <div class="info-label">Mobile Number</div>
-                                                    <div class="info-value">{{ $user->mobile ?: 'Not provided' }}</div>
-                                                </div>
-                                                <div class="info-item">
-                                                    <div class="info-label">City</div>
-                                                    <div class="info-value">{{ $user->city ?: 'Not provided' }}</div>
-                                                </div>
-                                                <div class="info-item">
-                                                    <div class="info-label">State</div>
-                                                    <div class="info-value">{{ $user->state ?: 'Not provided' }}</div>
+                                                    <div class="info-value">{{ $user->phone ?: 'Not provided' }}</div>
                                                 </div>
                                                 <div class="info-item">
                                                     <div class="info-label">Country</div>
-                                                    <div class="info-value">{{ $user->country ?: 'Not provided' }}</div>
+                                                    <div class="info-value">{{ optional($user->country)->name ?? 'Not provided' }}</div>
+                                                </div>
+                                                <div class="info-item">
+                                                    <div class="info-label">State</div>
+                                                    <div class="info-value">{{ optional($user->state)->name ?? 'Not provided' }}</div>
+                                                </div>
+                                                <div class="info-item">
+                                                    <div class="info-label">District</div>
+                                                    <div class="info-value">{{ optional($user->district)->name ?? 'Not provided' }}</div>
+                                                </div>
+                                                <div class="info-item">
+                                                    <div class="info-label">Block</div>
+                                                    <div class="info-value">{{ optional($user->block)->name ?? 'Not provided' }}</div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                               
+
 
                                 <!-- Account Details Tab -->
                                 <div class="tab-pane fade" id="edit-account" role="tabpanel"
@@ -596,35 +600,44 @@
                                         </div>
 
                                         <div class="woocommerce-form-row woocommerce-form-row--wide">
-                                            <label>Address <span class="required">*</span></label>
+                                            <label>Address</label>
                                             <input type="text" id="user-address" name="address"
                                                 value="{{ Auth::user()->address }}">
                                         </div>
 
+                                        <div class="woocommerce-form-row woocommerce-form-row--wide">
+                                            <label>Country</label>
+                                            <select id="user-country-id" name="country_id" style="color: #495057">
+                                                <option value="">Select Country</option>
+                                                @foreach ($countries as $country)
+                                                    <option value="{{ $country->id }}"
+                                                        @if ($country->id == Auth::user()->country_id) selected @endif>
+                                                        {{ $country->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
                                         <div class="woocommerce-form-row woocommerce-form-row--first">
-                                            <label>City <span class="required">*</span></label>
-                                            <input type="text" id="user-city" name="city"
-                                                value="{{ Auth::user()->city }}">
+                                            <label>State</label>
+                                            <select id="user-state-id" name="state_id" style="color: #495057">
+                                                <option value="">Select State</option>
+                                            </select>
                                         </div>
 
                                         <div class="woocommerce-form-row woocommerce-form-row--last">
-                                            <label>State <span class="required">*</span></label>
-                                            <input type="text" id="user-state" name="state"
-                                                value="{{ Auth::user()->state }}">
+                                            <label>District</label>
+                                            <select id="user-district-id" name="district_id" style="color: #495057">
+                                                <option value="">Select District</option>
+                                            </select>
                                         </div>
 
                                         <div class="clear"></div>
 
                                         <div class="woocommerce-form-row woocommerce-form-row--wide">
-                                            <label>Country <span class="required">*</span></label>
-                                            <select id="user-country" name="country">
-                                                <option value="">Select Country</option>
-                                                @foreach ($countries as $country)
-                                                    <option value="{{ $country->name }}"
-                                                        @if ($country->name == Auth::user()->country) selected @endif>
-                                                        {{ $country->name }}
-                                                    </option>
-                                                @endforeach
+                                            <label>Block</label>
+                                            <select id="user-block-id" name="block_id" style="color: #495057">
+                                                <option value="">Select Block</option>
                                             </select>
                                         </div>
 
@@ -637,7 +650,7 @@
                                         <div class="woocommerce-form-row woocommerce-form-row--last">
                                             <label>Mobile number <span class="required">*</span></label>
                                             <input type="text" id="user-mobile" name="mobile"
-                                                value="{{ Auth::user()->mobile }}">
+                                                value="{{ Auth::user()->phone }}">
                                         </div>
 
                                         <div class="clear"></div>
@@ -778,12 +791,12 @@
                                                     // Expand first query or if status is not resolved, collapse resolved queries by default
                                                     $isExpanded = ($key == 0 && $query->status != 'resolved') || ($key == 0 && $query->status == 'resolved' && $contactQueries->count() == 1);
                                                 @endphp
-                                                
+
                                                 <div class="accordion-item" style="border: 1px solid #e5e5e5; border-radius: 8px; margin-bottom: 15px; overflow: hidden;">
                                                     <h2 class="accordion-header" id="{{ $headingId }}">
-                                                        <button class="accordion-button {{ $isExpanded ? '' : 'collapsed' }}" type="button" 
-                                                                data-bs-toggle="collapse" data-bs-target="#{{ $collapseId }}" 
-                                                                aria-expanded="{{ $isExpanded ? 'true' : 'false' }}" 
+                                                        <button class="accordion-button {{ $isExpanded ? '' : 'collapsed' }}" type="button"
+                                                                data-bs-toggle="collapse" data-bs-target="#{{ $collapseId }}"
+                                                                aria-expanded="{{ $isExpanded ? 'true' : 'false' }}"
                                                                 aria-controls="{{ $collapseId }}"
                                                                 style="background: #f8f9fa; padding: 15px 20px;">
                                                             <div style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
@@ -803,10 +816,10 @@
                                                             </div>
                                                         </button>
                                                     </h2>
-                                                    
-                                                    <div id="{{ $collapseId }}" 
-                                                         class="accordion-collapse collapse {{ $isExpanded ? 'show' : '' }}" 
-                                                         aria-labelledby="{{ $headingId }}" 
+
+                                                    <div id="{{ $collapseId }}"
+                                                         class="accordion-collapse collapse {{ $isExpanded ? 'show' : '' }}"
+                                                         aria-labelledby="{{ $headingId }}"
                                                          data-bs-parent="#queriesAccordion">
                                                         <div class="accordion-body" style="padding: 20px; background: #fff;">
                                                             <!-- Original Query -->
@@ -903,6 +916,163 @@
                 $('.woocommerce-MyAccount-navigation .nav-link').removeClass('active');
                 $(e.target).addClass('active');
             });
+
+            // Current user location values
+            var currentCountryId = @json(Auth::user()->country_id ?? null);
+            var currentStateId = @json(Auth::user()->state_id ?? null);
+            var currentDistrictId = @json(Auth::user()->district_id ?? null);
+            var currentBlockId = @json(Auth::user()->block_id ?? null);
+
+            // Load states based on country
+            function loadUserStates(countryId) {
+                if (!countryId) {
+                    $('#user-state-id').empty().append('<option value="">Select State</option>');
+                    $('#user-district-id').empty().append('<option value="">Select District</option>');
+                    $('#user-block-id').empty().append('<option value="">Select Block</option>');
+                    return Promise.resolve();
+                }
+
+                return new Promise(function(resolve, reject) {
+                    $.ajax({
+                        url: '{{ route('user_states') }}',
+                        type: 'GET',
+                        data: { country: countryId },
+                        dataType: 'json',
+                        success: function(response) {
+                            var stateSelect = $('#user-state-id');
+                            stateSelect.empty();
+                            stateSelect.append('<option value="">Select State</option>');
+
+                            $.each(response, function(key, value) {
+                                stateSelect.append('<option value="' + key + '">' + value + '</option>');
+                            });
+
+                            // Clear dependent dropdowns
+                            $('#user-district-id').empty().append('<option value="">Select District</option>');
+                            $('#user-block-id').empty().append('<option value="">Select Block</option>');
+
+                            // Set current value if exists
+                            if (currentStateId && currentStateId !== null) {
+                                stateSelect.val(currentStateId);
+                                loadUserDistricts(currentStateId).then(resolve);
+                            } else {
+                                resolve();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Error loading states:', error);
+                            reject(error);
+                        }
+                    });
+                });
+            }
+
+            // Load districts based on state
+            function loadUserDistricts(stateId) {
+                if (!stateId) {
+                    $('#user-district-id').empty().append('<option value="">Select District</option>');
+                    $('#user-block-id').empty().append('<option value="">Select Block</option>');
+                    return Promise.resolve();
+                }
+
+                return new Promise(function(resolve, reject) {
+                    $.ajax({
+                        url: '{{ route('user_districts') }}',
+                        type: 'GET',
+                        data: { state: stateId },
+                        dataType: 'json',
+                        success: function(response) {
+                            var districtSelect = $('#user-district-id');
+                            districtSelect.empty();
+                            districtSelect.append('<option value="">Select District</option>');
+
+                            $.each(response, function(key, value) {
+                                districtSelect.append('<option value="' + key + '">' + value + '</option>');
+                            });
+
+                            // Clear dependent dropdowns
+                            $('#user-block-id').empty().append('<option value="">Select Block</option>');
+
+                            // Set current value if exists
+                            if (currentDistrictId && currentDistrictId !== null) {
+                                districtSelect.val(currentDistrictId);
+                                loadUserBlocks(currentDistrictId).then(resolve);
+                            } else {
+                                resolve();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Error loading districts:', error);
+                            reject(error);
+                        }
+                    });
+                });
+            }
+
+            // Load blocks based on district
+            function loadUserBlocks(districtId) {
+                if (!districtId) {
+                    $('#user-block-id').empty().append('<option value="">Select Block</option>');
+                    return Promise.resolve();
+                }
+
+                return new Promise(function(resolve, reject) {
+                    $.ajax({
+                        url: '{{ route('user_blocks') }}',
+                        type: 'GET',
+                        data: { district: districtId },
+                        dataType: 'json',
+                        success: function(response) {
+                            var blockSelect = $('#user-block-id');
+                            blockSelect.empty();
+                            blockSelect.append('<option value="">Select Block</option>');
+
+                            $.each(response, function(key, value) {
+                                blockSelect.append('<option value="' + key + '">' + value + '</option>');
+                            });
+
+                            // Set current value if exists
+                            if (currentBlockId && currentBlockId !== null) {
+                                blockSelect.val(currentBlockId);
+                            }
+
+                            resolve();
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Error loading blocks:', error);
+                            reject(error);
+                        }
+                    });
+                });
+            }
+
+            // Event handlers for cascading dropdowns
+            $('#user-country-id').on('change', function() {
+                var countryId = $(this).val();
+                currentStateId = null;
+                currentDistrictId = null;
+                currentBlockId = null;
+                loadUserStates(countryId);
+            });
+
+            $('#user-state-id').on('change', function() {
+                var stateId = $(this).val();
+                currentDistrictId = null;
+                currentBlockId = null;
+                loadUserDistricts(stateId);
+            });
+
+            $('#user-district-id').on('change', function() {
+                var districtId = $(this).val();
+                currentBlockId = null;
+                loadUserBlocks(districtId);
+            });
+
+            // Initialize form with current values
+            if (currentCountryId && currentCountryId !== null) {
+                $('#user-country-id').val(currentCountryId);
+                loadUserStates(currentCountryId);
+            }
         });
     </script>
 @endsection

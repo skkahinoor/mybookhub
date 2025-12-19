@@ -39,7 +39,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     Route::match(['get', 'post'], 'login', 'AdminController@login'); // match() method is used to use more than one HTTP request method for the same route, so GET for rendering the login.php page, and POST for the login.php page <form> submission (e.g. GET and POST)    // Matches the '/admin/dashboard' URL (i.e. http://127.0.0.1:8000/admin/dashboard)
 
                                                                                                           // This a Route Group for routes that ALL start with 'admin/-something' and utilizes the 'admin' Authentication Guard    // Note: You must remove the '/admin'/ part from the routes that are written inside this Route Group (e.g.    Route::get('logout');    , NOT    Route::get('admin/logout');    )
-    Route::group(['middleware' => ['admin']], function () {  
+    Route::group(['middleware' => ['admin']], function () {
         // check isbn
         Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
         ->name('admin.book.isbnLookup');                                             // using our 'admin' guard (which we created in auth.php)
@@ -329,6 +329,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     Route::get('institution-districts', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getDistricts'])->name('institution_districts');
     Route::get('institution-blocks', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getBlocks'])->name('institution_blocks');
 
+    // AJAX routes for vendor location dropdowns
+    Route::get('vendor-states', [App\Http\Controllers\Admin\AdminController::class, 'getVendorStates'])->name('vendor_states');
+    Route::get('vendor-districts', [App\Http\Controllers\Admin\AdminController::class, 'getVendorDistricts'])->name('vendor_districts');
+    Route::get('vendor-blocks', [App\Http\Controllers\Admin\AdminController::class, 'getVendorBlocks'])->name('vendor_blocks');
+
 });
 
 // User download order PDF invoice (We'll use the same viewPDFInvoice() function (but with different routes/URLs!) to render the PDF invoice for 'admin'-s in the Admin Panel and for the user to download it!) (we created this route outside outside the Admin Panel routes so that the user could use it!)
@@ -357,6 +362,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     // the register HTML form submission in vendor login_register.blade.php page
     Route::get('vendor/register', 'VendorController@showRegister')->name('vendor.register'); // the register HTML form submission in vendor login_register.blade.php page
     Route::post('vendor/register', 'VendorController@register')->name('vendor.register.submit'); // the register HTML form submission in vendor login_register.blade.php page
+    Route::post('vendor/send-otp', 'VendorController@sendOtp')->name('vendor.otp.send');
 
                                                                            // Confirm Vendor Account (from 'vendor_confirmation.blade.php) from the mail by Mailtrap
     Route::get('vendor/confirm/{code}', 'VendorController@confirmVendor'); // {code} is the base64 encoded vendor e-mail with which they have registered which is a Route Parameters/URL Paramters: https://laravel.com/docs/9.x/routing#required-parameters    // this route is requested (accessed/opened) from inside the mail sent to vendor (vendor_confirmation.blade.php)
@@ -449,6 +455,11 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
         // User reply to contact query
         Route::post('user/query/{id}/reply', 'UserController@replyToQuery')->name('user.query.reply');
+
+        // AJAX routes for user location dropdowns
+        Route::get('user-states', 'UserController@getUserStates')->name('user_states');
+        Route::get('user-districts', 'UserController@getUserDistricts')->name('user_districts');
+        Route::get('user-blocks', 'UserController@getUserBlocks')->name('user_blocks');
 
                                                                                              // Coupon Code redemption (Apply coupon) / Coupon Code HTML Form submission via AJAX in front/products/cart_items.blade.php, check front/js/custom.js
         Route::post('/apply-coupon', 'ProductsController@applyCoupon')->name('applyCoupon'); // Important Note: We added this route here as a protected route inside the 'auth' middleware group because ONLY logged in/authenticated users are allowed to redeem Coupons!

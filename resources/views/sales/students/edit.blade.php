@@ -272,12 +272,18 @@
                                     <i class="fas fa-birthday-cake form-icon"></i>
                                     Date of Birth <span class="required">*</span>
                                 </label>
-                                <input type="date" name="dob" class="form-control"
-                                    value="{{ old('dob', optional($student->dob)->format('Y-m-d')) }}" required>
+
+                                <input type="date"
+                                       name="dob"
+                                       class="form-control"
+                                       value="{{ old('dob', $student->dob ? \Carbon\Carbon::parse($student->dob)->format('Y-m-d') : '') }}"
+                                       required>
+
                                 @error('dob')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
                             </div>
+
                         </div>
 
                         <div class="form-group text-center mt-4">

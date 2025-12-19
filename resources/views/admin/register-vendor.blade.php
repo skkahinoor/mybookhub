@@ -50,31 +50,45 @@
                             @endif
 
 
-                            {{-- My code --}}
-                            <form method="POST" action="{{ route('vendor.register.submit') }}">
+                            {{-- Vendor Registration with OTP (similar to Sales) --}}
+                            <form method="POST" action="{{ route('vendor.register.submit') }}" id="vendorRegisterForm">
                                 @csrf
-        
+
                                 <div class="form-group mb-3">
                                     <input type="text" name="name" class="form-control" placeholder="Vendor Name" required>
                                 </div>
-        
+
                                 <div class="form-group mb-3">
                                     <input type="email" name="email" class="form-control" placeholder="Email Address" required>
                                 </div>
-        
+
                                 <div class="form-group mb-3">
                                     <input type="number" name="mobile" class="form-control" placeholder="Mobile Number" required>
                                 </div>
-        
-                                <div class="form-group mb-3">
-                                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+
+                                {{-- OTP Input - Hidden initially --}}
+                                <div class="form-group mb-3 d-none" id="otpSection">
+                                    <input type="text" name="otp" class="form-control" placeholder="Enter OTP">
                                 </div>
-        
-                                <div class="form-group mb-3">
-                                    <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm Password" required>
+
+                                {{-- Password - Hidden until OTP sent --}}
+                                <div class="form-group mb-3 d-none" id="passwordSection">
+                                    <input type="password" name="password" class="form-control" placeholder="Password">
                                 </div>
-                                <button type="submit" class="btn btn-primary w-100">
-                                    Register
+
+                                {{-- Confirm Password - Hidden until OTP sent --}}
+                                <div class="form-group mb-3 d-none" id="confirmPasswordSection">
+                                    <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm Password">
+                                </div>
+
+                                {{-- Send OTP Button --}}
+                                <button type="button" class="btn btn-primary w-100 mb-2" id="sendOtpBtn">
+                                    Send OTP
+                                </button>
+
+                                {{-- Verify + Register Button --}}
+                                <button type="submit" class="btn btn-success w-100 d-none" id="verifyBtn">
+                                    Verify OTP & Register
                                 </button>
                             </form>
                         </div>
@@ -87,7 +101,7 @@
     </div>
     <!-- container-scroller -->
     <!-- plugins:js -->
-   <script src="{{ url('admin/vendors/js/vendor.bundle.base.js') }}"></script> 
+    <script src="{{ url('admin/vendors/js/vendor.bundle.base.js') }}"></script>
     <!-- endinject -->
     <!-- Plugin js for this page -->
     <!-- End plugin js for this page -->
@@ -97,7 +111,70 @@
     <script src="{{ url('admin/js/template.js') }}"></script>
     <script src="{{ url('admin/js/settings.js') }}"></script>
     <script src="{{ url('admin/js/todolist.js') }}"></script>
-    <!-- endinject --> 
+    <!-- endinject -->
+
+    {{-- jQuery for OTP (if not already loaded) --}}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $('#sendOtpBtn').click(function(e) {
+            e.preventDefault();
+
+            let formData = {
+                name: $("input[name='name']").val(),
+                email: $("input[name='email']").val(),
+                mobile: $("input[name='mobile']").val(),
+                _token: "{{ csrf_token() }}"
+            };
+
+            $.ajax({
+                url: "{{ route('vendor.otp.send') }}",
+                type: "POST",
+                data: formData,
+                success: function(response) {
+                    if (response.status === true) {
+                        alert("OTP Sent Successfully");
+
+                        $("input[name='email']").prop('readonly', true);
+                        $("input[name='mobile']").prop('readonly', true);
+
+                        // Show OTP + Password fields
+                        $('#otpSection').removeClass('d-none');
+                        $('#passwordSection').removeClass('d-none');
+                        $('#confirmPasswordSection').removeClass('d-none');
+                        $('#verifyBtn').removeClass('d-none');
+                        $('#sendOtpBtn').addClass('d-none');
+                    } else {
+                        alert(response.message || 'Something went wrong while sending OTP.');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+
+                        // Remove old error messages
+                        $('.text-danger').remove();
+
+                        // Email error
+                        if (errors.email) {
+                            $("input[name='email']")
+                                .closest('.form-group')
+                                .append('<span class="text-danger small">' + errors.email[0] + '</span>');
+                        }
+
+                        // Mobile error
+                        if (errors.mobile) {
+                            $("input[name='mobile']")
+                                .closest('.form-group')
+                                .append('<span class="text-danger small">' + errors.mobile[0] + '</span>');
+                        }
+                    } else {
+                        alert('Failed to send OTP. Please try again.');
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>

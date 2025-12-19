@@ -67,9 +67,9 @@
                                     <a href="{{ url('sales/students/'.$student->id.'/edit') }}" class="btn btn-sm btn-success">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $student->id }})">
+                                    {{-- <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $student->id }})">
                                         <i class="fas fa-trash"></i>
-                                    </button>
+                                    </button> --}}
                                 </td>
                             </tr>
                         @empty

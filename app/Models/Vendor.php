@@ -12,9 +12,10 @@ class Vendor extends Model
     protected $fillable = [
         'name',
         'address',
-        'city',
-        'state',
-        'country',
+        'country_id',
+        'state_id',
+        'district_id',
+        'block_id',
         'pincode',
         'mobile',
         'email',

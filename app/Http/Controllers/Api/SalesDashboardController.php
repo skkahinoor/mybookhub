@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\InstitutionManagement;
-use App\Models\Student;
+use App\Models\User;
 use App\Models\SalesExecutive;
 use Carbon\Carbon;
 
@@ -74,7 +74,7 @@ class SalesDashboardController extends Controller
 
         $today = Carbon::today();
 
-        $students = Student::where('added_by', $sales->id)
+        $students = User::where('added_by', $sales->id)
             ->where('status', 1)
             ->whereDate('created_at', $today)
             ->get();
@@ -98,7 +98,7 @@ class SalesDashboardController extends Controller
             ], 403);
         }
 
-        $students = Student::where('added_by', $sales->id)->where('status', 1)->get();
+        $students = User::where('added_by', $sales->id)->where('status', 1)->get();
 
         return response()->json([
             'status' => true,
@@ -134,7 +134,7 @@ class SalesDashboardController extends Controller
             ->pluck('count', 'date')
             ->toArray();
 
-        $studentData = Student::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+        $studentData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $sales->id)
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)

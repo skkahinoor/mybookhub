@@ -93,27 +93,37 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="vendor_address">Address</label>
-                                        <input type="text" class="form-control" id="vendor_address" placeholder="Enter Address" name="vendor_address" value="{{ $vendorDetails['address'] }}"> {{-- $vendorDetails was passed from AdminController --}}
+                                        <input type="text" class="form-control" id="vendor_address" placeholder="Enter Address" name="vendor_address" value="{{ $vendorDetails['address'] ?? '' }}"> {{-- $vendorDetails was passed from AdminController --}}
                                     </div>
+
                                     <div class="form-group">
-                                        <label for="vendor_city">City</label>
-                                        <input type="text" class="form-control" id="vendor_city" placeholder="Enter City" name="vendor_city" value="{{ $vendorDetails['city'] }}"> {{-- $vendorDetails was passed from AdminController --}}
+                                        <label for="vendor_country">Country</label>
+                                        <select class="form-control" id="vendor_country_id" name="country_id" style="color: #495057">
+                                            <option value="">Select Country</option>
+                                            @foreach ($countries as $country)
+                                                <option value="{{ $country['id'] }}" @if (isset($vendorDetails['country_id']) && $country['id'] == $vendorDetails['country_id']) selected @endif>{{ $country['name'] }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
+
                                     <div class="form-group">
                                         <label for="vendor_state">State</label>
-                                        <input type="text" class="form-control" id="vendor_state" placeholder="Enter State" name="vendor_state" value="{{ $vendorDetails['state'] }}"> {{-- $vendorDetails was passed from AdminController --}}
+                                        <select class="form-control" id="vendor_state_id" name="state_id" style="color: #495057">
+                                            <option value="">Select State</option>
+                                        </select>
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="shop_country">Country</label>
+                                        <label for="vendor_district">District</label>
+                                        <select class="form-control" id="vendor_district_id" name="district_id" style="color: #495057">
+                                            <option value="">Select District</option>
+                                        </select>
+                                    </div>
 
-                                        <select class="form-control" id="vendor_country" name="vendor_country"  style="color: #495057">
-                                            <option value="">Select Country</option>
-
-                                            @foreach ($countries as $country)
-                                                <option value="{{ $country['name'] }}" @if ($country['name'] == $vendorDetails['country']) selected @endif>{{ $country['name'] }}</option>
-                                            @endforeach
-
+                                    <div class="form-group">
+                                        <label for="vendor_block">Block</label>
+                                        <select class="form-control" id="vendor_block_id" name="block_id" style="color: #495057">
+                                            <option value="">Select Block</option>
                                         </select>
                                     </div>
 
@@ -366,4 +376,162 @@
         @include('admin.layout.footer')
         <!-- partial -->
     </div>
+
+    @if ($slug == 'personal')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Current vendor location values
+            var currentCountryId = @json($vendorDetails['country_id'] ?? null);
+            var currentStateId = @json($vendorDetails['state_id'] ?? null);
+            var currentDistrictId = @json($vendorDetails['district_id'] ?? null);
+            var currentBlockId = @json($vendorDetails['block_id'] ?? null);
+
+            // Load states based on country
+            function loadVendorStates(countryId) {
+                if (!countryId) {
+                    $('#vendor_state_id').empty().append('<option value="">Select State</option>');
+                    $('#vendor_district_id').empty().append('<option value="">Select District</option>');
+                    $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
+                    return Promise.resolve();
+                }
+
+                return new Promise(function(resolve, reject) {
+                    $.ajax({
+                        url: '{{ route('vendor_states') }}',
+                        type: 'GET',
+                        data: { country: countryId },
+                        dataType: 'json',
+                        success: function(response) {
+                            var stateSelect = $('#vendor_state_id');
+                            stateSelect.empty();
+                            stateSelect.append('<option value="">Select State</option>');
+
+                            $.each(response, function(key, value) {
+                                stateSelect.append('<option value="' + key + '">' + value + '</option>');
+                            });
+
+                            // Clear dependent dropdowns
+                            $('#vendor_district_id').empty().append('<option value="">Select District</option>');
+                            $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
+
+                            // Set current value if exists
+                            if (currentStateId && currentStateId !== null) {
+                                stateSelect.val(currentStateId);
+                                loadVendorDistricts(currentStateId).then(resolve);
+                            } else {
+                                resolve();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Error loading states:', error);
+                            reject(error);
+                        }
+                    });
+                });
+            }
+
+            // Load districts based on state
+            function loadVendorDistricts(stateId) {
+                if (!stateId) {
+                    $('#vendor_district_id').empty().append('<option value="">Select District</option>');
+                    $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
+                    return Promise.resolve();
+                }
+
+                return new Promise(function(resolve, reject) {
+                    $.ajax({
+                        url: '{{ route('vendor_districts') }}',
+                        type: 'GET',
+                        data: { state: stateId },
+                        dataType: 'json',
+                        success: function(response) {
+                            var districtSelect = $('#vendor_district_id');
+                            districtSelect.empty();
+                            districtSelect.append('<option value="">Select District</option>');
+
+                            $.each(response, function(key, value) {
+                                districtSelect.append('<option value="' + key + '">' + value + '</option>');
+                            });
+
+                            // Clear dependent dropdowns
+                            $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
+
+                            // Set current value if exists
+                            if (currentDistrictId && currentDistrictId !== null) {
+                                districtSelect.val(currentDistrictId);
+                                loadVendorBlocks(currentDistrictId).then(resolve);
+                            } else {
+                                resolve();
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Error loading districts:', error);
+                            reject(error);
+                        }
+                    });
+                });
+            }
+
+            // Load blocks based on district
+            function loadVendorBlocks(districtId) {
+                if (!districtId) {
+                    $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
+                    return Promise.resolve();
+                }
+
+                return new Promise(function(resolve, reject) {
+                    $.ajax({
+                        url: '{{ route('vendor_blocks') }}',
+                        type: 'GET',
+                        data: { district: districtId },
+                        dataType: 'json',
+                        success: function(response) {
+                            var blockSelect = $('#vendor_block_id');
+                            blockSelect.empty();
+                            blockSelect.append('<option value="">Select Block</option>');
+
+                            $.each(response, function(key, value) {
+                                blockSelect.append('<option value="' + key + '">' + value + '</option>');
+                            });
+
+                            // Set current value if exists
+                            if (currentBlockId && currentBlockId !== null) {
+                                blockSelect.val(currentBlockId);
+                            }
+
+                            resolve();
+                        },
+                        error: function(xhr, status, error) {
+                            console.log('Error loading blocks:', error);
+                            reject(error);
+                        }
+                    });
+                });
+            }
+
+            // Event handlers for cascading dropdowns
+            $('#vendor_country_id').on('change', function() {
+                var countryId = $(this).val();
+                loadVendorStates(countryId);
+            });
+
+            $('#vendor_state_id').on('change', function() {
+                var stateId = $(this).val();
+                loadVendorDistricts(stateId);
+            });
+
+            $('#vendor_district_id').on('change', function() {
+                var districtId = $(this).val();
+                loadVendorBlocks(districtId);
+            });
+
+            // Initialize form with current values
+            if (currentCountryId && currentCountryId !== null) {
+                $('#vendor_country_id').val(currentCountryId);
+                loadVendorStates(currentCountryId);
+            }
+        });
+    </script>
+    @endif
 @endsection
