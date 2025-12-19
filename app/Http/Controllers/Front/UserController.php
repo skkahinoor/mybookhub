@@ -112,7 +112,7 @@ class UserController extends Controller
         if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
             $credentials['email'] = $loginInput;
         } elseif (preg_match('/^\d{10}$/', $loginInput)) {
-            $credentials['mobile'] = $loginInput;
+            $credentials['phone'] = $loginInput;
         } else {
             return redirect()->back()->withErrors([
                 'login' => 'Enter a valid email or 10-digit mobile number.',
