@@ -11,24 +11,43 @@ use App\Models\HeaderLogo;
 
 class UserController extends Controller
 {
-    // Render admin/users/users.blade.php page in the Admin Panel    
+    // Render admin/users/users.blade.php page in the Admin Panel
     public function users() {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'users');
 
-
-        $users = User::where('user_type', 'user')->get()->toArray();
-        // dd($users);
-
+        // Get all users (excluding admins) and load relationships
+        $users = User::with(['country', 'state', 'district', 'block'])
+            ->where(function($query) {
+                $query->whereNull('user_type')
+                      ->orWhere('user_type', '!=', 'admin');
+            })
+            ->get()
+            ->map(function($user) {
+                // Transform data to match view expectations
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name ?? '',
+                    'address' => $user->address ?? '',
+                    'city' => $user->district ? $user->district->name : '', // Using district as city
+                    'state' => $user->state ? $user->state->name : '',
+                    'country' => $user->country ? $user->country->name : '',
+                    'pincode' => $user->pincode ?? '',
+                    'mobile' => $user->phone ?? '', // phone field mapped to mobile for view
+                    'email' => $user->email ?? '',
+                    'status' => $user->status ?? 0,
+                ];
+            })
+            ->toArray();
 
         return view('admin.users.users')->with(compact('users', 'logos', 'headerLogo'));
     }
 
 
 
-    // Update User Status (active/inactive) via AJAX in admin/users/users.blade.php, check admin/js/custom.js    
+    // Update User Status (active/inactive) via AJAX in admin/users/users.blade.php, check admin/js/custom.js
     public function updateUserStatus(Request $request) {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -42,7 +61,7 @@ class UserController extends Controller
                 $status = 1;
             }
 
-            User::where('id', $data['user_id'])->where('user_type', 'user')->update(['status' => $status]); // $data['user_id'] comes from the 'data' object inside the $.ajax() method
+            User::where('id', $data['user_id'])->update(['status' => $status]); // $data['user_id'] comes from the 'data' object inside the $.ajax() method
 
             return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
                 'status'  => $status,
