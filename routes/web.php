@@ -325,10 +325,16 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     });
 
     // AJAX routes for cascading location dropdowns (outside admin middleware for AJAX access)
-    Route::get('institution-countries', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getCountries'])->name('institution_countries');
-    Route::get('institution-states', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getStates'])->name('institution_states');
-    Route::get('institution-districts', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getDistricts'])->name('institution_districts');
-    Route::get('institution-blocks', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getBlocks'])->name('institution_blocks');
+    Route::get('institution-countries', [InstitutionManagementController::class, 'getCountries'])->name('admin.institution.countries');
+Route::get('institution-states', [InstitutionManagementController::class, 'getStates'])
+    ->name('admin.institution.states');
+
+Route::get('institution-districts', [InstitutionManagementController::class, 'getDistricts'])
+    ->name('admin.institution.districts');
+
+Route::get('institution-blocks', [InstitutionManagementController::class, 'getBlocks'])
+    ->name('admin.institution.blocks');
+
 
     // AJAX routes for vendor location dropdowns
     Route::get('vendor-states', [App\Http\Controllers\Admin\AdminController::class, 'getVendorStates'])->name('vendor_states');
