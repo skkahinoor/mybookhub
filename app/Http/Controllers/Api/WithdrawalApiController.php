@@ -62,21 +62,27 @@ class WithdrawalApiController extends Controller
         $sales = $request->user();
         $salesExecutiveId = $sales->id;
 
-        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
-        $incomePerTarget = $sales->income_per_target ?? 0;
+
+        $totalStudents = User::where('added_by', $salesExecutiveId)
+            ->where('status', 1)
+            ->count();
+
+        $incomePerTarget = (float) ($sales->income_per_target ?? 0);
         $totalEarning = $incomePerTarget * $totalStudents;
 
         $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecutiveId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
-        $availableBalance = $totalEarning - $totalWithdrawn;
-        $minWithdraw = Setting::where('key', 'min_withdrawal_amount')->value('value');
+        $availableBalance = max(0, $totalEarning - $totalWithdrawn);
 
-        if ($totalEarning < 50) {
+        $minWithdraw = (float) Setting::where('key', 'min_withdrawal_amount')->value('value');
+
+
+        if ($availableBalance < $minWithdraw) {
             return response()->json([
                 'status' => false,
-                'message' => 'You must have at least ₹' . $minWithdraw . ' to request withdrawal.'
+                'message' => 'You must have at least ₹' . number_format($minWithdraw, 2) . ' available to request withdrawal.'
             ], 403);
         }
 
@@ -92,7 +98,7 @@ class WithdrawalApiController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:1|max:' . $availableBalance,
+            'amount' => 'required|numeric|min:' . $minWithdraw . '|max:' . $availableBalance,
             'payment_method' => 'required|string|in:bank_transfer,upi',
             'remarks' => 'nullable|string|max:500',
         ]);
@@ -107,7 +113,7 @@ class WithdrawalApiController extends Controller
 
         $validated = $validator->validated();
 
-        if ($validated['payment_method'] == 'bank_transfer') {
+        if ($validated['payment_method'] === 'bank_transfer') {
             if (
                 empty($sales->bank_name) ||
                 empty($sales->account_number) ||
@@ -121,7 +127,7 @@ class WithdrawalApiController extends Controller
             }
         }
 
-        if ($validated['payment_method'] == 'upi') {
+        if ($validated['payment_method'] === 'upi') {
             if (empty($sales->upi_id)) {
                 return response()->json([
                     'status' => false,
@@ -138,23 +144,24 @@ class WithdrawalApiController extends Controller
             'status' => 'pending'
         ]);
 
-        // Notification for withdraw
         Notification::create([
             'type' => 'withdrawal_request',
             'title' => 'New Withdrawal Request',
-            'message' => "Sales executive '{$sales->name}' has requested a withdrawal of ₹{$request->amount} via {$request->payment_method}.",
+            'message' => "Sales executive '{$sales->name}' requested ₹{$validated['amount']} via {$validated['payment_method']}.",
             'related_id' => $withdrawal->id,
-            'related_type' => 'App\Models\Withdrawal',
+            'related_type' => Withdrawal::class,
             'is_read' => false,
         ]);
+
 
         $this->sendWithdrawRequestSMS($sales->phone, $validated['amount']);
 
         return response()->json([
             'status' => true,
-            'message' => 'Withdrawal request submitted successfully.',
+            'message' => 'Withdrawal request submitted successfully.'
         ], 201);
     }
+
 
     public function sendWithdrawRequestSMS($phone, $amount)
     {
