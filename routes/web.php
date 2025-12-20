@@ -39,7 +39,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     Route::match(['get', 'post'], 'login', 'AdminController@login'); // match() method is used to use more than one HTTP request method for the same route, so GET for rendering the login.php page, and POST for the login.php page <form> submission (e.g. GET and POST)    // Matches the '/admin/dashboard' URL (i.e. http://127.0.0.1:8000/admin/dashboard)
 
                                                                                                           // This a Route Group for routes that ALL start with 'admin/-something' and utilizes the 'admin' Authentication Guard    // Note: You must remove the '/admin'/ part from the routes that are written inside this Route Group (e.g.    Route::get('logout');    , NOT    Route::get('admin/logout');    )
-    Route::group(['middleware' => ['admin']], function () {
+    Route::group(['middleware' => ['auth:admin']], function () {
         // check isbn
         Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
         ->name('admin.book.isbnLookup');                                             // using our 'admin' guard (which we created in auth.php)
@@ -181,7 +181,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('withdrawals/minimum/update', 'WithdrawalController@updateMinimum')->name('admin.withdrawals.minimum.update');
 
 // AJAX route for getting classes based on institution type (outside admin middleware for AJAX access)
-        Route::get('institution-classes', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getClasses'])->name('institution_classes');
+        Route::get('institution-classes', [InstitutionManagementController::class, 'getClasses'])->name('admin.institution.classes');
+
 
 // AJAX route for getting location data based on pincode (outside admin middleware for AJAX access)
         Route::get('institution-location-data', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getLocationData'])->name('institution_location_data');
@@ -580,8 +581,8 @@ Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function
         Route::get('institution-states', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getStates'])->name('institution_states');
         Route::get('institution-districts', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getDistricts'])->name('institution_districts');
         Route::get('institution-blocks', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getBlocks'])->name('institution_blocks');
-        Route::get('/institution-classes', [InstitutionManagementController::class, 'getClasses'])
-            ->name('institution_classes');
+        Route::get('institution-classes', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getClasses'])->name('sales.institution.classes');
+
 
 
     });
