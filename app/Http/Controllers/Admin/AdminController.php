@@ -560,11 +560,20 @@ class AdminController extends Controller
     {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        $vendorDetails = Admin::with('vendorPersonal', 'vendorBusiness', 'vendorBank')->where('vendor_id', $id)->first(); // Using the relationship defined in the Admin.php model to be able to get data from `vendors`, `vendors_business_details` and `vendors_bank_details` tables
+        $vendorDetails = Admin::with('vendorPersonal', 'vendorBusiness', 'vendorBank')->where('id', $id)->first(); // Using the relationship defined in the Admin.php model to be able to get data from `vendors`, `vendors_business_details` and `vendors_bank_details` tables
         $vendorDetails = json_decode(json_encode($vendorDetails), true);                                           // We used json_decode(json_encode($variable), true) to convert $vendorDetails to an array instead of Laravel's toArray() method
                                                                                                                    // dd($vendorDetails);
 
-        return view('admin/admins/view_vendor_details', compact('vendorDetails', 'logos', 'headerLogo'));
+        // Fetch countries for dropdowns
+        $countries = Country::where('status', true)->get()->toArray();
+        
+        // Get current location IDs from vendor personal details
+        $currentCountryId = $vendorDetails['vendor_personal']['country_id'] ?? null;
+        $currentStateId = $vendorDetails['vendor_personal']['state_id'] ?? null;
+        $currentDistrictId = $vendorDetails['vendor_personal']['district_id'] ?? null;
+        $currentBlockId = $vendorDetails['vendor_personal']['block_id'] ?? null;
+
+        return view('admin/admins/view_vendor_details', compact('vendorDetails', 'logos', 'headerLogo', 'countries', 'currentCountryId', 'currentStateId', 'currentDistrictId', 'currentBlockId'));
     }
 
     public function updateAdminStatus(Request $request)
@@ -811,11 +820,33 @@ class AdminController extends Controller
 
                 // If this admin is a vendor, also update the vendors table
                 if ($admin && $admin->type == 'vendor' && !empty($admin->vendor_id)) {
-                    Vendor::where('id', $admin->vendor_id)->update([
+                    $vendorUpdateData = [
                         'name'   => $data['name'],
                         'email'  => $data['email'],
                         'mobile' => $data['mobile'],
-                    ]);
+                    ];
+
+                    // Update location fields if provided
+                    if (isset($data['vendor_address'])) {
+                        $vendorUpdateData['address'] = $data['vendor_address'];
+                    }
+                    if (isset($data['vendor_pincode'])) {
+                        $vendorUpdateData['pincode'] = $data['vendor_pincode'];
+                    }
+                    if (isset($data['vendor_country_id'])) {
+                        $vendorUpdateData['country_id'] = $data['vendor_country_id'];
+                    }
+                    if (isset($data['vendor_state_id'])) {
+                        $vendorUpdateData['state_id'] = $data['vendor_state_id'];
+                    }
+                    if (isset($data['vendor_district_id'])) {
+                        $vendorUpdateData['district_id'] = $data['vendor_district_id'];
+                    }
+                    if (isset($data['vendor_block_id'])) {
+                        $vendorUpdateData['block_id'] = $data['vendor_block_id'];
+                    }
+
+                    Vendor::where('id', $admin->vendor_id)->update($vendorUpdateData);
                 }
 
                 return redirect('admin/admins')->with('success_message', 'Vendor updated successfully!');
@@ -823,6 +854,9 @@ class AdminController extends Controller
         }
 
         // GET request: show the form
+        // Fetch all countries for dropdowns
+        $countries = Country::where('status', true)->get()->toArray();
+
         if (!empty($id)) {
             // Edit mode: get admin data
             $admin = Admin::where('id', $id)->first()->toArray();
@@ -842,7 +876,7 @@ class AdminController extends Controller
                 $vendorBank = $vendorBank ? $vendorBank->toArray() : [];
             }
 
-            return view('admin/admins/edit', compact('admin', 'vendorPersonal', 'vendorBusiness', 'vendorBank', 'logos', 'headerLogo'));
+            return view('admin/admins/edit', compact('admin', 'vendorPersonal', 'vendorBusiness', 'vendorBank', 'countries', 'logos', 'headerLogo'));
         } else {
             // Add mode
             return view('admin/admins/add', compact('logos', 'headerLogo'));

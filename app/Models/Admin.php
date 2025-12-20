@@ -27,20 +27,18 @@ class Admin extends Authenticatable
     protected $hidden = [
         'password',
     ];
-
-    // Relationships
     public function vendorPersonal()
     {
-        return $this->belongsTo('App\Models\Vendor', 'vendor_id');
+        return $this->belongsTo(Vendor::class, 'vendor_id', 'id');
     }
 
     public function vendorBusiness()
     {
-        return $this->belongsTo('App\Models\VendorsBusinessDetail', 'vendor_id');
+        return $this->hasOne(VendorsBusinessDetail::class, 'vendor_id', 'vendor_id');
     }
 
     public function vendorBank()
     {
-        return $this->belongsTo('App\Models\VendorsBankDetail', 'vendor_id');
+        return $this->hasOne(VendorsBankDetail::class, 'vendor_id', 'vendor_id');
     }
 }

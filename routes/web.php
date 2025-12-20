@@ -583,6 +583,11 @@ Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function
         Route::get('institution-blocks', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getBlocks'])->name('institution_blocks');
         Route::get('institution-classes', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getClasses'])->name('sales.institution.classes');
 
+        // AJAX routes for sales profile location dropdowns
+        Route::get('sales-profile-states', [App\Http\Controllers\Sales\ProfileController::class, 'getStates'])->name('sales.profile.states');
+        Route::get('sales-profile-districts', [App\Http\Controllers\Sales\ProfileController::class, 'getDistricts'])->name('sales.profile.districts');
+        Route::get('sales-profile-blocks', [App\Http\Controllers\Sales\ProfileController::class, 'getBlocks'])->name('sales.profile.blocks');
+
 
 
     });

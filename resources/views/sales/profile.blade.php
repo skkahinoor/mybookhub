@@ -136,28 +136,35 @@
                                                 <input type="text" name="address" class="form-control" value="{{ old('address', $sales->address) }}">
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label fw-semibold">City</label>
-                                                <input type="text" name="city" class="form-control" value="{{ old('city', $sales->city) }}">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label fw-semibold">Block</label>
-                                                <input type="text" name="block" class="form-control" value="{{ old('block', $sales->block) }}">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label fw-semibold">District</label>
-                                                <input type="text" name="district" class="form-control" value="{{ old('district', $sales->district) }}">
+                                                <label class="form-label fw-semibold">Country</label>
+                                                <select class="form-control" id="sales_country_id" name="country_id" style="color: #495057">
+                                                    <option value="">Select Country</option>
+                                                    @foreach ($countries as $country)
+                                                        <option value="{{ $country['id'] }}" @if (isset($currentCountryId) && $country['id'] == $currentCountryId) selected @endif>{{ $country['name'] }}</option>
+                                                    @endforeach
+                                                </select>
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label fw-semibold">State</label>
-                                                <input type="text" name="state" class="form-control" value="{{ old('state', $sales->state) }}">
+                                                <select class="form-control" id="sales_state_id" name="state_id" style="color: #495057">
+                                                    <option value="">Select State</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold">District</label>
+                                                <select class="form-control" id="sales_district_id" name="district_id" style="color: #495057">
+                                                    <option value="">Select District</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-semibold">Block</label>
+                                                <select class="form-control" id="sales_block_id" name="block_id" style="color: #495057">
+                                                    <option value="">Select Block</option>
+                                                </select>
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label fw-semibold">Pincode</label>
                                                 <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $sales->pincode) }}">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label fw-semibold">Country</label>
-                                                <input type="text" name="country" class="form-control" value="{{ old('country', $sales->country) }}">
                                             </div>
                                         </div>
 
@@ -259,6 +266,163 @@
                 };
                 reader.readAsDataURL(file);
             });
+        }
+
+        // Cascading location dropdowns
+        var currentCountryId = {{ $currentCountryId ?? 'null' }};
+        var currentStateId = {{ $currentStateId ?? 'null' }};
+        var currentDistrictId = {{ $currentDistrictId ?? 'null' }};
+        var currentBlockId = {{ $currentBlockId ?? 'null' }};
+
+        // Load states based on country
+        function loadSalesStates(countryId) {
+            if (!countryId) {
+                $('#sales_state_id').empty().append('<option value="">Select State</option>');
+                $('#sales_district_id').empty().append('<option value="">Select District</option>');
+                $('#sales_block_id').empty().append('<option value="">Select Block</option>');
+                return Promise.resolve();
+            }
+
+            return new Promise(function(resolve, reject) {
+                $.ajax({
+                    url: '{{ route('sales.profile.states') }}',
+                    type: 'GET',
+                    data: { country: countryId },
+                    dataType: 'json',
+                    success: function(response) {
+                        var stateSelect = $('#sales_state_id');
+                        stateSelect.empty();
+                        stateSelect.append('<option value="">Select State</option>');
+
+                        $.each(response, function(key, value) {
+                            stateSelect.append('<option value="' + key + '">' + value + '</option>');
+                        });
+
+                        // Clear dependent dropdowns
+                        $('#sales_district_id').empty().append('<option value="">Select District</option>');
+                        $('#sales_block_id').empty().append('<option value="">Select Block</option>');
+
+                        // Set current value if exists
+                        if (currentStateId && currentStateId !== null) {
+                            stateSelect.val(currentStateId);
+                            loadSalesDistricts(currentStateId).then(resolve);
+                        } else {
+                            resolve();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error loading states:', error);
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        // Load districts based on state
+        function loadSalesDistricts(stateId) {
+            if (!stateId) {
+                $('#sales_district_id').empty().append('<option value="">Select District</option>');
+                $('#sales_block_id').empty().append('<option value="">Select Block</option>');
+                return Promise.resolve();
+            }
+
+            return new Promise(function(resolve, reject) {
+                $.ajax({
+                    url: '{{ route('sales.profile.districts') }}',
+                    type: 'GET',
+                    data: { state: stateId },
+                    dataType: 'json',
+                    success: function(response) {
+                        var districtSelect = $('#sales_district_id');
+                        districtSelect.empty();
+                        districtSelect.append('<option value="">Select District</option>');
+
+                        $.each(response, function(key, value) {
+                            districtSelect.append('<option value="' + key + '">' + value + '</option>');
+                        });
+
+                        // Clear dependent dropdowns
+                        $('#sales_block_id').empty().append('<option value="">Select Block</option>');
+
+                        // Set current value if exists
+                        if (currentDistrictId && currentDistrictId !== null) {
+                            districtSelect.val(currentDistrictId);
+                            loadSalesBlocks(currentDistrictId).then(resolve);
+                        } else {
+                            resolve();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error loading districts:', error);
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        // Load blocks based on district
+        function loadSalesBlocks(districtId) {
+            if (!districtId) {
+                $('#sales_block_id').empty().append('<option value="">Select Block</option>');
+                return Promise.resolve();
+            }
+
+            return new Promise(function(resolve, reject) {
+                $.ajax({
+                    url: '{{ route('sales.profile.blocks') }}',
+                    type: 'GET',
+                    data: { district: districtId },
+                    dataType: 'json',
+                    success: function(response) {
+                        var blockSelect = $('#sales_block_id');
+                        blockSelect.empty();
+                        blockSelect.append('<option value="">Select Block</option>');
+
+                        $.each(response, function(key, value) {
+                            blockSelect.append('<option value="' + key + '">' + value + '</option>');
+                        });
+
+                        // Set current value if exists
+                        if (currentBlockId && currentBlockId !== null) {
+                            blockSelect.val(currentBlockId);
+                        }
+
+                        resolve();
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error loading blocks:', error);
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        // Event handlers for cascading dropdowns
+        $('#sales_country_id').on('change', function() {
+            var countryId = $(this).val();
+            currentStateId = null;
+            currentDistrictId = null;
+            currentBlockId = null;
+            loadSalesStates(countryId);
+        });
+
+        $('#sales_state_id').on('change', function() {
+            var stateId = $(this).val();
+            currentDistrictId = null;
+            currentBlockId = null;
+            loadSalesDistricts(stateId);
+        });
+
+        $('#sales_district_id').on('change', function() {
+            var districtId = $(this).val();
+            currentBlockId = null;
+            loadSalesBlocks(districtId);
+        });
+
+        // Initialize form with current values
+        if (currentCountryId && currentCountryId !== null) {
+            $('#sales_country_id').val(currentCountryId);
+            loadSalesStates(currentCountryId);
         }
     });
     </script>

@@ -330,7 +330,7 @@ class VendorController extends Controller
                 DB::table('otps')->where('phone', $data['mobile'])->delete();
                 session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile']);
 
-                return redirect('admin/admins')
+                return redirect('admin/login')
                     ->with('success_message', 'Vendor registered successfully!');
             } else {
                 // ================= EDIT MODE =================
