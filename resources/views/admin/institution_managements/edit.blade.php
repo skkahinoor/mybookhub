@@ -418,7 +418,7 @@ $(document).ready(function() {
     $('select[name="type"]').change(function() {
         var type = $(this).val();
         var classField = $('#class-field');
-        var classSelect = $('#class-select');
+        var classSelect = $('.class-select').first();
 
         if (type === 'school') {
             // Show class field
@@ -426,7 +426,7 @@ $(document).ready(function() {
 
             // Load classes via AJAX
             $.ajax({
-                url: '{{ route("institution_classes") }}',
+                url: '{{ route("admin.institution.classes") }}',
                 type: 'GET',
                 data: { type: type },
                 dataType: 'json',
@@ -453,7 +453,6 @@ $(document).ready(function() {
                     console.log('Error:', error);
                     console.log('Response Text:', xhr.responseText);
                     console.log('Status Code:', xhr.status);
-                    console.log('URL:', '{{ route("institution_classes") }}');
                     console.log('Type:', type);
 
                     // Try to show a more helpful error message
