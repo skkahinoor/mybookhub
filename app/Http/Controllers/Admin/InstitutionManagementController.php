@@ -236,62 +236,44 @@ class InstitutionManagementController extends Controller
         return view('admin.institution_managements.index', compact('institutions', 'logos', 'headerLogo'));
     }
 
-    public function getCountries()
-    {
-        $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        $countries = Country::where('status', true)
-            ->pluck('name', 'id')
-            ->toArray();
+   public function getCountries()
+{
+    $countries = Country::where('status', true)
+        ->pluck('name', 'id');
 
-        return response()->json($countries, 'logos');
-        return view('admin.institution_managements.index', compact('institutions', 'logos', 'headerLogo'));
-    }
+    return response()->json($countries);
+}
+
 
     public function getStates(Request $request)
-    {
-        $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        $countryId = $request->input('country');
+{
+    $states = State::where('country_id', $request->country)
+        ->where('status', true)
+        ->pluck('name', 'id');
 
-        $states = State::where('country_id', $countryId)
-            ->where('status', true)
-            ->pluck('name', 'id')
-            ->toArray();
+    return response()->json($states);
+}
 
-        return response()->json($states, 'logos');
-        return view('admin.institution_managements.index', compact('institutions', 'logos', 'headerLogo'));
-    }
 
     public function getDistricts(Request $request)
-    {
-        $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        $stateId = $request->input('state');
+{
+    $districts = District::where('state_id', $request->state)
+        ->where('status', true)
+        ->pluck('name', 'id');
 
-        $districts = District::where('state_id', $stateId)
-            ->where('status', true)
-            ->pluck('name', 'id')
-            ->toArray();
+    return response()->json($districts);
+}
 
-        return response()->json($districts, 'logos');
-        return view('admin.institution_managements.index', compact('institutions', 'logos', 'headerLogo'));
-    }
 
     public function getBlocks(Request $request)
-    {
-        $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        $districtId = $request->input('district');
+{
+    $blocks = Block::where('district_id', $request->district)
+        ->where('status', true)
+        ->pluck('name', 'id');
 
-        $blocks = Block::where('district_id', $districtId)
-            ->where('status', true)
-            ->pluck('name', 'id')
-            ->toArray();
+    return response()->json($blocks);
+}
 
-        return response()->json($blocks, 'logos');
-        return view('admin.institution_managements.index', compact('institutions', 'logos', 'headerLogo'));
-    }
 
     // public function getCities(Request $request)
     // {

@@ -527,7 +527,7 @@ $(document).ready(function() {
     function loadCountries() {
         return new Promise(function(resolve, reject) {
             $.ajax({
-                url: '{{ route("institution_countries") }}',
+                url: '{{ route("admin.institution.countries") }}',
                 type: 'GET',
                 dataType: 'json',
                 success: function(response) {
@@ -561,7 +561,7 @@ $(document).ready(function() {
 
         return new Promise(function(resolve, reject) {
             $.ajax({
-                url: '{{ route("institution_states") }}',
+                url: '{{ route("admin.institution.states") }}',
                 type: 'GET',
                 data: { country: country },
                 dataType: 'json',
@@ -600,7 +600,7 @@ $(document).ready(function() {
 
         return new Promise(function(resolve, reject) {
             $.ajax({
-                url: '{{ route("institution_districts") }}',
+                url: '{{ route("admin.institution.districts") }}',
                 type: 'GET',
                 data: { state: state },
                 dataType: 'json',
