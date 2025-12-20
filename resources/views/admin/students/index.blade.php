@@ -203,91 +203,94 @@
             </div>
 
             @if($students->count() > 0)
-                <div class="row">
-                    @foreach($students as $student)
-                        <div class="col-lg-6 col-xl-4">
-                            <div class="student-card">
-                                <div class="student-header">
-                                    <div>
-                                        <h5 class="student-name">{{ $student->name }}</h5>
-                                        <p class="student-roll">
-                                            <i class="fas fa-id-card"></i>
-                                            Roll: {{ $student->roll_number }}
-                                        </p>
-                                    </div>
 
-                                    @if($student->institution && $student->institution->type)
-                                        <span class="badge badge-{{ $student->institution->type == 'school' ? 'primary' : ($student->institution->type == 'college' ? 'success' : 'info') }}">
-                                            <i class="fas fa-{{ $student->institution->type == 'school' ? 'school' : ($student->institution->type == 'college' ? 'graduation-cap' : 'university') }}"></i>
-                                            {{ ucfirst($student->institution->type) }}
-                                        </span>
-                                    @endif
-                                </div>
-                                <div class="student-body">
-                                    <div class="student-info">
-                                        <div class="info-item">
-                                            <i class="fas fa-envelope info-icon"></i>
-                                            <span class="info-text">{{ $student->email ?: 'No email' }}</span>
-                                        </div>
-                                        <div class="info-item">
-                                            <i class="fas fa-phone info-icon"></i>
-                                            <span class="info-text">{{ $student->phone }}</span>
-                                        </div>
-                                        <div class="info-item">
-                                            <i class="fas fa-layer-group info-icon"></i>
-                                            <span class="info-text">{{ $student->class }}</span>
-                                        </div>
-                                        
-                                        <div class="info-item">
-                                            <i class="fas fa-birthday-cake info-icon"></i>
-                                            <span class="info-text">{{ \Carbon\Carbon::parse($student->dob)->format('d M Y') }}</span>
-                                        </div>
-                                    </div>
-
-                                    @if($student->institution)
-                                        <div class="mt-3">
-                                            <span class="institution-badge">
-                                                <i class="fas fa-school"></i>
-                                                {{ $student->institution->name }}
-                                            </span>
-                                        </div>
-                                    @else
-                                        <div class="mt-3">
-                                            <span class="no-institution">
-                                                <i class="fas fa-exclamation-triangle"></i>
-                                                No Institution Assigned
-                                            </span>
-                                        </div>
-                                    @endif
-
-                                    <div class="action-buttons mt-3 d-flex gap-2">
-                                        <a href="{{ url('admin/students/'.$student->id.'/edit') }}" class="btn-edit">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
-                                        <a href="javascript:void(0)" class="btn-delete" onclick="confirmDelete({{ $student->id }})">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
+            <div class="card mt-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table"></i> Student List
+                    </h5>
                 </div>
+            
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="studentsTable" class="table table-bordered table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Roll No</th>
+                                    <th>Gender</th>
+                                    <th>Class</th>
+                                    <th>DOB</th>
+                                    <th>Institution</th>
+                                    <th>Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($students as $student)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $student->name }}</td>
+                                        <td>{{ $student->roll_number }}</td>
+                                        <td>{{ ucfirst($student->gender) }}</td>
+                                        <td>{{ $student->class }}</td>
+                                        <td>
+                                            {{ $student->dob ? \Carbon\Carbon::parse($student->dob)->format('d M Y') : 'N/A' }}
+                                        </td>
+                                        <td>
+                                            {{ $student->institution->name ?? 'No Institution' }}
+                                        </td>
+                                        <td>
+                                            {{ $student->institution->type ?? '-' }}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url('admin/students/'.$student->id.'/edit') }}"
+                                               class="btn btn-sm btn-success">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+            
+                                            <button onclick="confirmDelete({{ $student->id }})"
+                                                    class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
             @else
-                <div class="empty-state text-center py-5">
-                    <i class="fas fa-user-graduate fa-4x mb-3"></i>
-                    <h4>No Students Found</h4>
-                    <p>Start by adding your first student to the system.</p>
-                    <a href="{{ url('admin/students/create') }}" class="add-student-btn">
-                        <i class="fas fa-plus"></i>
-                        Add New Student
-                    </a>
-                </div>
+            <div class="empty-state text-center py-5">
+                <i class="fas fa-user-graduate fa-4x mb-3"></i>
+                <h4>No Students Found</h4>
+                <p>Start by adding your first student to the system.</p>
+                <a href="{{ url('admin/students/create') }}" class="add-student-btn">
+                    <i class="fas fa-plus"></i> Add New Student
+                </a>
+            </div>
             @endif
+            
         </div>
     </div>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
 
+<script>
+    $(document).ready(function () {
+        $('#studentsTable').DataTable({
+            pageLength: 10,
+            ordering: true,
+            searching: true,
+            lengthChange: true
+        });
+    });
+    </script>
 <script>
 function confirmDelete(id) {
     if (confirm("Are you sure you want to delete this student? This action cannot be undone.")) {
