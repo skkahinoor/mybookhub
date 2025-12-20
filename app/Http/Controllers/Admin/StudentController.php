@@ -131,7 +131,7 @@ class StudentController extends Controller
                 'dob' => $student->dob,
                 'roll_number' => $student->roll_number,
                 'status' => $student->status,
-                'institution' => $student->institution?->name,
+                'institution' => $student->institution->name ?? 'No Institution set',
                 'created_at' => optional($student->created_at)->format('M d, Y h:i A'),
             ],
         ]);
