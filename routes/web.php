@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\SalesExecutiveController;
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SubjectController;
+use App\Http\Controllers\Admin\OtpController;
 use App\Http\Controllers\Api\InstitutionController;
 use App\Http\Controllers\Front\BookRequestController;
 use App\Http\Controllers\Front\IndexController;
@@ -70,7 +71,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
         Route::get('delete-admin/{id}', 'AdminController@deleteAdmin');                        // Delete an Admin
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
-        Route::post('update-admin-status', 'AdminController@updateAdminStatus');               // Update Admin Status using AJAX in admins.blade.php
+        Route::post('update-admin-status', 'AdminController@updateAdminStatus');  
+
+        // otp
+        Route::get('admin/otps', [OtpController::class, 'otps'])->name('otps');
+        
+        // Update Admin Status using AJAX in admins.blade.php
 
         // Sections (Sections, Categories, Subcategories, Products, Attributes)
         // Route::get('sections', 'SectionController@sections');

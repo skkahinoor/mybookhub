@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\SalesDashboardController;
 use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\WithdrawalApiController;
 use App\Http\Controllers\Api\VendorController;
+use App\Http\Controllers\Api\CatalogueController;
 
 /*
 |--------------------------------------------------------------------------
@@ -82,6 +83,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/sales/withdraw-request', [WithdrawalApiController::class, 'requestWithdraw']);
 });
 
+// Vendor Profile Management
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vendor/profile', [VendorController::class, 'getprofile']);
     Route::post('/vendor/profile', [VendorController::class, 'updateprofile']);
@@ -89,5 +91,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vendor/bank-details', [VendorController::class, 'saveBankDetails']);
     Route::get('/vendor/business-details', [VendorController::class, 'getBusinessDetails']);
     Route::get('/vendor/bank-details', [VendorController::class, 'getBankDetails']);
+});
 
+// Catalogue Management
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/vendor/sections', [CatalogueController::class, 'getSection']);
+    Route::post('/vendor/sections', [CatalogueController::class, 'storeSection']);
+    Route::put('/vendor/sections/{id}', [CatalogueController::class, 'updateSection']);
+    Route::delete('/vendor/sections/{id}', [CatalogueController::class, 'destroySection']);
 });

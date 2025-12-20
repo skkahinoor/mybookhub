@@ -425,7 +425,7 @@ $(document).ready(function() {
 
             // Load classes via AJAX
             $.ajax({
-                url: '{{ route("institution_classes") }}',
+                url: '{{ route("sales.institution.classes") }}',
                 type: 'GET',
                 data: { type: type },
                 dataType: 'json',
@@ -452,7 +452,7 @@ $(document).ready(function() {
                     console.log('Error:', error);
                     console.log('Response Text:', xhr.responseText);
                     console.log('Status Code:', xhr.status);
-                    console.log('URL:', '{{ route("institution_classes") }}');
+                    console.log('URL:', '{{ route("sales.institution.classes") }}');
                     console.log('Type:', type);
 
                     // Try to show a more helpful error message

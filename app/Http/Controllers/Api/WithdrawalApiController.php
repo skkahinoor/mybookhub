@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Notification;
 use App\Models\Withdrawal;
 use App\Models\SalesExecutive;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use GuzzleHttp\Client;
@@ -41,6 +42,7 @@ class WithdrawalApiController extends Controller
         $withdrawals = Withdrawal::where('sales_executive_id', $salesExecutiveId)
             ->orderBy('created_at', 'desc')
             ->get();
+        $minWithdraw = Setting::where('key', 'min_withdrawal_amount')->value('value');
 
         return response()->json([
             'status' => true,
@@ -49,8 +51,8 @@ class WithdrawalApiController extends Controller
                 'total_earning'     => $totalEarning,
                 'total_withdrawn'   => $totalWithdrawn,
                 'available_balance' => $availableBalance,
-                'min_withdraw'      => 50,
-                'can_withdraw'      => $totalEarning >= 50,
+                'min_withdraw'      => $minWithdraw,
+                'can_withdraw'      => $totalEarning >= $minWithdraw,
                 'withdrawals'       => $withdrawals
             ]
         ]);
@@ -69,11 +71,12 @@ class WithdrawalApiController extends Controller
             ->sum('amount');
 
         $availableBalance = $totalEarning - $totalWithdrawn;
+        $minWithdraw = Setting::where('key', 'min_withdrawal_amount')->value('value');
 
         if ($totalEarning < 50) {
             return response()->json([
                 'status' => false,
-                'message' => 'You must have at least ₹50 to request withdrawal.'
+                'message' => 'You must have at least ₹' . $minWithdraw . ' to request withdrawal.'
             ], 403);
         }
 

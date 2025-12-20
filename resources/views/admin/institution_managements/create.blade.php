@@ -396,7 +396,7 @@
 
                     // Load classes via AJAX
                     $.ajax({
-                        url: '{{ route('institution_classes') }}',
+                        url: '{{ route('admin.institution.classes') }}',
                         type: 'GET',
                         data: {
                             type: type
@@ -425,7 +425,7 @@
                             console.log('Error:', error);
                             console.log('Response Text:', xhr.responseText);
                             console.log('Status Code:', xhr.status);
-                            console.log('URL:', '{{ route('institution_classes') }}');
+                            console.log('URL:', '{{ route('admin.institution.classes') }}');
                             console.log('Type:', type);
 
                             // Try to show a more helpful error message

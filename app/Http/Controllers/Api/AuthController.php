@@ -48,7 +48,7 @@ class AuthController extends Controller
                     ->first();
             } elseif ($model === User::class) {
                 $user = $model::where('email', $loginInput)
-                    ->orWhere('mobile', $loginInput)
+                    ->orWhere('phone', $loginInput)
                     ->first();
             } else {
                 $user = null;
@@ -249,6 +249,7 @@ class AuthController extends Controller
             'email' => $email,
             'phone' => $phone,
             'status' => '0',
+            'income_per_target' => '10',
             'password' => $password,
         ]);
 
