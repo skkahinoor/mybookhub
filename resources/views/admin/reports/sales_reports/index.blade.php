@@ -1,11 +1,139 @@
-@extends('layouts.app')
+@extends('admin.layout.layout')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <h1>Sales Reports</h1>
+    <div class="main-panel">
+        <div class="content-wrapper">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4 class="mb-3">Sales Executive Reports</h4>
+
+                    @php
+                        $countries = $countries ?? [];
+                        $states = $states ?? [];
+                        $districts = $districts ?? [];
+                        $blocks = $blocks ?? [];
+                    @endphp
+
+                    <div class="card">
+                        <div class="card-body">
+                            <form id="sales-report-filters" class="row g-3" method="GET"
+                                action="{{ route('admin.reports.sales_reports.index') }}">
+                                <div class="col-md-3">
+                                    <label class="form-label">Country</label>
+                                    <select name="country_id" id="filter-country" class="form-control">
+                                        <option value="">All</option>
+                                        @foreach ($countries as $country)
+                                            <option value="{{ $country->name ?? $country['name'] ?? '' }}"
+                                                {{ request('country_id') == ($country->name ?? $country['name'] ?? '') ? 'selected' : '' }}>
+                                                {{ $country->name ?? $country['name'] ?? '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">State</label>
+                                    <select name="state_id" id="filter-state" class="form-control">
+                                        <option value="">All</option>
+                                        @foreach ($states as $state)
+                                            <option value="{{ $state->name ?? $state['name'] ?? '' }}"
+                                                {{ request('state_id') == ($state->name ?? $state['name'] ?? '') ? 'selected' : '' }}>
+                                                {{ $state->name ?? $state['name'] ?? '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">District</label>
+                                    <select name="district_id" id="filter-district" class="form-control">
+                                        <option value="">All</option>
+                                        @foreach ($districts as $district)
+                                            <option value="{{ $district->name ?? $district['name'] ?? '' }}"
+                                                {{ request('district_id') == ($district->name ?? $district['name'] ?? '') ? 'selected' : '' }}>
+                                                {{ $district->name ?? $district['name'] ?? '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Block</label>
+                                    <select name="block_id" id="filter-block" class="form-control">
+                                        <option value="">All</option>
+                                        @foreach ($blocks as $block)
+                                            <option value="{{ $block->name ?? $block['name'] ?? '' }}"
+                                                {{ request('block_id') == ($block->name ?? $block['name'] ?? '') ? 'selected' : '' }}>
+                                                {{ $block->name ?? $block['name'] ?? '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="col-12 d-flex gap-2 mt-3">
+                                    <button type="submit" class="btn btn-primary">Filter</button>
+                                    <a href="{{ route('admin.reports.sales_reports.index') }}"
+                                        class="btn btn-light border">Reset</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="salesReportsTable" class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Phone</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($salesExecutives as $salesExecutive)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $salesExecutive->name }}</td>
+                                                <td>{{ $salesExecutive->phone }}</td>
+                                                <td>
+                                                    @if ($salesExecutive->status)
+                                                        <span class="badge badge-success">Active</span>
+                                                    @else
+                                                        <span class="badge badge-secondary">Inactive</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <a href="{{ route('admin.reports.sales_reports.show', $salesExecutive->id) }}"
+                                                        class="btn btn-sm btn-outline-primary">View</a>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted">No sales executives found.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            // Optional: enable client-side DataTable (no AJAX)
+            $('#salesReportsTable').DataTable({
+                order: [[0, 'asc']]
+            });
+        });
+    </script>
+@endpush

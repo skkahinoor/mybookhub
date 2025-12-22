@@ -507,14 +507,14 @@
         <!-- Footer -->
         <footer class="site-footer style-1">
             <!-- Footer Category -->
-            <div class="footer-category">
+            {{-- <div class="footer-category">
                 <div class="container">
                     <div class="category-toggle">
                         <a href="javascript:void(0);" class="toggle-btn">Books categories</a>
                         <div class="toggle-items row">
                             <div class="footer-col-book">
                                 <ul>
-                                    {{-- <li><a href="{{ url('/category-products') }}">All Books</a></li> --}}
+                                    <li><a href="{{ url('/category-products') }}">All Books</a></li>
                                     @foreach ($sections as $section)
                                         @if (!empty($section['categories']) && count($section['categories']) > 0)
                                             @foreach ($section['categories'] as $category)
@@ -533,7 +533,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
             <!-- Footer Category End -->
 
             <!-- Footer Top -->

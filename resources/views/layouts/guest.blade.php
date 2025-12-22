@@ -18,6 +18,10 @@
     {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
 
     <style>
+        nav {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
         body {
             font-family: 'Nunito', Arial, sans-serif;
             background: #f8f9fa;
@@ -33,8 +37,7 @@
     <nav class="navbar navbar-expand-lg navbar-white bg-white border-bottom shadow-sm">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-primary" href="#">
-                <i class="bi bi-stack"></i>
-                {{ config('app.name', 'Laravel') }}
+                <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" style="height:45px; width:250px;" alt="BookHub Logo" class="brand-logo mb-3">
             </a>
         </div>
     </nav>
