@@ -405,6 +405,23 @@
                             class="nav-link" href="{{ route('otps') }}">Otp Management</a></li>
                 </ul>
             </div>
+            <li class="nav-item">
+                <a @if (Session::get('page') == 'report_management') style="background: #052CA3 !important; color: #FFF !important" @endif
+                    class="nav-link" data-toggle="collapse" href="#ui-report-management" aria-expanded="false"
+                    aria-controls="ui-report-management">
+                    <i class="icon-layout menu-icon"></i>
+                    <span class="menu-title">Report Management</span>
+                    <i class="menu-arrow"></i>
+                </a>
+            </li>
+            <div class="collapse" id="ui-report-management">
+                <ul class="nav flex-column sub-menu"
+                    style="background: #fff !important; color: #052CA3 !important">
+                    <li class="nav-item"> <a
+                            @if (Session::get('page') == 'sales_reports') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                            class="nav-link" href="{{ url('admin/reports/sales_reports') }}">Sales Reports</a></li>
+                </ul>
+            </div>
         @endif
 
     </ul>

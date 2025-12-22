@@ -22,7 +22,7 @@
         }
 
         .card-body {
-            padding: 2.5rem;
+            padding: 1.5rem;
         }
 
         .brand-logo {

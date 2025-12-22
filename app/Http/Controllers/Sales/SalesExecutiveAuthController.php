@@ -8,7 +8,9 @@ use App\Models\SalesExecutive;
 use App\Models\InstitutionManagement;
 use App\Models\User;
 use App\Models\InstitutionClass;
+use App\Models\Language;
 use App\Models\Notification;
+use App\Models\Section;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,14 +28,19 @@ class SalesExecutiveAuthController extends Controller
     // LOGIN ---------------------
     public function showLogin()
     {
-        $headerLogo = HeaderLogo::first();
-        $logos      = $headerLogo;
+        $logos    = HeaderLogo::first();
+        $language = Language::get();
+        $sections = Section::all();
+        $condition      = session('condition', 'new');
+        // $headerLogo = HeaderLogo::first();
+        // $logos      = $headerLogo;
 
-        return view('sales.login', compact('logos', 'headerLogo'));
+        return view('sales.login', compact('logos', 'language', 'sections', 'condition'));
     }
 
     public function login(Request $request)
     {
+
         $data = $request->validate([
             'login'    => ['required', 'string', 'max:150'],
             'password' => ['required'],
