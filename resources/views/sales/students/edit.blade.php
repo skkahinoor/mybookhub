@@ -167,7 +167,7 @@
                                     <i class="fas fa-school form-icon"></i>
                                     Institution
                                 </label>
-                                <select name="institution_id" class="form-control">
+                                <select name="institution_id" id="institution-select" class="form-control">
                                     <option value="">Select Institution</option>
                                     @foreach ($institutions as $institution)
                                         <option value="{{ $institution->id }}"
@@ -226,8 +226,9 @@
                                     <i class="fas fa-layer-group form-icon"></i>
                                     Class <span class="required">*</span>
                                 </label>
-                                <input type="text" name="class" class="form-control"
-                                    value="{{ old('class', $student->class) }}" placeholder="Enter class/grade" required>
+                                <select name="class" id="class-select" class="form-control" required>
+                                    <option value="">Select Class</option>
+                                </select>
                                 @error('class')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
@@ -301,5 +302,65 @@
             </div>
         </div>
     </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var classSelect = $('#class-select');
+            var institutionSelect = $('#institution-select');
+            var initialClass = '{{ old('class', $student->class) }}';
+
+            function resetClassSelect(placeholderText) {
+                placeholderText = placeholderText || 'Select Class';
+                classSelect.empty();
+                classSelect.append('<option value="">' + placeholderText + '</option>');
+            }
+
+            function loadClassesForInstitution(institutionId, selectValue) {
+                if (!institutionId) {
+                    resetClassSelect('Select Class');
+                    return;
+                }
+
+                $.ajax({
+                    url: '{{ route('sales.students.institution_classes') }}',
+                    type: 'GET',
+                    data: {institution_id: institutionId},
+                    dataType: 'json',
+                    success: function (response) {
+                        resetClassSelect('Select Class / Stream');
+
+                        if (Array.isArray(response)) {
+                            $.each(response, function (index, className) {
+                                classSelect.append('<option value="' + className + '">' + className + '</option>');
+                            });
+                        }
+
+                        if (selectValue) {
+                            classSelect.val(selectValue);
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error loading classes for institution:', error);
+                        resetClassSelect('Select Class');
+                    }
+                });
+            }
+
+            institutionSelect.on('change', function () {
+                var institutionId = $(this).val();
+                initialClass = ''; // stop re-forcing original class after manual change
+                loadClassesForInstitution(institutionId, '');
+            });
+
+            // Initial load for current institution (if any)
+            var initialInstitutionId = institutionSelect.val();
+            if (initialInstitutionId) {
+                loadClassesForInstitution(initialInstitutionId, initialClass);
+            } else {
+                resetClassSelect('Select Class');
+            }
+        });
+    </script>
 
 @endsection

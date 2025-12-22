@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Sales;
 use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
 use App\Models\InstitutionManagement;
+use App\Models\InstitutionClass;
 use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\Student;
@@ -40,7 +41,6 @@ class StudentController extends Controller
         Session::put('page', 'students');
 
         $institutions = InstitutionManagement::where('status', 1)->where('added_by', $salesId)->orderBy('name')->get();
-
         return view('sales.students.create')->with(compact('institutions', 'logos', 'headerLogo'));
     }
 
@@ -205,4 +205,28 @@ class StudentController extends Controller
 
     //     return response()->json(['status' => 'ok']);
     // }
+
+    /**
+     * Return classes/streams for a given institution belonging to the current sales executive.
+     */
+    public function getInstitutionClasses(Request $request)
+    {
+        $request->validate([
+            'institution_id' => 'required|integer|exists:institution_managements,id',
+        ]);
+
+        $salesId = Auth::guard('sales')->id();
+
+        $institution = InstitutionManagement::where('id', $request->input('institution_id'))
+            ->where('added_by', $salesId)
+            ->firstOrFail();
+
+        $classes = $institution->institutionClasses()
+            ->orderBy('class_name')
+            ->pluck('class_name')
+            ->unique()
+            ->values();
+
+        return response()->json($classes);
+    }
 }

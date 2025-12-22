@@ -42,7 +42,7 @@ class InstitutionManagementController extends Controller
 
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        $data = $request->validate([
+        $validationRules = [
             'name'           => 'required|string|max:255',
             'type'           => 'required|string|max:255',
             'board'          => 'required|string|max:255',
@@ -53,8 +53,16 @@ class InstitutionManagementController extends Controller
             'district_id'    => 'required|integer',
             'block_id'       => 'nullable|string|max:255',
             'pincode'        => 'required|string|max:10',
+        ];
 
-        ]);
+        // Require classes/streams array for all institution types that use it
+        if (in_array($request->input('type'), ['school', 'college', 'university'], true)) {
+            $validationRules['classes']              = 'required|array|min:1';
+            $validationRules['classes.*.class_name'] = 'required|string|max:255';
+            $validationRules['classes.*.strength']   = 'required|integer|min:1';
+        }
+
+        $data = $request->validate($validationRules);
 
         $data['block_id'] = $this->prepareBlockId($data['block_id'] ?? null, $data['district_id'] ?? null);
         $data['status']   = 0;
@@ -62,6 +70,18 @@ class InstitutionManagementController extends Controller
         $data['added_by'] = $salesExecutive->id;
 
         $institution = InstitutionManagement::create($data);
+
+        // Handle institution classes/streams (same structure for all types)
+        if ($request->has('classes') && is_array($request->classes)) {
+            foreach ($request->classes as $classData) {
+                if (! empty($classData['class_name']) && ! empty($classData['strength'])) {
+                    $institution->institutionClasses()->create([
+                        'class_name'     => $classData['class_name'], // can be class or stream name
+                        'total_strength' => $classData['strength'],
+                    ]);
+                }
+            }
+        }
 
         // Create notification for admin
         Notification::create([
@@ -122,8 +142,8 @@ class InstitutionManagementController extends Controller
             // 'status' => 'boolean',
         ];
 
-        // Only require classes array if type is school
-        if ($request->input('type') === 'school') {
+        // Require classes/streams array for all institution types that use it
+        if (in_array($request->input('type'), ['school', 'college', 'university'], true)) {
             $validationRules['classes']              = 'required|array|min:1';
             $validationRules['classes.*.class_name'] = 'required|string|max:255';
             $validationRules['classes.*.strength']   = 'required|integer|min:1';

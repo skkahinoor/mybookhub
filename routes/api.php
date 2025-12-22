@@ -99,4 +99,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vendor/sections', [CatalogueController::class, 'storeSection']);
     Route::put('/vendor/sections/{id}', [CatalogueController::class, 'updateSection']);
     Route::delete('/vendor/sections/{id}', [CatalogueController::class, 'destroySection']);
+
+    Route::get('/vendor/category', [CatalogueController::class, 'getCategory']);
+    Route::post('/vendor/category', [CatalogueController::class, 'storeCategory']);
+    Route::post('/vendor/category/{id}', [CatalogueController::class, 'updateCategory']);
+    Route::delete('/vendor/category/{id}', [CatalogueController::class, 'destroyCategory']);
+
+    Route::get('/vendor/publisher', [CatalogueController::class, 'getPublisher']);
+    Route::post('/vendor/publisher', [CatalogueController::class, 'storePublisher']);
+    Route::put('/vendor/publisher/{id}', [CatalogueController::class, 'updatePublisher']);
+    Route::delete('/vendor/publisher/{id}', [CatalogueController::class, 'destroyPublisher']);
+
+    Route::get('/vendor/author', [CatalogueController::class, 'getAuthor']);
+    Route::post('/vendor/author', [CatalogueController::class, 'storeAuthor']);
+    Route::put('/vendor/author/{id}', [CatalogueController::class, 'updateAuthor']);
+    Route::delete('/vendor/author/{id}', [CatalogueController::class, 'destroyAuthor']);
+
+    Route::get('/vendor/subject', [CatalogueController::class, 'getSubject']);
+    Route::post('/vendor/subject', [CatalogueController::class, 'storeSubject']);
+    Route::put('/vendor/subject/{id}', [CatalogueController::class, 'updateSubject']);
+    Route::delete('/vendor/subject/{id}', [CatalogueController::class, 'destroySubject']);
+
+    Route::get('/vendor/language', [CatalogueController::class, 'getLanguage']);
+    Route::post('/vendor/language', [CatalogueController::class, 'storeLanguage']);
+    Route::put('/vendor/language/{id}', [CatalogueController::class, 'updateLanguage']);
+    Route::delete('/vendor/language/{id}', [CatalogueController::class, 'destroyLanguage']);
 });

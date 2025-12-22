@@ -607,18 +607,18 @@ class AdminController extends Controller
                 // Note: Vendor receives THREE emails: the first one when they register (please click on the confirmation link mail (in emails/vendor_confirmation.blade.php)), the second one when they click on the confirmation link sent in the first email (telling them that they have been confirmed and asking them to complete filling in their personal, business and bank details to get ACTIVATED/APPROVED (`status gets 1) (in emails/vendor_confirmed.blade.php)), the third email when the 'admin' or 'superadmin' manually activates (`status` becomes 1) the vendor from the Admin Panel from 'Admin Management' tab, then clicks Status (the email tells them they have been approved (activated and `status` became 1) and asks them to add their products on the website (in emails/vendor_approved.blade.php))
 
                                                  // Send the Approval Success Email to the new vendor
-                $email = $adminDetails['email']; // the vendor's email
+                // $email = $adminDetails['email']; // the vendor's email
 
                 // The email message data/variables that will be passed in to the email view
-                $messageData = [
-                    'email'  => $adminDetails['email'],
-                    'name'   => $adminDetails['name'],
-                    'mobile' => $adminDetails['mobile'],
-                ];
+                // $messageData = [
+                //     'email'  => $adminDetails['email'],
+                //     'name'   => $adminDetails['name'],
+                //     'mobile' => $adminDetails['mobile'],
+                // ];
 
-                \Illuminate\Support\Facades\Mail::send('emails.vendor_approved', $messageData, function ($message) use ($email) { // Sending Mail: https://laravel.com/docs/9.x/mail#sending-mail    // 'emails.vendor_approved' is the vendor_approved.blade.php file inside the 'resources/views/emails' folder that will be sent as an email    // We pass in all the variables that vendor_approved.blade.php will use    // https://www.php.net/manual/en/functions.anonymous.php
-                    $message->to($email)->subject('Vendor Account is Approved');
-                });
+                // \Illuminate\Support\Facades\Mail::send('emails.vendor_approved', $messageData, function ($message) use ($email) { // Sending Mail: https://laravel.com/docs/9.x/mail#sending-mail    // 'emails.vendor_approved' is the vendor_approved.blade.php file inside the 'resources/views/emails' folder that will be sent as an email    // We pass in all the variables that vendor_approved.blade.php will use    // https://www.php.net/manual/en/functions.anonymous.php
+                //     $message->to($email)->subject('Vendor Account is Approved');
+                // });
             }
 
             $adminType = Auth::guard('admin')->user()->type; // `type` is the column in `admins` table    // Retrieving The Authenticated User and getting their `type`      column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances

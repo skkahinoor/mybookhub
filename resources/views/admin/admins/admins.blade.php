@@ -66,11 +66,19 @@
                                                 </td>
                                                 <td>
                                                     @if ($admin['status'] == 1)
-                                                        <a class="updateAdminStatus" id="admin-{{ $admin['id'] }}" admin_id="{{ $admin['id'] }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                        <a class="updateAdminStatus"
+                                                           id="admin-{{ $admin['id'] }}"
+                                                           admin_id="{{ $admin['id'] }}"
+                                                           data-url="{{ route('updateadminstatus') }}"
+                                                           href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
                                                     @else {{-- if the admin status is inactive --}}
-                                                        <a class="updateAdminStatus" id="admin-{{ $admin['id'] }}" admin_id="{{ $admin['id'] }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                        <a class="updateAdminStatus"
+                                                           id="admin-{{ $admin['id'] }}"
+                                                           admin_id="{{ $admin['id'] }}"
+                                                           data-url="{{ route('updateadminstatus') }}"
+                                                           href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
                                                     @endif

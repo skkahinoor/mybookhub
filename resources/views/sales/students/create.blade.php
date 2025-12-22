@@ -159,7 +159,7 @@
                                 <i class="fas fa-school form-icon"></i>
                                 Institution <span class="required">*</span>
                             </label>
-                            <select name="institution_id" class="form-control">
+                            <select name="institution_id" id="institution-select" class="form-control">
                                 <option value="">Select Institution</option>
                                 @foreach($institutions as $institution)
                                     <option value="{{ $institution->id }}" {{ old('institution_id') == $institution->id ? 'selected' : '' }}>
@@ -211,28 +211,13 @@
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">
+                            <label class="form-label" id="class-label">
                                 <i class="fas fa-layer-group form-icon"></i>
                                 Class <span class="required">*</span>
                             </label>
 
-                            <select name="class" class="form-control" required>
+                            <select name="class" id="class-select" class="form-control" required>
                                 <option value="">Select Class</option>
-                                <option value="Nursery" {{ old('class')=='Nursery' ? 'selected' : '' }}>Nursery</option>
-                                <option value="LKG" {{ old('class')=='LKG' ? 'selected' : '' }}>LKG</option>
-                                <option value="UKG" {{ old('class')=='UKG' ? 'selected' : '' }}>UKG</option>
-                                <option value="Class 1" {{ old('class')=='Class 1' ? 'selected' : '' }}>Class 1</option>
-                                <option value="Class 2" {{ old('class')=='Class 2' ? 'selected' : '' }}>Class 2</option>
-                                <option value="Class 3" {{ old('class')=='Class 3' ? 'selected' : '' }}>Class 3</option>
-                                <option value="Class 4" {{ old('class')=='Class 4' ? 'selected' : '' }}>Class 4</option>
-                                <option value="Class 5" {{ old('class')=='Class 5' ? 'selected' : '' }}>Class 5</option>
-                                <option value="Class 6" {{ old('class')=='Class 6' ? 'selected' : '' }}>Class 6</option>
-                                <option value="Class 7" {{ old('class')=='Class 7' ? 'selected' : '' }}>Class 7</option>
-                                <option value="Class 8" {{ old('class')=='Class 8' ? 'selected' : '' }}>Class 8</option>
-                                <option value="Class 9" {{ old('class')=='Class 9' ? 'selected' : '' }}>Class 9</option>
-                                <option value="Class 10" {{ old('class')=='Class 10' ? 'selected' : '' }}>Class 10</option>
-                                <option value="Class 11" {{ old('class')=='Class 11' ? 'selected' : '' }}>Class 11</option>
-                                <option value="Class 12" {{ old('class')=='Class 12' ? 'selected' : '' }}>Class 12</option>
                             </select>
 
                             @error('class')
@@ -299,7 +284,65 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        var classSelect = $('#class-select');
+        var institutionSelect = $('#institution-select');
+        var oldClass = '{{ old('class') }}';
+
+        function resetClassSelect(placeholderText) {
+            placeholderText = placeholderText || 'Select Class';
+            classSelect.empty();
+            classSelect.append('<option value="">' + placeholderText + '</option>');
+        }
+
+        function loadClassesForInstitution(institutionId) {
+            if (!institutionId) {
+                resetClassSelect('Select Class');
+                return;
+            }
+
+            $.ajax({
+                url: '{{ route('sales.students.institution_classes') }}',
+                type: 'GET',
+                data: { institution_id: institutionId },
+                dataType: 'json',
+                success: function (response) {
+                    resetClassSelect('Select Class / Stream');
+
+                    if (Array.isArray(response)) {
+                        $.each(response, function (index, className) {
+                            classSelect.append('<option value="' + className + '">' + className + '</option>');
+                        });
+                    }
+
+                    if (oldClass) {
+                        classSelect.val(oldClass);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error loading classes for institution:', error);
+                    resetClassSelect('Select Class');
+                }
+            });
+        }
+
+        institutionSelect.on('change', function () {
+            var institutionId = $(this).val();
+            oldClass = ''; // avoid forcing old value after manual change
+            loadClassesForInstitution(institutionId);
+        });
+
+        // If an institution was already selected (validation error), reload its classes
+        var initialInstitutionId = institutionSelect.val();
+        if (initialInstitutionId) {
+            loadClassesForInstitution(initialInstitutionId);
+        } else {
+            resetClassSelect('Select Class');
+        }
+    });
+</script>
 {{-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         const institutionSelect = document.querySelector('select[name="institution_id"]');

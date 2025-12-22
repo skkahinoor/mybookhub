@@ -45,13 +45,11 @@ class InstitutionController extends Controller
         return null;
     }
 
-    // ✅ GET all institutions
     public function index(Request $request)
     {
         $user = $request->user();
         $type = $this->detectUserType($user);
 
-        // ✅ Allow only Superadmin or Sales
         if (!in_array($type, ['superadmin', 'sales'])) {
             return response()->json([
                 'status' => false,
@@ -59,13 +57,11 @@ class InstitutionController extends Controller
             ], 403);
         }
 
-        // ✅ Superadmin: can view all institutions
         if ($type === 'superadmin') {
             $institutions = InstitutionManagement::with(['institutionClasses', 'country', 'state', 'district', 'block'])
                 ->orderBy('id', 'desc')
                 ->get();
         } else {
-            // ✅ Sales: can only view institutions they created
             $institutions = InstitutionManagement::with(['institutionClasses', 'country', 'state', 'district', 'block'])
                 ->where('added_by', $user->id)
                 ->orderBy('id', 'desc')
@@ -79,8 +75,6 @@ class InstitutionController extends Controller
         ]);
     }
 
-
-    // ✅ ADD institution
     public function store(Request $request)
     {
         $user = $request->user();
@@ -93,7 +87,7 @@ class InstitutionController extends Controller
             ], 403);
         }
 
-        $validationRules = [
+        $rules = [
             'name' => 'required|string|max:255',
             'type' => 'required|string|max:255',
             'board' => 'required|string|max:255',
@@ -104,44 +98,40 @@ class InstitutionController extends Controller
             'district_id' => 'required',
             'block_id' => 'nullable',
             'pincode' => 'required|string|max:10',
-            'status' => 'boolean',
         ];
 
-        if ($request->input('type') === 'school') {
-            $validationRules['classes'] = 'required|array|min:1';
-            $validationRules['classes.*.class_name'] = 'required|string|max:255';
-            $validationRules['classes.*.strength'] = 'required|integer|min:1';
+        if ($request->type === 'school') {
+            $rules['classes'] = 'required|array|min:1';
+            $rules['classes.*.class_name'] = 'required|string|max:255';
+            $rules['classes.*.strength'] = 'required|integer|min:1';
+        } else {
+            $rules['branches'] = 'required|array|min:1';
+            $rules['branches.*.branch_name'] = 'required|string|max:255';
+            $rules['branches.*.strength'] = 'required|integer|min:1';
         }
 
-        $request->validate($validationRules);
+        $validated = $request->validate($rules);
 
-        $data = $request->all();
-        $types = $this->detectUserType($user);
-        $data['status'] = ($types === 'superadmin') ? 1 : 0;
-        $data['added_by'] = $user->id;
+        $validated['status']   = ($type === 'superadmin') ? 1 : 0;
+        $validated['added_by'] = $user->id;
 
-        $institution = InstitutionManagement::create($data);
+        unset($validated['classes'], $validated['branches']);
 
-        // Create notification for admin if added by sales executive
-        if ($types === 'sales') {
-            \App\Models\Notification::create([
-                'type' => 'institution_added',
-                'title' => 'New Institution Added',
-                'message' => "Sales executive '{$user->name}' has added a new institution '{$institution->name}' ({$institution->type}) and is waiting for approval.",
-                'related_id' => $institution->id,
-                'related_type' => 'App\Models\InstitutionManagement',
-                'is_read' => false,
-            ]);
-        }
+        $institution = InstitutionManagement::create($validated);
 
-        if ($request->has('classes') && is_array($request->classes)) {
-            foreach ($request->classes as $classData) {
-                if (!empty($classData['class_name']) && !empty($classData['strength'])) {
-                    $institution->institutionClasses()->create([
-                        'class_name' => $classData['class_name'],
-                        'total_strength' => $classData['strength'],
-                    ]);
-                }
+        if ($request->type === 'school') {
+            foreach ($request->classes as $class) {
+                $institution->institutionClasses()->create([
+                    'class_name' => $class['class_name'],
+                    'total_strength' => $class['strength'],
+                ]);
+            }
+        } else {
+            foreach ($request->branches as $branch) {
+                $institution->institutionClasses()->create([
+                    'class_name' => $branch['branch_name'],
+                    'total_strength' => $branch['strength'],
+                ]);
             }
         }
 
@@ -152,13 +142,11 @@ class InstitutionController extends Controller
         ]);
     }
 
-    // ✅ UPDATE institution
     public function update(Request $request, $id)
     {
         $user = $request->user();
         $type = $this->detectUserType($user);
 
-        // ✅ Restrict access
         if (!in_array($type, ['superadmin', 'sales'])) {
             return response()->json([
                 'status' => false,
@@ -166,7 +154,6 @@ class InstitutionController extends Controller
             ], 403);
         }
 
-        // ✅ Find institution
         $institution = InstitutionManagement::with('institutionClasses')->find($id);
         if (!$institution) {
             return response()->json([
@@ -175,16 +162,14 @@ class InstitutionController extends Controller
             ], 404);
         }
 
-        // ✅ Restrict sales to only their own institutions
         if ($type === 'sales' && $institution->added_by !== $user->id) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! You can only update institutions added by you.'
+                'message' => 'You can update only institutions added by you.'
             ], 403);
         }
 
-        // ✅ Validation rules
-        $validationRules = [
+        $rules = [
             'name' => 'required|string|max:255',
             'type' => 'required|string|max:255',
             'board' => 'required|string|max:255',
@@ -197,37 +182,44 @@ class InstitutionController extends Controller
             'pincode' => 'required|string|max:10',
         ];
 
-        // ✅ If type = school, validate classes
-        if ($request->input('type') === 'school') {
-            $validationRules['classes'] = 'required|array|min:1';
-            $validationRules['classes.*.id'] = 'nullable|integer|exists:institution_classes,id';
-            $validationRules['classes.*.class_name'] = 'required|string|max:255';
-            $validationRules['classes.*.strength'] = 'required|integer|min:1';
+        if ($request->type === 'school') {
+            $rules['classes'] = 'required|array|min:1';
+            $rules['classes.*.class_name'] = 'required|string|max:255';
+            $rules['classes.*.strength'] = 'required|integer|min:1';
+        } else {
+            $rules['branches'] = 'required|array|min:1';
+            $rules['branches.*.branch_name'] = 'required|string|max:255';
+            $rules['branches.*.strength'] = 'required|integer|min:1';
         }
-
 
         if ($type === 'superadmin') {
-            $validationRules['status'] = 'boolean';
+            $rules['status'] = 'boolean';
         }
 
-        $validated = $request->validate($validationRules);
-        $updateData = $validated;
+        $validated = $request->validate($rules);
 
         if ($type !== 'superadmin') {
-            unset($updateData['status']);
+            unset($validated['status']);
         }
 
+        unset($validated['classes'], $validated['branches']);
 
-        $institution->update($updateData);
+        $institution->update($validated);
 
+        $institution->institutionClasses()->delete();
 
-        if ($request->has('classes')) {
-            $institution->institutionClasses()->delete();
-
+        if ($request->type === 'school') {
             foreach ($request->classes as $class) {
                 $institution->institutionClasses()->create([
                     'class_name' => $class['class_name'],
-                    'total_strength' => $class['strength']
+                    'total_strength' => $class['strength'],
+                ]);
+            }
+        } else {
+            foreach ($request->branches as $branch) {
+                $institution->institutionClasses()->create([
+                    'class_name' => $branch['branch_name'],
+                    'total_strength' => $branch['strength'],
                 ]);
             }
         }
@@ -239,24 +231,19 @@ class InstitutionController extends Controller
         ]);
     }
 
-
-    // ✅ DELETE institution
     public function destroy(Request $request, $id)
     {
         $user = $request->user();
         $type = $this->detectUserType($user);
 
-        // ✅ Restrict access
         if (!in_array($type, ['superadmin', 'sales'])) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! Only Superadmin or Sales can delete institutions.'
+                'message' => 'Access denied!'
             ], 403);
         }
 
-        // ✅ Find institution
         $institution = InstitutionManagement::find($id);
-
         if (!$institution) {
             return response()->json([
                 'status' => false,
@@ -264,15 +251,13 @@ class InstitutionController extends Controller
             ], 404);
         }
 
-        // ✅ Sales can delete only their own institutions
         if ($type === 'sales' && $institution->added_by !== $user->id) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! You can only delete institutions added by you.'
+                'message' => 'You can delete only institutions added by you.'
             ], 403);
         }
 
-        // ✅ Delete institution and its related classes
         $institution->institutionClasses()->delete();
         $institution->delete();
 

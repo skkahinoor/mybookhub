@@ -17,6 +17,7 @@ use App\Http\Controllers\Front\BookRequestController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\ProductsController;
 use App\Http\Controllers\Sales\SalesExecutiveAuthController;
+use App\Http\Controllers\Admin\SalesReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,6 +62,10 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-sales-executive-status', [SalesExecutiveController::class, 'updateStatus'])->name('sales_executives.update_status');
         Route::get('sales-executive/{id}/details', [SalesExecutiveController::class, 'getDetails'])->name('sales_executives.get_details');
 
+        // Sales Reports (Admin)
+        Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('admin.reports.sales_reports.index');
+        Route::get('reports/sales_reports/{id}', [SalesReportController::class, 'show'])->name('admin.reports.sales_reports.show');
+
         // Notifications
         Route::get('notifications', 'NotificationController@index')->name('notifications.index');
         Route::get('notifications/get', 'NotificationController@getNotifications')->name('notifications.get');
@@ -71,7 +76,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
         Route::get('delete-admin/{id}', 'AdminController@deleteAdmin');                        // Delete an Admin
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
-        Route::post('update-admin-status', 'AdminController@updateAdminStatus');  
+        Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('updateadminstatus');  
 
         // otp
         Route::get('admin/otps', [OtpController::class, 'otps'])->name('otps');
@@ -551,6 +556,10 @@ Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function
             'update'  => 'sales.institution_managements.update',
             'destroy' => 'sales.institution_managements.destroy',
         ]);
+
+        // AJAX: get classes/streams for a given institution (only those added by current sales)
+        Route::get('students/institution-classes', 'StudentController@getInstitutionClasses')
+            ->name('sales.students.institution_classes');
 
 // Sales Students Management (similar to Admin)
         Route::resource('students', 'StudentController')->names([

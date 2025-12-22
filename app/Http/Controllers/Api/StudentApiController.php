@@ -69,175 +69,146 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'father_name' => 'required|string|max:255',
-                'email' => 'nullable|email|max:255|unique:users,email',
-                'phone' => 'required|string|min:10|max:15|unique:users,phone',
-                'institution_id' => 'nullable|exists:institution_managements,id',
-                'class' => 'required|string|max:255',
-                'gender' => 'required|string|in:male,female,other',
-                'dob' => 'required|date|before:today',
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'father_name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255|unique:users,email',
+            'phone' => 'required|string|min:10|max:15|unique:users,phone',
+            'institution_id' => 'required|exists:institution_managements,id',
+            'gender' => 'required|string|in:male,female,other',
+            'dob' => 'required|date|before:today',
+            'roll_number' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('users', 'roll_number')
+                    ->where('institution_id', $request->institution_id)
+            ],
+        ]);
 
-                // 🔥 Unique roll number for same institution_id
-                'roll_number' => [
-                    'nullable',
-                    'string',
-                    'max:255',
-                    Rule::unique('users', 'roll_number')
-                        ->where('institution_id', $request->institution_id)
-                ],
-            ]);
-        } catch (ValidationException $e) {
+        $institution = InstitutionManagement::find($validated['institution_id']);
+
+        if (!$institution || $institution->status == 0) {
             return response()->json([
                 'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
+                'message' => 'This institution is inactive.'
+            ], 403);
         }
 
-        // Institution must be active
-        if (!empty($validated['institution_id'])) {
-            $institution = InstitutionManagement::find($validated['institution_id']);
-            if ($institution && $institution->status == 0) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'This institution is inactive. You cannot add students.'
-                ], 403);
-            }
+        if ($institution->type === 'school') {
+            $request->validate([
+                'class' => 'required|string|max:255',
+            ]);
+            $validated['class'] = $request->class;
+        } else {
+            $request->validate([
+                'branch' => 'required|string|max:255',
+            ]);
+            $validated['class'] = $request->branch;
         }
 
-        // Status: superadmin=1, sales=0
-        $studentStatus = ($type === 'superadmin') ? 1 : 0;
-        $validated['user_type']   = "student";
-        $validated['status']   = $studentStatus;
+        $validated['user_type'] = 'student';
+        $validated['status']   = ($type === 'superadmin') ? 1 : 0;
         $validated['added_by'] = $user->id;
         $validated['password'] = Hash::make('12345678');
-        // Save student
-        $users = User::create($validated);
 
-        // Create notification for admin
+        $student = User::create($validated);
+
         Notification::create([
             'type' => 'student_added',
             'title' => 'New Student Added',
-            // 'message' => "Sales executive '" . Auth::guard('sales')->user()->name . "' has added a new student '{$validated['name']}' and is waiting for approval.",
-            'message' => "User '" . ($user->name ?? 'Unknown') . "' has added a new student '{$validated['name']}' and is waiting for approval.",
-            'related_id' => $users->id,
-            'related_type' => 'App\Models\Student',
+            'message' => "User '{$user->name}' added student '{$student->name}'.",
+            'related_id' => $student->id,
+            'related_type' => User::class,
             'is_read' => false,
         ]);
-
 
         return response()->json([
             'status' => true,
             'message' => ucfirst($type) . ' added student successfully.',
-            'data' => $users
+            'data' => $student
         ], 201);
     }
 
     public function update(Request $request, $id)
     {
         $user = $request->user();
-        $type = $this->detectUserType($user);
+        $type = strtolower($this->detectUserType($user));
 
         if (!in_array($type, ['superadmin', 'sales'])) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! Only Superadmin or Sales can update students.'
+                'message' => 'Access denied!'
             ], 403);
         }
 
-        $users = User::find($id);
-
-        if (!$users) {
+        $student = User::find($id);
+        if (!$student) {
             return response()->json([
                 'status' => false,
                 'message' => 'Student not found.'
             ], 404);
         }
 
-        // Sales can edit only their students
-        if ($type === 'sales' && $users->added_by !== $user->id) {
+        if ($type === 'sales' && $student->added_by !== $user->id) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! You can only update students added by you.'
+                'message' => 'You can update only your students.'
             ], 403);
         }
 
-        // Get linked user account
-        $linkedUserID = User::where('phone', $users->phone)
-            ->orWhere('email', $users->email)
-            ->value('id');
-
-        // Validation rules
-        $validationRules = [
-            'name'         => 'required|string|max:255',
-            'father_name'  => 'required|string|max:255', // NEW
-            'email'        => [
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'father_name' => 'required|string|max:255',
+            'email' => [
                 'nullable',
                 'email',
                 'max:255',
-                Rule::unique('users', 'email')->ignore($linkedUserID)
+                Rule::unique('users', 'email')->ignore($student->id)
             ],
             'phone' => [
                 'required',
                 'string',
                 'min:10',
                 'max:15',
-                Rule::unique('users', 'phone')->ignore($linkedUserID)
+                Rule::unique('users', 'phone')->ignore($student->id)
             ],
-            'institution_id' => 'nullable|exists:institution_managements,id',
-            'class'          => 'required|string|max:255',
-            'gender'         => 'required|string|in:male,female,other',
-            'dob'            => 'required|date|before:today',
-            // 'roll_number' => [
-            //     'nullable',
-            //     'string',
-            //     'max:255',
-            //     Rule::unique('students', 'roll_number')
-            //         ->ignore($student->id)
-            //         ->where(function ($q) use ($request) {
-            //             return $q->where('institution_id', $request->institution_id);
-            //         }),
-            // ],
+            'institution_id' => 'required|exists:institution_managements,id',
+            'gender' => 'required|string|in:male,female,other',
+            'dob' => 'required|date|before:today',
             'roll_number' => Rule::unique('users')
                 ->where('institution_id', $request->institution_id)
-                ->ignore($users->id),
-        ];
+                ->ignore($student->id),
+        ]);
 
-        // Superadmin can update status
-        if ($type === 'superadmin') {
-            $validationRules['status'] = 'boolean';
+        $institution = InstitutionManagement::find($validated['institution_id']);
+        if (!$institution || $institution->status == 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Institution inactive.'
+            ], 403);
         }
 
-        $validated = $request->validate($validationRules);
-
-        // Institution must be active
-        if (!empty($validated['institution_id'])) {
-            $institution = InstitutionManagement::find($validated['institution_id']);
-            if ($institution && $institution->status == 0) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'This institution is inactive. You cannot update students.'
-                ], 403);
-            }
+        // Conditional mapping
+        if ($institution->type === 'school') {
+            $request->validate(['class' => 'required|string|max:255']);
+            $validated['class'] = $request->class;
+        } else {
+            $request->validate(['branch' => 'required|string|max:255']);
+            $validated['class'] = $request->branch;
         }
 
-        // Sales cannot update status
         if ($type !== 'superadmin') {
             unset($validated['status']);
         }
 
-        // Update student
-        $users->update($validated);
-
+        $student->update($validated);
 
         return response()->json([
             'status' => true,
             'message' => ucfirst($type) . ' updated student successfully.',
-            'data' => $users
-        ], 200);
+            'data' => $student
+        ]);
     }
 
     public function destroy(Request $request, $id)
@@ -293,10 +264,7 @@ class StudentApiController extends Controller
         $query = User::query();
 
         if ($type === 'superadmin') {
-
-        }
-
-        elseif ($type === 'sales') {
+        } elseif ($type === 'sales') {
             $query->where('added_by', $user->id);
         }
 

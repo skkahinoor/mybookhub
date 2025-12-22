@@ -235,13 +235,13 @@
                     <div class="form-group" id="class-field" style="display: none;">
                         <label class="form-label">
                             <i class="fas fa-layer-group form-icon"></i>
-                            Add Class with Strength
+                            Add <span id="class-stream-label">Class</span> with Strength
                         </label>
                         <div id="class-list-container">
                             <!-- Classes will be added dynamically here -->
                         </div>
                         <button type="button" class="btn btn-success btn-sm mt-2" id="add-class-btn">
-                            <i class="fas fa-plus"></i> Add Class
+                            <i class="fas fa-plus"></i> <span id="add-class-btn-text">Add Class</span>
                         </button>
                         @error('class')
                             <div class="error-message">{{ $message }}</div>
@@ -356,8 +356,15 @@
                 var type = $(this).val();
                 var classField = $('#class-field');
                 var classSelect = $('#class-select');
+                var labelSpan = $('#class-stream-label');
+                var btnTextSpan = $('#add-class-btn-text');
+
+                // Reset dynamic list when type changes
+                $('#class-list-container').empty();
 
                 if (type === 'school') {
+                    labelSpan.text('Class');
+                    btnTextSpan.text('Add Class');
                     // Show class field
                     classField.show();
 
@@ -410,6 +417,11 @@
                             alert(errorMessage);
                         }
                     });
+                } else if (type === 'college' || type === 'university') {
+                    // For college/university we use the same structure but call it "Stream"
+                    labelSpan.text('Stream');
+                    btnTextSpan.text('Add Stream');
+                    classField.show();
                 } else {
                     // Hide class field and clear value
                     classField.hide();
@@ -428,9 +440,16 @@
             var availableClasses = ['Nursery', 'LKG', 'UKG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
                 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'
             ];
+            var availableStreams = ['Science', 'Commerce', 'Arts', 'Engineering', 'Management', 'Law', 'Medical'];
 
             $('#add-class-btn').on('click', function() {
-                var classOptions = availableClasses.map(cls =>
+                var type = $('select[name="type"]').val();
+                var isSchool = (type === 'school');
+                var optionsSource = isSchool ? availableClasses : availableStreams;
+                var nameLabel = isSchool ? 'Class Name' : 'Stream Name';
+                var selectPlaceholder = isSchool ? 'Select Class' : 'Select Stream';
+
+                var classOptions = optionsSource.map(cls =>
                     `<option value="${cls}">${cls}</option>`
                 ).join('');
 
@@ -438,9 +457,9 @@
             <div class="class-item mb-3 p-3 border rounded" data-index="${classIndex}">
                 <div class="row">
                     <div class="col-md-5">
-                        <label>Class Name</label>
+                        <label>${nameLabel}</label>
                         <select name="classes[${classIndex}][class_name]" class="form-control class-select" required>
-                            <option value="">Select Class</option>
+                            <option value="">${selectPlaceholder}</option>
                             ${classOptions}
                         </select>
                     </div>

@@ -21,7 +21,8 @@ class AuthorController extends Controller
 
     public function add()
     {
-
+        $logos = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
         return view('admin.authors.add_author', compact('logos', 'headerLogo'));
     }
 

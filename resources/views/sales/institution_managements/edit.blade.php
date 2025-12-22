@@ -249,7 +249,7 @@
                         <div class="form-group" id="class-field" style="display: none;">
                             <label class="form-label">
                                 <i class="fas fa-layer-group form-icon"></i>
-                                Add Class with Strength
+                                Add <span id="class-stream-label">Class</span> with Strength
                             </label>
                             <div id="class-list-container">
                                 @if($institution->institutionClasses && $institution->institutionClasses->count() > 0)
@@ -257,24 +257,11 @@
                                         <div class="class-item mb-3 p-3 border rounded" data-index="{{ $index }}">
                                             <div class="row">
                                                 <div class="col-md-5">
-                                                    <label>Class Name</label>
-                                                    <select name="classes[{{ $index }}][class_name]" class="form-control class-select" required>
-                                                        <option value="">Select Class</option>
-                                                        <option value="Nursery" {{ $instClass->class_name == 'Nursery' ? 'selected' : '' }}>Nursery</option>
-                                                        <option value="LKG" {{ $instClass->class_name == 'LKG' ? 'selected' : '' }}>LKG</option>
-                                                        <option value="UKG" {{ $instClass->class_name == 'UKG' ? 'selected' : '' }}>UKG</option>
-                                                        <option value="Class 1" {{ $instClass->class_name == 'Class 1' ? 'selected' : '' }}>Class 1</option>
-                                                        <option value="Class 2" {{ $instClass->class_name == 'Class 2' ? 'selected' : '' }}>Class 2</option>
-                                                        <option value="Class 3" {{ $instClass->class_name == 'Class 3' ? 'selected' : '' }}>Class 3</option>
-                                                        <option value="Class 4" {{ $instClass->class_name == 'Class 4' ? 'selected' : '' }}>Class 4</option>
-                                                        <option value="Class 5" {{ $instClass->class_name == 'Class 5' ? 'selected' : '' }}>Class 5</option>
-                                                        <option value="Class 6" {{ $instClass->class_name == 'Class 6' ? 'selected' : '' }}>Class 6</option>
-                                                        <option value="Class 7" {{ $instClass->class_name == 'Class 7' ? 'selected' : '' }}>Class 7</option>
-                                                        <option value="Class 8" {{ $instClass->class_name == 'Class 8' ? 'selected' : '' }}>Class 8</option>
-                                                        <option value="Class 9" {{ $instClass->class_name == 'Class 9' ? 'selected' : '' }}>Class 9</option>
-                                                        <option value="Class 10" {{ $instClass->class_name == 'Class 10' ? 'selected' : '' }}>Class 10</option>
-                                                        <option value="Class 11" {{ $instClass->class_name == 'Class 11' ? 'selected' : '' }}>Class 11</option>
-                                                        <option value="Class 12" {{ $instClass->class_name == 'Class 12' ? 'selected' : '' }}>Class 12</option>
+                                                    <label class="class-stream-name-label">Class Name</label>
+                                                    <select name="classes[{{ $index }}][class_name]"
+                                                            class="form-control class-select"
+                                                            data-selected="{{ $instClass->class_name }}"
+                                                            required>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-5">
@@ -292,7 +279,7 @@
                                 @endif
                             </div>
                             <button type="button" class="btn btn-success btn-sm mt-2" id="add-class-btn">
-                                <i class="fas fa-plus"></i> Add Another Class
+                                <i class="fas fa-plus"></i> <span id="add-class-btn-text">Add Class</span>
                             </button>
                             @error('class')
                                 <div class="error-message">{{ $message }}</div>
@@ -413,92 +400,84 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
-    // Handle institution type change
-    $('select[name="type"]').change(function() {
-        var type = $(this).val();
-        var classField = $('#class-field');
-        var classSelect = $('#class-select');
-
-        if (type === 'school') {
-            // Show class field
-            classField.show();
-
-            // Load classes via AJAX
-            $.ajax({
-                url: '{{ route("sales.institution.classes") }}',
-                type: 'GET',
-                data: { type: type },
-                dataType: 'json',
-                success: function(response) {
-                    console.log('AJAX Success:', response);
-                    classSelect.empty();
-                    classSelect.append('<option value="">Select Class</option>');
-
-                    if (Array.isArray(response)) {
-                        $.each(response, function(index, className) {
-                            classSelect.append('<option value="' + className + '">' + className + '</option>');
-                        });
-                    }
-
-                    // Set old value or current institution class
-                    var currentClass = '{{ old("class", $institution->class) }}';
-                    if (currentClass) {
-                        classSelect.val(currentClass);
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.log('AJAX Error Details:');
-                    console.log('Status:', status);
-                    console.log('Error:', error);
-                    console.log('Response Text:', xhr.responseText);
-                    console.log('Status Code:', xhr.status);
-                    console.log('URL:', '{{ route("sales.institution.classes") }}');
-                    console.log('Type:', type);
-
-                    // Try to show a more helpful error message
-                    var errorMessage = 'Error loading classes. ';
-                    if (xhr.status === 404) {
-                        errorMessage += 'Route not found. Please check if you are logged in as sales.';
-                    } else if (xhr.status === 403) {
-                        errorMessage += 'Access denied. Please check your permissions.';
-                    } else if (xhr.status === 500) {
-                        errorMessage += 'Server error. Please try again later.';
-                    } else {
-                        errorMessage += 'Please check console for details.';
-                    }
-                    alert(errorMessage);
-                }
-            });
-        } else {
-            // Hide class field and clear value
-            classField.hide();
-            classSelect.empty();
-            classSelect.append('<option value="">Select Class</option>');
-        }
-    });
-
-    // Trigger change event on page load if type is school
-    if ($('select[name="type"]').val() === 'school') {
-        $('select[name="type"]').trigger('change');
-    }
-
-    // Add new class row
     var classIndex = {{ $institution->institutionClasses ? $institution->institutionClasses->count() : 0 }};
     var availableClasses = ['Nursery', 'LKG', 'UKG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
+    var availableStreams = ['Science', 'Commerce', 'Arts', 'Engineering', 'Management', 'Law', 'Medical'];
 
+    function updateClassStreamUI() {
+        var type = $('select[name="type"]').val();
+        var classField = $('#class-field');
+        var labelSpan = $('#class-stream-label');
+        var btnTextSpan = $('#add-class-btn-text');
+
+        // Show field only for these types
+        if (['school', 'college', 'university'].includes(type)) {
+            classField.show();
+        } else {
+            classField.hide();
+            return;
+        }
+
+        var isSchool = (type === 'school');
+        var optionsSource = isSchool ? availableClasses : availableStreams;
+        var placeholder = isSchool ? 'Select Class' : 'Select Stream';
+        var nameLabel = isSchool ? 'Class Name' : 'Stream Name';
+
+        labelSpan.text(isSchool ? 'Class' : 'Stream');
+        btnTextSpan.text(isSchool ? 'Add Class' : 'Add Stream');
+
+        // Update existing rows
+        $('.class-item').each(function() {
+            var select = $(this).find('.class-select');
+            var selectedValue = select.data('selected') || select.val() || '';
+
+            var optionsHtml = `<option value="">${placeholder}</option>`;
+            optionsSource.forEach(function(opt) {
+                optionsHtml += `<option value="${opt}">${opt}</option>`;
+            });
+
+            // If existing value is not in predefined list, keep it
+            if (selectedValue && !optionsSource.includes(selectedValue)) {
+                optionsHtml += `<option value="${selectedValue}">${selectedValue}</option>`;
+            }
+
+            select.html(optionsHtml);
+            if (selectedValue) {
+                select.val(selectedValue);
+            }
+
+            $(this).find('.class-stream-name-label').text(nameLabel);
+        });
+    }
+
+    // Handle institution type change
+    $('select[name="type"]').on('change', function() {
+        updateClassStreamUI();
+    });
+
+    // Initial setup
+    updateClassStreamUI();
+
+    // Add new class/stream row
     $('#add-class-btn').on('click', function() {
-        var classOptions = availableClasses.map(cls =>
-            `<option value="${cls}">${cls}</option>`
-        ).join('');
+        var type = $('select[name="type"]').val();
+        var isSchool = (type === 'school');
+        var optionsSource = isSchool ? availableClasses : availableStreams;
+        var placeholder = isSchool ? 'Select Class' : 'Select Stream';
+        var nameLabel = isSchool ? 'Class Name' : 'Stream Name';
+
+        var optionsHtml = `<option value="">${placeholder}</option>`;
+        optionsSource.forEach(function(opt) {
+            optionsHtml += `<option value="${opt}">${opt}</option>`;
+        });
 
         var classHtml = `
             <div class="class-item mb-3 p-3 border rounded" data-index="${classIndex}">
                 <div class="row">
                     <div class="col-md-5">
-                        <label>Class Name</label>
+                        <label class="class-stream-name-label">${nameLabel}</label>
                         <select name="classes[${classIndex}][class_name]" class="form-control class-select" required>
-                            <option value="">Select Class</option>
-                            ${classOptions}
+                            ${optionsHtml}
                         </select>
                     </div>
 

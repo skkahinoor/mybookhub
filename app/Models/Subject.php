@@ -10,6 +10,6 @@ class Subject extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
+        'name', 'status',
     ];
 }

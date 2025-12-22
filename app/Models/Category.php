@@ -9,6 +9,19 @@ class Category extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'parent_id',
+        'section_id',
+        'category_name',
+        'category_image',
+        'category_discount',
+        'description',
+        'url',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
+        'status',
+    ];
 
 
     // Every category belongs to a section    // The inverse of the relationship
@@ -23,14 +36,14 @@ class Category extends Model
         return $this->belongsTo('App\Models\Category', 'parent_id')->select('id', 'category_name'); // 'parent_id' is the `categories` table foreign key to the same table (the relationship between a category and its parent category inside the same table (`categories` table))    // select('id', 'category_name') means select `id` and `category_name` columns ONLY from the `sections` table for a better performance
     }
 
-    public function subCategories() { // this method could be better named 'children'    // This relationship brings the categories that point to the current category (using their `parent_id`) (Example: If the current category with `id` = 4, i.e. \App\Models\Category::find(4), the relationship brings all the categories that their `parent_id` = 4)    // A one category can have many subcategories (this is a relationship inside the same table `categories` (not between two different tables))    
+    public function subCategories() { // this method could be better named 'children'    // This relationship brings the categories that point to the current category (using their `parent_id`) (Example: If the current category with `id` = 4, i.e. \App\Models\Category::find(4), the relationship brings all the categories that their `parent_id` = 4)    // A one category can have many subcategories (this is a relationship inside the same table `categories` (not between two different tables))
         return $this->hasMany('App\Models\Category', 'parent_id')->where('status', 1);
     }
 
 
 
     // Get the parent category & its subcategories (child categories) of a URL
-    public static function categoryDetails($url) { // this method is used inside ProductsController.php to be used in listing.blade.php page    // Note: if the URL is a 'category', we need to fetch its related products as well as its subcategories related products, but if the url is a subcategory, we need to fetch the subcategory related products only    
+    public static function categoryDetails($url) { // this method is used inside ProductsController.php to be used in listing.blade.php page    // Note: if the URL is a 'category', we need to fetch its related products as well as its subcategories related products, but if the url is a subcategory, we need to fetch the subcategory related products only
         $categoryDetails = Category::select('id', 'parent_id', 'category_name', 'url', 'description', 'meta_title', 'meta_description', 'meta_keywords')->with([ // Constraining Eager Loads: https://laravel.com/docs/9.x/eloquent-relationships#constraining-eager-loads    // Subquery Where Clauses: https://laravel.com/docs/9.x/queries#subquery-where-clauses    // Advanced Subqueries: https://laravel.com/docs/9.x/eloquent#advanced-subqueries
             'subCategories' => function($query) { // the 'subCategories' relationship method in Category.php model (this model)
                 $query->select('id', 'parent_id', 'category_name', 'url', 'description', 'meta_title', 'meta_description', 'meta_keywords'); // Important Note: It's a MUST to select 'id' even if you don't need it, because the relationship Foreign Key `product_id` depends on it, or else the `product` relationship would give you 'null'!
@@ -42,7 +55,7 @@ class Category extends Model
 
 
 
-        // Category Breadcrumb in listing.blade.php: There're two Breadrumbs: category Breadcrumb and subcategory Breadcrumb    
+        // Category Breadcrumb in listing.blade.php: There're two Breadrumbs: category Breadcrumb and subcategory Breadcrumb
         if ($categoryDetails['parent_id'] == 0) { // if the category is PARENT category (not SUBcategory)
             // Show main category only in the Breadcrumb
             $breadcrumbs = '
@@ -76,7 +89,7 @@ class Category extends Model
 
 
 
-    // this method is called in admin\filters\filters.blade.php to be able to translate the filter cat_ids column to category names to show them in the table in filters.blade.php in the Admin Panel    
+    // this method is called in admin\filters\filters.blade.php to be able to translate the filter cat_ids column to category names to show them in the table in filters.blade.php in the Admin Panel
     public static function getCategoryName($category_id) {
         $getCategoryName = Category::select('category_name')->where('id', $category_id)->first();
 
