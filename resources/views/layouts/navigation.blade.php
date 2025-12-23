@@ -56,6 +56,20 @@
                             <i class="bi bi-wallet2 me-1"></i>{{ __('Withdrawals') }}
                         </x-nav-link>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="salesVendorsDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-lines-fill me-1"></i> Vendors
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="salesVendorsDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('sales.vendors.index') }}">All Vendors</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('sales.vendors.create') }}">Add Vendor</a>
+                            </li>
+                        </ul>
+                    </li>
                     {{-- <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="salesBlocksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-person-lines-fill me-1"></i> Blocks

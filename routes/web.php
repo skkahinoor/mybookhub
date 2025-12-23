@@ -572,6 +572,15 @@ Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function
             'destroy' => 'sales.students.destroy',
         ])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
+        // Sales Vendors Management
+        Route::resource('vendors', 'VendorController')->names([
+            'index'   => 'sales.vendors.index',
+            'create'  => 'sales.vendors.create',
+            'store'   => 'sales.vendors.store',
+            'show'    => 'sales.vendors.show',
+            'destroy' => 'sales.vendors.destroy',
+        ])->only(['index', 'create', 'store', 'show', 'destroy']);
+
         // Route::post('students/store-user-location', 'StudentController@storeUserLocation')->name('sales.students.store_user_location');
         // Route::post('students/store-institution-location', 'StudentController@storeInstitutionLocation')->name('sales.students.store_institution_location');
         // Route::get('students/institution/{institution}/address', 'StudentController@getInstitutionAddress')->name('sales.students.institution_address');
