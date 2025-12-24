@@ -14,6 +14,7 @@ use App\Models\Publisher;
 use App\Models\Author;
 use App\Models\Subject;
 use App\Models\Language;
+use App\Models\Edition;
 
 class CatalogueController extends Controller
 {
@@ -616,4 +617,85 @@ class CatalogueController extends Controller
             'message' => 'Language deleted successfully'
         ]);
     }
-}
+
+    public function getEdition(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $edition = Edition::orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Edition fetched successfully',
+            'data' => $edition
+        ]);
+    }
+
+    public function storeEdition(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $request->validate([
+            'edition' => 'required|string|max:255|unique:editions,edition',
+        ]);
+
+        $edition = Edition::create([
+            'edition' => $request->edition,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Edition created successfully',
+            'data' => $edition
+        ]);
+    }
+
+    public function updateEdition(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $edition = Edition::find($id);
+
+        if (!$edition) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Edition not found'
+            ], 404);
+        }
+
+        $request->validate([
+            'edition' => 'required|string|max:255|unique:editions,edition,' . $edition->id,
+        ]);
+
+        $edition->update([
+            'edition' => $request->edition,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Edition updated successfully',
+            'data' => $edition
+        ]);
+    }
+
+    public function destroyEdition(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $edition = Edition::find($id);
+
+        if (!$edition) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Edition not found'
+            ], 404);
+        }
+
+        $edition->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Edition deleted successfully'
+        ]);
+    }
+}  
