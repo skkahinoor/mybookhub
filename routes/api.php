@@ -124,4 +124,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vendor/language', [CatalogueController::class, 'storeLanguage']);
     Route::put('/vendor/language/{id}', [CatalogueController::class, 'updateLanguage']);
     Route::delete('/vendor/language/{id}', [CatalogueController::class, 'destroyLanguage']);
+
+    Route::get('/vendor/edition', [CatalogueController::class, 'getEdition']);
+    Route::post('/vendor/edition', [CatalogueController::class, 'storeEdition']);
+    Route::put('/vendor/edition/{id}', [CatalogueController::class, 'updateEdition']);
+    Route::delete('/vendor/edition/{id}', [CatalogueController::class, 'destroyEdition']);
 });
