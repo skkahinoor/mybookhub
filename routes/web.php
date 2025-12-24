@@ -86,13 +86,13 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Sections (Sections, Categories, Subcategories, Products, Attributes)
         // Route::get('sections', 'SectionController@sections');
         Route::get('sections', [SectionController::class, 'sections'])->name('sections');
-        Route::post('update-section-status', 'SectionController@updateSectionStatus');               // Update Sections Status using AJAX in sections.blade.php
+        Route::post('update-section-status', 'SectionController@updateSectionStatus')->name('updatesectionstatus');               // Update Sections Status using AJAX in sections.blade.php
         Route::get('delete-section/{id}', 'SectionController@deleteSection');                        // Delete a section in sections.blade.php
         Route::match(['get', 'post'], 'add-edit-section/{id?}', 'SectionController@addEditSection'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the section, and if not passed, this means Add a Section
 
                                                                                                         // Categories
         Route::get('categories', 'CategoryController@categories');                                      // Categories in Catalogue Management in Admin Panel
-        Route::post('update-category-status', 'CategoryController@updateCategoryStatus');               // Update Categories Status using AJAX in categories.blade.php
+        Route::post('update-category-status', 'CategoryController@updateCategoryStatus')->name('updatecategorystatus');               // Update Categories Status using AJAX in categories.blade.php
         Route::match(['get', 'post'], 'add-edit-category/{id?}', 'CategoryController@addEditCategory'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Category, and if not passed, this means Add a Category
         Route::get('append-categories-level', 'CategoryController@appendCategoryLevel');                // Show Categories <select> <option> depending on the chosen Section (show the relevant categories of the chosen section) using AJAX in admin/js/custom.js in append_categories_level.blade.php page
         Route::get('delete-category/{id}', 'CategoryController@deleteCategory');                        // Delete a category in categories.blade.php
@@ -202,7 +202,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Products
         Route::get('products/getauthors', [AdminProductsController::class, 'getAuthor']);
         Route::get('products', [AdminProductsController::class, 'products']);                                        // render products.blade.php in the Admin Panel
-        Route::post('update-product-status', [AdminProductsController::class, 'updateProductStatus']);               // Update Products Status using AJAX in products.blade.php
+            Route::post('update-product-status', [AdminProductsController::class, 'updateProductStatus'])->name('updateproductstatus');               // Update Products Status using AJAX in products.blade.php
         Route::get('delete-product/{id}', [AdminProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
         Route::match(['get', 'post'], 'add-edit-product/{id?}', [AdminProductsController::class, 'addEditProduct']); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
         Route::get('delete-product-image/{id}', [AdminProductsController::class, 'deleteProductImage']);             // Delete a product images (in the three folders: small, medium and large) in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
@@ -236,7 +236,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
                                                                                      // Coupons
         Route::get('coupons', 'CouponsController@coupons');                          // Render admin/coupons/coupons.blade.php page in the Admin Panel
-        Route::post('update-coupon-status', 'CouponsController@updateCouponStatus'); // Update Coupon Status (active/inactive) via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
+        Route::post('update-coupon-status', 'CouponsController@updateCouponStatus')->name('updatecouponstatus'); // Update Coupon Status (active/inactive) via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
         Route::get('delete-coupon/{id}', 'CouponsController@deleteCoupon');          // Delete a Coupon via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
 
                                                                                                    // Render admin/coupons/add_edit_coupon.blade.php page with 'GET' request ('Edit/Update the Coupon') if the {id?} Optional Parameter is passed, or if it's not passed, it's a GET request too to 'Add a Coupon', or it's a POST request for the HTML Form submission in the same page
@@ -244,7 +244,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
                                                                               // Users
         Route::get('users', 'UserController@users');                          // Render admin/users/users.blade.php page in the Admin Panel
-        Route::post('update-user-status', 'UserController@updateUserStatus'); // Update User Status (active/inactive) via AJAX in admin/users/users.blade.php, check admin/js/custom.js
+        Route::post('update-user-status', 'UserController@updateUserStatus')->name('updateuserstatus'); // Update User Status (active/inactive) via AJAX in admin/users/users.blade.php, check admin/js/custom.js
 
         // Orders
         // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel

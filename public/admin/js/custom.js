@@ -78,12 +78,12 @@ $(document).ready(function () {
     $(document).on('click', '.updateSectionStatus', function () { // '.updateSectionStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateSectionStatus').on('click', function() {
         var status = $(this).children('i').attr('status'); // Using HTML Custom Attributes
         var section_id = $(this).attr('section_id'); // Using HTML Custom Attributes
-
+        var updateUrl = $(this).data('url');
 
         $.ajax({
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
             type: 'post',
-            url: '/admin/update-section-status', // check the web.php for this route and check the SectionController for the updateSectionStatus() method
+            url: updateUrl, // check the web.php for this route and check the SectionController for the updateSectionStatus() method
             data: { status: status, section_id: section_id }, // we pass the status and section_id
             success: function (resp) {
                 if (resp.status == 0) { // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
@@ -102,12 +102,12 @@ $(document).ready(function () {
     $(document).on('click', '.updateCategoryStatus', function () { // '.updateCategoryStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateCategoryStatus').on('click', function() {
         var status = $(this).children('i').attr('status'); // Using HTML Custom Attributes
         var category_id = $(this).attr('category_id'); // Using HTML Custom Attributes
-
+        var updateUrl = $(this).data('url');
 
         $.ajax({
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
             type: 'post',
-            url: '/admin/update-category-status', // check the web.php for this route and check the CategoryController for the updateCategoryStatus() method
+            url: updateUrl, // check the web.php for this route and check the CategoryController for the updateCategoryStatus() method
             data: { status: status, category_id: category_id }, // we pass the status and category_id
             success: function (resp) {
                 if (resp.status == 0) { // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
@@ -150,12 +150,12 @@ $(document).ready(function () {
     $(document).on('click', '.updateProductStatus', function () { // '.updateProductStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateProductStatus').on('click', function() {
         var status = $(this).children('i').attr('status'); // Using HTML Custom Attributes
         var product_id = $(this).attr('product_id'); // Using HTML Custom Attributes
-
+        var updateUrl = $(this).data('url');
 
         $.ajax({
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
             type: 'post',
-            url: '/admin/update-product-status', // check the web.php for this route and check the ProductsController for the updateProductStatus() method
+            url: updateUrl, // check the web.php for this route and check the ProductsController for the updateProductStatus() method
             data: { status: status, product_id: product_id }, // we pass the status and product_id
             success: function (resp) {
                 if (resp.status == 0) { // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
@@ -294,13 +294,13 @@ $(document).ready(function () {
     $(document).on('click', '.updateCouponStatus', function () { // '.updateCouponStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateCouponStatus').on('click', function() {
         var status = $(this).children('i').attr('status'); // Using HTML Custom Attributes
         var coupon_id = $(this).attr('coupon_id'); // Using HTML Custom Attributes
-
+        var updateUrl = $(this).data('url');
 
 
         $.ajax({
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
             type: 'post',
-            url: '/admin/update-coupon-status', // check the web.php for this route and check the CouponsController for the updateCouponStatus() method
+            url: updateUrl, // check the web.php for this route and check the CouponsController for the updateCouponStatus() method
             data: { status: status, coupon_id: coupon_id }, // we pass the status and coupon_id
             success: function (resp) {
                 if (resp.status == 0) { // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
@@ -319,18 +319,42 @@ $(document).ready(function () {
     $(document).on('click', '.updateUserStatus', function () { // '.updateUserStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateUserStatus').on('click', function() {
         var status = $(this).children('i').attr('status'); // Using HTML Custom Attributes
         var user_id = $(this).attr('user_id'); // Using HTML Custom Attributes
-
+        var updateUrl = $(this).data('url');
 
         $.ajax({
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
             type: 'post',
-            url: '/admin/update-user-status', // check the web.php for this route and check the UsersController for the updateUserStatus() method
+            url: updateUrl, // check the web.php for this route and check the UsersController for the updateUserStatus() method
             data: { status: status, user_id: user_id }, // we pass the status and user_id
             success: function (resp) {
                 if (resp.status == 0) { // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $('#user-' + user_id).html('<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>');
                 } else if (resp.status == 1) {
                     $('#user-' + user_id).html('<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>');
+                }
+            },
+            error: function () {
+                alert('Error');
+            }
+        });
+    });
+
+    // Update Student Status (active/inactive) via AJAX in admin/students/index.blade.php
+    $(document).on('click', '.updateStudentStatus', function () {
+        var status = $(this).children('i').attr('status');
+        var studentId = $(this).attr('student_id');
+        var updateUrl = $(this).data('url');
+
+        $.ajax({
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            type: 'post',
+            url: updateUrl,
+            data: { status: status === 'Active' ? 0 : 1 },
+            success: function (resp) {
+                if (resp.status === 0) {
+                    $('#student-' + studentId).html('<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>');
+                } else if (resp.status === 1) {
+                    $('#student-' + studentId).html('<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>');
                 }
             },
             error: function () {

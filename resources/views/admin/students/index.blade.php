@@ -224,6 +224,7 @@
                                     <th>DOB</th>
                                     <th>Institution</th>
                                     <th>Type</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -243,6 +244,19 @@
                                         </td>
                                         <td>
                                             {{ $student->institution->type ?? '-' }}
+                                        </td>
+                                        <td>
+                                            <a class="updateStudentStatus"
+                                               id="student-{{ $student->id }}"
+                                               student_id="{{ $student->id }}"
+                                               data-url="{{ route('admin.students.updateStatus', $student->id) }}"
+                                               href="javascript:void(0)">
+                                                @if($student->status)
+                                                    <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                @else
+                                                    <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>
+                                                @endif
+                                            </a>
                                         </td>
                                         <td>
                                             <a href="{{ url('admin/students/'.$student->id.'/edit') }}"

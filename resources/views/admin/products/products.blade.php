@@ -90,7 +90,7 @@
                                                 <td>
                                                     @if ($product['status'] == 1)
                                                         <a class="updateProductStatus" id="product-{{ $product['id'] }}"
-                                                            product_id="{{ $product['id'] }}" href="javascript:void(0)">
+                                                            product_id="{{ $product['id'] }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
                                                             {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                 status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
@@ -98,7 +98,7 @@
                                                     @else
                                                         {{-- if the admin status is inactive --}}
                                                         <a class="updateProductStatus" id="product-{{ $product['id'] }}"
-                                                            product_id="{{ $product['id'] }}" href="javascript:void(0)">
+                                                            product_id="{{ $product['id'] }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
                                                             {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
                                                                 status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
