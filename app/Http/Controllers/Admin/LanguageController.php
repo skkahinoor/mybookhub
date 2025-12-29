@@ -31,9 +31,9 @@ class LanguageController extends Controller
                 $status = 1;
             }
             Language::where('id', $data['language_id'])->update(['status' => $status]);
-            return response()->json(['status' => $status, 'language_id' => $data['language_id']], 'logos');
-            return view('admin.languages.languages', compact('languages', 'logos', 'headerLogo'));
+            return response()->json(['status' => $status, 'language_id' => $data['language_id']]);
         }
+        return view('admin.languages.languages', compact('languages', 'logos', 'headerLogo'));
     }
 
     public function addEditLanguage(Request $request, $id = null)

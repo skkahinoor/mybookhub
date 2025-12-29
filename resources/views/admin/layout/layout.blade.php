@@ -219,6 +219,10 @@
                                         iconClass = 'ti-bookmark-alt';
                                         iconBg = 'bg-warning';
                                         linkUrl = 'notifications?view-inst=' + notification.related_id + '&notif=' + notification.id;
+                                    } else if (notification.type === 'product_added' && notification.related_id) {
+                                        iconClass = 'ti-package';
+                                        iconBg = 'bg-primary';
+                                        linkUrl = 'add-edit-product/' + notification.related_id;
                                     }
                                     
                                     notificationsHtml += `

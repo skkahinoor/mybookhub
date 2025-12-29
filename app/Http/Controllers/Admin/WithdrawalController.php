@@ -96,7 +96,7 @@ class WithdrawalController extends Controller
             'pending' => 'Withdrawal status reset to pending.',
         ];
 
-        return redirect()->route('admin.withdrawals.index')
+        return redirect()->route('admin.withdrawals.show', $id)
             ->with('success_message', $statusMessages[$request->status] ?? 'Status updated successfully.');
     }
 

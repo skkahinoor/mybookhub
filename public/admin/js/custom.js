@@ -146,6 +146,130 @@ $(document).ready(function () {
         });
     });
 
+    // Updating Publisher status (active/inactive) using AJAX in publisher.blade.php
+    $(document).on('click', '.updatePublisherStatus', function () { // '.updatePublisherStatus' is the anchor link <a> CSS class    // This is the same as    $('.updatePublisherStatus').on('click', function() {
+        var status = $(this).children('i').attr('status'); // Using HTML Custom Attributes
+        var publisher_id = $(this).attr('publisher_id'); // Using HTML Custom Attributes
+        var updateUrl = $(this).data('url');
+
+        if (!updateUrl) {
+            alert('Error: Update URL not found');
+            return;
+        }
+
+        $.ajax({
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
+            type: 'post',
+            url: updateUrl, // check the web.php for this route and check the PublisherController for the updatePublisherStatus() method
+            data: { status: status, publisher_id: publisher_id }, // we pass the status and publisher_id
+            success: function (resp) {
+                if (resp.status == 0) { // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
+                    $('#publisher-' + publisher_id).html('<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>');
+                } else if (resp.status == 1) {
+                    $('#publisher-' + publisher_id).html('<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error:', error);
+                console.error('Response:', xhr.responseText);
+                alert('Error updating publisher status. Please check console for details.');
+            }
+        });
+    });
+
+    // Updating Author status (active/inactive) using AJAX in authors/author.blade.php
+    $(document).on('click', '.updateAuthorStatus', function () {
+        var status = $(this).children('i').attr('status');
+        var authorId = $(this).attr('author_id');
+        var updateUrl = $(this).data('url');
+
+        if (!updateUrl) {
+            alert('Error: Update URL not found');
+            return;
+        }
+
+        $.ajax({
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            type: 'post',
+            url: updateUrl,
+            data: { status: status, author_id: authorId },
+            success: function (resp) {
+                if (resp.status == 0) {
+                    $('#author-' + authorId).html('<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>');
+                } else if (resp.status == 1) {
+                    $('#author-' + authorId).html('<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error:', error);
+                console.error('Response:', xhr.responseText);
+                alert('Error updating author status. Please check console for details.');
+            }
+        });
+    });
+
+    // Updating Subject status (active/inactive) using AJAX in subject/subject.blade.php
+    $(document).on('click', '.updateSubjectStatus', function () {
+        var status = $(this).children('i').attr('status');
+        var subjectId = $(this).attr('subject_id');
+        var updateUrl = $(this).data('url');
+
+        if (!updateUrl) {
+            alert('Error: Update URL not found');
+            return;
+        }
+
+        $.ajax({
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            type: 'post',
+            url: updateUrl,
+            data: { status: status, subject_id: subjectId },
+            success: function (resp) {
+                if (resp.status == 0) {
+                    $('#subject-' + subjectId).html('<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>');
+                } else if (resp.status == 1) {
+                    $('#subject-' + subjectId).html('<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error:', error);
+                console.error('Response:', xhr.responseText);
+                alert('Error updating subject status. Please check console for details.');
+            }
+        });
+    });
+
+    // Updating Language status (active/inactive) using AJAX in languages/languages.blade.php
+    $(document).on('click', '.updateLanguageStatus', function () {
+        var status = $(this).children('i').attr('status');
+        var languageId = $(this).attr('language_id');
+        var updateUrl = $(this).data('url');
+
+        if (!updateUrl) {
+            alert('Error: Update URL not found');
+            return;
+        }
+
+        $.ajax({
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            type: 'post',
+            url: updateUrl,
+            data: { status: status, language_id: languageId },
+            success: function (resp) {
+                if (resp.status == 0) {
+                    $('#language-' + languageId).html('<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>');
+                } else if (resp.status == 1) {
+                    $('#language-' + languageId).html('<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error:', error);
+                console.error('Response:', xhr.responseText);
+                alert('Error updating language status. Please check console for details.');
+            }
+        });
+    });
+
     // Updating Product status (active/inactive) using AJAX in products.blade.php
     $(document).on('click', '.updateProductStatus', function () { // '.updateProductStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateProductStatus').on('click', function() {
         var status = $(this).children('i').attr('status'); // Using HTML Custom Attributes

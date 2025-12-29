@@ -1,14 +1,14 @@
 <?php
-
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Notification;
 use App\Models\HeaderLogo;
+use App\Models\Notification;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
+use Yajra\DataTables\DataTables;
 
 class NotificationController extends Controller
 {
@@ -17,29 +17,50 @@ class NotificationController extends Controller
      */
     public function getNotifications()
     {
-        $notifications = Notification::orderBy('created_at', 'desc')
-            ->limit(5)
+        $admin = Auth::guard('admin')->user();
+        
+        // Build query based on admin type
+        $query = Notification::orderBy('created_at', 'desc');
+        
+        // Filter notifications based on admin type
+        if ($admin->type === 'superadmin') {
+            // Superadmin sees all notifications (no filtering)
+        } elseif ($admin->type === 'vendor') {
+            // Vendor sees ONLY their own notifications (vendor_id matches their vendor_id)
+            // Vendors CANNOT see admin notifications (where vendor_id is null)
+            $query->where('vendor_id', $admin->vendor_id);
+        } else {
+            // Other admin types (admin, subadmin) see all notifications (no filtering)
+        }
+        
+        $notifications = $query->limit(5)
             ->get()
             ->map(function ($notification) {
                 return [
-                    'id' => $notification->id,
-                    'type' => $notification->type,
-                    'title' => $notification->title,
-                    'message' => $notification->message,
-                    'related_id' => $notification->related_id,
+                    'id'           => $notification->id,
+                    'type'         => $notification->type,
+                    'title'        => $notification->title,
+                    'message'      => $notification->message,
+                    'related_id'   => $notification->related_id,
                     'related_type' => $notification->related_type,
-                    'is_read' => (bool) $notification->is_read,
-                    'created_at' => $notification->created_at->toDateTimeString(),
+                    'is_read'      => (bool) $notification->is_read,
+                    'created_at'   => $notification->created_at->toDateTimeString(),
                 ];
             })
             ->values()
             ->toArray();
 
-        $unreadCount = Notification::where('is_read', false)->count();
+        // Count unread notifications with same filter
+        $unreadQuery = Notification::where('is_read', false);
+        if ($admin->type === 'vendor') {
+            // Vendor sees ONLY their own unread notifications
+            $unreadQuery->where('vendor_id', $admin->vendor_id);
+        }
+        $unreadCount = $unreadQuery->count();
 
         return response()->json([
             'notifications' => $notifications,
-            'unreadCount' => $unreadCount,
+            'unreadCount'   => $unreadCount,
         ]);
     }
 
@@ -48,7 +69,16 @@ class NotificationController extends Controller
      */
     public function markAsRead($id)
     {
+        $admin = Auth::guard('admin')->user();
         $notification = Notification::findOrFail($id);
+        
+        // Check if vendor can access this notification
+        if ($admin->type === 'vendor') {
+            if ($notification->vendor_id !== null && $notification->vendor_id != $admin->vendor_id) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+        }
+        
         $notification->update(['is_read' => true]);
 
         return response()->json(['success' => true]);
@@ -59,7 +89,17 @@ class NotificationController extends Controller
      */
     public function markAllAsRead()
     {
-        Notification::where('is_read', false)->update(['is_read' => true]);
+        $admin = Auth::guard('admin')->user();
+        
+        $query = Notification::where('is_read', false);
+        
+        // Filter based on admin type
+        if ($admin->type === 'vendor') {
+            // Vendor can only mark their own notifications as read
+            $query->where('vendor_id', $admin->vendor_id);
+        }
+        
+        $query->update(['is_read' => true]);
 
         return response()->json(['success' => true]);
     }
@@ -72,11 +112,22 @@ class NotificationController extends Controller
     {
         Session::put('page', 'notifications');
         $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        $title = 'All Notifications';
+        $logos      = HeaderLogo::first();
+        $title      = 'All Notifications';
+        
+        $admin = Auth::guard('admin')->user();
+        
         if ($request->ajax()) {
-
+            // Build query based on admin type
             $query = Notification::latest();
+            
+            // Filter notifications based on admin type
+            if ($admin->type === 'vendor') {
+                // Vendor sees ONLY their own notifications (vendor_id matches their vendor_id)
+                // Vendors CANNOT see admin notifications (where vendor_id is null)
+                $query->where('vendor_id', $admin->vendor_id);
+            }
+            // superadmin and other admin types see all notifications (no filtering)
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -87,7 +138,7 @@ class NotificationController extends Controller
 
                 ->editColumn('type', function ($n) {
                     return '<span class="badge badge-info">'
-                        . ucfirst(str_replace('_', ' ', $n->type))
+                    . ucfirst(str_replace('_', ' ', $n->type))
                         . '</span>';
                 })
 
@@ -101,13 +152,13 @@ class NotificationController extends Controller
                     return $n->created_at->format('M d, Y h:i A');
                 })
 
-                // 🔥 ACTION COLUMN
+            // 🔥 ACTION COLUMN
                 ->addColumn('action', function ($n) {
 
                     $html = '<div class="d-flex align-items-center" style="gap:10px;">';
 
                     // Mark as read
-                    if (!$n->is_read) {
+                    if (! $n->is_read) {
                         $html .= '
                         <a href="#" class="mark-as-read"
                            data-id="' . $n->id . '" title="Mark as Read">
@@ -167,9 +218,9 @@ class NotificationController extends Controller
         }
 
         return view('admin.notifications.index', [
-            'title' => 'Notifications',
+            'title'      => 'Notifications',
             'headerLogo' => $headerLogo,
-            'logos' => $logos,
+            'logos'      => $logos,
         ]);
     }
 }

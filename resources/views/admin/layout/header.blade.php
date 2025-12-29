@@ -23,13 +23,20 @@
         </ul>
         <ul class="navbar-nav navbar-nav-right">
             {{-- Notification Bell --}}
+            {{-- Notifications are filtered by admin type: superadmin sees all, vendor sees only their own --}}
             <li class="nav-item dropdown">
                 <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#" data-toggle="dropdown" aria-expanded="false">
                     <i class="ti-bell"></i>
                     <span class="count" id="notificationCount" style="display: none;">0</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list" aria-labelledby="notificationDropdown">
-                    <p class="mb-0 font-weight-normal float-left dropdown-header">Notifications</p>
+                    <p class="mb-0 font-weight-normal float-left dropdown-header">
+                        @if(Auth::guard('admin')->user()->type === 'vendor')
+                            My Notifications
+                        @else
+                            Notifications
+                        @endif
+                    </p>
                     <div id="notificationsList">
                         <div class="dropdown-item preview-item">
                             <div class="preview-thumbnail">
