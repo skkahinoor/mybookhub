@@ -39,7 +39,7 @@
                                 <table class="table table-bordered" id="admins-table">
                                     <thead>
                                         <tr>
-                                            <th>Admin ID</th>
+                                            <th>{{ $title }} ID</th>
                                             <th>Name</th>
                                             <th>Type</th>
                                             <th>Mobile</th>

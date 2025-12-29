@@ -566,7 +566,7 @@ class AdminController extends Controller
 
         // Fetch countries for dropdowns
         $countries = Country::where('status', true)->get()->toArray();
-        
+
         // Get current location IDs from vendor personal details
         $currentCountryId = $vendorDetails['vendor_personal']['country_id'] ?? null;
         $currentStateId = $vendorDetails['vendor_personal']['state_id'] ?? null;
@@ -943,6 +943,7 @@ class AdminController extends Controller
     public function updateContactReply(Request $request, $id)
     {
         $logos = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
         if ($request->isMethod('post')) {
             $data = $request->all();
 

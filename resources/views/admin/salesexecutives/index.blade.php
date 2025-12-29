@@ -16,6 +16,21 @@
                             </div>
 
 
+                            <style>
+                                .status-icon {
+                                    width: 28px;
+                                    height: 28px;
+                                    border-radius: 35%;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 15px;
+                                    line-height: 1;
+                                }
+                                </style>
+
+
+
                             @if (Session::has('success_message'))
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <strong>Success:</strong> {{ Session::get('success_message') }}
@@ -44,23 +59,22 @@
                                                 <td>{{ $se->name }}</td>
                                                 <td>{{ $se->email }}</td>
                                                 <td>{{ $se->phone }}</td>
-                                                <td>
+                                                <td class="text-center">
                                                     @if ($se->status == 1)
-                                                        {{-- Active: green circle with tick --}}
-                                                        <span class="badge bg-success d-inline-flex align-items-center justify-content-center text-white"
-                                                              style="width:20px;height:20px;border-radius:32%;font-size:16px;padding:5px !importatnt;">
+                                                        {{-- Active --}}
+                                                        <span class="badge bg-success status-icon text-white">
                                                             <i class="mdi mdi-check"></i>
                                                         </span>
                                                     @else
-                                                        {{-- Inactive: red circle with cross --}}
-                                                        <span class="badge bg-danger d-inline-flex align-items-center justify-content-center text-white"
-                                                              style="width:20px;height:20px;border-radius:32%;font-size:16px; padding:5px !importatnt;">
+                                                        {{-- Inactive --}}
+                                                        <span class="badge bg-danger status-icon text-white">
                                                             <i class="mdi mdi-close"></i>
                                                         </span>
                                                     @endif
                                                 </td>
-                                                
-                                                
+
+
+
                                                 <td>
                                                     <div class="d-flex align-items-center" style="gap: 10px;">
                                                         <a href="javascript:void(0)" class="view-sales-executive"
@@ -97,41 +111,12 @@
         </footer>
     </div>
 
-    <!-- Sales Executive Details Modal -->
-    <div class="modal fade" id="salesExecutiveModal" tabindex="-1" role="dialog"
-        aria-labelledby="salesExecutiveModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="salesExecutiveModalLabel">Sales Executive Details</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" id="salesExecutiveModalBody">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" id="approveSalesExecutiveBtn" style="display: none;">
-                        <i class="mdi mdi-check"></i> Approve (Activate)
-                    </button>
-                    <button type="button" class="btn btn-danger" id="deactivateSalesExecutiveBtn" style="display: none;">
-                        <i class="mdi mdi-close"></i> Inactive
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(function() {
             $('#sales-table').DataTable({
@@ -144,36 +129,27 @@
                 }]
             });
 
-            var currentSalesExecutiveId = null;
-
-            // View Sales Executive Details Modal
+            // View Sales Executive Details - Show SweetAlert
             $(document).on('click', '.view-sales-executive', function(e) {
                 e.preventDefault();
-                currentSalesExecutiveId = $(this).data('id');
+                var salesExecutiveId = $(this).data('id');
 
-                // Reset modal state
-                $('#approveSalesExecutiveBtn').hide();
-                $('#deactivateSalesExecutiveBtn').hide();
-
-                // Show modal
-                $('#salesExecutiveModal').modal('show');
-
-                // Load sales executive details
-                loadSalesExecutiveDetails(currentSalesExecutiveId);
-            });
-
-            // Reset modal when closed
-            $('#salesExecutiveModal').on('hidden.bs.modal', function() {
-                currentSalesExecutiveId = null;
-                $('#salesExecutiveModalBody').html(
-                    '<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>'
-                );
+                // Load sales executive details and show in SweetAlert
+                loadSalesExecutiveDetails(salesExecutiveId);
             });
 
             function loadSalesExecutiveDetails(id) {
-                $('#salesExecutiveModalBody').html(
-                    '<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>'
-                );
+                // Show loading SweetAlert
+                Swal.fire({
+                    title: 'Loading...',
+                    text: 'Please wait while we fetch the details',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
 
                 $.ajax({
                     url: '{{ url('admin/sales-executive') }}/' + id + '/details',
@@ -184,141 +160,185 @@
                     success: function(response) {
                         if (response.success) {
                             var data = response.data;
-                            var statusBadge = data.status == 1 ?
-                                '<span class="badge badge-success">Active</span>' :
-                                '<span class="badge badge-warning">Inactive (Pending Approval)</span>';
+                            var statusText = data.status == 1 ? 'Active' : 'Inactive (Pending Approval)';
+                            var statusIcon = data.status == 1 ? 'success' : 'warning';
 
-                            var html = `
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <h6 class="font-weight-bold mb-3">Personal Information</h6>
-                                        <table class="table table-sm table-bordered">
-                                            <tr>
-                                                <td style="width: 40%;"><strong>Name:</strong></td>
-                                                <td>${data.name || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Email:</strong></td>
-                                                <td>${data.email || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Phone:</strong></td>
-                                                <td>${data.phone || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Address:</strong></td>
-                                                <td>${data.address || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>City:</strong></td>
-                                                <td>${data.city || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>District:</strong></td>
-                                                <td>${data.district || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>State:</strong></td>
-                                                <td>${data.state || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Country:</strong></td>
-                                                <td>${data.country || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Pincode:</strong></td>
-                                                <td>${data.pincode || 'N/A'}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Status:</strong></td>
-                                                <td>${statusBadge}</td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>Registered On:</strong></td>
-                                                <td>${data.created_at || 'N/A'}</td>
-                                            </tr>
-                                        </table>
-                                    </div>
+                            // Format the details as HTML
+                            var detailsHtml = `
+                                <div style="text-align: left; padding: 10px;">
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold; width: 40%;">Name:</td>
+                                            <td style="padding: 8px;">${data.name || 'N/A'}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">Email:</td>
+                                            <td style="padding: 8px;">${data.email || 'N/A'}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">Phone:</td>
+                                            <td style="padding: 8px;">${data.phone || 'N/A'}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">Address:</td>
+                                            <td style="padding: 8px;">${data.address || 'N/A'}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">City:</td>
+                                            <td style="padding: 8px;">${data.city || 'N/A'}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">District:</td>
+                                            <td style="padding: 8px;">${data.district || 'N/A'}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">State:</td>
+                                            <td style="padding: 8px;">${data.state || 'N/A'}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">Country:</td>
+                                            <td style="padding: 8px;">${data.country || 'N/A'}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">Pincode:</td>
+                                            <td style="padding: 8px;">${data.pincode || 'N/A'}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">Status:</td>
+                                            <td style="padding: 8px;">${statusText}</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding: 8px; font-weight: bold;">Registered On:</td>
+                                            <td style="padding: 8px;">${data.created_at || 'N/A'}</td>
+                                        </tr>
+                                    </table>
                                 </div>
                             `;
 
-                            $('#salesExecutiveModalBody').html(html);
+                            // Store current status for use in callback
+                            var currentStatus = data.status;
+                            var actionStatus = currentStatus == 0 ? 'Active' : 'Inactive';
 
-                            // Show approve / deactivate buttons based on status
-                            if (data.status == 0) {
-                                $('#approveSalesExecutiveBtn').show();
-                                $('#deactivateSalesExecutiveBtn').hide();
-                            } else if (data.status == 1) {
-                                $('#approveSalesExecutiveBtn').hide();
-                                $('#deactivateSalesExecutiveBtn').show();
-                            } else {
-                                $('#approveSalesExecutiveBtn').hide();
-                                $('#deactivateSalesExecutiveBtn').hide();
+                            // Configure buttons based on status
+                            var swalConfig = {
+                                title: 'Sales Executive Details',
+                                html: detailsHtml,
+                                icon: statusIcon,
+                                confirmButtonText: 'Close',
+                                confirmButtonColor: '#a71d84',
+                                width: '600px',
+                                showDenyButton: false,
+                                allowOutsideClick: true,
+                                allowEscapeKey: true
+                            };
+
+                            // Show approve button if status is inactive (0)
+                            if (currentStatus == 0) {
+                                swalConfig.showDenyButton = true;
+                                swalConfig.denyButtonText = '<i class="mdi mdi-check"></i> Approve (Activate)';
+                                swalConfig.denyButtonColor = '#28a745';
+                                swalConfig.confirmButtonText = 'Close';
                             }
+                            // Show deactivate button if status is active (1)
+                            else if (currentStatus == 1) {
+                                swalConfig.showDenyButton = true;
+                                swalConfig.denyButtonText = '<i class="mdi mdi-close"></i> Deactivate';
+                                swalConfig.denyButtonColor = '#dc3545';
+                                swalConfig.confirmButtonText = 'Close';
+                            }
+
+                            // Show details in SweetAlert
+                            Swal.fire(swalConfig).then((result) => {
+                                if (result.isDenied) {
+                                    // Action button clicked (Approve or Deactivate)
+                                    updateSalesExecutiveStatus(id, actionStatus);
+                                }
+                            });
+                        } else {
+                            Swal.fire({
+                                title: 'Error',
+                                text: 'Failed to load sales executive details',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
                         }
                     },
                     error: function(xhr) {
-                        $('#salesExecutiveModalBody').html(
-                            '<div class="alert alert-danger">Error loading sales executive details.</div>'
-                        );
+                        Swal.fire({
+                            title: 'Error',
+                            text: 'Error loading sales executive details. Please try again.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
                         console.error('Error loading sales executive details:', xhr);
                     }
                 });
             }
 
-            // Approve Sales Executive (Activate - set status to 1)
-            $('#approveSalesExecutiveBtn').on('click', function() {
-                if (!confirm('Are you sure you want to approve (activate) this sales executive?')) {
-                    return;
-                }
+            // Function to update sales executive status
+            function updateSalesExecutiveStatus(salesExecutiveId, status) {
+                var confirmMessage = status === 'Active'
+                    ? 'Are you sure you want to approve (activate) this sales executive?'
+                    : 'Are you sure you want to deactivate this sales executive?';
 
-                $.ajax({
-                    url: '{{ url('admin/update-sales-executive-status') }}',
-                    type: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    data: {
-                        sales_executive_id: currentSalesExecutiveId,
-                        status: 'Active'
-                    },
-                    success: function(response) {
-                        $('#salesExecutiveModal').modal('hide');
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        alert('Error updating sales executive status.');
-                        console.error('Error updating status:', xhr);
+                Swal.fire({
+                    title: 'Confirm Action',
+                    text: confirmMessage,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: status === 'Active' ? '#28a745' : '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, proceed',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Show loading
+                        Swal.fire({
+                            title: 'Processing...',
+                            text: 'Please wait',
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            showConfirmButton: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        $.ajax({
+                            url: '{{ url('admin/update-sales-executive-status') }}',
+                            type: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                sales_executive_id: salesExecutiveId,
+                                status: status
+                            },
+                            success: function(response) {
+                                Swal.fire({
+                                    title: 'Success!',
+                                    text: 'Sales executive status updated successfully',
+                                    icon: 'success',
+                                    confirmButtonText: 'OK',
+                                    confirmButtonColor: '#a71d84'
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function(xhr) {
+                                Swal.fire({
+                                    title: 'Error',
+                                    text: 'Error updating sales executive status. Please try again.',
+                                    icon: 'error',
+                                    confirmButtonText: 'OK'
+                                });
+                                console.error('Error updating status:', xhr);
+                            }
+                        });
                     }
                 });
-            });
+            }
 
-            // Deactivate Sales Executive (set status to 0)
-            $('#deactivateSalesExecutiveBtn').on('click', function() {
-                if (!confirm('Are you sure you want to deactivate this sales executive?')) {
-                    return;
-                }
-
-                $.ajax({
-                    url: '{{ url('admin/update-sales-executive-status') }}',
-                    type: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    data: {
-                        sales_executive_id: currentSalesExecutiveId,
-                        status: 'Inactive'
-                    },
-                    success: function(response) {
-                        $('#salesExecutiveModal').modal('hide');
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        alert('Error updating sales executive status.');
-                        console.error('Error updating status:', xhr);
-                    }
-                });
-            });
         });
     </script>
 @endsection
