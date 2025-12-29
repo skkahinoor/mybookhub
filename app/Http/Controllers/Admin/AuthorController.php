@@ -71,4 +71,29 @@ class AuthorController extends Controller
         return redirect()->back()->with('success', 'Author name deleted successfully!!', 'logos');
         return view('admin.authors.author', compact('authors', 'logos', 'headerLogo'));
     }
+
+    /**
+     * Toggle author status (active/inactive) via AJAX.
+     */
+    public function updateStatus(Request $request)
+    {
+        if (!$request->ajax()) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'status'    => 'required|in:Active,Inactive,0,1',
+            'author_id' => 'required|exists:authors,id',
+        ]);
+
+        $current = $data['status'];
+        $status = ($current === 'Active' || $current === '1' || $current === 1) ? 0 : 1;
+
+        Author::where('id', $data['author_id'])->update(['status' => $status]);
+
+        return response()->json([
+            'status'    => $status,
+            'author_id' => $data['author_id'],
+        ]);
+    }
 }

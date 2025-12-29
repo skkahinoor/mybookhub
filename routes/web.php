@@ -106,9 +106,15 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         //Publishers
         Route::get('publisher', 'PublisherController@publisher');
-        Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus');
+        Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
 
         Route::post('/admin/add-publisher-ajax', [App\Http\Controllers\Admin\PublisherController::class, 'addPublisherAjax'])->name('admin.addPublisherAjax');
+
+        // Authors
+        Route::post('update-author-status', [AuthorController::class, 'updateStatus'])->name('updateauthorstatus');
+
+        // Subjects
+        Route::post('update-subject-status', [SubjectController::class, 'updateStatus'])->name('updatesubjectstatus');
 
                                                                                                            // Update Brands Status using AJAX in brands.blade.php
         Route::get('delete-publisher/{id}', 'PublisherController@deletePublisher');                        // Delete a brand in brands.blade.php
@@ -303,7 +309,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Languages Routes
         Route::get('languages', 'App\Http\Controllers\Admin\LanguageController@languages');
-        Route::post('update-language-status', 'App\Http\Controllers\Admin\LanguageController@updateLanguageStatus');
+        Route::post('update-language-status', 'App\Http\Controllers\Admin\LanguageController@updateLanguageStatus')->name('updatelanguagestatus'); // Update Language Status using AJAX in languages.blade.php
         Route::match(['get', 'post'], 'add-edit-language/{id?}', 'App\Http\Controllers\Admin\LanguageController@addEditLanguage');
         Route::get('delete-language/{id}', 'App\Http\Controllers\Admin\LanguageController@deleteLanguage');
 

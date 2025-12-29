@@ -33,11 +33,11 @@
                                         <td>{{ $language['name'] }}</td>
                                         <td>
                                             @if($language['status']==1)
-                                                <a class="updateLanguageStatus" id="language-{{ $language['id'] }}" language_id="{{ $language['id'] }}" href="javascript:void(0)">
+                                                <a class="updateLanguageStatus" id="language-{{ $language['id'] }}" language_id="{{ $language['id'] }}" data-url="{{ route('updatelanguagestatus') }}" href="javascript:void(0)">
                                                 <i style="font-size:25px;" class="mdi mdi-bookmark-check" status="Active"></i>
                                                 </a>
                                             @else
-                                                <a class="updateLanguageStatus" id="language-{{ $language['id'] }}" language_id="{{ $language['id'] }}" href="javascript:void(0)">
+                                                <a class="updateLanguageStatus" id="language-{{ $language['id'] }}" language_id="{{ $language['id'] }}" data-url="{{ route('updatelanguagestatus') }}" href="javascript:void(0)">
                                                 <i style="font-size:25px;" class="mdi mdi-bookmark-outline" status="Inactive"></i>
                                                 </a>
                                             @endif
@@ -61,19 +61,18 @@
     </div>
     @include('admin.layout.footer')
 </div>
-
-
-    <!-- DataTables Bootstrap 4 CSS CDN -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
-
-    <!-- jQuery CDN (required for DataTables) -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <!-- DataTables JS CDN -->
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#lang').DataTable();
-        });
-    </script>
 @endsection
+
+@push('scripts')
+<!-- DataTables Bootstrap 4 CSS CDN -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
+
+<!-- DataTables JS CDN (jQuery is already loaded in layout) -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#lang').DataTable();
+    });
+</script>
+@endpush

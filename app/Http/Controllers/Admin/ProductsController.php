@@ -20,6 +20,7 @@ use App\Models\Category;
 use App\Models\Section;
 use App\Models\Edition;
 use App\Models\Publisher;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Validator;
 use App\Models\HeaderLogo;
 
@@ -457,6 +458,32 @@ class ProductsController extends Controller
                 }
 
                 $attribute->save();
+
+                // Create notification when a new product is added
+                // Only create notification if this is a new product (not an update)
+                if ($id == null) {
+                    $vendorId = null;
+                    $notificationMessage = '';
+                    
+                    if ($user->type === 'vendor') {
+                        $vendorId = $user->vendor_id;
+                        $vendorName = $user->name;
+                        $notificationMessage = "Vendor '{$vendorName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
+                    } else {
+                        $adminName = $user->name;
+                        $notificationMessage = "Admin '{$adminName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
+                    }
+
+                    Notification::create([
+                        'type' => 'product_added',
+                        'title' => 'New Product Added',
+                        'message' => $notificationMessage,
+                        'related_id' => $product->id,
+                        'related_type' => 'App\Models\Product',
+                        'vendor_id' => $vendorId, // null for admin-added products, vendor_id for vendor-added products
+                        'is_read' => false,
+                    ]);
+                }
             }
 
             return redirect('admin/products')->with('success_message', $message);

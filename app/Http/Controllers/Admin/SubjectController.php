@@ -73,4 +73,29 @@ class SubjectController extends Controller
         return redirect()->back()->with('success', 'Subject deleted successfully', 'logos');
         return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));
     }
+
+    /**
+     * Toggle subject status (active/inactive) via AJAX.
+     */
+    public function updateStatus(Request $request)
+    {
+        if (!$request->ajax()) {
+            abort(404);
+        }
+
+        $data = $request->validate([
+            'status'     => 'required|in:Active,Inactive,0,1',
+            'subject_id' => 'required|exists:subjects,id',
+        ]);
+
+        $current = $data['status'];
+        $status = ($current === 'Active' || $current === '1' || $current === 1) ? 0 : 1;
+
+        Subject::where('id', $data['subject_id'])->update(['status' => $status]);
+
+        return response()->json([
+            'status'     => $status,
+            'subject_id' => $data['subject_id'],
+        ]);
+    }
 }

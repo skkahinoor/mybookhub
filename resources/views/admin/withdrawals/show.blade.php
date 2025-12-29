@@ -157,10 +157,10 @@
                                                 <option value="rejected">Reject</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-4">
+                                        {{-- <div class="col-md-4">
                                             <label class="form-label"><strong>Transaction ID</strong> <small>(Optional)</small></label>
                                             <input type="text" name="transaction_id" class="form-control" placeholder="Enter transaction ID">
-                                        </div>
+                                        </div> --}}
                                         <div class="col-md-4">
                                             <label class="form-label"><strong>Remarks</strong></label>
                                             <input type="text" name="remarks" class="form-control" placeholder="Add remarks (optional)">
