@@ -126,7 +126,7 @@ class CouponsController extends Controller
                 'coupon_type'   => 'required',
                 'amount_type'   => 'required',
                 'amount'        => 'required|numeric',
-                'expiry_date'   => 'required'
+                'expiry_date'   => 'nullable'
             ];
 
             $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
@@ -136,7 +136,6 @@ class CouponsController extends Controller
                 'amount_type.required'   => 'Select Amount Type',
                 'amount.required'        => 'Enter Amount',
                 'amount.numeric'         => 'Enter Valid Amount',
-                'expiry_date.required'   => 'Enter Expiry Date',
             ];
 
             $this->validate($request, $rules, $customMessages);
@@ -182,11 +181,11 @@ class CouponsController extends Controller
             $coupon->coupon_code   = $coupon_code;
             $coupon->categories    = $categories;
 
-            $coupon->users         = $users;
+            $coupon->users         = $users ?? null;
             $coupon->coupon_type   = $data['coupon_type'];
             $coupon->amount_type   = $data['amount_type'];
             $coupon->amount        = $data['amount'];
-            $coupon->expiry_date   = $data['expiry_date'];
+            $coupon->expiry_date   = $data['expiry_date'] ?? null;
             $coupon->status        = 1;
 
             $coupon->save();
