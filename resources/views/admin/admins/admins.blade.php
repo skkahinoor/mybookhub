@@ -50,56 +50,64 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($admins as $admin)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $admin['name'] }}</td>
-                                                <td>{{ $admin['type'] }}</td>
-                                                <td>{{ $admin['mobile'] }}</td>
-                                                <td>{{ $admin['email'] }}</td>
-                                                <td>
-                                                    @if ($admin['image'] != '')
-                                                        <img src="{{ asset('admin/images/photos/' . $admin['image']) }}">
-                                                    @else
-                                                        <img src="{{ asset('admin/images/photos/no-image.gif') }}">
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    @if ($admin['status'] == 1)
-                                                        <a class="updateAdminStatus"
-                                                           id="admin-{{ $admin['id'] }}"
-                                                           admin_id="{{ $admin['id'] }}"
-                                                           data-url="{{ route('updateadminstatus') }}"
-                                                           href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @else {{-- if the admin status is inactive --}}
-                                                        <a class="updateAdminStatus"
-                                                           id="admin-{{ $admin['id'] }}"
-                                                           admin_id="{{ $admin['id'] }}"
-                                                           data-url="{{ route('updateadminstatus') }}"
-                                                           href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <div class="d-flex align-items-center" style="gap: 10px;">
-                                                        <a href="{{ url('admin/add-edit-admin/' . $admin['id']) }}" title="Edit">
-                                                            <i style="font-size: 20px" class="mdi mdi-pencil"></i>
-                                                        </a>
-                                                    @if ($admin['type'] == 'vendor') {{-- if the admin `type` is vendor, show their further details --}}
-                                                            <a href="{{ url('admin/view-vendor-details/' . $admin['id']) }}" title="View Details">
-                                                                <i style="font-size: 20px" class="mdi mdi-file-document"></i>
+                                        @if (count($admins) > 0)
+                                            @foreach ($admins as $admin)
+                                                <tr>
+                                                    <td>{{ $loop->iteration }}</td>
+                                                    <td>{{ $admin['name'] }}</td>
+                                                    <td>{{ $admin['type'] }}</td>
+                                                    <td>{{ $admin['mobile'] }}</td>
+                                                    <td>{{ $admin['email'] }}</td>
+                                                    <td>
+                                                        @if (!empty($admin['image']))
+                                                            <img src="{{ asset('admin/images/photos/' . $admin['image']) }}" alt="Admin Image" style="width: 50px; height: 50px; object-fit: cover;">
+                                                        @else
+                                                            <img src="{{ asset('admin/images/photos/no-image.gif') }}" alt="No Image" style="width: 50px; height: 50px; object-fit: cover;">
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if (isset($admin['status']) && $admin['status'] == 1)
+                                                            <a class="updateAdminStatus"
+                                                               id="admin-{{ $admin['id'] }}"
+                                                               admin_id="{{ $admin['id'] }}"
+                                                               data-url="{{ route('updateadminstatus') }}"
+                                                               href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                            </a>
+                                                        @else {{-- if the admin status is inactive --}}
+                                                            <a class="updateAdminStatus"
+                                                               id="admin-{{ $admin['id'] }}"
+                                                               admin_id="{{ $admin['id'] }}"
+                                                               data-url="{{ route('updateadminstatus') }}"
+                                                               href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                             </a>
                                                         @endif
-                                                        <a href="javascript:void(0);" class="confirmDelete" admin_id="{{ $admin['id'] }}" title="Delete">
-                                                            <i style="font-size: 20px; color: #e74c3c;" class="mdi mdi-delete"></i>
-                                                        </a>
-                                                    </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center" style="gap: 10px;">
+                                                            <a href="{{ url('admin/add-edit-admin/' . $admin['id']) }}" title="Edit">
+                                                                <i style="font-size: 20px" class="mdi mdi-pencil"></i>
+                                                            </a>
+                                                        @if (isset($admin['type']) && $admin['type'] == 'vendor') {{-- if the admin `type` is vendor, show their further details --}}
+                                                                <a href="{{ url('admin/view-vendor-details/' . $admin['id']) }}" title="View Details">
+                                                                    <i style="font-size: 20px" class="mdi mdi-file-document"></i>
+                                                                </a>
+                                                            @endif
+                                                            <a href="javascript:void(0);" class="confirmDelete" admin_id="{{ $admin['id'] }}" title="Delete">
+                                                                <i style="font-size: 20px; color: #e74c3c;" class="mdi mdi-delete"></i>
+                                                            </a>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @else
+                                            <tr>
+                                                <td colspan="8" class="text-center py-4">
+                                                    <p class="text-muted mb-0">No {{ $title }} found.</p>
                                                 </td>
                                             </tr>
-                                        @endforeach
+                                        @endif
                                     </tbody>
                                 </table>
                             </div>

@@ -531,12 +531,19 @@ class AdminController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $admins = Admin::query();
-        // $sales = SalesExecutive::query();
-        // dd($admins);
 
         if (! empty($type)) { // in this case, $type can be: superadmin, admin, subadmin or vendor
-            $admins = $admins->where('type', $type);
-            // $sales = $sales->where('type', $type);
+            // Map URL parameter to database type
+            // If URL says 'admin', it might actually be 'superadmin' in the database
+            $typeMapping = [
+                'admin' => 'superadmin', // Map 'admin' URL to 'superadmin' database type
+            ];
+
+            // Use mapped type if exists, otherwise use the original type
+            $dbType = isset($typeMapping[strtolower($type)]) ? $typeMapping[strtolower($type)] : $type;
+
+            // Use case-insensitive comparison to handle any case variations
+            $admins = $admins->whereRaw('LOWER(type) = ?', [strtolower($dbType)]);
             $title  = ucfirst($type);
 
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
@@ -544,14 +551,13 @@ class AdminController extends Controller
 
         } else { // if there's no $type is passed, show ALL of the admins, subadmins and vendors
             $title = 'All Admins/Vendors';
-            // $sales = $sales->get()->toArray();
 
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
             Session::put('page', 'view_all');
         }
 
-        $admins = $admins->get()->toArray(); // toArray() method converts the Collection object to a plain PHP array
-                                             // dd($admins);
+        // Order by id descending to show newest first, then convert to array
+        $admins = $admins->orderBy('id', 'desc')->get()->toArray(); // toArray() method converts the Collection object to a plain PHP array
 
         return view('admin/admins/admins', compact('admins', 'title','logos', 'headerLogo'));
     }
