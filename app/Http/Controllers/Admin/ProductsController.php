@@ -462,11 +462,11 @@ class ProductsController extends Controller
                 // Create notification when a new product is added
                 // Only create notification if this is a new product (not an update)
                 if ($id == null) {
-                    $vendorId = null;
+                    $vendorId = null; // Always null so notification is visible to admin only
                     $notificationMessage = '';
                     
                     if ($user->type === 'vendor') {
-                        $vendorId = $user->vendor_id;
+                        // Keep vendor_id as null so only admin sees this notification
                         $vendorName = $user->name;
                         $notificationMessage = "Vendor '{$vendorName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
                     } else {
@@ -480,7 +480,7 @@ class ProductsController extends Controller
                         'message' => $notificationMessage,
                         'related_id' => $product->id,
                         'related_type' => 'App\Models\Product',
-                        'vendor_id' => $vendorId, // null for admin-added products, vendor_id for vendor-added products
+                        'vendor_id' => $vendorId, // null so only admin can see vendor-added product notifications
                         'is_read' => false,
                     ]);
                 }

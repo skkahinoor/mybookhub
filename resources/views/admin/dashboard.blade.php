@@ -123,6 +123,7 @@
 
             {{-- Metrics Grid --}}
             <div class="row">
+                @if (Auth::guard('admin')->user()->type == 'superadmin')
                 <div class="col-md-12">
                     <div class="metric-grid">
                         <div class="metric-card vendors">
@@ -201,6 +202,47 @@
                         </div>
                     </div>
                 </div> 
+                @elseif (Auth::guard('admin')->user()->type == 'vendor')
+                <div class="col-md-12 mt-3">
+                    <div class="metric-grid">
+                        <div class="metric-card products">
+                            <a href="{{ url('admin/products') }}">
+                                <div class="metric-info">
+                                    <span class="metric-label">Products</span>
+                                    <span class="metric-value">{{ number_format($productsCount) }}</span>
+                                </div>
+                                <div class="metric-icon">
+                                    <i class="fas fa-box-open"></i>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="metric-card orders">
+                            <a href="{{ url('admin/orders') }}">
+                                <div class="metric-info">
+                                    <span class="metric-label">Orders</span>
+                                    <span class="metric-value">{{ number_format($ordersCount) }}</span>
+                                </div>
+                                <div class="metric-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                            </a>
+                        </div>
+
+                        <div class="metric-card coupons">
+                            <a href="{{ url('admin/coupons') }}">
+                                <div class="metric-info">
+                                    <span class="metric-label">Coupons</span>
+                                    <span class="metric-value">{{ number_format($couponsCount) }}</span>
+                                </div>
+                                <div class="metric-icon">
+                                    <i class="fas fa-ticket-alt"></i>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div> 
+                @endif
             </div>
 
         </div>
