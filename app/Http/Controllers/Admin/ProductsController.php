@@ -411,13 +411,33 @@ class ProductsController extends Controller
                 }
             }
 
+            $user = Auth::guard('admin')->user();
+
+            // Check Free plan limit for new products (not updates)
+            if ($id == null && $user->type === 'vendor' && !$skipProductSave) {
+                $vendor = \App\Models\Vendor::find($user->vendor_id);
+                if ($vendor && $vendor->plan === 'free') {
+                    // Count products added this month
+                    $currentMonthStart = now()->startOfMonth();
+                    $productsThisMonth = Product::whereHas('firstAttribute', function($q) use ($vendor) {
+                        $q->where('vendor_id', $vendor->id)
+                          ->where('admin_type', 'vendor');
+                    })
+                    ->where('created_at', '>=', $currentMonthStart)
+                    ->count();
+
+                    if ($productsThisMonth >= 100) {
+                        return redirect('admin/products')
+                            ->with('error_message', 'You have reached the monthly limit of 100 products for Free plan. Please upgrade to Pro plan for unlimited uploads.');
+                    }
+                }
+            }
+
             if (!$skipProductSave) {
                 $product->save();
             }
 
             $product->authors()->sync($request->author_id ?? []);
-
-            $user = Auth::guard('admin')->user();
 
             $attributeQuery = ProductsAttribute::where('product_id', $product->id);
 

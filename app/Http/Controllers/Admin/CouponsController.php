@@ -31,6 +31,13 @@ class CouponsController extends Controller
                 return redirect('admin/update-vendor-details/personal')->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details'); // the error_message will appear to the vendor in the route: 'admin/update-vendor-details/personal' which is the update_vendor_details.blade.php page
             }
 
+            // Check if vendor is on Free plan - block coupon access
+            $vendor = \App\Models\Vendor::find($vendor_id);
+            if ($vendor && $vendor->plan === 'free') {
+                return redirect('admin/dashboard')
+                    ->with('error_message', 'Coupon management is not available in Free plan. Please upgrade to Pro plan to create and manage coupons.');
+            }
+
             $coupons = Coupon::where('vendor_id', $vendor_id)->get()->toArray(); // Get ONLY the coupons that BELONG TO the vendor
 
         } else { // if the $adminType is 'admin'
@@ -44,6 +51,18 @@ class CouponsController extends Controller
 
     // Update Coupon Status (active/inactive) via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
     public function updateCouponStatus(Request $request) {
+        // Check if vendor is on Free plan
+        $adminType = Auth::guard('admin')->user()->type;
+        if ($adminType == 'vendor') {
+            $vendor = \App\Models\Vendor::find(Auth::guard('admin')->user()->vendor_id);
+            if ($vendor && $vendor->plan === 'free') {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Coupon management is not available in Free plan. Please upgrade to Pro plan.'
+                ], 403);
+            }
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($request->ajax()) { // if the request is coming via an AJAX call
@@ -70,6 +89,16 @@ class CouponsController extends Controller
 
     // Delete a Coupon via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
     public function deleteCoupon($id) {
+        // Check if vendor is on Free plan
+        $adminType = Auth::guard('admin')->user()->type;
+        if ($adminType == 'vendor') {
+            $vendor = \App\Models\Vendor::find(Auth::guard('admin')->user()->vendor_id);
+            if ($vendor && $vendor->plan === 'free') {
+                return redirect('admin/coupons')
+                    ->with('error_message', 'Coupon deletion is not available in Free plan. Please upgrade to Pro plan.');
+            }
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Coupon::where('id', $id)->delete();
@@ -84,6 +113,16 @@ class CouponsController extends Controller
     public function addEditCoupon(Request $request, $id = null) { // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Coupon', and if not passed, this means' Add a Coupon'    // GET request to render the add_edit_coupon.blade.php view (whether Add or Edit depending on passing or not passing the Optional Parameter {id?}), and POST request to submit the <form> in that same page    // {id?} Optional Parameters: https://laravel.com/docs/9.x/routing#parameters-optional-parameters
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'coupons');
+
+        // Check if vendor is on Free plan - block coupon access
+        $adminType = Auth::guard('admin')->user()->type;
+        if ($adminType == 'vendor') {
+            $vendor = \App\Models\Vendor::find(Auth::guard('admin')->user()->vendor_id);
+            if ($vendor && $vendor->plan === 'free') {
+                return redirect('admin/coupons')
+                    ->with('error_message', 'Coupon creation and editing is not available in Free plan. Please upgrade to Pro plan.');
+            }
+        }
 
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();

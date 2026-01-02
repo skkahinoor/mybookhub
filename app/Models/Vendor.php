@@ -22,6 +22,17 @@ class Vendor extends Model
         'confirm',
         'commission',
         'status',
+        'plan',
+        'plan_started_at',
+        'plan_expires_at',
+        'razorpay_order_id',
+        'razorpay_payment_id',
+        'razorpay_signature',
+    ];
+
+    protected $casts = [
+        'plan_started_at' => 'datetime',
+        'plan_expires_at' => 'datetime',
     ];
 
     // Relationship of a Vendor `vendors` with VendorsBusinessDetail `vendors_business_details` (every product belongs to a vendor)

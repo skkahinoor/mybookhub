@@ -146,6 +146,34 @@
 
     {{-- End: Our Custom Admin JS --}}
 
+    {{-- SweetAlert2 for Flash Messages --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        @if(Session::has('error_message'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Access Denied',
+                text: '{{ Session::get("error_message") }}',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#dc3545',
+                timer: 5000,
+                timerProgressBar: true
+            });
+        @endif
+
+        @if(Session::has('success_message'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: '{{ Session::get("success_message") }}',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#28a745',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        @endif
+    </script>
+
 
     @stack('scripts')
     {{-- Notification Scripts --}}

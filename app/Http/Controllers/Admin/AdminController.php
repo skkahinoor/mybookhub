@@ -45,8 +45,13 @@ class AdminController extends Controller
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
+        // Get vendor plan info if user is a vendor
+        $vendor = null;
+        if (Auth::guard('admin')->check() && Auth::guard('admin')->user()->type === 'vendor' && Auth::guard('admin')->user()->vendor_id) {
+            $vendor = Vendor::find(Auth::guard('admin')->user()->vendor_id);
+        }
 
-        return view('admin/dashboard')->with(compact('productsCount', 'ordersCount', 'couponsCount', 'vendorsCount', 'usersCount', 'salesExecutivesCount', 'logos', 'headerLogo')); // is the same as:    return view('admin.dashboard');
+        return view('admin/dashboard')->with(compact('productsCount', 'ordersCount', 'couponsCount', 'vendorsCount', 'usersCount', 'salesExecutivesCount', 'logos', 'headerLogo', 'vendor')); // is the same as:    return view('admin.dashboard');
     }
 
     public function login(Request $request)

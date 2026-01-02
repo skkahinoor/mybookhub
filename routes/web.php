@@ -38,7 +38,7 @@ require __DIR__ . '/auth.php';
 // First: Admin Panel routes:
 // The website 'ADMIN' Section: Route Group for routes starting with the 'admin' word (Admin Route Group)    // NOTE: ALL THE ROUTES INSIDE THIS PREFIX STATRT WITH 'admin/', SO THOSE ROUTES INSIDE THE PREFIX, YOU DON'T WRITE '/admin' WHEN YOU DEFINE THEM, IT'LL BE DEFINED AUTOMATICALLY!!
 Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function () {
-    Route::match(['get', 'post'], 'login', 'AdminController@login'); // match() method is used to use more than one HTTP request method for the same route, so GET for rendering the login.php page, and POST for the login.php page <form> submission (e.g. GET and POST)    // Matches the '/admin/dashboard' URL (i.e. http://127.0.0.1:8000/admin/dashboard)
+    Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one HTTP request method for the same route, so GET for rendering the login.php page, and POST for the login.php page <form> submission (e.g. GET and POST)    // Matches the '/admin/dashboard' URL (i.e. http://127.0.0.1:8000/admin/dashboard)
 
                                                                                                           // This a Route Group for routes that ALL start with 'admin/-something' and utilizes the 'admin' Authentication Guard    // Note: You must remove the '/admin'/ part from the routes that are written inside this Route Group (e.g.    Route::get('logout');    , NOT    Route::get('admin/logout');    )
     Route::group(['middleware' => ['auth:admin']], function () {
@@ -205,14 +205,16 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('institution-location-data', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getLocationData'])->name('institution_location_data');
 
 
-        // Products
-        Route::get('products/getauthors', [AdminProductsController::class, 'getAuthor']);
-        Route::get('products', [AdminProductsController::class, 'products']);                                        // render products.blade.php in the Admin Panel
+        // Products (with vendor plan check middleware)
+        Route::middleware(['vendor.plan'])->group(function () {
+            Route::get('products/getauthors', [AdminProductsController::class, 'getAuthor']);
+            Route::get('products', [AdminProductsController::class, 'products']);                                        // render products.blade.php in the Admin Panel
             Route::post('update-product-status', [AdminProductsController::class, 'updateProductStatus'])->name('updateproductstatus');               // Update Products Status using AJAX in products.blade.php
-        Route::get('delete-product/{id}', [AdminProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
-        Route::match(['get', 'post'], 'add-edit-product/{id?}', [AdminProductsController::class, 'addEditProduct']); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
-        Route::get('delete-product-image/{id}', [AdminProductsController::class, 'deleteProductImage']);             // Delete a product images (in the three folders: small, medium and large) in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
-        Route::get('delete-product-video/{id}', [AdminProductsController::class, 'deleteProductVideo']);             // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
+            Route::get('delete-product/{id}', [AdminProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
+            Route::match(['get', 'post'], 'add-edit-product/{id?}', [AdminProductsController::class, 'addEditProduct'])->name('admin.products.add'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
+            Route::get('delete-product-image/{id}', [AdminProductsController::class, 'deleteProductImage']);             // Delete a product images (in the three folders: small, medium and large) in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
+            Route::get('delete-product-video/{id}', [AdminProductsController::class, 'deleteProductVideo']);             // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
+        });
 
                                                                                                                       // Attributes
         Route::match(['get', 'post'], 'add-edit-attributes/{id}', [AdminProductsController::class, 'addAttributes']); // GET request to render the add_edit_attributes.blade.php view, and POST request to submit the <form> in that view
@@ -240,13 +242,13 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-filter-value/{id?}', 'FilterController@addEditFilterValue'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Filter Value', and if not passed, this means' Add a Filter Value'    // GET request to render the add_edit_filter_value.blade.php view, and POST request to submit the <form> in that view
         Route::post('category-filters', 'FilterController@categoryFilters');                                 // Show the related filters depending on the selected category <select> in category_filters.blade.php (which in turn is included by add_edit_product.php) using AJAX. Check admin/js/custom.js
 
-                                                                                     // Coupons
-        Route::get('coupons', 'CouponsController@coupons');                          // Render admin/coupons/coupons.blade.php page in the Admin Panel
-        Route::post('update-coupon-status', 'CouponsController@updateCouponStatus')->name('updatecouponstatus'); // Update Coupon Status (active/inactive) via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
-        Route::get('delete-coupon/{id}', 'CouponsController@deleteCoupon');          // Delete a Coupon via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
-
-                                                                                                   // Render admin/coupons/add_edit_coupon.blade.php page with 'GET' request ('Edit/Update the Coupon') if the {id?} Optional Parameter is passed, or if it's not passed, it's a GET request too to 'Add a Coupon', or it's a POST request for the HTML Form submission in the same page
-        Route::match(['get', 'post'], 'add-edit-coupon/{id?}', 'CouponsController@addEditCoupon'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Coupon', and if not passed, this means' Add a Coupon'    // GET request to render the add_edit_coupon.blade.php view (whether Add or Edit depending on passing or not passing the Optional Parameter {id?}), and POST request to submit the <form> in that same page
+                                                                                     // Coupons (with vendor plan check middleware)
+        Route::middleware(['vendor.plan'])->group(function () {
+            Route::get('coupons', 'CouponsController@coupons');                          // Render admin/coupons/coupons.blade.php page in the Admin Panel
+            Route::post('update-coupon-status', 'CouponsController@updateCouponStatus')->name('updatecouponstatus'); // Update Coupon Status (active/inactive) via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
+            Route::get('delete-coupon/{id}', 'CouponsController@deleteCoupon');          // Delete a Coupon via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
+            Route::match(['get', 'post'], 'add-edit-coupon/{id?}', 'CouponsController@addEditCoupon'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Coupon', and if not passed, this means' Add a Coupon'    // GET request to render the add_edit_coupon.blade.php view (whether Add or Edit depending on passing or not passing the Optional Parameter {id?}), and POST request to submit the <form> in that same page
+        });
 
                                                                               // Users
         Route::get('users', 'UserController@users');                          // Render admin/users/users.blade.php page in the Admin Panel
@@ -386,6 +388,20 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     // the register HTML form submission in vendor login_register.blade.php page
     Route::get('vendor/register', 'VendorController@showRegister')->name('vendor.register'); // the register HTML form submission in vendor login_register.blade.php page
     Route::post('vendor/register', 'VendorController@register')->name('vendor.register.submit'); // the register HTML form submission in vendor login_register.blade.php page
+    
+    // Vendor Plan Payment Routes
+    Route::get('vendor/payment/create/{vendor_id}', [App\Http\Controllers\Admin\VendorPlanController::class, 'createOrder'])->name('vendor.payment.create');
+    Route::post('vendor/payment/verify', [App\Http\Controllers\Admin\VendorPlanController::class, 'verifyPayment'])->name('vendor.payment.verify');
+    Route::get('vendor/payment/success', [App\Http\Controllers\Admin\VendorPlanController::class, 'paymentSuccess'])->name('vendor.payment.success');
+    Route::get('vendor/payment/failure', [App\Http\Controllers\Admin\VendorPlanController::class, 'paymentFailure'])->name('vendor.payment.failure');
+    
+    // Vendor Plan Management Routes (requires admin middleware)
+    Route::middleware(['admin', 'vendor.plan'])->group(function () {
+        Route::get('vendor/plan/manage', [App\Http\Controllers\Admin\VendorPlanController::class, 'manage'])->name('vendor.plan.manage');
+        Route::post('vendor/plan/upgrade', [App\Http\Controllers\Admin\VendorPlanController::class, 'upgrade'])->name('vendor.plan.upgrade');
+        Route::post('vendor/plan/downgrade', [App\Http\Controllers\Admin\VendorPlanController::class, 'downgrade'])->name('vendor.plan.downgrade');
+        Route::post('vendor/plan/renew', [App\Http\Controllers\Admin\VendorPlanController::class, 'renew'])->name('vendor.plan.renew');
+    });
     Route::post('vendor/send-otp', 'VendorController@sendOtp')->name('vendor.otp.send');
 
                                                                            // Confirm Vendor Account (from 'vendor_confirmation.blade.php) from the mail by Mailtrap
@@ -462,6 +478,9 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
     // Render the Sales page (front/pages/sales.blade.php) using GET HTTP Requests, or the HTML Form Submission using POST HTTP Requests
     Route::match(['get', 'post'], 'sales', 'UserController@sales');
+
+    // Render the Vendors page (front/pages/vendors.blade.php) using GET HTTP Requests, or the HTML Form Submission using POST HTTP Requests
+    Route::match(['get', 'post'], 'vendors', 'UserController@vendors');
 
     // Add a Newsletter Subscriber email HTML Form Submission in front/layout/footer.blade.php when clicking on the Submit button (using an AJAX Request/Call)
     Route::post('add-subscriber-email', 'NewsletterController@addSubscriber');

@@ -16,6 +16,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+        
+        // Check and renew vendor subscriptions daily
+        $schedule->command('vendor:renew-subscriptions')
+                 ->daily()
+                 ->at('00:00');
     }
 
     /**

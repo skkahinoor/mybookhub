@@ -10,7 +10,22 @@
                 <div class="col-md-12 mb-4">
                     <div class="d-flex flex-wrap justify-content-between align-items-center">
                         <div>
-                            <h3 class="font-weight-bold mb-1">Welcome {{ Auth::guard('admin')->user()->name }}</h3>
+                            <h3 class="font-weight-bold mb-1">
+                                Welcome {{ Auth::guard('admin')->user()->name }}
+                                @if(Auth::guard('admin')->user()->type === 'vendor' && $vendor)
+                                    @if($vendor->plan === 'pro')
+                                        <span class="badge badge-primary ml-2" style="font-size: 0.7rem; padding: 0.35rem 0.65rem;">PRO</span>
+                                    @else
+                                        <span class="badge badge-secondary ml-2" style="font-size: 0.7rem; padding: 0.35rem 0.65rem;">FREE</span>
+                                        <form method="POST" action="{{ route('vendor.plan.upgrade') }}" style="display: inline-block; margin-left: 10px;">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.75rem;">
+                                                <i class="mdi mdi-crown"></i> Upgrade to Pro
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endif
+                            </h3>
                             <p class="text-muted mb-0" style="font-size: 0.9rem;">
                                 All systems are running smoothly. Here is a quick overview of your store.
                             </p>

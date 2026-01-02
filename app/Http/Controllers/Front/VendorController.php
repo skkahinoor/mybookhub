@@ -280,6 +280,7 @@ class VendorController extends Controller
                 $rules['password'] = 'required|min:6|confirmed';
                 $rules['password_confirmation'] = 'required';
                 $rules['otp'] = 'required';
+                $rules['plan'] = 'required|in:free,pro';
             }
 
             $this->validate($request, $rules, $customMessages);
@@ -308,15 +309,26 @@ class VendorController extends Controller
 
             if (empty($id)) {
                 // ================= ADD MODE =================
+                $selectedPlan = $data['plan'] ?? 'free';
 
-                // Insert Vendor
-                $vendorId = Vendor::insertGetId([
+                // Insert Vendor with plan
+                $vendorData = [
                     'name'    => $data['name'],
                     'email'   => $data['email'],
                     'mobile'  => $data['mobile'],
                     'confirm' => 'Yes',
                     'status'  => isset($data['status']) ? 1 : 0,
-                ]);
+                    'plan'    => $selectedPlan,
+                ];
+
+                // Set plan dates for free plan
+                if ($selectedPlan === 'free') {
+                    $vendorData['plan_started_at'] = now();
+                    // Free plan doesn't expire, but we can set a far future date
+                    $vendorData['plan_expires_at'] = null;
+                }
+
+                $vendorId = Vendor::insertGetId($vendorData);
 
                 // Insert Admin
                 $adminData['vendor_id'] = $vendorId;
@@ -330,8 +342,14 @@ class VendorController extends Controller
                 DB::table('otps')->where('phone', $data['mobile'])->delete();
                 session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile']);
 
+                // If Pro plan selected, redirect to payment
+                if ($selectedPlan === 'pro') {
+                    return redirect()->route('vendor.payment.create', ['vendor_id' => $vendorId])
+                        ->with('vendor_id', $vendorId);
+                }
+
                 return redirect('admin/login')
-                    ->with('success_message', 'Vendor registered successfully!');
+                    ->with('success_message', 'Vendor registered successfully with Free plan!');
             } else {
                 // ================= EDIT MODE =================
 
