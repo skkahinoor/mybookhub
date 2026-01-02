@@ -14,8 +14,44 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        // add other fillable fields as needed
+        // Basic info
+        'product_name',
+        'product_isbn',
+        'description',
+        'product_price',
+        'product_discount',
+        'product_image',
+        'condition',
         'location',
+
+        // Relations
+        'section_id',
+        'category_id',
+        'publisher_id',
+        'subject_id',
+        'edition_id',
+        'language_id',
+
+        // Extra attributes
+        'cbse',
+        'operating_system',
+        'screen_size',
+        'occasion',
+        'fit',
+        'pattern',
+        'sleeve',
+        'ram',
+        'fabric',
+
+        // SEO
+        'meta_title',
+        'meta_keywords',
+        'meta_description',
+
+        // Flags
+        'is_featured',
+        'is_bestseller',
+        'status'
     ];
 
     // Every 'product' belongs to a 'section'
