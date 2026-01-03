@@ -73,10 +73,32 @@
 
                 </a>
                 <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
+                    <div class="dropdown-item-text">
+                        <strong>{{ Auth::guard('admin')->user()->name }}</strong>
+                        @if(Auth::guard('admin')->user()->type === 'vendor')
+                            @php
+                                $vendor = \App\Models\Vendor::find(Auth::guard('admin')->user()->vendor_id);
+                            @endphp
+                            @if($vendor)
+                                @if($vendor->plan === 'pro')
+                                    <span class="badge badge-primary ml-2" style="font-size: 0.65rem; padding: 0.25rem 0.5rem;">PRO</span>
+                                @else
+                                    <span class="badge badge-secondary ml-2" style="font-size: 0.65rem; padding: 0.25rem 0.5rem;">FREE</span>
+                                @endif
+                            @endif
+                        @endif
+                    </div>
+                    <div class="dropdown-divider"></div>
                     <a href="{{ url('admin/update-admin-details') }}" class="dropdown-item">
                     <i class="ti-settings text-primary"></i>
                     Details setting
                     </a>
+                    @if(Auth::guard('admin')->user()->type === 'vendor')
+                        <a href="{{ route('vendor.plan.manage') }}" class="dropdown-item">
+                        <i class="ti-crown text-warning"></i>
+                        Plan Management
+                        </a>
+                    @endif
                     <a href="{{ url('admin/logout') }}" class="dropdown-item">
                     <i class="ti-power-off text-primary"></i>
                     Logout

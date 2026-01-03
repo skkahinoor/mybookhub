@@ -1099,6 +1099,91 @@
     </section>
     <!-- Sales Executive CTA End -->
 
+    {{-- Advanced Vendor CTA Section for Home Page --}}
+    <section class="py-5 position-relative overflow-hidden" style="background: var(--primary);">
+        <div class="container position-relative" style="z-index:2;">
+            <div class="row align-items-center gy-4">
+                <div class="col-lg-7 text-white">
+                    <span class="badge bg-light text-primary mb-3 px-3 py-2 rounded-pill">
+                        Vendor Opportunity • Limited Effort, High Reach
+                    </span>
+                    <h2 class="fw-semibold mb-3" style="color: #181818; font-weight: bold;">
+                        Turn Your Book Catalog into a New Revenue Channel with BookHub
+                    </h2>
+                    <p class="mb-3">
+                        Upload your books once, and let BookHub handle the marketing, promotion, and student reach.
+                        You pay only a <b>5% promotion fee</b> on successful orders—no big ad budgets, no platform
+                        headaches.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-3 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light text-primary d-flex align-items-center justify-content-center me-2"
+                                style="width:32px;height:32px;">
+                                <i class="fa fa-book"></i>
+                            </div>
+                            <span>Upload books & editions easily</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light text-primary d-flex align-items-center justify-content-center me-2"
+                                style="width:32px;height:32px;">
+                                <i class="fa fa-bullhorn"></i>
+                            </div>
+                            <span>BookHub markets for you</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light text-primary d-flex align-items-center justify-content-center me-2"
+                                style="width:32px;height:32px;">
+                                <i class="fa fa-inr"></i>
+                            </div>
+                            <span>Only 5% promotion fee</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{{ route('vendor.register') }}" class="btn btn-light btn-sm">
+                            Register as Vendor
+                        </a>
+                        <a href="{{ url('/vendors') }}" class="btn btn-outline-light btn-sm">
+                            View Vendor Plans
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 text-lg-end text-center text-white">
+                    <div
+                        class="bg-white bg-opacity-10 border border-light border-opacity-25 rounded-3 p-4 d-inline-block shadow-lg">
+                        <h5 class="fw-semibold mb-2" style="color: #181818; font-weight: bold;">Free Plan & Pro Plan</h5>
+                        <p class="mb-2">
+                            Start free with up to 100 books per month, or switch to Pro for unlimited uploads and coupons
+                            at just ₹499/month.
+                        </p>
+                        <ul class="list-unstyled small mb-3 text-start">
+                            <li class="mb-1">
+                                <i class="fa fa-check text-success me-1"></i> No separate website required
+                            </li>
+                            <li class="mb-1">
+                                <i class="fa fa-check text-success me-1"></i> We handle promotion & traffic
+                            </li>
+                            <li class="mb-1">
+                                <i class="fa fa-check text-success me-1"></i> Transparent vendor dashboard
+                            </li>
+                        </ul>
+                        <a href="{{ url('/contact') }}" class="btn btn-outline-light btn-sm">
+                            Talk to Our Team
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- subtle background shapes --}}
+        <div class="position-absolute rounded-circle bg-white"
+            style="opacity:0.08;width:220px;height:220px;top:-60px;right:-40px;"></div>
+        <div class="position-absolute rounded-circle bg-white"
+            style="opacity:0.04;width:280px;height:280px;bottom:-80px;left:-80px;"></div>
+    </section>
+
 
 
     {{-- Js Section  --}}
