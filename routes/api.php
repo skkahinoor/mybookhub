@@ -51,7 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/institutions', [InstitutionController::class, 'store']);
     Route::put('/institutions/{id}', [InstitutionController::class, 'update']);
     Route::delete('/institutions/{id}', [InstitutionController::class, 'destroy']);
-    Route::post('/book/lookup', [BookController::class, 'lookupByIsbn']);
+    // Route::post('/book/lookup', [BookController::class, 'lookupByIsbn']);
 });
 
 // Student
@@ -129,4 +129,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vendor/edition', [CatalogueController::class, 'storeEdition']);
     Route::put('/vendor/edition/{id}', [CatalogueController::class, 'updateEdition']);
     Route::delete('/vendor/edition/{id}', [CatalogueController::class, 'destroyEdition']);
+
+    Route::get('/vendor/coupons', [CatalogueController::class, 'getCoupon']);
+    Route::post('/vendor/coupons', [CatalogueController::class, 'storeCoupon']);
+    Route::post('/vendor/coupons/{id}', [CatalogueController::class, 'updateCoupon']);
+    Route::patch('/vendor/coupons/{id}/status', [CatalogueController::class, 'updateCouponStatus']);
+    Route::delete('/vendor/coupons/{id}', [CatalogueController::class, 'destroyCoupon']);
+
+    Route::get('/vendor/products', [BookController::class, 'getproduct']);
+    Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);
+    Route::delete('/vendor/products/{id}', [BookController::class, 'deleteProduct']);
+    Route::post('/vendor/products/isbn-lookup', [BookController::class, 'lookupByIsbn']);
+    Route::post('/vendor/products', [BookController::class, 'storeManualProduct']);
 });
