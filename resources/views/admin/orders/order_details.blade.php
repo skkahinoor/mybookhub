@@ -171,7 +171,7 @@
 
                             <div class="form-group" style="height: 15px">
                                 <label style="font-weight: 550">Mobile: </label>
-                                <label>{{ $userDetails['mobile'] }}</label>
+                                <label>{{ $userDetails['phone'] }}</label>
                             </div>
                             <div class="form-group" style="height: 15px">
                                 <label style="font-weight: 550">Email: </label>
