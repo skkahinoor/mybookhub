@@ -77,10 +77,8 @@ class PlanSettingsController extends Controller
             'pro_plan_trial_duration_days' => 'required|integer|min:1|max:365',
         ]);
 
-        // Convert price to paise (multiply by 100)
-        $priceInPaise = $request->pro_plan_price * 100;
 
-        Setting::setValue('pro_plan_price', $priceInPaise);
+        Setting::setValue('pro_plan_price', $request->pro_plan_price);
         Setting::setValue('free_plan_book_limit', $request->free_plan_book_limit);
         Setting::setValue('give_new_users_pro_plan', $request->give_new_users_pro_plan ? 1 : 0);
         Setting::setValue('pro_plan_trial_duration_days', $request->pro_plan_trial_duration_days);

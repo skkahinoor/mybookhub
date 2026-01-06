@@ -111,9 +111,9 @@
                                             <div class="card border plan-card" data-plan="pro" style="cursor: pointer; transition: all 0.3s;" onclick="selectPlan('pro')">
                                                 <div class="card-body text-center p-3">
                                                     <input type="radio" name="plan" value="pro" id="plan_pro" {{ !empty($isInvitePro) || !empty($giveNewUsersProPlan) ? 'checked' : '' }} style="display: none;">
-                                                    <span class="badge bg-primary mb-1">Recommended</span>
+                                                    <span class="badge text-white bg-primary mb-1">Recommended</span>
                                                     <h6 class="mb-1 fw-bold">Pro Plan</h6>
-                                                    <p class="mb-1"><span class="fs-4 fw-bold text-primary">₹{{ number_format(($proPlanPrice ?? 49900) / 100, 2) }}</span><small class="text-muted">/month</small></p>
+                                                    <p class="mb-1"><span class="fs-4 fw-bold text-primary">₹{{ number_format(($proPlanPrice), 2) }}</span><small class="text-muted">/month</small></p>
                                                     <small class="text-muted d-block">Unlimited books</small>
                                                     <small class="text-muted d-block">Unlimited coupons</small>
                                                 </div>

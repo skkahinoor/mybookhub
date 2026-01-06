@@ -26,7 +26,7 @@ class VendorPlanController extends Controller
         }
 
         // Get dynamic plan price from settings
-        $amount = (int) Setting::getValue('pro_plan_price', 49900); // Default to ₹499 in paise
+        $amount = (int) Setting::getValue('pro_plan_price'); 
 
         try {
             $client = new Client();
@@ -38,7 +38,7 @@ class VendorPlanController extends Controller
                     env('RAZORPAY_KEY_SECRET')
                 ],
                 'json' => [
-                    'amount' => $amount,
+                    'amount' => $amount*100,
                     'currency' => 'INR',
                     'receipt' => 'vendor_plan_' . $vendor->id . '_' . time(),
                     'notes' => [
@@ -60,7 +60,7 @@ class VendorPlanController extends Controller
             return view('admin.vendor.payment', [
                 'vendor' => $vendor,
                 'order_id' => $orderData['id'],
-                'amount' => $orderData['amount'],
+                'amount' => $amount,
                 'currency' => $orderData['currency'],
                 'key_id' => env('RAZORPAY_KEY_ID'),
             ]);

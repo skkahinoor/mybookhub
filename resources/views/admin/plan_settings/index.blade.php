@@ -64,7 +64,7 @@
                                                class="form-control form-control-lg"
                                                id="pro_plan_price"
                                                name="pro_plan_price"
-                                               value="{{ $proPlanPrice / 100 }}"
+                                               value="{{ $proPlanPrice }}"
                                                min="1"
                                                step="0.01"
                                                required>
@@ -135,7 +135,6 @@
                                     <h5 class="mb-2">Invite Pro Link</h5>
                                     <p class="text-muted small mb-3">
                                         Share this link so vendors can sign up directly to Pro without payment.
-                                        You may regenerate this link at any time in the backend.
                                     </p>
 
                                     <div class="form-group mb-2">
