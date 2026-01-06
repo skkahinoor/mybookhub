@@ -21,6 +21,7 @@ use App\Models\Section;
 use App\Models\Edition;
 use App\Models\Publisher;
 use App\Models\Notification;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Validator;
 use App\Models\HeaderLogo;
 
@@ -417,6 +418,9 @@ class ProductsController extends Controller
             if ($id == null && $user->type === 'vendor' && !$skipProductSave) {
                 $vendor = \App\Models\Vendor::find($user->vendor_id);
                 if ($vendor && $vendor->plan === 'free') {
+                    // Get dynamic limit from settings
+                    $freePlanBookLimit = (int) Setting::getValue('free_plan_book_limit', 100);
+                    
                     // Count products added this month
                     $currentMonthStart = now()->startOfMonth();
                     $productsThisMonth = Product::whereHas('firstAttribute', function($q) use ($vendor) {
@@ -426,9 +430,9 @@ class ProductsController extends Controller
                     ->where('created_at', '>=', $currentMonthStart)
                     ->count();
 
-                    if ($productsThisMonth >= 100) {
+                    if ($productsThisMonth >= $freePlanBookLimit) {
                         return redirect('admin/products')
-                            ->with('error_message', 'You have reached the monthly limit of 100 products for Free plan. Please upgrade to Pro plan for unlimited uploads.');
+                            ->with('error_message', "You have reached the monthly limit of {$freePlanBookLimit} products for Free plan. Please upgrade to Pro plan for unlimited uploads.");
                     }
                 }
             }

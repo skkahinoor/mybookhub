@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Vendor;
 use App\Models\Product;
+use App\Models\Setting;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckVendorPlan
@@ -48,6 +49,9 @@ class CheckVendorPlan
 
         // Check product upload limits for Free plan
         if ($vendor->plan === 'free' && ($request->routeIs('admin.products.add') || $request->is('admin/add-edit-product'))) {
+            // Get dynamic limit from settings
+            $freePlanBookLimit = (int) Setting::getValue('free_plan_book_limit', 100);
+            
             // Count products added this month
             $currentMonthStart = now()->startOfMonth();
             $productsThisMonth = Product::whereHas('firstAttribute', function($q) use ($vendor) {
@@ -57,9 +61,9 @@ class CheckVendorPlan
             ->where('created_at', '>=', $currentMonthStart)
             ->count();
 
-            if ($productsThisMonth >= 100) {
+            if ($productsThisMonth >= $freePlanBookLimit) {
                 return redirect('admin/products')
-                    ->with('error_message', 'You have reached the monthly limit of 100 products for Free plan. Please upgrade to Pro plan for unlimited uploads.');
+                    ->with('error_message', "You have reached the monthly limit of {$freePlanBookLimit} products for Free plan. Please upgrade to Pro plan for unlimited uploads.");
             }
         }
 

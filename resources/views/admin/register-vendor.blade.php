@@ -28,6 +28,14 @@
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <h4>Vendor Registration</h4>
                             <h6 class="font-weight-light">Sign up to become a vendor.</h6>
+                            @if(!empty($giveNewUsersProPlan) || !empty($isInvitePro))
+                                <div class="alert alert-info mt-2">
+                                    New vendors get Pro plan access for {{ $proPlanTrialDurationDays ?? 30 }} days automatically.
+                                    @if(!empty($isInvitePro))
+                                        (Invite link applied)
+                                    @endif
+                                </div>
+                            @endif
 
 
                             {{-- Our Bootstrap error code in case of wrong credentials when logging in: --}}
@@ -53,6 +61,9 @@
                             {{-- Vendor Registration with OTP (similar to Sales) --}}
                             <form method="POST" action="{{ route('vendor.register.submit') }}" id="vendorRegisterForm">
                                 @csrf
+                                @if(!empty($inviteToken))
+                                    <input type="hidden" name="invite_token" value="{{ $inviteToken }}">
+                                @endif
 
                                 <div class="form-group mb-3">
                                     <input type="text" name="name" class="form-control" placeholder="Vendor Name" required>
@@ -88,10 +99,10 @@
                                         <div class="col-md-6 mb-2">
                                             <div class="card border plan-card" data-plan="free" style="cursor: pointer; transition: all 0.3s;" onclick="selectPlan('free')">
                                                 <div class="card-body text-center p-3">
-                                                    <input type="radio" name="plan" value="free" id="plan_free" checked style="display: none;">
+                                                    <input type="radio" name="plan" value="free" id="plan_free" {{ !empty($isInvitePro) || !empty($giveNewUsersProPlan) ? '' : 'checked' }} style="display: none;">
                                                     <h6 class="mb-1 fw-bold">Free Plan</h6>
                                                     <p class="mb-1"><span class="fs-4 fw-bold">₹0</span><small class="text-muted">/month</small></p>
-                                                    <small class="text-muted d-block">Up to 100 books/month</small>
+                                                    <small class="text-muted d-block">Up to {{ $freePlanBookLimit ?? 100 }} books/month</small>
                                                     <small class="text-muted d-block">No coupons</small>
                                                 </div>
                                             </div>
@@ -99,10 +110,10 @@
                                         <div class="col-md-6 mb-2">
                                             <div class="card border plan-card" data-plan="pro" style="cursor: pointer; transition: all 0.3s;" onclick="selectPlan('pro')">
                                                 <div class="card-body text-center p-3">
-                                                    <input type="radio" name="plan" value="pro" id="plan_pro" style="display: none;">
+                                                    <input type="radio" name="plan" value="pro" id="plan_pro" {{ !empty($isInvitePro) || !empty($giveNewUsersProPlan) ? 'checked' : '' }} style="display: none;">
                                                     <span class="badge bg-primary mb-1">Recommended</span>
                                                     <h6 class="mb-1 fw-bold">Pro Plan</h6>
-                                                    <p class="mb-1"><span class="fs-4 fw-bold text-primary">₹499</span><small class="text-muted">/month</small></p>
+                                                    <p class="mb-1"><span class="fs-4 fw-bold text-primary">₹{{ number_format(($proPlanPrice ?? 49900) / 100, 2) }}</span><small class="text-muted">/month</small></p>
                                                     <small class="text-muted d-block">Unlimited books</small>
                                                     <small class="text-muted d-block">Unlimited coupons</small>
                                                 </div>
@@ -169,7 +180,8 @@
 
         // Initialize default selection
         $(document).ready(function() {
-            selectPlan('free');
+            const defaultPlan = "{{ !empty($giveNewUsersProPlan) || !empty($isInvitePro) ? 'pro' : 'free' }}";
+            selectPlan(defaultPlan);
         });
 
         $('#sendOtpBtn').click(function(e) {

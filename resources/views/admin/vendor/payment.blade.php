@@ -19,7 +19,7 @@
                         <div class="text-center mb-4">
                             <h5>Upgrade to Pro Plan</h5>
                             <p class="text-muted">Get unlimited book uploads and coupons</p>
-                            <h3 class="text-primary">₹499 <small class="text-muted">/month</small></h3>
+                            <h3 class="text-primary">₹{{ number_format($amount / 100, 2) }} <small class="text-muted">/month</small></h3>
                         </div>
 
                         <div id="payment-status"></div>
@@ -30,7 +30,7 @@
                             <input type="hidden" name="razorpay_order_id" value="{{ $order_id }}">
                             
                             <button type="button" class="btn btn-primary w-100 btn-lg" id="pay-button">
-                                Pay ₹499
+                                Pay ₹{{ number_format($amount / 100, 2) }}
                             </button>
                         </form>
 
@@ -50,7 +50,7 @@
                 "amount": {{ $amount }},
                 "currency": "{{ $currency }}",
                 "name": "BookHub",
-                "description": "Pro Plan Subscription - ₹499/month",
+                "description": "Pro Plan Subscription - ₹{{ number_format($amount / 100, 2) }}/month",
                 "order_id": "{{ $order_id }}",
                 "handler": function (response) {
                     // Submit payment details to server

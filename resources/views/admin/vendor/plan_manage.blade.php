@@ -38,11 +38,11 @@
                                             </p>
                                         @endif
                                     @else
-                                        <p class="mb-2"><strong>Monthly Upload Limit:</strong> 100 books</p>
-                                        <p class="mb-2"><strong>Books Uploaded This Month:</strong> {{ $productsThisMonth }}/100</p>
+                                        <p class="mb-2"><strong>Monthly Upload Limit:</strong> {{ $freePlanBookLimit ?? 100 }} books</p>
+                                        <p class="mb-2"><strong>Books Uploaded This Month:</strong> {{ $productsThisMonth }}/{{ $freePlanBookLimit ?? 100 }}</p>
                                         <div class="progress mb-2">
-                                            <div class="progress-bar" role="progressbar" style="width: {{ ($productsThisMonth / 100) * 100 }}%">
-                                                {{ $productsThisMonth }}%
+                                            <div class="progress-bar" role="progressbar" style="width: {{ $freePlanBookLimit > 0 ? ($productsThisMonth / $freePlanBookLimit) * 100 : 0 }}%">
+                                                {{ $freePlanBookLimit > 0 ? round(($productsThisMonth / $freePlanBookLimit) * 100) : 0 }}%
                                             </div>
                                         </div>
                                         <p class="text-muted small">Coupons: Not Available</p>
@@ -58,7 +58,7 @@
                                     
                                     @if($vendor->plan === 'free')
                                         <ul class="list-unstyled">
-                                            <li><i class="mdi mdi-check text-success"></i> Up to 100 books per month</li>
+                                            <li><i class="mdi mdi-check text-success"></i> Up to {{ $freePlanBookLimit ?? 100 }} books per month</li>
                                             <li><i class="mdi mdi-close text-danger"></i> No coupon creation</li>
                                             <li><i class="mdi mdi-check text-success"></i> Basic vendor dashboard</li>
                                         </ul>
@@ -71,7 +71,7 @@
                                         </ul>
                                         <form method="POST" action="{{ route('vendor.plan.upgrade') }}" class="mt-3">
                                             @csrf
-                                            <button type="submit" class="btn btn-primary">Upgrade to Pro - ₹499/month</button>
+                                            <button type="submit" class="btn btn-primary">Upgrade to Pro - ₹{{ number_format(($proPlanPrice ?? 49900) / 100, 2) }}/month</button>
                                         </form>
                                     @else
                                         <ul class="list-unstyled">

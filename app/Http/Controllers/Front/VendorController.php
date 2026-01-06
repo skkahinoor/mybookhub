@@ -14,6 +14,7 @@ use App\Models\Admin;
 use App\Models\Language;
 use App\Models\Notification;
 use App\Models\Section;
+use App\Models\Setting;
 use Intervention\Image\Facades\Image;
 use GuzzleHttp\Client;
 
@@ -242,12 +243,24 @@ class VendorController extends Controller
         }
     }
 
-    public function showRegister()
+    public function showRegister(Request $request)
     {
-        // $headerLogo = HeaderLogo::first();
-        // $logos = $headerLogo;
+        $proPlanPrice = (int) Setting::getValue('pro_plan_price', 49900);
+        $freePlanBookLimit = (int) Setting::getValue('free_plan_book_limit', 100);
+        $giveNewUsersProPlan = (bool) Setting::getValue('give_new_users_pro_plan', 0);
+        $proPlanTrialDurationDays = (int) Setting::getValue('pro_plan_trial_duration_days', 30);
+        $inviteToken = $request->query('invite');
+        $storedInviteToken = Setting::getValue('invite_pro_token');
+        $isInvitePro = $inviteToken && $storedInviteToken && hash_equals($storedInviteToken, $inviteToken);
 
-        return view('admin.register-vendor');
+        return view('admin.register-vendor', compact(
+            'proPlanPrice',
+            'freePlanBookLimit',
+            'giveNewUsersProPlan',
+            'proPlanTrialDurationDays',
+            'inviteToken',
+            'isInvitePro'
+        ));
     }
 
     public function register(Request $request, $id = null)
@@ -310,6 +323,18 @@ class VendorController extends Controller
             if (empty($id)) {
                 // ================= ADD MODE =================
                 $selectedPlan = $data['plan'] ?? 'free';
+                
+                // Check settings and invite link
+                $giveNewUsersProPlan = (bool) Setting::getValue('give_new_users_pro_plan', 0);
+                $proPlanTrialDurationDays = (int) Setting::getValue('pro_plan_trial_duration_days', 30);
+                $storedInviteToken = Setting::getValue('invite_pro_token');
+                $requestInviteToken = $data['invite_token'] ?? null;
+                $isInvitePro = $requestInviteToken && $storedInviteToken && hash_equals($storedInviteToken, $requestInviteToken);
+
+                // If setting is enabled OR invite link used, force Pro (trial, no payment)
+                if ($giveNewUsersProPlan || $isInvitePro) {
+                    $selectedPlan = 'pro';
+                }
 
                 // Insert Vendor with plan
                 $vendorData = [
@@ -321,10 +346,19 @@ class VendorController extends Controller
                     'plan'    => $selectedPlan,
                 ];
 
-                // Set plan dates for free plan
-                if ($selectedPlan === 'free') {
+                // Set plan dates
+                if ($selectedPlan === 'pro') {
                     $vendorData['plan_started_at'] = now();
-                    // Free plan doesn't expire, but we can set a far future date
+                    // If this is a trial (from setting or invite), set expiry date
+                    if ($giveNewUsersProPlan || $isInvitePro) {
+                        $vendorData['plan_expires_at'] = now()->addDays($proPlanTrialDurationDays);
+                    } else {
+                        // Regular Pro plan - will be set after payment
+                        $vendorData['plan_expires_at'] = null;
+                    }
+                } else {
+                    // Free plan
+                    $vendorData['plan_started_at'] = now();
                     $vendorData['plan_expires_at'] = null;
                 }
 
@@ -342,14 +376,21 @@ class VendorController extends Controller
                 DB::table('otps')->where('phone', $data['mobile'])->delete();
                 session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile']);
 
-                // If Pro plan selected, redirect to payment
-                if ($selectedPlan === 'pro') {
+                $wasTrialProPlan = ($giveNewUsersProPlan || $isInvitePro) && $selectedPlan === 'pro';
+
+                // If Pro plan selected explicitly (not from trial/invite), redirect to payment
+                if ($selectedPlan === 'pro' && !$wasTrialProPlan) {
                     return redirect()->route('vendor.payment.create', ['vendor_id' => $vendorId])
                         ->with('vendor_id', $vendorId);
                 }
 
+                // Trial Pro plan (setting or invite) or Free plan - just redirect to login
+                $planMessage = $wasTrialProPlan 
+                    ? "Vendor registered successfully! You have been given Pro plan access for {$proPlanTrialDurationDays} days."
+                    : 'Vendor registered successfully with Free plan!';
+                
                 return redirect('admin/login')
-                    ->with('success_message', 'Vendor registered successfully with Free plan!');
+                    ->with('success_message', $planMessage);
             } else {
                 // ================= EDIT MODE =================
 

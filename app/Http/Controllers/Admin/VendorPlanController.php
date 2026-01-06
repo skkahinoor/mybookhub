@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Vendor;
 use App\Models\HeaderLogo;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -24,7 +25,8 @@ class VendorPlanController extends Controller
                 ->with('error_message', 'You already have an active Pro plan.');
         }
 
-        $amount = 49900; // ₹499 in paise
+        // Get dynamic plan price from settings
+        $amount = (int) Setting::getValue('pro_plan_price', 49900); // Default to ₹499 in paise
 
         try {
             $client = new Client();
@@ -246,6 +248,7 @@ class VendorPlanController extends Controller
         
         // Count products this month for Free plan
         $productsThisMonth = 0;
+        $freePlanBookLimit = (int) Setting::getValue('free_plan_book_limit', 100);
         if ($vendor->plan === 'free') {
             $currentMonthStart = now()->startOfMonth();
             $productsThisMonth = \App\Models\Product::whereHas('firstAttribute', function($q) use ($vendor) {
@@ -256,9 +259,14 @@ class VendorPlanController extends Controller
             ->count();
         }
 
+        // Get dynamic plan price
+        $proPlanPrice = (int) Setting::getValue('pro_plan_price', 49900);
+
         return view('admin.vendor.plan_manage', [
             'vendor' => $vendor,
             'productsThisMonth' => $productsThisMonth,
+            'freePlanBookLimit' => $freePlanBookLimit,
+            'proPlanPrice' => $proPlanPrice,
             'logos' => $logos,
             'headerLogo' => $headerLogo,
         ]);

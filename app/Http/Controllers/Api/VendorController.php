@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Admin;
 use App\Models\Vendor;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -134,14 +135,30 @@ class VendorController extends Controller
 
         DB::beginTransaction();
         try {
+            // Check if admin wants to give new users Pro plan initially
+            $giveNewUsersProPlan = (bool) Setting::getValue('give_new_users_pro_plan', 0);
+            $proPlanTrialDurationDays = (int) Setting::getValue('pro_plan_trial_duration_days', 30);
+            $selectedPlan = $giveNewUsersProPlan ? 'pro' : 'free';
 
-            $vendor = Vendor::create([
+            $vendorData = [
                 'name'    => $name,
                 'email'   => $email,
                 'mobile'  => $phone,
                 'status'  => 0,
                 'confirm' => 'No',
-            ]);
+                'plan'    => $selectedPlan,
+            ];
+
+            // Set plan dates
+            if ($selectedPlan === 'pro') {
+                $vendorData['plan_started_at'] = now();
+                $vendorData['plan_expires_at'] = now()->addDays($proPlanTrialDurationDays);
+            } else {
+                $vendorData['plan_started_at'] = now();
+                $vendorData['plan_expires_at'] = null;
+            }
+
+            $vendor = Vendor::create($vendorData);
 
             Admin::create([
                 'name'      => $name,
