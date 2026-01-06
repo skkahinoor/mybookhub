@@ -15,7 +15,7 @@ use App\Models\Author;
 use App\Models\Language;
 use App\Models\Admin;
 use App\Models\Category;
-
+use App\Models\Vendor;
 use App\Models\ProductsAttribute;
 
 class BookController extends Controller
@@ -384,4 +384,144 @@ class BookController extends Controller
         ], 201);
     }
 
+    public function productSummary(Request $request, $id)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $product = Product::select(
+            'id',
+            'product_name',
+            'product_price',
+            'product_isbn',
+            'product_image'
+        )->findOrFail($id);
+
+        $totalStock = 0;
+
+        if ($user->type === 'vendor') {
+
+            $totalStock = ProductsAttribute::where('product_id', $product->id)
+                ->where('vendor_id', $user->vendor_id)
+                ->where('admin_type', 'vendor')
+                ->sum('stock');
+        } else {
+
+            $totalStock = ProductsAttribute::where('product_id', $product->id)
+                ->where('admin_id', $user->id)
+                ->where('admin_type', 'admin')
+                ->sum('stock');
+        }
+
+        return response()->json([
+            'status' => true,
+            'data'   => [
+                'id'            => $product->id,
+                'product_name'  => $product->product_name,
+                'product_price' => $product->product_price,
+                'product_isbn'  => $product->product_isbn,
+                'product_image' => $product->product_image,
+                'available_stock'   => (int) $totalStock
+            ]
+        ], 200);
+    }
+
+    public function storeProductAttribute(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $request->validate([
+            'product_id'       => 'required|exists:products,id',
+            'total_stock'      => 'required|integer|min:0',
+            'product_discount' => 'nullable|numeric|min:0'
+        ]);
+
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $product = Product::findOrFail($request->product_id);
+
+        $attributeQuery = ProductsAttribute::where('product_id', $product->id);
+
+        if ($user->type === 'vendor') {
+            $attributeQuery->where('vendor_id', $user->vendor_id)
+                ->where('admin_type', 'vendor');
+        } else {
+            $attributeQuery->where('admin_id', $user->id)
+                ->where('admin_type', 'admin');
+        }
+
+        $existingAttribute = $attributeQuery->first();
+
+        if (!$existingAttribute && $user->type === 'vendor') {
+
+            $vendor = Vendor::find($user->vendor_id);
+
+            if ($vendor && $vendor->plan === 'free') {
+
+                $FREE_VENDOR_ATTRIBUTE_LIMIT = 10; //  CHANGE LIMIT HERE
+
+                $currentMonthStart = now()->startOfMonth();
+
+                $attributeCount = ProductsAttribute::where('vendor_id', $vendor->id)
+                    ->where('admin_type', 'vendor')
+                    ->where('created_at', '>=', $currentMonthStart)
+                    ->count();
+
+                if ($attributeCount >= $FREE_VENDOR_ATTRIBUTE_LIMIT) {
+                    return response()->json([
+                        'status'  => false,
+                        'message' => "Free plan allows only {$FREE_VENDOR_ATTRIBUTE_LIMIT} products per month. Please upgrade to Pro plan."
+                    ], 403);
+                }
+            }
+        }
+
+        if ($existingAttribute) {
+
+            $existingAttribute->stock += (int) $request->total_stock;
+            $existingAttribute->product_discount = $request->product_discount ?? 0;
+            $existingAttribute->save();
+        } else {
+
+            $attribute = new ProductsAttribute();
+            $attribute->product_id       = $product->id;
+            $attribute->size             = 'Default';
+            $attribute->sku              = 'null';
+            $attribute->stock            = $request->total_stock;
+            $attribute->product_discount = $request->product_discount ?? 0;
+            $attribute->status           = 1;
+
+            if ($user->type === 'vendor') {
+                $attribute->admin_type = 'vendor';
+                $attribute->vendor_id  = $user->vendor_id;
+                $attribute->admin_id   = null;
+            } else {
+                $attribute->admin_type = 'admin';
+                $attribute->admin_id   = $user->id;
+                $attribute->vendor_id  = null;
+            }
+
+            $attribute->save();
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Stock & discount saved successfully'
+        ], 201);
+    }
 }

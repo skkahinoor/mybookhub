@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\WithdrawalApiController;
 use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\CatalogueController;
+use App\Http\Controllers\Api\VendorPlanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -93,6 +94,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vendor/bank-details', [VendorController::class, 'getBankDetails']);
 });
 
+// Vendor Plan Management
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('vendor/plan/status', [VendorPlanController::class, 'status']);
+    Route::post('vendor/plan/upgrade', [VendorPlanController::class, 'upgrade']);
+    Route::post('vendor/plan/verify', [VendorPlanController::class, 'verify']);
+    Route::post('vendor/plan/downgrade', [VendorPlanController::class, 'downgrade']);
+});
+
 // Catalogue Management
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vendor/sections', [CatalogueController::class, 'getSection']);
@@ -141,4 +150,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/vendor/products/{id}', [BookController::class, 'deleteProduct']);
     Route::post('/vendor/products/isbn-lookup', [BookController::class, 'lookupByIsbn']);
     Route::post('/vendor/products', [BookController::class, 'storeManualProduct']);
+    Route::get('/vendor/products/{id}/summary', [BookController::class, 'productSummary']);
+    Route::post('/vendor/products/stock', [BookController::class, 'storeProductAttribute']);
 });
