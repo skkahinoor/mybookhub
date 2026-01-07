@@ -71,10 +71,27 @@ class BookController extends Controller
             });
         }
 
+        $products = $query->get();
+        $basePath = url('front/images/product_images');
+
+        $products->each(function ($product) use ($basePath) {
+            $product->image_urls = [
+                'large'  => $product->product_image
+                    ? $basePath . '/large/' . $product->product_image
+                    : null,
+                'medium' => $product->product_image
+                    ? $basePath . '/medium/' . $product->product_image
+                    : null,
+                'small'  => $product->product_image
+                    ? $basePath . '/small/' . $product->product_image
+                    : null,
+            ];
+        });
+
         return response()->json([
             'status'  => true,
             'message' => 'Products fetched successfully',
-            'data'    => $query->get()
+            'data'    => $products
         ], 200);
     }
 
@@ -377,6 +394,14 @@ class BookController extends Controller
             'authors'
         ]);
 
+        $basePath = url('front/images/product_images');
+
+        $product->image_urls = [
+            'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
+            'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
+            'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+        ];
+
         return response()->json([
             'status'  => true,
             'message' => 'Product added successfully',
@@ -384,7 +409,84 @@ class BookController extends Controller
         ], 201);
     }
 
-    public function productSummary(Request $request, $id)
+    public function productSummary(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $request->validate([
+            'isbn' => 'required|string|max:20'
+        ]);
+
+        $isbn = $request->isbn;
+
+        $product = Product::select(
+            'id',
+            'product_name',
+            'product_price',
+            'product_isbn',
+            'product_image'
+        )->where('product_isbn', $isbn)->first();
+
+        if (!$product) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Product not found with this ISBN'
+            ], 404);
+        }
+
+        $totalStock = 0;
+
+        if ($user->type === 'vendor') {
+            $totalStock = ProductsAttribute::where('product_id', $product->id)
+                ->where('vendor_id', $user->vendor_id)
+                ->where('admin_type', 'vendor')
+                ->sum('stock');
+        } else {
+            $totalStock = ProductsAttribute::where('product_id', $product->id)
+                ->where('admin_id', $user->id)
+                ->where('admin_type', 'admin')
+                ->sum('stock');
+        }
+
+        $basePath = url('front/images/product_images');
+
+        return response()->json([
+            'status' => true,
+            'data'   => [
+                'id'               => $product->id,
+                'product_name'     => $product->product_name,
+                'product_price'    => $product->product_price,
+                'product_isbn'     => $product->product_isbn,
+
+                // original image name (optional, keep for backend use)
+                'product_image'    => $product->product_image,
+
+                // FULL IMAGE PATHS (APP FRIENDLY)
+                'image_urls'       => [
+                    'large'  => $product->product_image
+                        ? $basePath . '/large/' . $product->product_image
+                        : null,
+                    'medium' => $product->product_image
+                        ? $basePath . '/medium/' . $product->product_image
+                        : null,
+                    'small'  => $product->product_image
+                        ? $basePath . '/small/' . $product->product_image
+                        : null,
+                ],
+
+                'available_stock'  => (int) $totalStock
+            ]
+        ], 200);
+    }
+
+    public function productSummaryByid(Request $request, $id)
     {
         $user = $request->user();
 
@@ -419,15 +521,33 @@ class BookController extends Controller
                 ->sum('stock');
         }
 
+        $basePath = url('front/images/product_images');
+
         return response()->json([
             'status' => true,
             'data'   => [
-                'id'            => $product->id,
-                'product_name'  => $product->product_name,
-                'product_price' => $product->product_price,
-                'product_isbn'  => $product->product_isbn,
-                'product_image' => $product->product_image,
-                'available_stock'   => (int) $totalStock
+                'id'               => $product->id,
+                'product_name'     => $product->product_name,
+                'product_price'    => $product->product_price,
+                'product_isbn'     => $product->product_isbn,
+
+                // original image name (optional, keep for backend use)
+                'product_image'    => $product->product_image,
+
+                // FULL IMAGE PATHS (APP FRIENDLY)
+                'image_urls'       => [
+                    'large'  => $product->product_image
+                        ? $basePath . '/large/' . $product->product_image
+                        : null,
+                    'medium' => $product->product_image
+                        ? $basePath . '/medium/' . $product->product_image
+                        : null,
+                    'small'  => $product->product_image
+                        ? $basePath . '/small/' . $product->product_image
+                        : null,
+                ],
+
+                'available_stock'  => (int) $totalStock
             ]
         ], 200);
     }
