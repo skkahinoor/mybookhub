@@ -149,7 +149,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);
     Route::delete('/vendor/products/{id}', [BookController::class, 'deleteProduct']);
     Route::post('/vendor/products/isbn-lookup', [BookController::class, 'lookupByIsbn']);
+    Route::get('/vendor/products/{id}/summary', [BookController::class, 'productSummaryByid']);
     Route::post('/vendor/products', [BookController::class, 'storeManualProduct']);
-    Route::get('/vendor/products/{id}/summary', [BookController::class, 'productSummary']);
+    Route::post('/vendor/products/summary', [BookController::class, 'productSummary']);
     Route::post('/vendor/products/stock', [BookController::class, 'storeProductAttribute']);
 });
