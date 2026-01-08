@@ -266,6 +266,13 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Render admin/orders/order_details.blade.php (View Order Details page) when clicking on the View Order Details icon in admin/orders/orders.blade.php (Orders tab under Orders Management section in Admin Panel)
         Route::get('orders/{id}', 'OrderController@orderDetails');
 
+        // Sales Concept (Vendor only)
+        Route::get('sales-concept', 'OrderController@salesConcept');
+        Route::post('sales-concept/search-isbn', 'OrderController@searchBookByIsbn');
+        Route::post('sales-concept/add-to-cart', 'OrderController@addToSalesCart');
+        Route::post('sales-concept/remove-from-cart', 'OrderController@removeFromSalesCart');
+        Route::post('sales-concept/process-sale', 'OrderController@processSale');
+
         // Update Order Status (which is determined by 'admin'-s ONLY, not 'vendor'-s, in contrast to "Update Item Status" which can be updated by both 'vendor'-s and 'admin'-s) (Pending, Shipped, In Progress, Canceled, ...) in admin/orders/order_details.blade.php in Admin Panel
         // Note: The `order_statuses` table contains all kinds of order statuses (that can be updated by 'admin'-s ONLY in `orders` table) like: pending, in progress, shipped, canceled, ...etc. In `order_statuses` table, the `name` column can be: 'New', 'Pending', 'Canceled', 'In Progress', 'Shipped', 'Partially Shipped', 'Delivered', 'Partially Delivered' and 'Paid'. 'Partially Shipped': If one order has products from different vendors, and one vendor has shipped their product to the customer while other vendor (or vendors) didn't!. 'Partially Delivered': if one order has products from different vendors, and one vendor has shipped and DELIVERED their product to the customer while other vendor (or vendors) didn't!    // The `order_item_statuses` table contains all kinds of order statuses (that can be updated by both 'vendor'-s and 'admin'-s in `orders_products` table) like: pending, in progress, shipped, canceled, ...etc.
         Route::post('update-order-status', 'OrderController@updateOrderStatus');
