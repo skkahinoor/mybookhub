@@ -166,4 +166,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('vendor/orders/{order_id}', [OrderController::class, 'show']);
     Route::patch('vendor/orders/{order_id}/status', [OrderController::class, 'updateOrderStatus']);
     Route::patch('vendor/order-items/{order_item_id}/status', [OrderController::class, 'updateOrderItemStatus']);
+
+    // Route::get('vendor/sales/cart', [OrderController::class, 'cart']);
+    Route::post('vendor/sales/search-isbn', [OrderController::class, 'searchByIsbn']);
+    Route::post('/vendor/sales/process', [OrderController::class, 'processSale']);
+    // Route::post('vendor/sales/cart/add', [OrderController::class, 'addToCart']);
+    // Route::post('vendor/cart/remove', [OrderController::class, 'removeFromCart']);
+    // Route::post('vendor/process', [OrderController::class, 'processSale']);
 });
