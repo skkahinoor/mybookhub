@@ -35,27 +35,65 @@ class Vendor extends Model
         'plan_expires_at' => 'datetime',
     ];
 
-    // Relationship of a Vendor `vendors` with VendorsBusinessDetail `vendors_business_details` (every product belongs to a vendor)
-    public function vendorbusinessdetails() {
-        return $this->belongsTo('App\Models\VendorsBusinessDetail', 'id', 'vendor_id'); // 'vendor_id' is the Foreign Key of the Relationship    // Defining The Inverse Of The Relationship: https://laravel.com/docs/9.x/eloquent-relationships#one-to-one-defining-the-inverse-of-the-relationship
+    /* =======================
+       Relationships
+    ======================= */
+
+    // Vendor → Business Details (One to One)
+    public function vendorbusinessdetails()
+    {
+        return $this->hasOne(
+            VendorsBusinessDetail::class,
+            'vendor_id',
+            'id'
+        );
     }
 
-
-
-
-    public static function getVendorShop($vendorid) { // this method is called (used) in vendorListing() method in Front/ProductsController.php
-        $getVendorShop = \App\Models\VendorsBusinessDetail::select('shop_name')->where('vendor_id', $vendorid)->first()->toArray();
-
-
-        return $getVendorShop['shop_name'];
+    // Vendor → Country
+    public function country()
+    {
+        return $this->belongsTo(
+            Country::class,
+            'country_id',
+            'id'
+        );
     }
 
-    // Get Vendor's Commission Percentage that they must pay for the Website Owner from `commission` column of `vendors` table
-    public static function getVendorCommission($vendor_id) {
-        $getVendorCommission = Vendor::select('commission')->where('id', $vendor_id)->first()->toArray();
-
-
-        return $getVendorCommission['commission'];
+    // Vendor → State
+    public function state()
+    {
+        return $this->belongsTo(
+            State::class,
+            'state_id',
+            'id'
+        );
     }
 
+    // Vendor → District
+    public function district()
+    {
+        return $this->belongsTo(
+            District::class,
+            'district_id',
+            'id'
+        );
+    }
+
+    /* =======================
+       Helper Functions
+    ======================= */
+
+    // Get Vendor Shop Name
+    public static function getVendorShop($vendorid)
+    {
+        return VendorsBusinessDetail::where('vendor_id', $vendorid)
+            ->value('shop_name');
+    }
+
+    // Get Vendor Commission
+    public static function getVendorCommission($vendor_id)
+    {
+        return Vendor::where('id', $vendor_id)
+            ->value('commission');
+    }
 }
