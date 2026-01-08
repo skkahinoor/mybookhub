@@ -614,7 +614,7 @@ class OrderController extends Controller
                     'vendor_id'     => $vendorId,
                     'product_id'    => $item['product']->id,
                     'product_name'  => $item['product']->product_name,
-                    'product_price' => $item['price'],   // ✅ NEVER NULL
+                    'product_price' => $item['price'],
                     'product_qty'   => $item['quantity'],
                     'item_status'   => 'New'
                 ]);
