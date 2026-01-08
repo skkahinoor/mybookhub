@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\WithdrawalApiController;
 use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\CatalogueController;
 use App\Http\Controllers\Api\VendorPlanController;
+use App\Http\Controllers\Api\OrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -145,6 +146,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/vendor/coupons/{id}/status', [CatalogueController::class, 'updateCouponStatus']);
     Route::delete('/vendor/coupons/{id}', [CatalogueController::class, 'destroyCoupon']);
 
+    Route::get('vendor/book-requests', [CatalogueController::class, 'getBookRequest']);
+    Route::delete('vendor/book-requests/{id}', [CatalogueController::class, 'deleteBookRequest']);
+    Route::patch('vendor/book-requests/{id}/status', [CatalogueController::class, 'updateBookRequestStatus']);
+
     Route::get('/vendor/products', [BookController::class, 'getproduct']);
     Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);
     Route::delete('/vendor/products/{id}', [BookController::class, 'deleteProduct']);
@@ -153,4 +158,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vendor/products', [BookController::class, 'storeManualProduct']);
     Route::post('/vendor/products/summary', [BookController::class, 'productSummary']);
     Route::post('/vendor/products/stock', [BookController::class, 'storeProductAttribute']);
+});
+
+// Order Management
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('vendor/orders', [OrderController::class, 'index']);
+    Route::get('vendor/orders/{order_id}', [OrderController::class, 'show']);
+    Route::patch('vendor/orders/{order_id}/status', [OrderController::class, 'updateOrderStatus']);
+    Route::patch('vendor/order-items/{order_item_id}/status', [OrderController::class, 'updateOrderItemStatus']);
 });
