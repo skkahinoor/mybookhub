@@ -18,6 +18,7 @@ use App\Models\Subject;
 use App\Models\Language;
 use App\Models\Edition;
 use App\Models\Coupon;
+use App\Models\BookRequest;
 
 class CatalogueController extends Controller
 {
@@ -871,5 +872,79 @@ class CatalogueController extends Controller
             'status' => true,
             'message' => 'Coupon deleted successfully'
         ]);
+    }
+
+    public function getBookRequest(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $bookRequests = BookRequest::with('user')->latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'data'   => $bookRequests
+        ], 200);
+    }
+
+    public function deleteBookRequest(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $bookRequest = BookRequest::find($id);
+
+        if (!$bookRequest) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Book Request not found'
+            ], 404);
+        }
+
+        $bookRequest->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Book Request deleted successfully'
+        ], 200);
+    }
+
+    public function updateBookRequestStatus(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $admin = $request->user();
+        $bookRequest = BookRequest::find($id);
+
+        if (!$bookRequest) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Book request not found'
+            ], 404);
+        }
+
+        // Optional: Vendor ownership check (if book_requests has vendor_id)
+        if ($admin->type === 'vendor' && isset($bookRequest->vendor_id)) {
+            if ($bookRequest->vendor_id !== $admin->vendor_id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+        }
+
+        $bookRequest->update([
+            'status' => !$bookRequest->status
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Book request status updated',
+            'book_request_status' => $bookRequest->status
+        ], 200);
     }
 }
