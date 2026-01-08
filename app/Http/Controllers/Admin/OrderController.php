@@ -791,12 +791,6 @@ class OrderController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'sales_concept');
 
-        // Check if user is vendor
-        $adminType = Auth::guard('admin')->user()->type;
-        if ($adminType != 'vendor') {
-            return redirect('admin/dashboard')->with('error_message', 'Access denied. This feature is only available for vendors.');
-        }
-
         // Get cart items from session
         $cartItems = Session::get('sales_cart', []);
 
@@ -809,17 +803,10 @@ class OrderController extends Controller
             'isbn' => 'required|string|max:20'
         ]);
 
-        // Check if user is vendor
-        $adminType = Auth::guard('admin')->user()->type;
-        if ($adminType != 'vendor') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Access denied. This feature is only available for vendors.'
-            ], 403);
-        }
-
         $isbn = $request->isbn;
+        $adminType = Auth::guard('admin')->user()->type;
         $vendor_id = Auth::guard('admin')->user()->vendor_id;
+        $admin_id = Auth::guard('admin')->user()->id;
 
         // Search product by ISBN
         $product = Product::where('product_isbn', $isbn)->first();
@@ -831,16 +818,30 @@ class OrderController extends Controller
             ], 404);
         }
 
-        // Get product attributes (stock) for this vendor
-        $productAttribute = ProductsAttribute::where([
-            'product_id' => $product->id,
-            'vendor_id' => $vendor_id
-        ])->first();
+        // Get product attributes (stock) based on user type
+        $productAttribute = null;
+        if ($adminType == 'vendor') {
+            $productAttribute = ProductsAttribute::where([
+                'product_id' => $product->id,
+                'vendor_id' => $vendor_id
+            ])->first();
+        } else {
+            // For admin/superadmin/subadmin
+            $productAttribute = ProductsAttribute::where([
+                'product_id' => $product->id,
+                'admin_id' => $admin_id
+            ])->first();
+            
+            // If not found with admin_id, try to get any attribute for this product
+            if (!$productAttribute) {
+                $productAttribute = ProductsAttribute::where('product_id', $product->id)->first();
+            }
+        }
 
         if (!$productAttribute) {
             return response()->json([
                 'status' => false,
-                'message' => 'Product not available for this vendor'
+                'message' => 'Product not available in inventory'
             ], 404);
         }
 
@@ -866,16 +867,32 @@ class OrderController extends Controller
 
         $product_id = $request->product_id;
         $quantity = $request->quantity;
+        $adminType = Auth::guard('admin')->user()->type;
         $vendor_id = Auth::guard('admin')->user()->vendor_id;
+        $admin_id = Auth::guard('admin')->user()->id;
 
         // Get product details
         $product = Product::findOrFail($product_id);
         
-        // Get product attribute (stock and price)
-        $productAttribute = ProductsAttribute::where([
-            'product_id' => $product_id,
-            'vendor_id' => $vendor_id
-        ])->first();
+        // Get product attribute (stock and price) based on user type
+        $productAttribute = null;
+        if ($adminType == 'vendor') {
+            $productAttribute = ProductsAttribute::where([
+                'product_id' => $product_id,
+                'vendor_id' => $vendor_id
+            ])->first();
+        } else {
+            // For admin/superadmin/subadmin
+            $productAttribute = ProductsAttribute::where([
+                'product_id' => $product_id,
+                'admin_id' => $admin_id
+            ])->first();
+            
+            // If not found with admin_id, try to get any attribute for this product
+            if (!$productAttribute) {
+                $productAttribute = ProductsAttribute::where('product_id', $product_id)->first();
+            }
+        }
 
         if (!$productAttribute) {
             return response()->json([
@@ -984,6 +1001,7 @@ class OrderController extends Controller
             return redirect()->back()->with('error_message', 'Cart is empty. Please add products first.');
         }
 
+        $adminType = Auth::guard('admin')->user()->type;
         $vendor_id = Auth::guard('admin')->user()->vendor_id;
         $admin_id = Auth::guard('admin')->user()->id;
 
@@ -1019,11 +1037,25 @@ class OrderController extends Controller
 
             // Create order products and update stock
             foreach ($cart as $item) {
-                // Get product attribute
-                $productAttribute = ProductsAttribute::where([
-                    'product_id' => $item['product_id'],
-                    'vendor_id' => $vendor_id
-                ])->first();
+                // Get product attribute based on user type
+                $productAttribute = null;
+                if ($adminType == 'vendor') {
+                    $productAttribute = ProductsAttribute::where([
+                        'product_id' => $item['product_id'],
+                        'vendor_id' => $vendor_id
+                    ])->first();
+                } else {
+                    // For admin/superadmin/subadmin
+                    $productAttribute = ProductsAttribute::where([
+                        'product_id' => $item['product_id'],
+                        'admin_id' => $admin_id
+                    ])->first();
+                    
+                    // If not found with admin_id, try to get any attribute for this product
+                    if (!$productAttribute) {
+                        $productAttribute = ProductsAttribute::where('product_id', $item['product_id'])->first();
+                    }
+                }
 
                 if (!$productAttribute) {
                     throw new \Exception('Product attribute not found for product ID: ' . $item['product_id']);
@@ -1042,8 +1074,8 @@ class OrderController extends Controller
                 $orderProduct = new OrdersProduct();
                 $orderProduct->order_id = $order_id;
                 $orderProduct->user_id = 0;
-                $orderProduct->admin_id = $admin_id;
-                $orderProduct->vendor_id = $vendor_id;
+                $orderProduct->admin_id = ($adminType == 'vendor') ? 0 : $admin_id;
+                $orderProduct->vendor_id = ($adminType == 'vendor') ? $vendor_id : 0;
                 $orderProduct->product_id = $item['product_id'];
                 $orderProduct->product_name = $item['product_name'];
                 $orderProduct->product_price = $item['price'];
