@@ -197,14 +197,7 @@ class VendorController extends Controller
     {
         $admin = $request->user();
 
-        if (!$admin instanceof Admin) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Vendor can access this profile.'
-            ], 403);
-        }
-
-        if ($admin->type !== 'vendor') {
+        if (!$admin instanceof Admin || $admin->type !== 'vendor') {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Vendor can access this profile.'
@@ -218,7 +211,11 @@ class VendorController extends Controller
             ], 403);
         }
 
-        $profileDetail = Vendor::where('id', $admin->vendor_id)->first();
+        $profileDetail = Vendor::with([
+            'country:id,name',
+            'state:id,name',
+            'district:id,name'
+        ])->where('id', $admin->vendor_id)->first();
 
         if (!$profileDetail) {
             return response()->json([
@@ -230,7 +227,12 @@ class VendorController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Profile details fetched successfully',
-            'data' => $profileDetail
+            'data' => [
+                'vendor'   => $profileDetail,
+                'country'  => $profileDetail->country?->name,
+                'state'    => $profileDetail->state?->name,
+                'district' => $profileDetail->district?->name,
+            ]
         ]);
     }
 
