@@ -3,70 +3,183 @@
 
 
 @section('content')
-    <style>
-        .multi-select-wrapper {
-            position: relative;
-            width: 300px;
-        }
+<style>
+    /* ===== GLOBAL ===== */
+    .card {
+        border-radius: 14px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    }
+    
+    .card-body {
+        padding: 24px;
+    }
+    
+    .card-title {
+        font-weight: 600;
+        color: #111827;
+    }
+    
+    /* ===== FORM ===== */
+    .form-group {
+        margin-bottom: 18px;
+    }
+    
+    .form-group label {
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        padding: 10px 14px;
+        border: 1px solid #d1d5db;
+        transition: 0.2s;
+    }
+    
+    .form-control:focus {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+    }
+    
+    /* ===== RADIO (NEW / OLD) ===== */
+    .btn-check + label {
+        padding: 6px 16px;
+        border-radius: 20px;
+        border: 1px solid #d1d5db;
+        cursor: pointer;
+        margin-left: 6px;
+        background: #f9fafb;
+    }
+    
+    .btn-check:checked + label {
+        background: #4f46e5;
+        color: #fff;
+        border-color: #4f46e5;
+    }
+    
+    /* ===== SECTION HEADERS ===== */
+    .form-section {
+        margin-top: 30px;
+    }
+    
+    .form-section h6 {
+        font-size: 14px;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 14px;
+        border-left: 4px solid #6366f1;
+        padding-left: 10px;
+    }
+    
+    /* ===== AUTHOR MULTI SELECT ===== */
+    .multi-select-wrapper {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px;
+        width: 100%;
+    }
+    
+    .selected-options {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+    
+    .selected-options span {
+        background: #6366f1;
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 18px;
+        font-size: 13px;
+    }
+    
+    .selected-options span i {
+        margin-left: 6px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    
+    .search-input {
+        border-radius: 8px;
+    }
+    
+    /* ===== OPTIONS DROPDOWN ===== */
+    .options-list {
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    }
+    
+    .options-list div:hover {
+        background: #eef2ff;
+    }
+    
+    /* ===== IMAGE PREVIEW ===== */
+    #isbnImagePreview img {
+        margin-top: 10px;
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(0,0,0,.1);
+    }
+    
+    /* ===== BUTTONS ===== */
+    .btn-primary {
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 22px;
+    }
+    
+    .btn-light {
+        border-radius: 10px;
+    }
+    
+    /* ===== CHECKBOX ===== */
+    input[type="checkbox"] {
+        transform: scale(1.15);
+        margin-right: 6px;
+    }
 
-        .selected-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 5px;
-        }
+    .condition-toggle {
+    gap: 12px;
+}
 
-        .selected-options span {
-            background-color: #007bff;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 14px;
-        }
+.condition-toggle label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1.5px solid #d1d5db;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4b5563;
+    transition: all 0.25s ease;
+}
 
-        .selected-options span i {
-            margin-left: 5px;
-            cursor: pointer;
-        }
+.condition-toggle label i {
+    font-size: 18px;
+}
 
-        .search-input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
+/* Checked state (NO background) */
+.condition-toggle .btn-check:checked + label {
+    border-color: #4f46e5;
+    color: #ffffff;
+}
 
-        .options-list {
-            border: 1px solid #ccc;
-            border-top: none;
-            max-height: 150px;
-            overflow-y: auto;
-            background: white;
-            position: absolute;
-            width: 100%;
-            z-index: 100;
-        }
+/* Hover */
+.condition-toggle label:hover {
+    border-color: #6366f1;
+    color: #6366f1;
+}
 
-        .options-list div {
-            padding: 8px;
-            cursor: pointer;
-        }
 
-        .options-list div:hover {
-            background: #f1f1f1;
-        }
 
-        #searchResults {
-            max-height: 200px;
-            overflow-y: auto;
-            cursor: pointer;
-        }
 
-        #searchResults .list-group-item {
-            padding: 8px 12px;
-        }
     </style>
+    
     <div class="main-panel">
         <div class="content-wrapper">
             <div class="row">
@@ -168,82 +281,27 @@
                                 <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
                                 @csrf
 
-                                <div class="d-flex align-items-center" role="group" aria-label="Condition"
-                                    style="justify-content: flex-end !important;">
+                                <div class="d-flex align-items-center condition-toggle" role="group" aria-label="Condition">
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="new"
                                             value="new" autocomplete="off"
                                             {{ old('condition', $product->condition ?? '') === 'new' ? 'checked' : '' }}>
-                                        <label class="" for="new">New</label>
+                                        <label for="new">
+                                            <i class="mdi mdi-book-open-page-variant"></i> New
+                                        </label>
                                     </div>
-
+                                
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="old"
                                             value="old" autocomplete="off"
                                             {{ old('condition', $product->condition ?? '') === 'old' ? 'checked' : '' }}>
-                                        <label class="" for="old">Old</label>
+                                        <label for="old">
+                                            <i class="mdi mdi-history"></i> Old
+                                        </label>
                                     </div>
                                 </div>
-                                <div class="card mb-4">
-                                    <div class="card-header text-white" style="background-color: #928e8e">
-                                        <i class="mdi mdi-map-marker"></i> Location
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="form-group mb-3">
-                                            <label for="location">Coordinates (Latitude,Longitude)</label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control" readonly id="location"
-                                                    name="location" placeholder="e.g. 28.6139,77.2090"
-                                                    value="{{ old('location', $product->location ?? '') }}">
-                                                <div class="input-group-append">
-                                                    <button class="btn btn-outline-secondary" type="button"
-                                                        id="getLocationBtn">
-                                                        <i class="mdi mdi-crosshairs-gps"></i> Get Current Location
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <small class="form-text text-muted">use the button to fetch the current
-                                                location.</small>
-                                        </div>
-
-                                        {{-- <div class="form-group mb-3" style="position:relative;">
-                                            <label for="searchLocation">Search Location</label>
-                                            <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
-                                                </div>
-                                                <input type="text" class="form-control" id="searchLocation" placeholder="Type a place, address, or city...">
-                                            </div>
-                                            <div class="list-group" id="searchResults" style="position:absolute;z-index:1000;width:100%;display:none;"></div>
-                                            <small class="form-text text-muted">Start typing to search for a location.</small>
-                                        </div> --}}
-
-                                        <div id="map"
-                                            style="height: 300px; margin-top: 10px; border-radius: 8px; overflow: hidden;">
-                                        </div>
-                                    </div>
-                                </div>
-                                <style>
-                                    #searchResults {
-                                        max-height: 200px;
-                                        overflow-y: auto;
-                                        cursor: pointer;
-                                        border-radius: 0 0 0.25rem 0.25rem;
-                                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-                                    }
-
-                                    #searchResults .list-group-item {
-                                        padding: 10px 16px;
-                                        font-size: 15px;
-                                        transition: background 0.2s;
-                                    }
-
-                                    #searchResults .list-group-item:hover,
-                                    #searchResults .list-group-item.active {
-                                        background: #f1f1f1;
-                                        color: #007bff;
-                                    }
-                                </style>
+                                
+                                
 
                                 <div class="form-group">
                                     <div class="form-group">
@@ -253,6 +311,16 @@
                                             @if (!empty($product['product_isbn'])) value="{{ $product['product_isbn'] }}" @else value="{{ old('product_isbn') }}" @endif>
                                         {{-- Repopulating  Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                     </div>
+
+                                    <div class="form-group">
+                                        <label for="product_name">Book Name</label>
+                                        <input type="text" class="form-control" id="product_name"
+                                            placeholder="Enter Book Name" name="product_name"
+                                            @if (!empty($product['product_name'])) value="{{ $product['product_name'] }}" @else value="{{ old('product_name') }}" @endif>
+                                        {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
+                                    </div>
+
+                                    
                                     <label for="category_id">Select Category</label>
                                     {{-- <input type="text" class="form-control" id="category_id" placeholder="Enter Category Name" name="category_id" @if (!empty($product['name'])) value="{{ $product['category_id'] }}" @else value="{{ old('category_id') }}" @endif>  --}} {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                     <select name="category_id" id="category_id" class="form-control text-dark">
@@ -278,6 +346,9 @@
                                         {{-- <option value="{{ $category['id'] }}" @if (!empty($product['category_id']) && $product['category_id'] == $category['id']) selected @endif >{{ $category['name'] }}</option> --}}
                                     </select>
                                 </div>
+
+                              
+
                                 {{-- Including the related filters <select> box of a product DEPENDING ON THE SELECTED CATEGORY of the product --}}
                                 <div class="loadFilters">
                                     @include('admin.filters.category_filters')
@@ -349,13 +420,7 @@
                                     @endforeach
                                 </select>
 
-                                <div class="form-group">
-                                    <label for="product_name">Book Name</label>
-                                    <input type="text" class="form-control" id="product_name"
-                                        placeholder="Enter Book Name" name="product_name"
-                                        @if (!empty($product['product_name'])) value="{{ $product['product_name'] }}" @else value="{{ old('product_name') }}" @endif>
-                                    {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
-                                </div>
+                               
                                 <div class="form-group">
                                     <label for="language_id">Book Language</label>
                                     <select name="language_id" id="language_id" class="form-control text-dark">
@@ -684,110 +749,5 @@
         renderSelected();
     </script>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script>
-        // Existing geolocation button
-        document.getElementById('getLocationBtn').addEventListener('click', function() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    document.getElementById('location').value = position.coords.latitude + ',' + position
-                        .coords.longitude;
-                    updateMapMarker(position.coords.latitude, position.coords.longitude);
-                }, function(error) {
-                    alert('Unable to retrieve your location.');
-                });
-            } else {
-                alert('Geolocation is not supported by this browser.');
-            }
-        });
-
-        // Leaflet map integration
-        var defaultLatLng = [28.6139, 77.2090]; // Default to New Delhi
-        var locationInput = document.getElementById('location');
-        var initialLatLng = locationInput.value ? locationInput.value.split(',').map(Number) : defaultLatLng;
-        var map = L.map('map').setView(initialLatLng, 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        var marker = L.marker(initialLatLng, {
-            draggable: true
-        }).addTo(map);
-
-        function updateMapMarker(lat, lng) {
-            marker.setLatLng([lat, lng]);
-            map.setView([lat, lng], 13);
-        }
-
-        marker.on('dragend', function(e) {
-            var latlng = marker.getLatLng();
-            locationInput.value = latlng.lat.toFixed(6) + ',' + latlng.lng.toFixed(6);
-        });
-
-        map.on('click', function(e) {
-            marker.setLatLng(e.latlng);
-            locationInput.value = e.latlng.lat.toFixed(6) + ',' + e.latlng.lng.toFixed(6);
-        });
-
-        locationInput.addEventListener('change', function() {
-            var val = locationInput.value.split(',');
-            if (val.length === 2) {
-                var lat = parseFloat(val[0]);
-                var lng = parseFloat(val[1]);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    updateMapMarker(lat, lng);
-                }
-            }
-        });
-
-        // Search Location Geocoding
-        //const searchInput = document.getElementById('searchLocation');
-        const searchResults = document.getElementById('searchResults');
-
-        searchInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            if (query.length < 3) {
-                searchResults.style.display = 'none';
-                searchResults.innerHTML = '';
-                return;
-            }
-            searchResults.innerHTML = '<div class="list-group-item">Searching...</div>';
-            searchResults.style.display = 'block';
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    searchResults.innerHTML = '';
-                    if (data.length === 0) {
-                        searchResults.innerHTML = '<div class="list-group-item">No results found.</div>';
-                        return;
-                    }
-                    data.forEach(place => {
-                        const item = document.createElement('a');
-                        item.className = 'list-group-item list-group-item-action';
-                        item.textContent = place.display_name;
-                        item.href = '#';
-                        item.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            updateMapMarker(place.lat, place.lon);
-                            locationInput.value =
-                                `${parseFloat(place.lat).toFixed(6)},${parseFloat(place.lon).toFixed(6)}`;
-                            searchResults.style.display = 'none';
-                            searchInput.value = place.display_name;
-                        });
-                        searchResults.appendChild(item);
-                    });
-                });
-        });
-        document.addEventListener('click', function(e) {
-            const searchInput = document.getElementById('searchInput');
-            const searchResults = document.getElementById('searchResults');
-
-            // Only add logic if both elements exist
-            if (searchInput && searchResults) {
-                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                    searchResults.style.display = 'none';
-                }
-            }
-        });
-    </script>
+   
 @endsection

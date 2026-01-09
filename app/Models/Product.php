@@ -22,7 +22,6 @@ class Product extends Model
         'product_discount',
         'product_image',
         'condition',
-        'location',
 
         // Relations
         'section_id',
@@ -32,25 +31,12 @@ class Product extends Model
         'edition_id',
         'language_id',
 
-        // Extra attributes
-        'cbse',
-        'operating_system',
-        'screen_size',
-        'occasion',
-        'fit',
-        'pattern',
-        'sleeve',
-        'ram',
-        'fabric',
-
         // SEO
         'meta_title',
         'meta_keywords',
         'meta_description',
 
         // Flags
-        'is_featured',
-        'is_bestseller',
         'status'
     ];
 

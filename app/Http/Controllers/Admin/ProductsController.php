@@ -380,7 +380,6 @@ class ProductsController extends Controller
 
             $product->subject_id  = $data['subject_id'];
             $product->language_id = $data['language_id'];
-            $product->location    = $data['location'] ?? null;
 
             $product->condition        = $data['condition'];
             $product->product_name     = $data['product_name'];
