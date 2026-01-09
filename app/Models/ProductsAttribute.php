@@ -19,6 +19,10 @@ class ProductsAttribute extends Model
         'vendor_id',
         'admin_id',
         'admin_type',
+
+        // Flags
+        'is_featured',
+        'is_bestseller'
     ];
 
     /**

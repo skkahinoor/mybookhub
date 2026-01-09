@@ -11,6 +11,7 @@ class Vendor extends Model
 
     protected $fillable = [
         'name',
+        'location',
         'address',
         'country_id',
         'state_id',
@@ -35,9 +36,6 @@ class Vendor extends Model
         'plan_expires_at' => 'datetime',
     ];
 
-    /* =======================
-       Relationships
-    ======================= */
 
     // Vendor → Business Details (One to One)
     public function vendorbusinessdetails()
@@ -75,6 +73,15 @@ class Vendor extends Model
         return $this->belongsTo(
             District::class,
             'district_id',
+            'id'
+        );
+    }
+
+    public function block()
+    {
+        return $this->belongsTo(
+            Block::class,
+            'block_id',
             'id'
         );
     }

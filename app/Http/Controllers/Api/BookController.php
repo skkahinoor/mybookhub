@@ -189,6 +189,127 @@ class BookController extends Controller
         ], 200);
     }
 
+    // public function lookupByIsbn(Request $request)
+    // {
+    //     if ($resp = $this->checkAccess($request)) {
+    //         return $resp;
+    //     }
+
+    //     $request->validate([
+    //         'isbn' => 'required|string|max:20'
+    //     ]);
+
+    //     $isbn = $request->isbn;
+
+    //     $product = Product::with([
+    //         'section',
+    //         'category',
+    //         'publisher',
+    //         'subject',
+    //         'edition',
+    //         'language',
+    //         'authors'
+    //     ])->where('product_isbn', $isbn)->first();
+
+    //     if ($product) {
+    //         return response()->json([
+    //             'status'       => true,
+    //             'source'       => 'local',
+    //             'manual_entry' => false,
+    //             'message'      => 'Book found in local database',
+    //             'data'         => $product
+    //         ], 200);
+    //     }
+
+    //     $key = config('services.isbn.key');
+
+    //     try {
+    //         $response = Http::withHeaders([
+    //             'Authorization' => $key
+    //         ])->get("https://api2.isbndb.com/book/$isbn");
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'status'       => false,
+    //             'manual_entry' => true,
+    //             'message'      => 'ISBN service unavailable. Please enter details manually.'
+    //         ], 503);
+    //     }
+
+    //     if ($response->failed() || !isset($response['book'])) {
+    //         return response()->json([
+    //             'status'       => false,
+    //             'source'       => 'none',
+    //             'manual_entry' => true,
+    //             'message'      => 'Book not found. Please enter book details manually.',
+    //             'isbn'         => $isbn
+    //         ], 404);
+    //     }
+
+    //     $book = $response['book'];
+
+
+    //     $publisher_id = !empty($book['publisher'])
+    //         ? Publisher::firstOrCreate(['name' => $book['publisher']], ['status' => 1])->id
+    //         : null;
+
+    //     $subject_id = !empty($book['subjects'][0])
+    //         ? Subject::firstOrCreate(['name' => $book['subjects'][0]], ['status' => 1])->id
+    //         : null;
+
+    //     $edition_id = !empty($book['edition'])
+    //         ? Edition::firstOrCreate(['edition' => $book['edition']], ['status' => 1])->id
+    //         : null;
+
+    //     $language_id = !empty($book['language'])
+    //         ? Language::firstOrCreate(['name' => $book['language']], ['status' => 1])->id
+    //         : null;
+
+    //     $author_ids = [];
+    //     if (!empty($book['authors'])) {
+    //         foreach ($book['authors'] as $name) {
+    //             $author = Author::firstOrCreate(['name' => $name], ['status' => 1]);
+    //             $author_ids[] = $author->id;
+    //         }
+    //     }
+
+    //     $product = Product::create([
+    //         'product_name'  => $book['title'] ?? '',
+    //         'product_isbn'  => $isbn,
+    //         'description'   => $book['synopsis'] ?? '',
+    //         'product_price' => $book['msrp'] ?? 0,
+    //         'product_image' => $book['image'] ?? null,
+    //         'section_id'    => null,
+    //         'category_id'   => null,
+    //         'publisher_id'  => $publisher_id,
+    //         'subject_id'    => $subject_id,
+    //         'edition_id'    => $edition_id,
+    //         'language_id'   => $language_id,
+    //         'status'        => 1
+    //     ]);
+
+    //     if (!empty($author_ids)) {
+    //         $product->authors()->sync($author_ids);
+    //     }
+
+    //     $product->load([
+    //         'section',
+    //         'category',
+    //         'publisher',
+    //         'subject',
+    //         'edition',
+    //         'language',
+    //         'authors'
+    //     ]);
+
+    //     return response()->json([
+    //         'status'       => true,
+    //         'source'       => 'isbndb',
+    //         'manual_entry' => false,
+    //         'message'      => 'Book fetched from ISBNdb and saved locally',
+    //         'data'         => $product
+    //     ], 201);
+    // }
+
     public function lookupByIsbn(Request $request)
     {
         if ($resp = $this->checkAccess($request)) {
@@ -196,11 +317,80 @@ class BookController extends Controller
         }
 
         $request->validate([
-            'isbn' => 'required|string|max:20'
+            'query' => 'required|string|max:255'
         ]);
 
-        $isbn = $request->isbn;
+        $query = trim($request->input('query'));
 
+        if (preg_match('/^[0-9\-]{10,17}$/', $query)) {
+
+            $product = Product::with([
+                'section',
+                'category',
+                'publisher',
+                'subject',
+                'edition',
+                'language',
+                'authors'
+            ])->where('product_isbn', $query)->first();
+
+            if ($product) {
+                return response()->json([
+                    'status' => true,
+                    'source' => 'local',
+                    'manual_entry' => false,
+                    'data' => $product
+                ]);
+            }
+
+            return $this->fetchFromIsbnDb($query);
+        }
+
+
+        $books = Product::where('product_name', 'LIKE', "%{$query}%")
+            ->select('id', 'product_name', 'product_isbn')
+            ->limit(10)
+            ->get();
+
+        if ($books->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'manual_entry' => true,
+                'message' => 'No matching books found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'source' => 'local',
+            'manual_entry' => false,
+            'suggestions' => $books
+        ]);
+    }
+
+    public function autocomplete(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $request->validate([
+            'title' => 'required|string|min:2'
+        ]);
+
+        $books = Product::where('product_name', 'LIKE', "%{$request->title}%")
+            ->select('id', 'product_name', 'product_isbn')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $books
+        ]);
+    }
+
+    public function show($id)
+    {
         $product = Product::with([
             'section',
             'category',
@@ -209,18 +399,23 @@ class BookController extends Controller
             'edition',
             'language',
             'authors'
-        ])->where('product_isbn', $isbn)->first();
+        ])->find($id);
 
-        if ($product) {
+        if (!$product) {
             return response()->json([
-                'status'       => true,
-                'source'       => 'local',
-                'manual_entry' => false,
-                'message'      => 'Book found in local database',
-                'data'         => $product
-            ], 200);
+                'status' => false,
+                'message' => 'Book not found'
+            ], 404);
         }
 
+        return response()->json([
+            'status' => true,
+            'data' => $product
+        ]);
+    }
+
+    private function fetchFromIsbnDb($isbn)
+    {
         $key = config('services.isbn.key');
 
         try {
@@ -229,24 +424,21 @@ class BookController extends Controller
             ])->get("https://api2.isbndb.com/book/$isbn");
         } catch (\Exception $e) {
             return response()->json([
-                'status'       => false,
+                'status' => false,
                 'manual_entry' => true,
-                'message'      => 'ISBN service unavailable. Please enter details manually.'
+                'message' => 'ISBN service unavailable'
             ], 503);
         }
 
         if ($response->failed() || !isset($response['book'])) {
             return response()->json([
-                'status'       => false,
-                'source'       => 'none',
+                'status' => false,
                 'manual_entry' => true,
-                'message'      => 'Book not found. Please enter book details manually.',
-                'isbn'         => $isbn
+                'message' => 'Book not found'
             ], 404);
         }
 
         $book = $response['book'];
-
 
         $publisher_id = !empty($book['publisher'])
             ? Publisher::firstOrCreate(['name' => $book['publisher']], ['status' => 1])->id
@@ -278,8 +470,6 @@ class BookController extends Controller
             'description'   => $book['synopsis'] ?? '',
             'product_price' => $book['msrp'] ?? 0,
             'product_image' => $book['image'] ?? null,
-            'section_id'    => null,
-            'category_id'   => null,
             'publisher_id'  => $publisher_id,
             'subject_id'    => $subject_id,
             'edition_id'    => $edition_id,
@@ -302,11 +492,10 @@ class BookController extends Controller
         ]);
 
         return response()->json([
-            'status'       => true,
-            'source'       => 'isbndb',
+            'status' => true,
+            'source' => 'isbndb',
             'manual_entry' => false,
-            'message'      => 'Book fetched from ISBNdb and saved locally',
-            'data'         => $product
+            'data' => $product
         ], 201);
     }
 
@@ -330,7 +519,10 @@ class BookController extends Controller
             'edition_id'    => 'nullable|exists:editions,id',
             'language_id'   => 'nullable|exists:languages,id',
             'author_ids'    => 'nullable|array',
-            'author_ids.*'  => 'exists:authors,id'
+            'author_ids.*'  => 'exists:authors,id',
+            'meta_title'    => 'nullable|string',
+            'meta_keywords' => 'nullable|string',
+            'meta_description' => 'nullable|string'
         ]);
 
         $categoryDetails = Category::find($request->category_id);
@@ -355,6 +547,9 @@ class BookController extends Controller
             'subject_id'    => $request->subject_id,
             'edition_id'    => $request->edition_id,
             'language_id'   => $request->language_id,
+            'meta_title'    => $request->meta_title,
+            'meta_keywords' => $request->meta_keywords,
+            'meta_description'   => $request->meta_description,
             'status'        => 1
         ]);
 
@@ -441,19 +636,27 @@ class BookController extends Controller
             ], 404);
         }
 
-        $totalStock = 0;
-
+        // ===============================
+        // STOCK & DISCOUNT FETCH
+        // ===============================
         if ($user->type === 'vendor') {
-            $totalStock = ProductsAttribute::where('product_id', $product->id)
+
+            $attribute = ProductsAttribute::where('product_id', $product->id)
                 ->where('vendor_id', $user->vendor_id)
                 ->where('admin_type', 'vendor')
-                ->sum('stock');
+                ->select('stock', 'product_discount')
+                ->first();
         } else {
-            $totalStock = ProductsAttribute::where('product_id', $product->id)
+
+            $attribute = ProductsAttribute::where('product_id', $product->id)
                 ->where('admin_id', $user->id)
                 ->where('admin_type', 'admin')
-                ->sum('stock');
+                ->select('stock', 'product_discount')
+                ->first();
         }
+
+        $totalStock = $attribute?->stock ?? 0;
+        $discount   = $attribute?->product_discount ?? 0;
 
         $basePath = url('front/images/product_images');
 
@@ -465,10 +668,10 @@ class BookController extends Controller
                 'product_price'    => $product->product_price,
                 'product_isbn'     => $product->product_isbn,
 
-                // original image name (optional, keep for backend use)
+                // original image name
                 'product_image'    => $product->product_image,
 
-                // FULL IMAGE PATHS (APP FRIENDLY)
+                // FULL IMAGE PATHS
                 'image_urls'       => [
                     'large'  => $product->product_image
                         ? $basePath . '/large/' . $product->product_image
@@ -481,7 +684,10 @@ class BookController extends Controller
                         : null,
                 ],
 
-                'available_stock'  => (int) $totalStock
+                'available_stock'  => (int) $totalStock,
+
+                // ✅ FIXED: discount from products_attributes
+                'product_discount' => (float) $discount
             ]
         ], 200);
     }
@@ -505,21 +711,21 @@ class BookController extends Controller
             'product_image'
         )->findOrFail($id);
 
-        $totalStock = 0;
-
         if ($user->type === 'vendor') {
 
-            $totalStock = ProductsAttribute::where('product_id', $product->id)
+            $query = ProductsAttribute::where('product_id', $product->id)
                 ->where('vendor_id', $user->vendor_id)
-                ->where('admin_type', 'vendor')
-                ->sum('stock');
+                ->where('admin_type', 'vendor');
         } else {
 
-            $totalStock = ProductsAttribute::where('product_id', $product->id)
+            $query = ProductsAttribute::where('product_id', $product->id)
                 ->where('admin_id', $user->id)
-                ->where('admin_type', 'admin')
-                ->sum('stock');
+                ->where('admin_type', 'admin');
         }
+
+        $totalStock = (int) $query->sum('stock');
+
+        $discount = (float) $query->max('product_discount');
 
         $basePath = url('front/images/product_images');
 
@@ -531,10 +737,8 @@ class BookController extends Controller
                 'product_price'    => $product->product_price,
                 'product_isbn'     => $product->product_isbn,
 
-                // original image name (optional, keep for backend use)
                 'product_image'    => $product->product_image,
 
-                // FULL IMAGE PATHS (APP FRIENDLY)
                 'image_urls'       => [
                     'large'  => $product->product_image
                         ? $basePath . '/large/' . $product->product_image
@@ -547,7 +751,9 @@ class BookController extends Controller
                         : null,
                 ],
 
-                'available_stock'  => (int) $totalStock
+                'available_stock'  => $totalStock,
+
+                'product_discount' => $discount
             ]
         ], 200);
     }
@@ -643,5 +849,97 @@ class BookController extends Controller
             'status'  => true,
             'message' => 'Stock & discount saved successfully'
         ], 201);
+    }
+
+    public function isBestSeller(Request $request, $productId)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $admin = $request->user();
+
+        $vendorId = ($admin->type === 'vendor')
+            ? $admin->vendor_id
+            : $request->vendor_id;
+
+        if ($admin->type !== 'vendor' && !$vendorId) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Vendor ID is required'
+            ], 422);
+        }
+
+        $attribute = ProductsAttribute::where([
+            'product_id' => $productId,
+            'vendor_id'  => $vendorId
+        ])->first();
+
+        if (!$attribute) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        $newStatus = ($attribute->is_bestseller === 'Yes') ? 'No' : 'Yes';
+
+        $attribute->update([
+            'is_bestseller' => $newStatus
+        ]);
+
+        return response()->json([
+            'status'        => true,
+            'message'       => 'Best seller status updated',
+            'product_id'    => $productId,
+            'vendor_id'     => $vendorId,
+            'is_bestseller' => $newStatus
+        ], 200);
+    }
+
+    public function isFeatured(Request $request, $productId)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $admin = $request->user();
+
+        $vendorId = ($admin->type === 'vendor')
+            ? $admin->vendor_id
+            : $request->vendor_id;
+
+        if ($admin->type !== 'vendor' && !$vendorId) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Vendor ID is required'
+            ], 422);
+        }
+
+        $attribute = ProductsAttribute::where([
+            'product_id' => $productId,
+            'vendor_id'  => $vendorId
+        ])->first();
+
+        if (!$attribute) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        $newStatus = ($attribute->is_featured === 'Yes') ? 'No' : 'Yes';
+
+        $attribute->update([
+            'is_featured' => $newStatus
+        ]);
+
+        return response()->json([
+            'status'       => true,
+            'message'      => 'Featured status updated',
+            'product_id'   => $productId,
+            'vendor_id'    => $vendorId,
+            'is_featured'  => $newStatus
+        ], 200);
     }
 }
