@@ -28,45 +28,44 @@ use App\Models\HeaderLogo;
 class ProductsController extends Controller
 {
     public function products()
-    { // render products.blade.php in the Admin Panel
+    { 
         Session::put('page', 'products');
+    
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-
-
-        // Modify the last $products variable so that ONLY products that BELONG TO the 'vendor' show up in (not ALL products show up) in products.blade.php, and also make sure that the 'vendor' account is active/enabled/approved (`status` is 1) before they can access the products page
-        $adminType = Auth::guard('admin')->user()->type;      // `type`      is the column in `admins` table    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances    // Retrieving The Authenticated User and getting their `type`      column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
-        $vendor_id = Auth::guard('admin')->user()->vendor_id; // `vendor_id` is the column in `admins` table    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances    // Retrieving The Authenticated User and getting their `vendor_id` column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
-
-        if ($adminType == 'vendor') { // if the authenticated user (the logged in user) is 'vendor', check his `status`
-            $vendorStatus = Auth::guard('admin')->user()->status; // `status` is the column in `admins` table    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances    // Retrieving The Authenticated User and getting their `status` column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
-            if ($vendorStatus == 0) { // if the 'vendor' is inactive/disabled
-                return redirect('admin/update-vendor-details/personal')->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.'); // the error_message will appear to the vendor in the route: 'admin/update-vendor-details/personal' which is the update_vendor_details.blade.php page
+    
+        $adminType = Auth::guard('admin')->user()->type;      
+        $vendor_id = Auth::guard('admin')->user()->vendor_id; 
+    
+        if ($adminType == 'vendor') { 
+            $vendorStatus = Auth::guard('admin')->user()->status;
+            if ($vendorStatus == 0) { 
+                return redirect('admin/update-vendor-details/personal')
+                    ->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.'); 
             }
         }
-
-        // Get ALL products ($products)
-        $products = Product::orderBy('id', 'desc')
+    
+        // ✅ Build query (do NOT call get yet)
+        $productsQuery = ProductsAttribute::orderBy('id', 'desc')
             ->with([
-                'section:id,name',
-                'category:id,category_name',
-                'edition:id,edition',
-                'firstAttribute:id,product_id,vendor_id,admin_id,admin_type'
+                'product:id,product_name,product_isbn,product_image,category_id,section_id',
+                'product.category:id,category_name',
+                'product.section:id,name',
+                'vendor:id,name',
+                'admin:id,name',
             ]);
-
-        // if the authenticated user (the logged in user) is 'vendor', show ONLY the products that BELONG TO them (in products.blade.php) ($products)
-        if ($adminType == 'vendor') {
-            $products = $products->whereHas('firstAttribute', function ($q) use ($vendor_id) {
-                $q->where('vendor_id', $vendor_id);
-            });
+    
+        // ✅ Apply vendor filter BEFORE get()
+        if ($adminType === 'vendor') {
+            $productsQuery->where('vendor_id', $vendor_id);
         }
-
-        $products = $products->get()->toArray(); // $products will be either ALL products Or VENDOR products ONLY (depending on the last if condition)    // Using subqueries with Eager Loading for a better performance    // Constraining Eager Loads: https://laravel.com/docs/9.x/eloquent-relationships#constraining-eager-loads    // Subquery Where Clauses: https://laravel.com/docs/9.x/queries#subquery-where-clauses    // Advanced Subqueries: https://laravel.com/docs/9.x/eloquent#advanced-subqueries    // ['section', 'category'] are the relationships methods names
-        // dd($products);
-
-
-        return view('admin.products.products')->with(compact('products', 'logos', 'headerLogo')); // render products.blade.php page, and pass $products variable to the view
+    
+        // ✅ Execute query
+        $products = $productsQuery->get();
+    
+        return view('admin.products.products', compact('products', 'logos', 'headerLogo')); 
     }
+    
 
     public function updateProductStatus(Request $request)
     { // Update Product Status using AJAX in products.blade.php

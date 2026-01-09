@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Author;
 use App\Models\Cart;
+use App\Models\ProductsAttribute;
 use Illuminate\Http\Request;
 
 class IndexController extends Controller
@@ -22,17 +23,19 @@ class IndexController extends Controller
         $sliderBanners  = Banner::where('type', 'Slider')->where('status', 1)->get()->toArray();
         $fixBanners     = Banner::where('type', 'Fix')->where('status', 1)->get()->toArray();
         $condition      = session('condition', 'new');
-        $sliderProducts = Product::with(['authors', 'publisher', 'edition'])
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($query) {
-                $query->where('language_id', session('language'));
-            })
+        $sliderProducts = ProductsAttribute::with([
+            'product:id,product_name,product_isbn,product_image,product_price,category_id,section_id',
+            'product.category:id,category_name',
+            'product.section:id,name',
+            'vendor:id,name',
+            'vendor.vendorbusinessdetails',
+            'admin:id,name',
+        ])
             ->where('status', 1)
-            ->orderBy('id', 'desc')
             ->limit(10)
-            ->get();
+            ->get()
+            ->toArray();
+
         // // Get 'condition' from query string (default to 'new' if not set or invalid)
         // $condition = $request->query('condition');
         // if (!in_array($condition, ['new', 'old'])) {

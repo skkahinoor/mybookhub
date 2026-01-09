@@ -152,8 +152,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/vendor/products', [BookController::class, 'getproduct']);
     Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);
+    Route::patch('/vendor/products/{id}/bestSeller', [BookController::class, 'isBestSeller']);
+    Route::patch('/vendor/products/{id}/featured', [BookController::class, 'isFeatured']);
     Route::delete('/vendor/products/{id}', [BookController::class, 'deleteProduct']);
     Route::post('/vendor/products/isbn-lookup', [BookController::class, 'lookupByIsbn']);
+    Route::get('/vendor/products/autocomplete', [BookController::class, 'autocomplete']);
+    Route::get('/vendor/products/byId/{id}', [BookController::class, 'show']);
     Route::get('/vendor/products/{id}/summary', [BookController::class, 'productSummaryByid']);
     Route::post('/vendor/products', [BookController::class, 'storeManualProduct']);
     Route::post('/vendor/products/summary', [BookController::class, 'productSummary']);
