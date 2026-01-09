@@ -434,24 +434,10 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="total_stock">Total Stock</label>
-                                    <input type="number" class="form-control" id="total_stock"
-                                        placeholder="Enter Total Stock" name="total_stock"
-                                        @if (!empty($products_attributes['total_stock'])) value="{{ $product['total_stock'] }}" @else value="{{ old('total_stock') }}" @endif>
-                                </div>
-
-                                <div class="form-group">
                                     <label for="product_price">Price</label>
                                     <input type="text" class="form-control" id="product_price"
                                         placeholder="Enter Book Price" name="product_price"
                                         @if (!empty($product['product_price'])) value="{{ $product['product_price'] }}" @else value="{{ old('product_price') }}" @endif>
-                                    {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
-                                </div>
-                                <div class="form-group">
-                                    <label for="product_discount">Discount (%)</label>
-                                    <input type="number" class="form-control" id="product_discount"
-                                        placeholder="Enter Book Discount" name="product_discount"
-                                        @if (!empty($product['product_discount'])) value="{{ $product['product_discount'] }}" @else value="{{ old('product_discount') }}" @endif>
                                     {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                 </div>
 
@@ -501,16 +487,7 @@
                                         @if (!empty($product['meta_keywords'])) value="{{ $product['meta_keywords'] }}" @else value="{{ old('meta_keywords') }}" @endif>
                                     {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                 </div>
-                                <div class="form-group">
-                                    <label for="is_featured">Featured Item (Yes/No)</label>
-                                    <input type="checkbox" name="is_featured" id="is_featured" value="Yes"
-                                        @if (!empty($product['is_featured']) && $product['is_featured'] == 'Yes') checked @endif>
-                                </div>
-                                <div class="form-group">
-                                    <label for="is_bestseller">Best Seller Item (Yes/No)</label> {{-- Note: Only 'superadmin' can mark a product as 'bestseller', but 'vendor' can't --}}
-                                    <input type="checkbox" name="is_bestseller" id="is_bestseller" value="Yes"
-                                        @if (!empty($product['is_bestseller']) && $product['is_bestseller'] == 'Yes') checked @endif>
-                                </div>
+                                
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
 
                                 <a href="{{ url('admin/products') }}" class="btn btn-light">Cancel</a>
@@ -523,6 +500,38 @@
         <!-- content-wrapper ends -->
         @include('admin.layout.footer')
         <!-- partial -->
+    </div>
+
+    <!-- Modal for Stock and Discount -->
+    <div class="modal fade" id="attributesModal" tabindex="-1" role="dialog" aria-labelledby="attributesModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="attributesModalLabel">Add Stock & Discount</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="attributesForm">
+                        @csrf
+                        <input type="hidden" id="modal_product_id" name="product_id">
+                        
+                        <div class="form-group">
+                            <label for="modal_stock">Stock <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="modal_stock" name="stock" min="0" required>
+                            <small class="form-text text-muted">Enter the total stock quantity</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="modal_product_discount">Discount (%)</label>
+                            <input type="number" class="form-control" id="modal_product_discount" name="product_discount" min="0" max="100" step="0.01" value="0">
+                            <small class="form-text text-muted">Enter discount percentage (0-100)</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="saveAttributesBtn">Save Attributes</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
@@ -747,6 +756,92 @@
         }
 
         renderSelected();
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            // Handle form submission
+            $('form').on('submit', function(e) {
+                e.preventDefault();
+                
+                const form = $(this);
+                const formData = new FormData(form[0]);
+                const submitBtn = $('#submitBtn');
+                
+                // Disable submit button
+                submitBtn.prop('disabled', true).text('Saving...');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.show_modal && response.product_id) {
+                            // Show modal for new products
+                            $('#modal_product_id').val(response.product_id);
+                            $('#attributesModal').modal('show');
+                            submitBtn.prop('disabled', false).text('Submit');
+                        } else {
+                            // Redirect for existing products or if no modal needed
+                            window.location.href = "{{ url('admin/products') }}";
+                        }
+                    },
+                    error: function(xhr) {
+                        submitBtn.prop('disabled', false).text('Submit');
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            let errorMsg = 'Validation errors:\n';
+                            $.each(errors, function(key, value) {
+                                errorMsg += value[0] + '\n';
+                            });
+                            alert(errorMsg);
+                        } else {
+                            alert('An error occurred. Please try again.');
+                        }
+                    }
+                });
+            });
+
+            // Handle save attributes button
+            $('#saveAttributesBtn').on('click', function() {
+                const form = $('#attributesForm');
+                const formData = form.serialize();
+                const btn = $(this);
+                
+                btn.prop('disabled', true).text('Saving...');
+                
+                $.ajax({
+                    url: "{{ route('admin.products.saveAttributes') }}",
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        $('#attributesModal').modal('hide');
+                        window.location.href = "{{ url('admin/products') }}";
+                    },
+                    error: function(xhr) {
+                        btn.prop('disabled', false).text('Save Attributes');
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            let errorMsg = 'Validation errors:\n';
+                            $.each(errors, function(key, value) {
+                                errorMsg += value[0] + '\n';
+                            });
+                            alert(errorMsg);
+                        } else {
+                            alert('An error occurred while saving attributes. Please try again.');
+                        }
+                    }
+                });
+            });
+
+            // Handle skip button
+            $('#skipAttributesBtn').on('click', function() {
+                $('#attributesModal').modal('hide');
+                window.location.href = "{{ url('admin/products') }}";
+            });
+        });
     </script>
 
    

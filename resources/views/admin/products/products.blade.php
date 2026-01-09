@@ -108,27 +108,27 @@
 
                                                 <td>
                                                     <a title="Edit Book"
-                                                        href="{{ url('admin/add-edit-product/' . $product['id']) }}">
+                                                        href="{{ url('admin/add-edit-product/' . $product->product_id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                         {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
 
                                                     <a href="#" title="Add Edition" data-bs-toggle="modal"
-                                                        data-bs-target="#addAttributeModal" data-id="{{ $product['id'] }}"
-                                                        data-name="{{ $product['product_name'] }}"
+                                                        data-bs-target="#addAttributeModal" data-id="{{ $product->product_id }}"
+                                                        data-name="{{ $product->product->product_name ?? 'N/A' }}"
                                                         id="openAddAttributeModal">
                                                         <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
                                                     </a>
 
 
                                                     <a title="Add Multiple Images"
-                                                        href="{{ url('admin/add-images/' . $product['id']) }}">
+                                                        href="{{ url('admin/add-images/' . $product->product_id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
                                                         {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
 
 
-                                                    <a href="{{ url('admin/delete-product/' . $product['id']) }}"
+                                                    <a href="{{ url('admin/delete-product/' . $product->product_id) }}"
                                                         onclick="return confirm('Are you sure you want to delete this product?')">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>

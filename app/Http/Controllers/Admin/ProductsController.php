@@ -335,7 +335,6 @@ class ProductsController extends Controller
                 'product_isbn'  => 'required',
                 'product_price' => 'required|numeric',
                 'language_id'   => 'required',
-                'total_stock'   => 'required|numeric|min:0',
             ]);
 
             $existingProduct = Product::where('product_isbn', $data['product_isbn'])->first();
@@ -389,8 +388,6 @@ class ProductsController extends Controller
             $product->meta_title       = $data['meta_title'];
             $product->meta_keywords    = $data['meta_keywords'];
             $product->meta_description = $data['meta_description'];
-            $product->is_featured      = $data['is_featured'] ?? 'No';
-            $product->is_bestseller    = $data['is_bestseller'] ?? 'No';
             $product->status           = 1;
 
             if (!$skipProductSave) {
@@ -441,73 +438,40 @@ class ProductsController extends Controller
 
             $product->authors()->sync($request->author_id ?? []);
 
-            $attributeQuery = ProductsAttribute::where('product_id', $product->id);
-
-            if ($user->type === 'vendor') {
-                $attributeQuery->where('vendor_id', $user->vendor_id)
-                    ->where('admin_type', 'vendor');
-            } else {
-                $attributeQuery->where('admin_id', $user->id)
-                    ->where('admin_type', 'superadmin');
-            }
-
-            $existingAttribute = $attributeQuery->first();
-
-            $newStock = (int) $data['total_stock'];
-            $newDiscount = (float) ($data['product_discount'] ?? 0);
-
-            if ($existingAttribute) {
-                $existingAttribute->stock = $existingAttribute->stock + $newStock;
-                $existingAttribute->product_discount = $newDiscount;
-                $existingAttribute->save();
-            } else {
-                $attribute = new ProductsAttribute();
-                $attribute->product_id = $product->id;
-                $attribute->size = 'Default';
-                $attribute->stock = $newStock;
-                $attribute->product_discount = $newDiscount;
-                $attribute->sku = 'null';
-                $attribute->status = 1;
-
-                if ($user->type === 'vendor') {
-                    $attribute->admin_type = 'vendor';
-                    $attribute->vendor_id = $user->vendor_id;
-                    $attribute->admin_id = null;
-                } else {
-                    $attribute->admin_type = 'admin';
-                    $attribute->admin_id = $user->id;
-                    $attribute->vendor_id = null;
-                }
-
-                $attribute->save();
-
+            // For new products, return JSON to show modal for stock/discount
+            if ($id == null) {
                 // Create notification when a new product is added
-                // Only create notification if this is a new product (not an update)
-                if ($id == null) {
-                    $vendorId = null; // Always null so notification is visible to admin only
-                    $notificationMessage = '';
-                    
-                    if ($user->type === 'vendor') {
-                        // Keep vendor_id as null so only admin sees this notification
-                        $vendorName = $user->name;
-                        $notificationMessage = "Vendor '{$vendorName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
-                    } else {
-                        $adminName = $user->name;
-                        $notificationMessage = "Admin '{$adminName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
-                    }
-
-                    Notification::create([
-                        'type' => 'product_added',
-                        'title' => 'New Product Added',
-                        'message' => $notificationMessage,
-                        'related_id' => $product->id,
-                        'related_type' => 'App\Models\Product',
-                        'vendor_id' => $vendorId, // null so only admin can see vendor-added product notifications
-                        'is_read' => false,
-                    ]);
+                $vendorId = null; // Always null so notification is visible to admin only
+                $notificationMessage = '';
+                
+                if ($user->type === 'vendor') {
+                    // Keep vendor_id as null so only admin sees this notification
+                    $vendorName = $user->name;
+                    $notificationMessage = "Vendor '{$vendorName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
+                } else {
+                    $adminName = $user->name;
+                    $notificationMessage = "Admin '{$adminName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
                 }
+
+                Notification::create([
+                    'type' => 'product_added',
+                    'title' => 'New Product Added',
+                    'message' => $notificationMessage,
+                    'related_id' => $product->id,
+                    'related_type' => 'App\Models\Product',
+                    'vendor_id' => $vendorId, // null so only admin can see vendor-added product notifications
+                    'is_read' => false,
+                ]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => $message,
+                    'product_id' => $product->id,
+                    'show_modal' => true
+                ]);
             }
 
+            // For existing products, redirect normally
             return redirect('admin/products')->with('success_message', $message);
         }
 
@@ -541,6 +505,62 @@ class ProductsController extends Controller
         return Author::where('name', 'like', "%{$q}%")
             ->select('id', 'name')
             ->get();
+    }
+
+    public function saveProductAttributes(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'stock' => 'required|integer|min:0',
+            'product_discount' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $user = Auth::guard('admin')->user();
+        $data = $request->all();
+
+        $attributeQuery = ProductsAttribute::where('product_id', $data['product_id']);
+
+        if ($user->type === 'vendor') {
+            $attributeQuery->where('vendor_id', $user->vendor_id)
+                ->where('admin_type', 'vendor');
+        } else {
+            $attributeQuery->where('admin_id', $user->id)
+                ->where('admin_type', 'superadmin');
+        }
+
+        $existingAttribute = $attributeQuery->first();
+
+        if ($existingAttribute) {
+            // Update existing attribute
+            $existingAttribute->stock = (int) $data['stock'];
+            $existingAttribute->product_discount = (float) ($data['product_discount'] ?? 0);
+            $existingAttribute->save();
+        } else {
+            // Create new attribute
+            $attribute = new ProductsAttribute();
+            $attribute->product_id = $data['product_id'];
+            $attribute->stock = (int) $data['stock'];
+            $attribute->product_discount = (float) ($data['product_discount'] ?? 0);
+            $attribute->sku = 'null';
+            $attribute->status = 1;
+
+            if ($user->type === 'vendor') {
+                $attribute->admin_type = 'vendor';
+                $attribute->vendor_id = $user->vendor_id;
+                $attribute->admin_id = null;
+            } else {
+                $attribute->admin_type = 'admin';
+                $attribute->admin_id = $user->id;
+                $attribute->vendor_id = null;
+            }
+
+            $attribute->save();
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Product attributes saved successfully!'
+        ]);
     }
 
     public function deleteProductImage($id)

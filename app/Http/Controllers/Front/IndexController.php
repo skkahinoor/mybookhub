@@ -90,36 +90,71 @@ class IndexController extends Controller
             ->get()
             ->toArray();
 
-        $bestSellers = Product::where([
-            'is_bestseller' => 'Yes',
-            'status'        => 1,
+        // Best Sellers - now from ProductsAttribute table
+        $bestSellers = ProductsAttribute::with([
+            'product' => function($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    });
+            }
         ])
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
+            ->where('is_bestseller', 'Yes')
+            ->where('status', 1)
+            ->whereHas('product', function($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    });
             })
             ->inRandomOrder()
             ->get()
             ->toArray();
 
-        $discountedProducts = Product::where('product_discount', '>', 0)
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
+        // Discounted Products - now from ProductsAttribute table
+        $discountedProducts = ProductsAttribute::with([
+            'product' => function($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    });
+            }
+        ])
+            ->where('product_discount', '>', 0)
             ->where('status', 1)
+            ->whereHas('product', function($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    });
+            })
             ->limit(6)
             ->inRandomOrder()
             ->get()
             ->toArray();
 
-        $featuredProducts = Product::where([
-            'is_featured' => 'Yes',
-            'status'      => 1,
+        // Featured Products - now from ProductsAttribute table
+        $featuredProducts = ProductsAttribute::with([
+            'product' => function($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    })
+                    ->when(session('language') && session('language') !== 'all', function ($q) {
+                        $q->where('language_id', session('language'));
+                    });
+            }
         ])
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($query) {
-                $query->where('language_id', session('language'));
+            ->where('is_featured', 'Yes')
+            ->where('status', 1)
+            ->whereHas('product', function($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    })
+                    ->when(session('language') && session('language') !== 'all', function ($q) {
+                        $q->where('language_id', session('language'));
+                    });
             })
             ->limit(10)
             ->get();

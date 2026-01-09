@@ -19,7 +19,6 @@ class Product extends Model
         'product_isbn',
         'description',
         'product_price',
-        'product_discount',
         'product_image',
         'condition',
 
@@ -103,17 +102,23 @@ class Product extends Model
         return $this->belongsTo('App\Models\Vendor', 'vendor_id')->with('vendorbusinessdetails'); // 'vendor_id' is the Foreign Key of the Relationship
     }
 
-    // A static method (to be able to be called directly without instantiating an object in index.blade.php) to determine the final price of a product because a product can have a discount from TWO things: either a `CATEGORY` discount or `PRODUCT` discout
+    // A static method (to be able to be called directly without instantiating an object in index.blade.php) to determine the final price of a product because a product can have a discount from TWO things: either a `CATEGORY` discount or `PRODUCT` discount
     public static function getDiscountPrice($product_id)
     { // this method is called in front/index.blade.php
-        // Get the product PRICE, DISCOUNT and CATEGORY ID
-        $productDetails = Product::select('product_price', 'product_discount', 'category_id')->where('id', $product_id)->first();
+        // Get the product PRICE and CATEGORY ID
+        $productDetails = Product::select('product_price', 'category_id')->where('id', $product_id)->first();
 
         if (! $productDetails) {
             return 0; // Return 0 if product not found
         }
 
         $productDetails = json_decode(json_encode($productDetails), true); // convert the object to an array
+
+        // Get the product discount from ProductsAttribute table (get first attribute)
+        $productAttribute = ProductsAttribute::where('product_id', $product_id)
+            ->where('status', 1)
+            ->first();
+        $productDiscount = $productAttribute ? (float) ($productAttribute->product_discount ?? 0) : 0;
 
         // Get the product category discount `category_discount` from `categories` table using its `category_id` in `products` table
         $categoryDetails = Category::select('category_discount')->where('id', $productDetails['category_id'])->first();
@@ -125,7 +130,6 @@ class Product extends Model
         }
 
         $originalPrice    = $productDetails['product_price'];
-        $productDiscount  = $productDetails['product_discount'] ?? 0;
         $categoryDiscount = $categoryDetails['category_discount'] ?? 0;
 
         // Calculate the highest discount (product discount takes precedence over category discount)
@@ -136,31 +140,38 @@ class Product extends Model
             // if there's NO a PRODUCT discount, but there's a CATEGORY discount
             $discounted_price = $originalPrice - ($originalPrice * $categoryDiscount / 100);
         } else {
-            // there's no discount on neither `product_discount` (in `products` table) nor `category_discount` (in `categories` table)
+            // there's no discount on neither `product_discount` (in `products_attributes` table) nor `category_discount` (in `categories` table)
             $discounted_price = 0;
         }
 
         return round($discounted_price, 2); // Round to 2 decimal places
     }
 
-    public static function getDiscountAttributePrice($product_id, $size = null)
+    public static function getDiscountAttributePrice($product_id, $attribute_id = null)
     {
-        // If a size is provided and there is an attribute-level price, prefer it.
+        // If an attribute_id is provided, use that specific attribute, otherwise get the first active attribute
         $attribute = null;
-        if (!empty($size)) {
+        if (!empty($attribute_id)) {
             $attribute = \App\Models\ProductsAttribute::where([
                 'product_id' => $product_id,
-                'size'       => $size,
+                'id'         => $attribute_id,
             ])->first();
+        } else {
+            // Get the first active attribute for this product
+            $attribute = \App\Models\ProductsAttribute::where('product_id', $product_id)
+                ->where('status', 1)
+                ->first();
         }
 
         // If attribute exists, compute discount against attribute price using product/category discounts
         if ($attribute) {
             $attributePrice = (float) $attribute->price;
+            
+            // Get product discount from the attribute itself (now stored in ProductsAttribute)
+            $productDiscount = (float) ($attribute->product_discount ?? 0);
 
-            $productDetails = Product::select('product_discount', 'category_id')->where('id', $product_id)->first();
-            $productDiscount = $productDetails ? (float) ($productDetails->product_discount ?? 0) : 0;
-
+            // Get category discount
+            $productDetails = Product::select('category_id')->where('id', $product_id)->first();
             $categoryDiscount = 0;
             if ($productDetails) {
                 $categoryDiscount = (float) (Category::where('id', $productDetails->category_id)->value('category_discount') ?? 0);
@@ -194,7 +205,7 @@ class Product extends Model
 
     public static function getDiscountPriceDetails($product_id)
     {
-        $product = Product::select('product_price', 'product_discount', 'category_id')->where('id', $product_id)->first();
+        $product = Product::select('product_price', 'category_id')->where('id', $product_id)->first();
         if (!$product) {
             return [
                 'product_price' => 0,
@@ -203,11 +214,17 @@ class Product extends Model
             ];
         }
         $product = $product->toArray();
+        
+        // Get product discount from ProductsAttribute table (get first attribute)
+        $productAttribute = ProductsAttribute::where('product_id', $product_id)
+            ->where('status', 1)
+            ->first();
+        $product_discount = $productAttribute ? (float) ($productAttribute->product_discount ?? 0) : 0;
+        
         $category = Category::select('category_discount')->where('id', $product['category_id'])->first();
         $category_discount = $category ? $category->category_discount : 0;
 
         $original_price = $product['product_price'];
-        $product_discount = $product['product_discount'] ?? 0;
 
         if ($product_discount > 0) {
             $final_price = $original_price - ($original_price * $product_discount / 100);
