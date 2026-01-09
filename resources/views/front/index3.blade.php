@@ -192,20 +192,21 @@
                 @foreach ($sliderProducts as $sliderProduct)
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
                         <div class="card flex-fill shadow-sm border-0 book-grid-card" style="border-radius:20px;">
-                            <a href="{{ url('product/' . $sliderProduct['id']) }}" class="d-block">
-                                <img src="{{ asset('front/images/product_images/small/' . $sliderProduct['product_image']) }}"
+                            <a href="{{ url('product/' . $sliderProduct['product_id']) }}" class="d-block">
+                                <img src="{{ asset('front/images/product_images/small/' . $sliderProduct['product']['product_image']) }}"
                                     alt="book" class="card-img-top"
                                     style="height:220px; object-fit:cover; border-radius:20px 20px 0 0;">
                             </a>
                             <div class="card-body d-flex flex-column">
                                 <h5 class="mb-1 card-title" style="font-size:1.05rem;">
-                                    <a href="{{ url('product/' . $sliderProduct['id']) }}"
+                                    <a href="{{ url('product/' . $sliderProduct['product_id']) }}"
                                         class="text-dark text-decoration-none">
-                                        {{ $sliderProduct['product_name'] }}
+                                        {{ $sliderProduct['product']['product_name'] ?? 'N/A' }}
                                     </a>
                                 </h5>
                                 <span
-                                    class="price mb-2 text-primary fw-bold fs-6">₹{{ \App\Models\Product::getDiscountPrice($sliderProduct['id']) }}</span>
+                                    class="price mb-2 text-primary fw-bold fs-6">₹{{ $sliderProduct['product']['product_price'] }}</span> 
+                                    <span class="text-dark small">Shop Name: {{ $sliderProduct['vendor']['vendorbusinessdetails']['shop_name'] ?? 'N/A' }}</span>
                                 <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
                                     @csrf
                                     <input type="hidden" name="product_id" value="{{ $sliderProduct['id'] }}">

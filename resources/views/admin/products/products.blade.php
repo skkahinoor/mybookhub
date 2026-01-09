@@ -40,7 +40,6 @@
                                             <th>Image</th>
                                             <th>Category</th> {{-- Through the relationship --}}
                                             <th>Section</th> {{-- Through the relationship --}}
-                                            <th>Added by</th> {{-- Through the relationship --}}
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -49,15 +48,14 @@
                                         @foreach ($products as $key => $product)
                                             <tr>
                                                 <td>{{ __($key + 1) }}</td>
-                                                <td>{{ $product['product_name'] }}
-                                                    ({{ $product['edition']['edition'] ?? 'not set' }} Edition)
+                                                <td> {{ $product->product->product_name ?? 'N/A' }}
                                                 </td>
-                                                <td>ISBN-{{ $product['product_isbn'] }}</td>
+                                                <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }}</td>
 
                                                 <td>
-                                                    @if (!empty($product['product_image']))
+                                                    @if (!empty($product->product->product_image))
                                                         <img style="width:120px; height:100px"
-                                                            src="{{ asset('front/images/product_images/small/' . $product['product_image']) }}">
+                                                            src="{{ asset('front/images/product_images/small/' . $product->product->product_image) }}">
                                                         {{-- Show the 'small' image size from the 'small' folder --}}
                                                     @else
                                                         <img style="width:120px; height:100px"
@@ -65,32 +63,32 @@
                                                         {{-- Show the 'no-image' Dummy Image: If you have for example a table with an 'images' column (that can exist or not exist), use a 'Dummy Image' in case there's no image. Example: https://dummyimage.com/  --}}
                                                     @endif
                                                 </td>
-                                                <td>{{ $product['category']['category_name'] ?? 'N/A' }}</td>
+                                                <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
                                                 {{-- Through the relationship --}}
-                                                <td>{{ $product['section']['name'] ?? 'N/A' }}</td> {{-- Through the relationship --}}
-                                                <td>
+                                                <td>{{ $product->product->section->name ?? 'N/A' }}</td> {{-- Through the relationship --}}
+                                                {{-- <td>
                                                     @php
-                                                        $attr = $product['first_attribute'] ?? null;
+                                                        $attr = $product->firstAttribute ?? null;
                                                     @endphp
 
                                                     @if ($attr)
-                                                        @if ($attr['admin_type'] == 'vendor')
+                                                        @if ($attr->admin_type == 'vendor')
                                                             <a target="_blank"
-                                                                href="{{ url('admin/view-vendor-details/' . $attr['vendor_id']) }}">
-                                                                {{ ucfirst($attr['admin_type']) }}
+                                                                href="{{ url('admin/view-vendor-details/' . $attr->vendor_id) }}">
+                                                                {{ ucfirst($attr->admin_type) }}
                                                             </a>
                                                         @else
-                                                            {{ ucfirst($attr['admin_type']) }}
+                                                            {{ ucfirst($attr->admin_type) }}
                                                         @endif
                                                     @else
                                                         <span class="text-muted">Not Set</span>
                                                     @endif
-                                                </td>
+                                                </td> --}}
 
                                                 <td>
                                                     @if ($product['status'] == 1)
-                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}"
-                                                            product_id="{{ $product['id'] }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
+                                                        <a class="updateProductStatus" id="product-{{ $product->id }}"
+                                                            product_id="{{ $product->id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
                                                             {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                 status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
