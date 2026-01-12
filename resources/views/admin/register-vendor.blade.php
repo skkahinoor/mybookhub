@@ -28,10 +28,11 @@
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <h4>Vendor Registration</h4>
                             <h6 class="font-weight-light">Sign up to become a vendor.</h6>
-                            @if(!empty($giveNewUsersProPlan) || !empty($isInvitePro))
+                            @if (!empty($giveNewUsersProPlan) || !empty($isInvitePro))
                                 <div class="alert alert-info mt-2">
-                                    New vendors get Pro plan access for {{ $proPlanTrialDurationDays ?? 30 }} days automatically.
-                                    @if(!empty($isInvitePro))
+                                    New vendors get Pro plan access for {{ $proPlanTrialDurationDays ?? 30 }} days
+                                    automatically.
+                                    @if (!empty($isInvitePro))
                                         (Invite link applied)
                                     @endif
                                 </div>
@@ -61,20 +62,36 @@
                             {{-- Vendor Registration with OTP (similar to Sales) --}}
                             <form method="POST" action="{{ route('vendor.register.submit') }}" id="vendorRegisterForm">
                                 @csrf
-                                @if(!empty($inviteToken))
+                                @if (!empty($inviteToken))
                                     <input type="hidden" name="invite_token" value="{{ $inviteToken }}">
                                 @endif
 
+                                <!-- Location Search -->
                                 <div class="form-group mb-3">
-                                    <input type="text" name="name" class="form-control" placeholder="Vendor Name" required>
+                                    <label><strong>Business Location</strong></label>
+                                    <input type="text" id="location_search" class="form-control"
+                                        placeholder="Search location">
+                                </div>
+
+                                <!-- Google Map -->
+                                <div id="map" style="height:300px;width:100%;margin-bottom:15px;"></div>
+
+                                <!-- Hidden location field (lat,lng) -->
+                                <input type="hidden" name="location" id="location">
+
+                                <div class="form-group mb-3">
+                                    <input type="text" name="name" class="form-control" placeholder="Vendor Name"
+                                        required>
                                 </div>
 
                                 <div class="form-group mb-3">
-                                    <input type="email" name="email" class="form-control" placeholder="Email Address" required>
+                                    <input type="email" name="email" class="form-control"
+                                        placeholder="Email Address" required>
                                 </div>
 
                                 <div class="form-group mb-3">
-                                    <input type="number" name="mobile" class="form-control" placeholder="Mobile Number" required>
+                                    <input type="number" name="mobile" class="form-control"
+                                        placeholder="Mobile Number" required>
                                 </div>
 
                                 {{-- OTP Input - Hidden initially --}}
@@ -89,7 +106,8 @@
 
                                 {{-- Confirm Password - Hidden until OTP sent --}}
                                 <div class="form-group mb-3 d-none" id="confirmPasswordSection">
-                                    <input type="password" name="password_confirmation" class="form-control" placeholder="Confirm Password">
+                                    <input type="password" name="password_confirmation" class="form-control"
+                                        placeholder="Confirm Password">
                                 </div>
 
                                 {{-- Plan Selection --}}
@@ -97,23 +115,36 @@
                                     <label class="form-label"><strong>Select Plan</strong></label>
                                     <div class="row">
                                         <div class="col-md-6 mb-2">
-                                            <div class="card border plan-card" data-plan="free" style="cursor: pointer; transition: all 0.3s;" onclick="selectPlan('free')">
+                                            <div class="card border plan-card" data-plan="free"
+                                                style="cursor: pointer; transition: all 0.3s;"
+                                                onclick="selectPlan('free')">
                                                 <div class="card-body text-center p-3">
-                                                    <input type="radio" name="plan" value="free" id="plan_free" {{ !empty($isInvitePro) || !empty($giveNewUsersProPlan) ? '' : 'checked' }} style="display: none;">
+                                                    <input type="radio" name="plan" value="free" id="plan_free"
+                                                        {{ !empty($isInvitePro) || !empty($giveNewUsersProPlan) ? '' : 'checked' }}
+                                                        style="display: none;">
                                                     <h6 class="mb-1 fw-bold">Free Plan</h6>
-                                                    <p class="mb-1"><span class="fs-4 fw-bold">₹0</span><small class="text-muted">/month</small></p>
-                                                    <small class="text-muted d-block">Up to {{ $freePlanBookLimit ?? 100 }} books/month</small>
+                                                    <p class="mb-1"><span class="fs-4 fw-bold">₹0</span><small
+                                                            class="text-muted">/month</small></p>
+                                                    <small class="text-muted d-block">Up to
+                                                        {{ $freePlanBookLimit ?? 100 }} books/month</small>
                                                     <small class="text-muted d-block">No coupons</small>
                                                 </div>
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-2">
-                                            <div class="card border plan-card" data-plan="pro" style="cursor: pointer; transition: all 0.3s;" onclick="selectPlan('pro')">
+                                            <div class="card border plan-card" data-plan="pro"
+                                                style="cursor: pointer; transition: all 0.3s;"
+                                                onclick="selectPlan('pro')">
                                                 <div class="card-body text-center p-3">
-                                                    <input type="radio" name="plan" value="pro" id="plan_pro" {{ !empty($isInvitePro) || !empty($giveNewUsersProPlan) ? 'checked' : '' }} style="display: none;">
+                                                    <input type="radio" name="plan" value="pro"
+                                                        id="plan_pro"
+                                                        {{ !empty($isInvitePro) || !empty($giveNewUsersProPlan) ? 'checked' : '' }}
+                                                        style="display: none;">
                                                     <span class="badge text-white bg-primary mb-1">Recommended</span>
                                                     <h6 class="mb-1 fw-bold">Pro Plan</h6>
-                                                    <p class="mb-1"><span class="fs-4 fw-bold text-primary">₹{{ number_format(($proPlanPrice), 2) }}</span><small class="text-muted">/month</small></p>
+                                                    <p class="mb-1"><span
+                                                            class="fs-4 fw-bold text-primary">₹{{ number_format($proPlanPrice, 2) }}</span><small
+                                                            class="text-muted">/month</small></p>
                                                     <small class="text-muted d-block">Unlimited books</small>
                                                     <small class="text-muted d-block">Unlimited coupons</small>
                                                 </div>
@@ -140,6 +171,10 @@
         </div>
         <!-- page-body-wrapper ends -->
     </div>
+    <script
+        src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_key') }}&libraries=places&callback=initMap"
+        async defer></script>
+
     <!-- container-scroller -->
     <!-- plugins:js -->
     <script src="{{ url('admin/vendors/js/vendor.bundle.base.js') }}"></script>
@@ -157,14 +192,94 @@
     {{-- jQuery for OTP (if not already loaded) --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+    <script>
+        let map, marker, autocomplete;
+
+        function initMap() {
+
+            const fallbackLocation = {
+                lat: 20.2961,
+                lng: 85.8245
+            }; // Odisha fallback
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: fallbackLocation,
+                zoom: 14,
+            });
+
+            marker = new google.maps.Marker({
+                position: fallbackLocation,
+                map: map,
+                draggable: true,
+            });
+
+            // 🔍 Search autocomplete
+            autocomplete = new google.maps.places.Autocomplete(
+                document.getElementById("location_search")
+            );
+            autocomplete.bindTo("bounds", map);
+
+            autocomplete.addListener("place_changed", function() {
+                const place = autocomplete.getPlace();
+                if (!place.geometry) return;
+
+                map.setCenter(place.geometry.location);
+                marker.setPosition(place.geometry.location);
+
+                saveLocation(place.geometry.location);
+            });
+
+            marker.addListener("dragend", function() {
+                saveLocation(marker.getPosition());
+            });
+
+            // 📍 AUTO DETECT CURRENT LOCATION
+            detectCurrentLocation();
+        }
+
+        // Auto detect on page load
+        function detectCurrentLocation() {
+
+            if (!navigator.geolocation) {
+                console.warn("Geolocation not supported");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    const currentPos = new google.maps.LatLng(lat, lng);
+
+                    map.setCenter(currentPos);
+                    marker.setPosition(currentPos);
+
+                    saveLocation(currentPos);
+                },
+                function() {
+                    console.warn("User denied location access");
+                }
+            );
+        }
+
+        // Save lat,lng
+        function saveLocation(position) {
+            $('#location').val(position.lat() + ',' + position.lng());
+        }
+    </script>
+
     <style>
         .plan-card {
             transition: all 0.3s ease;
         }
+
         .plan-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         .plan-card.selected {
             border: 2px solid #1f3c88 !important;
             background-color: #f0f4ff !important;
@@ -191,6 +306,7 @@
                 name: $("input[name='name']").val(),
                 email: $("input[name='email']").val(),
                 mobile: $("input[name='mobile']").val(),
+                location: $("#location").val(),
                 _token: "{{ csrf_token() }}"
             };
 
@@ -226,14 +342,16 @@
                         if (errors.email) {
                             $("input[name='email']")
                                 .closest('.form-group')
-                                .append('<span class="text-danger small">' + errors.email[0] + '</span>');
+                                .append('<span class="text-danger small">' + errors.email[0] +
+                                    '</span>');
                         }
 
                         // Mobile error
                         if (errors.mobile) {
                             $("input[name='mobile']")
                                 .closest('.form-group')
-                                .append('<span class="text-danger small">' + errors.mobile[0] + '</span>');
+                                .append('<span class="text-danger small">' + errors.mobile[0] +
+                                    '</span>');
                         }
                     } else {
                         alert('Failed to send OTP. Please try again.');

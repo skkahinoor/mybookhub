@@ -539,7 +539,6 @@ class BookController extends Controller
 
         $request->validate([
             'condition'     => 'required|in:new,old',
-            'location'      => 'nullable|string|max:255',
             'product_isbn'  => 'required|string|max:20|unique:products,product_isbn',
             'product_name'  => 'required|string|max:255',
             'product_price' => 'required|numeric|min:0',
@@ -568,7 +567,6 @@ class BookController extends Controller
 
         $product = Product::create([
             'condition'     => $request->condition,
-            'location'      => $request->location,
             'product_isbn'  => $request->product_isbn,
             'product_name'  => $request->product_name,
             'description'   => $request->description,
