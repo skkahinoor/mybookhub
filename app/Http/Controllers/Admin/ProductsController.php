@@ -28,23 +28,23 @@ use App\Models\HeaderLogo;
 class ProductsController extends Controller
 {
     public function products()
-    { 
+    {
         Session::put('page', 'products');
-    
+
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-    
-        $adminType = Auth::guard('admin')->user()->type;      
-        $vendor_id = Auth::guard('admin')->user()->vendor_id; 
-    
-        if ($adminType == 'vendor') { 
+
+        $adminType = Auth::guard('admin')->user()->type;
+        $vendor_id = Auth::guard('admin')->user()->vendor_id;
+
+        if ($adminType == 'vendor') {
             $vendorStatus = Auth::guard('admin')->user()->status;
-            if ($vendorStatus == 0) { 
+            if ($vendorStatus == 0) {
                 return redirect('admin/update-vendor-details/personal')
-                    ->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.'); 
+                    ->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.');
             }
         }
-    
+
         // ✅ Build query (do NOT call get yet)
         $productsQuery = ProductsAttribute::orderBy('id', 'desc')
             ->with([
@@ -54,18 +54,18 @@ class ProductsController extends Controller
                 'vendor:id,name',
                 'admin:id,name',
             ]);
-    
+
         // ✅ Apply vendor filter BEFORE get()
         if ($adminType === 'vendor') {
             $productsQuery->where('vendor_id', $vendor_id);
         }
-    
+
         // ✅ Execute query
         $products = $productsQuery->get();
-    
-        return view('admin.products.products', compact('products', 'logos', 'headerLogo')); 
+
+        return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
     }
-    
+
 
     public function updateProductStatus(Request $request)
     { // Update Product Status using AJAX in products.blade.php
@@ -104,209 +104,6 @@ class ProductsController extends Controller
         return redirect()->back()->with('success_message', $message, 'logos');
         return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
     }
-
-    // public function addEditProductss(Request $request, $id = null)
-    // { // If the $id is not passed, this means 'Add a Product', if not, this means 'Edit the Product'
-    //     // Correcting issues in the Skydash Admin Panel Sidebar using Session
-    //     Session::put('page', 'products');
-    //     $headerLogo = HeaderLogo::first();
-    //     $logos = HeaderLogo::first();
-
-
-    //     if ($id == '') { // if there's no $id is passed in the route/URL parameters, this means 'Add a new product'
-    //         $title = 'Add Book';
-    //         $product = new \App\Models\Product();
-    //         // dd($product);
-    //         $message = 'Book added successfully!';
-    //     } else { // if the $id is passed in the route/URL parameters, this means Edit the Product
-    //         $title = 'Edit Book';
-    //         $product = Product::find($id);
-    //         // dd($product);
-    //         $message = 'Book updated successfully!';
-    //     }
-
-    //     if ($request->isMethod('post')) { // WHETHER 'Add a Product' or 'Update a Product' <form> is submitted (THE SAME <form>)!!
-    //         $data = $request->all();
-    //         // dd($data);
-
-
-    //         // Laravel's Validation    // Customizing Laravel's Validation Error Messages: https://laravel.com/docs/9.x/validation#customizing-the-error-messages    // Customizing Validation Rules: https://laravel.com/docs/9.x/validation#custom-validation-rules
-    //         $rules = [
-    //             'category_id'   => 'required',
-    //             'condition' => 'required|in:new,old',
-    //             'product_name'  => 'required', // only alphabetical characters and spaces
-    //             'product_isbn'  => 'required', // alphanumeric regular expression
-    //             'product_price' => 'required|numeric',
-    //             'language_id'   => 'required',
-    //         ];
-
-    //         $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
-    //             'category_id.required'   => 'Category is required',
-    //             'condition.required'   => 'You have to select the Book type',
-    //             'product_name.required'  => 'Book Name is required',
-    //             'product_name.regex'     => 'Valid Book Name is required',
-    //             'product_isbn.required'  => 'Book ISBN is required',
-    //             'product_price.required' => 'Book Price is required',
-    //             'product_price.numeric'  => 'Valid Book Price is required',
-    //             'language_id.required'   => 'Book Language is required',
-    //         ];
-
-    //         $this->validate($request, $rules, $customMessages);
-
-    //         $existingProduct = Product::where('product_isbn', $data['product_isbn'])->first();
-    //         if ($existingProduct && $id == null) {
-    //             return redirect()->back()
-    //                 ->with('error_message', 'This ISBN already exists. Please edit the existing book.')
-    //                 ->withInput();
-    //         }
-
-    //         // Upload Product Image after Resize
-    //         // Important Note: There are going to be 3 three sizes for the product image: Admin will upload the image with the recommended size which 1000*1000 which is the 'large' size, but theni we're going to use 'Intervention' package to get another two sizes: 500*500 which is the 'medium' size and 250*250 which is the 'small' size
-    //         // The 3 three image sizes: large: 1000x1000, medium: 500x500, small: 250x250
-    //         if ($request->hasFile('product_image')) {
-    //             $image_tmp = $request->file('product_image');
-    //             if ($image_tmp->isValid()) { // Validating Successful Uploads: https://laravel.com/docs/9.x/requests#validating-successful-uploads
-    //                 // Get image extension
-    //                 $extension = $image_tmp->getClientOriginalExtension();
-
-    //                 $imageName = rand(111, 99999) . '.' . $extension; // e.g. 5954.png
-
-    //                 $largeImagePath  = 'front/images/product_images/large/'  . $imageName; // 'large'  images folder
-    //                 $mediumImagePath = 'front/images/product_images/medium/' . $imageName; // 'medium' images folder
-    //                 $smallImagePath  = 'front/images/product_images/small/'  . $imageName; // 'small'  images folder
-
-
-    //                 Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);  // resize the 'large'  image size then store it in the 'large'  folder
-    //                 Image::make($image_tmp)->resize(500,   500)->save($mediumImagePath); // resize the 'medium' image size then store it in the 'medium' folder
-    //                 Image::make($image_tmp)->resize(250,   250)->save($smallImagePath);  // resize the 'small'  image size then store it in the 'small'  folder
-
-    //                 $product->product_image = $imageName;
-    //             }
-    //         }
-
-
-
-
-    //         // Saving BOTH inserted ('Add a product' <form>) AND updated ('Update a Product' <form>) data in `products` database table    // Inserting & Updating Models: https://laravel.com/docs/9.x/eloquent#inserts AND https://laravel.com/docs/9.x/eloquent#updates
-    //         $categoryDetails = \App\Models\Category::find($data['category_id']); // Get the section from the submitted category
-    //         // dd($categoryDetails);
-
-    //         $product->section_id  = $categoryDetails['section_id'];
-    //         $product->category_id = $data['category_id'];
-    //         // $product->publisher_id    = $data['publisher_id'];
-    //         // Existing or new publisher check
-    //         // Handle publisher
-    //         if (!empty($data['new_publisher'])) {
-    //             // Admin typed a new one → insert to DB
-    //             $newPublisher = new \App\Models\Publisher();
-    //             $newPublisher->name = $data['new_publisher'];
-    //             $newPublisher->status = 1;
-    //             $newPublisher->save();
-    //             $product->publisher_id = $newPublisher->id;
-    //         } else {
-    //             // Else use the existing selected one
-    //             $product->publisher_id = $data['publisher_id'];
-    //         }
-
-    //         //$product->authors()->sync($data['author_id']);
-    //         $product->subject_id    = $data['subject_id'];
-    //         $product->language_id    = $data['language_id'];
-
-    //         // Save location field
-    //         $product->location = $data['location'] ?? null;
-
-
-    //         // Saving the seleted filter for a product
-    //         $productFilters = ProductsFilter::productFilters(); // Get ALL the (enabled/active) Filters
-    //         foreach ($productFilters as $filter) { // get ALL the filters, then check if every filter's `filter_column` is submitted by the category_filters.blade.php page
-    //             $filterAvailable = ProductsFilter::filterAvailable($filter['id'], $data['category_id']);
-    //             if ($filterAvailable == 'Yes') {
-    //                 if (isset($filter['filter_column']) && $data[$filter['filter_column']]) { // check if every filter's `filter_column` is submitted by the category_filters.blade.php page
-    //                     // Save the product filter in the `products` table
-    //                     $product->{$filter['filter_column']} = $data[$filter['filter_column']]; // i.e. $product->filter_column = filter_value    // $data[$filter['filter_column']]    is like    $data['screen_size']    which is equal to the filter value e.g.    $data['screen_size'] = 5 to 5.4 in    // $data comes from the <select> box in category_filters.blade.php
-    //                 }
-    //             }
-    //         }
-
-
-    //         if ($id == '') {
-    //             $adminType = Auth::guard('admin')->user()->type;
-    //             $vendor_id = Auth::guard('admin')->user()->vendor_id;
-    //             $admin_id  = Auth::guard('admin')->user()->id;
-
-    //             $product->admin_type = $adminType;
-
-    //             if ($adminType == 'vendor') {
-    //                 $product->vendor_id  = $vendor_id;
-    //                 $product->admin_id = 0;
-    //             } else {
-    //                 $product->vendor_id = 0;
-    //                 $product->admin_id   = $admin_id;
-    //             }
-    //         }
-
-    //         if (empty($data['product_discount'])) {
-    //             $data['product_discount'] = 0;
-    //         }
-
-    //         $product->condition     = $data['condition'];
-    //         $product->product_name     = $data['product_name'];
-    //         $product->product_isbn     = $data['product_isbn'];
-    //         $product->product_price    = $data['product_price'];
-    //         $product->product_discount = $data['product_discount'];
-    //         $product->edition_id = $data['edition_id'];
-    //         $product->description      = $data['description'];
-    //         $product->meta_title       = $data['meta_title'];
-    //         $product->meta_description = $data['meta_description'];
-    //         $product->meta_keywords    = $data['meta_keywords'];
-
-    //         if (!empty($data['is_featured'])) {
-    //             $product->is_featured = $data['is_featured'];
-    //         } else {
-    //             $product->is_featured = 'No';
-    //         }
-
-
-    //         if (!empty($data['is_bestseller'])) {
-    //             $product->is_bestseller = $data['is_bestseller'];
-    //         } else {
-    //             $product->is_bestseller = 'No';
-    //         }
-
-
-    //         $product->status = 1;
-
-
-    //         $product->save();
-    //         $product->authors()->sync($request->author_id ?? []);
-
-    //         if ($id == '' && !$existingProduct) {
-    //             $attribute = new ProductsAttribute();
-    //             $attribute->product_id = $product->id;
-    //             $attribute->size = 'Default';
-    //             $attribute->price = 00;
-    //             $attribute->stock = $request->input('total_stock', 0);
-    //             $attribute->sku = 'null';
-    //             $attribute->status = 1;
-    //             $attribute->save();
-    //         }
-
-    //         return redirect('admin/products')->with('success_message', $message);
-    //     }
-
-    //     $categories = \App\Models\Section::with('categories')->get()->toArray(); // with('categories') is the relationship method name in the Section.php Model
-
-    //     $publishers = \App\Models\Publisher::where('status', 1)->get()->toArray();
-
-    //     $authors = Author::where('status', 1)->get();
-
-    //     $subjects = Subject::where('status', 1)->get()->toArray();
-
-    //     $languages = Language::get();
-    //     $editions = \App\Models\Edition::all();
-
-    //     return view('admin.products.add_edit_product')->with(compact('title', 'product', 'categories', 'publishers', 'authors', 'subjects', 'languages', 'editions', 'logos', 'headerLogo'));
-    // }
 
     public function addEditProduct(Request $request, $id = null)
     {
@@ -415,7 +212,7 @@ class ProductsController extends Controller
                 if ($vendor && $vendor->plan === 'free') {
                     // Get dynamic limit from settings
                     $freePlanBookLimit = (int) Setting::getValue('free_plan_book_limit', 100);
-                    
+
                     // Count products added this month
                     $currentMonthStart = now()->startOfMonth();
                     $productsThisMonth = Product::whereHas('firstAttribute', function($q) use ($vendor) {
@@ -443,7 +240,7 @@ class ProductsController extends Controller
                 // Create notification when a new product is added
                 $vendorId = null; // Always null so notification is visible to admin only
                 $notificationMessage = '';
-                
+
                 if ($user->type === 'vendor') {
                     // Keep vendor_id as null so only admin sees this notification
                     $vendorName = $user->name;
@@ -815,13 +612,11 @@ class ProductsController extends Controller
             unlink($medium_image_path . $productImage->image);
         }
 
-        // Third: Delete from the 'large' folder
+
         if (file_exists($large_image_path . $productImage->image)) {
             unlink($large_image_path . $productImage->image);
         }
 
-
-        // Delete the product image name (record) from the `products_images` database table
         ProductsImage::where('id', $id)->delete();
 
         $message = 'Book Image has been deleted successfully!';
@@ -831,7 +626,7 @@ class ProductsController extends Controller
     }
 
     public function deleteAttribute($id)
-    { // Delete an attribute in add_edit_attributes.blade.php
+    {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         ProductsAttribute::where('id', $id)->delete();
@@ -843,11 +638,10 @@ class ProductsController extends Controller
     }
 
     public function deleteProductVideo($id)
-    { // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
+    {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        // This method is referenced in routes but not implemented
-        // You can implement video deletion logic here if needed
+
 
         $message = 'Book Video has been deleted successfully!';
 
@@ -863,7 +657,6 @@ class ProductsController extends Controller
 
         $isbn = $request->isbn;
 
-        // 1️⃣ Check Local Database
         $product = Product::with(['publisher', 'subject', 'edition', 'language', 'authors'])
             ->where('product_isbn', $isbn)
             ->first();
@@ -890,7 +683,6 @@ class ProductsController extends Controller
             ]);
         }
 
-        // 2️⃣ Fetch From ISBNdb API
         $key = config('services.isbn.key');
 
         $response = Http::withHeaders([
@@ -974,5 +766,35 @@ class ProductsController extends Controller
                 "author_ids"   => $author_ids,
             ]
         ]);
+    }
+
+    public function nameSuggestions(Request $request)
+    {
+        try {
+
+            $query = $request->input('query');
+
+            if (!$query || strlen($query) < 2) {
+                return response()->json([
+                    'status' => true,
+                    'data' => []
+                ]);
+            }
+
+            $books = Product::where('product_name', 'LIKE', '%' . $query . '%')
+                ->limit(10)
+                ->get(['id', 'product_name', 'product_isbn']);
+
+            return response()->json([
+                'status' => true,
+                'data'   => $books
+            ]);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

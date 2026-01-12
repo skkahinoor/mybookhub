@@ -3,183 +3,179 @@
 
 
 @section('content')
-<style>
-    /* ===== GLOBAL ===== */
-    .card {
-        border-radius: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-    }
-    
-    .card-body {
-        padding: 24px;
-    }
-    
-    .card-title {
-        font-weight: 600;
-        color: #111827;
-    }
-    
-    /* ===== FORM ===== */
-    .form-group {
-        margin-bottom: 18px;
-    }
-    
-    .form-group label {
-        font-weight: 500;
-        color: #374151;
-        margin-bottom: 6px;
-    }
-    
-    .form-control {
-        border-radius: 10px;
-        padding: 10px 14px;
-        border: 1px solid #d1d5db;
-        transition: 0.2s;
-    }
-    
-    .form-control:focus {
-        border-color: #6366f1;
-        box-shadow: 0 0 0 3px rgba(99,102,241,.15);
-    }
-    
-    /* ===== RADIO (NEW / OLD) ===== */
-    .btn-check + label {
-        padding: 6px 16px;
-        border-radius: 20px;
-        border: 1px solid #d1d5db;
-        cursor: pointer;
-        margin-left: 6px;
-        background: #f9fafb;
-    }
-    
-    .btn-check:checked + label {
-        background: #4f46e5;
-        color: #fff;
-        border-color: #4f46e5;
-    }
-    
-    /* ===== SECTION HEADERS ===== */
-    .form-section {
-        margin-top: 30px;
-    }
-    
-    .form-section h6 {
-        font-size: 14px;
-        font-weight: 600;
-        color: #4b5563;
-        margin-bottom: 14px;
-        border-left: 4px solid #6366f1;
-        padding-left: 10px;
-    }
-    
-    /* ===== AUTHOR MULTI SELECT ===== */
-    .multi-select-wrapper {
-        background: #f9fafb;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 12px;
-        width: 100%;
-    }
-    
-    .selected-options {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        margin-bottom: 8px;
-    }
-    
-    .selected-options span {
-        background: #6366f1;
-        color: #fff;
-        padding: 6px 12px;
-        border-radius: 18px;
-        font-size: 13px;
-    }
-    
-    .selected-options span i {
-        margin-left: 6px;
-        cursor: pointer;
-        font-weight: bold;
-    }
-    
-    .search-input {
-        border-radius: 8px;
-    }
-    
-    /* ===== OPTIONS DROPDOWN ===== */
-    .options-list {
-        border-radius: 0 0 12px 12px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-    }
-    
-    .options-list div:hover {
-        background: #eef2ff;
-    }
-    
-    /* ===== IMAGE PREVIEW ===== */
-    #isbnImagePreview img {
-        margin-top: 10px;
-        border-radius: 12px;
-        box-shadow: 0 6px 16px rgba(0,0,0,.1);
-    }
-    
-    /* ===== BUTTONS ===== */
-    .btn-primary {
-        background: linear-gradient(135deg, #6366f1, #4f46e5);
-        border: none;
-        border-radius: 10px;
-        padding: 10px 22px;
-    }
-    
-    .btn-light {
-        border-radius: 10px;
-    }
-    
-    /* ===== CHECKBOX ===== */
-    input[type="checkbox"] {
-        transform: scale(1.15);
-        margin-right: 6px;
-    }
+    <style>
+        /* ===== GLOBAL ===== */
+        .card {
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
 
-    .condition-toggle {
-    gap: 12px;
-}
+        .card-body {
+            padding: 24px;
+        }
 
-.condition-toggle label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: 20px;
-    border: 1.5px solid #d1d5db;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: #4b5563;
-    transition: all 0.25s ease;
-}
+        .card-title {
+            font-weight: 600;
+            color: #111827;
+        }
 
-.condition-toggle label i {
-    font-size: 18px;
-}
+        /* ===== FORM ===== */
+        .form-group {
+            margin-bottom: 18px;
+        }
 
-/* Checked state (NO background) */
-.condition-toggle .btn-check:checked + label {
-    border-color: #4f46e5;
-    color: #ffffff;
-}
+        .form-group label {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
 
-/* Hover */
-.condition-toggle label:hover {
-    border-color: #6366f1;
-    color: #6366f1;
-}
+        .form-control {
+            border-radius: 10px;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            transition: 0.2s;
+        }
 
+        .form-control:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+        }
 
+        /* ===== RADIO (NEW / OLD) ===== */
+        .btn-check+label {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid #d1d5db;
+            cursor: pointer;
+            margin-left: 6px;
+            background: #f9fafb;
+        }
 
+        .btn-check:checked+label {
+            background: #4f46e5;
+            color: #fff;
+            border-color: #4f46e5;
+        }
 
+        /* ===== SECTION HEADERS ===== */
+        .form-section {
+            margin-top: 30px;
+        }
+
+        .form-section h6 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 14px;
+            border-left: 4px solid #6366f1;
+            padding-left: 10px;
+        }
+
+        /* ===== AUTHOR MULTI SELECT ===== */
+        .multi-select-wrapper {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+            width: 100%;
+        }
+
+        .selected-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .selected-options span {
+            background: #6366f1;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 18px;
+            font-size: 13px;
+        }
+
+        .selected-options span i {
+            margin-left: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .search-input {
+            border-radius: 8px;
+        }
+
+        /* ===== OPTIONS DROPDOWN ===== */
+        .options-list {
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .options-list div:hover {
+            background: #eef2ff;
+        }
+
+        /* ===== IMAGE PREVIEW ===== */
+        #isbnImagePreview img {
+            margin-top: 10px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .1);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 22px;
+        }
+
+        .btn-light {
+            border-radius: 10px;
+        }
+
+        /* ===== CHECKBOX ===== */
+        input[type="checkbox"] {
+            transform: scale(1.15);
+            margin-right: 6px;
+        }
+
+        .condition-toggle {
+            gap: 12px;
+        }
+
+        .condition-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1.5px solid #d1d5db;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4b5563;
+            transition: all 0.25s ease;
+        }
+
+        .condition-toggle label i {
+            font-size: 18px;
+        }
+
+        /* Checked state (NO background) */
+        .condition-toggle .btn-check:checked+label {
+            border-color: #4f46e5;
+            color: #ffffff;
+        }
+
+        /* Hover */
+        .condition-toggle label:hover {
+            border-color: #6366f1;
+            color: #6366f1;
+        }
     </style>
-    
+
     <div class="main-panel">
         <div class="content-wrapper">
             <div class="row">
@@ -281,7 +277,8 @@
                                 <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
                                 @csrf
 
-                                <div class="d-flex align-items-center condition-toggle" role="group" aria-label="Condition">
+                                <div class="d-flex align-items-center condition-toggle" role="group"
+                                    aria-label="Condition">
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="new"
                                             value="new" autocomplete="off"
@@ -290,7 +287,7 @@
                                             <i class="mdi mdi-book-open-page-variant"></i> New
                                         </label>
                                     </div>
-                                
+
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="old"
                                             value="old" autocomplete="off"
@@ -300,27 +297,41 @@
                                         </label>
                                     </div>
                                 </div>
-                                
-                                
+
+
 
                                 <div class="form-group">
                                     <div class="form-group">
-                                        <label for="product_isbn">ISBN number</label>
-                                        <input type="number" class="form-control" id="product_isbn"
-                                            placeholder="Enter ISBN-" name="product_isbn"
-                                            @if (!empty($product['product_isbn'])) value="{{ $product['product_isbn'] }}" @else value="{{ old('product_isbn') }}" @endif>
-                                        {{-- Repopulating  Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
+                                        <label for="product_isbn">ISBN Number</label>
+                                        <input type="text" class="form-control" id="product_isbn" name="product_isbn"
+                                            placeholder="Enter ISBN"
+                                            value="{{ old('product_isbn', $product['product_isbn'] ?? '') }}">
                                     </div>
 
-                                    <div class="form-group">
+                                    <div class="form-group position-relative">
                                         <label for="product_name">Book Name</label>
-                                        <input type="text" class="form-control" id="product_name"
-                                            placeholder="Enter Book Name" name="product_name"
-                                            @if (!empty($product['product_name'])) value="{{ $product['product_name'] }}" @else value="{{ old('product_name') }}" @endif>
-                                        {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
+
+                                        <input type="text" class="form-control" id="product_name" name="product_name"
+                                            placeholder="Enter Book Name" autocomplete="off"
+                                            value="{{ old('product_name', $product['product_name'] ?? '') }}">
+
+                                        <ul id="book_name_suggestion" class="list-group"
+                                            style="
+            position:absolute;
+            top:100%;
+            left:0;
+            right:0;
+            z-index:9999;
+            display:none;
+            max-height:200px;
+            overflow-y:auto;
+            background:#fff;
+            border:1px solid #ddd;
+        ">
+                                        </ul>
                                     </div>
 
-                                    
+
                                     <label for="category_id">Select Category</label>
                                     {{-- <input type="text" class="form-control" id="category_id" placeholder="Enter Category Name" name="category_id" @if (!empty($product['name'])) value="{{ $product['category_id'] }}" @else value="{{ old('category_id') }}" @endif>  --}} {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                     <select name="category_id" id="category_id" class="form-control text-dark">
@@ -347,7 +358,7 @@
                                     </select>
                                 </div>
 
-                              
+
 
                                 {{-- Including the related filters <select> box of a product DEPENDING ON THE SELECTED CATEGORY of the product --}}
                                 <div class="loadFilters">
@@ -420,7 +431,7 @@
                                     @endforeach
                                 </select>
 
-                               
+
                                 <div class="form-group">
                                     <label for="language_id">Book Language</label>
                                     <select name="language_id" id="language_id" class="form-control text-dark">
@@ -487,7 +498,7 @@
                                         @if (!empty($product['meta_keywords'])) value="{{ $product['meta_keywords'] }}" @else value="{{ old('meta_keywords') }}" @endif>
                                     {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                 </div>
-                                
+
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
 
                                 <a href="{{ url('admin/products') }}" class="btn btn-light">Cancel</a>
@@ -503,7 +514,8 @@
     </div>
 
     <!-- Modal for Stock and Discount -->
-    <div class="modal fade" id="attributesModal" tabindex="-1" role="dialog" aria-labelledby="attributesModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal fade" id="attributesModal" tabindex="-1" role="dialog" aria-labelledby="attributesModalLabel"
+        aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -513,16 +525,18 @@
                     <form id="attributesForm">
                         @csrf
                         <input type="hidden" id="modal_product_id" name="product_id">
-                        
+
                         <div class="form-group">
                             <label for="modal_stock">Stock <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="modal_stock" name="stock" min="0" required>
+                            <input type="number" class="form-control" id="modal_stock" name="stock" min="0"
+                                required>
                             <small class="form-text text-muted">Enter the total stock quantity</small>
                         </div>
 
                         <div class="form-group">
                             <label for="modal_product_discount">Discount (%)</label>
-                            <input type="number" class="form-control" id="modal_product_discount" name="product_discount" min="0" max="100" step="0.01" value="0">
+                            <input type="number" class="form-control" id="modal_product_discount"
+                                name="product_discount" min="0" max="100" step="0.01" value="0">
                             <small class="form-text text-muted">Enter discount percentage (0-100)</small>
                         </div>
                     </form>
@@ -542,89 +556,164 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-    function setReadonly(state) {
+        <script>
+        $(document).ready(function() {
 
-        // Text / input fields
-        $("#product_name, #product_price, #description").prop("readonly", state);
+            let debounceTimer = null;
 
-        // Dropdowns (disable)
-        $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
-            .prop("readonly", state);
+            $('#product_name').on('keyup', function() {
 
-        // Authors multiselect
-        $("#authors-select").prop("readonly", state);
-    }
+                let query = $(this).val().trim();
 
-    $(document).on("change", "#product_isbn", function () {
-
-        let isbn = $(this).val().trim();
-        if (isbn === "") return;
-
-        $.ajax({
-            url: "{{ route('admin.book.isbnLookup') }}",
-            type: "POST",
-            data: {
-                isbn: isbn,
-                _token: "{{ csrf_token() }}"
-            },
-
-            success: function (res) {
-
-                if (!res.status) {
-                    setReadonly(false);
-                    alert(res.message);
+                if (query.length < 2) {
+                    $('#book_name_suggestion').hide();
                     return;
                 }
 
-                let d = res.data;
+                clearTimeout(debounceTimer);
 
-                // ✅ Fill fields
-                $("#product_name").val(d.product_name);
-                $("#category_id").val(d.category_id);
-                $("#product_price").val(d.product_price);
-                $("#language_id").val(d.language_id);
-                $("#publisher_id").val(d.publisher_id);
-                $("#subject_id").val(d.subject_id);
-                $("#edition_id").val(d.edition_id);
-                $("#description").val(d.description);
+                debounceTimer = setTimeout(function() {
 
-                selected = [];
-                d.author_ids.forEach(id => {
-                    const author = authors.find(a => a.id == id);
-                    if (author) selected.push(author);
-                });
-                renderSelected();
+                    $.ajax({
+                        url: "{{ url('/admin/book/name-suggestions') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            query: query
+                        },
+                        success: function(res) {
 
-                if (d.image) {
-                    let imagePath = "{{ asset('front/images/product_images/small') }}/" + d.image;
-                    $("#isbnImagePreview").html(`<img src="${imagePath}" width="150">`);
+                            if (!res.data || res.data.length === 0) {
+                                $('#book_name_suggestion').hide();
+                                return;
+                            }
+
+                            let html = '';
+                            res.data.forEach(book => {
+                                html += `
+                        <li class="list-group-item book-title-item"
+                            data-isbn="${book.product_isbn}"
+                            style="cursor:pointer">
+                            ${book.product_name}
+                        </li>`;
+                            });
+
+                            $('#book_name_suggestion').html(html).show();
+                        }
+                    });
+
+                }, 300);
+            });
+
+            $(document).on('click', '.book-title-item', function() {
+
+                let isbn = $(this).data('isbn');
+
+                $('#product_isbn').val(isbn);
+                $('#product_name').val($(this).text().trim());
+                $('#book_name_suggestion').hide();
+
+                fetchBookByISBN(isbn);
+            });
+
+            $(document).click(function(e) {
+                if (!$(e.target).closest('#product_name, #book_name_suggestion').length) {
+                    $('#book_name_suggestion').hide();
                 }
+            });
 
-                // 🔒 Make fields readonly
-                setReadonly(true);
-            },
-
-            error: function () {
-
-                // Clear fields
-                $("#product_name, #product_price, #description").val('');
-                $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
-                    .val('').prop("readonly", false);
-
-                $("#authors-select").val([]).trigger("change").prop("readonly", false);
-                $("#isbnImagePreview").html("");
-
-                // 🔓 Enable editing
-                setReadonly(false);
-
-                alert("No book found for this ISBN. Please enter all details manually.");
-            }
         });
-    });
-</script>
+    </script>
 
+    <script>
+        function setReadonly(state) {
 
+            $("#product_name, #product_price, #description")
+                .prop("readonly", state);
+
+            $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
+                .prop("disabled", state);
+
+            $("#authors-select")
+                .prop("disabled", state);
+        }
+
+        function fetchBookByISBN(isbn) {
+
+            if (!isbn) return;
+
+            $.ajax({
+                url: "{{ route('admin.book.isbnLookup') }}",
+                type: "POST",
+                data: {
+                    isbn: isbn,
+                    _token: "{{ csrf_token() }}"
+                },
+
+                success: function(res) {
+
+                    if (!res.status) {
+                        setReadonly(false);
+                        alert(res.message);
+                        return;
+                    }
+
+                    let d = res.data;
+
+                    $("#product_name").val(d.product_name ?? '');
+                    $("#category_id").val(d.category_id ?? '').trigger('change');
+                    $("#product_price").val(d.product_price ?? '');
+                    $("#language_id").val(d.language_id ?? '').trigger('change');
+                    $("#publisher_id").val(d.publisher_id ?? '').trigger('change');
+                    $("#subject_id").val(d.subject_id ?? '').trigger('change');
+                    $("#edition_id").val(d.edition_id ?? '').trigger('change');
+                    $("#description").val(d.description ?? '');
+
+                    // authors
+                    if (Array.isArray(d.author_ids)) {
+                        selected = [];
+                        d.author_ids.forEach(id => {
+                            const author = authors.find(a => a.id == id);
+                            if (author) selected.push(author);
+                        });
+                        renderSelected();
+                    }
+
+                    // image
+                    if (d.image) {
+                        let imagePath = "{{ asset('front/images/product_images/small') }}/" + d.image;
+                        $("#isbnImagePreview").html(`<img src="${imagePath}" width="150">`);
+                    } else {
+                        $("#isbnImagePreview").html('');
+                    }
+
+                    setReadonly(true);
+                },
+
+                error: function() {
+
+                    $("#product_name, #product_price, #description").val('');
+
+                    $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
+                        .val('').prop("disabled", false);
+
+                    $("#authors-select")
+                        .val([]).trigger("change").prop("disabled", false);
+
+                    $("#isbnImagePreview").html("");
+
+                    setReadonly(false);
+
+                    alert("No book found for this ISBN. Please enter all details manually.");
+                }
+            });
+        }
+
+        // ✅ MANUAL ISBN CHANGE
+        $(document).on("change", "#product_isbn", function() {
+            fetchBookByISBN($(this).val().trim());
+        });
+    </script>
 
     <script>
         $('#addPublisherBtn').click(function() {
@@ -763,14 +852,14 @@
             // Handle form submission
             $('form').on('submit', function(e) {
                 e.preventDefault();
-                
+
                 const form = $(this);
                 const formData = new FormData(form[0]);
                 const submitBtn = $('#submitBtn');
-                
+
                 // Disable submit button
                 submitBtn.prop('disabled', true).text('Saving...');
-                
+
                 $.ajax({
                     url: form.attr('action'),
                     type: 'POST',
@@ -809,9 +898,9 @@
                 const form = $('#attributesForm');
                 const formData = form.serialize();
                 const btn = $(this);
-                
+
                 btn.prop('disabled', true).text('Saving...');
-                
+
                 $.ajax({
                     url: "{{ route('admin.products.saveAttributes') }}",
                     type: 'POST',
@@ -830,7 +919,9 @@
                             });
                             alert(errorMsg);
                         } else {
-                            alert('An error occurred while saving attributes. Please try again.');
+                            alert(
+                                'An error occurred while saving attributes. Please try again.'
+                                );
                         }
                     }
                 });
@@ -844,5 +935,5 @@
         });
     </script>
 
-   
+
 @endsection

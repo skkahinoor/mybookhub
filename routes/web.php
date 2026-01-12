@@ -44,7 +44,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     Route::group(['middleware' => ['auth:admin']], function () {
         // check isbn
         Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
-        ->name('admin.book.isbnLookup');                                             // using our 'admin' guard (which we created in auth.php)
+        ->name('admin.book.isbnLookup');
+        Route::post('/book/name-suggestions', [AdminProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
         Route::get('dashboard', 'AdminController@dashboard');                                                 // Admin login
         Route::get('logout', 'AdminController@logout');                                                       // Admin logout
         Route::match(['get', 'post'], 'update-admin-password', 'AdminController@updateAdminPassword');        // GET request to view the update password <form>, and a POST request to submit the update password <form>
@@ -81,11 +82,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
         Route::get('delete-admin/{id}', 'AdminController@deleteAdmin');                        // Delete an Admin
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
-        Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('updateadminstatus');  
+        Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('updateadminstatus');
 
         // otp
         Route::get('admin/otps', [OtpController::class, 'otps'])->name('otps');
-        
+
         // Update Admin Status using AJAX in admins.blade.php
 
         // Sections (Sections, Categories, Subcategories, Products, Attributes)
@@ -401,13 +402,13 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     // the register HTML form submission in vendor login_register.blade.php page
     Route::get('vendor/register', 'VendorController@showRegister')->name('vendor.register'); // the register HTML form submission in vendor login_register.blade.php page
     Route::post('vendor/register', 'VendorController@register')->name('vendor.register.submit'); // the register HTML form submission in vendor login_register.blade.php page
-    
+
     // Vendor Plan Payment Routes
     Route::get('vendor/payment/create/{vendor_id}', [App\Http\Controllers\Admin\VendorPlanController::class, 'createOrder'])->name('vendor.payment.create');
     Route::post('vendor/payment/verify', [App\Http\Controllers\Admin\VendorPlanController::class, 'verifyPayment'])->name('vendor.payment.verify');
     Route::get('vendor/payment/success', [App\Http\Controllers\Admin\VendorPlanController::class, 'paymentSuccess'])->name('vendor.payment.success');
     Route::get('vendor/payment/failure', [App\Http\Controllers\Admin\VendorPlanController::class, 'paymentFailure'])->name('vendor.payment.failure');
-    
+
     // Vendor Plan Management Routes (requires admin middleware)
     Route::middleware(['admin', 'vendor.plan'])->group(function () {
         Route::get('vendor/plan/manage', [App\Http\Controllers\Admin\VendorPlanController::class, 'manage'])->name('vendor.plan.manage');
