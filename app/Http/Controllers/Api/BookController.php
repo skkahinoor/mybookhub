@@ -334,6 +334,22 @@ class BookController extends Controller
                 'authors'
             ])->where('product_isbn', $query)->first();
 
+            $basePath = url('front/images/product_images');
+
+            $product->image_urls = [
+                'large' => $product->product_image
+                    ? $basePath . '/large/' . $product->product_image
+                    : null,
+
+                'medium' => $product->product_image
+                    ? $basePath . '/medium/' . $product->product_image
+                    : null,
+
+                'small' => $product->product_image
+                    ? $basePath . '/small/' . $product->product_image
+                    : null,
+            ];
+
             if ($product) {
                 return response()->json([
                     'status' => true,
@@ -407,6 +423,22 @@ class BookController extends Controller
                 'message' => 'Book not found'
             ], 404);
         }
+
+        $basePath = url('front/images/product_images');
+
+        $product->image_urls = [
+            'large' => $product->product_image
+                ? $basePath . '/large/' . $product->product_image
+                : null,
+
+            'medium' => $product->product_image
+                ? $basePath . '/medium/' . $product->product_image
+                : null,
+
+            'small' => $product->product_image
+                ? $basePath . '/small/' . $product->product_image
+                : null,
+        ];
 
         return response()->json([
             'status' => true,
@@ -636,9 +668,6 @@ class BookController extends Controller
             ], 404);
         }
 
-        // ===============================
-        // STOCK & DISCOUNT FETCH
-        // ===============================
         if ($user->type === 'vendor') {
 
             $attribute = ProductsAttribute::where('product_id', $product->id)
@@ -686,7 +715,6 @@ class BookController extends Controller
 
                 'available_stock'  => (int) $totalStock,
 
-                // ✅ FIXED: discount from products_attributes
                 'product_discount' => (float) $discount
             ]
         ], 200);

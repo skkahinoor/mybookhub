@@ -230,228 +230,6 @@ class OrderController extends Controller
         ], 200);
     }
 
-    // public function cart(Request $request)
-    // {
-    //     if ($resp = $this->checkAccess($request)) return $resp;
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'cart' => Session::get('sales_cart', [])
-    //     ]);
-    // }
-
-    // public function searchByIsbn(Request $request)
-    // {
-    //     if ($resp = $this->checkAccess($request)) return $resp;
-
-    //     $request->validate([
-    //         'isbn' => 'required|string|max:20'
-    //     ]);
-
-    //     $vendorId = $request->user()->vendor_id;
-
-    //     $product = Product::where('product_isbn', $request->isbn)->first();
-
-    //     if (!$product) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Book not found'
-    //         ], 404);
-    //     }
-
-    //     $attribute = ProductsAttribute::where([
-    //         'product_id' => $product->id,
-    //         'vendor_id' => $vendorId
-    //     ])->first();
-
-    //     if (!$attribute) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Product not available for this vendor'
-    //         ], 404);
-    //     }
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'data' => [
-    //             'product_id' => $product->id,
-    //             'product_name' => $product->product_name,
-    //             'product_isbn' => $product->product_isbn,
-    //             'price' => $attribute->price ?? $product->product_price,
-    //             'stock' => $attribute->stock,
-    //             'image' => $product->product_image
-    //         ]
-    //     ]);
-    // }
-
-    // public function addToCart(Request $request)
-    // {
-    //     if ($resp = $this->checkAccess($request)) return $resp;
-
-    //     $request->validate([
-    //         'product_id' => 'required|integer',
-    //         'quantity' => 'required|integer|min:1'
-    //     ]);
-
-    //     $vendorId = $request->user()->vendor_id;
-
-    //     $attribute = ProductsAttribute::where([
-    //         'product_id' => $request->product_id,
-    //         'vendor_id' => $vendorId
-    //     ])->first();
-
-    //     if (!$attribute || $attribute->stock < $request->quantity) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Insufficient stock'
-    //         ], 400);
-    //     }
-
-    //     $product = Product::find($request->product_id);
-    //     $price = $attribute->price ?? $product->product_price;
-
-    //     $cart = Session::get('sales_cart', []);
-
-    //     foreach ($cart as &$item) {
-    //         if ($item['product_id'] == $request->product_id) {
-    //             $item['quantity'] += $request->quantity;
-    //             $item['total'] = $item['quantity'] * $price;
-    //             Session::put('sales_cart', $cart);
-
-    //             return response()->json([
-    //                 'status' => true,
-    //                 'message' => 'Cart updated',
-    //                 'cart' => $cart
-    //             ]);
-    //         }
-    //     }
-
-    //     $cart[] = [
-    //         'product_id' => $product->id,
-    //         'product_name' => $product->product_name,
-    //         'price' => $price,
-    //         'quantity' => $request->quantity,
-    //         'total' => $price * $request->quantity
-    //     ];
-
-    //     Session::put('sales_cart', $cart);
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'Added to cart',
-    //         'cart' => $cart
-    //     ]);
-    // }
-
-    // public function removeFromCart(Request $request)
-    // {
-    //     if ($resp = $this->checkAccess($request)) return $resp;
-
-    //     $request->validate([
-    //         'product_id' => 'required|integer'
-    //     ]);
-
-    //     $cart = array_values(array_filter(
-    //         Session::get('sales_cart', []),
-    //         fn ($item) => $item['product_id'] != $request->product_id
-    //     ));
-
-    //     Session::put('sales_cart', $cart);
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'Item removed',
-    //         'cart' => $cart
-    //     ]);
-    // }
-
-    // public function processSale(Request $request)
-    // {
-    //     if ($resp = $this->checkAccess($request)) return $resp;
-
-    //     $request->validate([
-    //         'customer_name' => 'required|string|max:255',
-    //         'customer_mobile' => 'required|string|max:20',
-    //         'customer_email' => 'nullable|email',
-    //         'customer_address' => 'nullable|string'
-    //     ]);
-
-    //     $cart = Session::get('sales_cart', []);
-
-    //     if (empty($cart)) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Cart is empty'
-    //         ], 400);
-    //     }
-
-    //     DB::beginTransaction();
-
-    //     try {
-    //         $vendorId = $request->user()->vendor_id;
-    //         $adminId = $request->user()->id;
-
-    //         $grandTotal = collect($cart)->sum('total');
-
-    //         $order = Order::create([
-    //             'user_id' => 0,
-    //             'name' => $request->customer_name,
-    //             'address' => $request->customer_address ?? 'N/A',
-    //             'city' => 'N/A',
-    //             'state' => 'N/A',
-    //             'country' => 'N/A',
-    //             'pincode' => 'N/A',
-    //             'mobile' => $request->customer_mobile,
-    //             'email' => $request->customer_email ?? 'N/A',
-    //             'shipping_charges' => 0,
-    //             'order_status' => 'New',
-    //             'payment_method' => 'Cash',
-    //             'payment_gateway' => 'Cash',
-    //             'grand_total' => $grandTotal
-    //         ]);
-
-    //         foreach ($cart as $item) {
-    //             $attribute = ProductsAttribute::where([
-    //                 'product_id' => $item['product_id'],
-    //                 'vendor_id' => $vendorId
-    //             ])->lockForUpdate()->first();
-
-    //             if ($attribute->stock < $item['quantity']) {
-    //                 throw new \Exception('Stock issue');
-    //             }
-
-    //             $attribute->decrement('stock', $item['quantity']);
-
-    //             OrdersProduct::create([
-    //                 'order_id' => $order->id,
-    //                 'user_id' => 0,
-    //                 'admin_id' => $adminId,
-    //                 'vendor_id' => $vendorId,
-    //                 'product_id' => $item['product_id'],
-    //                 'product_name' => $item['product_name'],
-    //                 'product_price' => $item['price'],
-    //                 'product_qty' => $item['quantity']
-    //             ]);
-    //         }
-
-    //         DB::commit();
-    //         Session::forget('sales_cart');
-
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Sale completed',
-    //             'order_id' => $order->id
-    //         ]);
-
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
     public function searchByIsbn(Request $request)
     {
         if ($resp = $this->checkAccess($request)) return $resp;
@@ -467,7 +245,7 @@ class OrderController extends Controller
 
         if (!$product) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Book not found'
             ], 404);
         }
@@ -479,23 +257,47 @@ class OrderController extends Controller
 
         if (!$attribute) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Product not available for this vendor'
             ], 404);
         }
 
+        $basePrice = $attribute->price ?? $product->product_price;
+        $discount  = $attribute->product_discount ?? 0;
+
+        $discountAmount = ($basePrice * $discount) / 100;
+        $finalPrice     = $basePrice - $discountAmount;
+
+        $basePath = url('front/images/product_images');
+
         return response()->json([
             'status' => true,
             'data' => [
-                'product_id'   => $product->id,
-                'product_name' => $product->product_name,
-                'product_isbn' => $product->product_isbn,
-                'price'        => $attribute->price ?? $product->product_price,
-                'stock'        => $attribute->stock,
-                'image'        => $product->product_image
+                'product_id'           => $product->id,
+                'product_name'         => $product->product_name,
+                'product_isbn'         => $product->product_isbn,
+                'original_price'       => $basePrice,
+                'discount_percent'     => $discount,
+                'discount_amount'      => round($discountAmount),
+                'price_after_discount' => round($finalPrice),
+                'stock'                => $attribute->stock,
+                'image'                => $product->product_image,
+
+                'image_urls'       => [
+                    'large'  => $product->product_image
+                        ? $basePath . '/large/' . $product->product_image
+                        : null,
+                    'medium' => $product->product_image
+                        ? $basePath . '/medium/' . $product->product_image
+                        : null,
+                    'small'  => $product->product_image
+                        ? $basePath . '/small/' . $product->product_image
+                        : null,
+                ],
             ]
         ], 200);
     }
+
 
     public function processSale(Request $request)
     {
@@ -526,7 +328,7 @@ class OrderController extends Controller
             $vendorId = $request->user()->vendor_id;
             $adminId  = $request->user()->id;
 
-            $grandTotal = 0;
+            $grandTotal   = 0;
             $resolvedItems = [];
 
             foreach ($cart as $item) {
@@ -537,76 +339,74 @@ class OrderController extends Controller
                 ])->lockForUpdate()->first();
 
                 if (!$attribute) {
-                    throw new \Exception(
-                        'Product not available for vendor. Product ID: ' . $item['product_id']
-                    );
+                    throw new \Exception('Product not available for vendor. Product ID: ' . $item['product_id']);
                 }
 
                 if ($attribute->stock < $item['quantity']) {
-                    throw new \Exception(
-                        'Insufficient stock for product ID: ' . $item['product_id']
-                    );
+                    throw new \Exception('Insufficient stock for product ID: ' . $item['product_id']);
                 }
 
                 $product = Product::find($item['product_id']);
 
                 if (!$product) {
+                    throw new \Exception('Product not found. Product ID: ' . $item['product_id']);
+                }
+
+
+                $basePrice = $attribute->price ?? $product->product_price;
+                $discount  = $attribute->product_discount ?? 0;
+
+
+                $discountAmount = ($basePrice * $discount) / 100;
+                $discountAmount = round($discountAmount);
+                $finalPrice = $basePrice - $discountAmount;
+                $finalPrice = round($finalPrice);
+
+                if ($finalPrice <= 0) {
                     throw new \Exception(
-                        'Product not found. Product ID: ' . $item['product_id']
+                        'Invalid price after discount for product ID: ' . $item['product_id']
                     );
                 }
 
-                /**
-                 * 🔥 PRICE RESOLUTION (CRITICAL FIX)
-                 * Vendor price → fallback to base product price
-                 */
-                $price = $attribute->price ?? $product->product_price;
-
-                if ($price === null) {
-                    throw new \Exception(
-                        'Price not defined for product ID: ' . $item['product_id']
-                    );
+                if ($finalPrice === null) {
+                    throw new \Exception('Price not defined for product ID: ' . $item['product_id']);
                 }
 
                 $resolvedItems[] = [
-                    'product'   => $product,
-                    'attribute' => $attribute,
-                    'price'     => $price,
-                    'quantity'  => $item['quantity']
+                    'product'          => $product,
+                    'attribute'        => $attribute,
+                    'base_price'       => round($basePrice),
+                    'discount_percent' => $discount,
+                    'discount_amount'  => $discountAmount, // already rounded
+                    'final_price'      => $finalPrice,      // already rounded
+                    'quantity'         => $item['quantity']
                 ];
 
-                $grandTotal += ($price * $item['quantity']);
+                $grandTotal += ($finalPrice * $item['quantity']);
             }
 
-            /* =========================
-           CREATE ORDER
-        ========================== */
             $order = Order::create([
-                'user_id'           => 0,
-                'name'              => $request->customer_name,
-                'address'           => $request->customer_address ?? 'N/A',
-                'city'              => 'N/A',
-                'state'             => 'N/A',
-                'country'           => 'N/A',
-                'pincode'           => 'N/A',
-                'mobile'            => $request->customer_mobile,
-                'email'             => $request->customer_email ?? 'N/A',
-                'shipping_charges'  => 0,
-                'order_status'      => 'New',
-                'payment_method'    => 'Cash',
-                'payment_gateway'   => 'Cash',
-                'grand_total'       => $grandTotal
+                'user_id'          => 0,
+                'name'             => $request->customer_name,
+                'address'          => $request->customer_address ?? 'N/A',
+                'city'             => 'N/A',
+                'state'            => 'N/A',
+                'country'          => 'N/A',
+                'pincode'          => 'N/A',
+                'mobile'           => $request->customer_mobile,
+                'email'            => $request->customer_email ?? 'N/A',
+                'shipping_charges' => 0,
+                'order_status'     => 'New',
+                'payment_method'   => 'Cash',
+                'payment_gateway'  => 'Cash',
+                'grand_total'      => round($grandTotal)
             ]);
 
-            /* =========================
-           CREATE ORDER ITEMS + UPDATE STOCK
-        ========================== */
+            // ORDER ITEMS + STOCK UPDATE
             foreach ($resolvedItems as $item) {
 
-                // Update stock
                 $item['attribute']->decrement('stock', $item['quantity']);
 
-                // Create order product
                 OrdersProduct::create([
                     'order_id'      => $order->id,
                     'user_id'       => 0,
@@ -614,7 +414,7 @@ class OrderController extends Controller
                     'vendor_id'     => $vendorId,
                     'product_id'    => $item['product']->id,
                     'product_name'  => $item['product']->product_name,
-                    'product_price' => $item['price'],
+                    'product_price' => round($item['final_price']),
                     'product_qty'   => $item['quantity'],
                     'item_status'   => 'New'
                 ]);

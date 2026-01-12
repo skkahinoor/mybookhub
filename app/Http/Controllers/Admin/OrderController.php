@@ -786,313 +786,247 @@ class OrderController extends Controller
     }
 
     // Sales Concept - Display page
-    public function salesConcept() {
+    public function salesConcept()
+    {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'sales_concept');
 
-        // Get cart items from session
         $cartItems = Session::get('sales_cart', []);
 
-        return view('admin.orders.sales_concept')->with(compact('cartItems', 'logos', 'headerLogo'));
+        return view('admin.orders.sales_concept')
+            ->with(compact('cartItems', 'logos', 'headerLogo'));
     }
 
     // Sales Concept - Search book by ISBN
-    public function searchBookByIsbn(Request $request) {
+    public function searchBookByIsbn(Request $request)
+    {
         $request->validate([
             'isbn' => 'required|string|max:20'
         ]);
 
-        $isbn = $request->isbn;
-        $adminType = Auth::guard('admin')->user()->type;
-        $vendor_id = Auth::guard('admin')->user()->vendor_id;
-        $admin_id = Auth::guard('admin')->user()->id;
+        $isbn      = $request->isbn;
+        $admin     = Auth::guard('admin')->user();
+        $adminType = $admin->type;
 
-        // Search product by ISBN
         $product = Product::where('product_isbn', $isbn)->first();
 
         if (!$product) {
             return response()->json([
                 'status' => false,
-                'message' => 'Book not found with ISBN: ' . $isbn
+                'message' => 'Book not found'
             ], 404);
         }
 
-        // Get product attributes (stock) based on user type
-        $productAttribute = null;
-        if ($adminType == 'vendor') {
-            $productAttribute = ProductsAttribute::where([
+        // Get attribute
+        if ($adminType === 'vendor') {
+            $attribute = ProductsAttribute::where([
                 'product_id' => $product->id,
-                'vendor_id' => $vendor_id
+                'vendor_id'  => $admin->vendor_id
             ])->first();
         } else {
-            // For admin/superadmin/subadmin
-            $productAttribute = ProductsAttribute::where([
-                'product_id' => $product->id,
-                'admin_id' => $admin_id
-            ])->first();
-            
-            // If not found with admin_id, try to get any attribute for this product
-            if (!$productAttribute) {
-                $productAttribute = ProductsAttribute::where('product_id', $product->id)->first();
-            }
+            $attribute = ProductsAttribute::where('product_id', $product->id)->first();
         }
 
-        if (!$productAttribute) {
+        if (!$attribute) {
             return response()->json([
                 'status' => false,
                 'message' => 'Product not available in inventory'
             ], 404);
         }
 
+        // PRICE + DISCOUNT (ROUND FIRST)
+        $basePrice = $attribute->price ?? $product->product_price;
+        $discount  = $attribute->product_discount ?? 0;
+
+        $discountAmount = round(($basePrice * $discount) / 100);
+        $finalPrice     = round($basePrice - $discountAmount);
+
         return response()->json([
             'status' => true,
             'data' => [
-                'id' => $product->id,
-                'product_name' => $product->product_name,
-                'product_isbn' => $product->product_isbn,
-                'product_price' => $productAttribute->price ?? $product->product_price,
-                'stock' => $productAttribute->stock ?? 0,
-                'product_image' => $product->product_image ?? '',
+                'product_id'           => $product->id,
+                'product_name'         => $product->product_name,
+                'product_isbn'         => $product->product_isbn,
+                'base_price'           => round($basePrice),
+                'discount_percent'     => $discount,
+                'discount_amount'      => $discountAmount,
+                'price_after_discount' => $finalPrice,
+                'stock'                => $attribute->stock,
+                'product_image'        => $product->product_image ?? ''
             ]
         ]);
     }
 
     // Sales Concept - Add to cart (session)
-    public function addToSalesCart(Request $request) {
+    public function addToSalesCart(Request $request)
+    {
         $request->validate([
             'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1'
+            'quantity'   => 'required|integer|min:1'
         ]);
 
-        $product_id = $request->product_id;
-        $quantity = $request->quantity;
-        $adminType = Auth::guard('admin')->user()->type;
-        $vendor_id = Auth::guard('admin')->user()->vendor_id;
-        $admin_id = Auth::guard('admin')->user()->id;
+        $admin     = Auth::guard('admin')->user();
+        $adminType = $admin->type;
 
-        // Get product details
-        $product = Product::findOrFail($product_id);
-        
-        // Get product attribute (stock and price) based on user type
-        $productAttribute = null;
-        if ($adminType == 'vendor') {
-            $productAttribute = ProductsAttribute::where([
-                'product_id' => $product_id,
-                'vendor_id' => $vendor_id
+        $product = Product::findOrFail($request->product_id);
+
+        if ($adminType === 'vendor') {
+            $attribute = ProductsAttribute::where([
+                'product_id' => $product->id,
+                'vendor_id'  => $admin->vendor_id
             ])->first();
         } else {
-            // For admin/superadmin/subadmin
-            $productAttribute = ProductsAttribute::where([
-                'product_id' => $product_id,
-                'admin_id' => $admin_id
-            ])->first();
-            
-            // If not found with admin_id, try to get any attribute for this product
-            if (!$productAttribute) {
-                $productAttribute = ProductsAttribute::where('product_id', $product_id)->first();
-            }
+            $attribute = ProductsAttribute::where('product_id', $product->id)->first();
         }
 
-        if (!$productAttribute) {
+        if (!$attribute || $attribute->stock < $request->quantity) {
             return response()->json([
                 'status' => false,
-                'message' => 'Product attribute not found'
-            ], 404);
-        }
-
-        // Check stock availability
-        if ($productAttribute->stock < $quantity) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Insufficient stock. Available: ' . $productAttribute->stock
+                'message' => 'Insufficient stock'
             ], 400);
         }
 
-        // Get current cart from session
+        // PRICE + DISCOUNT (ROUND FIRST)
+        $basePrice = $attribute->price ?? $product->product_price;
+        $discount  = $attribute->product_discount ?? 0;
+
+        $discountAmount = round(($basePrice * $discount) / 100);
+        $finalPrice     = round($basePrice - $discountAmount);
+
         $cart = Session::get('sales_cart', []);
 
-        // Check if product already exists in cart
-        $existingIndex = null;
-        foreach ($cart as $index => $item) {
-            if ($item['product_id'] == $product_id) {
-                $existingIndex = $index;
+        $found = false;
+        foreach ($cart as &$item) {
+            if ($item['product_id'] == $product->id) {
+                $newQty = $item['quantity'] + $request->quantity;
+
+                if ($newQty > $attribute->stock) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Insufficient stock'
+                    ], 400);
+                }
+
+                $item['quantity'] = $newQty;
+                $item['total']    = $finalPrice * $newQty;
+                $found = true;
                 break;
             }
         }
 
-        $price = $productAttribute->price ?? $product->product_price;
-
-        if ($existingIndex !== null) {
-            // Update existing item quantity
-            $newQuantity = $cart[$existingIndex]['quantity'] + $quantity;
-            
-            // Check stock again
-            if ($productAttribute->stock < $newQuantity) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Insufficient stock. Available: ' . $productAttribute->stock
-                ], 400);
-            }
-
-            $cart[$existingIndex]['quantity'] = $newQuantity;
-            $cart[$existingIndex]['total'] = $price * $newQuantity;
-        } else {
-            // Add new item to cart
+        if (!$found) {
             $cart[] = [
-                'product_id' => $product_id,
-                'product_name' => $product->product_name,
-                'product_isbn' => $product->product_isbn,
-                'price' => $price,
-                'quantity' => $quantity,
-                'stock' => $productAttribute->stock,
-                'total' => $price * $quantity,
+                'product_id'       => $product->id,
+                'product_name'     => $product->product_name,
+                'product_isbn'     => $product->product_isbn,
+                'base_price'       => round($basePrice),
+                'discount_percent' => $discount,
+                'discount_amount'  => $discountAmount,
+                'price'            => $finalPrice,
+                'quantity'         => $request->quantity,
+                'stock'            => $attribute->stock,
+                'total'            => $finalPrice * $request->quantity
             ];
         }
 
-        // Store cart in session
         Session::put('sales_cart', $cart);
 
         return response()->json([
             'status' => true,
-            'message' => 'Product added to cart successfully',
+            'message' => 'Product added to cart',
             'cart' => $cart
         ]);
     }
 
     // Sales Concept - Remove from cart
-    public function removeFromSalesCart(Request $request) {
-        $request->validate([
-            'product_id' => 'required|exists:products,id'
-        ]);
-
-        $product_id = $request->product_id;
-        $cart = Session::get('sales_cart', []);
-
-        // Remove item from cart
-        $cart = array_filter($cart, function($item) use ($product_id) {
-            return $item['product_id'] != $product_id;
-        });
-
-        // Re-index array
-        $cart = array_values($cart);
+    public function removeFromSalesCart(Request $request)
+    {
+        $cart = array_values(array_filter(
+            Session::get('sales_cart', []),
+            fn($item) => $item['product_id'] != $request->product_id
+        ));
 
         Session::put('sales_cart', $cart);
 
         return response()->json([
             'status' => true,
-            'message' => 'Product removed from cart',
+            'message' => 'Product removed',
             'cart' => $cart
         ]);
     }
 
     // Sales Concept - Process sale (create order and update stock)
-    public function processSale(Request $request) {
+    public function processSale(Request $request)
+    {
         $request->validate([
-            'customer_name' => 'required|string|max:255',
+            'customer_name'   => 'required|string|max:255',
             'customer_mobile' => 'required|string|max:20',
-            'customer_email' => 'nullable|email|max:255',
-            'customer_address' => 'nullable|string|max:500',
+            'customer_email'  => 'nullable|email',
+            'customer_address'=> 'nullable|string'
         ]);
 
         $cart = Session::get('sales_cart', []);
-
         if (empty($cart)) {
-            return redirect()->back()->with('error_message', 'Cart is empty. Please add products first.');
+            return back()->with('error_message', 'Cart is empty');
         }
 
-        $adminType = Auth::guard('admin')->user()->type;
-        $vendor_id = Auth::guard('admin')->user()->vendor_id;
-        $admin_id = Auth::guard('admin')->user()->id;
+        $admin     = Auth::guard('admin')->user();
+        $adminType = $admin->type;
 
         DB::beginTransaction();
         try {
-            // Calculate total
-            $grand_total = 0;
+            $grandTotal = array_sum(array_column($cart, 'total'));
+
+            $order = Order::create([
+                'user_id'          => 0,
+                'name'             => $request->customer_name,
+                'address'          => $request->customer_address ?? 'N/A',
+                'city'             => 'N/A',
+                'state'            => 'N/A',
+                'country'          => 'N/A',
+                'pincode'          => 'N/A',
+                'mobile'           => $request->customer_mobile,
+                'email'            => $request->customer_email ?? 'N/A',
+                'shipping_charges' => 0,
+                'order_status'     => 'New',
+                'payment_method'   => 'Cash',
+                'payment_gateway'  => 'Cash',
+                'grand_total'      => $grandTotal
+            ]);
+
             foreach ($cart as $item) {
-                $grand_total += $item['total'];
-            }
 
-            // Create order
-            $order = new Order();
-            $order->user_id = 0; // No user for direct sales
-            $order->name = $request->customer_name;
-            $order->address = $request->customer_address ?? 'N/A';
-            $order->city = 'N/A';
-            $order->state = 'N/A';
-            $order->country = 'N/A';
-            $order->pincode = 'N/A';
-            $order->mobile = $request->customer_mobile;
-            $order->email = $request->customer_email ?? 'N/A';
-            $order->shipping_charges = 0;
-            $order->coupon_code = null;
-            $order->coupon_amount = null;
-            $order->order_status = 'New';
-            $order->payment_method = 'Cash';
-            $order->payment_gateway = 'Cash';
-            $order->grand_total = $grand_total;
-            $order->save();
+                $attribute = ProductsAttribute::where('product_id', $item['product_id'])->lockForUpdate()->first();
 
-            $order_id = $order->id;
-
-            // Create order products and update stock
-            foreach ($cart as $item) {
-                // Get product attribute based on user type
-                $productAttribute = null;
-                if ($adminType == 'vendor') {
-                    $productAttribute = ProductsAttribute::where([
-                        'product_id' => $item['product_id'],
-                        'vendor_id' => $vendor_id
-                    ])->first();
-                } else {
-                    // For admin/superadmin/subadmin
-                    $productAttribute = ProductsAttribute::where([
-                        'product_id' => $item['product_id'],
-                        'admin_id' => $admin_id
-                    ])->first();
-                    
-                    // If not found with admin_id, try to get any attribute for this product
-                    if (!$productAttribute) {
-                        $productAttribute = ProductsAttribute::where('product_id', $item['product_id'])->first();
-                    }
-                }
-
-                if (!$productAttribute) {
-                    throw new \Exception('Product attribute not found for product ID: ' . $item['product_id']);
-                }
-
-                // Check stock availability
-                if ($productAttribute->stock < $item['quantity']) {
+                if ($attribute->stock < $item['quantity']) {
                     throw new \Exception('Insufficient stock for ' . $item['product_name']);
                 }
 
-                // Update stock
-                $productAttribute->stock -= $item['quantity'];
-                $productAttribute->save();
+                $attribute->decrement('stock', $item['quantity']);
 
-                // Create order product
-                $orderProduct = new OrdersProduct();
-                $orderProduct->order_id = $order_id;
-                $orderProduct->user_id = 0;
-                $orderProduct->admin_id = ($adminType == 'vendor') ? 0 : $admin_id;
-                $orderProduct->vendor_id = ($adminType == 'vendor') ? $vendor_id : 0;
-                $orderProduct->product_id = $item['product_id'];
-                $orderProduct->product_name = $item['product_name'];
-                $orderProduct->product_price = $item['price'];
-                $orderProduct->product_qty = $item['quantity'];
-                $orderProduct->save();
+                OrdersProduct::create([
+                    'order_id'      => $order->id,
+                    'user_id'       => 0,
+                    'admin_id'      => ($adminType !== 'vendor') ? $admin->id : 0,
+                    'vendor_id'     => ($adminType === 'vendor') ? $admin->vendor_id : 0,
+                    'product_id'    => $item['product_id'],
+                    'product_name'  => $item['product_name'],
+                    'product_price' => $item['price'],
+                    'product_qty'   => $item['quantity'],
+                    'item_status'   => 'New'
+                ]);
             }
 
             DB::commit();
-
-            // Clear cart
             Session::forget('sales_cart');
 
-            return redirect('admin/sales-concept')->with('success_message', 'Sale processed successfully! Order ID: ' . $order_id);
+            return redirect('admin/sales-concept')
+                ->with('success_message', 'Sale completed successfully');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error_message', 'Error processing sale: ' . $e->getMessage());
+            return back()->with('error_message', $e->getMessage());
         }
     }
 
