@@ -547,6 +547,11 @@
             </div>
         </div>
     </div>
+    <style>.readonly-select {
+    pointer-events: none;
+    background-color: #e9ecef;
+}</style>
+
 
     {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
     <!-- Include Select2 CSS -->
@@ -556,7 +561,7 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-        <script>
+    <script>
         $(document).ready(function() {
 
             let debounceTimer = null;
@@ -632,82 +637,89 @@
                 .prop("readonly", state);
 
             $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
-                .prop("disabled", state);
+                .toggleClass("readonly-select", state);
 
             $("#authors-select")
-                .prop("disabled", state);
+                .toggleClass("readonly-select", state);
         }
 
         function fetchBookByISBN(isbn) {
 
-            if (!isbn) return;
+    if (!isbn) return;
 
-            $.ajax({
-                url: "{{ route('admin.book.isbnLookup') }}",
-                type: "POST",
-                data: {
-                    isbn: isbn,
-                    _token: "{{ csrf_token() }}"
-                },
+    $.ajax({
+        url: "{{ route('admin.book.isbnLookup') }}",
+        type: "POST",
+        data: {
+            isbn: isbn,
+            _token: "{{ csrf_token() }}"
+        },
 
-                success: function(res) {
+        success: function (res) {
 
-                    if (!res.status) {
-                        setReadonly(false);
-                        alert(res.message);
-                        return;
-                    }
+            if (!res.status) {
+                setReadonly(false);
+                alert(res.message);
+                return;
+            }
 
-                    let d = res.data;
+            let d = res.data || {};
 
-                    $("#product_name").val(d.product_name ?? '');
-                    $("#category_id").val(d.category_id ?? '').trigger('change');
-                    $("#product_price").val(d.product_price ?? '');
-                    $("#language_id").val(d.language_id ?? '').trigger('change');
-                    $("#publisher_id").val(d.publisher_id ?? '').trigger('change');
-                    $("#subject_id").val(d.subject_id ?? '').trigger('change');
-                    $("#edition_id").val(d.edition_id ?? '').trigger('change');
-                    $("#description").val(d.description ?? '');
+            // 🔓 ENABLE EVERYTHING FIRST
+            setReadonly(false);
 
-                    // authors
-                    if (Array.isArray(d.author_ids)) {
-                        selected = [];
-                        d.author_ids.forEach(id => {
-                            const author = authors.find(a => a.id == id);
-                            if (author) selected.push(author);
-                        });
-                        renderSelected();
-                    }
+            // text fields
+            $("#product_name").val(d.product_name || '');
+            $("#product_price").val(d.product_price || '');
+            $("#description").val(d.description || '');
 
-                    // image
-                    if (d.image) {
-                        let imagePath = "{{ asset('front/images/product_images/small') }}/" + d.image;
-                        $("#isbnImagePreview").html(`<img src="${imagePath}" width="150">`);
-                    } else {
-                        $("#isbnImagePreview").html('');
-                    }
+            // dropdowns (NO trigger)
+            $("#category_id").val(d.category_id || '');
+            $("#language_id").val(d.language_id || '');
+            $("#publisher_id").val(d.publisher_id || '');
+            $("#subject_id").val(d.subject_id || '');
+            $("#edition_id").val(d.edition_id || '');
 
-                    setReadonly(true);
-                },
+            // authors (SAFE CHECK)
+            if (Array.isArray(d.author_ids) && typeof authors !== 'undefined') {
+                selected = [];
+                d.author_ids.forEach(id => {
+                    const author = authors.find(a => a.id == id);
+                    if (author) selected.push(author);
+                });
 
-                error: function() {
-
-                    $("#product_name, #product_price, #description").val('');
-
-                    $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
-                        .val('').prop("disabled", false);
-
-                    $("#authors-select")
-                        .val([]).trigger("change").prop("disabled", false);
-
-                    $("#isbnImagePreview").html("");
-
-                    setReadonly(false);
-
-                    alert("No book found for this ISBN. Please enter all details manually.");
+                if (typeof renderSelected === 'function') {
+                    renderSelected();
                 }
-            });
+            }
+
+            // image
+            if (d.image) {
+                $("#isbnImagePreview").html(
+                    `<img src="{{ asset('front/images/product_images/small') }}/${d.image}" width="150">`
+                );
+            } else {
+                $("#isbnImagePreview").html('');
+            }
+
+            // 🔒 DISABLE AFTER ALL VALUES SET
+            setReadonly(true);
+        },
+
+        error: function () {
+
+            setReadonly(false);
+
+            $("#product_name, #product_price, #description").val('');
+            $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id").val('');
+            $("#isbnImagePreview").html('');
+
+            alert("No book found for this ISBN. Please enter all details manually.");
         }
+    });
+}
+
+
 
         // ✅ MANUAL ISBN CHANGE
         $(document).on("change", "#product_isbn", function() {
@@ -921,7 +933,7 @@
                         } else {
                             alert(
                                 'An error occurred while saving attributes. Please try again.'
-                                );
+                            );
                         }
                     }
                 });
