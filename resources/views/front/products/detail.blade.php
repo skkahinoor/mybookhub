@@ -69,12 +69,12 @@
                                             </div> --}}
 
                                         <li><span>Writen
-                                                by</span>{{ $productDetails->authors->pluck('name')->join(', ') ?: 'N/A' }}
+                                                by</span>{{ isset($productDetails['authors']) && count($productDetails['authors']) > 0 ? collect($productDetails['authors'])->pluck('name')->join(', ') : 'N/A' }}
                                         </li>
-                                        <li><span>Publisher</span>{{ $productDetails->publisher->name ?? 'N/A' }}</li>
-                                        <li><span>Language</span>{{ $productDetails->language->name ?? 'N/A' }}</li>
+                                        <li><span>Publisher</span>{{ $productDetails['publisher']['name'] ?? 'N/A' }}</li>
+                                        <li><span>Language</span>{{ $productDetails['language']['name'] ?? 'N/A' }}</li>
                                         <li><span>ISBN</span>ISBN-{{ $productDetails['product_isbn'] }}</li>
-                                        <li><span>Year</span>{{ $productDetails['product_year'] }}</li>
+                                        <li><span>Year</span>{{ $productDetails['product_year'] ?? 'N/A' }}</li>
                                         <li><span>Stock</span>{{ $totalStock > 0 ? $totalStock : 'Out of Stock' }}</li>
                                     </ul>
                                 </div>
@@ -89,8 +89,8 @@
                                 @php
                                     $userLat = session('user_latitude');
                                     $userLng = session('user_longitude');
-                                    $productLatLng = $productDetails->location
-                                        ? explode(',', $productDetails->location)
+                                    $productLatLng = isset($productDetails['location']) && $productDetails['location']
+                                        ? explode(',', $productDetails['location'])
                                         : [null, null];
                                     $distance = null;
                                     if ($userLat && $userLng && $productLatLng[0] && $productLatLng[1]) {
@@ -147,16 +147,21 @@
                                     </span>
                                 </p>
                                 @php
-                                    $originalPrice = $productDetails['product_price'];
-                                    $discountedPrice = \App\Models\Product::getDiscountPrice($productDetails['id']);
-                                    $savings = $originalPrice - $discountedPrice;
-                                    $savingsPercentage =
-                                        $originalPrice > 0 && $savings > 0 ? ($savings / $originalPrice) * 100 : 0;
+                                    // Get product ID - handle both object and array access
+                                    $productId = is_array($productDetails) ? $productDetails['id'] : $productDetails->id;
+                                    $priceDetails = \App\Models\ProductsAttribute::getDiscountPriceDetails($productId);
+                                    $originalPrice = $priceDetails['product_price'];
+                                    $discountedPrice = $priceDetails['final_price'];
+                                    $savings = $priceDetails['discount'];
+                                    $hasDiscount = $savings > 0;
+                                    $savingsPercentage = $originalPrice > 0 && $savings > 0 ? ($savings / $originalPrice) * 100 : 0;
                                 @endphp
                                 <div class="book-footer">
                                     <div class="price">
-                                        <h5>₹{{ $discountedPrice }}</h5>
-                                        <p class="p-lr10">₹{{ $originalPrice }}</p>
+                                        <h5>₹{{ number_format($discountedPrice, 2) }}</h5>
+                                        @if($hasDiscount)
+                                            <p class="p-lr10"><del>₹{{ number_format($originalPrice, 2) }}</del></p>
+                                        @endif
                                     </div>
                                     <div class="product-num">
                                         <form action="{{ url('cart/add') }}" method="POST"
@@ -205,7 +210,7 @@
                                     </tr>
                                     <tr>
                                         <th>Author</th>
-                                        <td>{{ $productDetails->authors->pluck('name')->join(', ') ?: 'N/A' }}</td>
+                                        <td>{{ isset($productDetails['authors']) && count($productDetails['authors']) > 0 ? collect($productDetails['authors'])->pluck('name')->join(', ') : 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>ISBN</th>
@@ -213,11 +218,11 @@
                                     </tr>
                                     <tr>
                                         <th>Language</th>
-                                        <td>{{ $productDetails->language->name ?? 'N/A' }}</td>
+                                        <td>{{ $productDetails['language']['name'] ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Categories</th>
-                                        <td>{{ $productDetails->category->category_name ?? 'N/A' }}</td>
+                                        <td>{{ $productDetails['category']['category_name'] ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Book Format</th>
@@ -229,7 +234,7 @@
                                     </tr>
                                     <tr>
                                         <th>Publisher</th>
-                                        <td>{{ $productDetails->publisher->name ?? 'N/A' }}</td>
+                                        <td>{{ $productDetails['publisher']['name'] ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Pages</th>

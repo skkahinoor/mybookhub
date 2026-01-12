@@ -141,7 +141,8 @@ class Product extends Model
             $discounted_price = $originalPrice - ($originalPrice * $categoryDiscount / 100);
         } else {
             // there's no discount on neither `product_discount` (in `products_attributes` table) nor `category_discount` (in `categories` table)
-            $discounted_price = 0;
+            // Return original price when no discount
+            $discounted_price = $originalPrice;
         }
 
         return round($discounted_price, 2); // Round to 2 decimal places

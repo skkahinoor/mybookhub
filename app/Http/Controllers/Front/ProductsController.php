@@ -540,9 +540,15 @@ class ProductsController extends Controller
         }
 
         $categoryDetails = Category::categoryDetails($productDetails->category->url);
+        
+        // Store category_id before converting to array
+        $categoryId = $productDetails->category->id;
+        
+        // Convert to array for blade template access (after using it as object above)
+        $productDetails = $productDetails->toArray();
 
         $similarProducts = Product::with('publisher', 'authors')
-            ->where('category_id', $productDetails->category->id)
+            ->where('category_id', $categoryId)
             ->where('id', '!=', $id)
             ->limit(3)
             ->inRandomOrder()

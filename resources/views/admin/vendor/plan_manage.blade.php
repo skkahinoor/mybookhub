@@ -71,7 +71,7 @@
                                         </ul>
                                         <form method="POST" action="{{ route('vendor.plan.upgrade') }}" class="mt-3">
                                             @csrf
-                                            <button type="submit" class="btn btn-primary">Upgrade to Pro - ₹{{ number_format(($proPlanPrice ?? 49900) / 100, 2) }}/month</button>
+                                            <button type="submit" class="btn btn-primary">Upgrade to Pro - ₹{{ number_format( $proPlanPrice, 2) }}/month</button>
                                         </form>
                                     @else
                                         <ul class="list-unstyled">
