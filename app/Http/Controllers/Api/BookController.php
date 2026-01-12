@@ -853,16 +853,17 @@ class BookController extends Controller
             $attribute = new ProductsAttribute();
             $attribute->product_id       = $product->id;
             $attribute->size             = 'Default';
-            $attribute->sku              = 'null';
             $attribute->stock            = $request->total_stock;
             $attribute->product_discount = $request->product_discount ?? 0;
             $attribute->status           = 1;
 
             if ($user->type === 'vendor') {
+                $attribute->sku = 'BH-P' . $product->id . '-V' . $user->vendor_id;
                 $attribute->admin_type = 'vendor';
                 $attribute->vendor_id  = $user->vendor_id;
                 $attribute->admin_id   = null;
             } else {
+                $attribute->sku = 'BH-P' . $product->id . '-A' . $user->id;
                 $attribute->admin_type = 'admin';
                 $attribute->admin_id   = $user->id;
                 $attribute->vendor_id  = null;
