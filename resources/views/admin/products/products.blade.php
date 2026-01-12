@@ -130,8 +130,8 @@
                                                     </a>
 
 
-                                                    <a href="{{ url('admin/delete-product/' . $product->product_id) }}"
-                                                        onclick="return confirm('Are you sure you want to delete this product?')">
+                                                    <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
+                                                        onclick="return confirm('Are you sure you want to delete this product attribute?')">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>
                                                 </td>
@@ -214,7 +214,7 @@
                             <i class="fas fa-save me-2"></i> Update 
                         </button>
                         <button type="button" class="btn btn-outline-secondary  px-4" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-2"></i>Cancel
+                            <i class="fas fa-times me-2"></i> Cancel
                         </button>
                     </div>
                 </form>

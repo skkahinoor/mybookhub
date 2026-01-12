@@ -93,16 +93,17 @@ class ProductsController extends Controller
         return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
     }
 
-    public function deleteProduct($id)
+    public function deleteProductAttribute($id)
     {
-        $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        Product::where('id', $id)->delete();
+        // Delete a specific product attribute (not the product itself)
+        $attribute = ProductsAttribute::find($id);
 
-        $message = 'Book has been deleted successfully!';
+        if ($attribute) {
+            $attribute->delete();
+            return redirect()->back()->with('success_message', 'Product attribute has been deleted successfully!');
+        }
 
-        return redirect()->back()->with('success_message', $message, 'logos');
-        return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
+        return redirect()->back()->with('error_message', 'Attribute not found or already deleted.');
     }
 
     public function addEditProduct(Request $request, $id = null)
