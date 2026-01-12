@@ -169,6 +169,7 @@ class VendorController extends Controller
             'name'   => 'required|string|max:150',
             'email'  => 'required|email|unique:admins,email|unique:vendors,email',
             'mobile' => 'required|digits:10|unique:admins,mobile|unique:vendors,mobile',
+            'location' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -190,6 +191,7 @@ class VendorController extends Controller
             'vendor_reg_name'   => $request->name,
             'vendor_reg_email'  => $request->email,
             'vendor_reg_mobile' => $request->mobile,
+            'vendor_reg_location' => $request->location,
         ]);
 
         $sent = $this->sendSMS($request->mobile, $otp);
@@ -276,6 +278,7 @@ class VendorController extends Controller
                 'name'   => 'required|regex:/^[\pL\s\-]+$/u',
                 'email'  => 'required|email|unique:admins,email,' . ($adminId ?? '') . ',id',
                 'mobile' => 'required|numeric',
+                'location' => ['required', 'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/']
             ];
 
             $customMessages = [
@@ -323,7 +326,7 @@ class VendorController extends Controller
             if (empty($id)) {
                 // ================= ADD MODE =================
                 $selectedPlan = $data['plan'] ?? 'free';
-                
+
                 // Check settings and invite link
                 $giveNewUsersProPlan = (bool) Setting::getValue('give_new_users_pro_plan', 0);
                 $proPlanTrialDurationDays = (int) Setting::getValue('pro_plan_trial_duration_days', 30);
@@ -341,6 +344,7 @@ class VendorController extends Controller
                     'name'    => $data['name'],
                     'email'   => $data['email'],
                     'mobile'  => $data['mobile'],
+                    'location' => $data['location'],
                     'confirm' => 'Yes',
                     'status'  => isset($data['status']) ? 1 : 0,
                     'plan'    => $selectedPlan,
@@ -374,7 +378,7 @@ class VendorController extends Controller
 
                 // Clear OTP and session after successful registration
                 DB::table('otps')->where('phone', $data['mobile'])->delete();
-                session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile']);
+                session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile', 'vendor_reg_location',]);
 
                 $wasTrialProPlan = ($giveNewUsersProPlan || $isInvitePro) && $selectedPlan === 'pro';
 
@@ -385,10 +389,10 @@ class VendorController extends Controller
                 }
 
                 // Trial Pro plan (setting or invite) or Free plan - just redirect to login
-                $planMessage = $wasTrialProPlan 
+                $planMessage = $wasTrialProPlan
                     ? "Vendor registered successfully! You have been given Pro plan access for {$proPlanTrialDurationDays} days."
                     : 'Vendor registered successfully with Free plan!';
-                
+
                 return redirect('admin/login')
                     ->with('success_message', $planMessage);
             } else {
@@ -402,6 +406,7 @@ class VendorController extends Controller
                         'name'   => $data['name'],
                         'email'  => $data['email'],
                         'mobile' => $data['mobile'],
+                        'location' => $data['location'],
                     ]);
                 }
 
