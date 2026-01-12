@@ -339,7 +339,7 @@ class ProductsController extends Controller
             $attribute->product_id = $data['product_id'];
             $attribute->stock = (int) $data['stock'];
             $attribute->product_discount = (float) ($data['product_discount'] ?? 0);
-            $attribute->sku = 'null';
+            $attribute->sku = 'BH' . '-' . 'P' . $data['product_id'] . '-' . 'V' . $user->vendor_id;
             $attribute->status = 1;
 
             if ($user->type === 'vendor') {
