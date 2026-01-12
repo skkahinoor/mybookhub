@@ -32,6 +32,7 @@ class IndexController extends Controller
             'admin:id,name',
         ])
             ->where('status', 1)
+            ->orderBy('id', 'desc')
             ->limit(10)
             ->get()
             ->toArray();

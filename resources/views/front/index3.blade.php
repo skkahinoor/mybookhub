@@ -190,22 +190,29 @@
             </div>
             <div class="row g-4">
                 @foreach ($sliderProducts as $sliderProduct)
+                    @php
+                        $product = $sliderProduct['product'] ?? null;
+                        $productImage = $product['product_image'] ?? 'no-image.png';
+                        $productName = $product['product_name'] ?? 'N/A';
+                        $productPrice = $product['product_price'] ?? '0.00';
+                    @endphp
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
                         <div class="card flex-fill shadow-sm border-0 book-grid-card" style="border-radius:20px;">
-                            <a href="{{ url('product/' . $sliderProduct['product_id']) }}" class="d-block">
-                                <img src="{{ asset('front/images/product_images/small/' . $sliderProduct['product']['product_image']) }}"
+                            <a href="{{ url('product/' . $sliderProduct['id']) }}" class="d-block">
+                                <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
                                     alt="book" class="card-img-top"
-                                    style="height:220px; object-fit:cover; border-radius:20px 20px 0 0;">
+                                    style="height:220px; object-fit:cover; border-radius:20px 20px 0 0;"
+                                    onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
                             </a>
                             <div class="card-body d-flex flex-column">
                                 <h5 class="mb-1 card-title" style="font-size:1.05rem;">
-                                    <a href="{{ url('product/' . $sliderProduct['product_id']) }}"
+                                    <a href="{{ url('product/' . $sliderProduct['id']) }}"
                                         class="text-dark text-decoration-none">
-                                        {{ $sliderProduct['product']['product_name'] ?? 'N/A' }}
+                                        {{ $productName }}
                                     </a>
                                 </h5>
                                 <span
-                                    class="price mb-2 text-primary fw-bold fs-6">₹{{ $sliderProduct['product']['product_price'] }}</span> 
+                                    class="price mb-2 text-primary fw-bold fs-6">₹{{ $productPrice }}</span> 
                                     <span class="text-dark small">Shop Name: {{ $sliderProduct['vendor']['vendorbusinessdetails']['shop_name'] ?? 'N/A' }}</span>
                                 <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
                                     @csrf

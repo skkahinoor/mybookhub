@@ -521,6 +521,21 @@ class ProductsController extends Controller
             ->take(3)
             ->get()
             ->toArray();
+        
+        // First, try to find ProductsAttribute by ID (since products are displayed from ProductsAttribute)
+        $productAttribute = ProductsAttribute::with('product')->where('id', $id)->where('status', 1)->first();
+        
+        if ($productAttribute) {
+            // If found, get the product_id from the attribute
+            $productId = $productAttribute->product_id;
+            $selectedAttributeId = $productAttribute->id;
+        } else {
+            // Fallback: try to find Product directly (for backward compatibility)
+            $productId = $id;
+            $selectedAttributeId = null;
+        }
+        
+        // Load product with all relationships
         $productDetails = Product::with([
             'section',
             'category',
@@ -532,7 +547,7 @@ class ProductsController extends Controller
             },
             'images',
             'vendor',
-        ])->find($id);
+        ])->find($productId);
 
         // Check if product or its category is missing
         if (! $productDetails || ! $productDetails->category) {
@@ -546,17 +561,20 @@ class ProductsController extends Controller
         
         // Convert to array for blade template access (after using it as object above)
         $productDetails = $productDetails->toArray();
+        
+        // Add selected attribute ID to product details for reference
+        if ($selectedAttributeId) {
+            $productDetails['selected_attribute_id'] = $selectedAttributeId;
+        }
 
+        // Get similar products (exclude current product)
         $similarProducts = Product::with('publisher', 'authors')
             ->where('category_id', $categoryId)
-            ->where('id', '!=', $id)
+            ->where('id', '!=', $productId)
             ->limit(3)
             ->inRandomOrder()
             ->get()
             ->toArray();
-
-                                                                                                                                                                                                // dd($productDetails->publisher->name);
-        $similarProducts = Product::with('publisher', 'authors')->where('category_id', $productDetails['category']['id'])->where('id', '!=', $id)->limit(3)->inRandomOrder()->get()->toArray(); // where('id', '!=', $id)    means get all similar products (of the same category) EXCEPT (exclude) the currently viewed product (to not be repeated (to prevent repetition))    // limit(4)->inRandomOrder()    means show only 4 similar products but IN RANDOM ORDER
 
                                                  // Recently Viewed Products (Items) functionality (we created `recently_viewed_products` table but we won't need to create a Model for it, because we won't do much work with it)
                                                  // The idea of the Recently Viewed Products functionality is whenever a user views a product (i.e. opens detail.blade.php page via the detail() method here), we insert the viewed product id and the user's session id in the `recently_viewed_products` database table. At the same time, we retrieve/get/fetch the previously inserted recently viewed products (from `recently_viewed_products` table) to display them in detail.blade.php
@@ -573,19 +591,19 @@ class ProductsController extends Controller
 
                                                                                       // If they don't already exist, INSERT the currently viewed product `product_id` and `session_id` in `recently_viewed_products` table (ONE TIME ONLY)
         $countRecentlyViewedProducts = DB::table('recently_viewed_products')->where([ // Note: Here we use Laravel 'DB' facade because we didn't create a Model for the `recently_viewed_products` table, because we don't need it because we won't do much work with it. So we'll just ONLY DIRECTLY interact with the `recently_viewed_products` table using Laravel 'DB' facade
-            'product_id' => $id,
+            'product_id' => $productId,
             'session_id' => $session_id, // comes from the two cases of the last if statement
         ])->count();                 // get the count or the number of that currently Viewed Product through the same Product (through `product_id`) and Session (through `session_id`). This should not be more than ONE TIME ONLY!
 
         if ($countRecentlyViewedProducts == 0) {        // if that currently Viewed Product doesn't already exist in the `recently_viewed_products` table, INSERT it in
             DB::table('recently_viewed_products')->INSERT([ // Note: Here we use Laravel 'DB' facade because we didn't create a Model for the `recently_viewed_products` table, because we don't need it because we won't do much work with it. So we'll just ONLY DIRECTLY interact with the `recently_viewed_products` table using Laravel 'DB' facade
-                'product_id' => $id,
+                'product_id' => $productId,
                 'session_id' => $session_id, // $session_id comes from one of the two cases of the last if statement
             ]);
         }
 
                                                                                                                                                                                                                   // Get Recently Viewed Products (Items) IDs
-        $recentProductsIds = DB::table('recently_viewed_products')->select('product_id')->where('product_id', '!=', $id)->where('session_id', $session_id)->inRandomOrder()->get()->take(4)->pluck('product_id'); // take() is identical to limit(): https://laravel.com/docs/9.x/queries#limit-and-offset    // where('product_id', '!=', $id)    means exclude (EXCEPT) the currently viewed product (to not be repeated (to prevent repetition))    // Note: Here we use Laravel 'DB' facade because we didn't create a Model for the `recently_viewed_products` table, because we don't need it because we won't do much work with it. So we'll just ONLY DIRECTLY interact with the `recently_viewed_products` table using Laravel 'DB' facade
+        $recentProductsIds = DB::table('recently_viewed_products')->select('product_id')->where('product_id', '!=', $productId)->where('session_id', $session_id)->inRandomOrder()->get()->take(4)->pluck('product_id'); // take() is identical to limit(): https://laravel.com/docs/9.x/queries#limit-and-offset    // where('product_id', '!=', $productId)    means exclude (EXCEPT) the currently viewed product (to not be repeated (to prevent repetition))    // Note: Here we use Laravel 'DB' facade because we didn't create a Model for the `recently_viewed_products` table, because we don't need it because we won't do much work with it. So we'll just ONLY DIRECTLY interact with the `recently_viewed_products` table using Laravel 'DB' facade
 
                                                                                                                               // Get Recently Viewed Products (Items)
         $recentlyViewedProducts = Product::with('publisher', 'authors')->whereIn('id', $recentProductsIds)->get()->toArray(); // https://laravel.com/docs/9.x/collections#method-wherein AND https://laravel.com/docs/9.x/queries#additional-where-clauses
@@ -595,7 +613,7 @@ class ProductsController extends Controller
         $groupProducts = [];
         if (! empty($productDetails['group_code'])) {                                             // if the product has a `group_code`
                                                                                                      // Get all other products who also have the same `group_code`
-            $groupProducts = Product::select('id', 'product_image')->where('id', '!=', $id)->where([ // where('id', '!=', $id)    means exclude (EXCEPT) the currently viewed product (to not be repeated (to prevent repetition))
+            $groupProducts = Product::select('id', 'product_image')->where('id', '!=', $productId)->where([ // where('id', '!=', $productId)    means exclude (EXCEPT) the currently viewed product (to not be repeated (to prevent repetition))
                 'group_code' => $productDetails['group_code'],
                 'status'     => 1,
             ])->get()->toArray();
@@ -603,19 +621,19 @@ class ProductsController extends Controller
 
                                                  // Show Ratings & Reviews in front/products/detail.blade.php
         $ratings = Rating::with('user')->where([ // Eager Loading: https://laravel.com/docs/9.x/eloquent-relationships#eager-loading    // 'user' is the relationship method name in Rating.php model
-            'product_id' => $id,
+            'product_id' => $productId,
             'status'     => 1,
         ])->get()->toArray();
 
         // Calculate Average Rating (for a product):
         $ratingSum = Rating::where([
-            'product_id' => $id,
+            'product_id' => $productId,
             'status'     => 1,
         ])->sum('rating');
 
         // Number of times a product has been rated by users
         $ratingCount = Rating::where([
-            'product_id' => $id,
+            'product_id' => $productId,
             'status'     => 1,
         ])->count();
 
@@ -629,36 +647,36 @@ class ProductsController extends Controller
 
         // Calculate the count of Star Ratings for 1 Star, 2 Stars, 3 Stars, 4 Stars, and 5 Stars ratings (Each on its own)
         $ratingOneStarCount = Rating::where([
-            'product_id' => $id,
+            'product_id' => $productId,
             'status'     => 1,
             'rating'     => 1,
         ])->count();
 
         $ratingTwoStarCount = Rating::where([
-            'product_id' => $id,
+            'product_id' => $productId,
             'status'     => 1,
             'rating'     => 2,
         ])->count();
 
         $ratingThreeStarCount = Rating::where([
-            'product_id' => $id,
+            'product_id' => $productId,
             'status'     => 1,
             'rating'     => 3,
         ])->count();
 
         $ratingFourStarCount = Rating::where([
-            'product_id' => $id,
+            'product_id' => $productId,
             'status'     => 1,
             'rating'     => 4,
         ])->count();
 
         $ratingFiveStarCount = Rating::where([
-            'product_id' => $id,
+            'product_id' => $productId,
             'status'     => 1,
             'rating'     => 5,
         ])->count();
 
-        $totalStock = ProductsAttribute::where('product_id', $id)->sum('stock'); // sum() the `stock` column of the `products_attributes` table    // sum(): https://laravel.com/docs/9.x/collections#method-sum
+        $totalStock = ProductsAttribute::where('product_id', $productId)->sum('stock'); // sum() the `stock` column of the `products_attributes` table    // sum(): https://laravel.com/docs/9.x/collections#method-sum
 
         // Get statistics for the statistics section
         $totalUsers    = User::count();

@@ -891,15 +891,42 @@
                     },
                     error: function(xhr) {
                         submitBtn.prop('disabled', false).text('Submit');
+                        
+                        // Check if product already exists
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.product_exists) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Product Already Exists',
+                                text: xhr.responseJSON.message || 'This product has already been added to your account.',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#dc3545',
+                                timer: 5000,
+                                timerProgressBar: true
+                            });
+                            return;
+                        }
+                        
                         if (xhr.status === 422) {
                             let errors = xhr.responseJSON.errors;
                             let errorMsg = 'Validation errors:\n';
                             $.each(errors, function(key, value) {
                                 errorMsg += value[0] + '\n';
                             });
-                            alert(errorMsg);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Validation Error',
+                                text: errorMsg,
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#dc3545'
+                            });
                         } else {
-                            alert('An error occurred. Please try again.');
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred. Please try again.',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#dc3545'
+                            });
                         }
                     }
                 });

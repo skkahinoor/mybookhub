@@ -135,6 +135,47 @@ class ProductsController extends Controller
                 'language_id'   => 'required',
             ]);
 
+            $user = Auth::guard('admin')->user();
+
+            // Check if product already exists for current admin/vendor
+            if ($id == null) {
+                $existingProduct = Product::where('product_isbn', $data['product_isbn'])->first();
+                
+                if ($existingProduct) {
+                    // Check if current admin/vendor already has this product
+                    $existingAttributeQuery = ProductsAttribute::where('product_id', $existingProduct->id);
+                    
+                    if ($user->type === 'vendor') {
+                        $existingAttributeQuery->where('vendor_id', $user->vendor_id)
+                            ->where('admin_type', 'vendor');
+                    } else {
+                        $existingAttributeQuery->where('admin_id', $user->id)
+                            ->where('admin_type', 'admin');
+                    }
+                    
+                    $existingAttribute = $existingAttributeQuery->first();
+                    
+                    if ($existingAttribute) {
+                        $userType = $user->type === 'vendor' ? 'vendor' : 'admin';
+                        $errorMessage = "This product (ISBN: {$data['product_isbn']}) already exists in your {$userType} account. Please choose a different product or edit the existing one.";
+                        
+                        // Return JSON response for AJAX requests
+                        if ($request->ajax() || $request->expectsJson()) {
+                            return response()->json([
+                                'status' => 'error',
+                                'product_exists' => true,
+                                'message' => $errorMessage
+                            ], 422);
+                        }
+                        
+                        // Return redirect for regular form submissions
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error_message', $errorMessage);
+                    }
+                }
+            }
+
             $existingProduct = Product::where('product_isbn', $data['product_isbn'])->first();
             $skipProductSave = false;
 
@@ -204,8 +245,6 @@ class ProductsController extends Controller
                     }
                 }
             }
-
-            $user = Auth::guard('admin')->user();
 
             // Check Free plan limit for new products (not updates)
             if ($id == null && $user->type === 'vendor' && !$skipProductSave) {
