@@ -125,19 +125,12 @@ class ProductsController extends Controller
         if ($request->isMethod('post')) {
 
             $data = $request->all();
-
-            $this->validate($request, [
-                'category_id'   => 'required',
-                'condition'     => 'required|in:new,old',
-                'product_name'  => 'required',
-                'product_isbn'  => 'required',
-                'product_price' => 'required|numeric',
-                'language_id'   => 'required',
-            ]);
-
             $user = Auth::guard('admin')->user();
 
-            // Check if product already exists for current admin/vendor
+            // Check if product with this ISBN already exists (BEFORE validation)
+            $existingProduct = null;
+            $skipProductSave = false;
+            
             if ($id == null) {
                 $existingProduct = Product::where('product_isbn', $data['product_isbn'])->first();
                 
@@ -173,61 +166,86 @@ class ProductsController extends Controller
                             ->withInput()
                             ->with('error_message', $errorMessage);
                     }
+                    
+                    // Product exists but current user doesn't have it - we'll reuse it
+                    $skipProductSave = true;
                 }
             }
 
-            $existingProduct = Product::where('product_isbn', $data['product_isbn'])->first();
-            $skipProductSave = false;
+            // Conditional validation: If we're reusing an existing product, don't require ISBN uniqueness
+            $isbnValidationRule = 'required';
+            if ($id == null && $existingProduct) {
+                // Product exists and we're reusing it - allow existing ISBN
+                $isbnValidationRule = 'required';
+            } else if ($id == null) {
+                // New product - require unique ISBN
+                $isbnValidationRule = 'required|unique:products,product_isbn';
+            } else {
+                // Editing existing product - require unique ISBN except for current product
+                $isbnValidationRule = 'required|unique:products,product_isbn,' . $id;
+            }
 
+            $this->validate($request, [
+                'category_id'   => 'required',
+                'condition'     => 'required|in:new,old',
+                'product_name'  => 'required',
+                'product_isbn'  => $isbnValidationRule,
+                'product_price' => 'required|numeric',
+                'language_id'   => 'required',
+            ]);
+
+            // If reusing existing product, set it here
             if ($existingProduct && $id == null) {
                 $product = $existingProduct;
-                $skipProductSave = true;
             }
 
-            if ($request->hasFile('product_image')) {
-                $image_tmp = $request->file('product_image');
-                if ($image_tmp->isValid()) {
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = rand(111, 99999) . '.' . $extension;
+            // Only update product fields if we're not reusing an existing product
+            if (!$skipProductSave) {
+                if ($request->hasFile('product_image')) {
+                    $image_tmp = $request->file('product_image');
+                    if ($image_tmp->isValid()) {
+                        $extension = $image_tmp->getClientOriginalExtension();
+                        $imageName = rand(111, 99999) . '.' . $extension;
 
-                    Image::make($image_tmp)->resize(1000, 1000)
-                        ->save('front/images/product_images/large/' . $imageName);
-                    Image::make($image_tmp)->resize(500, 500)
-                        ->save('front/images/product_images/medium/' . $imageName);
-                    Image::make($image_tmp)->resize(250, 250)
-                        ->save('front/images/product_images/small/' . $imageName);
+                        Image::make($image_tmp)->resize(1000, 1000)
+                            ->save('front/images/product_images/large/' . $imageName);
+                        Image::make($image_tmp)->resize(500, 500)
+                            ->save('front/images/product_images/medium/' . $imageName);
+                        Image::make($image_tmp)->resize(250, 250)
+                            ->save('front/images/product_images/small/' . $imageName);
 
-                    $product->product_image = $imageName;
+                        $product->product_image = $imageName;
+                    }
                 }
+
+                $categoryDetails = Category::find($data['category_id']);
+                $product->section_id  = $categoryDetails->section_id;
+                $product->category_id = $data['category_id'];
+
+                if (!empty($data['new_publisher'])) {
+                    $publisher = new Publisher();
+                    $publisher->name = $data['new_publisher'];
+                    $publisher->status = 1;
+                    $publisher->save();
+                    $product->publisher_id = $publisher->id;
+                } else {
+                    $product->publisher_id = $data['publisher_id'];
+                }
+
+                $product->subject_id  = $data['subject_id'];
+                $product->language_id = $data['language_id'];
+
+                $product->condition        = $data['condition'];
+                $product->product_name     = $data['product_name'];
+                $product->product_isbn     = $data['product_isbn'];
+                $product->product_price    = $data['product_price'];
+                $product->edition_id       = $data['edition_id'];
+                $product->description      = $data['description'];
+                $product->meta_title       = $data['meta_title'];
+                $product->meta_keywords    = $data['meta_keywords'];
+                $product->meta_description = $data['meta_description'];
+                $product->status           = 1;
             }
-
-            $categoryDetails = Category::find($data['category_id']);
-            $product->section_id  = $categoryDetails->section_id;
-            $product->category_id = $data['category_id'];
-
-            if (!empty($data['new_publisher'])) {
-                $publisher = new Publisher();
-                $publisher->name = $data['new_publisher'];
-                $publisher->status = 1;
-                $publisher->save();
-                $product->publisher_id = $publisher->id;
-            } else {
-                $product->publisher_id = $data['publisher_id'];
-            }
-
-            $product->subject_id  = $data['subject_id'];
-            $product->language_id = $data['language_id'];
-
-            $product->condition        = $data['condition'];
-            $product->product_name     = $data['product_name'];
-            $product->product_isbn     = $data['product_isbn'];
-            $product->product_price    = $data['product_price'];
-            $product->edition_id       = $data['edition_id'];
-            $product->description      = $data['description'];
-            $product->meta_title       = $data['meta_title'];
-            $product->meta_keywords    = $data['meta_keywords'];
-            $product->meta_description = $data['meta_description'];
-            $product->status           = 1;
 
             if (!$skipProductSave) {
                 $productFilters = ProductsFilter::productFilters();
@@ -271,9 +289,9 @@ class ProductsController extends Controller
 
             if (!$skipProductSave) {
                 $product->save();
+                // Only sync authors if we're saving the product (not reusing)
+                $product->authors()->sync($request->author_id ?? []);
             }
-
-            $product->authors()->sync($request->author_id ?? []);
 
             // For new products, return JSON to show modal for stock/discount
             if ($id == null) {
@@ -362,7 +380,8 @@ class ProductsController extends Controller
                 ->where('admin_type', 'vendor');
         } else {
             $attributeQuery->where('admin_id', $user->id)
-                ->where('admin_type', 'superadmin');
+            ->where('admin_type', 'admin')
+            ->orWhere('admin_type', 'superadmin');
         }
 
         $existingAttribute = $attributeQuery->first();
