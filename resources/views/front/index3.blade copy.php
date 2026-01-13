@@ -178,101 +178,52 @@
 
     <!-- Recommend Section Start -->
     <section class="content-inner-1 bg-grey reccomend py-5">
-    <div class="container">
-        <div class="section-head text-center mb-4">
-            <h2 class="title">Recommended For You</h2>
-            <p>Discover titles picked just for you — find your next great read from our curated list!</p>
-        </div>
-
-        <div class="row g-4">
-            @foreach ($sliderProducts as $sliderProduct)
-
-                @php
-                    $product = $sliderProduct['product'] ?? null;
-                    if (!$product) continue;
-
-                    $productImage = $product['product_image'] ?? 'no-image.png';
-                    $productName  = $product['product_name'] ?? 'N/A';
-
-                    // ✅ MULTI-VENDOR PRICE
-                    $originalPrice  = (float) $product['product_price'];
-                    $vendorDiscount = (float) ($sliderProduct['product_discount'] ?? 0);
-
-                    if ($vendorDiscount > 0) {
-                        $finalPrice = round($originalPrice - ($originalPrice * $vendorDiscount / 100));
-                        $discountPercent = round($vendorDiscount);
-                    } else {
-                        $finalPrice = round($originalPrice);
-                        $discountPercent = 0;
-                    }
-                @endphp
-
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
-                    <div class="card flex-fill shadow-sm border-0" style="border-radius:20px; overflow:hidden;">
-
-                        {{-- IMAGE --}}
-                        <div class="position-relative">
-                            <a href="{{ url('product/' . $product['id']) }}">
-                                <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
-                                     class="card-img-top"
-                                     style="height:220px; object-fit:cover;"
-                                     onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
+        <div class="container">
+            <div class="section-head text-center mb-4">
+                <h2 class="title">Recommended For You</h2>
+                <p>Discover titles picked just for you — find your next great read from our curated list!</p>
+            </div>
+            <div class="row g-4">
+                @foreach ($sliderProducts as $sliderProduct)
+                    @php
+                        $product = $sliderProduct['product'] ?? null;
+                        $productImage = $product['product_image'] ?? 'no-image.png';
+                        $productName = $product['product_name'] ?? 'N/A';
+                        $productPrice = $product['product_price'] ?? '0.00';
+                    @endphp
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
+                        <div class="card flex-fill shadow-sm border-0 book-grid-card" style="border-radius:20px;">
+                            <a href="{{ url('product/' . $sliderProduct['id']) }}" class="d-block">
+                                <img src="{{ asset('front/images/product_images/small/' . $productImage) }}" alt="book"
+                                    class="card-img-top"
+                                    style="height:220px; object-fit:cover; border-radius:20px 20px 0 0;"
+                                    onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
                             </a>
-
-                            @if($discountPercent > 0)
-                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
-                                    -{{ $discountPercent }}%
-                                </span>
-                            @endif
-                        </div>
-
-                        {{-- BODY --}}
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="mb-1">
-                                <a href="{{ url('product/' . $product['id']) }}"
-                                   class="text-dark text-decoration-none">
-                                    {{ $productName }}
-                                </a>
-                            </h5>
-
-                            <div class="mb-2">
-                                @if($discountPercent > 0)
-                                    <span class="text-muted text-decoration-line-through small">
-                                        ₹{{ round($originalPrice) }}
-                                    </span>
-                                    <span class="fw-bold text-primary ms-1">
-                                        ₹{{ $finalPrice }}
-                                    </span>
-                                @else
-                                    <span class="fw-bold text-primary">
-                                        ₹{{ round($originalPrice) }}
-                                    </span>
-                                @endif
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="mb-1 card-title" style="font-size:1.05rem;">
+                                    <a href="{{ url('product/' . $sliderProduct['id']) }}"
+                                        class="text-dark text-decoration-none">
+                                        {{ $productName }}
+                                    </a>
+                                </h5>
+                                <span class="price mb-2 text-primary fw-bold fs-6">₹{{ $productPrice }}</span>
+                                <span class="text-dark small">Shop Name:
+                                    {{ $sliderProduct['vendor']['vendorbusinessdetails']['shop_name'] ?? 'N/A' }}</span>
+                                <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
+                                    @csrf
+                                    <input type="hidden" name="product_id" value="{{ $sliderProduct['id'] }}">
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="flaticon-shopping-cart-1"></i> Add to cart
+                                    </button>
+                                </form>
                             </div>
-
-                            <span class="text-dark small mb-2">
-                                Shop Name:
-                                {{ $sliderProduct['vendor']['vendorbusinessdetails']['shop_name'] ?? 'N/A' }}
-                            </span>
-
-                            <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $product['id'] }}">
-                                <input type="hidden" name="vendor_id" value="{{ $sliderProduct['vendor_id'] }}">
-                                <input type="hidden" name="quantity" value="1">
-
-                                <button type="submit" class="btn btn-outline-primary btn-sm w-100">
-                                    <i class="flaticon-shopping-cart-1"></i> Add to cart
-                                </button>
-                            </form>
                         </div>
-
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
 
 
