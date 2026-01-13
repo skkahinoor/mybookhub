@@ -40,6 +40,9 @@
                                             <th>Image</th>
                                             <th>Category</th> {{-- Through the relationship --}}
                                             <th>Section</th> {{-- Through the relationship --}}
+                                            @if ($adminType == 'admin' || $adminType == 'superadmin')
+                                                <th>Stock</th>
+                                            @endif
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -48,24 +51,41 @@
                                         @foreach ($products as $key => $product)
                                             <tr>
                                                 <td>{{ __($key + 1) }}</td>
-                                                <td> {{ $product->product->product_name ?? 'N/A' }}
-                                                </td>
-                                                <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }} <span class="text-muted">({{ $product->product->condition ?? 'N/A' }})</span></td>
-
-                                                <td>
-                                                    @if (!empty($product->product->product_image))
-                                                        <img style="width:120px; height:100px"
-                                                            src="{{ asset('front/images/product_images/small/' . $product->product->product_image) }}">
-                                                        {{-- Show the 'small' image size from the 'small' folder --}}
-                                                    @else
-                                                        <img style="width:120px; height:100px"
-                                                            src="{{ asset('front/images/product_images/small/no-image.png') }}">
-                                                        {{-- Show the 'no-image' Dummy Image: If you have for example a table with an 'images' column (that can exist or not exist), use a 'Dummy Image' in case there's no image. Example: https://dummyimage.com/  --}}
-                                                    @endif
-                                                </td>
-                                                <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
-                                                {{-- Through the relationship --}}
-                                                <td>{{ $product->product->section->name ?? 'N/A' }}</td> {{-- Through the relationship --}}
+                                                
+                                                @if ($adminType === 'vendor')
+                                                    {{-- Vendor: Display from ProductsAttribute --}}
+                                                    <td> {{ $product->product->product_name ?? 'N/A' }}</td>
+                                                    <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }} <span class="text-muted">({{ ucfirst($product->product->condition ?? 'N/A') }})</span></td>
+                                                    <td>
+                                                        @if (!empty($product->product->product_image))
+                                                            <img style="width:120px; height:100px"
+                                                                src="{{ asset('front/images/product_images/small/' . $product->product->product_image) }}">
+                                                        @else
+                                                            <img style="width:120px; height:100px"
+                                                                src="{{ asset('front/images/product_images/small/no-image.png') }}">
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->section->name ?? 'N/A' }}</td>
+                                                @else
+                                                    {{-- Admin/Superadmin: Display from Product --}}
+                                                    <td> {{ $product->product_name ?? 'N/A' }}</td>
+                                                    <td>ISBN-{{ $product->product_isbn ?? 'N/A' }} <span class="text-muted">({{ ucfirst($product->condition ?? 'N/A') }})</span></td>
+                                                    <td>
+                                                        @if (!empty($product->product_image))
+                                                            <img style="width:120px; height:100px"
+                                                                src="{{ asset('front/images/product_images/small/' . $product->product_image) }}">
+                                                        @else
+                                                            <img style="width:120px; height:100px"
+                                                                src="{{ asset('front/images/product_images/small/no-image.png') }}">
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $product->category->category_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->section->name ?? 'N/A' }}</td>
+                                                    <td>
+                                                        <span class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
+                                                    </td>
+                                                @endif
                                                 {{-- <td>
                                                     @php
                                                         $attr = $product->firstAttribute ?? null;
@@ -86,57 +106,103 @@
                                                 </td> --}}
 
                                                 <td>
-                                                    @if ($product['status'] == 1)
-                                                        <a class="updateProductStatus" id="product-{{ $product->id }}"
-                                                            product_id="{{ $product->id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
-                                                            {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
+                                                    @if ($adminType === 'vendor')
+                                                        {{-- Vendor: Use attribute status --}}
+                                                        @if ($product->status == 1)
+                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
+                                                                product_id="{{ $product->product_id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                    status="Active"></i>
+                                                            </a>
+                                                        @else
+                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
+                                                                product_id="{{ $product->product_id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
+                                                                    status="Inactive"></i>
+                                                            </a>
+                                                        @endif
                                                     @else
-                                                        {{-- if the admin status is inactive --}}
-                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}"
-                                                            product_id="{{ $product['id'] }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
-                                                            {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
+                                                        {{-- Admin/Superadmin: Use product status --}}
+                                                        @if ($product->status == 1)
+                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
+                                                                product_id="{{ $product->id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                    status="Active"></i>
+                                                            </a>
+                                                        @else
+                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
+                                                                product_id="{{ $product->id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
+                                                                    status="Inactive"></i>
+                                                            </a>
+                                                        @endif
                                                     @endif
                                                 </td>
 
 
 
                                                 <td>
-                                                    @if ($adminType == 'admin' || $adminType == 'superadmin')
-                                                    <a title="Edit Book"
-                                                        href="{{ url('admin/add-edit-product/' . $product->product_id) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
-                                                    </a>
+                                                    @if ($adminType === 'vendor')
+                                                        {{-- Vendor: Show edit, add stock, delete attribute --}}
+                                                        {{-- <a title="Edit Book"
+                                                            href="{{ url('admin/add-edit-product/' . $product->product_id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                        </a> --}}
+
+                                                        <a href="#" title="Add Stock" data-bs-toggle="modal"
+                                                            data-bs-target="#addAttributeModal" data-id="{{ $product->product_id }}"
+                                                            data-name="{{ $product->product->product_name ?? 'N/A' }}"
+                                                            data-stock="{{ $product->stock ?? 0 }}"
+                                                            data-discount="{{ $product->product_discount ?? 0 }}"
+                                                            id="openAddAttributeModal">
+                                                            <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
+                                                        </a>
+
+                                                        <a title="Add Multiple Images"
+                                                            href="{{ url('admin/add-images/' . $product->product_id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
+                                                        </a>
+
+                                                        <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
+                                                            onclick="return confirm('Are you sure you want to delete this product attribute?')"
+                                                            title="Delete Product Attribute">
+                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                                        </a>
+                                                    @else
+                                                        {{-- Admin/Superadmin: Show edit, add stock, add images --}}
+                                                        <a title="Edit Book"
+                                                            href="{{ url('admin/add-edit-product/' . $product->id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                        </a>
+
+                                                        @php
+                                                            // Get the first attribute for this product and current admin to show current stock/discount
+                                                            $firstAttribute = \App\Models\ProductsAttribute::where('product_id', $product->id)
+                                                                ->where('admin_id', Auth::guard('admin')->user()->id)
+                                                                ->where('admin_type', 'admin')
+                                                                ->first();
+                                                        @endphp
+
+                                                        <a href="#" title="Add Stock" data-bs-toggle="modal"
+                                                            data-bs-target="#addAttributeModal" data-id="{{ $product->id }}"
+                                                            data-name="{{ $product->product_name ?? 'N/A' }}"
+                                                            data-stock="{{ $firstAttribute->stock ?? 0 }}"
+                                                            data-discount="{{ $firstAttribute->product_discount ?? 0 }}"
+                                                            id="openAddAttributeModal">
+                                                            <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
+                                                        </a>
+
+                                                        <a title="Add Multiple Images"
+                                                            href="{{ url('admin/add-images/' . $product->id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
+                                                        </a>
+
+                                                        <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
+                                                            onclick="return confirm('Are you sure you want to delete this product attribute?')"
+                                                            title="Delete Product Attribute">
+                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                                        </a>
                                                     @endif
-
-                                                    <a href="#" title="Add Stock" data-bs-toggle="modal"
-                                                        data-bs-target="#addAttributeModal" data-id="{{ $product->product_id }}"
-                                                        data-name="{{ $product->product->product_name ?? 'N/A' }}"
-                                                        data-stock="{{ $product->stock ?? 0 }}"
-                                                        data-discount="{{ $product->product_discount ?? 0 }}"
-                                                        id="openAddAttributeModal">
-                                                        <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
-                                                    </a>
-
-
-                                                    <a title="Add Multiple Images"
-                                                        href="{{ url('admin/add-images/' . $product->product_id) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
-                                                    </a>
-
-                                                   
-                                                         <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
-                                                        onclick="return confirm('Are you sure you want to delete this product attribute?')">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                    </a>
-                                                   
                                                 </td>
                                             </tr>
                                         @endforeach

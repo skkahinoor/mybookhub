@@ -45,23 +45,46 @@ class ProductsController extends Controller
             }
         }
 
-        // ✅ Build query (do NOT call get yet)
-        $productsQuery = ProductsAttribute::orderBy('id', 'desc')
-            ->with([
-                'product:id,product_name,product_isbn,product_image,category_id,section_id',
-                'product.category:id,category_name',
-                'product.section:id,name',
-                'vendor:id,name',
-                'admin:id,name',
-            ]);
-
-        // ✅ Apply vendor filter BEFORE get()
+        // Different logic for vendor vs admin/superadmin
         if ($adminType === 'vendor') {
-            $productsQuery->where('vendor_id', $vendor_id);
-        }
+            // For vendors: Fetch from ProductsAttribute table (old logic)
+            $productsQuery = ProductsAttribute::orderBy('id', 'desc')
+                ->with([
+                    'product:id,product_name,product_isbn,product_image,category_id,section_id,condition',
+                    'product.category:id,category_name',
+                    'product.section:id,name',
+                    'vendor:id,name',
+                    'admin:id,name',
+                ]);
 
-        // ✅ Execute query
-        $products = $productsQuery->get();
+            // Apply vendor filter
+            $productsQuery->where('vendor_id', $vendor_id)
+                         ->where('admin_type', 'vendor');
+
+            // Execute query
+            $products = $productsQuery->get();
+        } else {
+            // For admin/superadmin: Fetch from products table with total stock
+            $productsQuery = Product::orderBy('id', 'desc')
+                ->with([
+                    'category:id,category_name',
+                    'section:id,name',
+                ]);
+
+            // For admin/superadmin: Show all products that have any attributes (from any source)
+            // They can see products uploaded by vendors, admins, or superadmins
+            $productsQuery->whereHas('attributes');
+
+            // Execute query
+            $products = $productsQuery->get();
+
+            // Calculate total stock for each product from ALL sources (vendor, admin, superadmin)
+            foreach ($products as $product) {
+                // Sum ALL stock from ALL sources for this product
+                $product->total_stock = ProductsAttribute::where('product_id', $product->id)
+                    ->sum('stock');
+            }
+        }
 
         return view('admin.products.products', compact('products', 'logos', 'headerLogo', 'adminType'));
     }
