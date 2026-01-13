@@ -50,7 +50,7 @@
                                                 <td>{{ __($key + 1) }}</td>
                                                 <td> {{ $product->product->product_name ?? 'N/A' }}
                                                 </td>
-                                                <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }}</td>
+                                                <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }} <span class="text-muted">({{ $product->product->condition ?? 'N/A' }})</span></td>
 
                                                 <td>
                                                     @if (!empty($product->product->product_image))
@@ -107,13 +107,15 @@
 
 
                                                 <td>
+                                                    @if ($adminType == 'admin' || $adminType == 'superadmin')
                                                     <a title="Edit Book"
                                                         href="{{ url('admin/add-edit-product/' . $product->product_id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                         {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
+                                                    @endif
 
-                                                    <a href="#" title="Add Edition" data-bs-toggle="modal"
+                                                    <a href="#" title="Add Stock" data-bs-toggle="modal"
                                                         data-bs-target="#addAttributeModal" data-id="{{ $product->product_id }}"
                                                         data-name="{{ $product->product->product_name ?? 'N/A' }}"
                                                         data-stock="{{ $product->stock ?? 0 }}"
@@ -129,11 +131,12 @@
                                                         {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
 
-
-                                                    <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
+                                                   
+                                                         <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
                                                         onclick="return confirm('Are you sure you want to delete this product attribute?')">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>
+                                                   
                                                 </td>
                                             </tr>
                                         @endforeach

@@ -63,7 +63,7 @@ class ProductsController extends Controller
         // ✅ Execute query
         $products = $productsQuery->get();
 
-        return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
+        return view('admin.products.products', compact('products', 'logos', 'headerLogo', 'adminType'));
     }
 
 
@@ -127,15 +127,18 @@ class ProductsController extends Controller
             $data = $request->all();
             $user = Auth::guard('admin')->user();
 
-            // Check if product with this ISBN already exists (BEFORE validation)
+            // Check if product with this ISBN AND condition already exists (BEFORE validation)
             $existingProduct = null;
             $skipProductSave = false;
             
             if ($id == null) {
-                $existingProduct = Product::where('product_isbn', $data['product_isbn'])->first();
+                // Check for product with same ISBN AND same condition
+                $existingProduct = Product::where('product_isbn', $data['product_isbn'])
+                    ->where('condition', $data['condition'])
+                    ->first();
                 
                 if ($existingProduct) {
-                    // Check if current admin/vendor already has this product
+                    // Check if current admin/vendor already has this product (same ISBN + same condition)
                     $existingAttributeQuery = ProductsAttribute::where('product_id', $existingProduct->id);
                     
                     if ($user->type === 'vendor') {
@@ -150,14 +153,18 @@ class ProductsController extends Controller
                     
                     if ($existingAttribute) {
                         $userType = $user->type === 'vendor' ? 'vendor' : 'admin';
-                        $errorMessage = "This product (ISBN: {$data['product_isbn']}) already exists in your {$userType} account. Please choose a different product or edit the existing one.";
-                        
+                        $conditionText = $data['condition'] === 'new' ? 'new' : 'old';
+                        $errorMessage = "This {$conditionText} product (ISBN: {$data['product_isbn']}) already exists in your {$userType} account. Please choose a different product or edit the existing one.";
+
                         // Return JSON response for AJAX requests
                         if ($request->ajax() || $request->expectsJson()) {
                             return response()->json([
-                                'status' => 'error',
-                                'product_exists' => true,
-                                'message' => $errorMessage
+                                'status'           => 'error',
+                                'product_exists'   => true,
+                                'message'          => $errorMessage,
+                                'product_id'       => $existingProduct->id,
+                                'stock'            => (int) ($existingAttribute->stock ?? 0),
+                                'product_discount' => (float) ($existingAttribute->product_discount ?? 0),
                             ], 422);
                         }
                         
@@ -167,25 +174,40 @@ class ProductsController extends Controller
                             ->with('error_message', $errorMessage);
                     }
                     
-                    // Product exists but current user doesn't have it - we'll reuse it
+                    // Product exists with same ISBN + condition but current user doesn't have it - we'll reuse it
                     $skipProductSave = true;
+                } else {
+                    // Check if product exists with same ISBN but different condition
+                    // This is allowed - user can add same ISBN with different condition
+                    $productWithDifferentCondition = Product::where('product_isbn', $data['product_isbn'])
+                        ->where('condition', '!=', $data['condition'])
+                        ->first();
+                    
+                    // If product exists with different condition, it's a new product entry (not reusing)
+                    // So we don't set skipProductSave = true
                 }
             }
 
-            // Conditional validation: If we're reusing an existing product, don't require ISBN uniqueness
-            $isbnValidationRule = 'required';
-            if ($id == null && $existingProduct) {
-                // Product exists and we're reusing it - allow existing ISBN
-                $isbnValidationRule = 'required';
-            } else if ($id == null) {
-                // New product - require unique ISBN
-                $isbnValidationRule = 'required|unique:products,product_isbn';
+            // Conditional validation: ISBN uniqueness is now based on ISBN + condition combination
+            // Since we allow same ISBN with different conditions, we need custom validation
+            $isbnValidationRule = 'required|digits_between:10,13';
+            
+            if ($id == null) {
+                // For new products, check if ISBN + condition combination already exists
+                // We'll handle this in custom validation after checking existingProduct
+                if ($existingProduct) {
+                    // Product exists with same ISBN + condition - validation will pass (we already checked user doesn't have it)
+                    $isbnValidationRule = 'required|digits_between:10,13';
+                } else {
+                    // New product - check uniqueness of ISBN + condition combination
+                    $isbnValidationRule = 'required|digits_between:10,13';
+                }
             } else {
-                // Editing existing product - require unique ISBN except for current product
-                $isbnValidationRule = 'required|unique:products,product_isbn,' . $id;
+                // Editing existing product - require unique ISBN + condition except for current product
+                $isbnValidationRule = 'required|digits_between:10,13';
             }
 
-            $this->validate($request, [
+            $validator = Validator::make($request->all(), [
                 'category_id'   => 'required',
                 'condition'     => 'required|in:new,old',
                 'product_name'  => 'required',
@@ -193,6 +215,50 @@ class ProductsController extends Controller
                 'product_price' => 'required|numeric',
                 'language_id'   => 'required',
             ]);
+
+            // Custom validation: Check ISBN + condition uniqueness
+            // Note: We already checked for existingProduct above, but this ensures validation consistency
+            if ($id == null) {
+                // For new products: if we're not reusing an existing product, check uniqueness
+                if (!$existingProduct) {
+                    $validator->after(function ($validator) use ($data) {
+                        $exists = Product::where('product_isbn', $data['product_isbn'])
+                            ->where('condition', $data['condition'])
+                            ->exists();
+                        
+                        if ($exists) {
+                            $conditionText = $data['condition'] === 'new' ? 'new' : 'old';
+                            $validator->errors()->add('product_isbn', "A {$conditionText} product with this ISBN already exists. You can reuse it by selecting the same condition, or add it as a different condition.");
+                        }
+                    });
+                }
+                // If existingProduct exists, validation passes (we already verified user doesn't have it)
+            } else {
+                // For editing: check ISBN + condition uniqueness except current product
+                $validator->after(function ($validator) use ($data, $id) {
+                    $exists = Product::where('product_isbn', $data['product_isbn'])
+                        ->where('condition', $data['condition'])
+                        ->where('id', '!=', $id)
+                        ->exists();
+                    
+                    if ($exists) {
+                        $conditionText = $data['condition'] === 'new' ? 'new' : 'old';
+                        $validator->errors()->add('product_isbn', "A {$conditionText} product with this ISBN already exists.");
+                    }
+                });
+            }
+
+            if ($validator->fails()) {
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'errors' => $validator->errors()
+                    ], 422);
+                }
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
 
             // If reusing existing product, set it here
             if ($existingProduct && $id == null) {
@@ -215,6 +281,17 @@ class ProductsController extends Controller
                             ->save('front/images/product_images/small/' . $imageName);
 
                         $product->product_image = $imageName;
+                    }
+                } elseif ($id == null) {
+                    // No new image uploaded for a NEW product.
+                    // If there is already another product with the same ISBN (any condition)
+                    // and it has an image, reuse that image for this new record.
+                    $imageSourceProduct = Product::where('product_isbn', $data['product_isbn'])
+                        ->whereNotNull('product_image')
+                        ->first();
+
+                    if ($imageSourceProduct) {
+                        $product->product_image = $imageSourceProduct->product_image;
                     }
                 }
 

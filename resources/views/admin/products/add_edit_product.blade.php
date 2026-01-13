@@ -282,7 +282,7 @@
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="new"
                                             value="new" autocomplete="off"
-                                            {{ old('condition', $product->condition ?? '') === 'new' ? 'checked' : '' }}>
+                                            {{ old('condition', !empty($product->id) ? ($product->condition ?? 'new') : 'new') === 'new' ? 'checked' : '' }}>
                                         <label for="new">
                                             <i class="mdi mdi-book-open-page-variant"></i> New
                                         </label>
@@ -291,7 +291,7 @@
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="old"
                                             value="old" autocomplete="off"
-                                            {{ old('condition', $product->condition ?? '') === 'old' ? 'checked' : '' }}>
+                                            {{ old('condition', !empty($product->id) ? ($product->condition ?? 'new') : 'new') === 'old' ? 'checked' : '' }}>
                                         <label for="old">
                                             <i class="mdi mdi-history"></i> Old
                                         </label>
@@ -302,9 +302,9 @@
 
                                 <div class="form-group">
                                     <div class="form-group">
-                                        <label for="product_isbn">ISBN Number</label>
+                                        <label for="product_isbn">ISBN Number <small class="text-muted">(10-13 digits)</small></label>
                                         <input type="text" class="form-control" id="product_isbn" name="product_isbn"
-                                            placeholder="Enter ISBN"
+                                            placeholder="Enter ISBN (10-13 digits)" maxlength="13"
                                             value="{{ old('product_isbn', $product['product_isbn'] ?? '') }}">
                                     </div>
 
@@ -891,21 +891,46 @@
                     },
                     error: function(xhr) {
                         submitBtn.prop('disabled', false).text('Submit');
-                        
-                        // Check if product already exists
+
+                        // Check if product already exists for this admin/vendor
                         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.product_exists) {
+                            const resp = xhr.responseJSON;
+
+                            // First info message
                             Swal.fire({
                                 icon: 'warning',
                                 title: 'Product Already Exists',
-                                text: xhr.responseJSON.message || 'This product has already been added to your account.',
+                                text: resp.message || 'This product has already been added to your account.',
                                 confirmButtonText: 'OK',
-                                confirmButtonColor: '#dc3545',
-                                timer: 5000,
-                                timerProgressBar: true
+                                confirmButtonColor: '#dc3545'
+                            }).then(() => {
+                                // Then ask if user wants to update stock/discount
+                                Swal.fire({
+                                    icon: 'question',
+                                    title: 'Update Stock / Discount?',
+                                    text: 'Do you want to update stock and discount for this product?',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Yes',
+                                    cancelButtonText: 'No',
+                                    confirmButtonColor: '#28a745',
+                                    cancelButtonColor: '#dc3545'
+                                }).then((result) => {
+                                    if (result.isConfirmed && resp.product_id) {
+                                        // Prefill and open the same attributes modal used on products list
+                                        $('#modal_product_id').val(resp.product_id);
+                                        if (typeof resp.stock !== 'undefined') {
+                                            $('#modal_stock').val(resp.stock);
+                                        }
+                                        if (typeof resp.product_discount !== 'undefined') {
+                                            $('#modal_product_discount').val(resp.product_discount);
+                                        }
+                                        $('#attributesModal').modal('show');
+                                    }
+                                });
                             });
                             return;
                         }
-                        
+
                         if (xhr.status === 422) {
                             let errors = xhr.responseJSON.errors;
                             let errorMsg = 'Validation errors:\n';
