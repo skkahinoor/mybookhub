@@ -103,110 +103,48 @@ class Product extends Model
     }
 
     // A static method (to be able to be called directly without instantiating an object in index.blade.php) to determine the final price of a product because a product can have a discount from TWO things: either a `CATEGORY` discount or `PRODUCT` discount
-    public static function getDiscountPrice($product_id)
-    { // this method is called in front/index.blade.php
-        // Get the product PRICE and CATEGORY ID
-        $productDetails = Product::select('product_price', 'category_id')->where('id', $product_id)->first();
+    public static function getDiscountPrice($product_id, $vendor_id = null)
+    {
+        $product = self::select('product_price', 'category_id')->find($product_id);
 
-        if (! $productDetails) {
-            return 0; // Return 0 if product not found
+        if (!$product) {
+            return 0;
         }
 
-        $productDetails = json_decode(json_encode($productDetails), true); // convert the object to an array
+        $originalPrice = (float) $product->product_price;
 
-        // Get the product discount from ProductsAttribute table (get first attribute)
-        $productAttribute = ProductsAttribute::where('product_id', $product_id)
+        // ✅ EXACT ATTRIBUTE IF VENDOR PROVIDED
+        $attribute = ProductsAttribute::when($vendor_id, function ($q) use ($vendor_id) {
+            $q->where('vendor_id', $vendor_id);
+        })
+            ->where('product_id', $product_id)
             ->where('status', 1)
             ->first();
-        $productDiscount = $productAttribute ? (float) ($productAttribute->product_discount ?? 0) : 0;
 
-        // Get the product category discount `category_discount` from `categories` table using its `category_id` in `products` table
-        $categoryDetails = Category::select('category_discount')->where('id', $productDetails['category_id'])->first();
+        $productDiscount = $attribute ? (float) $attribute->product_discount : 0;
 
-        if (! $categoryDetails) {
-            $categoryDetails = ['category_discount' => 0];
-        } else {
-            $categoryDetails = json_decode(json_encode($categoryDetails), true); // convert the object to an array
-        }
+        $categoryDiscount = Category::where('id', $product->category_id)
+            ->value('category_discount') ?? 0;
 
-        $originalPrice    = $productDetails['product_price'];
-        $categoryDiscount = $categoryDetails['category_discount'] ?? 0;
-
-        // Calculate the highest discount (product discount takes precedence over category discount)
         if ($productDiscount > 0) {
-            // if there's a PRODUCT discount on the product itself
-            $discounted_price = $originalPrice - ($originalPrice * $productDiscount / 100);
-        } else if ($categoryDiscount > 0) {
-            // if there's NO a PRODUCT discount, but there's a CATEGORY discount
-            $discounted_price = $originalPrice - ($originalPrice * $categoryDiscount / 100);
+            $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
+        } elseif ($categoryDiscount > 0) {
+            $finalPrice = $originalPrice - ($originalPrice * $categoryDiscount / 100);
         } else {
-            // there's no discount on neither `product_discount` (in `products_attributes` table) nor `category_discount` (in `categories` table)
-            // Return original price when no discount
-            $discounted_price = $originalPrice;
+            $finalPrice = $originalPrice;
         }
 
-        return round($discounted_price, 2); // Round to 2 decimal places
+        return round($finalPrice);
     }
 
-    public static function getDiscountAttributePrice($product_id, $attribute_id = null)
+    /* =========================
+       PRICE + DISCOUNT DETAILS
+       (BACKWARD COMPATIBLE)
+    ========================= */
+    public static function getDiscountPriceDetails($product_id, $vendor_id = null)
     {
-        // If an attribute_id is provided, use that specific attribute, otherwise get the first active attribute
-        $attribute = null;
-        if (!empty($attribute_id)) {
-            $attribute = \App\Models\ProductsAttribute::where([
-                'product_id' => $product_id,
-                'id'         => $attribute_id,
-            ])->first();
-        } else {
-            // Get the first active attribute for this product
-            $attribute = \App\Models\ProductsAttribute::where('product_id', $product_id)
-                ->where('status', 1)
-                ->first();
-        }
+        $product = self::select('product_price', 'category_id')->find($product_id);
 
-        // If attribute exists, compute discount against attribute price using product/category discounts
-        if ($attribute) {
-            $attributePrice = (float) $attribute->price;
-            
-            // Get product discount from the attribute itself (now stored in ProductsAttribute)
-            $productDiscount = (float) ($attribute->product_discount ?? 0);
-
-            // Get category discount
-            $productDetails = Product::select('category_id')->where('id', $product_id)->first();
-            $categoryDiscount = 0;
-            if ($productDetails) {
-                $categoryDiscount = (float) (Category::where('id', $productDetails->category_id)->value('category_discount') ?? 0);
-            }
-
-            if ($productDiscount > 0) {
-                $finalPrice = $attributePrice - ($attributePrice * $productDiscount / 100);
-            } elseif ($categoryDiscount > 0) {
-                $finalPrice = $attributePrice - ($attributePrice * $categoryDiscount / 100);
-            } else {
-                $finalPrice = $attributePrice;
-            }
-
-            $discount = max(0, $attributePrice - $finalPrice);
-
-            return [
-                'product_price' => round($attributePrice, 2),
-                'final_price'   => round($finalPrice, 2),
-                'discount'      => round($discount, 2),
-            ];
-        }
-
-        // Fallback: when size not provided or no attribute exists, use the product-level price rules
-        $details = self::getDiscountPriceDetails($product_id);
-        return [
-            'product_price' => $details['product_price'] ?? 0,
-            'final_price'   => $details['final_price'] ?? 0,
-            'discount'      => $details['discount'] ?? 0,
-        ];
-    }
-
-    public static function getDiscountPriceDetails($product_id)
-    {
-        $product = Product::select('product_price', 'category_id')->where('id', $product_id)->first();
         if (!$product) {
             return [
                 'product_price' => 0,
@@ -214,37 +152,72 @@ class Product extends Model
                 'discount'      => 0,
             ];
         }
-        $product = $product->toArray();
-        
-        // Get product discount from ProductsAttribute table (get first attribute)
-        $productAttribute = ProductsAttribute::where('product_id', $product_id)
+
+        $originalPrice = (float) $product->product_price;
+
+        // ✅ EXACT ATTRIBUTE (IF vendor exists)
+        $attribute = ProductsAttribute::when($vendor_id, function ($q) use ($vendor_id) {
+            $q->where('vendor_id', $vendor_id);
+        })
+            ->where('product_id', $product_id)
             ->where('status', 1)
             ->first();
-        $product_discount = $productAttribute ? (float) ($productAttribute->product_discount ?? 0) : 0;
-        
-        $category = Category::select('category_discount')->where('id', $product['category_id'])->first();
-        $category_discount = $category ? $category->category_discount : 0;
 
-        $original_price = $product['product_price'];
+        $productDiscount = $attribute ? (float) $attribute->product_discount : 0;
 
-        if ($product_discount > 0) {
-            $final_price = $original_price - ($original_price * $product_discount / 100);
-            $discount = $original_price - $final_price;
-        } elseif ($category_discount > 0) {
-            $final_price = $original_price - ($original_price * $category_discount / 100);
-            $discount = $original_price - $final_price;
+        $categoryDiscount = Category::where('id', $product->category_id)
+            ->value('category_discount') ?? 0;
+
+        if ($productDiscount > 0) {
+            $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
+        } elseif ($categoryDiscount > 0) {
+            $finalPrice = $originalPrice - ($originalPrice * $categoryDiscount / 100);
         } else {
-            $final_price = $original_price;
-            $discount = 0;
+            $finalPrice = $originalPrice;
         }
 
         return [
-            'product_price' => $original_price,
-            'final_price'   => round($final_price, 2),
-            'discount'      => round($discount, 2),
+            'product_price' => round($originalPrice),
+            'final_price'   => round($finalPrice),
+            'discount'      => round($originalPrice - $finalPrice),
         ];
     }
 
+    public static function getDiscountAttributePrice($product_id, $vendor_id)
+    {
+        $attribute = ProductsAttribute::where('product_id', $product_id)
+            ->where('vendor_id', $vendor_id)
+            ->where('status', 1)
+            ->first();
+
+        if (!$attribute) {
+            return self::getDiscountPriceDetails($product_id, $vendor_id);
+        }
+
+        $originalPrice = (float) Product::where('id', $product_id)
+            ->value('product_price');
+
+        $productDiscount = (float) $attribute->product_discount;
+
+        $categoryDiscount = Category::where(
+            'id',
+            Product::where('id', $product_id)->value('category_id')
+        )->value('category_discount') ?? 0;
+
+        if ($productDiscount > 0) {
+            $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
+        } elseif ($categoryDiscount > 0) {
+            $finalPrice = $originalPrice - ($originalPrice * $categoryDiscount / 100);
+        } else {
+            $finalPrice = $originalPrice;
+        }
+
+        return [
+            'product_price' => round($originalPrice),
+            'final_price'   => round($finalPrice),
+            'discount'      => round($originalPrice - $finalPrice),
+        ];
+    }
 
     public static function isProductNew($product_id)
     {
@@ -273,7 +246,6 @@ class Product extends Model
 
         return $getProductImage['product_image'] ?? '';
     }
-
 
     // Note: We need to prevent orders (upon checkout and payment) of the 'disabled' products (`status` = 0), where the product ITSELF can be disabled in admin/products/products.blade.php (by checking the `products` database table) or a product's attribute (`stock`) can be disabled in 'admin/attributes/add_edit_attributes.blade.php' (by checking the `products_attributes` database table). We also prevent orders of the out of stock / sold-out products (by checking the `products_attributes` database table)
     public static function getProductStatus($product_id)
