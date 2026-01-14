@@ -103,7 +103,7 @@
             width: 150px;
         }
 
-        .submenu>li:hover>.submenu1 {
+        .submenu1>li:hover {
             display: block;
         }
 
@@ -253,18 +253,20 @@
                                     <li class="nav-item">
                                         <div class="row">
                                             <div class="col" style="padding-right: 3px;">
-                                                <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
+                                                {{-- <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
                                                     data-bs-target="#loginModal" class="btn text-white"
                                                     style="font-size: 12px;">
                                                     <i class="fas fa-user" style="margin-right:8px;"></i> Login
-                                                </a>
+                                                </a> --}}
+                                                <a href="{{ route('user.login') }}" class="btn btn-primary btnhover">Login</a>
                                             </div>
                                             <div class="col" style="padding-left: 3px;">
-                                                <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
+                                                {{-- <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
                                                     data-bs-target="#registerModal" class="btn text-white"
                                                     style="font-size: 12px;">
                                                     <i class="fas fa-user-plus" style="margin-right:4px;"></i> Register
-                                                </a>
+                                                </a> --}}
+                                                <a href="{{ route('user.register') }}" class="btn btn-primary btnhover">Register</a>
                                             </div>
                                         </div>
                                     </li>
@@ -285,7 +287,7 @@
                                                 <span>{{ Auth::user()->email ?? 'Email Not Set' }}</span>
                                             </div>
                                             <div class="dropdown-body">
-                                                <a href="{{ route('useraccount') }}"
+                                                <a href="{{ route('user.account') }}"
                                                     class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
                                                     <div>
                                                         <svg xmlns="http://www.w3.org/2000/svg" height="20px"

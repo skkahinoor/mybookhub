@@ -20,6 +20,7 @@ class CmsController extends Controller
             $rules = [
                 // Fields/Column Names
                 'name'    => 'required|string|max:100',
+                'phone'   => 'nullable|string|max:20',
                 'email'   => 'required|email|max:150',
                 'subject' => 'required|max:200',
                 'message' => 'required'
@@ -30,6 +31,8 @@ class CmsController extends Controller
                 // The SAME last Fields (inside $rules array)
                 'name.required'    => 'Name is required',
                 'name.string'      => 'Name must be string',
+
+                'phone.string'     => 'Phone must be a valid number',
 
                 'email.required'   => 'Email is required',
                 'email.email'      => 'Valid email is required',
@@ -54,6 +57,7 @@ class CmsController extends Controller
             // The email message data/variables that will be passed in to the email view
             $messageData = [
                 'name'    => $data['name'],
+                'phone'   => $data['phone'] ?? null,
                 'email'   => $data['email'],
                 'subject' => $data['subject'],
                 'comment' => $data['message']
@@ -61,11 +65,12 @@ class CmsController extends Controller
 
             // Save to database
             ContactUs::create([
-                'name' => $data['name'],
-                'email' => $data['email'],
+                'name'    => $data['name'],
+                'phone'   => $data['phone'] ?? null,
+                'email'   => $data['email'],
                 'subject' => $data['subject'],
                 'message' => $data['message'],
-                'status' => 'pending',
+                'status'  => 'pending',
             ]);
 
             \Illuminate\Support\Facades\Mail::send('emails.inquiry', $messageData, function ($message) use ($email) {

@@ -33,6 +33,7 @@
                                     <tr>
                                         <th>ID</th>
                                         <th>Name</th>
+                                        <th>Phone</th>
                                         <th>Email</th>
                                         <th>Subject</th>
                                         <th>Message</th>
@@ -46,6 +47,7 @@
                                     <tr>
                                         <td>{{ $key + 1 }}</td>
                                         <td>{{ $query['name'] }}</td>
+                                        <td>{{ $query['phone'] }}</td>
                                         <td>{{ $query['email'] }}</td>
                                         <td>{{ $query['subject'] }}</td>
                                         <td>{{ Str::limit($query['message'], 50) }}</td>
@@ -58,10 +60,11 @@
                                         </td>
                                         <td>{{ date('Y-m-d H:i:s', strtotime($query['created_at'])) }}</td>
                                         <td>
-                                            <a href="{{ url('admin/contact-queries/reply/'.$query['id']) }}" title="Reply">
+                                            {{-- <a href="{{ url('admin/contact-queries/reply/'.$query['id']) }}" title="Reply">
                                                 <i style="font-size:25px;" class="mdi mdi-reply"></i>
                                             </a>
-                                            &nbsp;
+                                            &nbsp; --}}
+                                            
                                             <a href="javascript:void(0)" class="confirmDelete" module="contact_query" moduleid="{{ $query['id'] }}" title="Delete">
                                                 <i style="font-size:25px;" class="mdi mdi-file-excel-box"></i>
                                             </a>

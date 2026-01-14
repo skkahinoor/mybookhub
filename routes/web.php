@@ -13,11 +13,15 @@ use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\OtpController;
 use App\Http\Controllers\Api\InstitutionController;
-use App\Http\Controllers\Front\BookRequestController;
+use App\Http\Controllers\User\BookRequestController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\ProductsController;
 use App\Http\Controllers\Sales\SalesExecutiveAuthController;
 use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\User\AccountController;
+use App\Http\Controllers\User\AuthController;
+use App\Http\Controllers\User\DashboardController;
+use App\Http\Controllers\User\OrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -136,6 +140,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         //RequestedBooks
         Route::get('requestedbooks', [BookRequestsController::class, 'index'])->name('requestbook.index');
+        Route::match(['get', 'post'], 'requestedbooks/reply/{id}', [BookRequestsController::class, 'reply'])->name('requestbook.reply');
         Route::delete('book-requests/{id}', [BookRequestsController::class, 'delete'])->name('bookrequests.delete');
         Route::post('admin/bookrequests/update-status', [BookRequestsController::class, 'updateStatus'])->name('bookrequests.updateStatus');
 
@@ -454,13 +459,13 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::get('user/login-register', ['as' => 'login', 'uses' => 'UserController@loginRegister']); // 'as' => 'login'    is Giving this route a name 'login' route in order for the 'auth' middleware ('auth' middleware is the Authenticate.php) to redirect to the right page
 
     // User Registration (in front/users/login_register.blade.php) <form> submission using an AJAX request. Check front/js/custom.js
-    Route::post('user/register', 'UserController@userRegister')->name('user.register');
+    //Route::post('user/register', 'UserController@userRegister')->name('user.register');
 
     // User Login (in front/users/login_register.blade.php) <form> submission using an AJAX request. Check front/js/custom.js
-    Route::post('user/login', 'UserController@userLogin')->name('user.login');
+    //Route::post('user/login', 'UserController@userLogin')->name('user.login');
 
     // User logout (This route is accessed from Logout tab in the drop-down menu in the header (in front/layout/header.blade.php))
-    Route::post('user/logout', 'UserController@userLogout')->name('logout');
+    //Route::post('user/logout', 'UserController@userLogout')->name('logout');
 
     // User Forgot Password Functionality (this route is accessed from the <a> tag in front/users/login_register.blade.php through a 'GET' request, and through a 'POST' request when the HTML Form is submitted in front/users/forgot_password.blade.php)
     Route::match(['get', 'post'], 'user/forgot-password', 'UserController@forgotPassword'); // We used match() method to use get() to render the front/users/forgot_password.blade.php page, and post() when the HTML Form in the same page is submitted    // The POST request is from an AJAX request. Check front/js/custom.js
@@ -534,8 +539,8 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         // Rendering Thanks page (after placing an order)
         Route::get('thanks', 'ProductsController@thanks');
 
-        // Render User 'My Orders' page
-        Route::get('user/orders/{id?}', 'OrderController@orders'); // If the slug {id?} (Optional Parameters) is passed in, this means go to the front/orders/order_details.blade.php page, and if not, this means go to the front/orders/orders.blade.php page
+        // OLD FRONT ORDERS ROUTE - COMMENTED OUT TO USE USER DASHBOARD ORDERS INSTEAD
+        // Route::get('user/orders/{id?}', 'OrderController@orders'); // This route conflicts with user dashboard orders. Use /user/orders instead.
 
         // PayPal routes:
         // PayPal payment gateway integration in Laravel (this route is accessed from checkout() method in Front/ProductsController.php). Rendering front/paypal/paypal.blade.php page
@@ -567,8 +572,124 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
 Route::get('/dashboard', [App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');
 
+//User routes
+Route::prefix('/user')->namespace('App\Http\Controllers\User')->group(function () {
+
+    Route::get('/login', [AuthController::class, 'Login'])->name('user.login');
+    Route::get('/register', [AuthController::class, 'Register'])->name('user.register');
+    Route::post('/loginStore', [AuthController::class, 'loginStore'])->name('user.loginstore');
+    Route::post('/registerStore', [AuthController::class, 'registerStore'])->name('user.registerstore');
+
+    // Protected routes (require authentication)
+    Route::group(['middleware' => ['auth']], function () {
+        Route::get('/index', [DashboardController::class, 'index'])->name('user.index');
+        Route::post('/user/profile/update', [AccountController::class, 'updateProfile'])
+            ->name('user.profile.update');
+        Route::post('user/logout',[AuthController::class, 'logout'])->name('user.logout');
+        Route::match(['GET', 'POST'], '/account', [AccountController::class, 'index'])->name('user.account');
+        Route::post('/avatar', [AccountController::class, 'updateAvatar'])->name('user.avatar.update');
+        
+        Route::post('/book-request', [BookRequestController::class, 'store'])->name('user.book.request.store');
+        Route::get('/book-requests', [BookRequestController::class, 'indexbookrequest'])->name('user.book.indexrequest');
+        Route::post('/book-request/{id}/reply', [BookRequestController::class, 'replyToQuery'])->name('user.book.reply');
+        Route::get('/queries', [BookRequestController::class, 'indexqueries'])->name('user.query.index');
+        Route::get('/orders', [OrderController::class, 'index'])->name('user.orders.index');
+        Route::get('/orders/{id}', [OrderController::class, 'show'])->name('user.orders.show');
+    });
+});
+
 // Sales Executives routes
-require __DIR__ . '/sales.php';
+Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function () {
+    Route::get('login', 'SalesExecutiveAuthController@showLogin')->name('sales.login');
+    Route::post('login', 'SalesExecutiveAuthController@login')->name('sales.login.submit');
+    Route::get('/sales/register', [SalesExecutiveAuthController::class, 'showRegister'])->name('sales.register');
+    Route::post('/sales/send-otp', [SalesExecutiveAuthController::class, 'sendOtp'])->name('sales.otp.send');
+    Route::post('/sales/register', [SalesExecutiveAuthController::class, 'register'])->name('sales.register.submit');
+
+    Route::group(['middleware' => ['sales']], function () {
+        Route::get('dashboard', 'SalesExecutiveAuthController@dashboard')->name('sales.dashboard');
+        Route::post('logout', 'SalesExecutiveAuthController@logout')->name('sales.logout');
+
+        // Sales Executive Profile
+        Route::get('profile', 'ProfileController@edit')->name('sales.profile.edit');
+        Route::post('profile', 'ProfileController@update')->name('sales.profile.update');
+
+        // Sales Institution Management (similar to Admin)
+        Route::resource('institution-managements', 'InstitutionManagementController')->names([
+            'index'   => 'sales.institution_managements.index',
+            'create'  => 'sales.institution_managements.create',
+            'store'   => 'sales.institution_managements.store',
+            'show'    => 'sales.institution_managements.show',
+            'edit'    => 'sales.institution_managements.edit',
+            'update'  => 'sales.institution_managements.update',
+            'destroy' => 'sales.institution_managements.destroy',
+        ]);
+
+        // AJAX: get classes/streams for a given institution (only those added by current sales)
+        Route::get('students/institution-classes', 'StudentController@getInstitutionClasses')
+            ->name('sales.students.institution_classes');
+
+// Sales Students Management (similar to Admin)
+        Route::resource('students', 'StudentController')->names([
+            'index'   => 'sales.students.index',
+            'create'  => 'sales.students.create',
+            'store'   => 'sales.students.store',
+            'show'    => 'sales.students.show',
+            'edit'    => 'sales.students.edit',
+            'update'  => 'sales.students.update',
+            'destroy' => 'sales.students.destroy',
+        ])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
+
+        // Sales Vendors Management
+        Route::resource('vendors', 'VendorController')->names([
+            'index'   => 'sales.vendors.index',
+            'create'  => 'sales.vendors.create',
+            'store'   => 'sales.vendors.store',
+            'show'    => 'sales.vendors.show',
+            'destroy' => 'sales.vendors.destroy',
+        ])->only(['index', 'create', 'store', 'show', 'destroy']);
+
+        // Route::post('students/store-user-location', 'StudentController@storeUserLocation')->name('sales.students.store_user_location');
+        // Route::post('students/store-institution-location', 'StudentController@storeInstitutionLocation')->name('sales.students.store_institution_location');
+        // Route::get('students/institution/{institution}/address', 'StudentController@getInstitutionAddress')->name('sales.students.institution_address');
+
+        // Sales Reports
+        Route::get('reports', 'ReportController@index')->name('sales.reports.index');
+
+        // Sales Withdrawals
+        Route::resource('withdrawals', 'WithdrawalController')->names([
+            'index'   => 'sales.withdrawals.index',
+            'create'  => 'sales.withdrawals.create',
+            'store'   => 'sales.withdrawals.store',
+        ])->only(['index', 'create', 'store']);
+
+// Sales Blocks Management (similar to Admin)
+        Route::resource('blocks', 'BlockController')->names([
+            'index'   => 'sales.blocks.index',
+            'create'  => 'sales.blocks.create',
+            'store'   => 'sales.blocks.store',
+            'show'    => 'sales.blocks.show',
+            'edit'    => 'sales.blocks.edit',
+            'update'  => 'sales.blocks.update',
+            'destroy' => 'sales.blocks.destroy',
+        ])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
+
+// AJAX routes for cascading location dropdowns (outside admin middleware for AJAX access)
+        Route::get('institution-countries', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getCountries'])->name('institution_countries');
+        Route::get('institution-states', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getStates'])->name('institution_states');
+        Route::get('institution-districts', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getDistricts'])->name('institution_districts');
+        Route::get('institution-blocks', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getBlocks'])->name('institution_blocks');
+        Route::get('institution-classes', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getClasses'])->name('sales.institution.classes');
+
+        // AJAX routes for sales profile location dropdowns
+        Route::get('sales-profile-states', [App\Http\Controllers\Sales\ProfileController::class, 'getStates'])->name('sales.profile.states');
+        Route::get('sales-profile-districts', [App\Http\Controllers\Sales\ProfileController::class, 'getDistricts'])->name('sales.profile.districts');
+        Route::get('sales-profile-blocks', [App\Http\Controllers\Sales\ProfileController::class, 'getBlocks'])->name('sales.profile.blocks');
+
+
+
+    });
+});
 
 // Test route for AJAX endpoints
 // Route::get('test-ajax-endpoints', function() {

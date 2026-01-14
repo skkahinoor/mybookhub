@@ -12,6 +12,7 @@ class BookRequest extends Model
         'book_title',
         'author_name',
         'message',
+        'admin_reply',
         'requested_by_user',
         'status',
     ];
@@ -19,5 +20,9 @@ class BookRequest extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'requested_by_user');
+    }
+    public function replies()
+    {
+        return $this->hasMany(BookRequestReply::class, 'book_request_id')->orderBy('created_at', 'asc');
     }
 }

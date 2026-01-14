@@ -3,6 +3,7 @@
 @section('content')
     <div class="container py-5">
         <div class="row">
+
             <!-- Search Results -->
             <div class="col-lg-9">
                 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -20,6 +21,49 @@
                     </div>
                 </div>
 
+                <!-- Active Filters -->
+                {{-- @if (request('search') || request('section_id') || request('condition') || request('language_id') || request('min_price') || request('max_price'))
+                    <div class="mb-4">
+                        <div class="d-flex flex-wrap gap-2">
+                            @if (request('search'))
+                                <span class="badge bg-light text-dark p-2">
+                                    Search: {{ request('search') }}
+                                </span>
+                            @endif
+                            @if (request('section_id'))
+                                <span class="badge bg-light text-dark p-2">
+                                    Category: {{ \App\Models\Section::find(request('section_id'))->name }}
+                                </span>
+                            @endif
+                            @if (request('condition'))
+                                <span class="badge bg-light text-dark p-2">
+                                    Condition: {{ ucfirst(request('condition')) }}
+                                </span>
+                            @endif
+                            @if (request('language_id'))
+                                <span class="badge bg-light text-dark p-2">
+                                    Language: {{ \App\Models\Language::find(request('language_id'))->name }}
+                                </span>
+                            @endif
+                            @if (request('min_price') || request('max_price'))
+                                <span class="badge bg-light text-dark p-2">
+                                    Price:
+                                    @if (request('min_price'))
+                                        ₹{{ request('min_price') }}
+                                    @endif
+                                    @if (request('min_price') && request('max_price'))
+                                        -
+                                    @endif
+                                    @if (request('max_price'))
+                                        ₹{{ request('max_price') }}
+                                    @endif
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                @endif --}}
+
+                <!-- Products Grid -->
                 <div class="row g-4">
                     @forelse($products as $product)
                         @php
