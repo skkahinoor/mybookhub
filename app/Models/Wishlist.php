@@ -15,6 +15,7 @@ class Wishlist extends Model
         'user_id',
         'session_id',
         'product_id',
+        'product_attribute_id',
         'quantity',
     ];
 
@@ -44,6 +45,11 @@ class Wishlist extends Model
         }
 
         return $items;
+    }
+
+    public function attribute()
+    {
+        return $this->belongsTo(ProductsAttribute::class, 'product_attribute_id');
     }
 
     public static function totalWishlistItems(): int

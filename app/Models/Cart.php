@@ -12,17 +12,31 @@ class Cart extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'session_id',
+        'user_id',
+        'product_attribute_id',
+        'product_id',
+        'size',
+        'quantity',
+    ];
+
 
 
     // Relationship of a Cart Item `carts` table with a Product `products` table (every cart item belongs to a product)
-    public function product() { // A Product `products` belongs to a Vendor `vendors`, and the Foreign Key of the Relationship is the `product_id` column
+    public function product()
+    { // A Product `products` belongs to a Vendor `vendors`, and the Foreign Key of the Relationship is the `product_id` column
         return $this->belongsTo('App\Models\Product', 'product_id'); // 'product_id' is the Foreign Key of the Relationship
     }
 
-
+    public function productAttribute()
+    {
+        return $this->belongsTo(ProductsAttribute::class, 'product_attribute_id');
+    }
 
     // Get the Cart Items of a cerain user (using their `user_id` if they're authenticated/logged in or their `session_id` if they're not authenticated/not logged in (guest))
-    public static function getCartItems() { // this method is called (used) in cart() method in Front/ProductsController.php
+    public static function getCartItems()
+    { // this method is called (used) in cart() method in Front/ProductsController.php
         // Get all Cart items of the user depending on whether the user is authenticated/logged in or logged out (Guest)
         if (Auth::check()) { // if the user is authenticated/logged in, get their cart items through their BOTH `user_id` and `session_id` in `carts` table
             $getCartItems = Cart::with([ // Constraining Eager Loads: https://laravel.com/docs/9.x/eloquent-relationships#constraining-eager-loads    // Subquery Where Clauses: https://laravel.com/docs/9.x/queries#subquery-where-clauses    // Advanced Subqueries: https://laravel.com/docs/9.x/eloquent#advanced-subqueries    // Eager Loading (using with() method): https://laravel.com/docs/9.x/eloquent-relationships#eager-loading
@@ -32,7 +46,6 @@ class Cart extends Model
             ])->orderBy('id', 'Desc')->where([ // orderBy() method: https://laravel.com/docs/9.x/queries#orderby
                 'user_id'    => Auth::user()->id // Through the `user_id` as the user is authenticated/logged in
             ])->get()->toArray();
-
         } else { // if the user is NOT authenticated/logged out/Guest, get their cart items through their `session_id` ONLY (obviously `user_id` = 0 in this case) in `carts` table
             $getCartItems = Cart::with([ // Constraining Eager Loads: https://laravel.com/docs/9.x/eloquent-relationships#constraining-eager-loads    // Subquery Where Clauses: https://laravel.com/docs/9.x/queries#subquery-where-clauses    // Advanced Subqueries: https://laravel.com/docs/9.x/eloquent#advanced-subqueries    // Eager Loading (using with() method): https://laravel.com/docs/9.x/eloquent-relationships#eager-loading
                 'product' => function ($query) { // 'product' is the relationship method name in Cart.php Model
@@ -49,7 +62,8 @@ class Cart extends Model
     }
 
     // Get total cart items count
-    public static function totalCartItems() {
+    public static function totalCartItems()
+    {
         if (Auth::check()) {
             $user_id = Auth::user()->id;
             $totalCartItems = Cart::where('user_id', $user_id)->sum('quantity');
@@ -59,5 +73,4 @@ class Cart extends Model
         }
         return $totalCartItems;
     }
-
 }
