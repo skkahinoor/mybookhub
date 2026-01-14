@@ -87,7 +87,7 @@
                                                 Sign up here
                                             </a>
                                         </p>
-                                    </div>                                    
+                                    </div>
                                 </form>
                             </div>
                         </div>

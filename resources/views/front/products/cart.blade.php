@@ -52,7 +52,7 @@
                                 <tbody>
                                     <tr>
                                         <td>Order Subtotal</td>
-                                        <td>₹<span id="subtotal">{{ $total_price ?? 0 }}</span></td>
+                                        <td>₹<span id="orderSubtotal">{{ $total_price ?? 0 }}</span></td>
                                     </tr>
                                     <tr>
                                         <td>Shipping</td>

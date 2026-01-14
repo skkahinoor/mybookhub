@@ -3,164 +3,164 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <style>
-.quantity-controls {
-    display: flex;
-    align-items: center;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 4px;
-    width: fit-content;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.qty-btn {
-    background: #ffffff;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    color: #495057;
-    font-size: 12px;
-}
-
-.qty-btn:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.qty-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-.qty-btn:disabled {
-    background: #f8f9fa;
-    color: #adb5bd;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-.qty-input {
-    width: 50px;
-    height: 32px;
-    text-align: center;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    margin: 0 8px;
-    font-weight: 600;
-    color: #495057;
-    background: #ffffff;
-    font-size: 14px;
-}
-
-.qty-input:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-}
-
-.qty-minus {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-right: none;
-}
-
-.qty-plus {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-left: none;
-}
-
-.qty-input {
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
     .quantity-controls {
-        padding: 2px;
+        display: flex;
+        align-items: center;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 4px;
+        width: fit-content;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     .qty-btn {
-        width: 28px;
-        height: 28px;
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: #495057;
+        font-size: 12px;
+    }
+
+    .qty-btn:hover {
+        background: #e9ecef;
+        border-color: #adb5bd;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .qty-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .qty-btn:disabled {
+        background: #f8f9fa;
+        color: #adb5bd;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
     }
 
     .qty-input {
-        width: 40px;
-        height: 28px;
-        margin: 0 4px;
-        font-size: 12px;
+        width: 50px;
+        height: 32px;
+        text-align: center;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        margin: 0 8px;
+        font-weight: 600;
+        color: #495057;
+        background: #ffffff;
+        font-size: 14px;
     }
-}
 
-/* Notification styles */
-.qty-notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    color: white;
-    font-weight: 500;
-    z-index: 9999;
-    transform: translateX(100%);
-    transition: transform 0.3s ease;
-    max-width: 300px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
+    .qty-input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
 
-.qty-notification.show {
-    transform: translateX(0);
-}
+    .qty-minus {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        border-right: none;
+    }
 
-.qty-notification-info {
-    background: #17a2b8;
-}
+    .qty-plus {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-left: none;
+    }
 
-.qty-notification-success {
-    background: #28a745;
-}
+    .qty-input {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
 
-.qty-notification-warning {
-    background: #ffc107;
-    color: #212529;
-}
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .quantity-controls {
+            padding: 2px;
+        }
 
-.qty-notification-error {
-    background: #dc3545;
-}
+        .qty-btn {
+            width: 28px;
+            height: 28px;
+        }
 
-/* Disabled button styles */
-.qty-btn.disabled {
-    background: #f8f9fa;
-    color: #adb5bd;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
+        .qty-input {
+            width: 40px;
+            height: 28px;
+            margin: 0 4px;
+            font-size: 12px;
+        }
+    }
 
-/* Prevent multiple clicks during update */
-.product-item-quantity.updating .qty-btn {
-    pointer-events: none;
-    opacity: 0.6;
-}
+    /* Notification styles */
+    .qty-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 9999;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
 
-.product-item-quantity.updating .qty-input {
-    background: #f8f9fa;
-    color: #6c757d;
-}
+    .qty-notification.show {
+        transform: translateX(0);
+    }
+
+    .qty-notification-info {
+        background: #17a2b8;
+    }
+
+    .qty-notification-success {
+        background: #28a745;
+    }
+
+    .qty-notification-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .qty-notification-error {
+        background: #dc3545;
+    }
+
+    /* Disabled button styles */
+    .qty-btn.disabled {
+        background: #f8f9fa;
+        color: #adb5bd;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Prevent multiple clicks during update */
+    .product-item-quantity.updating .qty-btn {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+
+    .product-item-quantity.updating .qty-input {
+        background: #f8f9fa;
+        color: #6c757d;
+    }
 </style>
 
 <!-- Products-List-Wrapper -->
@@ -177,70 +177,85 @@
             </tr>
         </thead>
         <tbody>
-            {{-- We'll place this $total_price inside the foreach loop to calculate the total price of all products in Cart. Check the end of the next foreach loop before @endforeach --}}
-            @php $total_price = 0 @endphp
+            @php $total_price = 0; @endphp
 
             @foreach ($getCartItems as $item)
-                {{-- $getCartItems is passed in from cart() method in Front/ProductsController.php --}}
                 @php
-                    $getDiscountPriceDetails = \App\Models\Product::getDiscountPriceDetails($item['product_id']);
+                    // ✅ ATTRIBUTE-WISE PRICE (MULTI VENDOR FIX)
+                    $priceDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute(
+                        $item['product_attribute_id'],
+                    );
+
+                    $finalPrice = $priceDetails['final_price'] ?? 0;
+                    $originalPrice = $priceDetails['product_price'] ?? 0;
+                    $discount = $priceDetails['discount'] ?? 0;
+
+                    $itemTotal = $finalPrice * $item['quantity'];
+                    $total_price += $itemTotal;
                 @endphp
 
                 <tr>
+                    {{-- Product Image --}}
                     <td class="product-item-img">
                         @if (!empty($item['product']['product_image']))
-                            <img src="{{ asset('front/images/product_images/small/' . $item['product']['product_image']) }}" alt="{{ $item['product']['product_name'] ?? 'Product' }}" class="img-fluid" style="max-width: 80px; height: auto;">
+                            <img src="{{ asset('front/images/product_images/small/' . $item['product']['product_image']) }}"
+                                alt="{{ $item['product']['product_name'] }}" class="img-fluid" style="max-width:80px;">
                         @else
-                            <img src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="No Image" class="img-fluid" style="max-width: 80px; height: auto;">
+                            <img src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="No Image"
+                                class="img-fluid" style="max-width:80px;">
                         @endif
                     </td>
+
+                    {{-- Product Name --}}
                     <td class="product-item-name">
-                        <a href="{{ url('product/' . $item['product_id']) }}">
-                            {{ $item['product']['product_name'] ?? 'Product Name Not Available' }}
+                        <a href="{{ url('product/' . $item['product_attribute_id']) }}">
+                            {{ $item['product']['product_name'] ?? 'Product' }}
                         </a>
                     </td>
+
+                    {{-- Unit Price --}}
                     <td class="product-item-price">
-                        @if (isset($getDiscountPriceDetails['discount']) && $getDiscountPriceDetails['discount'] > 0)
-                            <div class="item-new-price">
-                                ₹{{ $getDiscountPriceDetails['final_price'] ?? 0 }}
-                            </div>
-                            <div class="item-old-price" style="text-decoration: line-through; color: #999;">
-                                ₹{{ $getDiscountPriceDetails['product_price'] ?? 0 }}
-                            </div>
-                        @else
-                            <div class="item-new-price">
-                                ₹{{ $getDiscountPriceDetails['final_price'] ?? 0 }}
+                        <div class="item-new-price">
+                            ₹{{ number_format($finalPrice, 2) }}
+                        </div>
+
+                        @if ($discount > 0)
+                            <div class="item-old-price text-muted text-decoration-line-through">
+                                ₹{{ number_format($originalPrice, 2) }}
                             </div>
                         @endif
                     </td>
+
+                    {{-- Quantity --}}
                     <td class="product-item-quantity">
                         <div class="quantity-controls">
-                            <button type="button" class="qty-btn qty-minus" data-min="1" data-cartid="{{ $item['id'] }}" title="Decrease quantity">
+                            <button type="button" class="qty-btn qty-minus" data-min="1"
+                                data-cartid="{{ $item['id'] }}" title="Decrease quantity">
                                 <i class="fas fa-minus"></i>
                             </button>
-                            <input type="text" class="qty-input" value="{{ $item['quantity'] }}" data-original-qty="{{ $item['quantity'] }}" readonly>
-                            <button type="button" class="qty-btn qty-plus" data-max="1000" data-cartid="{{ $item['id'] }}" title="Increase quantity">
+                            <input type="text" class="qty-input" value="{{ $item['quantity'] }}"
+                                data-original-qty="{{ $item['quantity'] }}" readonly>
+                            <button type="button" class="qty-btn qty-plus" data-max="1000"
+                                data-cartid="{{ $item['id'] }}" title="Increase quantity">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
                     </td>
+                    {{-- Total --}}
                     <td class="product-item-totle">
-                        ₹{{ ($getDiscountPriceDetails['final_price'] ?? 0) * ($item['quantity'] ?? 1) }}
+                        ₹{{ number_format($itemTotal, 2) }}
                     </td>
-                    <td class="product-item-close">
-                        <button class="btn btn-outline-danger btn-sm deleteCartItem" data-cartid="{{ $item['id'] }}" title="Remove item">
+
+                    {{-- Remove --}}
+                    <td class="product-item-close text-end">
+                        <button class="btn btn-outline-danger btn-sm deleteCartItem" data-cartid="{{ $item['id'] }}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </td>
                 </tr>
-
-                {{-- This is placed here INSIDE the foreach loop to calculate the total price of all products in Cart --}}
-                @php
-                    $itemTotal = ($getDiscountPriceDetails['final_price'] ?? 0) * ($item['quantity'] ?? 1);
-                    $total_price = $total_price + $itemTotal;
-                @endphp
             @endforeach
         </tbody>
+
     </table>
 </div>
 <!-- Products-List-Wrapper /- -->
@@ -334,7 +349,7 @@
             }
         }
 
-                // Show notification
+        // Show notification
         function showNotification(message, type = 'info') {
             // Remove any existing notifications first
             $('.qty-notification').remove();
@@ -394,35 +409,27 @@
                 },
                 success: function(resp) {
                     if (resp.status) {
-                        // Update the input field
-                        $input.val(qty);
 
-                        // Update button states
-                        updateButtonStates($row);
-
-                        // Show success notification only if quantity actually changed
-                        let currentQty = parseInt($input.attr('data-original-qty') || $input.val());
-                        if (qty !== currentQty) {
-                            showNotification('Quantity updated successfully!', 'success');
-                            $input.attr('data-original-qty', qty);
-                        }
-
-                        // Update total cart items count
-                        if (resp.totalCartItems !== undefined) {
-                            $('.totalCartItems').text(resp.totalCartItems);
-                        }
-
-                        // Update the entire cart view if provided
+                        // Update cart items
                         if (resp.view) {
                             $('#appendCartItems').html(resp.view);
                         }
 
-                        // Update header cart view if provided
+                        // Header cart
                         if (resp.headerview) {
                             $('.headerCartItems').html(resp.headerview);
                         }
-                    } else {
-                        showNotification(resp.message || 'Could not update quantity.', 'error');
+
+                        // Cart count
+                        if (resp.totalCartItems !== undefined) {
+                            $('.totalCartItems').text(resp.totalCartItems);
+                        }
+
+                        // 🔥 UPDATE ORDER SUMMARY (NO REFRESH)
+                        if (resp.subtotal !== undefined) {
+                            $('#orderSubtotal').text(resp.subtotal);
+                            $('#grandTotal').text(resp.grandTotal);
+                        }
                     }
                 },
                 error: function(xhr) {

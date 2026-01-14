@@ -113,7 +113,6 @@ class Product extends Model
 
         $originalPrice = (float) $product->product_price;
 
-        // ✅ EXACT ATTRIBUTE IF VENDOR PROVIDED
         $attribute = ProductsAttribute::when($vendor_id, function ($q) use ($vendor_id) {
             $q->where('vendor_id', $vendor_id);
         })
@@ -137,10 +136,6 @@ class Product extends Model
         return round($finalPrice);
     }
 
-    /* =========================
-       PRICE + DISCOUNT DETAILS
-       (BACKWARD COMPATIBLE)
-    ========================= */
     public static function getDiscountPriceDetails($product_id, $vendor_id = null)
     {
         $product = self::select('product_price', 'category_id')->find($product_id);
@@ -155,7 +150,6 @@ class Product extends Model
 
         $originalPrice = (float) $product->product_price;
 
-        // ✅ EXACT ATTRIBUTE (IF vendor exists)
         $attribute = ProductsAttribute::when($vendor_id, function ($q) use ($vendor_id) {
             $q->where('vendor_id', $vendor_id);
         })
@@ -218,6 +212,43 @@ class Product extends Model
             'discount'      => round($originalPrice - $finalPrice),
         ];
     }
+
+    public static function getDiscountPriceDetailsByAttribute($attribute_id)
+    {
+        $attribute = ProductsAttribute::with('product')->where('id', $attribute_id)
+            ->where('status', 1)
+            ->first();
+
+        if (!$attribute || !$attribute->product) {
+            return [
+                'product_price' => 0,
+                'final_price'   => 0,
+                'discount'      => 0,
+            ];
+        }
+
+        $originalPrice = (float) $attribute->product->product_price;
+        $productDiscount = (float) $attribute->product_discount;
+
+        // Category discount fallback
+        $categoryDiscount = Category::where('id', $attribute->product->category_id)
+            ->value('category_discount') ?? 0;
+
+        if ($productDiscount > 0) {
+            $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
+        } elseif ($categoryDiscount > 0) {
+            $finalPrice = $originalPrice - ($originalPrice * $categoryDiscount / 100);
+        } else {
+            $finalPrice = $originalPrice;
+        }
+
+        return [
+            'product_price' => round($originalPrice),
+            'final_price'   => round($finalPrice),
+            'discount'      => round($originalPrice - $finalPrice),
+        ];
+    }
+
 
     public static function isProductNew($product_id)
     {

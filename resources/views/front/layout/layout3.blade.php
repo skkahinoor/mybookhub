@@ -103,7 +103,7 @@
             width: 150px;
         }
 
-        .submenu>li:hover>.submenu1 {
+        .submenu1>li:hover {
             display: block;
         }
 
@@ -172,8 +172,9 @@
                                             <path
                                                 d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z" />
                                         </svg>
-                                        <span class="badge totalWishlistItems">{{ isset($headerWishlistItemsCount) ? $headerWishlistItemsCount : 0 }}</span>
-                        {{-- Debug: {{ var_dump($headerWishlistItemsCount ?? 'not set') }} --}}
+                                        <span
+                                            class="badge totalWishlistItems">{{ isset($headerWishlistItemsCount) ? $headerWishlistItemsCount : 0 }}</span>
+                                        {{-- Debug: {{ var_dump($headerWishlistItemsCount ?? 'not set') }} --}}
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -184,19 +185,22 @@
                                             <path
                                                 d="M15.55 13c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.37-.66-.11-1.48-.87-1.48H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2h7.45zM6.16 6h12.15l-2.76 5H8.53L6.16 6zM7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
                                         </svg>
-                                        <span class="badge totalCartItems">{{ isset($headerCartItems) ? count($headerCartItems) : 0 }}</span>
+                                        <span
+                                            class="badge totalCartItems">{{ isset($headerCartItems) ? count($headerCartItems) : 0 }}</span>
                                     </button>
                                     <ul class="dropdown-menu cart-list headerCartItems">
-                                        @if(isset($headerCartItems) && count($headerCartItems) > 0)
+                                        @if (isset($headerCartItems) && count($headerCartItems) > 0)
                                             @foreach ($headerCartItems as $item)
                                                 @php
-                                                       $getDiscountPriceDetail = \App\Models\Product::getDiscountPriceDetails($item['product_id']);
+                                                    $getDiscountPriceDetail = \App\Models\Product::getDiscountPriceDetails(
+                                                        $item['product_id'],
+                                                    );
                                                 @endphp
                                                 <li class="cart-item">
                                                     <div class="media">
                                                         <div class="media-left">
                                                             <a href="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
-                                class="main-image-link">
+                                                                class="main-image-link">
                                                                 <img src="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
                                                                     alt="{{ $item['product']['product_name'] ?? 'Product' }}"
                                                                     class="img-fluid rounded shadow-sm"
@@ -210,13 +214,16 @@
                                                             </h6>
                                                             <span class="dz-price">
                                                                 @if ($getDiscountPriceDetail['discount'] > 0)
-                                                                    ₹{{ $getDiscountPriceDetail['final_price'] }} x {{ ($item['quantity'] ?? 1) }}
+                                                                    ₹{{ $getDiscountPriceDetail['final_price'] }} x
+                                                                    {{ $item['quantity'] ?? 1 }}
                                                                 @else
-                                                                    ₹{{ $getDiscountPriceDetail['final_price'] }} x {{ ($item['quantity'] ?? 1) }}
+                                                                    ₹{{ $getDiscountPriceDetail['final_price'] }} x
+                                                                    {{ $item['quantity'] ?? 1 }}
                                                                 @endif
                                                             </span>
 
-                                                            <a href="javascript:void(0);"><span class="item-close" data-cartid="{{ $item['id'] }}">&times;</span></a>
+                                                            <a href="javascript:void(0);"><span class="item-close"
+                                                                    data-cartid="{{ $item['id'] }}">&times;</span></a>
 
                                                         </div>
                                                     </div>
@@ -236,7 +243,8 @@
                                                 <h6 class="text-secondary">Your cart is empty</h6>
                                             </li>
                                             <li class="text-center">
-                                                <a href="{{ url('/') }}" class="btn btn-sm btn-primary btnhover w-100">Start Shopping</a>
+                                                <a href="{{ url('/') }}"
+                                                    class="btn btn-sm btn-primary btnhover w-100">Start Shopping</a>
                                             </li>
                                         @endif
                                     </ul>
@@ -245,18 +253,20 @@
                                     <li class="nav-item">
                                         <div class="row">
                                             <div class="col" style="padding-right: 3px;">
-                                                <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
+                                                {{-- <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
                                                     data-bs-target="#loginModal" class="btn text-white"
                                                     style="font-size: 12px;">
                                                     <i class="fas fa-user" style="margin-right:8px;"></i> Login
-                                                </a>
+                                                </a> --}}
+                                                <a href="{{ route('user.login') }}" class="btn btn-primary btnhover">Login</a>
                                             </div>
                                             <div class="col" style="padding-left: 3px;">
-                                                <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
+                                                {{-- <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
                                                     data-bs-target="#registerModal" class="btn text-white"
                                                     style="font-size: 12px;">
                                                     <i class="fas fa-user-plus" style="margin-right:4px;"></i> Register
-                                                </a>
+                                                </a> --}}
+                                                <a href="{{ route('user.register') }}" class="btn btn-primary btnhover">Register</a>
                                             </div>
                                         </div>
                                     </li>
@@ -277,7 +287,7 @@
                                                 <span>{{ Auth::user()->email ?? 'Email Not Set' }}</span>
                                             </div>
                                             <div class="dropdown-body">
-                                                <a href="{{ route('useraccount') }}"
+                                                <a href="{{ route('user.account') }}"
                                                     class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
                                                     <div>
                                                         <svg xmlns="http://www.w3.org/2000/svg" height="20px"
@@ -394,7 +404,8 @@
                                 <input type="text" class="form-control" id="headerSearchInput"
                                     aria-label="Text input with dropdown button" placeholder="Search Books Here"
                                     style="border-top-left-radius:0px !important; border-bottom-left-radius:0px !important;">
-                                <button class="btn" id="headerSearchButton" type="button"><i class="flaticon-loupe"></i></button>
+                                <button class="btn" id="headerSearchButton" type="button"><i
+                                        class="flaticon-loupe"></i></button>
                             </div>
                         </div>
                     </div>
@@ -439,14 +450,16 @@
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="mobileSearchInput"
                                         aria-label="Text input with dropdown button" placeholder="Search Books Here">
-                                    <button class="btn" id="mobileSearchButton" type="button"><i class="flaticon-loupe"></i></button>
+                                    <button class="btn" id="mobileSearchButton" type="button"><i
+                                            class="flaticon-loupe"></i></button>
                                 </div>
                             </div>
                             <ul class="nav navbar-nav">
                                 <li class="nav-item"><a href="{{ url('/') }}"
                                         class="nav-link"><span>Home</span></a>
                                 </li>
-                                <li class="nav-item"><a href="{{ url('/about') }}" class="nav-link"><span>About Us</span></a></li>
+                                <li class="nav-item"><a href="{{ url('/about') }}" class="nav-link"><span>About
+                                            Us</span></a></li>
                                 <li class="sub-menu-down"><a href="javascript:void(0);"><span><i
                                                 class="fas fa-tag me-2"></i> Condition
                                             ({{ ucfirst($condition) }})</span></a>
@@ -583,11 +596,11 @@
                                     <li><a href="{{ url('/services') }}">Services</a></li>
                                     {{-- <li><a href="{{ url('product/' . $products['id']) }}">Book Details</a></li> --}}
                                     <li><a href="blog-detail.html">Blog Details</a></li>
-                                    <li><a href="#">Shop</a></li>
+                                    {{-- <li><a href="#">Shop</a></li> --}}
                                 </ul>
                             </div>
                         </div>
-                        <div class="col-xl-2 col-lg-3 col-md-4 col-sm-4 col-4 wow fadeInUp" data-wow-delay="0.4s">
+                        {{-- <div class="col-xl-2 col-lg-3 col-md-4 col-sm-4 col-4 wow fadeInUp" data-wow-delay="0.4s">
                             <div class="widget widget_services">
                                 <h5 class="footer-title">Resources</h5>
                                 <ul>
@@ -597,7 +610,7 @@
                                     <li><a href="{{ url('/user/login-register') }}">Login</a></li>
                                 </ul>
                             </div>
-                        </div>
+                        </div> --}}
                         <div class="col-xl-3 col-lg-3 col-md-12 col-sm-12 wow fadeInUp" data-wow-delay="0.5s">
                             <div class="widget widget_getintuch">
                                 <h5 class="footer-title">Get in Touch With Us</h5>
@@ -610,11 +623,11 @@
                                     </li>
                                     <li>
                                         <i class="flaticon-phone"></i>
-                                        <span>+91 (0) 84807 46394, +91 (0) 84807 46395</span>
+                                        <span>+91-9876543210</span>
                                     </li>
                                     <li>
                                         <i class="flaticon-email"></i>
-                                        <span>support@srdcindia.co.in</span>
+                                        <span>support@mybookhub.in</span>
                                     </li>
                                 </ul>
                             </div>
@@ -629,7 +642,7 @@
                 <div class="container">
                     <div class="row fb-inner">
                         <div class="col-lg-6 col-md-12 text-start">
-                            <p class="copyright-text">Bookhub Book Store Ecommerce Website - © 2025 All Rights
+                            <p class="copyright-text">Bookhub Book Store Ecommerce Website - © 2026 All Rights
                                 Reserved</p>
                         </div>
                         <div class="col-lg-6 col-md-12 text-end">
@@ -664,7 +677,8 @@
                         <!-- Email or Mobile -->
                         <div class="mb-3">
                             <label>Phone</label>
-                            <input type="text" name="login" class="form-control" placeholder="Enter 10-digit mobile" required>
+                            <input type="text" name="login" class="form-control"
+                                placeholder="Enter 10-digit mobile" required>
                         </div>
                         <!-- Password -->
                         <div class="mb-3">

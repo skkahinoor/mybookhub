@@ -62,7 +62,14 @@
                                         <li><span>Language</span>{{ $productDetails['language']['name'] ?? 'N/A' }}</li>
                                         <li><span>ISBN</span>ISBN-{{ $productDetails['product_isbn'] }}</li>
                                         <li><span>Year</span>{{ $productDetails['product_year'] ?? 'N/A' }}</li>
-                                        <li><span>Stock</span>{{ $totalStock > 0 ? $totalStock : 'Out of Stock' }}</li>
+                                        <li>
+                                            <span>Stock</span>
+                                            @if ($totalStock > 0)
+                                                {{ $totalStock }}
+                                            @else
+                                                <span class="text-danger">Out of Stock</span>
+                                            @endif
+                                        </li>
                                     </ul>
                                 </div>
                                 <div class="book-detail">
@@ -91,41 +98,7 @@
                                     }
                                 @endphp
                                 <p>
-                                    <svg width="24px" height="24px" viewBox="0 0 1024 1024" class="icon" version="1.1"
-                                        xmlns="http://www.w3.org/2000/svg" fill="#000000">
-                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-                                        <g id="SVGRepo_iconCarrier">
-                                            <path
-                                                d="M309.2 584.776h105.5l-49 153.2H225.8c-7.3 0-13.3-6-13.3-13.3 0-2.6 0.8-5.1 2.2-7.3l83.4-126.7c2.5-3.6 6.7-5.9 11.1-5.9z"
-                                                fill="#FFFFFF"></path>
-                                            <path
-                                                d="M404.5 791.276H225.8c-36.7 0-66.5-29.8-66.5-66.5 0-13 3.8-25.7 11-36.6l83.4-126.7c12.3-18.7 33.1-29.9 55.5-29.9h178.4l-83.1 259.7z m-95.3-206.5c-4.5 0-8.6 2.2-11.1 6l-83.4 126.7c-1.4 2.2-2.2 4.7-2.2 7.3 0 7.3 6 13.3 13.3 13.3h139.9l49-153.2H309.2z"
-                                                fill="#333333"></path>
-                                            <path d="M454.6 584.776h109.6l25.3 153.3H429.3z" fill="#FFFFFF"></path>
-                                            <path
-                                                d="M652.2 791.276H366.6l42.8-259.6h200l42.8 259.6z m-222.9-53.2h160.2l-25.3-153.3H454.6l-25.3 153.3z"
-                                                fill="#333333"></path>
-                                            <path
-                                                d="M618.6 584.776h105.5c4.5 0 8.6 2.2 11.1 6l83.5 126.7c4 6.1 2.3 14.4-3.8 18.4-2.2 1.4-4.7 2.2-7.3 2.2H667.7l-49.1-153.3z"
-                                                fill="#FFFFFF"></path>
-                                            <path
-                                                d="M807.6 791.276H628.9l-83.1-259.7h178.4c22.4 0 43.2 11.2 55.5 29.9l83.4 126.7c9.8 14.8 13.2 32.6 9.6 50s-13.7 32.3-28.6 42.1c-10.8 7.2-23.5 11-36.5 11z m-139.9-53.2h139.9c2.6 0 5.1-0.8 7.3-2.2 4-2.6 5.3-6.4 5.7-8.4 0.4-2 0.7-6-1.9-10l-83.4-126.6c-2.5-3.8-6.6-6-11.1-6H618.6l49.1 153.2z"
-                                                fill="#333333"></path>
-                                            <path
-                                                d="M534.1 639.7C652.5 537.4 711.7 445.8 711.7 365c0-127-102.7-212.1-195-212.1s-195 85.1-195 212.1c0 80.8 59.2 172.3 177.7 274.7 9.9 8.6 24.7 8.6 34.7 0z"
-                                                fill="#8CAAFF"></path>
-                                            <path
-                                                d="M516.7 672.7c-12.5 0-24.9-4.3-34.8-12.9C356.2 551.2 295.1 454.7 295.1 365c0-142.8 114.6-238.7 221.6-238.7S738.3 222.2 738.3 365c0 89.7-61.1 186.2-186.9 294.8-9.8 8.6-22.3 12.9-34.7 12.9z m0-493.2c-79.7 0-168.4 76.2-168.4 185.5 0 72.3 56.7 158 168.4 254.6C628.5 523 685.1 437.3 685.1 365c0-109.3-88.7-185.5-168.4-185.5z"
-                                                fill="#333333"></path>
-                                            <path d="M516.7 348m-97.5 0a97.5 97.5 0 1 0 195 0 97.5 97.5 0 1 0-195 0Z"
-                                                fill="#FFFFFF">
-                                            </path>
-                                            <path
-                                                d="M516.7 472.1c-68.4 0-124.1-55.7-124.1-124.1s55.7-124.1 124.1-124.1S640.8 279.5 640.8 348 585.1 472.1 516.7 472.1z m0-195.1c-39.1 0-70.9 31.8-70.9 70.9 0 39.1 31.8 70.9 70.9 70.9s70.9-31.8 70.9-70.9c0-39.1-31.8-70.9-70.9-70.9z"
-                                                fill="#333333"></path>
-                                        </g>
-                                    </svg> :
+                                    <i class="fa-solid fa-location-dot"></i> :
                                     <span>
                                         @if ($distance !== null)
                                             {{ $distance < 1 ? round($distance * 1000) . ' m' : round($distance, 2) . ' km' }}
@@ -135,30 +108,33 @@
                                     </span>
                                 </p>
                                 @php
-                                    // Get product ID - handle both object and array access
-                                    $productId = is_array($productDetails)
-                                        ? $productDetails['id']
-                                        : $productDetails->id;
-                                    $priceDetails = \App\Models\ProductsAttribute::getDiscountPriceDetails($productId);
+                                    $attributeId = $productAttribute->id;
+
+                                    $priceDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute(
+                                        $attributeId,
+                                    );
+
                                     $originalPrice = $priceDetails['product_price'];
-                                    $discountedPrice = $priceDetails['final_price'];
-                                    $savings = $priceDetails['discount'];
-                                    $hasDiscount = $savings > 0;
-                                    $savingsPercentage =
-                                        $originalPrice > 0 && $savings > 0 ? ($savings / $originalPrice) * 100 : 0;
+                                    $finalPrice = $priceDetails['final_price'];
+                                    $discount = $priceDetails['discount'];
                                 @endphp
+
                                 <div class="book-footer">
                                     <div class="price">
-                                        <h5>₹{{ number_format($discountedPrice, 2) }}</h5>
-                                        @if ($hasDiscount)
-                                            <p class="p-lr10"><del>₹{{ number_format($originalPrice, 2) }}</del></p>
+                                        <h5>₹{{ number_format($finalPrice, 2) }}</h5>
+                                        @if ($discount)
+                                            <p class="p-lr10">
+                                                <del>₹{{ number_format($originalPrice, 2) }}</del>
+                                            </p>
                                         @endif
                                     </div>
                                     <div class="product-num">
                                         <form action="{{ url('cart/add') }}" method="POST"
                                             class="d-flex align-items-center">
                                             @csrf
-                                            <input type="hidden" name="product_id" value="{{ $productDetails['id'] }}">
+                                            {{-- <input type="hidden" name="product_id" value="{{ $productDetails['id'] }}"> --}}
+                                            <input type="hidden" name="product_attribute_id"
+                                                value="{{ $productAttribute->id }}">
                                             <div class="quantity btn-quantity style-1 me-3">
                                                 <input id="quantity_top" type="number" value="1" min="1"
                                                     name="quantity" />
@@ -171,13 +147,19 @@
                                         <form action="{{ url('wishlist/add') }}" method="POST"
                                             class="d-flex align-items-center">
                                             @csrf
-                                            <input type="hidden" name="product_id" value="{{ $productDetails['id'] }}">
+
+                                            {{-- IMPORTANT: vendor-specific --}}
+                                            <input type="hidden" name="product_attribute_id"
+                                                value="{{ $productAttribute->id }}">
                                             <input type="hidden" name="quantity" value="1">
+
                                             <button type="submit" class="btn btn-outline-danger ms-2 item-addwishlist"
-                                                data-product-id="{{ $productDetails['id'] }}" title="Add to Wishlist">
-                                                <i class="flaticon-heart"></i> <span>&nbsp;&nbsp;Add to Wishlist</span>
+                                                title="Add to Wishlist">
+                                                <i class="flaticon-heart"></i>
+                                                <span>&nbsp;&nbsp;Add to Wishlist</span>
                                             </button>
                                         </form>
+
                                     </div>
                                 </div>
                             </div>
@@ -305,7 +287,8 @@
                                                                 <div class="reply">
                                                                     <a class="comment-reply-link"
                                                                         href="javascript:void(0);"><i
-                                                                            class="fa fa-reply"></i> Reply</a>
+                                                                            class="fa fa-reply"></i>
+                                                                        Reply</a>
                                                                 </div>
                                                             </div>
                                                         </li>
