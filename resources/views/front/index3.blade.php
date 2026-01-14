@@ -177,7 +177,7 @@
     </div>
 
     <!-- Recommend Section Start -->
-    <section class="content-inner-1 bg-grey reccomend py-5">
+<section class="content-inner-1 bg-grey reccomend py-5">
     <div class="container">
         <div class="section-head text-center mb-4">
             <h2 class="title">Recommended For You</h2>
@@ -186,20 +186,23 @@
 
         <div class="row g-4">
             @foreach ($sliderProducts as $sliderProduct)
-
                 @php
                     $product = $sliderProduct['product'] ?? null;
-                    if (!$product) continue;
+                    if (!$product) {
+                        continue;
+                    }
+
+                    // ✅ ATTRIBUTE ID (MOST IMPORTANT)
+                    $attributeId = $sliderProduct['id']; // product_attribute_id
 
                     $productImage = $product['product_image'] ?? 'no-image.png';
                     $productName  = $product['product_name'] ?? 'N/A';
 
-                    // ✅ MULTI-VENDOR PRICE
                     $originalPrice  = (float) $product['product_price'];
                     $vendorDiscount = (float) ($sliderProduct['product_discount'] ?? 0);
 
                     if ($vendorDiscount > 0) {
-                        $finalPrice = round($originalPrice - ($originalPrice * $vendorDiscount / 100));
+                        $finalPrice = round($originalPrice - ($originalPrice * $vendorDiscount) / 100);
                         $discountPercent = round($vendorDiscount);
                     } else {
                         $finalPrice = round($originalPrice);
@@ -208,35 +211,36 @@
                 @endphp
 
                 <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
-                    <div class="card flex-fill shadow-sm border-0" style="border-radius:20px; overflow:hidden;">
+                    <div class="card flex-fill shadow-sm border-0"
+                         style="border-radius:20px; overflow:hidden;">
 
                         {{-- IMAGE --}}
                         <div class="position-relative">
-                            <a href="{{ url('product/' . $product['id']) }}">
+                            <a href="{{ url('product/' . $attributeId) }}">
                                 <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
                                      class="card-img-top"
                                      style="height:220px; object-fit:cover;"
                                      onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
                             </a>
 
-                            @if($discountPercent > 0)
+                            @if ($discountPercent > 0)
                                 <span class="badge bg-danger position-absolute top-0 end-0 m-2">
                                     -{{ $discountPercent }}%
                                 </span>
                             @endif
                         </div>
 
-                        {{-- BODY --}}
+
                         <div class="card-body d-flex flex-column">
                             <h5 class="mb-1">
-                                <a href="{{ url('product/' . $product['id']) }}"
+                                <a href="{{ url('product/' . $product['id'] . '?attribute=' . $attributeId) }}"
                                    class="text-dark text-decoration-none">
                                     {{ $productName }}
                                 </a>
                             </h5>
 
                             <div class="mb-2">
-                                @if($discountPercent > 0)
+                                @if ($discountPercent > 0)
                                     <span class="text-muted text-decoration-line-through small">
                                         ₹{{ round($originalPrice) }}
                                     </span>
@@ -255,10 +259,10 @@
                                 {{ $sliderProduct['vendor']['vendorbusinessdetails']['shop_name'] ?? 'N/A' }}
                             </span>
 
+                            {{-- ✅ ADD TO CART (ATTRIBUTE BASED) --}}
                             <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
                                 @csrf
-                                <input type="hidden" name="product_id" value="{{ $product['id'] }}">
-                                <input type="hidden" name="vendor_id" value="{{ $sliderProduct['vendor_id'] }}">
+                                <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
                                 <input type="hidden" name="quantity" value="1">
 
                                 <button type="submit" class="btn btn-outline-primary btn-sm w-100">
@@ -273,7 +277,6 @@
         </div>
     </div>
 </section>
-
 
 
     <!-- icon-box1 -->

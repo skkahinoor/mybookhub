@@ -183,25 +183,20 @@
                                                                 ->first();
                                                         @endphp
 
-                                                        <a href="#" title="Add Stock" data-bs-toggle="modal"
+                                                        {{-- <a href="#" title="Add Stock" data-bs-toggle="modal"
                                                             data-bs-target="#addAttributeModal" data-id="{{ $product->id }}"
                                                             data-name="{{ $product->product_name ?? 'N/A' }}"
                                                             data-stock="{{ $firstAttribute->stock ?? 0 }}"
                                                             data-discount="{{ $firstAttribute->product_discount ?? 0 }}"
                                                             id="openAddAttributeModal">
                                                             <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
-                                                        </a>
+                                                        </a> --}}
 
                                                         <a title="Add Multiple Images"
                                                             href="{{ url('admin/add-images/' . $product->id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
                                                         </a>
 
-                                                        <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
-                                                            onclick="return confirm('Are you sure you want to delete this product attribute?')"
-                                                            title="Delete Product Attribute">
-                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                        </a>
                                                     @endif
                                                 </td>
                                             </tr>
