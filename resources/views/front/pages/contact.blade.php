@@ -50,6 +50,10 @@
                             <input type="text" id="contact-name" class="form-control" name="name" placeholder="Name" value="{{ old('name') }}">
                         </div>
                         <div class="mb-3">
+                            <label for="contact-phone" class="form-label">Your Phone <span class="text-danger">*</span></label>
+                            <input type="tel" id="contact-phone" class="form-control" name="phone" placeholder="Phone" value="{{ old('phone') }}">
+                        </div>
+                        <div class="mb-3">
                             <label for="contact-email" class="form-label">Your Email <span class="text-danger">*</span></label>
                             <input type="email" id="contact-email" class="form-control" name="email" placeholder="Email" value="{{ old('email') }}">
                         </div>

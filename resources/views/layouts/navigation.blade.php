@@ -1,9 +1,9 @@
 <nav class="navbar navbar-expand-lg bg-white border-bottom shadow-sm sticky-top">
     <div class="container">
 
-        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" style="height:45px; width:260px;" alt="BookHub Logo" class="brand-logo mb-3">
+        {{-- <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" style="height:45px; width:260px;" alt="BookHub Logo" class="brand-logo mb-3"> --}}
         <!-- FAVICONS ICON -->
-        <link rel="icon" type="image/x-icon" href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}" />
+        {{-- <link rel="icon" type="image/x-icon" href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}" /> --}}
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
             aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
