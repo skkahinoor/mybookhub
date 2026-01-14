@@ -361,6 +361,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery');
     });
 
+    require __DIR__ . '/vendor.php';
+
     // AJAX routes for cascading location dropdowns (outside admin middleware for AJAX access)
     Route::get('institution-countries', [InstitutionManagementController::class, 'getCountries'])->name('admin.institution.countries');
     Route::get('institution-states', [InstitutionManagementController::class, 'getStates'])
