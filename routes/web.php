@@ -40,11 +40,11 @@ require __DIR__ . '/auth.php';
 Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function () {
     Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one HTTP request method for the same route, so GET for rendering the login.php page, and POST for the login.php page <form> submission (e.g. GET and POST)    // Matches the '/admin/dashboard' URL (i.e. http://127.0.0.1:8000/admin/dashboard)
 
-                                                                                                          // This a Route Group for routes that ALL start with 'admin/-something' and utilizes the 'admin' Authentication Guard    // Note: You must remove the '/admin'/ part from the routes that are written inside this Route Group (e.g.    Route::get('logout');    , NOT    Route::get('admin/logout');    )
+    // This a Route Group for routes that ALL start with 'admin/-something' and utilizes the 'admin' Authentication Guard    // Note: You must remove the '/admin'/ part from the routes that are written inside this Route Group (e.g.    Route::get('logout');    , NOT    Route::get('admin/logout');    )
     Route::group(['middleware' => ['auth:admin']], function () {
         // check isbn
         Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
-        ->name('admin.book.isbnLookup');
+            ->name('admin.book.isbnLookup');
         Route::post('/book/name-suggestions', [AdminProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
         Route::get('dashboard', 'AdminController@dashboard');                                                 // Admin login
         Route::get('logout', 'AdminController@logout');                                                       // Admin logout
@@ -63,7 +63,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Sales Executives Management - Must be BEFORE admins/{type?} route to prevent route conflicts
         Route::get('sales-executive', [SalesExecutiveController::class, 'index'])->name('salesexecutives.index');
-        Route::match(['get','post'], 'add-edit-sales-executive/{id?}', [SalesExecutiveController::class, 'addEdit'])->name('sales_executives.add_edit');
+        Route::match(['get', 'post'], 'add-edit-sales-executive/{id?}', [SalesExecutiveController::class, 'addEdit'])->name('sales_executives.add_edit');
         Route::get('delete-sales-executive/{id}', [SalesExecutiveController::class, 'delete'])->name('sales_executives.delete');
         Route::post('update-sales-executive-status', [SalesExecutiveController::class, 'updateStatus'])->name('sales_executives.update_status');
         Route::get('sales-executive/{id}/details', [SalesExecutiveController::class, 'getDetails'])->name('sales_executives.get_details');
@@ -96,7 +96,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-section/{id}', 'SectionController@deleteSection');                        // Delete a section in sections.blade.php
         Route::match(['get', 'post'], 'add-edit-section/{id?}', 'SectionController@addEditSection'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the section, and if not passed, this means Add a Section
 
-                                                                                                        // Categories
+        // Categories
         Route::get('categories', 'CategoryController@categories');                                      // Categories in Catalogue Management in Admin Panel
         Route::post('update-category-status', 'CategoryController@updateCategoryStatus')->name('updatecategorystatus');               // Update Categories Status using AJAX in categories.blade.php
         Route::match(['get', 'post'], 'add-edit-category/{id?}', 'CategoryController@addEditCategory'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Category, and if not passed, this means Add a Category
@@ -122,7 +122,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Subjects
         Route::post('update-subject-status', [SubjectController::class, 'updateStatus'])->name('updatesubjectstatus');
 
-                                                                                                           // Update Brands Status using AJAX in brands.blade.php
+        // Update Brands Status using AJAX in brands.blade.php
         Route::get('delete-publisher/{id}', 'PublisherController@deletePublisher');                        // Delete a brand in brands.blade.php
         Route::match(['get', 'post'], 'add-edit-publisher/{id?}', 'PublisherController@addEditPublisher'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the brand, and if not passed, this means Add a Brand
 
@@ -203,11 +203,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('withdrawals/{id}/update-status', 'WithdrawalController@updateStatus')->name('admin.withdrawals.updateStatus');
         Route::post('withdrawals/minimum/update', 'WithdrawalController@updateMinimum')->name('admin.withdrawals.minimum.update');
 
-// AJAX route for getting classes based on institution type (outside admin middleware for AJAX access)
+        // AJAX route for getting classes based on institution type (outside admin middleware for AJAX access)
         Route::get('institution-classes', [InstitutionManagementController::class, 'getClasses'])->name('admin.institution.classes');
 
 
-// AJAX route for getting location data based on pincode (outside admin middleware for AJAX access)
+        // AJAX route for getting location data based on pincode (outside admin middleware for AJAX access)
         Route::get('institution-location-data', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getLocationData'])->name('institution_location_data');
 
 
@@ -224,13 +224,13 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             Route::get('delete-product-video/{id}', [AdminProductsController::class, 'deleteProductVideo']);             // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
         });
 
-                                                                                                                      // Attributes
+        // Attributes
         Route::match(['get', 'post'], 'add-edit-attributes/{id}', [AdminProductsController::class, 'addAttributes']); // GET request to render the add_edit_attributes.blade.php view, and POST request to submit the <form> in that view
         Route::post('update-attribute-status', [AdminProductsController::class, 'updateAttributeStatus']);            // Update Attributes Status using AJAX in add_edit_attributes.blade.php
         Route::get('delete-attribute/{id}', [AdminProductsController::class, 'deleteAttribute']);                     // Delete an attribute in add_edit_attributes.blade.php
         Route::match(['get', 'post'], 'edit-attributes/{id}', [AdminProductsController::class, 'editAttributes']);    // in add_edit_attributes.blade.php
 
-                                                                                                         // Images
+        // Images
         Route::match(['get', 'post'], 'add-images/{id}', [AdminProductsController::class, 'addImages']); // GET request to render the add_edit_attributes.blade.php view, and POST request to submit the <form> in that view
         Route::post('update-image-status', [AdminProductsController::class, 'updateImageStatus']);       // Update Images Status using AJAX in add_images.blade.php
         Route::get('delete-image/{id}', [AdminProductsController::class, 'deleteImage']);                // Delete an image in add_images.blade.php
@@ -241,7 +241,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-banner/{id}', 'BannerController@deleteBanner');                        // Delete a banner in banners.blade.php
         Route::match(['get', 'post'], 'add-edit-banner/{id?}', 'BannerController@addEditBanner'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Banner', and if not passed, this means' Add a Banner'    // GET request to render the add_edit_banner.blade.php view, and POST request to submit the <form> in that view
 
-                                                                                                             // Filters
+        // Filters
         Route::get('filters', 'FilterController@filters');                                                   // Render filters.blade.php page
         Route::post('update-filter-status', 'FilterController@updateFilterStatus');                          // Update Filter Status using AJAX in filters.blade.php
         Route::post('update-filter-value-status', 'FilterController@updateFilterValueStatus');               // Update Filter Value Status using AJAX in filters_values.blade.php
@@ -250,7 +250,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-filter-value/{id?}', 'FilterController@addEditFilterValue'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Filter Value', and if not passed, this means' Add a Filter Value'    // GET request to render the add_edit_filter_value.blade.php view, and POST request to submit the <form> in that view
         Route::post('category-filters', 'FilterController@categoryFilters');                                 // Show the related filters depending on the selected category <select> in category_filters.blade.php (which in turn is included by add_edit_product.php) using AJAX. Check admin/js/custom.js
 
-                                                                                     // Coupons (with vendor plan check middleware)
+        // Coupons (with vendor plan check middleware)
         Route::middleware(['vendor.plan'])->group(function () {
             Route::get('coupons', 'CouponsController@coupons');                          // Render admin/coupons/coupons.blade.php page in the Admin Panel
             Route::post('update-coupon-status', 'CouponsController@updateCouponStatus')->name('updatecouponstatus'); // Update Coupon Status (active/inactive) via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
@@ -258,7 +258,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             Route::match(['get', 'post'], 'add-edit-coupon/{id?}', 'CouponsController@addEditCoupon'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Coupon', and if not passed, this means' Add a Coupon'    // GET request to render the add_edit_coupon.blade.php view (whether Add or Edit depending on passing or not passing the Optional Parameter {id?}), and POST request to submit the <form> in that same page
         });
 
-                                                                              // Users
+        // Users
         Route::get('users', 'UserController@users');                          // Render admin/users/users.blade.php page in the Admin Panel
         Route::post('update-user-status', 'UserController@updateUserStatus')->name('updateuserstatus'); // Update User Status (active/inactive) via AJAX in admin/users/users.blade.php, check admin/js/custom.js
 
@@ -354,27 +354,24 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-contact-status', 'AdminController@updateContactStatus');
         Route::match(['get', 'post'], 'contact-queries/reply/{id}', 'AdminController@updateContactReply');
         Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery');
-
-
     });
 
     // AJAX routes for cascading location dropdowns (outside admin middleware for AJAX access)
     Route::get('institution-countries', [InstitutionManagementController::class, 'getCountries'])->name('admin.institution.countries');
-Route::get('institution-states', [InstitutionManagementController::class, 'getStates'])
-    ->name('admin.institution.states');
+    Route::get('institution-states', [InstitutionManagementController::class, 'getStates'])
+        ->name('admin.institution.states');
 
-Route::get('institution-districts', [InstitutionManagementController::class, 'getDistricts'])
-    ->name('admin.institution.districts');
+    Route::get('institution-districts', [InstitutionManagementController::class, 'getDistricts'])
+        ->name('admin.institution.districts');
 
-Route::get('institution-blocks', [InstitutionManagementController::class, 'getBlocks'])
-    ->name('admin.institution.blocks');
+    Route::get('institution-blocks', [InstitutionManagementController::class, 'getBlocks'])
+        ->name('admin.institution.blocks');
 
 
     // AJAX routes for vendor location dropdowns
     Route::get('vendor-states', [App\Http\Controllers\Admin\AdminController::class, 'getVendorStates'])->name('vendor_states');
     Route::get('vendor-districts', [App\Http\Controllers\Admin\AdminController::class, 'getVendorDistricts'])->name('vendor_districts');
     Route::get('vendor-blocks', [App\Http\Controllers\Admin\AdminController::class, 'getVendorBlocks'])->name('vendor_blocks');
-
 });
 
 // User download order PDF invoice (We'll use the same viewPDFInvoice() function (but with different routes/URLs!) to render the PDF invoice for 'admin'-s in the Admin Panel and for the user to download it!) (we created this route outside outside the Admin Panel routes so that the user could use it!)
@@ -387,19 +384,19 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::post('/set-language', [IndexController::class, 'setLanguage']);
     Route::post('/set-location-session', [App\Http\Controllers\Front\LocationController::class, 'setLocationSession']);
 
-                                                                                                        // Dynamic Routes for the `url` column in the `categories` table using a foreach loop    // Listing/Categories Routes
-                                                                                                        // Important Note: When you run this Laravel project for the first time and if you're running  the "php artisan migrate" command for the first time, before that you must comment out the $catUrls variable and the following foreach loop in web.php file (routes file), because when we run that artisan command, by then the `categories` table has not been created yet, and this causes an error, so make sure to comment out this code in web.php file before running the "php artisan migrate" command for the first time.
+    // Dynamic Routes for the `url` column in the `categories` table using a foreach loop    // Listing/Categories Routes
+    // Important Note: When you run this Laravel project for the first time and if you're running  the "php artisan migrate" command for the first time, before that you must comment out the $catUrls variable and the following foreach loop in web.php file (routes file), because when we run that artisan command, by then the `categories` table has not been created yet, and this causes an error, so make sure to comment out this code in web.php file before running the "php artisan migrate" command for the first time.
     $catUrls = \App\Models\Category::select('url')->where('status', 1)->get()->pluck('url')->toArray(); // Routes like: /men, /women, /shirts, ...
-                                                                                                        // dd($catUrls);
+    // dd($catUrls);
     foreach ($catUrls as $key => $url) {
-                                                                                 // Important Note: When you run this Laravel project for the first time and if you're running  the "php artisan migrate" command for the first time, before that you must comment out the $catUrls variable and the following foreach loop in web.php file (routes file), because when we run that artisan command, by then the `categories` table has not been created yet, and this causes an error, so make sure to comment out this code in web.php file before running the "php artisan migrate" command for the first time.
+        // Important Note: When you run this Laravel project for the first time and if you're running  the "php artisan migrate" command for the first time, before that you must comment out the $catUrls variable and the following foreach loop in web.php file (routes file), because when we run that artisan command, by then the `categories` table has not been created yet, and this causes an error, so make sure to comment out this code in web.php file before running the "php artisan migrate" command for the first time.
         Route::match(['get', 'post'], '/' . $url, 'ProductsController@listing'); // used match() for the HTTP 'GET' requests to render listing.blade.php page and the HTTP 'POST' method for the AJAX request of the Sorting Filter or the HTML Form submission and jQuery for the Sorting Filter WITHOUT AJAX, AND ALSO for submitting the Search Form in listing.blade.php    // e.g.    /men    or    /computers    // Important Note: When you run this Laravel project for the first time and if you're running  the "php artisan migrate" command for the first time, before that you must comment out the $catUrls variable and the following foreach loop in web.php file (routes file), because when we run that artisan command, by then the `categories` table has not been created yet, and this causes an error, so make sure to comment out this code in web.php file before running the "php artisan migrate" command for the first time.
     }
 
-                                                                           // Vendor Login/Register
+    // Vendor Login/Register
     // Route::get('vendor/login-register', 'VendorController@loginRegister'); // render vendor login_register.blade.php page
 
-                                                                       // Vendor Register
+    // Vendor Register
     // the register HTML form submission in vendor login_register.blade.php page
     Route::get('vendor/register', 'VendorController@showRegister')->name('vendor.register'); // the register HTML form submission in vendor login_register.blade.php page
     Route::post('vendor/register', 'VendorController@register')->name('vendor.register.submit'); // the register HTML form submission in vendor login_register.blade.php page
@@ -419,7 +416,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     });
     Route::post('vendor/send-otp', 'VendorController@sendOtp')->name('vendor.otp.send');
 
-                                                                           // Confirm Vendor Account (from 'vendor_confirmation.blade.php) from the mail by Mailtrap
+    // Confirm Vendor Account (from 'vendor_confirmation.blade.php) from the mail by Mailtrap
     Route::get('vendor/confirm/{code}', 'VendorController@confirmVendor'); // {code} is the base64 encoded vendor e-mail with which they have registered which is a Route Parameters/URL Paramters: https://laravel.com/docs/9.x/routing#required-parameters    // this route is requested (accessed/opened) from inside the mail sent to vendor (vendor_confirmation.blade.php)
 
     // Render Single Product Detail Page in front/products/detail.blade.php
@@ -453,7 +450,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     // Delete a Cart Item AJAX call in front/products/cart_items.blade.php. Check front/js/custom.js
     Route::post('cart/delete', [ProductsController::class, 'cartDelete'])->name('cartDelete');
 
-                                                                                                    // Render User Login/Register page (front/users/login_register.blade.php)
+    // Render User Login/Register page (front/users/login_register.blade.php)
     Route::get('user/login-register', ['as' => 'login', 'uses' => 'UserController@loginRegister']); // 'as' => 'login'    is Giving this route a name 'login' route in order for the 'auth' middleware ('auth' middleware is the Authenticate.php) to redirect to the right page
 
     // User Registration (in front/users/login_register.blade.php) <form> submission using an AJAX request. Check front/js/custom.js
@@ -465,10 +462,10 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     // User logout (This route is accessed from Logout tab in the drop-down menu in the header (in front/layout/header.blade.php))
     Route::post('user/logout', 'UserController@userLogout')->name('logout');
 
-                                                                                            // User Forgot Password Functionality (this route is accessed from the <a> tag in front/users/login_register.blade.php through a 'GET' request, and through a 'POST' request when the HTML Form is submitted in front/users/forgot_password.blade.php)
+    // User Forgot Password Functionality (this route is accessed from the <a> tag in front/users/login_register.blade.php through a 'GET' request, and through a 'POST' request when the HTML Form is submitted in front/users/forgot_password.blade.php)
     Route::match(['get', 'post'], 'user/forgot-password', 'UserController@forgotPassword'); // We used match() method to use get() to render the front/users/forgot_password.blade.php page, and post() when the HTML Form in the same page is submitted    // The POST request is from an AJAX request. Check front/js/custom.js
 
-                                                                        // User account Confirmation E-mail which contains the 'Activation Link' to activate the user account (in resources/views/emails/confirmation.blade.php, using Mailtrap)
+    // User account Confirmation E-mail which contains the 'Activation Link' to activate the user account (in resources/views/emails/confirmation.blade.php, using Mailtrap)
     Route::get('user/confirm/{code}', 'UserController@confirmAccount'); // {code} is the base64 encoded user's 'Activation Code' sent to the user in the Confirmation E-mail with which they have registered, which is received as a Route Parameters/URL Paramters in the 'Activation Link'    // this route is requested (accessed/opened) from inside the mail sent to user (in resources/views/emails/confirmation.blade.php)
 
     // Website Search Form (to search for all website products). Check the HTML Form in front/layout/header.blade.php
@@ -519,7 +516,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         Route::get('user-districts', 'UserController@getUserDistricts')->name('user_districts');
         Route::get('user-blocks', 'UserController@getUserBlocks')->name('user_blocks');
 
-                                                                                             // Coupon Code redemption (Apply coupon) / Coupon Code HTML Form submission via AJAX in front/products/cart_items.blade.php, check front/js/custom.js
+        // Coupon Code redemption (Apply coupon) / Coupon Code HTML Form submission via AJAX in front/products/cart_items.blade.php, check front/js/custom.js
         Route::post('/apply-coupon', 'ProductsController@applyCoupon')->name('applyCoupon'); // Important Note: We added this route here as a protected route inside the 'auth' middleware group because ONLY logged in/authenticated users are allowed to redeem Coupons!
 
         // Checkout page (using match() method for the 'GET' request for rendering the front/products/checkout.blade.php page or the 'POST' request for the HTML Form submission in the same page (for submitting the user's Delivery Address and Payment Method))
@@ -537,7 +534,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         // Rendering Thanks page (after placing an order)
         Route::get('thanks', 'ProductsController@thanks');
 
-                                                                   // Render User 'My Orders' page
+        // Render User 'My Orders' page
         Route::get('user/orders/{id?}', 'OrderController@orders'); // If the slug {id?} (Optional Parameters) is passed in, this means go to the front/orders/order_details.blade.php page, and if not, this means go to the front/orders/orders.blade.php page
 
         // PayPal routes:
@@ -571,97 +568,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 Route::get('/dashboard', [App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');
 
 // Sales Executives routes
-Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function () {
-    Route::get('login', 'SalesExecutiveAuthController@showLogin')->name('sales.login');
-    Route::post('login', 'SalesExecutiveAuthController@login')->name('sales.login.submit');
-    Route::get('/sales/register', [SalesExecutiveAuthController::class, 'showRegister'])->name('sales.register');
-    Route::post('/sales/send-otp', [SalesExecutiveAuthController::class, 'sendOtp'])->name('sales.otp.send');
-    Route::post('/sales/register', [SalesExecutiveAuthController::class, 'register'])->name('sales.register.submit');
-
-    Route::group(['middleware' => ['sales']], function () {
-        Route::get('dashboard', 'SalesExecutiveAuthController@dashboard')->name('sales.dashboard');
-        Route::post('logout', 'SalesExecutiveAuthController@logout')->name('sales.logout');
-
-        // Sales Executive Profile
-        Route::get('profile', 'ProfileController@edit')->name('sales.profile.edit');
-        Route::post('profile', 'ProfileController@update')->name('sales.profile.update');
-
-        // Sales Institution Management (similar to Admin)
-        Route::resource('institution-managements', 'InstitutionManagementController')->names([
-            'index'   => 'sales.institution_managements.index',
-            'create'  => 'sales.institution_managements.create',
-            'store'   => 'sales.institution_managements.store',
-            'show'    => 'sales.institution_managements.show',
-            'edit'    => 'sales.institution_managements.edit',
-            'update'  => 'sales.institution_managements.update',
-            'destroy' => 'sales.institution_managements.destroy',
-        ]);
-
-        // AJAX: get classes/streams for a given institution (only those added by current sales)
-        Route::get('students/institution-classes', 'StudentController@getInstitutionClasses')
-            ->name('sales.students.institution_classes');
-
-// Sales Students Management (similar to Admin)
-        Route::resource('students', 'StudentController')->names([
-            'index'   => 'sales.students.index',
-            'create'  => 'sales.students.create',
-            'store'   => 'sales.students.store',
-            'show'    => 'sales.students.show',
-            'edit'    => 'sales.students.edit',
-            'update'  => 'sales.students.update',
-            'destroy' => 'sales.students.destroy',
-        ])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
-
-        // Sales Vendors Management
-        Route::resource('vendors', 'VendorController')->names([
-            'index'   => 'sales.vendors.index',
-            'create'  => 'sales.vendors.create',
-            'store'   => 'sales.vendors.store',
-            'show'    => 'sales.vendors.show',
-            'destroy' => 'sales.vendors.destroy',
-        ])->only(['index', 'create', 'store', 'show', 'destroy']);
-
-        // Route::post('students/store-user-location', 'StudentController@storeUserLocation')->name('sales.students.store_user_location');
-        // Route::post('students/store-institution-location', 'StudentController@storeInstitutionLocation')->name('sales.students.store_institution_location');
-        // Route::get('students/institution/{institution}/address', 'StudentController@getInstitutionAddress')->name('sales.students.institution_address');
-
-        // Sales Reports
-        Route::get('reports', 'ReportController@index')->name('sales.reports.index');
-
-        // Sales Withdrawals
-        Route::resource('withdrawals', 'WithdrawalController')->names([
-            'index'   => 'sales.withdrawals.index',
-            'create'  => 'sales.withdrawals.create',
-            'store'   => 'sales.withdrawals.store',
-        ])->only(['index', 'create', 'store']);
-
-// Sales Blocks Management (similar to Admin)
-        Route::resource('blocks', 'BlockController')->names([
-            'index'   => 'sales.blocks.index',
-            'create'  => 'sales.blocks.create',
-            'store'   => 'sales.blocks.store',
-            'show'    => 'sales.blocks.show',
-            'edit'    => 'sales.blocks.edit',
-            'update'  => 'sales.blocks.update',
-            'destroy' => 'sales.blocks.destroy',
-        ])->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
-
-// AJAX routes for cascading location dropdowns (outside admin middleware for AJAX access)
-        Route::get('institution-countries', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getCountries'])->name('institution_countries');
-        Route::get('institution-states', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getStates'])->name('institution_states');
-        Route::get('institution-districts', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getDistricts'])->name('institution_districts');
-        Route::get('institution-blocks', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getBlocks'])->name('institution_blocks');
-        Route::get('institution-classes', [App\Http\Controllers\Sales\InstitutionManagementController::class, 'getClasses'])->name('sales.institution.classes');
-
-        // AJAX routes for sales profile location dropdowns
-        Route::get('sales-profile-states', [App\Http\Controllers\Sales\ProfileController::class, 'getStates'])->name('sales.profile.states');
-        Route::get('sales-profile-districts', [App\Http\Controllers\Sales\ProfileController::class, 'getDistricts'])->name('sales.profile.districts');
-        Route::get('sales-profile-blocks', [App\Http\Controllers\Sales\ProfileController::class, 'getBlocks'])->name('sales.profile.blocks');
-
-
-
-    });
-});
+require __DIR__ . '/sales.php';
 
 // Test route for AJAX endpoints
 // Route::get('test-ajax-endpoints', function() {
