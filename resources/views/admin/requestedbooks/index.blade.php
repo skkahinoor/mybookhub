@@ -50,19 +50,13 @@
                                             @endif
                                         </td>
                                         <td>
-                                            {{-- <a href="{{ url('admin/add-edit-language/'.$language['id']) }}"><i style="font-size:25px;" class="mdi mdi-pencil-box"></i></a> --}}
-
-
-                                            {{-- <a href="javascript:void(0)" class="confirmDelete" module="book" moduleid="{{ $book['id'] }}"><i style="font-size:25px;" class="mdi mdi-file-excel-box"></i></a> --}}
-
-                                            {{-- <a title="book" class="confirmDelete" href="{{route('bookrequests.delete',$book->id )}}"><i style="font-size:25px;" class="mdi mdi-file-excel-box"></i></a> --}}
-
-                                            <form action="{{route('bookrequests.delete',$book->id )}}" method="POST" onsubmit="return confirm('Are you sure?');">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" style="border: none; padding: 0;background: transparent;"><i style=" font-size:25px;" class="mdi mdi-file-excel-box"></i></button>
-                                            </form>
-
+                                            <a href="{{ url('admin/requestedbooks/reply/'.$book['id']) }}" title="Reply">
+                                                <i style="font-size:25px;" class="mdi mdi-reply"></i>
+                                            </a>
+                                        
+                                            <a href="javascript:void(0)" class="confirmDelete" module="book" moduleid="{{ $book['id'] }}" title="Delete">
+                                                <i style="font-size:25px;" class="mdi mdi-file-excel-box"></i>
+                                            </a>
                                         </td>
                                     </tr>
                                     @endforeach

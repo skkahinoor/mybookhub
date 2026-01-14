@@ -13,11 +13,15 @@ use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\OtpController;
 use App\Http\Controllers\Api\InstitutionController;
-use App\Http\Controllers\Front\BookRequestController;
+use App\Http\Controllers\User\BookRequestController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\ProductsController;
 use App\Http\Controllers\Sales\SalesExecutiveAuthController;
 use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\User\AccountController;
+use App\Http\Controllers\User\AuthController;
+use App\Http\Controllers\User\DashboardController;
+use App\Http\Controllers\User\OrderController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -76,11 +80,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
         Route::get('delete-admin/{id}', 'AdminController@deleteAdmin');                        // Delete an Admin
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
-        Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('updateadminstatus');  
+        Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('updateadminstatus');
 
         // otp
         Route::get('admin/otps', [OtpController::class, 'otps'])->name('otps');
-        
+
         // Update Admin Status using AJAX in admins.blade.php
 
         // Sections (Sections, Categories, Subcategories, Products, Attributes)
@@ -130,6 +134,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         //RequestedBooks
         Route::get('requestedbooks', [BookRequestsController::class, 'index'])->name('requestbook.index');
+        Route::match(['get', 'post'], 'requestedbooks/reply/{id}', [BookRequestsController::class, 'reply'])->name('requestbook.reply');
         Route::delete('book-requests/{id}', [BookRequestsController::class, 'delete'])->name('bookrequests.delete');
         Route::post('admin/bookrequests/update-status', [BookRequestsController::class, 'updateStatus'])->name('bookrequests.updateStatus');
 
@@ -426,13 +431,13 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::get('user/login-register', ['as' => 'login', 'uses' => 'UserController@loginRegister']); // 'as' => 'login'    is Giving this route a name 'login' route in order for the 'auth' middleware ('auth' middleware is the Authenticate.php) to redirect to the right page
 
     // User Registration (in front/users/login_register.blade.php) <form> submission using an AJAX request. Check front/js/custom.js
-    Route::post('user/register', 'UserController@userRegister')->name('user.register');
+    //Route::post('user/register', 'UserController@userRegister')->name('user.register');
 
     // User Login (in front/users/login_register.blade.php) <form> submission using an AJAX request. Check front/js/custom.js
-    Route::post('user/login', 'UserController@userLogin')->name('user.login');
+    //Route::post('user/login', 'UserController@userLogin')->name('user.login');
 
     // User logout (This route is accessed from Logout tab in the drop-down menu in the header (in front/layout/header.blade.php))
-    Route::post('user/logout', 'UserController@userLogout')->name('logout');
+    //Route::post('user/logout', 'UserController@userLogout')->name('logout');
 
                                                                                             // User Forgot Password Functionality (this route is accessed from the <a> tag in front/users/login_register.blade.php through a 'GET' request, and through a 'POST' request when the HTML Form is submitted in front/users/forgot_password.blade.php)
     Route::match(['get', 'post'], 'user/forgot-password', 'UserController@forgotPassword'); // We used match() method to use get() to render the front/users/forgot_password.blade.php page, and post() when the HTML Form in the same page is submitted    // The POST request is from an AJAX request. Check front/js/custom.js
@@ -503,8 +508,8 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         // Rendering Thanks page (after placing an order)
         Route::get('thanks', 'ProductsController@thanks');
 
-                                                                   // Render User 'My Orders' page
-        Route::get('user/orders/{id?}', 'OrderController@orders'); // If the slug {id?} (Optional Parameters) is passed in, this means go to the front/orders/order_details.blade.php page, and if not, this means go to the front/orders/orders.blade.php page
+        // OLD FRONT ORDERS ROUTE - COMMENTED OUT TO USE USER DASHBOARD ORDERS INSTEAD
+        // Route::get('user/orders/{id?}', 'OrderController@orders'); // This route conflicts with user dashboard orders. Use /user/orders instead.
 
         // PayPal routes:
         // PayPal payment gateway integration in Laravel (this route is accessed from checkout() method in Front/ProductsController.php). Rendering front/paypal/paypal.blade.php page
@@ -535,6 +540,32 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 });
 
 Route::get('/dashboard', [App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');
+
+//User routes
+Route::prefix('/user')->namespace('App\Http\Controllers\User')->group(function () {
+
+    Route::get('/login', [AuthController::class, 'Login'])->name('user.login');
+    Route::get('/register', [AuthController::class, 'Register'])->name('user.register');
+    Route::post('/loginStore', [AuthController::class, 'loginStore'])->name('user.loginstore');
+    Route::post('/registerStore', [AuthController::class, 'registerStore'])->name('user.registerstore');
+
+    // Protected routes (require authentication)
+    Route::group(['middleware' => ['auth']], function () {
+        Route::get('/index', [DashboardController::class, 'index'])->name('user.index');
+        Route::post('/user/profile/update', [AccountController::class, 'updateProfile'])
+            ->name('user.profile.update');
+        Route::post('user/logout',[AuthController::class, 'logout'])->name('user.logout');
+        Route::match(['GET', 'POST'], '/account', [AccountController::class, 'index'])->name('user.account');
+        Route::post('/avatar', [AccountController::class, 'updateAvatar'])->name('user.avatar.update');
+        
+        Route::post('/book-request', [BookRequestController::class, 'store'])->name('user.book.request.store');
+        Route::get('/book-requests', [BookRequestController::class, 'indexbookrequest'])->name('user.book.indexrequest');
+        Route::post('/book-request/{id}/reply', [BookRequestController::class, 'replyToQuery'])->name('user.book.reply');
+        Route::get('/queries', [BookRequestController::class, 'indexqueries'])->name('user.query.index');
+        Route::get('/orders', [OrderController::class, 'index'])->name('user.orders.index');
+        Route::get('/orders/{id}', [OrderController::class, 'show'])->name('user.orders.show');
+    });
+});
 
 // Sales Executives routes
 Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function () {
