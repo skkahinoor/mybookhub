@@ -379,6 +379,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     Route::get('vendor-blocks', [App\Http\Controllers\Admin\AdminController::class, 'getVendorBlocks'])->name('vendor_blocks');
 });
 
+// Vendor routes (separate prefix /vendor, vendor-only access)
+require __DIR__ . '/vendor.php';
+
 // User download order PDF invoice (We'll use the same viewPDFInvoice() function (but with different routes/URLs!) to render the PDF invoice for 'admin'-s in the Admin Panel and for the user to download it!) (we created this route outside outside the Admin Panel routes so that the user could use it!)
 Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Admin\OrderController@viewPDFInvoice');
 
@@ -572,34 +575,12 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
 Route::get('/dashboard', [App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');
 
-//User routes
-Route::prefix('/user')->namespace('App\Http\Controllers\User')->group(function () {
-
-    Route::get('/login', [AuthController::class, 'Login'])->name('user.login');
-    Route::get('/register', [AuthController::class, 'Register'])->name('user.register');
-    Route::post('/loginStore', [AuthController::class, 'loginStore'])->name('user.loginstore');
-    Route::post('/registerStore', [AuthController::class, 'registerStore'])->name('user.registerstore');
-
-    // Protected routes (require authentication)
-    Route::group(['middleware' => ['auth']], function () {
-        Route::get('/index', [DashboardController::class, 'index'])->name('user.index');
-        Route::post('/user/profile/update', [AccountController::class, 'updateProfile'])
-            ->name('user.profile.update');
-        Route::post('user/logout', [AuthController::class, 'logout'])->name('user.logout');
-        Route::match(['GET', 'POST'], '/account', [AccountController::class, 'index'])->name('user.account');
-        Route::post('/avatar', [AccountController::class, 'updateAvatar'])->name('user.avatar.update');
-
-        Route::post('/book-request', [BookRequestController::class, 'store'])->name('user.book.request.store');
-        Route::get('/book-requests', [BookRequestController::class, 'indexbookrequest'])->name('user.book.indexrequest');
-        Route::post('/book-request/{id}/reply', [BookRequestController::class, 'replyToQuery'])->name('user.book.reply');
-        Route::get('/queries', [BookRequestController::class, 'indexqueries'])->name('user.query.index');
-        Route::get('/orders', [OrderController::class, 'index'])->name('user.orders.index');
-        Route::get('/orders/{id}', [OrderController::class, 'show'])->name('user.orders.show');
-    });
-});
 
 // Sales Executives routes
 require __DIR__ . '/sales.php';
+
+// User routes
+require __DIR__ . '/user.php';
 
 // Test route for AJAX endpoints
 // Route::get('test-ajax-endpoints', function() {
