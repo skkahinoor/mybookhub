@@ -177,106 +177,102 @@
     </div>
 
     <!-- Recommend Section Start -->
-<section class="content-inner-1 bg-grey reccomend py-5">
-    <div class="container">
-        <div class="section-head text-center mb-4">
-            <h2 class="title">Recommended For You</h2>
-            <p>Discover titles picked just for you — find your next great read from our curated list!</p>
-        </div>
+    <section class="content-inner-1 bg-grey reccomend py-5">
+        <div class="container">
+            <div class="section-head text-center mb-4">
+                <h2 class="title">Recommended For You</h2>
+                <p>Discover titles picked just for you — find your next great read from our curated list!</p>
+            </div>
 
-        <div class="row g-4">
-            @foreach ($sliderProducts as $sliderProduct)
-                @php
-                    $product = $sliderProduct['product'] ?? null;
-                    if (!$product) {
-                        continue;
-                    }
+            <div class="row g-4">
+                @foreach ($sliderProducts as $sliderProduct)
+                    @php
+                        $product = $sliderProduct['product'] ?? null;
+                        if (!$product) {
+                            continue;
+                        }
 
-                    // ✅ ATTRIBUTE ID (MOST IMPORTANT)
-                    $attributeId = $sliderProduct['id']; // product_attribute_id
+                        $attributeId = $sliderProduct['id']; // product_attribute_id
 
-                    $productImage = $product['product_image'] ?? 'no-image.png';
-                    $productName  = $product['product_name'] ?? 'N/A';
+                        $productImage = $product['product_image'] ?? 'no-image.png';
+                        $productName = $product['product_name'] ?? 'N/A';
 
-                    $originalPrice  = (float) $product['product_price'];
-                    $vendorDiscount = (float) ($sliderProduct['product_discount'] ?? 0);
+                        $originalPrice = (float) $product['product_price'];
+                        $vendorDiscount = (float) ($sliderProduct['product_discount'] ?? 0);
 
-                    if ($vendorDiscount > 0) {
-                        $finalPrice = round($originalPrice - ($originalPrice * $vendorDiscount) / 100);
-                        $discountPercent = round($vendorDiscount);
-                    } else {
-                        $finalPrice = round($originalPrice);
-                        $discountPercent = 0;
-                    }
-                @endphp
+                        if ($vendorDiscount > 0) {
+                            $finalPrice = round($originalPrice - ($originalPrice * $vendorDiscount) / 100);
+                            $discountPercent = round($vendorDiscount);
+                        } else {
+                            $finalPrice = round($originalPrice);
+                            $discountPercent = 0;
+                        }
+                    @endphp
 
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
-                    <div class="card flex-fill shadow-sm border-0"
-                         style="border-radius:20px; overflow:hidden;">
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
+                        <div class="card flex-fill shadow-sm border-0" style="border-radius:20px; overflow:hidden;">
 
-                        {{-- IMAGE --}}
-                        <div class="position-relative">
-                            <a href="{{ url('product/' . $attributeId) }}">
-                                <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
-                                     class="card-img-top"
-                                     style="height:220px; object-fit:cover;"
-                                     onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
-                            </a>
-
-                            @if ($discountPercent > 0)
-                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
-                                    -{{ $discountPercent }}%
-                                </span>
-                            @endif
-                        </div>
-
-
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="mb-1">
-                                <a href="{{ url('product/' . $product['id'] . '?attribute=' . $attributeId) }}"
-                                   class="text-dark text-decoration-none">
-                                    {{ $productName }}
+                            {{-- IMAGE --}}
+                            <div class="position-relative">
+                                <a href="{{ url('product/' . $attributeId) }}">
+                                    <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
+                                        class="card-img-top" style="height:220px; object-fit:cover;"
+                                        onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
                                 </a>
-                            </h5>
 
-                            <div class="mb-2">
                                 @if ($discountPercent > 0)
-                                    <span class="text-muted text-decoration-line-through small">
-                                        ₹{{ round($originalPrice) }}
-                                    </span>
-                                    <span class="fw-bold text-primary ms-1">
-                                        ₹{{ $finalPrice }}
-                                    </span>
-                                @else
-                                    <span class="fw-bold text-primary">
-                                        ₹{{ round($originalPrice) }}
+                                    <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                        -{{ $discountPercent }}%
                                     </span>
                                 @endif
                             </div>
 
-                            <span class="text-dark small mb-2">
-                                Shop Name:
-                                {{ $sliderProduct['vendor']['vendorbusinessdetails']['shop_name'] ?? 'N/A' }}
-                            </span>
 
-                            {{-- ✅ ADD TO CART (ATTRIBUTE BASED) --}}
-                            <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
-                                @csrf
-                                <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
-                                <input type="hidden" name="quantity" value="1">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="mb-1">
+                                    <a href="{{ url('product/' . $attributeId) }}" class="text-dark text-decoration-none">
+                                        {{ $productName }}
+                                    </a>
+                                </h5>
 
-                                <button type="submit" class="btn btn-outline-primary btn-sm w-100">
-                                    <i class="flaticon-shopping-cart-1"></i> Add to cart
-                                </button>
-                            </form>
+                                <div class="mb-2">
+                                    @if ($discountPercent > 0)
+                                        <span class="text-muted text-decoration-line-through small">
+                                            ₹{{ round($originalPrice) }}
+                                        </span>
+                                        <span class="fw-bold text-primary ms-1">
+                                            ₹{{ $finalPrice }}
+                                        </span>
+                                    @else
+                                        <span class="fw-bold text-primary">
+                                            ₹{{ round($originalPrice) }}
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <span class="text-dark small mb-2">
+                                    Shop Name:
+                                    {{ $sliderProduct['vendor']['vendorbusinessdetails']['shop_name'] ?? 'N/A' }}
+                                </span>
+
+                                {{-- ✅ ADD TO CART (ATTRIBUTE BASED) --}}
+                                <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
+                                    @csrf
+                                    <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
+                                    <input type="hidden" name="quantity" value="1">
+
+                                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                                        <i class="flaticon-shopping-cart-1"></i> Add to cart
+                                    </button>
+                                </form>
+                            </div>
+
                         </div>
-
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
         </div>
-    </div>
-</section>
+    </section>
 
 
     <!-- icon-box1 -->
@@ -334,173 +330,139 @@
     <!-- icon-box1 End-->
 
     <!-- Book Sale -->
-    <section class="content-inner-1">
-        <div class="container">
-            <div class="section-head book-align">
-                <h2 class="title mb-0">Books on Sale</h2>
-                <div class="pagination-align style-1">
-                    <div class="swiper-button-prev"><i class="fa-solid fa-angle-left"></i></div>
-                    <div class="swiper-pagination-two"></div>
-                    <div class="swiper-button-next"><i class="fa-solid fa-angle-right"></i></div>
+    @php
+        $discountCount = $discountedProducts->count();
+    @endphp
+
+    @if ($discountCount > 0)
+        <section class="content-inner-1">
+            <div class="container">
+
+                {{-- SECTION HEAD --}}
+                <div class="section-head book-align">
+                    <h2 class="title mb-0">Books on Sale</h2>
+
+                    {{-- SHOW SLIDER CONTROLS ONLY IF > 4 --}}
+                    @if ($discountCount > 4)
+                        <div class="pagination-align style-1">
+                            <div class="swiper-button-prev"><i class="fa-solid fa-angle-left"></i></div>
+                            <div class="swiper-pagination-two"></div>
+                            <div class="swiper-button-next"><i class="fa-solid fa-angle-right"></i></div>
+                        </div>
+                    @endif
                 </div>
-            </div>
-            <div class="swiper-container books-wrapper-3 swiper-four">
-                <div class="swiper-wrapper">
 
-                    @forelse($newProducts as $product)
+                {{-- WRAPPER --}}
+                @if ($discountCount > 4)
+                    {{-- SLIDER MODE --}}
+                    <div class="swiper-container books-wrapper-3 swiper-four">
+                        <div class="swiper-wrapper">
+                        @else
+                            {{-- GRID MODE --}}
+                            <div class="row g-4">
+                @endif
+
+                {{-- LOOP --}}
+                @foreach ($discountedProducts as $item)
+                    @php
+                        $product = $item->product;
+                        if (!$product) {
+                            continue;
+                        }
+
+                        $attributeId = $item->id;
+                        $priceDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($attributeId);
+                    @endphp
+
+                    @if ($discountCount > 4)
                         <div class="swiper-slide">
-                            @php
-                                $discountedPrice = \App\Models\Product::getDiscountPrice($product->id);
-                                $hasDiscount = $discountedPrice > 0;
-                            @endphp
-                            <div class="books-card style-3 wow fadeInUp" data-wow-delay="0.1s">
-                                <div class="dz-media">
-                                    <a href="{{ url('product/' . $product['id']) }}">
-                                        <img src="{{ asset('front/images/product_images/small/' . $product['product_image']) }}"
-                                            style="height: 256px;  width: 357px !important; object-fit: cover;"
-                                            alt="book">
-                                    </a>
+                        @else
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                    @endif
+
+                    <div class="books-card style-3 wow fadeInUp">
+
+                        {{-- IMAGE --}}
+                        <div class="dz-media position-relative">
+                            <a href="{{ url('product/' . $attributeId) }}">
+                                <img src="{{ asset('front/images/product_images/small/' . ($product->product_image ?? 'no-image.png')) }}"
+                                    style="height:256px;width:100%;object-fit:cover;"
+                                    onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'"
+                                    alt="{{ $product->product_name }}">
+                            </a>
+
+                            {{-- DISCOUNT BADGE --}}
+                            <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                -{{ $item->product_discount }}%
+                            </span>
+                        </div>
+
+                        <div class="dz-content">
+
+                            {{-- TITLE --}}
+                            <h5 class="title book-title-truncate">
+                                <a href="{{ url('product/' . $attributeId) }}" title="{{ $product->product_name }}">
+                                    {{ $product->product_name }}
+                                </a>
+                            </h5>
+
+                            {{-- AUTHORS --}}
+                            <ul class="dz-tags">
+                                <li>
+                                    Authors:
+                                    {{ $product->authors->pluck('name')->first() ?? 'N/A' }}
+                                    @if ($product->authors->count() > 1)
+                                        ...
+                                    @endif
+                                </li>
+                            </ul>
+
+                            {{-- FOOTER --}}
+                            <div class="book-footer">
+                                <div class="rate">
+                                    <span style="text-transform: capitalize;">
+                                        {{ $product->condition }}
+                                    </span>
                                 </div>
-                                <div class="dz-content">
-                                    <h5 class="title"><a
-                                            href="{{ url('product/' . $product['id']) }}">{{ $product['product_name'] }}</a>
-                                    </h5>
-                                    <ul class="dz-tags">
-                                        @php
-                                            $allAuthorNames = $product->authors->pluck('name')->join(', ');
-                                        @endphp
-                                        <li title="{{ $allAuthorNames }}">
-                                            Authors:
-                                            @if ($product->authors->isNotEmpty())
-                                                {{ $product->authors->first()->name }}
-                                                @if ($product->authors->count() > 1)
-                                                    ...
-                                                @endif
-                                            @else
-                                                N/A
-                                            @endif
-                                        </li>
 
-                                    </ul>
-                                    <div>
-
-                                        {{-- location --}}
-                                        @php
-                                            $userLat = session('user_latitude');
-                                            $userLng = session('user_longitude');
-                                            $productLatLng = $product->location
-                                                ? explode(',', $product->location)
-                                                : [null, null];
-                                            $distance = null;
-                                            if ($userLat && $userLng && $productLatLng[0] && $productLatLng[1]) {
-                                                $distance = \App\Helpers\Helper::getDistance(
-                                                    $userLat,
-                                                    $userLng,
-                                                    $productLatLng[0],
-                                                    $productLatLng[1],
-                                                );
-                                            }
-                                        @endphp
-                                        <p>
-                                            <svg width="24px" height="24px" viewBox="0 0 1024 1024" class="icon"
-                                                version="1.1" xmlns="http://www.w3.org/2000/svg" fill="#000000">
-                                                <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                                <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                                    stroke-linejoin="round"></g>
-                                                <g id="SVGRepo_iconCarrier">
-                                                    <path
-                                                        d="M309.2 584.776h105.5l-49 153.2H225.8c-7.3 0-13.3-6-13.3-13.3 0-2.6 0.8-5.1 2.2-7.3l83.4-126.7c2.5-3.6 6.7-5.9 11.1-5.9z"
-                                                        fill="#FFFFFF"></path>
-                                                    <path
-                                                        d="M404.5 791.276H225.8c-36.7 0-66.5-29.8-66.5-66.5 0-13 3.8-25.7 11-36.6l83.4-126.7c12.3-18.7 33.1-29.9 55.5-29.9h178.4l-83.1 259.7z m-95.3-206.5c-4.5 0-8.6 2.2-11.1 6l-83.4 126.7c-1.4 2.2-2.2 4.7-2.2 7.3 0 7.3 6 13.3 13.3 13.3h139.9l49-153.2H309.2z"
-                                                        fill="#333333"></path>
-                                                    <path d="M454.6 584.776h109.6l25.3 153.3H429.3z" fill="#FFFFFF">
-                                                    </path>
-                                                    <path
-                                                        d="M652.2 791.276H366.6l42.8-259.6h200l42.8 259.6z m-222.9-53.2h160.2l-25.3-153.3H454.6l-25.3 153.3z"
-                                                        fill="#333333"></path>
-                                                    <path
-                                                        d="M618.6 584.776h105.5c4.5 0 8.6 2.2 11.1 6l83.5 126.7c4 6.1 2.3 14.4-3.8 18.4-2.2 1.4-4.7 2.2-7.3 2.2H667.7l-49.1-153.3z"
-                                                        fill="#FFFFFF"></path>
-                                                    <path
-                                                        d="M807.6 791.276H628.9l-83.1-259.7h178.4c22.4 0 43.2 11.2 55.5 29.9l83.4 126.7c9.8 14.8 13.2 32.6 9.6 50s-13.7 32.3-28.6 42.1c-10.8 7.2-23.5 11-36.5 11z m-139.9-53.2h139.9c2.6 0 5.1-0.8 7.3-2.2 4-2.6 5.3-6.4 5.7-8.4 0.4-2 0.7-6-1.9-10l-83.4-126.6c-2.5-3.8-6.6-6-11.1-6H618.6l49.1 153.2z"
-                                                        fill="#333333"></path>
-                                                    <path
-                                                        d="M534.1 639.7C652.5 537.4 711.7 445.8 711.7 365c0-127-102.7-212.1-195-212.1s-195 85.1-195 212.1c0 80.8 59.2 172.3 177.7 274.7 9.9 8.6 24.7 8.6 34.7 0z"
-                                                        fill="#8CAAFF"></path>
-                                                    <path
-                                                        d="M516.7 672.7c-12.5 0-24.9-4.3-34.8-12.9C356.2 551.2 295.1 454.7 295.1 365c0-142.8 114.6-238.7 221.6-238.7S738.3 222.2 738.3 365c0 89.7-61.1 186.2-186.9 294.8-9.8 8.6-22.3 12.9-34.7 12.9z m0-493.2c-79.7 0-168.4 76.2-168.4 185.5 0 72.3 56.7 158 168.4 254.6C628.5 523 685.1 437.3 685.1 365c0-109.3-88.7-185.5-168.4-185.5z"
-                                                        fill="#333333"></path>
-                                                    <path
-                                                        d="M516.7 348m-97.5 0a97.5 97.5 0 1 0 195 0 97.5 97.5 0 1 0-195 0Z"
-                                                        fill="#FFFFFF">
-                                                    </path>
-                                                    <path
-                                                        d="M516.7 472.1c-68.4 0-124.1-55.7-124.1-124.1s55.7-124.1 124.1-124.1S640.8 279.5 640.8 348 585.1 472.1 516.7 472.1z m0-195.1c-39.1 0-70.9 31.8-70.9 70.9 0 39.1 31.8 70.9 70.9 70.9s70.9-31.8 70.9-70.9c0-39.1-31.8-70.9-70.9-70.9z"
-                                                        fill="#333333"></path>
-                                                </g>
-                                            </svg> :
-                                            <span>
-                                                @if ($distance !== null)
-                                                    {{ $distance < 1 ? round($distance * 1000) . ' m' : round($distance, 2) . ' km' }}
-                                                @else
-                                                    N/A
-                                                @endif
-                                            </span>
-                                        </p>
-                                    </div>
-                                    <div class="book-footer">
-                                        {{-- <div class="rate">
-                                            <i class="flaticon-star"></i> 6.8
-                                        </div> --}}
-                                        <div class="rate">
-                                            <div class="row">
-                                                <div class="col" style="padding: 0px !important;">
-                                                    <svg width="20px" height="20px" viewBox="0 0 24 24"
-                                                        fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-                                                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round"
-                                                            stroke-linejoin="round"></g>
-                                                        <g id="SVGRepo_iconCarrier">
-                                                            <path
-                                                                d="M19.8978 16H7.89778C6.96781 16 6.50282 16 6.12132 16.1022C5.08604 16.3796 4.2774 17.1883 4 18.2235"
-                                                                stroke="#1C274D" stroke-width="1.5"></path>
-                                                            <path d="M8 7H16" stroke="#1C274D" stroke-width="1.5"
-                                                                stroke-linecap="round"></path>
-                                                            <path d="M8 10.5H13" stroke="#1C274D" stroke-width="1.5"
-                                                                stroke-linecap="round"></path>
-                                                            <path d="M19.5 19H8" stroke="#1C274D" stroke-width="1.5"
-                                                                stroke-linecap="round"></path>
-                                                            <path
-                                                                d="M10 22C7.17157 22 5.75736 22 4.87868 21.1213C4 20.2426 4 18.8284 4 16V8C4 5.17157 4 3.75736 4.87868 2.87868C5.75736 2 7.17157 2 10 2H14C16.8284 2 18.2426 2 19.1213 2.87868C20 3.75736 20 5.17157 20 8M14 22C16.8284 22 18.2426 22 19.1213 21.1213C20 20.2426 20 18.8284 20 16V12"
-                                                                stroke="#1C274D" stroke-width="1.5"
-                                                                stroke-linecap="round">
-                                                            </path>
-                                                        </g>
-                                                    </svg>
-                                                </div>
-                                                <div class="col" style="padding: 2px !important;">
-                                                    <span
-                                                        style="text-transform:capitalize;">{{ $product['condition'] }}</span>
-                                                </div>
-                                            </div>
-
-                                        </div>
-                                        <div class="price">
-                                            <span
-                                                class="price-num">₹{{ \App\Models\Product::getDiscountPrice($product['id']) }}</span>
-                                            <del>₹{{ $product['product_price'] }}</del>
-                                        </div>
-                                    </div>
+                                <div class="price">
+                                    <span class="price-num">
+                                        ₹{{ number_format($priceDetails['final_price'], 2) }}
+                                    </span>
+                                    <del>
+                                        ₹{{ number_format($priceDetails['product_price'], 2) }}
+                                    </del>
                                 </div>
                             </div>
+                            <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
+                                @csrf
+                                <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
+                                <input type="hidden" name="quantity" value="1">
+
+                                <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="flaticon-shopping-cart-1"></i> Add to cart
+                                </button>
+                            </form>
                         </div>
-                    @empty
-                    @endforelse
-                </div>
+                    </div>
             </div>
-        </div>
+    @endforeach
+
+    {{-- CLOSE WRAPPERS --}}
+    @if ($discountCount > 4)
+        </div> {{-- swiper-wrapper --}}
+        </div> {{-- swiper-container --}}
+    @else
+        </div> {{-- row --}}
+    @endif
+
+    </div>
     </section>
+    @endif
+
+
+
+
     <!-- Book Sale End -->
 
     <!-- Feature Product -->
@@ -1239,6 +1201,17 @@
             style="opacity:0.04;width:280px;height:280px;bottom:-80px;left:-80px;"></div>
     </section>
 
+<style>
+    .book-title-truncate {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;      /* show only 2 lines */
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.4em;
+        min-height: 2.8em;          /* equal card height */
+    }
+</style>
 
 
     {{-- Js Section  --}}

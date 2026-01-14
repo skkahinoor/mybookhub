@@ -114,25 +114,20 @@ class IndexController extends Controller
 
         // Discounted Products - now from ProductsAttribute table
         $discountedProducts = ProductsAttribute::with([
-            'product' => function ($query) use ($condition) {
-                $query->where('status', 1)
-                    ->when($condition !== 'all', function ($q) use ($condition) {
-                        $q->where('condition', $condition);
-                    });
+            'product' => function ($query) {
+                $query->where('status', 1);
             }
         ])
-            ->where('product_discount', '>', 0)
             ->where('status', 1)
-            ->whereHas('product', function ($query) use ($condition) {
-                $query->where('status', 1)
-                    ->when($condition !== 'all', function ($q) use ($condition) {
-                        $q->where('condition', $condition);
-                    });
+            ->where('product_discount', '>=', 20)
+            ->whereHas('product', function ($query) {
+                $query->where('status', 1);
             })
-            ->limit(6)
-            ->inRandomOrder()
-            ->get()
-            ->toArray();
+            ->orderBy('product_discount', 'desc') // best discounts first
+            ->get();
+
+
+
 
         // Featured Products - now from ProductsAttribute table
         $featuredProducts = ProductsAttribute::with([
