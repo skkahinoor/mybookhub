@@ -313,36 +313,4 @@ class AuthController extends Controller
         }
     }
 
-
-    // public function register(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'name' => 'required|string|max:255',
-    //         'email' => 'required|email|max:255|unique:sales_executives,email',
-    //         'phone' => 'required|string|max:20',
-    //         'password' => 'required|min:6| ',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Validation failed',
-    //             'errors' => $validator->errors(),
-    //         ], 422);
-    //     }
-
-    //     $sales = SalesExecutive::create([
-    //         'name' => $request->name,
-    //         'email' => $request->email,
-    //         'phone' => $request->phone,
-    //         'status' => '0',
-    //         'password' => Hash::make($request->password),
-    //     ]);
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'Sales Executive registered successfully. Please log in to continue.',
-    //         'data' => $sales,
-    //     ], 201);
-    // }
 }

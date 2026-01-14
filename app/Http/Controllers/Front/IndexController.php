@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Author;
 use App\Models\Cart;
+use App\Models\ProductsAttribute;
 use Illuminate\Http\Request;
 
 class IndexController extends Controller
@@ -22,17 +23,20 @@ class IndexController extends Controller
         $sliderBanners  = Banner::where('type', 'Slider')->where('status', 1)->get()->toArray();
         $fixBanners     = Banner::where('type', 'Fix')->where('status', 1)->get()->toArray();
         $condition      = session('condition', 'new');
-        $sliderProducts = Product::with(['authors', 'publisher', 'edition'])
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($query) {
-                $query->where('language_id', session('language'));
-            })
+        $sliderProducts = ProductsAttribute::with([
+            'product:id,product_name,product_isbn,product_image,product_price,category_id,section_id',
+            'product.category:id,category_name',
+            'product.section:id,name',
+            'vendor:id,name',
+            'vendor.vendorbusinessdetails',
+            'admin:id,name',
+        ])
             ->where('status', 1)
             ->orderBy('id', 'desc')
             ->limit(10)
-            ->get();
+            ->get()
+            ->toArray();
+
         // // Get 'condition' from query string (default to 'new' if not set or invalid)
         // $condition = $request->query('condition');
         // if (!in_array($condition, ['new', 'old'])) {
@@ -87,36 +91,71 @@ class IndexController extends Controller
             ->get()
             ->toArray();
 
-        $bestSellers = Product::where([
-            'is_bestseller' => 'Yes',
-            'status'        => 1,
+        // Best Sellers - now from ProductsAttribute table
+        $bestSellers = ProductsAttribute::with([
+            'product' => function ($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    });
+            }
         ])
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
+            ->where('is_bestseller', 'Yes')
+            ->where('status', 1)
+            ->whereHas('product', function ($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    });
             })
             ->inRandomOrder()
             ->get()
             ->toArray();
 
-        $discountedProducts = Product::where('product_discount', '>', 0)
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
+        // Discounted Products - now from ProductsAttribute table
+        $discountedProducts = ProductsAttribute::with([
+            'product' => function ($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    });
+            }
+        ])
+            ->where('product_discount', '>', 0)
             ->where('status', 1)
+            ->whereHas('product', function ($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    });
+            })
             ->limit(6)
             ->inRandomOrder()
             ->get()
             ->toArray();
 
-        $featuredProducts = Product::where([
-            'is_featured' => 'Yes',
-            'status'      => 1,
+        // Featured Products - now from ProductsAttribute table
+        $featuredProducts = ProductsAttribute::with([
+            'product' => function ($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    })
+                    ->when(session('language') && session('language') !== 'all', function ($q) {
+                        $q->where('language_id', session('language'));
+                    });
+            }
         ])
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($query) {
-                $query->where('language_id', session('language'));
+            ->where('is_featured', 'Yes')
+            ->where('status', 1)
+            ->whereHas('product', function ($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    })
+                    ->when(session('language') && session('language') !== 'all', function ($q) {
+                        $q->where('language_id', session('language'));
+                    });
             })
             ->limit(10)
             ->get();
@@ -195,89 +234,123 @@ class IndexController extends Controller
 
     public function searchProducts(Request $request)
     {
-        $condition      = session('condition', 'new');
-        $query          = Product::with(['publisher', 'authors'])->where('status', 1);
-        $sections       = Section::all();
-        $footerProducts = Product::orderBy('id', 'Desc')
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
+        $condition = session('condition', 'new');
+
+        $query = ProductsAttribute::with([
+            'product.publisher',
+            'product.authors',
+            'product.category',
+            'vendor.vendorbusinessdetails',
+        ])
             ->where('status', 1)
+            ->whereHas('product', fn($q) => $q->where('status', 1));
+
+        /* CONDITION */
+        if ($request->filled('condition')) {
+            $query->whereHas(
+                'product',
+                fn($q) =>
+                $q->where('condition', $request->condition)
+            );
+        } elseif ($condition !== 'all') {
+            $query->whereHas(
+                'product',
+                fn($q) =>
+                $q->where('condition', $condition)
+            );
+        }
+
+        /* LANGUAGE */
+        if ($request->filled('language_id') && $request->language_id !== 'all') {
+            $query->whereHas(
+                'product',
+                fn($q) =>
+                $q->where('language_id', $request->language_id)
+            );
+        } elseif (session('language') && session('language') !== 'all') {
+            $query->whereHas(
+                'product',
+                fn($q) =>
+                $q->where('language_id', session('language'))
+            );
+        }
+
+        /* SEARCH */
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('product', function ($q) use ($search) {
+                $q->where('product_name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('product_isbn', 'like', "%{$search}%")
+                    ->orWhereHas(
+                        'category',
+                        fn($c) =>
+                        $c->where('category_name', 'like', "%{$search}%")
+                    );
+            });
+        }
+
+        /* SECTION */
+        if ($request->filled('section_id')) {
+            $query->whereHas(
+                'product',
+                fn($q) =>
+                $q->where('section_id', $request->section_id)
+            );
+        }
+
+        /* FETCH */
+        $products = $query->get();
+
+        /* PRICE FILTER (VENDOR DISCOUNT SAFE) */
+        if ($request->filled('min_price') || $request->filled('max_price')) {
+            $minPrice = (float) ($request->min_price ?? 0);
+            $maxPrice = (float) ($request->max_price ?? PHP_FLOAT_MAX);
+
+            $products = $products->filter(function ($attr) use ($minPrice, $maxPrice) {
+                $price = Product::getDiscountPrice($attr->product_id, $attr->vendor_id);
+                return $price >= $minPrice && $price <= $maxPrice;
+            });
+        }
+
+        /* PAGINATION */
+        $perPage = 12;
+        $page    = request('page', 1);
+
+        $products = new \Illuminate\Pagination\LengthAwarePaginator(
+            $products->forPage($page, $perPage),
+            $products->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        $sections = Section::all();
+        $category = Category::limit(10)->get();
+        $language = Language::all();
+        $logos    = HeaderLogo::first();
+
+        $footerProducts = Product::where('status', 1)
+            ->orderByDesc('id')
             ->take(3)
             ->get()
             ->toArray();
-        $category = Category::limit(10)->get();
-        $language = Language::get();
-        $logos    = HeaderLogo::first();
 
-        // Filter by condition (default to session condition if not specified)
-        if ($request->filled('condition')) {
-            $query->where('condition', $request->condition);
-        } else {
-            if ($condition !== 'all') {
-                $query->where('condition', $condition);
-            }
-        }
-
-        // Filter by language
-        if ($request->filled('language_id')) {
-            if ($request->language_id !== 'all') {
-                $query->where('language_id', $request->language_id);
-            }
-        } else {
-            $query->when(session('language') && session('language') !== 'all', function ($q) {
-                $q->where('language_id', session('language'));
-            });
-        }
-
-        // Apply search term
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('product_name', 'like', '%' . $search . '%')
-                    ->orWhere('description', 'like', '%' . $search . '%')
-                    ->orWhere('product_isbn', 'like', '%' . $search . '%')
-                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
-                        $categoryQuery->where('category_name', 'like', '%' . $search . '%');
-                    });
-            });
-        }
-
-        // Filter by section/category
-        if ($request->filled('section_id')) {
-            $query->where('section_id', $request->section_id);
-        }
-
-        // Get the results first
-        $products = $query->get();
-
-        // Apply price range filter using discounted prices
-        if ($request->filled('min_price') || $request->filled('max_price')) {
-            $minPrice = $request->filled('min_price') ? (float) $request->min_price : 0;
-            $maxPrice = $request->filled('max_price') ? (float) $request->max_price : PHP_FLOAT_MAX;
-
-            $products = $products->filter(function ($product) use ($minPrice, $maxPrice) {
-                $discountedPrice = Product::getDiscountPrice($product->id);
-                $finalPrice      = $discountedPrice > 0 ? $discountedPrice : $product->product_price;
-
-                return $finalPrice >= $minPrice && $finalPrice <= $maxPrice;
-            });
-        }
-
-        // Convert back to pagination
-        $perPage     = 12;
-        $currentPage = $request->get('page', 1);
-        $products    = new \Illuminate\Pagination\LengthAwarePaginator(
-            $products->forPage($currentPage, $perPage),
-            $products->count(),
-            $perPage,
-            $currentPage,
-            ['path' => $request->url(), 'query' => $request->query()]
+        return view(
+            'front.products.search',
+            compact(
+                'products',
+                'condition',
+                'sections',
+                'footerProducts',
+                'category',
+                'language',
+                'logos'
+            ),
+            [
+                'languages'        => Language::all(),
+                'selectedLanguage' => Language::find(session('language')),
+            ]
         );
-
-        return view('front.products.search', compact('products', 'request', 'condition', 'sections', 'footerProducts', 'category', 'language', 'logos'), [
-            'languages'        => Language::all(),
-            'selectedLanguage' => Language::find(session('language')),
-        ]);
     }
 }

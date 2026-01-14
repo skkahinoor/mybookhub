@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\SalesReportController;
 use App\Http\Controllers\Api\WithdrawalApiController;
 use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\CatalogueController;
+use App\Http\Controllers\Api\VendorPlanController;
+use App\Http\Controllers\Api\OrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,7 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/institutions', [InstitutionController::class, 'store']);
     Route::put('/institutions/{id}', [InstitutionController::class, 'update']);
     Route::delete('/institutions/{id}', [InstitutionController::class, 'destroy']);
-    Route::post('/book/lookup', [BookController::class, 'lookupByIsbn']);
+    // Route::post('/book/lookup', [BookController::class, 'lookupByIsbn']);
 });
 
 // Student
@@ -93,6 +95,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vendor/bank-details', [VendorController::class, 'getBankDetails']);
 });
 
+// Vendor Plan Management
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('vendor/plan/status', [VendorPlanController::class, 'status']);
+    Route::post('vendor/plan/upgrade', [VendorPlanController::class, 'upgrade']);
+    Route::post('vendor/plan/verify', [VendorPlanController::class, 'verify']);
+    Route::post('vendor/plan/downgrade', [VendorPlanController::class, 'downgrade']);
+});
+
 // Catalogue Management
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vendor/sections', [CatalogueController::class, 'getSection']);
@@ -129,4 +139,42 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vendor/edition', [CatalogueController::class, 'storeEdition']);
     Route::put('/vendor/edition/{id}', [CatalogueController::class, 'updateEdition']);
     Route::delete('/vendor/edition/{id}', [CatalogueController::class, 'destroyEdition']);
+
+    Route::get('/vendor/coupons', [CatalogueController::class, 'getCoupon']);
+    Route::post('/vendor/coupons', [CatalogueController::class, 'storeCoupon']);
+    Route::post('/vendor/coupons/{id}', [CatalogueController::class, 'updateCoupon']);
+    Route::patch('/vendor/coupons/{id}/status', [CatalogueController::class, 'updateCouponStatus']);
+    Route::delete('/vendor/coupons/{id}', [CatalogueController::class, 'destroyCoupon']);
+
+    Route::get('vendor/book-requests', [CatalogueController::class, 'getBookRequest']);
+    Route::delete('vendor/book-requests/{id}', [CatalogueController::class, 'deleteBookRequest']);
+    Route::patch('vendor/book-requests/{id}/status', [CatalogueController::class, 'updateBookRequestStatus']);
+
+    Route::get('/vendor/products', [BookController::class, 'getproduct']);
+    Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);
+    Route::patch('/vendor/products/{id}/bestSeller', [BookController::class, 'isBestSeller']);
+    Route::patch('/vendor/products/{id}/featured', [BookController::class, 'isFeatured']);
+    Route::delete('/vendor/products/{id}', [BookController::class, 'deleteProduct']);
+    Route::post('/vendor/products/isbn-lookup', [BookController::class, 'lookupByIsbn']);
+    Route::get('/vendor/products/autocomplete', [BookController::class, 'autocomplete']);
+    Route::get('/vendor/products/byId/{id}', [BookController::class, 'show']);
+    Route::get('/vendor/products/{id}/summary', [BookController::class, 'productSummaryByid']);
+    Route::post('/vendor/products', [BookController::class, 'storeManualProduct']);
+    Route::post('/vendor/products/summary', [BookController::class, 'productSummary']);
+    Route::post('/vendor/products/stock', [BookController::class, 'storeProductAttribute']);
+});
+
+// Order Management
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('vendor/orders', [OrderController::class, 'index']);
+    Route::get('vendor/orders/{order_id}', [OrderController::class, 'show']);
+    Route::patch('vendor/orders/{order_id}/status', [OrderController::class, 'updateOrderStatus']);
+    Route::patch('vendor/order-items/{order_item_id}/status', [OrderController::class, 'updateOrderItemStatus']);
+
+    // Route::get('vendor/sales/cart', [OrderController::class, 'cart']);
+    Route::post('vendor/sales/search-isbn', [OrderController::class, 'searchByIsbn']);
+    Route::post('/vendor/sales/process', [OrderController::class, 'processSale']);
+    // Route::post('vendor/sales/cart/add', [OrderController::class, 'addToCart']);
+    // Route::post('vendor/cart/remove', [OrderController::class, 'removeFromCart']);
+    // Route::post('vendor/process', [OrderController::class, 'processSale']);
 });

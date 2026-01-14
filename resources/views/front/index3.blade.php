@@ -176,51 +176,103 @@
         </button>
     </div>
 
-
-
-
-
-
     <!-- Recommend Section Start -->
     <section class="content-inner-1 bg-grey reccomend py-5">
-        <div class="container">
-            <div class="section-head text-center mb-4">
-                <h2 class="title">Recommended For You</h2>
-                <p>Discover titles picked just for you — find your next great read from our curated list!</p>
-            </div>
-            <div class="row g-4">
-                @foreach ($sliderProducts as $sliderProduct)
-                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
-                        <div class="card flex-fill shadow-sm border-0 book-grid-card" style="border-radius:20px;">
-                            <a href="{{ url('product/' . $sliderProduct['id']) }}" class="d-block">
-                                <img src="{{ asset('front/images/product_images/small/' . $sliderProduct['product_image']) }}"
-                                    alt="book" class="card-img-top"
-                                    style="height:220px; object-fit:cover; border-radius:20px 20px 0 0;">
-                            </a>
-                            <div class="card-body d-flex flex-column">
-                                <h5 class="mb-1 card-title" style="font-size:1.05rem;">
-                                    <a href="{{ url('product/' . $sliderProduct['id']) }}"
-                                        class="text-dark text-decoration-none">
-                                        {{ $sliderProduct['product_name'] }}
-                                    </a>
-                                </h5>
-                                <span
-                                    class="price mb-2 text-primary fw-bold fs-6">₹{{ \App\Models\Product::getDiscountPrice($sliderProduct['id']) }}</span>
-                                <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
-                                    @csrf
-                                    <input type="hidden" name="product_id" value="{{ $sliderProduct['id'] }}">
-                                    <input type="hidden" name="quantity" value="1">
-                                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">
-                                        <i class="flaticon-shopping-cart-1"></i> Add to cart
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
+    <div class="container">
+        <div class="section-head text-center mb-4">
+            <h2 class="title">Recommended For You</h2>
+            <p>Discover titles picked just for you — find your next great read from our curated list!</p>
         </div>
-    </section>
+
+        <div class="row g-4">
+            @foreach ($sliderProducts as $sliderProduct)
+
+                @php
+                    $product = $sliderProduct['product'] ?? null;
+                    if (!$product) continue;
+
+                    $productImage = $product['product_image'] ?? 'no-image.png';
+                    $productName  = $product['product_name'] ?? 'N/A';
+
+                    // ✅ MULTI-VENDOR PRICE
+                    $originalPrice  = (float) $product['product_price'];
+                    $vendorDiscount = (float) ($sliderProduct['product_discount'] ?? 0);
+
+                    if ($vendorDiscount > 0) {
+                        $finalPrice = round($originalPrice - ($originalPrice * $vendorDiscount / 100));
+                        $discountPercent = round($vendorDiscount);
+                    } else {
+                        $finalPrice = round($originalPrice);
+                        $discountPercent = 0;
+                    }
+                @endphp
+
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
+                    <div class="card flex-fill shadow-sm border-0" style="border-radius:20px; overflow:hidden;">
+
+                        {{-- IMAGE --}}
+                        <div class="position-relative">
+                            <a href="{{ url('product/' . $product['id']) }}">
+                                <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
+                                     class="card-img-top"
+                                     style="height:220px; object-fit:cover;"
+                                     onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
+                            </a>
+
+                            @if($discountPercent > 0)
+                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                    -{{ $discountPercent }}%
+                                </span>
+                            @endif
+                        </div>
+
+                        {{-- BODY --}}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="mb-1">
+                                <a href="{{ url('product/' . $product['id']) }}"
+                                   class="text-dark text-decoration-none">
+                                    {{ $productName }}
+                                </a>
+                            </h5>
+
+                            <div class="mb-2">
+                                @if($discountPercent > 0)
+                                    <span class="text-muted text-decoration-line-through small">
+                                        ₹{{ round($originalPrice) }}
+                                    </span>
+                                    <span class="fw-bold text-primary ms-1">
+                                        ₹{{ $finalPrice }}
+                                    </span>
+                                @else
+                                    <span class="fw-bold text-primary">
+                                        ₹{{ round($originalPrice) }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            <span class="text-dark small mb-2">
+                                Shop Name:
+                                {{ $sliderProduct['vendor']['vendorbusinessdetails']['shop_name'] ?? 'N/A' }}
+                            </span>
+
+                            <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $product['id'] }}">
+                                <input type="hidden" name="vendor_id" value="{{ $sliderProduct['vendor_id'] }}">
+                                <input type="hidden" name="quantity" value="1">
+
+                                <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="flaticon-shopping-cart-1"></i> Add to cart
+                                </button>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+</section>
 
 
 
@@ -1098,6 +1150,91 @@
         </div>
     </section>
     <!-- Sales Executive CTA End -->
+
+    {{-- Advanced Vendor CTA Section for Home Page --}}
+    <section class="py-5 position-relative overflow-hidden" style="background: var(--primary);">
+        <div class="container position-relative" style="z-index:2;">
+            <div class="row align-items-center gy-4">
+                <div class="col-lg-7 text-white">
+                    <span class="badge bg-light text-primary mb-3 px-3 py-2 rounded-pill">
+                        Vendor Opportunity • Limited Effort, High Reach
+                    </span>
+                    <h2 class="fw-semibold mb-3" style="color: #181818; font-weight: bold;">
+                        Turn Your Book Catalog into a New Revenue Channel with BookHub
+                    </h2>
+                    <p class="mb-3">
+                        Upload your books once, and let BookHub handle the marketing, promotion, and student reach.
+                        You pay only a <b>5% promotion fee</b> on successful orders—no big ad budgets, no platform
+                        headaches.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-3 mb-3">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light text-primary d-flex align-items-center justify-content-center me-2"
+                                style="width:32px;height:32px;">
+                                <i class="fa fa-book"></i>
+                            </div>
+                            <span>Upload books & editions easily</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light text-primary d-flex align-items-center justify-content-center me-2"
+                                style="width:32px;height:32px;">
+                                <i class="fa fa-bullhorn"></i>
+                            </div>
+                            <span>BookHub markets for you</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-light text-primary d-flex align-items-center justify-content-center me-2"
+                                style="width:32px;height:32px;">
+                                <i class="fa fa-inr"></i>
+                            </div>
+                            <span>Only 5% promotion fee</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="{{ route('vendor.register') }}" class="btn btn-light btn-sm">
+                            Register as Vendor
+                        </a>
+                        <a href="{{ url('/vendors') }}" class="btn btn-outline-light btn-sm">
+                            View Vendor Plans
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 text-lg-end text-center text-white">
+                    <div
+                        class="bg-white bg-opacity-10 border border-light border-opacity-25 rounded-3 p-4 d-inline-block shadow-lg">
+                        <h5 class="fw-semibold mb-2" style="color: #181818; font-weight: bold;">Free Plan & Pro Plan</h5>
+                        <p class="mb-2">
+                            Start free with up to 100 books per month, or switch to Pro for unlimited uploads and coupons
+                            at just ₹499/month.
+                        </p>
+                        <ul class="list-unstyled small mb-3 text-start">
+                            <li class="mb-1">
+                                <i class="fa fa-check text-success me-1"></i> No separate website required
+                            </li>
+                            <li class="mb-1">
+                                <i class="fa fa-check text-success me-1"></i> We handle promotion & traffic
+                            </li>
+                            <li class="mb-1">
+                                <i class="fa fa-check text-success me-1"></i> Transparent vendor dashboard
+                            </li>
+                        </ul>
+                        <a href="{{ url('/contact') }}" class="btn btn-outline-light btn-sm">
+                            Talk to Our Team
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- subtle background shapes --}}
+        <div class="position-absolute rounded-circle bg-white"
+            style="opacity:0.08;width:220px;height:220px;top:-60px;right:-40px;"></div>
+        <div class="position-absolute rounded-circle bg-white"
+            style="opacity:0.04;width:280px;height:280px;bottom:-80px;left:-80px;"></div>
+    </section>
 
 
 

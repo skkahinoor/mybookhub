@@ -14,6 +14,9 @@ use App\Models\OrdersProduct;
 use App\Models\OrdersLog;
 use App\Models\OrderStatus;
 use App\Models\OrderItemStatus;
+use App\Models\Product;
+use App\Models\ProductsAttribute;
+use Illuminate\Support\Facades\DB;
 
 
 class OrderController extends Controller
@@ -780,6 +783,251 @@ class OrderController extends Controller
 
         // Output the generated PDF to Browser
         $dompdf->stream();
+    }
+
+    // Sales Concept - Display page
+    public function salesConcept()
+    {
+        $headerLogo = HeaderLogo::first();
+        $logos = HeaderLogo::first();
+        Session::put('page', 'sales_concept');
+
+        $cartItems = Session::get('sales_cart', []);
+
+        return view('admin.orders.sales_concept')
+            ->with(compact('cartItems', 'logos', 'headerLogo'));
+    }
+
+    // Sales Concept - Search book by ISBN
+    public function searchBookByIsbn(Request $request)
+    {
+        $request->validate([
+            'isbn' => 'required|string|max:20'
+        ]);
+
+        $isbn      = $request->isbn;
+        $admin     = Auth::guard('admin')->user();
+        $adminType = $admin->type;
+
+        $product = Product::where('product_isbn', $isbn)->first();
+
+        if (!$product) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Book not found'
+            ], 404);
+        }
+
+        // Get attribute
+        if ($adminType === 'vendor') {
+            $attribute = ProductsAttribute::where([
+                'product_id' => $product->id,
+                'vendor_id'  => $admin->vendor_id
+            ])->first();
+        } else {
+            $attribute = ProductsAttribute::where('product_id', $product->id)->first();
+        }
+
+        if (!$attribute) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Product not available in inventory'
+            ], 404);
+        }
+
+        // PRICE + DISCOUNT (ROUND FIRST)
+        $basePrice = $attribute->price ?? $product->product_price;
+        $discount  = $attribute->product_discount ?? 0;
+
+        $discountAmount = round(($basePrice * $discount) / 100);
+        $finalPrice     = round($basePrice - $discountAmount);
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'product_id'           => $product->id,
+                'product_name'         => $product->product_name,
+                'product_isbn'         => $product->product_isbn,
+                'base_price'           => round($basePrice),
+                'discount_percent'     => $discount,
+                'discount_amount'      => $discountAmount,
+                'price_after_discount' => $finalPrice,
+                'stock'                => $attribute->stock,
+                'product_image'        => $product->product_image ?? ''
+            ]
+        ]);
+    }
+
+    // Sales Concept - Add to cart (session)
+    public function addToSalesCart(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity'   => 'required|integer|min:1'
+        ]);
+
+        $admin     = Auth::guard('admin')->user();
+        $adminType = $admin->type;
+
+        $product = Product::findOrFail($request->product_id);
+
+        if ($adminType === 'vendor') {
+            $attribute = ProductsAttribute::where([
+                'product_id' => $product->id,
+                'vendor_id'  => $admin->vendor_id
+            ])->first();
+        } else {
+            $attribute = ProductsAttribute::where('product_id', $product->id)->first();
+        }
+
+        if (!$attribute || $attribute->stock < $request->quantity) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Insufficient stock'
+            ], 400);
+        }
+
+        // PRICE + DISCOUNT (ROUND FIRST)
+        $basePrice = $attribute->price ?? $product->product_price;
+        $discount  = $attribute->product_discount ?? 0;
+
+        $discountAmount = round(($basePrice * $discount) / 100);
+        $finalPrice     = round($basePrice - $discountAmount);
+
+        $cart = Session::get('sales_cart', []);
+
+        $found = false;
+        foreach ($cart as &$item) {
+            if ($item['product_id'] == $product->id) {
+                $newQty = $item['quantity'] + $request->quantity;
+
+                if ($newQty > $attribute->stock) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Insufficient stock'
+                    ], 400);
+                }
+
+                $item['quantity'] = $newQty;
+                $item['total']    = $finalPrice * $newQty;
+                $found = true;
+                break;
+            }
+        }
+
+        if (!$found) {
+            $cart[] = [
+                'product_id'       => $product->id,
+                'product_name'     => $product->product_name,
+                'product_isbn'     => $product->product_isbn,
+                'base_price'       => round($basePrice),
+                'discount_percent' => $discount,
+                'discount_amount'  => $discountAmount,
+                'price'            => $finalPrice,
+                'quantity'         => $request->quantity,
+                'stock'            => $attribute->stock,
+                'total'            => $finalPrice * $request->quantity
+            ];
+        }
+
+        Session::put('sales_cart', $cart);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Product added to cart',
+            'cart' => $cart
+        ]);
+    }
+
+    // Sales Concept - Remove from cart
+    public function removeFromSalesCart(Request $request)
+    {
+        $cart = array_values(array_filter(
+            Session::get('sales_cart', []),
+            fn($item) => $item['product_id'] != $request->product_id
+        ));
+
+        Session::put('sales_cart', $cart);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Product removed',
+            'cart' => $cart
+        ]);
+    }
+
+    // Sales Concept - Process sale (create order and update stock)
+    public function processSale(Request $request)
+    {
+        $request->validate([
+            'customer_name'   => 'required|string|max:255',
+            'customer_mobile' => 'required|string|max:20',
+            'customer_email'  => 'nullable|email',
+            'customer_address'=> 'nullable|string'
+        ]);
+
+        $cart = Session::get('sales_cart', []);
+        if (empty($cart)) {
+            return back()->with('error_message', 'Cart is empty');
+        }
+
+        $admin     = Auth::guard('admin')->user();
+        $adminType = $admin->type;
+
+        DB::beginTransaction();
+        try {
+            $grandTotal = array_sum(array_column($cart, 'total'));
+
+            $order = Order::create([
+                'user_id'          => 0,
+                'name'             => $request->customer_name,
+                'address'          => $request->customer_address ?? 'N/A',
+                'city'             => 'N/A',
+                'state'            => 'N/A',
+                'country'          => 'N/A',
+                'pincode'          => 'N/A',
+                'mobile'           => $request->customer_mobile,
+                'email'            => $request->customer_email ?? 'N/A',
+                'shipping_charges' => 0,
+                'order_status'     => 'New',
+                'payment_method'   => 'Cash',
+                'payment_gateway'  => 'Cash',
+                'grand_total'      => $grandTotal
+            ]);
+
+            foreach ($cart as $item) {
+
+                $attribute = ProductsAttribute::where('product_id', $item['product_id'])->lockForUpdate()->first();
+
+                if ($attribute->stock < $item['quantity']) {
+                    throw new \Exception('Insufficient stock for ' . $item['product_name']);
+                }
+
+                $attribute->decrement('stock', $item['quantity']);
+
+                OrdersProduct::create([
+                    'order_id'      => $order->id,
+                    'user_id'       => 0,
+                    'admin_id'      => ($adminType !== 'vendor') ? $admin->id : 0,
+                    'vendor_id'     => ($adminType === 'vendor') ? $admin->vendor_id : 0,
+                    'product_id'    => $item['product_id'],
+                    'product_name'  => $item['product_name'],
+                    'product_price' => $item['price'],
+                    'product_qty'   => $item['quantity'],
+                    'item_status'   => 'New'
+                ]);
+            }
+
+            DB::commit();
+            Session::forget('sales_cart');
+
+            return redirect('admin/sales-concept')
+                ->with('success_message', 'Sale completed successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error_message', $e->getMessage());
+        }
     }
 
 }

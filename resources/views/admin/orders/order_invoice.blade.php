@@ -45,7 +45,7 @@
                             {{ $userDetails['pincode'] }}<br>
                         @endif
 
-                        {{ $userDetails['mobile'] }}<br>
+                        {{ $userDetails['phone'] }}<br>
     				</address>
     			</div>
     			<div class="col-xs-6 text-right">
@@ -55,7 +55,7 @@
                         {{ $orderDetails['address'] }}<br>
                         {{ $orderDetails['city'] }}, {{ $orderDetails['state'] }}<br>
                         {{ $orderDetails['country'] }}-{{ $orderDetails['pincode'] }}<br>
-                        {{ $userDetails['mobile'] }}<br>
+                        {{ $userDetails['phone'] }}<br>
     				</address>
     			</div>
     		</div>

@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use App\Models\Section;
 use App\Models\Admin;
 use App\Models\Category;
@@ -15,6 +17,8 @@ use App\Models\Author;
 use App\Models\Subject;
 use App\Models\Language;
 use App\Models\Edition;
+use App\Models\Coupon;
+use App\Models\BookRequest;
 
 class CatalogueController extends Controller
 {
@@ -698,4 +702,249 @@ class CatalogueController extends Controller
             'message' => 'Edition deleted successfully'
         ]);
     }
-}  
+
+    public function getCoupon(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $admin = $request->user();
+
+        $coupons = ($admin->type === 'vendor')
+            ? Coupon::where('vendor_id', $admin->vendor_id)->get()
+            : Coupon::all();
+
+        return response()->json([
+            'status' => true,
+            'data' => $coupons
+        ]);
+    }
+
+    public function storeCoupon(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $admin = $request->user();
+
+        $validated = $request->validate([
+            'categories'    => 'required|array|min:1',
+            'coupon_option' => 'required|in:Automatic,Manual',
+            'coupon_code'   => 'nullable|required_if:coupon_option,Manual|unique:coupons,coupon_code',
+            'coupon_type'   => 'required|in:Single Time,Multiple Times',
+            'amount_type'   => 'required|in:Fixed,Percentage',
+            'amount'        => 'required|numeric|min:1',
+            'expiry_date'   => 'nullable|date',
+            'users'         => 'nullable|array'
+        ]);
+
+        if ($validated['coupon_option'] === 'Automatic') {
+            do {
+                $couponCode = Str::upper(Str::random(8));
+            } while (Coupon::where('coupon_code', $couponCode)->exists());
+        } else {
+            $couponCode = $validated['coupon_code'];
+        }
+
+        $coupon = Coupon::create([
+            'vendor_id'     => ($admin->type === 'vendor') ? $admin->vendor_id : 0,
+            'coupon_option' => $validated['coupon_option'],
+            'coupon_code'   => $couponCode,
+            'categories'    => implode(',', $validated['categories']),
+            'users'         => isset($validated['users']) ? implode(',', $validated['users']) : null,
+            'coupon_type'   => $validated['coupon_type'],
+            'amount_type'   => $validated['amount_type'],
+            'amount'        => $validated['amount'],
+            'expiry_date'   => $validated['expiry_date'],
+            'status'        => 1,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Coupon created successfully',
+            'data' => $coupon
+        ], 201);
+    }
+
+    public function updateCoupon(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $admin = $request->user();
+        $coupon = Coupon::find($id);
+
+        if (!$coupon) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Coupon not found'
+            ], 404);
+        }
+
+        if ($admin->type === 'vendor' && $coupon->vendor_id !== $admin->vendor_id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'categories'  => 'required|array|min:1',
+            'coupon_type' => 'required|in:Single Time,Multiple Times',
+            'amount_type' => 'required|in:Fixed,Percentage',
+            'amount'      => 'required|numeric|min:1',
+            'expiry_date' => 'nullable|date',
+            'users'       => 'nullable|array',
+            'coupon_code' => [
+                'required',
+                Rule::unique('coupons', 'coupon_code')->ignore($coupon->id)
+            ],
+        ]);
+
+        $coupon->update([
+            'coupon_code' => $validated['coupon_code'],
+            'categories'  => implode(',', $validated['categories']),
+            'users'       => isset($validated['users']) ? implode(',', $validated['users']) : null,
+            'coupon_type' => $validated['coupon_type'],
+            'amount_type' => $validated['amount_type'],
+            'amount'      => $validated['amount'],
+            'expiry_date' => $validated['expiry_date'],
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Coupon updated successfully',
+            'data' => $coupon
+        ]);
+    }
+
+    public function updateCouponStatus(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $admin = $request->user();
+        $coupon = Coupon::find($id);
+
+        if (!$coupon) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Coupon not found'
+            ], 404);
+        }
+
+        if ($admin->type === 'vendor' && $coupon->vendor_id !== $admin->vendor_id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $coupon->update(['status' => !$coupon->status]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Coupon status updated',
+            'coupon_status' => $coupon->status
+        ]);
+    }
+
+    public function destroyCoupon(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $admin = $request->user();
+        $coupon = Coupon::find($id);
+
+        if (!$coupon) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Coupon not found'
+            ], 404);
+        }
+
+        if ($admin->type === 'vendor' && $coupon->vendor_id !== $admin->vendor_id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+
+        $coupon->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Coupon deleted successfully'
+        ]);
+    }
+
+    public function getBookRequest(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $bookRequests = BookRequest::with('user')->latest()->get();
+
+        return response()->json([
+            'status' => true,
+            'data'   => $bookRequests
+        ], 200);
+    }
+
+    public function deleteBookRequest(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $bookRequest = BookRequest::find($id);
+
+        if (!$bookRequest) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Book Request not found'
+            ], 404);
+        }
+
+        $bookRequest->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Book Request deleted successfully'
+        ], 200);
+    }
+
+    public function updateBookRequestStatus(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $admin = $request->user();
+        $bookRequest = BookRequest::find($id);
+
+        if (!$bookRequest) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Book request not found'
+            ], 404);
+        }
+
+        // Optional: Vendor ownership check (if book_requests has vendor_id)
+        if ($admin->type === 'vendor' && isset($bookRequest->vendor_id)) {
+            if ($bookRequest->vendor_id !== $admin->vendor_id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+        }
+
+        $bookRequest->update([
+            'status' => !$bookRequest->status
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Book request status updated',
+            'book_request_status' => $bookRequest->status
+        ], 200);
+    }
+}

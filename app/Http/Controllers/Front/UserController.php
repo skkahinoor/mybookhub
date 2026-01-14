@@ -397,6 +397,15 @@ class UserController extends Controller
         return view('front.pages.sales', compact('condition', 'sections', 'logos', 'language'));
     }
 
+    public function vendors(){
+        $condition = session('condition', 'new');
+        $sections  = Section::all();
+        $logos     = HeaderLogo::all();
+        $language  = Language::get();
+
+        return view('front.pages.vendors', compact('condition', 'sections', 'logos', 'language'));
+    }
+
     // AJAX methods for cascading location dropdowns (for user account)
     public function getUserStates(Request $request)
     {

@@ -21,51 +21,74 @@ use App\Models\Section;
 use App\Models\Edition;
 use App\Models\Publisher;
 use App\Models\Notification;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Validator;
 use App\Models\HeaderLogo;
 
 class ProductsController extends Controller
 {
     public function products()
-    { // render products.blade.php in the Admin Panel
+    {
         Session::put('page', 'products');
+
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
+        $adminType = Auth::guard('admin')->user()->type;
+        $vendor_id = Auth::guard('admin')->user()->vendor_id;
 
-        // Modify the last $products variable so that ONLY products that BELONG TO the 'vendor' show up in (not ALL products show up) in products.blade.php, and also make sure that the 'vendor' account is active/enabled/approved (`status` is 1) before they can access the products page
-        $adminType = Auth::guard('admin')->user()->type;      // `type`      is the column in `admins` table    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances    // Retrieving The Authenticated User and getting their `type`      column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
-        $vendor_id = Auth::guard('admin')->user()->vendor_id; // `vendor_id` is the column in `admins` table    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances    // Retrieving The Authenticated User and getting their `vendor_id` column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
-
-        if ($adminType == 'vendor') { // if the authenticated user (the logged in user) is 'vendor', check his `status`
-            $vendorStatus = Auth::guard('admin')->user()->status; // `status` is the column in `admins` table    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances    // Retrieving The Authenticated User and getting their `status` column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
-            if ($vendorStatus == 0) { // if the 'vendor' is inactive/disabled
-                return redirect('admin/update-vendor-details/personal')->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.'); // the error_message will appear to the vendor in the route: 'admin/update-vendor-details/personal' which is the update_vendor_details.blade.php page
+        if ($adminType == 'vendor') {
+            $vendorStatus = Auth::guard('admin')->user()->status;
+            if ($vendorStatus == 0) {
+                return redirect('admin/update-vendor-details/personal')
+                    ->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.');
             }
         }
 
-        // Get ALL products ($products)
-        $products = Product::orderBy('id', 'desc')
-            ->with([
-                'section:id,name',
-                'category:id,category_name',
-                'edition:id,edition',
-                'firstAttribute:id,product_id,vendor_id,admin_id,admin_type'
-            ]);
+        // Different logic for vendor vs admin/superadmin
+        if ($adminType === 'vendor') {
+            // For vendors: Fetch from ProductsAttribute table (old logic)
+            $productsQuery = ProductsAttribute::orderBy('id', 'desc')
+                ->with([
+                    'product:id,product_name,product_isbn,product_image,category_id,section_id,condition',
+                    'product.category:id,category_name',
+                    'product.section:id,name',
+                    'vendor:id,name',
+                    'admin:id,name',
+                ]);
 
-        // if the authenticated user (the logged in user) is 'vendor', show ONLY the products that BELONG TO them (in products.blade.php) ($products)
-        if ($adminType == 'vendor') {
-            $products = $products->whereHas('firstAttribute', function ($q) use ($vendor_id) {
-                $q->where('vendor_id', $vendor_id);
-            });
+            // Apply vendor filter
+            $productsQuery->where('vendor_id', $vendor_id)
+                         ->where('admin_type', 'vendor');
+
+            // Execute query
+            $products = $productsQuery->get();
+        } else {
+            // For admin/superadmin: Fetch from products table with total stock
+            $productsQuery = Product::orderBy('id', 'desc')
+                ->with([
+                    'category:id,category_name',
+                    'section:id,name',
+                ]);
+
+            // For admin/superadmin: Show all products that have any attributes (from any source)
+            // They can see products uploaded by vendors, admins, or superadmins
+            $productsQuery->whereHas('attributes');
+
+            // Execute query
+            $products = $productsQuery->get();
+
+            // Calculate total stock for each product from ALL sources (vendor, admin, superadmin)
+            foreach ($products as $product) {
+                // Sum ALL stock from ALL sources for this product
+                $product->total_stock = ProductsAttribute::where('product_id', $product->id)
+                    ->sum('stock');
+            }
         }
 
-        $products = $products->get()->toArray(); // $products will be either ALL products Or VENDOR products ONLY (depending on the last if condition)    // Using subqueries with Eager Loading for a better performance    // Constraining Eager Loads: https://laravel.com/docs/9.x/eloquent-relationships#constraining-eager-loads    // Subquery Where Clauses: https://laravel.com/docs/9.x/queries#subquery-where-clauses    // Advanced Subqueries: https://laravel.com/docs/9.x/eloquent#advanced-subqueries    // ['section', 'category'] are the relationships methods names
-        // dd($products);
-
-
-        return view('admin.products.products')->with(compact('products', 'logos', 'headerLogo')); // render products.blade.php page, and pass $products variable to the view
+        return view('admin.products.products', compact('products', 'logos', 'headerLogo', 'adminType'));
     }
+
 
     public function updateProductStatus(Request $request)
     { // Update Product Status using AJAX in products.blade.php
@@ -93,220 +116,18 @@ class ProductsController extends Controller
         return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
     }
 
-    public function deleteProduct($id)
+    public function deleteProductAttribute($id)
     {
-        $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        Product::where('id', $id)->delete();
+        // Delete a specific product attribute (not the product itself)
+        $attribute = ProductsAttribute::find($id);
 
-        $message = 'Book has been deleted successfully!';
+        if ($attribute) {
+            $attribute->delete();
+            return redirect()->back()->with('success_message', 'Product attribute has been deleted successfully!');
+        }
 
-        return redirect()->back()->with('success_message', $message, 'logos');
-        return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
+        return redirect()->back()->with('error_message', 'Attribute not found or already deleted.');
     }
-
-    // public function addEditProductss(Request $request, $id = null)
-    // { // If the $id is not passed, this means 'Add a Product', if not, this means 'Edit the Product'
-    //     // Correcting issues in the Skydash Admin Panel Sidebar using Session
-    //     Session::put('page', 'products');
-    //     $headerLogo = HeaderLogo::first();
-    //     $logos = HeaderLogo::first();
-
-
-    //     if ($id == '') { // if there's no $id is passed in the route/URL parameters, this means 'Add a new product'
-    //         $title = 'Add Book';
-    //         $product = new \App\Models\Product();
-    //         // dd($product);
-    //         $message = 'Book added successfully!';
-    //     } else { // if the $id is passed in the route/URL parameters, this means Edit the Product
-    //         $title = 'Edit Book';
-    //         $product = Product::find($id);
-    //         // dd($product);
-    //         $message = 'Book updated successfully!';
-    //     }
-
-    //     if ($request->isMethod('post')) { // WHETHER 'Add a Product' or 'Update a Product' <form> is submitted (THE SAME <form>)!!
-    //         $data = $request->all();
-    //         // dd($data);
-
-
-    //         // Laravel's Validation    // Customizing Laravel's Validation Error Messages: https://laravel.com/docs/9.x/validation#customizing-the-error-messages    // Customizing Validation Rules: https://laravel.com/docs/9.x/validation#custom-validation-rules
-    //         $rules = [
-    //             'category_id'   => 'required',
-    //             'condition' => 'required|in:new,old',
-    //             'product_name'  => 'required', // only alphabetical characters and spaces
-    //             'product_isbn'  => 'required', // alphanumeric regular expression
-    //             'product_price' => 'required|numeric',
-    //             'language_id'   => 'required',
-    //         ];
-
-    //         $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
-    //             'category_id.required'   => 'Category is required',
-    //             'condition.required'   => 'You have to select the Book type',
-    //             'product_name.required'  => 'Book Name is required',
-    //             'product_name.regex'     => 'Valid Book Name is required',
-    //             'product_isbn.required'  => 'Book ISBN is required',
-    //             'product_price.required' => 'Book Price is required',
-    //             'product_price.numeric'  => 'Valid Book Price is required',
-    //             'language_id.required'   => 'Book Language is required',
-    //         ];
-
-    //         $this->validate($request, $rules, $customMessages);
-
-    //         $existingProduct = Product::where('product_isbn', $data['product_isbn'])->first();
-    //         if ($existingProduct && $id == null) {
-    //             return redirect()->back()
-    //                 ->with('error_message', 'This ISBN already exists. Please edit the existing book.')
-    //                 ->withInput();
-    //         }
-
-    //         // Upload Product Image after Resize
-    //         // Important Note: There are going to be 3 three sizes for the product image: Admin will upload the image with the recommended size which 1000*1000 which is the 'large' size, but theni we're going to use 'Intervention' package to get another two sizes: 500*500 which is the 'medium' size and 250*250 which is the 'small' size
-    //         // The 3 three image sizes: large: 1000x1000, medium: 500x500, small: 250x250
-    //         if ($request->hasFile('product_image')) {
-    //             $image_tmp = $request->file('product_image');
-    //             if ($image_tmp->isValid()) { // Validating Successful Uploads: https://laravel.com/docs/9.x/requests#validating-successful-uploads
-    //                 // Get image extension
-    //                 $extension = $image_tmp->getClientOriginalExtension();
-
-    //                 $imageName = rand(111, 99999) . '.' . $extension; // e.g. 5954.png
-
-    //                 $largeImagePath  = 'front/images/product_images/large/'  . $imageName; // 'large'  images folder
-    //                 $mediumImagePath = 'front/images/product_images/medium/' . $imageName; // 'medium' images folder
-    //                 $smallImagePath  = 'front/images/product_images/small/'  . $imageName; // 'small'  images folder
-
-
-    //                 Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);  // resize the 'large'  image size then store it in the 'large'  folder
-    //                 Image::make($image_tmp)->resize(500,   500)->save($mediumImagePath); // resize the 'medium' image size then store it in the 'medium' folder
-    //                 Image::make($image_tmp)->resize(250,   250)->save($smallImagePath);  // resize the 'small'  image size then store it in the 'small'  folder
-
-    //                 $product->product_image = $imageName;
-    //             }
-    //         }
-
-
-
-
-    //         // Saving BOTH inserted ('Add a product' <form>) AND updated ('Update a Product' <form>) data in `products` database table    // Inserting & Updating Models: https://laravel.com/docs/9.x/eloquent#inserts AND https://laravel.com/docs/9.x/eloquent#updates
-    //         $categoryDetails = \App\Models\Category::find($data['category_id']); // Get the section from the submitted category
-    //         // dd($categoryDetails);
-
-    //         $product->section_id  = $categoryDetails['section_id'];
-    //         $product->category_id = $data['category_id'];
-    //         // $product->publisher_id    = $data['publisher_id'];
-    //         // Existing or new publisher check
-    //         // Handle publisher
-    //         if (!empty($data['new_publisher'])) {
-    //             // Admin typed a new one → insert to DB
-    //             $newPublisher = new \App\Models\Publisher();
-    //             $newPublisher->name = $data['new_publisher'];
-    //             $newPublisher->status = 1;
-    //             $newPublisher->save();
-    //             $product->publisher_id = $newPublisher->id;
-    //         } else {
-    //             // Else use the existing selected one
-    //             $product->publisher_id = $data['publisher_id'];
-    //         }
-
-    //         //$product->authors()->sync($data['author_id']);
-    //         $product->subject_id    = $data['subject_id'];
-    //         $product->language_id    = $data['language_id'];
-
-    //         // Save location field
-    //         $product->location = $data['location'] ?? null;
-
-
-    //         // Saving the seleted filter for a product
-    //         $productFilters = ProductsFilter::productFilters(); // Get ALL the (enabled/active) Filters
-    //         foreach ($productFilters as $filter) { // get ALL the filters, then check if every filter's `filter_column` is submitted by the category_filters.blade.php page
-    //             $filterAvailable = ProductsFilter::filterAvailable($filter['id'], $data['category_id']);
-    //             if ($filterAvailable == 'Yes') {
-    //                 if (isset($filter['filter_column']) && $data[$filter['filter_column']]) { // check if every filter's `filter_column` is submitted by the category_filters.blade.php page
-    //                     // Save the product filter in the `products` table
-    //                     $product->{$filter['filter_column']} = $data[$filter['filter_column']]; // i.e. $product->filter_column = filter_value    // $data[$filter['filter_column']]    is like    $data['screen_size']    which is equal to the filter value e.g.    $data['screen_size'] = 5 to 5.4 in    // $data comes from the <select> box in category_filters.blade.php
-    //                 }
-    //             }
-    //         }
-
-
-    //         if ($id == '') {
-    //             $adminType = Auth::guard('admin')->user()->type;
-    //             $vendor_id = Auth::guard('admin')->user()->vendor_id;
-    //             $admin_id  = Auth::guard('admin')->user()->id;
-
-    //             $product->admin_type = $adminType;
-
-    //             if ($adminType == 'vendor') {
-    //                 $product->vendor_id  = $vendor_id;
-    //                 $product->admin_id = 0;
-    //             } else {
-    //                 $product->vendor_id = 0;
-    //                 $product->admin_id   = $admin_id;
-    //             }
-    //         }
-
-    //         if (empty($data['product_discount'])) {
-    //             $data['product_discount'] = 0;
-    //         }
-
-    //         $product->condition     = $data['condition'];
-    //         $product->product_name     = $data['product_name'];
-    //         $product->product_isbn     = $data['product_isbn'];
-    //         $product->product_price    = $data['product_price'];
-    //         $product->product_discount = $data['product_discount'];
-    //         $product->edition_id = $data['edition_id'];
-    //         $product->description      = $data['description'];
-    //         $product->meta_title       = $data['meta_title'];
-    //         $product->meta_description = $data['meta_description'];
-    //         $product->meta_keywords    = $data['meta_keywords'];
-
-    //         if (!empty($data['is_featured'])) {
-    //             $product->is_featured = $data['is_featured'];
-    //         } else {
-    //             $product->is_featured = 'No';
-    //         }
-
-
-    //         if (!empty($data['is_bestseller'])) {
-    //             $product->is_bestseller = $data['is_bestseller'];
-    //         } else {
-    //             $product->is_bestseller = 'No';
-    //         }
-
-
-    //         $product->status = 1;
-
-
-    //         $product->save();
-    //         $product->authors()->sync($request->author_id ?? []);
-
-    //         if ($id == '' && !$existingProduct) {
-    //             $attribute = new ProductsAttribute();
-    //             $attribute->product_id = $product->id;
-    //             $attribute->size = 'Default';
-    //             $attribute->price = 00;
-    //             $attribute->stock = $request->input('total_stock', 0);
-    //             $attribute->sku = 'null';
-    //             $attribute->status = 1;
-    //             $attribute->save();
-    //         }
-
-    //         return redirect('admin/products')->with('success_message', $message);
-    //     }
-
-    //     $categories = \App\Models\Section::with('categories')->get()->toArray(); // with('categories') is the relationship method name in the Section.php Model
-
-    //     $publishers = \App\Models\Publisher::where('status', 1)->get()->toArray();
-
-    //     $authors = Author::where('status', 1)->get();
-
-    //     $subjects = Subject::where('status', 1)->get()->toArray();
-
-    //     $languages = Language::get();
-    //     $editions = \App\Models\Edition::all();
-
-    //     return view('admin.products.add_edit_product')->with(compact('title', 'product', 'categories', 'publishers', 'authors', 'subjects', 'languages', 'editions', 'logos', 'headerLogo'));
-    // }
 
     public function addEditProduct(Request $request, $id = null)
     {
@@ -327,72 +148,204 @@ class ProductsController extends Controller
         if ($request->isMethod('post')) {
 
             $data = $request->all();
+            $user = Auth::guard('admin')->user();
 
-            $this->validate($request, [
-                'category_id'   => 'required',
-                'condition'     => 'required|in:new,old',
-                'product_name'  => 'required',
-                'product_isbn'  => 'required',
-                'product_price' => 'required|numeric',
-                'language_id'   => 'required',
-                'total_stock'   => 'required|numeric|min:0',
-            ]);
-
-            $existingProduct = Product::where('product_isbn', $data['product_isbn'])->first();
+            // Check if product with this ISBN AND condition already exists (BEFORE validation)
+            $existingProduct = null;
             $skipProductSave = false;
+            
+            if ($id == null) {
+                // Check for product with same ISBN AND same condition
+                $existingProduct = Product::where('product_isbn', $data['product_isbn'])
+                    ->where('condition', $data['condition'])
+                    ->first();
+                
+                if ($existingProduct) {
+                    // Check if current admin/vendor already has this product (same ISBN + same condition)
+                    $existingAttributeQuery = ProductsAttribute::where('product_id', $existingProduct->id);
+                    
+                    if ($user->type === 'vendor') {
+                        $existingAttributeQuery->where('vendor_id', $user->vendor_id)
+                            ->where('admin_type', 'vendor');
+                    } else {
+                        $existingAttributeQuery->where('admin_id', $user->id)
+                            ->where('admin_type', 'admin');
+                    }
+                    
+                    $existingAttribute = $existingAttributeQuery->first();
+                    
+                    if ($existingAttribute) {
+                        $userType = $user->type === 'vendor' ? 'vendor' : 'admin';
+                        $conditionText = $data['condition'] === 'new' ? 'new' : 'old';
+                        $errorMessage = "This {$conditionText} product (ISBN: {$data['product_isbn']}) already exists in your {$userType} account. Please choose a different product or edit the existing one.";
 
-            if ($existingProduct && $id == null) {
-                $product = $existingProduct;
-                $skipProductSave = true;
-            }
-
-            if ($request->hasFile('product_image')) {
-                $image_tmp = $request->file('product_image');
-                if ($image_tmp->isValid()) {
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = rand(111, 99999) . '.' . $extension;
-
-                    Image::make($image_tmp)->resize(1000, 1000)
-                        ->save('front/images/product_images/large/' . $imageName);
-                    Image::make($image_tmp)->resize(500, 500)
-                        ->save('front/images/product_images/medium/' . $imageName);
-                    Image::make($image_tmp)->resize(250, 250)
-                        ->save('front/images/product_images/small/' . $imageName);
-
-                    $product->product_image = $imageName;
+                        // Return JSON response for AJAX requests
+                        if ($request->ajax() || $request->expectsJson()) {
+                            return response()->json([
+                                'status'           => 'error',
+                                'product_exists'   => true,
+                                'message'          => $errorMessage,
+                                'product_id'       => $existingProduct->id,
+                                'stock'            => (int) ($existingAttribute->stock ?? 0),
+                                'product_discount' => (float) ($existingAttribute->product_discount ?? 0),
+                            ], 422);
+                        }
+                        
+                        // Return redirect for regular form submissions
+                        return redirect()->back()
+                            ->withInput()
+                            ->with('error_message', $errorMessage);
+                    }
+                    
+                    // Product exists with same ISBN + condition but current user doesn't have it - we'll reuse it
+                    $skipProductSave = true;
+                } else {
+                    // Check if product exists with same ISBN but different condition
+                    // This is allowed - user can add same ISBN with different condition
+                    $productWithDifferentCondition = Product::where('product_isbn', $data['product_isbn'])
+                        ->where('condition', '!=', $data['condition'])
+                        ->first();
+                    
+                    // If product exists with different condition, it's a new product entry (not reusing)
+                    // So we don't set skipProductSave = true
                 }
             }
 
-            $categoryDetails = Category::find($data['category_id']);
-            $product->section_id  = $categoryDetails->section_id;
-            $product->category_id = $data['category_id'];
-
-            if (!empty($data['new_publisher'])) {
-                $publisher = new Publisher();
-                $publisher->name = $data['new_publisher'];
-                $publisher->status = 1;
-                $publisher->save();
-                $product->publisher_id = $publisher->id;
+            // Conditional validation: ISBN uniqueness is now based on ISBN + condition combination
+            // Since we allow same ISBN with different conditions, we need custom validation
+            $isbnValidationRule = 'required|digits_between:10,13';
+            
+            if ($id == null) {
+                // For new products, check if ISBN + condition combination already exists
+                // We'll handle this in custom validation after checking existingProduct
+                if ($existingProduct) {
+                    // Product exists with same ISBN + condition - validation will pass (we already checked user doesn't have it)
+                    $isbnValidationRule = 'required|digits_between:10,13';
+                } else {
+                    // New product - check uniqueness of ISBN + condition combination
+                    $isbnValidationRule = 'required|digits_between:10,13';
+                }
             } else {
-                $product->publisher_id = $data['publisher_id'];
+                // Editing existing product - require unique ISBN + condition except for current product
+                $isbnValidationRule = 'required|digits_between:10,13';
             }
 
-            $product->subject_id  = $data['subject_id'];
-            $product->language_id = $data['language_id'];
-            $product->location    = $data['location'] ?? null;
+            $validator = Validator::make($request->all(), [
+                'category_id'   => 'required',
+                'condition'     => 'required|in:new,old',
+                'product_name'  => 'required',
+                'product_isbn'  => $isbnValidationRule,
+                'product_price' => 'required|numeric',
+                'language_id'   => 'required',
+            ]);
 
-            $product->condition        = $data['condition'];
-            $product->product_name     = $data['product_name'];
-            $product->product_isbn     = $data['product_isbn'];
-            $product->product_price    = $data['product_price'];
-            $product->edition_id       = $data['edition_id'];
-            $product->description      = $data['description'];
-            $product->meta_title       = $data['meta_title'];
-            $product->meta_keywords    = $data['meta_keywords'];
-            $product->meta_description = $data['meta_description'];
-            $product->is_featured      = $data['is_featured'] ?? 'No';
-            $product->is_bestseller    = $data['is_bestseller'] ?? 'No';
-            $product->status           = 1;
+            // Custom validation: Check ISBN + condition uniqueness
+            // Note: We already checked for existingProduct above, but this ensures validation consistency
+            if ($id == null) {
+                // For new products: if we're not reusing an existing product, check uniqueness
+                if (!$existingProduct) {
+                    $validator->after(function ($validator) use ($data) {
+                        $exists = Product::where('product_isbn', $data['product_isbn'])
+                            ->where('condition', $data['condition'])
+                            ->exists();
+                        
+                        if ($exists) {
+                            $conditionText = $data['condition'] === 'new' ? 'new' : 'old';
+                            $validator->errors()->add('product_isbn', "A {$conditionText} product with this ISBN already exists. You can reuse it by selecting the same condition, or add it as a different condition.");
+                        }
+                    });
+                }
+                // If existingProduct exists, validation passes (we already verified user doesn't have it)
+            } else {
+                // For editing: check ISBN + condition uniqueness except current product
+                $validator->after(function ($validator) use ($data, $id) {
+                    $exists = Product::where('product_isbn', $data['product_isbn'])
+                        ->where('condition', $data['condition'])
+                        ->where('id', '!=', $id)
+                        ->exists();
+                    
+                    if ($exists) {
+                        $conditionText = $data['condition'] === 'new' ? 'new' : 'old';
+                        $validator->errors()->add('product_isbn', "A {$conditionText} product with this ISBN already exists.");
+                    }
+                });
+            }
+
+            if ($validator->fails()) {
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json([
+                        'status' => 'error',
+                        'errors' => $validator->errors()
+                    ], 422);
+                }
+                return redirect()->back()
+                    ->withErrors($validator)
+                    ->withInput();
+            }
+
+            // If reusing existing product, set it here
+            if ($existingProduct && $id == null) {
+                $product = $existingProduct;
+            }
+
+            // Only update product fields if we're not reusing an existing product
+            if (!$skipProductSave) {
+                if ($request->hasFile('product_image')) {
+                    $image_tmp = $request->file('product_image');
+                    if ($image_tmp->isValid()) {
+                        $extension = $image_tmp->getClientOriginalExtension();
+                        $imageName = rand(111, 99999) . '.' . $extension;
+
+                        Image::make($image_tmp)->resize(1000, 1000)
+                            ->save('front/images/product_images/large/' . $imageName);
+                        Image::make($image_tmp)->resize(500, 500)
+                            ->save('front/images/product_images/medium/' . $imageName);
+                        Image::make($image_tmp)->resize(250, 250)
+                            ->save('front/images/product_images/small/' . $imageName);
+
+                        $product->product_image = $imageName;
+                    }
+                } elseif ($id == null) {
+                    // No new image uploaded for a NEW product.
+                    // If there is already another product with the same ISBN (any condition)
+                    // and it has an image, reuse that image for this new record.
+                    $imageSourceProduct = Product::where('product_isbn', $data['product_isbn'])
+                        ->whereNotNull('product_image')
+                        ->first();
+
+                    if ($imageSourceProduct) {
+                        $product->product_image = $imageSourceProduct->product_image;
+                    }
+                }
+
+                $categoryDetails = Category::find($data['category_id']);
+                $product->section_id  = $categoryDetails->section_id;
+                $product->category_id = $data['category_id'];
+
+                if (!empty($data['new_publisher'])) {
+                    $publisher = new Publisher();
+                    $publisher->name = $data['new_publisher'];
+                    $publisher->status = 1;
+                    $publisher->save();
+                    $product->publisher_id = $publisher->id;
+                } else {
+                    $product->publisher_id = $data['publisher_id'];
+                }
+
+                $product->subject_id  = $data['subject_id'];
+                $product->language_id = $data['language_id'];
+
+                $product->condition        = $data['condition'];
+                $product->product_name     = $data['product_name'];
+                $product->product_isbn     = $data['product_isbn'];
+                $product->product_price    = $data['product_price'];
+                $product->edition_id       = $data['edition_id'];
+                $product->description      = $data['description'];
+                $product->meta_title       = $data['meta_title'];
+                $product->meta_keywords    = $data['meta_keywords'];
+                $product->meta_description = $data['meta_description'];
+                $product->status           = 1;
+            }
 
             if (!$skipProductSave) {
                 $productFilters = ProductsFilter::productFilters();
@@ -411,81 +364,69 @@ class ProductsController extends Controller
                 }
             }
 
+            // Check Free plan limit for new products (not updates)
+            if ($id == null && $user->type === 'vendor' && !$skipProductSave) {
+                $vendor = \App\Models\Vendor::find($user->vendor_id);
+                if ($vendor && $vendor->plan === 'free') {
+                    // Get dynamic limit from settings
+                    $freePlanBookLimit = (int) Setting::getValue('free_plan_book_limit', 100);
+
+                    // Count products added this month
+                    $currentMonthStart = now()->startOfMonth();
+                    $productsThisMonth = Product::whereHas('firstAttribute', function($q) use ($vendor) {
+                        $q->where('vendor_id', $vendor->id)
+                          ->where('admin_type', 'vendor');
+                    })
+                    ->where('created_at', '>=', $currentMonthStart)
+                    ->count();
+
+                    if ($productsThisMonth >= $freePlanBookLimit) {
+                        return redirect('admin/products')
+                            ->with('error_message', "You have reached the monthly limit of {$freePlanBookLimit} products for Free plan. Please upgrade to Pro plan for unlimited uploads.");
+                    }
+                }
+            }
+
             if (!$skipProductSave) {
                 $product->save();
+                // Only sync authors if we're saving the product (not reusing)
+                $product->authors()->sync($request->author_id ?? []);
             }
 
-            $product->authors()->sync($request->author_id ?? []);
-
-            $user = Auth::guard('admin')->user();
-
-            $attributeQuery = ProductsAttribute::where('product_id', $product->id);
-
-            if ($user->type === 'vendor') {
-                $attributeQuery->where('vendor_id', $user->vendor_id)
-                    ->where('admin_type', 'vendor');
-            } else {
-                $attributeQuery->where('admin_id', $user->id)
-                    ->where('admin_type', 'superadmin');
-            }
-
-            $existingAttribute = $attributeQuery->first();
-
-            $newStock = (int) $data['total_stock'];
-            $newDiscount = (float) ($data['product_discount'] ?? 0);
-
-            if ($existingAttribute) {
-                $existingAttribute->stock = $existingAttribute->stock + $newStock;
-                $existingAttribute->product_discount = $newDiscount;
-                $existingAttribute->save();
-            } else {
-                $attribute = new ProductsAttribute();
-                $attribute->product_id = $product->id;
-                $attribute->size = 'Default';
-                $attribute->stock = $newStock;
-                $attribute->product_discount = $newDiscount;
-                $attribute->sku = 'null';
-                $attribute->status = 1;
+            // For new products, return JSON to show modal for stock/discount
+            if ($id == null) {
+                // Create notification when a new product is added
+                $vendorId = null; // Always null so notification is visible to admin only
+                $notificationMessage = '';
 
                 if ($user->type === 'vendor') {
-                    $attribute->admin_type = 'vendor';
-                    $attribute->vendor_id = $user->vendor_id;
-                    $attribute->admin_id = null;
+                    // Keep vendor_id as null so only admin sees this notification
+                    $vendorName = $user->name;
+                    $notificationMessage = "Vendor '{$vendorName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
                 } else {
-                    $attribute->admin_type = 'admin';
-                    $attribute->admin_id = $user->id;
-                    $attribute->vendor_id = null;
+                    $adminName = $user->name;
+                    $notificationMessage = "Admin '{$adminName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
                 }
 
-                $attribute->save();
+                Notification::create([
+                    'type' => 'product_added',
+                    'title' => 'New Product Added',
+                    'message' => $notificationMessage,
+                    'related_id' => $product->id,
+                    'related_type' => 'App\Models\Product',
+                    'vendor_id' => $vendorId, // null so only admin can see vendor-added product notifications
+                    'is_read' => false,
+                ]);
 
-                // Create notification when a new product is added
-                // Only create notification if this is a new product (not an update)
-                if ($id == null) {
-                    $vendorId = null; // Always null so notification is visible to admin only
-                    $notificationMessage = '';
-                    
-                    if ($user->type === 'vendor') {
-                        // Keep vendor_id as null so only admin sees this notification
-                        $vendorName = $user->name;
-                        $notificationMessage = "Vendor '{$vendorName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
-                    } else {
-                        $adminName = $user->name;
-                        $notificationMessage = "Admin '{$adminName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
-                    }
-
-                    Notification::create([
-                        'type' => 'product_added',
-                        'title' => 'New Product Added',
-                        'message' => $notificationMessage,
-                        'related_id' => $product->id,
-                        'related_type' => 'App\Models\Product',
-                        'vendor_id' => $vendorId, // null so only admin can see vendor-added product notifications
-                        'is_read' => false,
-                    ]);
-                }
+                return response()->json([
+                    'status' => 'success',
+                    'message' => $message,
+                    'product_id' => $product->id,
+                    'show_modal' => true
+                ]);
             }
 
+            // For existing products, redirect normally
             return redirect('admin/products')->with('success_message', $message);
         }
 
@@ -519,6 +460,63 @@ class ProductsController extends Controller
         return Author::where('name', 'like', "%{$q}%")
             ->select('id', 'name')
             ->get();
+    }
+
+    public function saveProductAttributes(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'stock' => 'required|integer|min:0',
+            'product_discount' => 'nullable|numeric|min:0|max:100',
+        ]);
+
+        $user = Auth::guard('admin')->user();
+        $data = $request->all();
+
+        $attributeQuery = ProductsAttribute::where('product_id', $data['product_id']);
+
+        if ($user->type === 'vendor') {
+            $attributeQuery->where('vendor_id', $user->vendor_id)
+                ->where('admin_type', 'vendor');
+        } else {
+            $attributeQuery->where('admin_id', $user->id)
+            ->where('admin_type', 'admin')
+            ->orWhere('admin_type', 'superadmin');
+        }
+
+        $existingAttribute = $attributeQuery->first();
+
+        if ($existingAttribute) {
+            // Update existing attribute
+            $existingAttribute->stock = (int) $data['stock'];
+            $existingAttribute->product_discount = (float) ($data['product_discount'] ?? 0);
+            $existingAttribute->save();
+        } else {
+            // Create new attribute
+            $attribute = new ProductsAttribute();
+            $attribute->product_id = $data['product_id'];
+            $attribute->stock = (int) $data['stock'];
+            $attribute->product_discount = (float) ($data['product_discount'] ?? 0);
+            $attribute->sku = 'BH' . '-' . 'P' . $data['product_id'] . '-' . 'V' . $user->vendor_id;
+            $attribute->status = 1;
+
+            if ($user->type === 'vendor') {
+                $attribute->admin_type = 'vendor';
+                $attribute->vendor_id = $user->vendor_id;
+                $attribute->admin_id = null;
+            } else {
+                $attribute->admin_type = 'admin';
+                $attribute->admin_id = $user->id;
+                $attribute->vendor_id = null;
+            }
+
+            $attribute->save();
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Product attributes saved successfully!'
+        ]);
     }
 
     public function deleteProductImage($id)
@@ -773,13 +771,11 @@ class ProductsController extends Controller
             unlink($medium_image_path . $productImage->image);
         }
 
-        // Third: Delete from the 'large' folder
+
         if (file_exists($large_image_path . $productImage->image)) {
             unlink($large_image_path . $productImage->image);
         }
 
-
-        // Delete the product image name (record) from the `products_images` database table
         ProductsImage::where('id', $id)->delete();
 
         $message = 'Book Image has been deleted successfully!';
@@ -789,7 +785,7 @@ class ProductsController extends Controller
     }
 
     public function deleteAttribute($id)
-    { // Delete an attribute in add_edit_attributes.blade.php
+    {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         ProductsAttribute::where('id', $id)->delete();
@@ -801,11 +797,10 @@ class ProductsController extends Controller
     }
 
     public function deleteProductVideo($id)
-    { // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
+    {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        // This method is referenced in routes but not implemented
-        // You can implement video deletion logic here if needed
+
 
         $message = 'Book Video has been deleted successfully!';
 
@@ -821,7 +816,6 @@ class ProductsController extends Controller
 
         $isbn = $request->isbn;
 
-        // 1️⃣ Check Local Database
         $product = Product::with(['publisher', 'subject', 'edition', 'language', 'authors'])
             ->where('product_isbn', $isbn)
             ->first();
@@ -848,7 +842,6 @@ class ProductsController extends Controller
             ]);
         }
 
-        // 2️⃣ Fetch From ISBNdb API
         $key = config('services.isbn.key');
 
         $response = Http::withHeaders([
@@ -932,5 +925,35 @@ class ProductsController extends Controller
                 "author_ids"   => $author_ids,
             ]
         ]);
+    }
+
+    public function nameSuggestions(Request $request)
+    {
+        try {
+
+            $query = $request->input('query');
+
+            if (!$query || strlen($query) < 2) {
+                return response()->json([
+                    'status' => true,
+                    'data' => []
+                ]);
+            }
+
+            $books = Product::where('product_name', 'LIKE', '%' . $query . '%')
+                ->limit(10)
+                ->get(['id', 'product_name', 'product_isbn']);
+
+            return response()->json([
+                'status' => true,
+                'data'   => $books
+            ]);
+        } catch (\Exception $e) {
+
+            return response()->json([
+                'status'  => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

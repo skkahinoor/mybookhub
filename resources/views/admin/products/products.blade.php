@@ -40,7 +40,9 @@
                                             <th>Image</th>
                                             <th>Category</th> {{-- Through the relationship --}}
                                             <th>Section</th> {{-- Through the relationship --}}
-                                            <th>Added by</th> {{-- Through the relationship --}}
+                                            @if ($adminType == 'admin' || $adminType == 'superadmin')
+                                                <th>Stock</th>
+                                            @endif
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -49,91 +51,158 @@
                                         @foreach ($products as $key => $product)
                                             <tr>
                                                 <td>{{ __($key + 1) }}</td>
-                                                <td>{{ $product['product_name'] }}
-                                                    ({{ $product['edition']['edition'] ?? 'not set' }} Edition)
-                                                </td>
-                                                <td>ISBN-{{ $product['product_isbn'] }}</td>
-
-                                                <td>
-                                                    @if (!empty($product['product_image']))
-                                                        <img style="width:120px; height:100px"
-                                                            src="{{ asset('front/images/product_images/small/' . $product['product_image']) }}">
-                                                        {{-- Show the 'small' image size from the 'small' folder --}}
-                                                    @else
-                                                        <img style="width:120px; height:100px"
-                                                            src="{{ asset('front/images/product_images/small/no-image.png') }}">
-                                                        {{-- Show the 'no-image' Dummy Image: If you have for example a table with an 'images' column (that can exist or not exist), use a 'Dummy Image' in case there's no image. Example: https://dummyimage.com/  --}}
-                                                    @endif
-                                                </td>
-                                                <td>{{ $product['category']['category_name'] ?? 'N/A' }}</td>
-                                                {{-- Through the relationship --}}
-                                                <td>{{ $product['section']['name'] ?? 'N/A' }}</td> {{-- Through the relationship --}}
-                                                <td>
+                                                
+                                                @if ($adminType === 'vendor')
+                                                    {{-- Vendor: Display from ProductsAttribute --}}
+                                                    <td> {{ $product->product->product_name ?? 'N/A' }}</td>
+                                                    <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }} <span class="text-muted">({{ ucfirst($product->product->condition ?? 'N/A') }})</span></td>
+                                                    <td>
+                                                        @if (!empty($product->product->product_image))
+                                                            <img style="width:120px; height:100px"
+                                                                src="{{ asset('front/images/product_images/small/' . $product->product->product_image) }}">
+                                                        @else
+                                                            <img style="width:120px; height:100px"
+                                                                src="{{ asset('front/images/product_images/small/no-image.png') }}">
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->section->name ?? 'N/A' }}</td>
+                                                @else
+                                                    {{-- Admin/Superadmin: Display from Product --}}
+                                                    <td> {{ $product->product_name ?? 'N/A' }}</td>
+                                                    <td>ISBN-{{ $product->product_isbn ?? 'N/A' }} <span class="text-muted">({{ ucfirst($product->condition ?? 'N/A') }})</span></td>
+                                                    <td>
+                                                        @if (!empty($product->product_image))
+                                                            <img style="width:120px; height:100px"
+                                                                src="{{ asset('front/images/product_images/small/' . $product->product_image) }}">
+                                                        @else
+                                                            <img style="width:120px; height:100px"
+                                                                src="{{ asset('front/images/product_images/small/no-image.png') }}">
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $product->category->category_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->section->name ?? 'N/A' }}</td>
+                                                    <td>
+                                                        <span class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
+                                                    </td>
+                                                @endif
+                                                {{-- <td>
                                                     @php
-                                                        $attr = $product['first_attribute'] ?? null;
+                                                        $attr = $product->firstAttribute ?? null;
                                                     @endphp
 
                                                     @if ($attr)
-                                                        @if ($attr['admin_type'] == 'vendor')
+                                                        @if ($attr->admin_type == 'vendor')
                                                             <a target="_blank"
-                                                                href="{{ url('admin/view-vendor-details/' . $attr['vendor_id']) }}">
-                                                                {{ ucfirst($attr['admin_type']) }}
+                                                                href="{{ url('admin/view-vendor-details/' . $attr->vendor_id) }}">
+                                                                {{ ucfirst($attr->admin_type) }}
                                                             </a>
                                                         @else
-                                                            {{ ucfirst($attr['admin_type']) }}
+                                                            {{ ucfirst($attr->admin_type) }}
                                                         @endif
                                                     @else
                                                         <span class="text-muted">Not Set</span>
                                                     @endif
-                                                </td>
+                                                </td> --}}
 
                                                 <td>
-                                                    @if ($product['status'] == 1)
-                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}"
-                                                            product_id="{{ $product['id'] }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
-                                                            {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
+                                                    @if ($adminType === 'vendor')
+                                                        {{-- Vendor: Use attribute status --}}
+                                                        @if ($product->status == 1)
+                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
+                                                                product_id="{{ $product->product_id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                    status="Active"></i>
+                                                            </a>
+                                                        @else
+                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
+                                                                product_id="{{ $product->product_id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
+                                                                    status="Inactive"></i>
+                                                            </a>
+                                                        @endif
                                                     @else
-                                                        {{-- if the admin status is inactive --}}
-                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}"
-                                                            product_id="{{ $product['id'] }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
-                                                            {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
+                                                        {{-- Admin/Superadmin: Use product status --}}
+                                                        @if ($product->status == 1)
+                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
+                                                                product_id="{{ $product->id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                    status="Active"></i>
+                                                            </a>
+                                                        @else
+                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
+                                                                product_id="{{ $product->id }}" data-url="{{ route('updateproductstatus') }}" href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
+                                                                    status="Inactive"></i>
+                                                            </a>
+                                                        @endif
                                                     @endif
                                                 </td>
 
 
 
                                                 <td>
-                                                    <a title="Edit Book"
-                                                        href="{{ url('admin/add-edit-product/' . $product['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
-                                                    </a>
+                                                    @if ($adminType === 'vendor')
+                                                        {{-- Vendor: Show edit, add stock, delete attribute --}}
+                                                        {{-- <a title="Edit Book"
+                                                            href="{{ url('admin/add-edit-product/' . $product->product_id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                        </a> --}}
 
-                                                    <a href="#" title="Add Edition" data-bs-toggle="modal"
-                                                        data-bs-target="#addAttributeModal" data-id="{{ $product['id'] }}"
-                                                        data-name="{{ $product['product_name'] }}"
-                                                        id="openAddAttributeModal">
-                                                        <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
-                                                    </a>
+                                                        <a href="#" title="Add Stock" data-bs-toggle="modal"
+                                                            data-bs-target="#addAttributeModal" data-id="{{ $product->product_id }}"
+                                                            data-name="{{ $product->product->product_name ?? 'N/A' }}"
+                                                            data-stock="{{ $product->stock ?? 0 }}"
+                                                            data-discount="{{ $product->product_discount ?? 0 }}"
+                                                            id="openAddAttributeModal">
+                                                            <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
+                                                        </a>
 
+                                                        <a title="Add Multiple Images"
+                                                            href="{{ url('admin/add-images/' . $product->product_id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
+                                                        </a>
 
-                                                    <a title="Add Multiple Images"
-                                                        href="{{ url('admin/add-images/' . $product['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
-                                                    </a>
+                                                        <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
+                                                            onclick="return confirm('Are you sure you want to delete this product attribute?')"
+                                                            title="Delete Product Attribute">
+                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                                        </a>
+                                                    @else
+                                                        {{-- Admin/Superadmin: Show edit, add stock, add images --}}
+                                                        <a title="Edit Book"
+                                                            href="{{ url('admin/add-edit-product/' . $product->id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                        </a>
 
+                                                        @php
+                                                            // Get the first attribute for this product and current admin to show current stock/discount
+                                                            $firstAttribute = \App\Models\ProductsAttribute::where('product_id', $product->id)
+                                                                ->where('admin_id', Auth::guard('admin')->user()->id)
+                                                                ->where('admin_type', 'admin')
+                                                                ->first();
+                                                        @endphp
 
-                                                    <a href="{{ url('admin/delete-product/' . $product['id']) }}"
-                                                        onclick="return confirm('Are you sure you want to delete this product?')">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                    </a>
+                                                        <a href="#" title="Add Stock" data-bs-toggle="modal"
+                                                            data-bs-target="#addAttributeModal" data-id="{{ $product->id }}"
+                                                            data-name="{{ $product->product_name ?? 'N/A' }}"
+                                                            data-stock="{{ $firstAttribute->stock ?? 0 }}"
+                                                            data-discount="{{ $firstAttribute->product_discount ?? 0 }}"
+                                                            id="openAddAttributeModal">
+                                                            <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
+                                                        </a>
+
+                                                        <a title="Add Multiple Images"
+                                                            href="{{ url('admin/add-images/' . $product->id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
+                                                        </a>
+
+                                                        <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
+                                                            onclick="return confirm('Are you sure you want to delete this product attribute?')"
+                                                            title="Delete Product Attribute">
+                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                                        </a>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -172,68 +241,49 @@
                     </div>
 
                     <div class="modal-body p-4">
-                        <!-- Book name + edition display (read-only) -->
+                        <!-- Book name display (read-only) -->
                         <div class="mb-4">
                             <label class="form-label fw-semibold text-muted">
                                 <i class="fas fa-book me-2"></i>Book Name
                             </label>
                             <div class="input-group">
-
                                 <input type="text" class="form-control bg-light" id="bookNameEdition" readonly>
                             </div>
                         </div>
 
-                        <!-- Edition select -->
-                        <div class="mb-4">
-                            <label for="bookEdition" class="form-label fw-semibold">
-                                <i class="fas fa-tag me-2 text-info"></i>Edition <span class="text-danger">*</span>
-                            </label>
-                            <div class="input-group">
-
-                                <select id="bookEdition" class="form-control" required>
-                                    <option value="" disabled selected>Choose Edition...</option>
-                                    <!-- Editions will be populated dynamically -->
-                                </select>
-                            </div>
-                            <div class="form-text">Select the edition for this book</div>
-                        </div>
-
                         <div class="row">
-                            <!-- Price input -->
-                            <div class="col-md-6 mb-4">
-                                <label for="bookPrice" class="form-label fw-semibold">
-                                    <i class="fas fa-dollar-sign me-2 text-success"></i>Price <span
-                                        class="text-danger">*</span>
-                                </label>
-                                <div class="input-group">
-
-                                    <input type="number" class="form-control" id="bookPrice" placeholder="0.00"
-                                        required min="0" step="0.01">
-                                </div>
-                                <div class="form-text">Enter price in rupees</div>
-                            </div>
-
                             <!-- Stock input -->
                             <div class="col-md-6 mb-4">
                                 <label for="bookStock" class="form-label fw-semibold">
                                     <i class="fas fa-boxes me-2 text-warning"></i>Stock <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-
                                     <input type="number" class="form-control" id="bookStock" placeholder="0" required
                                         min="0" step="1">
                                 </div>
-                                <div class="form-text">Available quantity</div>
+                                <div class="form-text">Available quantity: <span id="availableQuantity" class="fw-bold text-primary">0</span></div>
+                            </div>
+
+                            <!-- Discount input -->
+                            <div class="col-md-6 mb-4">
+                                <label for="bookDiscount" class="form-label fw-semibold">
+                                    <i class="fas fa-percent me-2 text-info"></i>Discount (%) <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="bookDiscount" placeholder="0" required
+                                        min="0" max="100" step="0.01">
+                                </div>
+                                <div class="form-text">Enter discount percentage (0-100)</div>
                             </div>
                         </div>
                     </div>
 
                     <div class="modal-footer bg-light border-0 p-4">
                         <button type="submit" class="btn btn-primary  px-4 fw-semibold">
-                            <i class="fas fa-save me-2"></i>Create Attribute
+                            <i class="fas fa-save me-2"></i> Update 
                         </button>
                         <button type="button" class="btn btn-outline-secondary  px-4" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-2"></i>Cancel
+                            <i class="fas fa-times me-2"></i> Cancel
                         </button>
                     </div>
                 </form>
@@ -248,39 +298,41 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Open modal and fill book name, fetch editions
+            // Open modal and fill book name
             $(document).on('click', '#openAddAttributeModal', function() {
                 var productId = $(this).data('id');
                 var productName = $(this).data('name');
+                var stock = parseInt($(this).data('stock')) || 0; // current available stock
+                var discount = $(this).data('discount') || 0;
+                
                 $('#bookNameEdition').val(productName);
-
+                
                 // Store productId in modal for later use
                 $('#addAttributeForm').data('product-id', productId);
-
-                // Fetch editions
-                $.ajax({
-                    url: 'product/' + productId + '/editions',
-                    type: 'GET',
-                    success: function(data) {
-                        var $editionSelect = $('#bookEdition');
-                        $editionSelect.empty();
-                        $editionSelect.append(
-                            '<option value="" disabled selected>Select Edition</option>');
-                        $.each(data, function(i, edition) {
-                            $editionSelect.append('<option value="' + edition.id +
-                                '">' + edition.edition + '</option>');
-                        });
-                    }
-                });
+                // Store current available stock separately for calculations
+                $('#addAttributeForm').data('current-stock', stock);
+                
+                // Populate form fields with existing values
+                $('#bookStock').val('0'); // start from 0 to add more stock
+                $('#bookDiscount').val(discount);
+                
+                // Display available quantity (current stock)
+                $('#availableQuantity').text(stock);
+            });
+            
+            // Update available quantity in real-time when stock input changes
+            $(document).on('input', '#bookStock', function() {
+                var newStockValue = parseInt($(this).val()) || 0;
+                var currentStock = parseInt($('#addAttributeForm').data('current-stock')) || 0;
+                $('#availableQuantity').text(currentStock + newStockValue);
             });
 
             // Handle form submit
             $('#addAttributeForm').on('submit', function(e) {
                 e.preventDefault();
                 var productId = $(this).data('product-id');
-                var editionId = $('#bookEdition').val();
-                var price = $('#bookPrice').val();
                 var stock = $('#bookStock').val();
+                var discount = $('#bookDiscount').val();
 
                 $.ajax({
                     url: 'book-attribute',
@@ -288,21 +340,30 @@
                     data: {
                         _token: '{{ csrf_token() }}',
                         product_id: productId,
-                        edition_id: editionId,
-                        product_price: price,
-                        stock: stock
+                        stock: stock,
+                        product_discount: discount
                     },
                     success: function(response) {
                         if (response.success) {
                             alert(response.message);
                             $('#addAttributeModal').modal('hide');
-                            location.reload(); // reload to show new product
+                            location.reload(); // reload to show updated attributes
                         } else {
                             alert('Error: ' + response.message);
                         }
                     },
                     error: function(xhr) {
-                        alert('Error: ' + xhr.responseJSON.message);
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            alert('Error: ' + xhr.responseJSON.message);
+                        } else if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            var errors = '';
+                            $.each(xhr.responseJSON.errors, function(key, value) {
+                                errors += value[0] + '\n';
+                            });
+                            alert('Validation errors:\n' + errors);
+                        } else {
+                            alert('An error occurred. Please try again.');
+                        }
                     }
                 });
             });

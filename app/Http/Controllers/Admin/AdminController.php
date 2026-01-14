@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -21,6 +22,7 @@ use App\Models\VendorsBankDetail;
 use App\Models\VendorsBusinessDetail;
 use App\Models\ContactUs;
 use App\Models\ContactReply;
+use App\Models\ProductsAttribute;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,21 +34,69 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-
         Session::put('page', 'dashboard');
 
-
-        $vendorsCount     = Vendor::count();;
-        $usersCount      = User::count();
-        $salesExecutivesCount = SalesExecutive::count();
-        $productsCount   = Product::where('status', 1)->count();
-        $ordersCount     = Order::count();
-        $couponsCount    = Coupon::where('status', 1)->count();
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
+        $admin = Auth::guard('admin')->user();
+        $adminType = $admin->type;
+        $vendorId = $admin->vendor_id;
 
-        return view('admin/dashboard')->with(compact('productsCount', 'ordersCount', 'couponsCount', 'vendorsCount', 'usersCount', 'salesExecutivesCount', 'logos', 'headerLogo')); // is the same as:    return view('admin.dashboard');
+        // Default (Admin counts)
+        $vendorsCount = Vendor::count();
+        $usersCount = User::count();
+        $salesExecutivesCount = SalesExecutive::count();
+        $productsCount = Product::where('status', 1)->count();
+        $ordersCount = Order::count();
+        $couponsCount = Coupon::where('status', 1)->count();
+
+        // Vendor-specific counts
+        if ($adminType === 'vendor' && $vendorId) {
+
+            // Vendors should NOT see vendor count
+            $vendorsCount = 1;
+
+            // Products added by vendor
+            $productsCount = ProductsAttribute::where('vendor_id', $vendorId)
+                ->whereHas('product', function ($q) {
+                    $q->where('status', 1);
+                })
+                ->distinct('product_id')
+                ->count('product_id');
+
+            // Orders containing vendor products
+            $ordersCount = Order::whereHas('order_items', function ($q) use ($vendorId) {
+                $q->where('vendor_id', $vendorId);
+            })->count();
+
+            // Coupons created by vendor (if applicable)
+            $couponsCount = Coupon::where('vendor_id', $vendorId)
+                ->where('status', 1)
+                ->count();
+
+            // Users & sales executives usually remain global
+            $usersCount = User::count();
+            $salesExecutivesCount = SalesExecutive::count();
+        }
+
+        // Vendor plan info
+        $vendor = null;
+        if ($adminType === 'vendor' && $vendorId) {
+            $vendor = Vendor::find($vendorId);
+        }
+
+        return view('admin.dashboard', compact(
+            'productsCount',
+            'ordersCount',
+            'couponsCount',
+            'vendorsCount',
+            'usersCount',
+            'salesExecutivesCount',
+            'logos',
+            'headerLogo',
+            'vendor'
+        ));
     }
 
     public function login(Request $request)
@@ -84,14 +134,11 @@ class AdminController extends Controller
             if (Auth::guard('admin')->attempt($credentials)) {
                 if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->confirm == 'No') {
                     return redirect()->back()->with('error_message', 'Please confirm your email to activate your Vendor Account');
-
                 } else if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->status == '0') {
                     return redirect()->back()->with('error_message', 'Your vendor account is not active');
-
                 } else {
                     return redirect('/admin/dashboard');
                 }
-
             } else {
                 return redirect()->back()->with('error_message', 'Invalid Email or Password');
             }
@@ -128,7 +175,6 @@ class AdminController extends Controller
                     ]); // we persist (update) the hashed password (not the password itself)
 
                     return redirect()->back()->with('success_message', 'Admin Password has been updated successfully!');
-
                 } else { // If new password and confirm password are not matching each other
                     return redirect()->back()->with('error_message', 'New Password and Confirm Password does not match!');
                 }
@@ -148,7 +194,7 @@ class AdminController extends Controller
         $data = $request->all();
         // dd($data);
 
-                                                                                              // Hashing Passwords: https://laravel.com/docs/9.x/hashing#hashing-passwords
+        // Hashing Passwords: https://laravel.com/docs/9.x/hashing#hashing-passwords
         if (Hash::check($data['current_password'], Auth::guard('admin')->user()->password)) { // ['current_password'] comes from the AJAX call in admin/js/custom.js page from the 'data' object inside $.ajax() method    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
             return 'true';
         } else {
@@ -158,7 +204,7 @@ class AdminController extends Controller
 
     public function updateAdminDetails(Request $request)
     { // the update_admin_details.blade.php
-                                                               // Correcting issues in the Skydash Admin Panel Sidebar using Session
+        // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'update_admin_details');
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
@@ -182,7 +228,7 @@ class AdminController extends Controller
 
             $this->validate($request, $rules, $customMessages);
 
-                                                    // Uploading Admin Photo    // Using the Intervention package for uploading images
+            // Uploading Admin Photo    // Using the Intervention package for uploading images
             if ($request->hasFile('admin_image')) { // the HTML name attribute    name="admin_name"    in update_admin_details.blade.php
                 $image_tmp = $request->file('admin_image');
                 // dd($image_tmp);
@@ -197,17 +243,16 @@ class AdminController extends Controller
                     // Assigning the uploaded images path inside the 'public' folder
                     $imagePath = 'admin/images/photos/' . $imageName;
 
-                                                               // Upload the image using the Intervention package and save it in our path inside the 'public' folder
+                    // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                     Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
                 }
-
             } else if (! empty($data['current_admin_image'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
                 $imageName = $data['current_admin_image'];
             } else { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), and originally there wasn't any image uploaded in the first place
                 $imageName = '';
             }
 
-                                                                           // Update Admin Details
+            // Update Admin Details
             Admin::where('id', Auth::guard('admin')->user()->id)->update([ // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                 'name'   => $data['admin_name'],
                 'mobile' => $data['admin_mobile'],
@@ -228,7 +273,7 @@ class AdminController extends Controller
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
             Session::put('page', 'update_personal_details');
 
-                                              // Handling update vendor personal details <form> submission
+            // Handling update vendor personal details <form> submission
             if ($request->isMethod('post')) { // if the <form> is submitted
                 $data = $request->all();
                 // dd($data);
@@ -254,7 +299,7 @@ class AdminController extends Controller
 
                 // Uploading Admin Photo
 
-                                                         // Using the Intervention package for uploading images
+                // Using the Intervention package for uploading images
                 if ($request->hasFile('vendor_image')) { // the HTML name attribute    name="admin_name"    in update_admin_details.blade.php
                     $image_tmp = $request->file('vendor_image');
 
@@ -268,25 +313,24 @@ class AdminController extends Controller
                         // Assigning the uploaded images path inside the 'public' folder
                         $imagePath = 'admin/images/photos/' . $imageName;
 
-                                                                   // Upload the image using the Intervention package and save it in our path inside the 'public' folder
+                        // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                         Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
                     }
-
                 } else if (! empty($data['current_vendor_image'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
                     $imageName = $data['current_vendor_image'];
                 } else { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), and originally there wasn't any image uploaded in the first place
                     $imageName = '';
                 }
 
-                                                                               // Vendor details need to be updated in BOTH `admins` and `vendors` tables:
-                                                                               // Update Vendor Details in 'admins' table
+                // Vendor details need to be updated in BOTH `admins` and `vendors` tables:
+                // Update Vendor Details in 'admins' table
                 Admin::where('id', Auth::guard('admin')->user()->id)->update([ // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                     'name'   => $data['vendor_name'],
                     'mobile' => $data['vendor_mobile'],
                     'image'  => $imageName,
                 ]); // Note that the image name is the random image name that we generated
 
-                                                                                       // Update Vendor Details in 'vendors' table
+                // Update Vendor Details in 'vendors' table
                 Vendor::where('id', Auth::guard('admin')->user()->vendor_id)->update([ // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                     'name'        => $data['vendor_name'],
                     'mobile'      => $data['vendor_mobile'],
@@ -330,7 +374,7 @@ class AdminController extends Controller
 
                 $this->validate($request, $rules, $customMessages);
 
-                                                                // Uploading Admin Photo    // Using the Intervention package for uploading images
+                // Uploading Admin Photo    // Using the Intervention package for uploading images
                 if ($request->hasFile('address_proof_image')) { // the HTML name attribute    name="admin_name"    in update_admin_details.blade.php
                     $image_tmp = $request->file('address_proof_image');
 
@@ -344,10 +388,9 @@ class AdminController extends Controller
                         // Assigning the uploaded images path inside the 'public' folder
                         $imagePath = 'admin/images/proofs/' . $imageName;
 
-                                                                   // Upload the image using the Intervention package and save it in our path inside the 'public' folder
+                        // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                         Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
                     }
-
                 } else if (! empty($data['current_address_proof'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
                     $imageName = $data['current_address_proof'];
                 } else { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), and originally there wasn't any image uploaded in the first place
@@ -356,7 +399,7 @@ class AdminController extends Controller
 
                 $vendorCount = VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->count(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                 if ($vendorCount > 0) {                                                                                     // if there's a vendor already existing, them UPDATE
-                                                                                                                                // UPDATE `vendors_business_details` table
+                    // UPDATE `vendors_business_details` table
                     VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->update([                // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'shop_name'               => $data['shop_name'],
                         'shop_mobile'             => $data['shop_mobile'],
@@ -372,9 +415,8 @@ class AdminController extends Controller
                         'address_proof'           => $data['address_proof'],
                         'address_proof_image'     => $imageName,
                     ]);
-
                 } else { // if there's no vendor already existing, then INSERT
-                             // INSERT INTO `vendors_business_details` table
+                    // INSERT INTO `vendors_business_details` table
                     VendorsBusinessDetail::insert([
                         'vendor_id'               => Auth::guard('admin')->user()->vendor_id, // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'shop_name'               => $data['shop_name'],
@@ -403,7 +445,6 @@ class AdminController extends Controller
             } else {
                 $vendorDetails = [];
             }
-
         } else if ($slug == 'bank') {
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
             Session::put('page', 'update_bank_details');
@@ -433,16 +474,15 @@ class AdminController extends Controller
 
                 $vendorCount = VendorsBankDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->count(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                 if ($vendorCount > 0) {                                                                                 // if there's a vendor already existing, them UPDATE
-                                                                                                                            // UPDATE `vendors_bank_details` table
+                    // UPDATE `vendors_bank_details` table
                     VendorsBankDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->update([                // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'account_holder_name' => $data['account_holder_name'],
                         'bank_name'           => $data['bank_name'],
                         'account_number'      => $data['account_number'],
                         'bank_ifsc_code'      => $data['bank_ifsc_code'],
                     ]);
-
                 } else { // if there's no vendor already existing, then INSERT
-                             // INSERT INTO `vendors_bank_details` table
+                    // INSERT INTO `vendors_bank_details` table
                     VendorsBankDetail::insert([
                         'vendor_id'           => Auth::guard('admin')->user()->vendor_id, // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'account_holder_name' => $data['account_holder_name'],
@@ -461,12 +501,11 @@ class AdminController extends Controller
             } else {
                 $vendorDetails = [];
             }
-
         }
 
-                                                                    // Fetch all of the world countries from the database table `countries`
+        // Fetch all of the world countries from the database table `countries`
         $countries = Country::where('status', true)->get()->toArray(); // get the countries which have `status` = true (to ignore the blacklisted countries, in case)
-                                                                    // dd($countries);
+        // dd($countries);
 
         // The 'GET' request: to show the update_vendor_details.blade.php page
         // We'll create one view (not 3) for the 3 pages, but parts inside it will change depending on the $slug value
@@ -548,7 +587,6 @@ class AdminController extends Controller
 
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
             Session::put('page', 'view_' . strtolower($title));
-
         } else { // if there's no $type is passed, show ALL of the admins, subadmins and vendors
             $title = 'All Admins/Vendors';
 
@@ -559,7 +597,7 @@ class AdminController extends Controller
         // Order by id descending to show newest first, then convert to array
         $admins = $admins->orderBy('id', 'desc')->get()->toArray(); // toArray() method converts the Collection object to a plain PHP array
 
-        return view('admin/admins/admins', compact('admins', 'title','logos', 'headerLogo'));
+        return view('admin/admins/admins', compact('admins', 'title', 'logos', 'headerLogo'));
     }
 
     public function viewVendorDetails($id)
@@ -568,7 +606,7 @@ class AdminController extends Controller
         $headerLogo = HeaderLogo::first();
         $vendorDetails = Admin::with('vendorPersonal', 'vendorBusiness', 'vendorBank')->where('id', $id)->first(); // Using the relationship defined in the Admin.php model to be able to get data from `vendors`, `vendors_business_details` and `vendors_bank_details` tables
         $vendorDetails = json_decode(json_encode($vendorDetails), true);                                           // We used json_decode(json_encode($variable), true) to convert $vendorDetails to an array instead of Laravel's toArray() method
-                                                                                                                   // dd($vendorDetails);
+        // dd($vendorDetails);
 
         // Fetch countries for dropdowns
         $countries = Country::where('status', true)->get()->toArray();
@@ -589,7 +627,7 @@ class AdminController extends Controller
         // Update Admin Status using AJAX in admins.blade.php
         if ($request->ajax()) {                               // if the request is coming via an AJAX call
             $data = $request->all();                              // Getting the name/value pairs array that are sent from the AJAX request (AJAX call)
-                                                                  // dd($data);
+            // dd($data);
 
             if ($data['status'] == 'Active') { // $data['status'] comes from the 'data' object inside the $.ajax() method    // reverse the 'status' from (ative/inactive) 0 to 1 and 1 to 0 (and vice versa)
                 $status = 0;
@@ -601,9 +639,9 @@ class AdminController extends Controller
 
 
             Admin::where('id', $data['admin_id'])->update(['status' => $status]); // $data['admin_id'] comes from the 'data' object inside the $.ajax() method
-                                                                                  // echo '<pre>', var_dump($data), '</pre>';
+            // echo '<pre>', var_dump($data), '</pre>';
 
-                                                                                       // Send a THIRD Approval Email to the vendor when the superadmin or admin approves their account (`status` column in the `admins` table becomes 1 instead of 0) so that they can add their products on the website now
+            // Send a THIRD Approval Email to the vendor when the superadmin or admin approves their account (`status` column in the `admins` table becomes 1 instead of 0) so that they can add their products on the website now
             $adminDetails = Admin::where('id', $data['admin_id'])->first()->toArray(); // get the admin that his `status` has been approved
 
             if ($adminDetails['type'] == 'vendor' && $status == 1) {                        // if the `type` column value (in `admins` table) is 'vendor', and their `status` became 1 (got approved), send them a THIRD confirmation mail
@@ -612,7 +650,7 @@ class AdminController extends Controller
                 // Note: Vendor CONFIRMATION occurs automatically through vendor clicking on the confirmation link sent in the email, but vendor ACTIVATION (active/inactive/disabled) occurs manually where 'superadmin' or 'admin' activates the `status` from the Admin Panel in 'Admin Management' tab, then clicks Status. Also, Vendor CONFIRMATION is related to the `confirm` columns in BOTH `admins` and `vendors` tables, but vendor ACTIVATION (active/inactive/disabled) is related to the `status` columns in BOTH `admins` and `vendors` tables!
                 // Note: Vendor receives THREE emails: the first one when they register (please click on the confirmation link mail (in emails/vendor_confirmation.blade.php)), the second one when they click on the confirmation link sent in the first email (telling them that they have been confirmed and asking them to complete filling in their personal, business and bank details to get ACTIVATED/APPROVED (`status gets 1) (in emails/vendor_confirmed.blade.php)), the third email when the 'admin' or 'superadmin' manually activates (`status` becomes 1) the vendor from the Admin Panel from 'Admin Management' tab, then clicks Status (the email tells them they have been approved (activated and `status` became 1) and asks them to add their products on the website (in emails/vendor_approved.blade.php))
 
-                                                 // Send the Approval Success Email to the new vendor
+                // Send the Approval Success Email to the new vendor
                 // $email = $adminDetails['email']; // the vendor's email
 
                 // The email message data/variables that will be passed in to the email view
@@ -1013,6 +1051,4 @@ class AdminController extends Controller
 
         return redirect('admin/contact-queries')->with('success_message', 'Query deleted successfully!');
     }
-
-
 }

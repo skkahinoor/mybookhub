@@ -208,6 +208,15 @@ class NotificationController extends Controller
                         </a>';
                     }
 
+                    // Product added
+                    if ($n->related_type === 'App\Models\Product' && $n->related_id) {
+                        $html .= '
+                        <a href="' . url('admin/add-edit-product/' . $n->related_id) . '"
+                           title="View Product">
+                           <i class="mdi mdi-eye text-primary" style="font-size:20px"></i>
+                        </a>';
+                    }
+
                     $html .= '</div>';
 
                     return $html;

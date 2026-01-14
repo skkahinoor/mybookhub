@@ -4,69 +4,178 @@
 
 @section('content')
     <style>
+        /* ===== GLOBAL ===== */
+        .card {
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        .card-title {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        /* ===== FORM ===== */
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            padding: 10px 14px;
+            border: 1px solid #d1d5db;
+            transition: 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
+        }
+
+        /* ===== RADIO (NEW / OLD) ===== */
+        .btn-check+label {
+            padding: 6px 16px;
+            border-radius: 20px;
+            border: 1px solid #d1d5db;
+            cursor: pointer;
+            margin-left: 6px;
+            background: #f9fafb;
+        }
+
+        .btn-check:checked+label {
+            background: #4f46e5;
+            color: #fff;
+            border-color: #4f46e5;
+        }
+
+        /* ===== SECTION HEADERS ===== */
+        .form-section {
+            margin-top: 30px;
+        }
+
+        .form-section h6 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 14px;
+            border-left: 4px solid #6366f1;
+            padding-left: 10px;
+        }
+
+        /* ===== AUTHOR MULTI SELECT ===== */
         .multi-select-wrapper {
-            position: relative;
-            width: 300px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+            width: 100%;
         }
 
         .selected-options {
             display: flex;
             flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 5px;
+            gap: 6px;
+            margin-bottom: 8px;
         }
 
         .selected-options span {
-            background-color: #007bff;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 14px;
+            background: #6366f1;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 18px;
+            font-size: 13px;
         }
 
         .selected-options span i {
-            margin-left: 5px;
+            margin-left: 6px;
             cursor: pointer;
+            font-weight: bold;
         }
 
         .search-input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 8px;
         }
 
+        /* ===== OPTIONS DROPDOWN ===== */
         .options-list {
-            border: 1px solid #ccc;
-            border-top: none;
-            max-height: 150px;
-            overflow-y: auto;
-            background: white;
-            position: absolute;
-            width: 100%;
-            z-index: 100;
-        }
-
-        .options-list div {
-            padding: 8px;
-            cursor: pointer;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
 
         .options-list div:hover {
-            background: #f1f1f1;
+            background: #eef2ff;
         }
 
-        #searchResults {
-            max-height: 200px;
-            overflow-y: auto;
+        /* ===== IMAGE PREVIEW ===== */
+        #isbnImagePreview img {
+            margin-top: 10px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, .1);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 22px;
+        }
+
+        .btn-light {
+            border-radius: 10px;
+        }
+
+        /* ===== CHECKBOX ===== */
+        input[type="checkbox"] {
+            transform: scale(1.15);
+            margin-right: 6px;
+        }
+
+        .condition-toggle {
+            gap: 12px;
+        }
+
+        .condition-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1.5px solid #d1d5db;
             cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4b5563;
+            transition: all 0.25s ease;
         }
 
-        #searchResults .list-group-item {
-            padding: 8px 12px;
+        .condition-toggle label i {
+            font-size: 18px;
+        }
+
+        /* Checked state (NO background) */
+        .condition-toggle .btn-check:checked+label {
+            border-color: #4f46e5;
+            color: #ffffff;
+        }
+
+        /* Hover */
+        .condition-toggle label:hover {
+            border-color: #6366f1;
+            color: #6366f1;
         }
     </style>
+
     <div class="main-panel">
         <div class="content-wrapper">
             <div class="row">
@@ -168,91 +277,61 @@
                                 <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
                                 @csrf
 
-                                <div class="d-flex align-items-center" role="group" aria-label="Condition"
-                                    style="justify-content: flex-end !important;">
+                                <div class="d-flex align-items-center condition-toggle" role="group"
+                                    aria-label="Condition">
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="new"
                                             value="new" autocomplete="off"
-                                            {{ old('condition', $product->condition ?? '') === 'new' ? 'checked' : '' }}>
-                                        <label class="" for="new">New</label>
+                                            {{ old('condition', !empty($product->id) ? ($product->condition ?? 'new') : 'new') === 'new' ? 'checked' : '' }}>
+                                        <label for="new">
+                                            <i class="mdi mdi-book-open-page-variant"></i> New
+                                        </label>
                                     </div>
 
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="old"
                                             value="old" autocomplete="off"
-                                            {{ old('condition', $product->condition ?? '') === 'old' ? 'checked' : '' }}>
-                                        <label class="" for="old">Old</label>
+                                            {{ old('condition', !empty($product->id) ? ($product->condition ?? 'new') : 'new') === 'old' ? 'checked' : '' }}>
+                                        <label for="old">
+                                            <i class="mdi mdi-history"></i> Old
+                                        </label>
                                     </div>
                                 </div>
-                                <div class="card mb-4">
-                                    <div class="card-header text-white" style="background-color: #928e8e">
-                                        <i class="mdi mdi-map-marker"></i> Location
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="form-group mb-3">
-                                            <label for="location">Coordinates (Latitude,Longitude)</label>
-                                            <div class="input-group">
-                                                <input type="text" class="form-control" readonly id="location"
-                                                    name="location" placeholder="e.g. 28.6139,77.2090"
-                                                    value="{{ old('location', $product->location ?? '') }}">
-                                                <div class="input-group-append">
-                                                    <button class="btn btn-outline-secondary" type="button"
-                                                        id="getLocationBtn">
-                                                        <i class="mdi mdi-crosshairs-gps"></i> Get Current Location
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <small class="form-text text-muted">use the button to fetch the current
-                                                location.</small>
-                                        </div>
 
-                                        {{-- <div class="form-group mb-3" style="position:relative;">
-                                            <label for="searchLocation">Search Location</label>
-                                            <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
-                                                </div>
-                                                <input type="text" class="form-control" id="searchLocation" placeholder="Type a place, address, or city...">
-                                            </div>
-                                            <div class="list-group" id="searchResults" style="position:absolute;z-index:1000;width:100%;display:none;"></div>
-                                            <small class="form-text text-muted">Start typing to search for a location.</small>
-                                        </div> --}}
 
-                                        <div id="map"
-                                            style="height: 300px; margin-top: 10px; border-radius: 8px; overflow: hidden;">
-                                        </div>
-                                    </div>
-                                </div>
-                                <style>
-                                    #searchResults {
-                                        max-height: 200px;
-                                        overflow-y: auto;
-                                        cursor: pointer;
-                                        border-radius: 0 0 0.25rem 0.25rem;
-                                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-                                    }
-
-                                    #searchResults .list-group-item {
-                                        padding: 10px 16px;
-                                        font-size: 15px;
-                                        transition: background 0.2s;
-                                    }
-
-                                    #searchResults .list-group-item:hover,
-                                    #searchResults .list-group-item.active {
-                                        background: #f1f1f1;
-                                        color: #007bff;
-                                    }
-                                </style>
 
                                 <div class="form-group">
                                     <div class="form-group">
-                                        <label for="product_isbn">ISBN number</label>
-                                        <input type="number" class="form-control" id="product_isbn"
-                                            placeholder="Enter ISBN-" name="product_isbn"
-                                            @if (!empty($product['product_isbn'])) value="{{ $product['product_isbn'] }}" @else value="{{ old('product_isbn') }}" @endif>
-                                        {{-- Repopulating  Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
+                                        <label for="product_isbn">ISBN Number <small class="text-muted">(10-13 digits)</small></label>
+                                        <input type="text" class="form-control" id="product_isbn" name="product_isbn"
+                                            placeholder="Enter ISBN (10-13 digits)" maxlength="13"
+                                            value="{{ old('product_isbn', $product['product_isbn'] ?? '') }}">
                                     </div>
+
+                                    <div class="form-group position-relative">
+                                        <label for="product_name">Book Name</label>
+
+                                        <input type="text" class="form-control" id="product_name" name="product_name"
+                                            placeholder="Enter Book Name" autocomplete="off"
+                                            value="{{ old('product_name', $product['product_name'] ?? '') }}">
+
+                                        <ul id="book_name_suggestion" class="list-group"
+                                            style="
+            position:absolute;
+            top:100%;
+            left:0;
+            right:0;
+            z-index:9999;
+            display:none;
+            max-height:200px;
+            overflow-y:auto;
+            background:#fff;
+            border:1px solid #ddd;
+        ">
+                                        </ul>
+                                    </div>
+
+
                                     <label for="category_id">Select Category</label>
                                     {{-- <input type="text" class="form-control" id="category_id" placeholder="Enter Category Name" name="category_id" @if (!empty($product['name'])) value="{{ $product['category_id'] }}" @else value="{{ old('category_id') }}" @endif>  --}} {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                     <select name="category_id" id="category_id" class="form-control text-dark">
@@ -278,6 +357,9 @@
                                         {{-- <option value="{{ $category['id'] }}" @if (!empty($product['category_id']) && $product['category_id'] == $category['id']) selected @endif >{{ $category['name'] }}</option> --}}
                                     </select>
                                 </div>
+
+
+
                                 {{-- Including the related filters <select> box of a product DEPENDING ON THE SELECTED CATEGORY of the product --}}
                                 <div class="loadFilters">
                                     @include('admin.filters.category_filters')
@@ -349,13 +431,7 @@
                                     @endforeach
                                 </select>
 
-                                <div class="form-group">
-                                    <label for="product_name">Book Name</label>
-                                    <input type="text" class="form-control" id="product_name"
-                                        placeholder="Enter Book Name" name="product_name"
-                                        @if (!empty($product['product_name'])) value="{{ $product['product_name'] }}" @else value="{{ old('product_name') }}" @endif>
-                                    {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
-                                </div>
+
                                 <div class="form-group">
                                     <label for="language_id">Book Language</label>
                                     <select name="language_id" id="language_id" class="form-control text-dark">
@@ -369,24 +445,10 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="total_stock">Total Stock</label>
-                                    <input type="number" class="form-control" id="total_stock"
-                                        placeholder="Enter Total Stock" name="total_stock"
-                                        @if (!empty($products_attributes['total_stock'])) value="{{ $product['total_stock'] }}" @else value="{{ old('total_stock') }}" @endif>
-                                </div>
-
-                                <div class="form-group">
                                     <label for="product_price">Price</label>
                                     <input type="text" class="form-control" id="product_price"
                                         placeholder="Enter Book Price" name="product_price"
                                         @if (!empty($product['product_price'])) value="{{ $product['product_price'] }}" @else value="{{ old('product_price') }}" @endif>
-                                    {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
-                                </div>
-                                <div class="form-group">
-                                    <label for="product_discount">Discount (%)</label>
-                                    <input type="number" class="form-control" id="product_discount"
-                                        placeholder="Enter Book Discount" name="product_discount"
-                                        @if (!empty($product['product_discount'])) value="{{ $product['product_discount'] }}" @else value="{{ old('product_discount') }}" @endif>
                                     {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                 </div>
 
@@ -436,16 +498,7 @@
                                         @if (!empty($product['meta_keywords'])) value="{{ $product['meta_keywords'] }}" @else value="{{ old('meta_keywords') }}" @endif>
                                     {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                 </div>
-                                <div class="form-group">
-                                    <label for="is_featured">Featured Item (Yes/No)</label>
-                                    <input type="checkbox" name="is_featured" id="is_featured" value="Yes"
-                                        @if (!empty($product['is_featured']) && $product['is_featured'] == 'Yes') checked @endif>
-                                </div>
-                                <div class="form-group">
-                                    <label for="is_bestseller">Best Seller Item (Yes/No)</label> {{-- Note: Only 'superadmin' can mark a product as 'bestseller', but 'vendor' can't --}}
-                                    <input type="checkbox" name="is_bestseller" id="is_bestseller" value="Yes"
-                                        @if (!empty($product['is_bestseller']) && $product['is_bestseller'] == 'Yes') checked @endif>
-                                </div>
+
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
 
                                 <a href="{{ url('admin/products') }}" class="btn btn-light">Cancel</a>
@@ -460,6 +513,46 @@
         <!-- partial -->
     </div>
 
+    <!-- Modal for Stock and Discount -->
+    <div class="modal fade" id="attributesModal" tabindex="-1" role="dialog" aria-labelledby="attributesModalLabel"
+        aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="attributesModalLabel">Add Stock & Discount</h5>
+                </div>
+                <div class="modal-body">
+                    <form id="attributesForm">
+                        @csrf
+                        <input type="hidden" id="modal_product_id" name="product_id">
+
+                        <div class="form-group">
+                            <label for="modal_stock">Stock <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="modal_stock" name="stock" min="0"
+                                required>
+                            <small class="form-text text-muted">Enter the total stock quantity</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="modal_product_discount">Discount (%)</label>
+                            <input type="number" class="form-control" id="modal_product_discount"
+                                name="product_discount" min="0" max="100" step="0.01" value="0">
+                            <small class="form-text text-muted">Enter discount percentage (0-100)</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="saveAttributesBtn">Save Attributes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>.readonly-select {
+    pointer-events: none;
+    background-color: #e9ecef;
+}</style>
+
+
     {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
     <!-- Include Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -469,88 +562,170 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-    function setReadonly(state) {
+        $(document).ready(function() {
 
-        // Text / input fields
-        $("#product_name, #product_price, #description").prop("readonly", state);
+            let debounceTimer = null;
 
-        // Dropdowns (disable)
-        $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
-            .prop("readonly", state);
+            $('#product_name').on('keyup', function() {
 
-        // Authors multiselect
-        $("#authors-select").prop("readonly", state);
-    }
+                let query = $(this).val().trim();
 
-    $(document).on("change", "#product_isbn", function () {
-
-        let isbn = $(this).val().trim();
-        if (isbn === "") return;
-
-        $.ajax({
-            url: "{{ route('admin.book.isbnLookup') }}",
-            type: "POST",
-            data: {
-                isbn: isbn,
-                _token: "{{ csrf_token() }}"
-            },
-
-            success: function (res) {
-
-                if (!res.status) {
-                    setReadonly(false);
-                    alert(res.message);
+                if (query.length < 2) {
+                    $('#book_name_suggestion').hide();
                     return;
                 }
 
-                let d = res.data;
+                clearTimeout(debounceTimer);
 
-                // ✅ Fill fields
-                $("#product_name").val(d.product_name);
-                $("#category_id").val(d.category_id);
-                $("#product_price").val(d.product_price);
-                $("#language_id").val(d.language_id);
-                $("#publisher_id").val(d.publisher_id);
-                $("#subject_id").val(d.subject_id);
-                $("#edition_id").val(d.edition_id);
-                $("#description").val(d.description);
+                debounceTimer = setTimeout(function() {
 
+                    $.ajax({
+                        url: "{{ url('/admin/book/name-suggestions') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            query: query
+                        },
+                        success: function(res) {
+
+                            if (!res.data || res.data.length === 0) {
+                                $('#book_name_suggestion').hide();
+                                return;
+                            }
+
+                            let html = '';
+                            res.data.forEach(book => {
+                                html += `
+                        <li class="list-group-item book-title-item"
+                            data-isbn="${book.product_isbn}"
+                            style="cursor:pointer">
+                            ${book.product_name}
+                        </li>`;
+                            });
+
+                            $('#book_name_suggestion').html(html).show();
+                        }
+                    });
+
+                }, 300);
+            });
+
+            $(document).on('click', '.book-title-item', function() {
+
+                let isbn = $(this).data('isbn');
+
+                $('#product_isbn').val(isbn);
+                $('#product_name').val($(this).text().trim());
+                $('#book_name_suggestion').hide();
+
+                fetchBookByISBN(isbn);
+            });
+
+            $(document).click(function(e) {
+                if (!$(e.target).closest('#product_name, #book_name_suggestion').length) {
+                    $('#book_name_suggestion').hide();
+                }
+            });
+
+        });
+    </script>
+
+    <script>
+        function setReadonly(state) {
+
+            $("#product_name, #product_price, #description")
+                .prop("readonly", state);
+
+            $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
+                .toggleClass("readonly-select", state);
+
+            $("#authors-select")
+                .toggleClass("readonly-select", state);
+        }
+
+        function fetchBookByISBN(isbn) {
+
+    if (!isbn) return;
+
+    $.ajax({
+        url: "{{ route('admin.book.isbnLookup') }}",
+        type: "POST",
+        data: {
+            isbn: isbn,
+            _token: "{{ csrf_token() }}"
+        },
+
+        success: function (res) {
+
+            if (!res.status) {
+                setReadonly(false);
+                alert(res.message);
+                return;
+            }
+
+            let d = res.data || {};
+
+            // 🔓 ENABLE EVERYTHING FIRST
+            setReadonly(false);
+
+            // text fields
+            $("#product_name").val(d.product_name || '');
+            $("#product_price").val(d.product_price || '');
+            $("#description").val(d.description || '');
+
+            // dropdowns (NO trigger)
+            $("#category_id").val(d.category_id || '');
+            $("#language_id").val(d.language_id || '');
+            $("#publisher_id").val(d.publisher_id || '');
+            $("#subject_id").val(d.subject_id || '');
+            $("#edition_id").val(d.edition_id || '');
+
+            // authors (SAFE CHECK)
+            if (Array.isArray(d.author_ids) && typeof authors !== 'undefined') {
                 selected = [];
                 d.author_ids.forEach(id => {
                     const author = authors.find(a => a.id == id);
                     if (author) selected.push(author);
                 });
-                renderSelected();
 
-                if (d.image) {
-                    let imagePath = "{{ asset('front/images/product_images/small') }}/" + d.image;
-                    $("#isbnImagePreview").html(`<img src="${imagePath}" width="150">`);
+                if (typeof renderSelected === 'function') {
+                    renderSelected();
                 }
-
-                // 🔒 Make fields readonly
-                setReadonly(true);
-            },
-
-            error: function () {
-
-                // Clear fields
-                $("#product_name, #product_price, #description").val('');
-                $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
-                    .val('').prop("readonly", false);
-
-                $("#authors-select").val([]).trigger("change").prop("readonly", false);
-                $("#isbnImagePreview").html("");
-
-                // 🔓 Enable editing
-                setReadonly(false);
-
-                alert("No book found for this ISBN. Please enter all details manually.");
             }
-        });
+
+            // image
+            if (d.image) {
+                $("#isbnImagePreview").html(
+                    `<img src="{{ asset('front/images/product_images/small') }}/${d.image}" width="150">`
+                );
+            } else {
+                $("#isbnImagePreview").html('');
+            }
+
+            // 🔒 DISABLE AFTER ALL VALUES SET
+            setReadonly(true);
+        },
+
+        error: function () {
+
+            setReadonly(false);
+
+            $("#product_name, #product_price, #description").val('');
+            $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id").val('');
+            $("#isbnImagePreview").html('');
+
+            alert("No book found for this ISBN. Please enter all details manually.");
+        }
     });
-</script>
+}
 
 
+
+        // ✅ MANUAL ISBN CHANGE
+        $(document).on("change", "#product_isbn", function() {
+            fetchBookByISBN($(this).val().trim());
+        });
+    </script>
 
     <script>
         $('#addPublisherBtn').click(function() {
@@ -684,110 +859,145 @@
         renderSelected();
     </script>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script>
-        // Existing geolocation button
-        document.getElementById('getLocationBtn').addEventListener('click', function() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    document.getElementById('location').value = position.coords.latitude + ',' + position
-                        .coords.longitude;
-                    updateMapMarker(position.coords.latitude, position.coords.longitude);
-                }, function(error) {
-                    alert('Unable to retrieve your location.');
-                });
-            } else {
-                alert('Geolocation is not supported by this browser.');
-            }
-        });
+        $(document).ready(function() {
+            // Handle form submission
+            $('form').on('submit', function(e) {
+                e.preventDefault();
 
-        // Leaflet map integration
-        var defaultLatLng = [28.6139, 77.2090]; // Default to New Delhi
-        var locationInput = document.getElementById('location');
-        var initialLatLng = locationInput.value ? locationInput.value.split(',').map(Number) : defaultLatLng;
-        var map = L.map('map').setView(initialLatLng, 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        var marker = L.marker(initialLatLng, {
-            draggable: true
-        }).addTo(map);
+                const form = $(this);
+                const formData = new FormData(form[0]);
+                const submitBtn = $('#submitBtn');
 
-        function updateMapMarker(lat, lng) {
-            marker.setLatLng([lat, lng]);
-            map.setView([lat, lng], 13);
-        }
+                // Disable submit button
+                submitBtn.prop('disabled', true).text('Saving...');
 
-        marker.on('dragend', function(e) {
-            var latlng = marker.getLatLng();
-            locationInput.value = latlng.lat.toFixed(6) + ',' + latlng.lng.toFixed(6);
-        });
+                $.ajax({
+                    url: form.attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.show_modal && response.product_id) {
+                            // Show modal for new products
+                            $('#modal_product_id').val(response.product_id);
+                            $('#attributesModal').modal('show');
+                            submitBtn.prop('disabled', false).text('Submit');
+                        } else {
+                            // Redirect for existing products or if no modal needed
+                            window.location.href = "{{ url('admin/products') }}";
+                        }
+                    },
+                    error: function(xhr) {
+                        submitBtn.prop('disabled', false).text('Submit');
 
-        map.on('click', function(e) {
-            marker.setLatLng(e.latlng);
-            locationInput.value = e.latlng.lat.toFixed(6) + ',' + e.latlng.lng.toFixed(6);
-        });
+                        // Check if product already exists for this admin/vendor
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.product_exists) {
+                            const resp = xhr.responseJSON;
 
-        locationInput.addEventListener('change', function() {
-            var val = locationInput.value.split(',');
-            if (val.length === 2) {
-                var lat = parseFloat(val[0]);
-                var lng = parseFloat(val[1]);
-                if (!isNaN(lat) && !isNaN(lng)) {
-                    updateMapMarker(lat, lng);
-                }
-            }
-        });
+                            // First info message
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Product Already Exists',
+                                text: resp.message || 'This product has already been added to your account.',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#dc3545'
+                            }).then(() => {
+                                // Then ask if user wants to update stock/discount
+                                Swal.fire({
+                                    icon: 'question',
+                                    title: 'Update Stock / Discount?',
+                                    text: 'Do you want to update stock and discount for this product?',
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Yes',
+                                    cancelButtonText: 'No',
+                                    confirmButtonColor: '#28a745',
+                                    cancelButtonColor: '#dc3545'
+                                }).then((result) => {
+                                    if (result.isConfirmed && resp.product_id) {
+                                        // Prefill and open the same attributes modal used on products list
+                                        $('#modal_product_id').val(resp.product_id);
+                                        if (typeof resp.stock !== 'undefined') {
+                                            $('#modal_stock').val(resp.stock);
+                                        }
+                                        if (typeof resp.product_discount !== 'undefined') {
+                                            $('#modal_product_discount').val(resp.product_discount);
+                                        }
+                                        $('#attributesModal').modal('show');
+                                    }
+                                });
+                            });
+                            return;
+                        }
 
-        // Search Location Geocoding
-        //const searchInput = document.getElementById('searchLocation');
-        const searchResults = document.getElementById('searchResults');
-
-        searchInput.addEventListener('input', function() {
-            const query = this.value.trim();
-            if (query.length < 3) {
-                searchResults.style.display = 'none';
-                searchResults.innerHTML = '';
-                return;
-            }
-            searchResults.innerHTML = '<div class="list-group-item">Searching...</div>';
-            searchResults.style.display = 'block';
-            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    searchResults.innerHTML = '';
-                    if (data.length === 0) {
-                        searchResults.innerHTML = '<div class="list-group-item">No results found.</div>';
-                        return;
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            let errorMsg = 'Validation errors:\n';
+                            $.each(errors, function(key, value) {
+                                errorMsg += value[0] + '\n';
+                            });
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Validation Error',
+                                text: errorMsg,
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: 'An error occurred. Please try again.',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
                     }
-                    data.forEach(place => {
-                        const item = document.createElement('a');
-                        item.className = 'list-group-item list-group-item-action';
-                        item.textContent = place.display_name;
-                        item.href = '#';
-                        item.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            updateMapMarker(place.lat, place.lon);
-                            locationInput.value =
-                                `${parseFloat(place.lat).toFixed(6)},${parseFloat(place.lon).toFixed(6)}`;
-                            searchResults.style.display = 'none';
-                            searchInput.value = place.display_name;
-                        });
-                        searchResults.appendChild(item);
-                    });
                 });
-        });
-        document.addEventListener('click', function(e) {
-            const searchInput = document.getElementById('searchInput');
-            const searchResults = document.getElementById('searchResults');
+            });
 
-            // Only add logic if both elements exist
-            if (searchInput && searchResults) {
-                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-                    searchResults.style.display = 'none';
-                }
-            }
+            // Handle save attributes button
+            $('#saveAttributesBtn').on('click', function() {
+                const form = $('#attributesForm');
+                const formData = form.serialize();
+                const btn = $(this);
+
+                btn.prop('disabled', true).text('Saving...');
+
+                $.ajax({
+                    url: "{{ route('admin.products.saveAttributes') }}",
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        $('#attributesModal').modal('hide');
+                        window.location.href = "{{ url('admin/products') }}";
+                    },
+                    error: function(xhr) {
+                        btn.prop('disabled', false).text('Save Attributes');
+                        if (xhr.status === 422) {
+                            let errors = xhr.responseJSON.errors;
+                            let errorMsg = 'Validation errors:\n';
+                            $.each(errors, function(key, value) {
+                                errorMsg += value[0] + '\n';
+                            });
+                            alert(errorMsg);
+                        } else {
+                            alert(
+                                'An error occurred while saving attributes. Please try again.'
+                            );
+                        }
+                    }
+                });
+            });
+
+            // Handle skip button
+            $('#skipAttributesBtn').on('click', function() {
+                $('#attributesModal').modal('hide');
+                window.location.href = "{{ url('admin/products') }}";
+            });
         });
     </script>
+
+
 @endsection

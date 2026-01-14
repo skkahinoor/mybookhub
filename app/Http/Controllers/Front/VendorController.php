@@ -14,6 +14,7 @@ use App\Models\Admin;
 use App\Models\Language;
 use App\Models\Notification;
 use App\Models\Section;
+use App\Models\Setting;
 use Intervention\Image\Facades\Image;
 use GuzzleHttp\Client;
 
@@ -168,6 +169,7 @@ class VendorController extends Controller
             'name'   => 'required|string|max:150',
             'email'  => 'required|email|unique:admins,email|unique:vendors,email',
             'mobile' => 'required|digits:10|unique:admins,mobile|unique:vendors,mobile',
+            'location' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -189,6 +191,7 @@ class VendorController extends Controller
             'vendor_reg_name'   => $request->name,
             'vendor_reg_email'  => $request->email,
             'vendor_reg_mobile' => $request->mobile,
+            'vendor_reg_location' => $request->location,
         ]);
 
         $sent = $this->sendSMS($request->mobile, $otp);
@@ -242,12 +245,24 @@ class VendorController extends Controller
         }
     }
 
-    public function showRegister()
+    public function showRegister(Request $request)
     {
-        // $headerLogo = HeaderLogo::first();
-        // $logos = $headerLogo;
+        $proPlanPrice = (int) Setting::getValue('pro_plan_price', 49900);
+        $freePlanBookLimit = (int) Setting::getValue('free_plan_book_limit', 100);
+        $giveNewUsersProPlan = (bool) Setting::getValue('give_new_users_pro_plan', 0);
+        $proPlanTrialDurationDays = (int) Setting::getValue('pro_plan_trial_duration_days', 30);
+        $inviteToken = $request->query('invite');
+        $storedInviteToken = Setting::getValue('invite_pro_token');
+        $isInvitePro = $inviteToken && $storedInviteToken && hash_equals($storedInviteToken, $inviteToken);
 
-        return view('admin.register-vendor');
+        return view('admin.register-vendor', compact(
+            'proPlanPrice',
+            'freePlanBookLimit',
+            'giveNewUsersProPlan',
+            'proPlanTrialDurationDays',
+            'inviteToken',
+            'isInvitePro'
+        ));
     }
 
     public function register(Request $request, $id = null)
@@ -263,6 +278,7 @@ class VendorController extends Controller
                 'name'   => 'required|regex:/^[\pL\s\-]+$/u',
                 'email'  => 'required|email|unique:admins,email,' . ($adminId ?? '') . ',id',
                 'mobile' => 'required|numeric',
+                'location' => ['required', 'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/']
             ];
 
             $customMessages = [
@@ -280,6 +296,7 @@ class VendorController extends Controller
                 $rules['password'] = 'required|min:6|confirmed';
                 $rules['password_confirmation'] = 'required';
                 $rules['otp'] = 'required';
+                $rules['plan'] = 'required|in:free,pro';
             }
 
             $this->validate($request, $rules, $customMessages);
@@ -308,15 +325,48 @@ class VendorController extends Controller
 
             if (empty($id)) {
                 // ================= ADD MODE =================
+                $selectedPlan = $data['plan'] ?? 'free';
 
-                // Insert Vendor
-                $vendorId = Vendor::insertGetId([
+                // Check settings and invite link
+                $giveNewUsersProPlan = (bool) Setting::getValue('give_new_users_pro_plan', 0);
+                $proPlanTrialDurationDays = (int) Setting::getValue('pro_plan_trial_duration_days', 30);
+                $storedInviteToken = Setting::getValue('invite_pro_token');
+                $requestInviteToken = $data['invite_token'] ?? null;
+                $isInvitePro = $requestInviteToken && $storedInviteToken && hash_equals($storedInviteToken, $requestInviteToken);
+
+                // If setting is enabled OR invite link used, force Pro (trial, no payment)
+                if ($giveNewUsersProPlan || $isInvitePro) {
+                    $selectedPlan = 'pro';
+                }
+
+                // Insert Vendor with plan
+                $vendorData = [
                     'name'    => $data['name'],
                     'email'   => $data['email'],
                     'mobile'  => $data['mobile'],
+                    'location' => $data['location'],
                     'confirm' => 'Yes',
                     'status'  => isset($data['status']) ? 1 : 0,
-                ]);
+                    'plan'    => $selectedPlan,
+                ];
+
+                // Set plan dates
+                if ($selectedPlan === 'pro') {
+                    $vendorData['plan_started_at'] = now();
+                    // If this is a trial (from setting or invite), set expiry date
+                    if ($giveNewUsersProPlan || $isInvitePro) {
+                        $vendorData['plan_expires_at'] = now()->addDays($proPlanTrialDurationDays);
+                    } else {
+                        // Regular Pro plan - will be set after payment
+                        $vendorData['plan_expires_at'] = null;
+                    }
+                } else {
+                    // Free plan
+                    $vendorData['plan_started_at'] = now();
+                    $vendorData['plan_expires_at'] = null;
+                }
+
+                $vendorId = Vendor::insertGetId($vendorData);
 
                 // Insert Admin
                 $adminData['vendor_id'] = $vendorId;
@@ -328,10 +378,23 @@ class VendorController extends Controller
 
                 // Clear OTP and session after successful registration
                 DB::table('otps')->where('phone', $data['mobile'])->delete();
-                session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile']);
+                session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile', 'vendor_reg_location',]);
+
+                $wasTrialProPlan = ($giveNewUsersProPlan || $isInvitePro) && $selectedPlan === 'pro';
+
+                // If Pro plan selected explicitly (not from trial/invite), redirect to payment
+                if ($selectedPlan === 'pro' && !$wasTrialProPlan) {
+                    return redirect()->route('vendor.payment.create', ['vendor_id' => $vendorId])
+                        ->with('vendor_id', $vendorId);
+                }
+
+                // Trial Pro plan (setting or invite) or Free plan - just redirect to login
+                $planMessage = $wasTrialProPlan
+                    ? "Vendor registered successfully! You have been given Pro plan access for {$proPlanTrialDurationDays} days."
+                    : 'Vendor registered successfully with Free plan!';
 
                 return redirect('admin/login')
-                    ->with('success_message', 'Vendor registered successfully!');
+                    ->with('success_message', $planMessage);
             } else {
                 // ================= EDIT MODE =================
 
@@ -343,6 +406,7 @@ class VendorController extends Controller
                         'name'   => $data['name'],
                         'email'  => $data['email'],
                         'mobile' => $data['mobile'],
+                        'location' => $data['location'],
                     ]);
                 }
 

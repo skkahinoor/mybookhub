@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Admin;
 use App\Models\Vendor;
+use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -28,7 +29,6 @@ class VendorController extends Controller
         try {
             $client = new Client();
 
-            // payload must match MSG91 flow template variables
             $payload = [
                 "template_id" => env('MSG91_TEMPLATE_ID'),
                 "recipients" => [
@@ -66,9 +66,13 @@ class VendorController extends Controller
     {
         $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|max:255|unique:vendors,email|unique:admins,email',
+            'email'    => 'required|email|unique:vendors,email|unique:admins,email',
             'mobile'   => 'required|string|min:10|max:15|unique:vendors,mobile|unique:admins,mobile',
             'password' => 'required|min:6|confirmed',
+            'location' => [
+                'required',
+                'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/'
+            ],
         ]);
 
         $phone = $request->mobile;
@@ -76,6 +80,7 @@ class VendorController extends Controller
         Cache::put("reg_name_$phone", $request->name, now()->addMinutes(10));
         Cache::put("reg_email_$phone", $request->email, now()->addMinutes(10));
         Cache::put("reg_password_$phone", Hash::make($request->password), now()->addMinutes(10));
+        Cache::put("reg_location_$phone", $request->location, now()->addMinutes(10));
 
         $otp = rand(100000, 999999);
 
@@ -84,12 +89,10 @@ class VendorController extends Controller
             ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
         );
 
-        $sendStatus = $this->sendSMS($phone, $otp);
-
-        if (!$sendStatus) {
+        if (!$this->sendSMS($phone, $otp)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to send OTP. Try again.'
+                'message' => 'Failed to send OTP'
             ], 500);
         }
 
@@ -106,7 +109,6 @@ class VendorController extends Controller
             'otp'   => 'required'
         ]);
 
-
         $otpRecord = DB::table('otps')
             ->where('phone', $request->phone)
             ->where('otp', $request->otp)
@@ -115,17 +117,17 @@ class VendorController extends Controller
         if (!$otpRecord) {
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid or expired OTP'
+                'message' => 'Invalid OTP'
             ], 400);
         }
 
-        $phone = $request->phone;
-
+        $phone    = $request->phone;
         $name     = Cache::get("reg_name_$phone");
         $email    = Cache::get("reg_email_$phone");
         $password = Cache::get("reg_password_$phone");
+        $location = Cache::get("reg_location_$phone");
 
-        if (!$name || !$email || !$password) {
+        if (!$name || !$email || !$password || !$location) {
             return response()->json([
                 'status' => false,
                 'message' => 'Registration session expired'
@@ -135,40 +137,49 @@ class VendorController extends Controller
         DB::beginTransaction();
         try {
 
+            $givePro = (bool) Setting::getValue('give_new_users_pro_plan', 0);
+            $trialDays = (int) Setting::getValue('pro_plan_trial_duration_days', 30);
+
             $vendor = Vendor::create([
-                'name'    => $name,
-                'email'   => $email,
-                'mobile'  => $phone,
-                'status'  => 0,
-                'confirm' => 'No',
+                'name' => $name,
+                'email' => $email,
+                'mobile' => $phone,
+                'location' => $location,
+                'plan' => $givePro ? 'pro' : 'free',
+                'plan_started_at' => now(),
+                'plan_expires_at' => $givePro ? now()->addDays($trialDays) : null,
+                'status' => 0,
+                'confirm' => 'No'
             ]);
 
             Admin::create([
-                'name'      => $name,
-                'type'      => 'vendor',
+                'name' => $name,
+                'type' => 'vendor',
                 'vendor_id' => $vendor->id,
-                'email'     => $email,
-                'mobile'    => $phone,
-                'password'  => $password,
-                'status'    => 0,
-                'confirm'   => 'No',
+                'email' => $email,
+                'mobile' => $phone,
+                'password' => $password,
+                'status' => 0,
+                'confirm' => 'No'
             ]);
 
             DB::table('otps')->where('phone', $phone)->delete();
-
             Cache::forget("reg_name_$phone");
             Cache::forget("reg_email_$phone");
             Cache::forget("reg_password_$phone");
+            Cache::forget("reg_location_$phone");
 
             DB::commit();
 
             return response()->json([
                 'status' => true,
                 'message' => 'Registration successful',
-                "data" => $vendor
+                'data' => $vendor
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error($e->getMessage());
+
             return response()->json([
                 'status' => false,
                 'message' => 'Registration failed'
@@ -180,14 +191,7 @@ class VendorController extends Controller
     {
         $admin = $request->user();
 
-        if (!$admin instanceof Admin) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Vendor can access this profile.'
-            ], 403);
-        }
-
-        if ($admin->type !== 'vendor') {
+        if (!$admin instanceof Admin || $admin->type !== 'vendor') {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Vendor can access this profile.'
@@ -201,7 +205,12 @@ class VendorController extends Controller
             ], 403);
         }
 
-        $profileDetail = Vendor::where('id', $admin->vendor_id)->first();
+        $profileDetail = Vendor::with([
+            'country:id,name',
+            'state:id,name',
+            'district:id,name',
+            'block:id,name'
+        ])->where('id', $admin->vendor_id)->first();
 
         if (!$profileDetail) {
             return response()->json([
@@ -213,7 +222,16 @@ class VendorController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Profile details fetched successfully',
-            'data' => $profileDetail
+            'data' => [
+                'vendor'   => $profileDetail,
+                'country'  => $profileDetail->country?->name,
+                'state'    => $profileDetail->state?->name,
+                'district' => $profileDetail->district?->name,
+                'block' => $profileDetail->block?->name,
+                'image' => $admin->image
+                        ? url('admin/images/photos/' . $admin->image)
+                        : null
+            ]
         ]);
     }
 
@@ -252,6 +270,11 @@ class VendorController extends Controller
             'block_id'    => 'nullable|integer',
             'pincode'     => 'nullable|string|max:10',
 
+            'location' => [
+                'nullable',
+                'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/'
+            ],
+
             'email' => [
                 'required',
                 'email',
@@ -284,7 +307,8 @@ class VendorController extends Controller
                 'block_id',
                 'pincode',
                 'mobile',
-                'email'
+                'email',
+                'location'
             ]));
 
             $admin->update([
@@ -308,12 +332,26 @@ class VendorController extends Controller
 
             DB::commit();
 
+            $vendor = Vendor::with([
+                'country:id,name',
+                'state:id,name',
+                'district:id,name',
+                'block:id,name'
+            ])->find($vendor->id);
+
             return response()->json([
                 'status' => true,
                 'message' => 'Profile updated successfully',
                 'data' => [
-                    'vendor' => $vendor,
-                    'image'  => $admin->image
+                    'vendor'   => $vendor,
+                    'country'  => $vendor->country?->name,
+                    'state'    => $vendor->state?->name,
+                    'district' => $vendor->district?->name,
+                    'block'    => $vendor->block?->name,
+                    'location' => $vendor->location,
+                    'image' => $admin->image
+                        ? url('admin/images/photos/' . $admin->image)
+                        : null
                 ]
             ]);
         } catch (\Exception $e) {
