@@ -1,20 +1,30 @@
 <?php
 
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\ProductsController;
+use App\Http\Controllers\Admin\AdminProductsController;
+use App\Http\Controllers\Admin\SalesExecutiveController;
+use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\SectionController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\PublisherController;
+use App\Http\Controllers\Admin\AuthorController;
+use App\Http\Controllers\Admin\SubjectController;
+use App\Http\Controllers\Admin\BookRequestsController;
+use App\Http\Controllers\Admin\SchoolController;
+use App\Http\Controllers\Admin\InstitutionManagementController;
+use App\Http\Controllers\Admin\BlockController;
+use App\Http\Controllers\Admin\StudentController;
 use Illuminate\Support\Facades\Route;
 
-
-    Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(function () {
-        Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one HTTP request method for the same route, so GET for rendering the login.php page, and POST for the login.php page <form> submission (e.g. GET and POST)    // Matches the '/admin/dashboard' URL (i.e. http://127.0.0.1:8000/admin/dashboard)
-    
-        // This a Route Group for routes that ALL start with 'admin/-something' and utilizes the 'admin' Authentication Guard    // Note: You must remove the '/admin'/ part from the routes that are written inside this Route Group (e.g.    Route::get('logout');    , NOT    Route::get('admin/logout');    )
-        Route::group(['middleware' => ['vendor']], function () {
+Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(function () {
+    // All routes in here are vendor-only (admins with type = 'vendor')
+    Route::group(['middleware' => ['vendor']], function () {
             // check isbn
             Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
                 ->name('admin.book.isbnLookup');
             Route::post('/book/name-suggestions', [AdminProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
-            Route::get('dashboard', 'AdminController@dashboard');                                                 // Admin login
+            Route::get('dashboard', 'AdminController@dashboard')->name('vendor.dashboard'); // /vendor/dashboard
             Route::get('logout', 'AdminController@logout');                                                       // Admin logout
             Route::match(['get', 'post'], 'update-admin-password', 'AdminController@updateAdminPassword');        // GET request to view the update password <form>, and a POST request to submit the update password <form>
             Route::post('check-admin-password', 'AdminController@checkAdminPassword');                            // Check Admin Password // This route is called from the AJAX call in admin/js/custom.js page

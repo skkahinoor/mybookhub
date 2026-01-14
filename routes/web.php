@@ -361,8 +361,6 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery');
     });
 
-    require __DIR__ . '/vendor.php';
-
     // AJAX routes for cascading location dropdowns (outside admin middleware for AJAX access)
     Route::get('institution-countries', [InstitutionManagementController::class, 'getCountries'])->name('admin.institution.countries');
     Route::get('institution-states', [InstitutionManagementController::class, 'getStates'])
@@ -380,6 +378,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     Route::get('vendor-districts', [App\Http\Controllers\Admin\AdminController::class, 'getVendorDistricts'])->name('vendor_districts');
     Route::get('vendor-blocks', [App\Http\Controllers\Admin\AdminController::class, 'getVendorBlocks'])->name('vendor_blocks');
 });
+
+// Vendor routes (separate prefix /vendor, vendor-only access)
+require __DIR__ . '/vendor.php';
 
 // User download order PDF invoice (We'll use the same viewPDFInvoice() function (but with different routes/URLs!) to render the PDF invoice for 'admin'-s in the Admin Panel and for the user to download it!) (we created this route outside outside the Admin Panel routes so that the user could use it!)
 Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Admin\OrderController@viewPDFInvoice');

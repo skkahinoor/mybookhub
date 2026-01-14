@@ -138,7 +138,7 @@ class AdminController extends Controller
                     return redirect()->back()->with('error_message', 'Your vendor account is not active');
                 } else {
                     if (Auth::guard('admin')->user()->type === 'vendor') {
-                        return redirect('/vendor/dashboard');
+                        return redirect()->route('vendor.dashboard'); // which is /vendor/dashboard
                     }
                     return redirect('/admin/dashboard');
                 }
