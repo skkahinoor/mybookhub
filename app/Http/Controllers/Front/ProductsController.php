@@ -1185,30 +1185,42 @@ class ProductsController extends Controller
         if ($request->isMethod('post')) { // if the <form> in front/products/checkout.blade.php is submitted (the HTML Form that the user submits to submit their Delivery Address and Payment Method)
             $data = $request->all();
             foreach ($getCartItems as $item) {
-                // Prevent 'disabled' (`status` = 0) products from being ordered (if it's disabled in admin/products/products.blade.php) by checking the `products` database table
-                $product_status = Product::getProductStatus($item['product_id']);
-                if ($product_status == 0) { // if the product is disabled (`status` = 0)
-                    $message = $item['product']['product_name'] . ' with ' . $item['size'] . ' size is not available. Please remove it from the Cart and choose another product.';
-                    return redirect('/cart')->with('error_message', $message); // Redirect to the Cart page with an error message
+                // Get the specific attribute for this cart item
+                $attribute = ProductsAttribute::with('product')
+                    ->where('id', $item['product_attribute_id'])
+                    ->first();
+
+                if (!$attribute || !$attribute->product) {
+                    $message = 'One of the products in your cart is no longer available. Please remove it and try again.';
+                    return redirect('/cart')->with('error_message', $message);
                 }
-            }
 
-            $getProductStock = ProductsAttribute::getProductStock($item['product_id'], $item['size']); // A product (`product_id`) with a certain `size`
-            if ($getProductStock == 0) {                                                               // if the product's `stock` is 0 zero
-                $message = $item['product']['product_name'] . ' with ' . $item['size'] . ' size is not available. Please remove it from the Cart and choose another product.';
-                return redirect('/cart')->with('error_message', $message); // Redirect to the Cart page with an error message
-            }
+                // Prevent 'disabled' (`status` = 0) products from being ordered
+                $product_status = Product::getProductStatus($item['product_id']);
+                if ($product_status == 0) {
+                    $message = $attribute->product->product_name . ' is not available. Please remove it from the Cart and choose another product.';
+                    return redirect('/cart')->with('error_message', $message);
+                }
 
-            $getAttributeStatus = ProductsAttribute::getAttributeStatus($item['product_id'], $item['size']); // A product (`product_id`) with a certain `size`
-            if ($getAttributeStatus == 0) {                                                                  // if the product's `stock` is 0 zero
-                $message = $item['product']['product_name'] . ' with ' . $item['size'] . ' size is not available. Please remove it from the Cart and choose another product.';
-                return redirect('/cart')->with('error_message', $message); // Redirect to the Cart page with an error message
-            }
+                // Check attribute status (must be enabled)
+                if ($attribute->status == 0) {
+                    $message = $attribute->product->product_name . ' with ' . ($item['size'] ?? '') . ' size is not available. Please remove it from the Cart and choose another product.';
+                    return redirect('/cart')->with('error_message', $message);
+                }
 
-            $getCategoryStatus = Category::getCategoryStatus($item['product']['category_id']);
-            if ($getCategoryStatus == 0) { // if the Category is disabled (`status` = 0)
-                $message = $item['product']['product_name'] . ' with ' . $item['size'] . ' size is not available. Please remove it from the Cart and choose another product.';
-                return redirect('/cart')->with('error_message', $message); // Redirect to the Cart page with an error message
+                // Check stock for this specific attribute
+                $availableStock = (int) $attribute->stock;
+                if ($availableStock == 0 || $item['quantity'] > $availableStock) {
+                    $message = $attribute->product->product_name . ' with ' . ($item['size'] ?? '') . ' size stock is not available/enough. Please reduce quantity or remove it from the Cart.';
+                    return redirect('/cart')->with('error_message', $message);
+                }
+
+                // Check category status
+                $getCategoryStatus = Category::getCategoryStatus($attribute->product->category_id);
+                if ($getCategoryStatus == 0) {
+                    $message = $attribute->product->product_name . ' category is disabled. Please remove it from the Cart and choose another product.';
+                    return redirect('/cart')->with('error_message', $message);
+                }
             }
 
             if (empty($data['address_id'])) { // if the user doesn't select a Delivery Address
@@ -1245,8 +1257,12 @@ class ProductsController extends Controller
 
             $total_price = 0;
             foreach ($getCartItems as $item) {
-                $getDiscountAttributePrice = Product::getDiscountAttributePrice($item['product_id'], $item['size']); // from the `products_attributes` table, not the `products` table
-                $total_price               = $total_price + ($getDiscountAttributePrice['final_price'] * $item['quantity']);
+                // Use attribute-based pricing (per size) from ProductsAttribute table
+                $getDiscountAttributePrice = Product::getDiscountAttributePrice(
+                    $item['product_id'],
+                    $item['size'] ?? null
+                );
+                $total_price += ($getDiscountAttributePrice['final_price'] * $item['quantity']);
             }
 
             // Calculate Shipping Charges `shipping_charges`
@@ -1284,33 +1300,49 @@ class ProductsController extends Controller
                 $cartItem           = new OrdersProduct;
                 $cartItem->order_id = $order_id;
                 $cartItem->user_id  = Auth::user()->id;
-                $getProductDetails  = Product::select('product_name', 'admin_id', 'vendor_id')->where('id', $item['product_id'])->first()->toArray();
+
+                // Get the specific attribute row for this cart item
+                $attribute = ProductsAttribute::with('product')
+                    ->where('id', $item['product_attribute_id'])
+                    ->where('status', 1)
+                    ->first();
+
+                if (! $attribute || ! $attribute->product) {
+                    DB::rollBack();
+                    return redirect('/cart')->with('error_message', 'One of the products in your cart is no longer available.');
+                }
 
                 // Continue filling in data into the `orders_products` table
-                $cartItem->admin_id  = $getProductDetails['admin_id'];
-                $cartItem->vendor_id = $getProductDetails['vendor_id'];
+                // Set default values if null (0 for admin products, actual vendor_id for vendor products)
+                $cartItem->admin_id  = $attribute->admin_id ?? 0;
+                $cartItem->vendor_id = $attribute->vendor_id ?? 0;
 
-                if ($getProductDetails['vendor_id'] > 0) { // if the order product's seller is a 'vendor'
-                    $vendorCommission     = Vendor::getVendorCommission($getProductDetails['vendor_id']);
+                if ($attribute->vendor_id && $attribute->vendor_id > 0) { // if the order product's seller is a 'vendor'
+                    $vendorCommission     = Vendor::getVendorCommission($attribute->vendor_id);
                     $cartItem->commission = $vendorCommission;
                 }
 
-                $cartItem->product_id   = $item['product_id'];
-                $cartItem->product_name = $getProductDetails['product_name'];
+                $cartItem->product_id   = $attribute->product_id;
+                $cartItem->product_name = $attribute->product->product_name;
 
-                $getDiscountAttributePrice = Product::getDiscountAttributePrice($item['product_id'], $item['size']); // from the `products_attributes` table, not the `products` table
-                $cartItem->product_price   = $getDiscountAttributePrice['final_price'];
+                // Price based on this attribute (size) using discount rules
+                $priceDetails = Product::getDiscountAttributePrice(
+                    $attribute->product_id,
+                    $item['size'] ?? null
+                );
+                $cartItem->product_price = $priceDetails['final_price'];
 
-                $getProductStock = ProductsAttribute::getProductStock($item['product_id'], $item['size']);
-                if ($item['quantity'] > $getProductStock) { // if the ordered quantity is greater than the existing stock, cancel the order/opertation
-                    $message = $getProductDetails['product_name'] . ' with ' . $item['size'] . ' size stock is not available/enough for your order. Please reduce its quantity and try again!';
+                // Stock check for this specific attribute
+                $availableStock = (int) $attribute->stock;
+                if ($item['quantity'] > $availableStock) {
+                    DB::rollBack();
+                    $message = $attribute->product->product_name
+                        . ' with ' . ($item['size'] ?? '') . ' size stock is not available/enough for your order. Please reduce its quantity and try again!';
 
-                    return redirect('/cart')->with('error_message', $message); // Redirect to the Cart page with an error message
+                    return redirect('/cart')->with('error_message', $message);
                 }
 
                 $cartItem->product_qty = $item['quantity'];
-
-                $getProductStock = ProductsAttribute::getProductStock($item['product_id'], $item['size']);
 
                 // Persist the order product row now that all fields are set
                 $cartItem->save();

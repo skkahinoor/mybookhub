@@ -177,39 +177,67 @@ class Product extends Model
         ];
     }
 
-    public static function getDiscountAttributePrice($product_id, $vendor_id)
+    /**
+     * Get discount price details for a specific product/size combination.
+     *
+     * NOTE: This now uses the price stored on the ProductsAttribute row
+     * (per size), and applies product/category discounts on top.
+     *
+     * @param  int         $product_id
+     * @param  string|null $size
+     * @return array{product_price:float,final_price:float,discount:float}
+     */
+    public static function getDiscountAttributePrice($product_id, $size = null)
     {
-        $attribute = ProductsAttribute::where('product_id', $product_id)
-            ->where('vendor_id', $vendor_id)
-            ->where('status', 1)
-            ->first();
-
-        if (!$attribute) {
-            return self::getDiscountPriceDetails($product_id, $vendor_id);
+        // If a size is provided and there is an attribute-level price, prefer it.
+        $attribute = null;
+        if (!empty($size)) {
+            $attribute = ProductsAttribute::where([
+                'product_id' => $product_id,
+                'size'       => $size,
+            ])->where('status', 1)->first();
         }
 
-        $originalPrice = (float) Product::where('id', $product_id)
-            ->value('product_price');
+        // If attribute exists, compute discount against attribute price using product/category discounts
+        if ($attribute) {
+            $attributePrice = (float) $attribute->price;
 
-        $productDiscount = (float) $attribute->product_discount;
+            $productDetails = Product::select('product_discount', 'category_id')
+                ->where('id', $product_id)
+                ->first();
 
-        $categoryDiscount = Category::where(
-            'id',
-            Product::where('id', $product_id)->value('category_id')
-        )->value('category_discount') ?? 0;
+            $productDiscount = $productDetails ? (float) ($productDetails->product_discount ?? 0) : 0;
 
-        if ($productDiscount > 0) {
-            $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
-        } elseif ($categoryDiscount > 0) {
-            $finalPrice = $originalPrice - ($originalPrice * $categoryDiscount / 100);
-        } else {
-            $finalPrice = $originalPrice;
+            $categoryDiscount = 0;
+            if ($productDetails) {
+                $categoryDiscount = (float) (Category::where('id', $productDetails->category_id)
+                    ->value('category_discount') ?? 0);
+            }
+
+            if ($productDiscount > 0) {
+                $finalPrice = $attributePrice - ($attributePrice * $productDiscount / 100);
+            } elseif ($categoryDiscount > 0) {
+                $finalPrice = $attributePrice - ($attributePrice * $categoryDiscount / 100);
+            } else {
+                $finalPrice = $attributePrice;
+            }
+
+            $discount = max(0, $attributePrice - $finalPrice);
+
+            return [
+                'product_price' => round($attributePrice, 2),
+                'final_price'   => round($finalPrice, 2),
+                'discount'      => round($discount, 2),
+            ];
         }
+
+        // Fallback: when size not provided or no attribute exists, use the product-level price rules
+        $details = self::getDiscountPriceDetails($product_id);
 
         return [
-            'product_price' => round($originalPrice),
-            'final_price'   => round($finalPrice),
-            'discount'      => round($originalPrice - $finalPrice),
+            'product_price' => $details['product_price'] ?? 0,
+            'final_price'   => $details['final_price'] ?? 0,
+            'discount'      => $details['discount'] ?? 0,
         ];
     }
 
