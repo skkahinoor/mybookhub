@@ -141,6 +141,8 @@
                                 <button class="button button-primary w-100">Register</button>
                             </div>
                         </form>
+                        {{-- Login button of vendor  --}}
+                        <a href="{{ route('vendor.login') }}" class="button button-primary w-100">Login</a>
                     </div>
                 </div>
                 <!-- Register /- -->

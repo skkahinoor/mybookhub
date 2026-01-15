@@ -24,7 +24,7 @@
         <div class="container-fluid page-body-wrapper full-page-wrapper">
             <div class="content-wrapper d-flex align-items-center auth px-0">
                 <div class="row w-100 mx-0">
-                    <div class="col-lg-4 mx-auto">
+                    <div class="col-lg-5 mx-auto">
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <h4>Vendor Registration</h4>
                             <h6 class="font-weight-light">Sign up to become a vendor.</h6>
@@ -79,16 +79,21 @@
                                 <!-- Hidden location field (lat,lng) -->
                                 <input type="hidden" name="location" id="location">
 
-                                <div class="form-group mb-3">
-                                    <input type="text" name="name" class="form-control" placeholder="Vendor Name"
-                                        required>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                            <input type="text" name="name" class="form-control" placeholder="Vendor Name"
+                                                required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                            <input type="email" name="email" class="form-control"
+                                                placeholder="Email Address" required>
+                                        </div>
+                                    </div>
                                 </div>
-
-                                <div class="form-group mb-3">
-                                    <input type="email" name="email" class="form-control"
-                                        placeholder="Email Address" required>
-                                </div>
-
+                               
                                 <div class="form-group mb-3">
                                     <input type="number" name="mobile" class="form-control"
                                         placeholder="Mobile Number" required>
@@ -163,6 +168,16 @@
                                     Verify OTP & Register
                                 </button>
                             </form>
+                        </div>
+
+                        {{-- Login button of vendor  --}}
+                        <div class="text-center mt-3">
+                            <p class="text-dark mb-0">
+                                Already have an account?
+                                <a href="{{ route('vendor.login') }}" class="font-weight-bold text-primary">
+                                    Sign in here
+                                </a>
+                            </p>
                         </div>
                     </div>
                 </div>

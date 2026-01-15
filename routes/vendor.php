@@ -1,54 +1,54 @@
 <?php
 
-use App\Http\Controllers\Admin\AdminProductsController;
-use App\Http\Controllers\Admin\SalesExecutiveController;
-use App\Http\Controllers\Admin\SalesReportController;
-use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\AdminController;
-use App\Http\Controllers\Admin\SectionController;
-use App\Http\Controllers\Admin\CategoryController;
-use App\Http\Controllers\Admin\PublisherController;
 use App\Http\Controllers\Admin\AuthorController;
-use App\Http\Controllers\Admin\SubjectController;
+use App\Http\Controllers\Admin\BookAttributeController;
 use App\Http\Controllers\Admin\BookRequestsController;
-use App\Http\Controllers\Admin\SchoolController;
+use App\Http\Controllers\Admin\EditionController;
 use App\Http\Controllers\Admin\InstitutionManagementController;
-use App\Http\Controllers\Admin\BlockController;
-use App\Http\Controllers\Admin\StudentController;
+use App\Http\Controllers\Admin\ProductsController;
+use App\Http\Controllers\Admin\SalesExecutiveController;
+use App\Http\Controllers\Admin\SchoolController;
+use App\Http\Controllers\Admin\SectionController;
+use App\Http\Controllers\Admin\SubjectController;
+use App\Http\Controllers\Admin\OtpController;
+use App\Http\Controllers\Api\InstitutionController;
+use App\Http\Controllers\User\BookRequestController;
+use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\User\AccountController;
+use App\Http\Controllers\User\AuthController;
+use App\Http\Controllers\User\DashboardController;
+use App\Http\Controllers\User\OrderController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(function () {
+
+    Route::match(['get', 'post'], 'login', 'AdminController@login')->name('vendor.login');
     // All routes in here are vendor-only (admins with type = 'vendor')
     Route::group(['middleware' => ['vendor']], function () {
             // check isbn
-            Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
+            Route::post('/admin/book/isbn-lookup', [ProductsController::class, 'lookupByIsbn'])
                 ->name('admin.book.isbnLookup');
-            Route::post('/book/name-suggestions', [AdminProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
+            Route::post('/book/name-suggestions', [ProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
             Route::get('dashboard', 'AdminController@dashboard')->name('vendor.dashboard'); // /vendor/dashboard
             Route::get('logout', 'AdminController@logout');                                                       // Admin logout
-            Route::match(['get', 'post'], 'update-admin-password', 'AdminController@updateAdminPassword');        // GET request to view the update password <form>, and a POST request to submit the update password <form>
-            Route::post('check-admin-password', 'AdminController@checkAdminPassword');                            // Check Admin Password // This route is called from the AJAX call in admin/js/custom.js page
-            Route::match(['get', 'post'], 'update-admin-details', 'AdminController@updateAdminDetails');          // Update Admin Details in update_admin_details.blade.php page    // 'GET' method to show the update_admin_details.blade.php page, and 'POST' method for the <form> submission in the same page
-            Route::match(['get', 'post'], 'update-vendor-details/{slug}', 'AdminController@updateVendorDetails'); // Update Vendor Details    // In the slug we can pass: 'personal' which means update vendor personal details, or 'business' which means update vendor business details, or 'bank' which means update vendor bank details    // We'll create one view (not 3) for the 3 pages, but parts inside it will change depending on the $slug value    // GET method to show the update admin details page, POST method for <form> submission
+            Route::match(['get', 'post'], 'update-vendor-password', 'AdminController@updateAdminPassword');        // GET request to view the update password <form>, and a POST request to submit the update password <form>
+            Route::post('check-vendor-password', 'AdminController@checkAdminPassword');                            // Check Admin Password // This route is called from the AJAX call in admin/js/custom.js page
+            Route::match(['get', 'post'], 'update-vendor-details', 'AdminController@updateAdminDetails');          // Update Admin Details in update_admin_details.blade.php page    // 'GET' method to show the update_admin_details.blade.php page, and 'POST' method for the <form> submission in the same page
+            Route::match(['get', 'post'], 'update-vendor-details/{slug}', 'AdminController@updateVendorDetails'); 
     
             // Vendor Plan Settings (Admin only)
-            Route::get('plan-settings', [App\Http\Controllers\Admin\PlanSettingsController::class, 'index'])->name('admin.plan.settings');
-            Route::post('plan-settings/update', [App\Http\Controllers\Admin\PlanSettingsController::class, 'update'])->name('admin.plan.settings.update');
-            Route::post('plan-settings/invite/regenerate', [App\Http\Controllers\Admin\PlanSettingsController::class, 'regenerateInviteLink'])->name('admin.plan.settings.invite.regenerate');
+            Route::get('plan-settings', [App\Http\Controllers\Admin\PlanSettingsController::class, 'index'])->name('vendor.plan.settings');
+            Route::post('plan-settings/update', [App\Http\Controllers\Admin\PlanSettingsController::class, 'update'])->name('vendor.plan.settings.update');
+            Route::post('plan-settings/invite/regenerate', [App\Http\Controllers\Admin\PlanSettingsController::class, 'regenerateInviteLink'])->name('vendor.plan.settings.invite.regenerate');
     
             // Update the vendor's commission percentage (by the Admin) in `vendors` table (for every vendor on their own) in the Admin Panel in admin/admins/view_vendor_details.blade.php (Commissions module: Every vendor must pay a certain commission (that may vary from a vendor to another) for the website owner (admin) on every item sold, and it's defined by the website owner (admin))
             Route::post('update-vendor-commission', 'AdminController@updateVendorCommission');
     
-            // Sales Executives Management - Must be BEFORE admins/{type?} route to prevent route conflicts
-            Route::get('sales-executive', [SalesExecutiveController::class, 'index'])->name('salesexecutives.index');
-            Route::match(['get', 'post'], 'add-edit-sales-executive/{id?}', [SalesExecutiveController::class, 'addEdit'])->name('sales_executives.add_edit');
-            Route::get('delete-sales-executive/{id}', [SalesExecutiveController::class, 'delete'])->name('sales_executives.delete');
-            Route::post('update-sales-executive-status', [SalesExecutiveController::class, 'updateStatus'])->name('sales_executives.update_status');
-            Route::get('sales-executive/{id}/details', [SalesExecutiveController::class, 'getDetails'])->name('sales_executives.get_details');
     
             // Sales Reports (Admin)
-            Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('admin.reports.sales_reports.index');
-            Route::get('reports/sales_reports/{id}', [SalesReportController::class, 'show'])->name('admin.reports.sales_reports.show');
+            Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('vendor.reports.sales_reports.index');
+            Route::get('reports/sales_reports/{id}', [SalesReportController::class, 'show'])->name('vendor.reports.sales_reports.show');
     
             // Notifications
             Route::get('notifications', 'NotificationController@index')->name('notifications.index');
@@ -82,17 +82,12 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
             Route::get('delete-category/{id}', 'CategoryController@deleteCategory');                        // Delete a category in categories.blade.php
             Route::get('delete-category-image/{id}', 'CategoryController@deleteCategoryImage');             // Delete a category image in add_edit_category.blade.php from BOTH SERVER (FILESYSTEM) & DATABASE
     
-            //Logo
-            Route::match(['get', 'post'], 'header-logo', [AdminController::class, 'headerLogo'])->name('logo');
-            //Favicon
-            Route::match(['get', 'post'], 'favicon', [AdminController::class, 'favicon'])->name('favicon');
-            Route::post('update-favicon', [AdminController::class, 'updateFavicon'])->name('update.favicon');
-    
+           
             //Publishers
             Route::get('publisher', 'PublisherController@publisher');
             Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
     
-            Route::post('/admin/add-publisher-ajax', [App\Http\Controllers\Admin\PublisherController::class, 'addPublisherAjax'])->name('admin.addPublisherAjax');
+            Route::post('/admin/add-publisher-ajax', [App\Http\Controllers\Admin\PublisherController::class, 'addPublisherAjax'])->name('vendor.addPublisherAjax');
     
             // Authors
             Route::post('update-author-status', [AuthorController::class, 'updateStatus'])->name('updateauthorstatus');
@@ -128,62 +123,62 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
     
             // Schools
             Route::resource('schools', SchoolController::class)->names([
-                'index'   => 'admin.schools.index',
-                'create'  => 'admin.schools.create',
-                'store'   => 'admin.schools.store',
-                'show'    => 'admin.schools.show',
-                'edit'    => 'admin.schools.edit',
-                'update'  => 'admin.schools.update',
-                'destroy' => 'admin.schools.destroy',
+                'index'   => 'vendor.schools.index',
+                'create'  => 'vendor.schools.create',
+                'store'   => 'vendor.schools.store',
+                'show'    => 'vendor.schools.show',
+                'edit'    => 'vendor.schools.edit',
+                'update'  => 'vendor.schools.update',
+                'destroy' => 'vendor.schools.destroy',
             ]);
     
             // Institution Management
             Route::resource('institution-managements', 'InstitutionManagementController')->names([
-                'index'   => 'admin.institution_managements.index',
-                'create'  => 'admin.institution_managements.create',
-                'store'   => 'admin.institution_managements.store',
-                'show'    => 'admin.institution_managements.show',
-                'edit'    => 'admin.institution_managements.edit',
-                'update'  => 'admin.institution_managements.update',
-                'destroy' => 'admin.institution_managements.destroy',
+                'index'   => 'vendor.institution_managements.index',
+                'create'  => 'vendor.institution_managements.create',
+                'store'   => 'vendor.institution_managements.store',
+                'show'    => 'vendor.institution_managements.show',
+                'edit'    => 'vendor.institution_managements.edit',
+                'update'  => 'vendor.institution_managements.update',
+                'destroy' => 'vendor.institution_managements.destroy',
             ]);
-            Route::post('update-institution-status', [InstitutionManagementController::class, 'updateStatus'])->name('admin.institution_managements.update_status');
+            Route::post('update-institution-status', [InstitutionManagementController::class, 'updateStatus'])->name('vendor.institution_managements.update_status');
             Route::get('institution-management/{id}/details', [InstitutionManagementController::class, 'getDetails'])->name('institution_managements.get_details');
     
             // Cities removed
     
             // Blocks Management
             Route::resource('blocks', 'BlockController')->names([
-                'index'   => 'admin.blocks.index',
-                'create'  => 'admin.blocks.create',
-                'store'   => 'admin.blocks.store',
-                'edit'    => 'admin.blocks.edit',
-                'update'  => 'admin.blocks.update',
-                'destroy' => 'admin.blocks.destroy',
+                'index'   => 'vendor.blocks.index',
+                'create'  => 'vendor.blocks.create',
+                'store'   => 'vendor.blocks.store',
+                'edit'    => 'vendor.blocks.edit',
+                'update'  => 'vendor.blocks.update',
+                'destroy' => 'vendor.blocks.destroy',
             ]);
             Route::post('update-block-status', 'BlockController@updateStatus');
     
             // Students Management
             Route::resource('students', 'StudentController')->names([
-                'index'   => 'admin.students.index',
-                'create'  => 'admin.students.create',
-                'store'   => 'admin.students.store',
-                'show'    => 'admin.students.show',
-                'edit'    => 'admin.students.edit',
-                'update'  => 'admin.students.update',
-                'destroy' => 'admin.students.destroy',
+                'index'   => 'vendor.students.index',
+                'create'  => 'vendor.students.create',
+                'store'   => 'vendor.students.store',
+                'show'    => 'vendor.students.show',
+                'edit'    => 'vendor.students.edit',
+                'update'  => 'vendor.students.update',
+                'destroy' => 'vendor.students.destroy',
             ]);
-            Route::get('students/{id}/details', 'StudentController@details')->name('admin.students.details');
-            Route::post('students/{id}/update-status', 'StudentController@updateStatus')->name('admin.students.updateStatus');
+            Route::get('students/{id}/details', 'StudentController@details')->name('vendor.students.details');
+            Route::post('students/{id}/update-status', 'StudentController@updateStatus')->name('vendor.students.updateStatus');
     
             // Withdrawals Management
-            Route::get('withdrawals', 'WithdrawalController@index')->name('admin.withdrawals.index');
-            Route::get('withdrawals/{id}', 'WithdrawalController@show')->name('admin.withdrawals.show');
-            Route::post('withdrawals/{id}/update-status', 'WithdrawalController@updateStatus')->name('admin.withdrawals.updateStatus');
-            Route::post('withdrawals/minimum/update', 'WithdrawalController@updateMinimum')->name('admin.withdrawals.minimum.update');
+            Route::get('withdrawals', 'WithdrawalController@index')->name('vendor.withdrawals.index');
+            Route::get('withdrawals/{id}', 'WithdrawalController@show')->name('vendor.withdrawals.show');
+            Route::post('withdrawals/{id}/update-status', 'WithdrawalController@updateStatus')->name('vendor.withdrawals.updateStatus');
+            Route::post('withdrawals/minimum/update', 'WithdrawalController@updateMinimum')->name('vendor.withdrawals.minimum.update');
     
             // AJAX route for getting classes based on institution type (outside admin middleware for AJAX access)
-            Route::get('institution-classes', [InstitutionManagementController::class, 'getClasses'])->name('admin.institution.classes');
+            Route::get('institution-classes', [InstitutionManagementController::class, 'getClasses'])->name('vendor.institution.classes');
     
     
             // AJAX route for getting location data based on pincode (outside admin middleware for AJAX access)
@@ -192,27 +187,27 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
     
             // Products (with vendor plan check middleware)
             Route::middleware(['vendor.plan'])->group(function () {
-                Route::get('products/getauthors', [AdminProductsController::class, 'getAuthor']);
-                Route::get('products', [AdminProductsController::class, 'products']);                                        // render products.blade.php in the Admin Panel
-                Route::post('update-product-status', [AdminProductsController::class, 'updateProductStatus'])->name('updateproductstatus');               // Update Products Status using AJAX in products.blade.php
-                Route::get('delete-product/{id}', [AdminProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
-                Route::get('delete-product-attribute/{id}', [AdminProductsController::class, 'deleteProductAttribute']);     // Delete a product attribute (ProductsAttribute)
-                Route::match(['get', 'post'], 'add-edit-product/{id?}', [AdminProductsController::class, 'addEditProduct'])->name('admin.products.add'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
-                Route::post('save-product-attributes', [AdminProductsController::class, 'saveProductAttributes'])->name('admin.products.saveAttributes'); // Save product attributes (stock and discount) via AJAX
-                Route::get('delete-product-image/{id}', [AdminProductsController::class, 'deleteProductImage']);             // Delete a product images (in the three folders: small, medium and large) in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
-                Route::get('delete-product-video/{id}', [AdminProductsController::class, 'deleteProductVideo']);             // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
+                Route::get('products/getauthors', [ProductsController::class, 'getAuthor']);
+                Route::get('products', [ProductsController::class, 'products']);                                        // render products.blade.php in the Admin Panel
+                Route::post('update-product-status', [ProductsController::class, 'updateProductStatus'])->name('updateproductstatus');               // Update Products Status using AJAX in products.blade.php
+                Route::get('delete-product/{id}', [ProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
+                Route::get('delete-product-attribute/{id}', [ProductsController::class, 'deleteProductAttribute']);     // Delete a product attribute (ProductsAttribute)
+                Route::match(['get', 'post'], 'add-edit-product/{id?}', [ProductsController::class, 'addEditProduct'])->name('vendor.products.add'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
+                Route::post('save-product-attributes', [ProductsController::class, 'saveProductAttributes'])->name('vendor.products.saveAttributes'); // Save product attributes (stock and discount) via AJAX
+                Route::get('delete-product-image/{id}', [ProductsController::class, 'deleteProductImage']);             // Delete a product images (in the three folders: small, medium and large) in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
+                Route::get('delete-product-video/{id}', [ProductsController::class, 'deleteProductVideo']);             // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
             });
     
             // Attributes
-            Route::match(['get', 'post'], 'add-edit-attributes/{id}', [AdminProductsController::class, 'addAttributes']); // GET request to render the add_edit_attributes.blade.php view, and POST request to submit the <form> in that view
-            Route::post('update-attribute-status', [AdminProductsController::class, 'updateAttributeStatus']);            // Update Attributes Status using AJAX in add_edit_attributes.blade.php
-            Route::get('delete-attribute/{id}', [AdminProductsController::class, 'deleteAttribute']);                     // Delete an attribute in add_edit_attributes.blade.php
-            Route::match(['get', 'post'], 'edit-attributes/{id}', [AdminProductsController::class, 'editAttributes']);    // in add_edit_attributes.blade.php
+            Route::match(['get', 'post'], 'add-edit-attributes/{id}', [ProductsController::class, 'addAttributes']); // GET request to render the add_edit_attributes.blade.php view, and POST request to submit the <form> in that view
+            Route::post('update-attribute-status', [ProductsController::class, 'updateAttributeStatus']);            // Update Attributes Status using AJAX in add_edit_attributes.blade.php
+            Route::get('delete-attribute/{id}', [ProductsController::class, 'deleteAttribute']);                     // Delete an attribute in add_edit_attributes.blade.php
+            Route::match(['get', 'post'], 'edit-attributes/{id}', [ProductsController::class, 'editAttributes']);    // in add_edit_attributes.blade.php
     
             // Images
-            Route::match(['get', 'post'], 'add-images/{id}', [AdminProductsController::class, 'addImages']); // GET request to render the add_edit_attributes.blade.php view, and POST request to submit the <form> in that view
-            Route::post('update-image-status', [AdminProductsController::class, 'updateImageStatus']);       // Update Images Status using AJAX in add_images.blade.php
-            Route::get('delete-image/{id}', [AdminProductsController::class, 'deleteImage']);                // Delete an image in add_images.blade.php
+            Route::match(['get', 'post'], 'add-images/{id}', [ProductsController::class, 'addImages']); // GET request to render the add_edit_attributes.blade.php view, and POST request to submit the <form> in that view
+            Route::post('update-image-status', [ProductsController::class, 'updateImageStatus']);       // Update Images Status using AJAX in add_images.blade.php
+            Route::get('delete-image/{id}', [ProductsController::class, 'deleteImage']);                // Delete an image in add_images.blade.php
     
             // Banners
             Route::get('banners', 'BannerController@banners');

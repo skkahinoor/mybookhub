@@ -750,7 +750,6 @@ class BookController extends Controller
 
             $attribute = new ProductsAttribute();
             $attribute->product_id       = $product->id;
-            $attribute->size             = 'Default';
             $attribute->stock            = $request->total_stock;
             $attribute->product_discount = $request->product_discount ?? 0;
             $attribute->status           = 1;
