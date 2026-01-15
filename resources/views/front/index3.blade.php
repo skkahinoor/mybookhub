@@ -2,8 +2,6 @@
 
 @section('content')
 
-
-
     <style>
         /* Ensure consistent banner height with responsive breakpoints */
         #carouselExampleAutoplaying .carousel-item img {
@@ -129,6 +127,7 @@
             }
         }
     </style>
+    <!-- Banner Section Start -->
     @php
         $hasSliderBanners = !empty($sliderBanners) && is_iterable($sliderBanners) && count($sliderBanners) > 0;
     @endphp
@@ -175,38 +174,40 @@
             <span class="visually-hidden">Next</span>
         </button>
     </div>
+    <!-- Banner Section End -->
 
     <!-- Recommend Section Start -->
     <section class="content-inner-1 bg-grey reccomend py-5">
         <div class="container">
+
             <div class="section-head text-center mb-4">
                 <h2 class="title">Recommended For You</h2>
-                <p>Discover titles picked just for you — find your next great read from our curated list!</p>
+                <p>Discover titles picked just for you — find your next great read!</p>
             </div>
 
             <div class="row g-4">
+
                 @foreach ($sliderProducts as $sliderProduct)
                     @php
-                        $product = $sliderProduct['product'] ?? null;
+                        $product = $sliderProduct->product;
                         if (!$product) {
                             continue;
                         }
 
-                        $attributeId = $sliderProduct['id']; // product_attribute_id
+                        $attributeId = $sliderProduct->id;
 
-                        $productImage = $product['product_image'] ?? 'no-image.png';
-                        $productName = $product['product_name'] ?? 'N/A';
+                        $ratings = $sliderProduct->ratings;
+                        $avgRating = $ratings->count() ? round($ratings->avg('rating'), 1) : 0;
+                        $fullStars = floor($avgRating);
+                        $halfStar = $avgRating - $fullStars >= 0.5;
 
-                        $originalPrice = (float) $product['product_price'];
-                        $vendorDiscount = (float) ($sliderProduct['product_discount'] ?? 0);
-
-                        if ($vendorDiscount > 0) {
-                            $finalPrice = round($originalPrice - ($originalPrice * $vendorDiscount) / 100);
-                            $discountPercent = round($vendorDiscount);
-                        } else {
-                            $finalPrice = round($originalPrice);
-                            $discountPercent = 0;
-                        }
+                        // PRICE
+                        $originalPrice = (float) $product->product_price;
+                        $discount = (float) ($sliderProduct->product_discount ?? 0);
+                        $finalPrice =
+                            $discount > 0
+                                ? round($originalPrice - ($originalPrice * $discount) / 100)
+                                : round($originalPrice);
                     @endphp
 
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3 d-flex">
@@ -215,28 +216,30 @@
                             {{-- IMAGE --}}
                             <div class="position-relative">
                                 <a href="{{ url('product/' . $attributeId) }}">
-                                    <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
-                                        class="card-img-top" style="height:220px; object-fit:cover;"
+                                    <img src="{{ asset('front/images/product_images/small/' . ($product->product_image ?? 'no-image.png')) }}"
+                                        class="card-img-top" style="height:220px;object-fit:cover;"
                                         onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
                                 </a>
 
-                                @if ($discountPercent > 0)
+                                @if ($discount > 0)
                                     <span class="badge bg-danger position-absolute top-0 end-0 m-2">
-                                        -{{ $discountPercent }}%
+                                        -{{ round($discount) }}%
                                     </span>
                                 @endif
                             </div>
 
-
+                            {{-- BODY --}}
                             <div class="card-body d-flex flex-column">
-                                <h5 class="mb-1">
-                                    <a href="{{ url('product/' . $attributeId) }}" class="text-dark text-decoration-none">
-                                        {{ $productName }}
-                                    </a>
-                                </h5>
 
-                                <div class="mb-2">
-                                    @if ($discountPercent > 0)
+                                <h6 class="mb-1 book-title-truncate">
+                                    <a href="{{ url('product/' . $attributeId) }}" class="text-dark text-decoration-none">
+                                        {{ $product->product_name }}
+                                    </a>
+                                </h6>
+
+                                {{-- PRICE --}}
+                                <div class="mb-1">
+                                    @if ($discount > 0)
                                         <span class="text-muted text-decoration-line-through small">
                                             ₹{{ round($originalPrice) }}
                                         </span>
@@ -245,17 +248,40 @@
                                         </span>
                                     @else
                                         <span class="fw-bold text-primary">
-                                            ₹{{ round($originalPrice) }}
+                                            ₹{{ $finalPrice }}
                                         </span>
                                     @endif
                                 </div>
 
-                                <span class="text-dark small mb-2">
-                                    Shop Name:
-                                    {{ $sliderProduct['vendor']['vendorbusinessdetails']['shop_name'] ?? 'N/A' }}
-                                </span>
+                                {{-- ⭐ STAR RATING --}}
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="text-warning me-2">
+                                        @for ($i = 1; $i <= 5; $i++)
+                                            @if ($i <= $fullStars)
+                                                <i class="fas fa-star"></i>
+                                            @elseif ($halfStar && $i == $fullStars + 1)
+                                                <i class="fas fa-star-half-alt"></i>
+                                            @else
+                                                <i class="far fa-star"></i>
+                                            @endif
+                                        @endfor
+                                    </div>
 
-                                {{-- ✅ ADD TO CART (ATTRIBUTE BASED) --}}
+                                    <small class="text-muted">
+                                        {{ $avgRating > 0 ? $avgRating . '/5' : 'No ratings' }}
+                                        @if ($ratings->count())
+                                            ({{ $ratings->count() }})
+                                        @endif
+                                    </small>
+                                </div>
+
+                                {{-- SHOP --}}
+                                <small class="text-muted mb-2">
+                                    Shop:
+                                    {{ $sliderProduct->vendor->vendorbusinessdetails->shop_name ?? 'N/A' }}
+                                </small>
+
+                                {{-- ADD TO CART --}}
                                 <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
                                     @csrf
                                     <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
@@ -265,15 +291,16 @@
                                         <i class="flaticon-shopping-cart-1"></i> Add to cart
                                     </button>
                                 </form>
-                            </div>
 
+                            </div>
                         </div>
                     </div>
                 @endforeach
+
             </div>
         </div>
     </section>
-
+    <!-- Recommend Section End -->
 
     <!-- icon-box1 -->
     <section class="content-inner-2">
@@ -333,16 +360,13 @@
     @php
         $discountCount = $discountedProducts->count();
     @endphp
-
     @if ($discountCount > 0)
         <section class="content-inner-1">
             <div class="container">
 
-                {{-- SECTION HEAD --}}
                 <div class="section-head book-align">
                     <h2 class="title mb-0">Books on Sale</h2>
 
-                    {{-- SHOW SLIDER CONTROLS ONLY IF > 4 --}}
                     @if ($discountCount > 4)
                         <div class="pagination-align style-1">
                             <div class="swiper-button-prev"><i class="fa-solid fa-angle-left"></i></div>
@@ -352,17 +376,13 @@
                     @endif
                 </div>
 
-                {{-- WRAPPER --}}
                 @if ($discountCount > 4)
-                    {{-- SLIDER MODE --}}
                     <div class="swiper-container books-wrapper-3 swiper-four">
                         <div class="swiper-wrapper">
                         @else
-                            {{-- GRID MODE --}}
                             <div class="row g-4">
                 @endif
 
-                {{-- LOOP --}}
                 @foreach ($discountedProducts as $item)
                     @php
                         $product = $item->product;
@@ -371,7 +391,13 @@
                         }
 
                         $attributeId = $item->id;
+
                         $priceDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($attributeId);
+
+                        $ratings = $item->ratings;
+                        $avgRating = $ratings->count() ? round($ratings->avg('rating'), 1) : 0;
+                        $fullStars = floor($avgRating);
+                        $halfStar = $avgRating - $fullStars >= 0.5;
                     @endphp
 
                     @if ($discountCount > 4)
@@ -393,20 +419,18 @@
 
                             {{-- DISCOUNT BADGE --}}
                             <span class="badge bg-danger position-absolute top-0 end-0 m-2">
-                                -{{ $item->product_discount }}%
+                                -{{ round($item->product_discount) }}%
                             </span>
                         </div>
 
                         <div class="dz-content">
 
-                            {{-- TITLE --}}
                             <h5 class="title book-title-truncate">
                                 <a href="{{ url('product/' . $attributeId) }}" title="{{ $product->product_name }}">
                                     {{ $product->product_name }}
                                 </a>
                             </h5>
 
-                            {{-- AUTHORS --}}
                             <ul class="dz-tags">
                                 <li>
                                     Authors:
@@ -417,7 +441,26 @@
                                 </li>
                             </ul>
 
-                            {{-- FOOTER --}}
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="text-warning me-2">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        @if ($i <= $fullStars)
+                                            <i class="fas fa-star"></i>
+                                        @elseif ($halfStar && $i == $fullStars + 1)
+                                            <i class="fas fa-star-half-alt"></i>
+                                        @else
+                                            <i class="far fa-star"></i>
+                                        @endif
+                                    @endfor
+                                </div>
+                                <small class="text-muted">
+                                    {{ $avgRating > 0 ? $avgRating . '/5' : 'No ratings' }}
+                                    @if ($ratings->count())
+                                        ({{ $ratings->count() }})
+                                    @endif
+                                </small>
+                            </div>
+
                             <div class="book-footer">
                                 <div class="rate">
                                     <span style="text-transform: capitalize;">
@@ -434,115 +477,187 @@
                                     </del>
                                 </div>
                             </div>
-                            <form action="{{ url('cart/add') }}" method="POST" class="mt-auto">
+
+                            {{-- ADD TO CART --}}
+                            <form action="{{ url('cart/add') }}" method="POST" class="mt-2">
                                 @csrf
                                 <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
                                 <input type="hidden" name="quantity" value="1">
-
                                 <button type="submit" class="btn btn-outline-primary btn-sm w-100">
                                     <i class="flaticon-shopping-cart-1"></i> Add to cart
                                 </button>
                             </form>
+
                         </div>
                     </div>
             </div>
     @endforeach
-
-    {{-- CLOSE WRAPPERS --}}
     @if ($discountCount > 4)
-        </div> {{-- swiper-wrapper --}}
-        </div> {{-- swiper-container --}}
+        </div>
+        </div>
     @else
-        </div> {{-- row --}}
+        </div>
     @endif
-
     </div>
     </section>
     @endif
-
-
-
-
-    <!-- Book Sale End -->
+    <!-- End Book Sale -->
 
     <!-- Feature Product -->
-    <section class="content-inner-1 bg-grey reccomend">
-        <div class="container">
-            <div class="section-head text-center">
-                <div class="circle style-1"></div>
-                <h2 class="title">Featured Product</h2>
-                <p>Discover our handpicked favorites—top-rated, trending titles curated to help you find your next great
-                    read.</p>
-            </div>
-        </div>
-        <div class="container">
-            <div class="swiper-container books-wrapper-2 swiper-three">
-                <div class="swiper-wrapper">
+    @php
+        $featuredCount = $featuredProducts->count();
+    @endphp
+    @if ($featuredCount > 0)
+        <section class="content-inner-1 bg-grey reccomend">
+            <div class="container">
 
-                    @foreach ($featuredProducts as $products)
+                {{-- SECTION HEAD --}}
+                <div class="section-head book-align">
+                    <h2 class="title mb-0">Featured Product</h2>
+
+                    {{-- SLIDER CONTROLS --}}
+                    @if ($featuredCount > 4)
+                        <div class="pagination-align style-1">
+                            <div class="swiper-button-prev"><i class="fa-solid fa-angle-left"></i></div>
+                            <div class="swiper-pagination-three"></div>
+                            <div class="swiper-button-next"><i class="fa-solid fa-angle-right"></i></div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- WRAPPER --}}
+                @if ($featuredCount > 4)
+                    <div class="swiper-container books-wrapper-2 swiper-three">
+                        <div class="swiper-wrapper">
+                        @else
+                            <div class="row g-4">
+                @endif
+
+                {{-- LOOP --}}
+                @foreach ($featuredProducts as $attribute)
+                    @php
+                        $product = $attribute->product;
+                        if (!$product) {
+                            continue;
+                        }
+
+                        $attributeId = $attribute->id;
+
+                        $priceDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($attributeId);
+
+                        $ratings = $attribute->ratings;
+                        $avgRating = $ratings->count() ? round($ratings->avg('rating'), 1) : 0;
+                        $fullStars = floor($avgRating);
+                        $halfStar = $avgRating - $fullStars >= 0.5;
+                    @endphp
+
+                    @if ($featuredCount > 4)
                         <div class="swiper-slide">
-                            <div class="books-card style-2">
-                                <div class="dz-media">
-                                    <img src="{{ asset('front/images/product_images/small/' . $products['product_image']) }}"
-                                        alt="banner-media" style="height: 500px; width: 1000px; object-fit: cover;">
+                        @else
+                            <div class="col-lg-3 col-md-4 col-sm-6">
+                    @endif
+
+                    <div class="books-card style-3 wow fadeInUp">
+
+                        {{-- IMAGE --}}
+                        <div class="dz-media position-relative">
+                            <a href="{{ url('product/' . $attributeId) }}">
+                                <img src="{{ asset('front/images/product_images/small/' . ($product->product_image ?? 'no-image.png')) }}"
+                                    style="height:256px;width:100%;object-fit:cover;"
+                                    onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'"
+                                    alt="{{ $product->product_name }}">
+                            </a>
+
+                            @if ($attribute->product_discount > 0)
+                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                    -{{ round($attribute->product_discount) }}%
+                                </span>
+                            @endif
+                        </div>
+
+                        <div class="dz-content">
+
+                            {{-- TITLE --}}
+                            <h5 class="title book-title-truncate">
+                                <a href="{{ url('product/' . $attributeId) }}">
+                                    {{ $product->product_name }}
+                                </a>
+                            </h5>
+
+                            {{-- AUTHORS --}}
+                            <ul class="dz-tags">
+                                <li>
+                                    Authors:
+                                    {{ $product->authors->pluck('name')->first() ?? 'N/A' }}
+                                    @if ($product->authors->count() > 1)
+                                        ...
+                                    @endif
+                                </li>
+                            </ul>
+
+                            {{-- ⭐ STAR RATING --}}
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="text-warning me-2">
+                                    @for ($i = 1; $i <= 5; $i++)
+                                        @if ($i <= $fullStars)
+                                            <i class="fas fa-star"></i>
+                                        @elseif ($halfStar && $i == $fullStars + 1)
+                                            <i class="fas fa-star-half-alt"></i>
+                                        @else
+                                            <i class="far fa-star"></i>
+                                        @endif
+                                    @endfor
                                 </div>
-                                <div class="dz-content">
-                                    <h6 class="font-family: poppins text-dark" data-swiper-parallax="-10">
-                                        Publisher:
-                                        {{ $products->publisher->name ?? 'N/A' }}
-                                    </h6>
-                                    <h2 class="title text-dark mb-0" data-swiper-parallax="-20">
-                                        {{ $products['product_name'] }}</h2>
-                                    <ul class="dz-tags" data-swiper-parallax="-30">
-                                        @php
-                                            $allAuthorNames = $products->authors->pluck('name')->join(', ');
-                                        @endphp
-                                        <li><a class="text-dark" title="{{ $allAuthorNames }}"
-                                                href="javascript:void(0);">
-                                                Authors:
-                                                @if ($products->authors->isNotEmpty())
-                                                    {{ $products->authors->first()->name }}
-                                                    @if ($products->authors->count() > 1)
-                                                        ...
-                                                    @endif
-                                                @else
-                                                    N/A
-                                                @endif
-                                            </a>
-                                        </li>
-                                    </ul>
-                                    <p class="text mb-0" data-swiper-parallax="-40">Book Condition: <span
-                                            style="text-transform: capitalize;">{{ $products['condition'] }}</span>
-                                    </p>
-                                    <p class="text mb-0" data-swiper-parallax="-40">Description:
-                                        {{ $products['description'] }}</p>
-                                    <div class="price">
-                                        <span
-                                            class="price-num">₹{{ \App\Models\Product::getDiscountPrice($products['id']) }}</span>
-                                        <del>₹{{ $products['product_price'] }}</del>
-                                    </div>
-                                    <div class="bookcard-footer">
-                                        <a class="btn btn-success btnhover"
-                                            href="{{ url('product/' . $products['id']) }}">Buy
-                                            Now</a>
-                                        <a class="btn border btnhover ms-4 text-dark"
-                                            href="{{ url('product/' . $products['id']) }}">See
-                                            Details</a>
-                                    </div>
+                                <small class="text-muted">
+                                    {{ $avgRating > 0 ? $avgRating . '/5' : 'No ratings' }}
+                                    @if ($ratings->count())
+                                        ({{ $ratings->count() }})
+                                    @endif
+                                </small>
+                            </div>
+
+                            {{-- FOOTER --}}
+                            <div class="book-footer">
+                                <div class="rate">
+                                    <span style="text-transform: capitalize;">
+                                        {{ $product->condition }}
+                                    </span>
+                                </div>
+
+                                <div class="price">
+                                    <span class="price-num">
+                                        ₹{{ number_format($priceDetails['final_price'], 2) }}
+                                    </span>
+
+                                    @if ($priceDetails['discount'] > 0)
+                                        <del>₹{{ number_format($priceDetails['product_price'], 2) }}</del>
+                                    @endif
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
 
-                </div>
-                <div class="pagination-align style-2">
-                    <div class="swiper-button-prev"><i class="fa-solid fa-angle-left"></i></div>
-                    <div class="swiper-pagination-three"></div>
-                    <div class="swiper-button-next"><i class="fa-solid fa-angle-right"></i></div>
-                </div>
+                            {{-- ADD TO CART --}}
+                            <form action="{{ url('cart/add') }}" method="POST" class="mt-2">
+                                @csrf
+                                <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
+                                <input type="hidden" name="quantity" value="1">
+                                <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="flaticon-shopping-cart-1"></i> Add to cart
+                                </button>
+                            </form>
+
+                        </div>
+                    </div>
             </div>
+    @endforeach
+    @if ($featuredCount > 4)
         </div>
+        </div>
+    @else
+        </div>
+    @endif
+    </div>
     </section>
+    @endif
     <!-- Feature Product End -->
 
     <!-- Special Offer-->
@@ -1201,18 +1316,19 @@
             style="opacity:0.04;width:280px;height:280px;bottom:-80px;left:-80px;"></div>
     </section>
 
-<style>
-    .book-title-truncate {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;      /* show only 2 lines */
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        line-height: 1.4em;
-        min-height: 2.8em;          /* equal card height */
-    }
-</style>
-
+    <style>
+        .book-title-truncate {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            /* show only 2 lines */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4em;
+            min-height: 2.8em;
+            /* equal card height */
+        }
+    </style>
 
     {{-- Js Section  --}}
 

@@ -422,10 +422,10 @@ class BookController extends Controller
             'product_isbn' => [
                 'required',
                 'string',
-                'max:20',
                 Rule::unique('products')->where(function ($query) use ($request) {
                     return $query->where('condition', $request->condition);
                 }),
+                'regex:/^(?:\d{10}|\d{13})$/',
             ],
             'product_name'  => 'required|string|max:255',
             'product_price' => 'required|numeric|min:0',

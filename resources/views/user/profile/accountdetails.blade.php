@@ -55,7 +55,13 @@
                             <div class="mb-3">
                                 @php
                                     $avatar = optional(Auth::user())->profile_image ?? null;
-                                    $avatarSrc = $avatar ? asset($avatar) : asset('user/images/faces/face28.jpg');
+                                    // Check if avatar exists and handle both new location (asset/user) and old location (storage)
+                                    if ($avatar) {
+                                        // Works for both asset/user/ and storage/ paths
+                                        $avatarSrc = asset($avatar);
+                                    } else {
+                                        $avatarSrc = asset('user/images/faces/face28.jpg');
+                                    }
                                 @endphp
                                 <img src="{{ $avatarSrc }}" id="user-avatar-preview" alt="profile"
                                     class="rounded-circle" style="width:72px;height:72px;object-fit:cover;">
@@ -718,6 +724,8 @@
                         var newSrc = response.avatar_url + '?v=' + Date.now();
                         $('#user-avatar-preview').attr('src', newSrc);
                         $('#nav-avatar').attr('src', newSrc);
+                        // Also update front navbar avatar if it exists
+                        $('#front-nav-avatar').attr('src', newSrc);
                     }
 
                     // Show success alert

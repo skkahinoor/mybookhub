@@ -11,7 +11,6 @@ class ProductsAttribute extends Model
 
     protected $fillable = [
         'product_id',
-        'size',
         'price',
         'stock',
         'sku',
@@ -56,6 +55,11 @@ class ProductsAttribute extends Model
     public static function getProductStock($product_id, $size = null)
     {
         return (int) self::where('product_id', $product_id)->sum('stock');
+    }
+
+    public function ratings()
+    {
+        return $this->hasMany(\App\Models\Rating::class, 'product_attribute_id');
     }
 
     /**
