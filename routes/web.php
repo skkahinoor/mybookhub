@@ -144,6 +144,13 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::delete('book-requests/{id}', [BookRequestsController::class, 'delete'])->name('bookrequests.delete');
         Route::post('admin/bookrequests/update-status', [BookRequestsController::class, 'updateStatus'])->name('bookrequests.updateStatus');
 
+        // Sell Book Requests (Users selling their old books)
+        Route::get('sell-book-requests', [App\Http\Controllers\Admin\SellBookRequestController::class, 'index'])->name('admin.sell-book-requests.index');
+        Route::get('sell-book-requests/{id}', [App\Http\Controllers\Admin\SellBookRequestController::class, 'show'])->name('admin.sell-book-requests.show');
+        Route::post('sell-book-requests/{id}/update-request-status', [App\Http\Controllers\Admin\SellBookRequestController::class, 'updateRequestStatus'])->name('admin.sell-book-requests.update-request-status');
+        Route::post('sell-book-requests/{id}/update-book-status', [App\Http\Controllers\Admin\SellBookRequestController::class, 'updateBookStatus'])->name('admin.sell-book-requests.update-book-status');
+        Route::delete('sell-book-requests/{id}', [App\Http\Controllers\Admin\SellBookRequestController::class, 'destroy'])->name('admin.sell-book-requests.destroy');
+
         //Subject
         Route::get('subjects', [SubjectController::class, 'index'])->name('subject');
         Route::get('add_subject', [SubjectController::class, 'add'])->name('add.subject');
