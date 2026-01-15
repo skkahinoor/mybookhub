@@ -22,34 +22,70 @@
                             </a>
 
                         </div>
-
                         <div class="dz-content">
                             <div class="dz-header">
                                 <h3 class="title">{{ $productDetails['product_name'] }}</h3>
                                 <div class="shop-item-rating">
+                                    @php
+                                        $ratingCount = $ratingCount ?? 0;
+                                        $avgRating = $avgRating ?? 0;
+
+                                        $fullStars = floor($avgRating);
+                                        $halfStar = $avgRating - $fullStars >= 0.5;
+                                    @endphp
+
                                     <div class="d-lg-flex d-sm-inline-flex d-flex align-items-center">
-                                        <ul class="dz-rating">
-                                            <li><i class="flaticon-star text-yellow"></i></li>
-                                            <li><i class="flaticon-star text-yellow"></i></li>
-                                            <li><i class="flaticon-star text-yellow"></i></li>
-                                            <li><i class="flaticon-star text-yellow"></i></li>
-                                            <li><i class="flaticon-star text-muted"></i></li>
-                                        </ul>
-                                        <h6 class="m-b0">4.0</h6>
+
+                                        <div class="text-warning me-2">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                @if ($i <= $fullStars)
+                                                    <i class="fas fa-star"></i>
+                                                @elseif ($halfStar && $i == $fullStars + 1)
+                                                    <i class="fas fa-star-half-alt"></i>
+                                                @else
+                                                    <i class="far fa-star"></i>
+                                                @endif
+                                            @endfor
+                                        </div>
+
+                                        <h6 class="m-b0 me-1">
+                                            {{ $avgRating > 0 ? number_format($avgRating, 1) : '0.0' }}
+                                        </h6>
+
+                                        <span class="text-muted">
+                                            ({{ $ratingCount }} {{ $ratingCount === 1 ? 'Review' : 'Reviews' }})
+                                        </span>
                                     </div>
+
+                                    {{-- SOCIAL SHARE --}}
                                     <div class="social-area">
                                         <ul class="dz-social-icon style-3">
-                                            <li><a href="https://www.facebook.com/dexignzone" target="_blank"><i
-                                                        class="fa-brands fa-facebook-f"></i></a></li>
-                                            <li><a href="https://twitter.com/dexignzones" target="_blank"><i
-                                                        class="fa-brands fa-twitter"></i></a></li>
-                                            <li><a href="https://www.whatsapp.com/" target="_blank"><i
-                                                        class="fa-brands fa-whatsapp"></i></a></li>
-                                            <li><a href="https://www.google.com/intl/en-GB/gmail/about/" target="_blank"><i
-                                                        class="fa-solid fa-envelope"></i></a></li>
+                                            <li>
+                                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ url()->current() }}"
+                                                    target="_blank">
+                                                    <i class="fa-brands fa-facebook-f"></i>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="https://twitter.com/intent/tweet?url={{ url()->current() }}"
+                                                    target="_blank">
+                                                    <i class="fa-brands fa-twitter"></i>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="https://wa.me/?text={{ url()->current() }}" target="_blank">
+                                                    <i class="fa-brands fa-whatsapp"></i>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="mailto:?subject=Check this book&body={{ url()->current() }}">
+                                                    <i class="fa-solid fa-envelope"></i>
+                                                </a>
+                                            </li>
                                         </ul>
                                     </div>
                                 </div>
+
                             </div>
                             <div class="dz-body">
                                 <div class="book-detail">
@@ -236,209 +272,263 @@
                                     </tr>
                                 </table>
                             </div>
-                            <div id="developement-1" class="tab-pane">
+                            <div id="developement-1" class="tab-pane active">
                                 <div class="clear" id="comment-list">
                                     <div class="post-comments comments-area style-1 clearfix">
-                                        <h4 class="comments-title">4 COMMENTS</h4>
+
+                                        {{-- TITLE --}}
+                                        <h4 class="comments-title">
+                                            {{ $ratingCount }} {{ $ratingCount === 1 ? 'Review' : 'Reviews' }}
+                                        </h4>
+
+                                        {{-- COMMENTS --}}
                                         <div id="comment">
                                             <ol class="comment-list">
-                                                <li class="comment even thread-even depth-1 comment" id="comment-2">
-                                                    <div class="comment-body">
-                                                        <div class="comment-author vcard">
-                                                            <img src="images/profile4.jpg" alt=""
-                                                                class="avatar" />
-                                                            <cite class="fn">Michel Poe</cite> <span
-                                                                class="says">says:</span>
-                                                            <div class="comment-meta">
-                                                                <a href="javascript:void(0);">December 28, 2022 at 6:14
-                                                                    am</a>
-                                                            </div>
-                                                        </div>
-                                                        <div class="comment-content dlab-page-text">
-                                                            <p>Donec suscipit porta lorem eget condimentum. Morbi vitae
-                                                                mauris in leo venenatis varius. Aliquam nunc enim, egestas
-                                                                ac dui in, aliquam vulputate erat.</p>
-                                                        </div>
-                                                        <div class="reply">
-                                                            <a rel="nofollow" class="comment-reply-link"
-                                                                href="javascript:void(0);"><i class="fa fa-reply"></i>
-                                                                Reply</a>
-                                                        </div>
-                                                    </div>
-                                                    <ol class="children">
-                                                        <li class="comment byuser comment-author-w3itexpertsuser bypostauthor odd alt depth-2 comment"
-                                                            id="comment-3">
-                                                            <div class="comment-body" id="div-comment-3">
-                                                                <div class="comment-author vcard">
-                                                                    <img src="images/profile3.jpg" alt=""
-                                                                        class="avatar" />
-                                                                    <cite class="fn">Celesto Anderson</cite> <span
-                                                                        class="says">says:</span>
-                                                                    <div class="comment-meta">
-                                                                        <a href="javascript:void(0);">December 28, 2022 at
-                                                                            6:14 am</a>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="comment-content dlab-page-text">
-                                                                    <p>Donec suscipit porta lorem eget condimentum. Morbi
-                                                                        vitae mauris in leo venenatis varius. Aliquam nunc
-                                                                        enim, egestas ac dui in, aliquam vulputate erat.</p>
-                                                                </div>
-                                                                <div class="reply">
-                                                                    <a class="comment-reply-link"
-                                                                        href="javascript:void(0);"><i
-                                                                            class="fa fa-reply"></i>
-                                                                        Reply</a>
+
+                                                @forelse ($ratings as $rating)
+                                                    @php
+                                                        $stars = (int) $rating['rating'];
+                                                    @endphp
+
+                                                    <li class="comment even depth-1">
+                                                        <div class="comment-body">
+
+                                                            {{-- AUTHOR --}}
+                                                            <div class="comment-author vcard">
+                                                                <img src="{{ asset('front/images/profile-default.png') }}"
+                                                                    alt="avatar" class="avatar" />
+
+                                                                <cite class="fn">
+                                                                    {{ $rating['user']['name'] ?? 'Anonymous' }}
+                                                                </cite>
+                                                                <span class="says">says:</span>
+
+                                                                <div class="comment-meta">
+                                                                    <a href="javascript:void(0);">
+                                                                        {{ \Carbon\Carbon::parse($rating['created_at'])->format('F d, Y \a\t h:i A') }}
+                                                                    </a>
                                                                 </div>
                                                             </div>
-                                                        </li>
-                                                    </ol>
-                                                </li>
-                                                <li class="comment even thread-odd thread-alt depth-1 comment"
-                                                    id="comment-4">
-                                                    <div class="comment-body" id="div-comment-4">
-                                                        <div class="comment-author vcard">
-                                                            <img src="images/profile2.jpg" alt=""
-                                                                class="avatar" />
-                                                            <cite class="fn">Ryan</cite> <span
-                                                                class="says">says:</span>
-                                                            <div class="comment-meta">
-                                                                <a href="javascript:void(0);">December 28, 2022 at 6:14
-                                                                    am</a>
+
+                                                            {{-- ⭐ STAR RATING --}}
+                                                            <div class="d-flex align-items-center mb-2">
+
+                                                                {{-- ⭐ STARS --}}
+                                                                <div class="d-flex me-2">
+                                                                    @for ($i = 1; $i <= 5; $i++)
+                                                                        @if ($i <= $stars)
+                                                                            <i class="flaticon-star me-1"
+                                                                                style="color:#f4b400;font-size:16px;"></i>
+                                                                        @else
+                                                                            <i class="flaticon-star me-1"
+                                                                                style="color:#ddd;font-size:16px;"></i>
+                                                                        @endif
+                                                                    @endfor
+                                                                </div>
+
+                                                                {{-- ⭐ RATING TEXT --}}
+                                                                <small class="text-muted">
+                                                                    {{ number_format($stars, 1) }}/5
+                                                                </small>
+
                                                             </div>
-                                                        </div>
-                                                        <div class="comment-content dlab-page-text">
-                                                            <p>Donec suscipit porta lorem eget condimentum. Morbi vitae
-                                                                mauris in leo venenatis varius. Aliquam nunc enim, egestas
-                                                                ac dui in, aliquam vulputate erat.</p>
-                                                        </div>
-                                                        <div class="reply">
-                                                            <a class="comment-reply-link" href="javascript:void(0);"><i
-                                                                    class="fa fa-reply"></i> Reply</a>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li class="comment odd alt thread-even depth-1 comment" id="comment-5">
-                                                    <div class="comment-body" id="div-comment-5">
-                                                        <div class="comment-author vcard">
-                                                            <img src="images/profile1.jpg" alt=""
-                                                                class="avatar" />
-                                                            <cite class="fn">Stuart</cite> <span
-                                                                class="says">says:</span>
-                                                            <div class="comment-meta">
-                                                                <a href="javascript:void(0);">December 28, 2022 at 6:14
-                                                                    am</a>
+
+
+                                                            {{-- REVIEW TEXT --}}
+                                                            <div class="comment-content dlab-page-text">
+                                                                <p>{{ $rating['review'] }}</p>
                                                             </div>
+
                                                         </div>
-                                                        <div class="comment-content dlab-page-text">
-                                                            <p>Donec suscipit porta lorem eget condimentum. Morbi vitae
-                                                                mauris in leo venenatis varius. Aliquam nunc enim, egestas
-                                                                ac dui in, aliquam vulputate erat.</p>
-                                                        </div>
-                                                        <div class="reply">
-                                                            <a rel="nofollow" class="comment-reply-link"
-                                                                href="javascript:void(0);"><i class="fa fa-reply"></i>
-                                                                Reply</a>
-                                                        </div>
-                                                    </div>
-                                                </li>
+                                                    </li>
+                                                @empty
+                                                    <li>
+                                                        <p class="text-muted">No reviews yet. Be the first to review this
+                                                            book.</p>
+                                                    </li>
+                                                @endforelse
+
                                             </ol>
                                         </div>
+
+                                        {{-- LEAVE A REVIEW --}}
                                         <div class="default-form comment-respond style-1" id="respond">
-                                            <h4 class="comment-reply-title" id="reply-title">LEAVE A REPLY <small> <a
-                                                        rel="nofollow" id="cancel-comment-reply-link"
-                                                        href="javascript:void(0)" style="display:none;">Cancel reply</a>
-                                                </small></h4>
-                                            <div class="clearfix">
-                                                <form method="post" id="comments_form" class="comment-form" novalidate>
-                                                    <p class="comment-form-author"><input id="name"
-                                                            placeholder="Author" name="author" type="text"
-                                                            value=""></p>
-                                                    <p class="comment-form-email"><input id="email"
-                                                            required="required" placeholder="Email" name="email"
-                                                            type="email" value=""></p>
-                                                    <p class="comment-form-comment">
-                                                        <textarea id="comments" placeholder="Type Comment Here" class="form-control4" name="comment" cols="45"
-                                                            rows="3" required="required"></textarea>
+                                            <h4 class="comment-reply-title">
+                                                LEAVE A REVIEW
+                                            </h4>
+
+                                            @auth
+                                                <form method="POST" action="{{ url('rating/add') }}" class="comment-form">
+                                                    @csrf
+
+                                                    <input type="hidden" name="product_id"
+                                                        value="{{ $productDetails['id'] }}">
+                                                    <input type="hidden" name="product_attribute_id"
+                                                        value="{{ $productAttribute->id }}">
+
+                                                    {{-- STAR SELECT --}}
+                                                    <p>
+                                                        <label class="d-block mb-1">Your Rating</label>
+                                                        <select name="rating" class="form-control" required>
+                                                            <option value="">Select Rating</option>
+                                                            @for ($i = 5; $i >= 1; $i--)
+                                                                <option value="{{ $i }}">{{ $i }} Star
+                                                                </option>
+                                                            @endfor
+                                                        </select>
                                                     </p>
-                                                    <p class="col-md-12 col-sm-12 col-xs-12 form-submit">
-                                                        <button id="submit" type="submit"
-                                                            class="submit btn btn-primary filled">
-                                                            Submit Now <i class="fa fa-angle-right m-l10"></i>
+
+                                                    {{-- REVIEW --}}
+                                                    <p class="comment-form-comment">
+                                                        <textarea name="review" placeholder="Write your review here..." class="form-control4" rows="3" required></textarea>
+                                                    </p>
+
+                                                    <p class="form-submit">
+                                                        <button type="submit" class="submit btn btn-primary filled">
+                                                            Submit Review <i class="fa fa-angle-right m-l10"></i>
                                                         </button>
                                                     </p>
                                                 </form>
-                                            </div>
+                                            @else
+                                                <p class="text-muted">
+                                                    Please <a href="{{ url('user/login') }}">login</a> to write a review.
+                                                </p>
+                                            @endauth
                                         </div>
+
                                     </div>
                                 </div>
-
                             </div>
+
                         </div>
                     </div>
                 </div>
+
                 <div class="col-xl-4 mt-5 mt-xl-0">
                     <div class="widget">
                         <h4 class="widget-title">Related Books</h4>
+
                         <div class="row">
-                            @if (count($similarProducts) > 0)
+                            @if ($similarProducts->count() > 0)
                                 @foreach ($similarProducts as $similarProduct)
                                     @php
-                                        $getDiscountPriceDetails = \App\Models\Product::getDiscountPriceDetails(
-                                            $similarProduct['id'],
+                                        $product = $similarProduct->product;
+
+                                        // 💰 PRICE
+                                        $priceDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute(
+                                            $similarProduct->id,
                                         );
+
+                                        // ⭐ RATING LOGIC
+                                        $ratingQuery = \App\Models\Rating::where('product_id', $product->id)
+                                            ->where('product_attribute_id', $similarProduct->id)
+                                            ->where('status', 1);
+
+                                        $ratingCount = $ratingQuery->count();
+                                        $avgRating = $ratingCount ? round($ratingQuery->avg('rating'), 1) : 0;
+                                        $fullStars = floor($avgRating);
+                                        $halfStar = $avgRating - $fullStars >= 0.5;
                                     @endphp
+
                                     <div class="col-xl-12 col-lg-6">
                                         <div class="dz-shop-card style-5">
+
+                                            {{-- IMAGE --}}
                                             <div class="dz-media">
-                                                @if (!empty($similarProduct['product_image']))
-                                                    <img src="{{ asset('front/images/product_images/small/' . $similarProduct['product_image']) }}"
-                                                        alt="{{ $similarProduct['product_name'] ?? 'Product' }}"
-                                                        class="img-fluid">
-                                                @else
-                                                    <img src="{{ asset('front/images/product_images/small/no-image.png') }}"
-                                                        alt="No Image" class="img-fluid">
-                                                @endif
+                                                <a href="{{ url('product/' . $similarProduct->id) }}">
+                                                    <img src="{{ asset('front/images/product_images/small/' . ($product->product_image ?? 'no-image.png')) }}"
+                                                        class="img-fluid"
+                                                        onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
+                                                </a>
                                             </div>
+
                                             <div class="dz-content">
+
+                                                {{-- TITLE --}}
                                                 <h5 class="subtitle">
-                                                    <a href="{{ url('product/' . $similarProduct['id']) }}"
+                                                    <a href="{{ url('product/' . $similarProduct->id) }}"
                                                         class="text-dark">
-                                                        {{ $similarProduct['product_name'] ?? 'Product Name Not Available' }}
+                                                        {{ $product->product_name }}
                                                     </a>
                                                 </h5>
+
+                                                {{-- META --}}
                                                 <ul class="dz-tags">
-                                                    @if (isset($similarProduct['publisher']['name']))
-                                                        <li>{{ strtoupper($similarProduct['publisher']['name']) }},</li>
+                                                    @if ($product->publisher)
+                                                        <li>{{ strtoupper($product->publisher->name) }},</li>
                                                     @endif
-                                                    @if (isset($similarProduct['category']['category_name']))
-                                                        <li>{{ strtoupper($similarProduct['category']['category_name']) }},
-                                                        </li>
+                                                    @if ($product->category)
+                                                        <li>{{ strtoupper($product->category->category_name) }},</li>
                                                     @endif
-                                                    @if (isset($similarProduct['authors']) && count($similarProduct['authors']) > 0)
-                                                        <li>{{ strtoupper($similarProduct['authors'][0]['name'] ?? 'Unknown Author') }}
-                                                        </li>
+                                                    @if ($product->authors->isNotEmpty())
+                                                        <li>{{ strtoupper($product->authors->first()->name) }}</li>
                                                     @endif
                                                 </ul>
-                                                <div class="price">
-                                                    @if (isset($getDiscountPriceDetails['discount']) && $getDiscountPriceDetails['discount'] > 0)
-                                                        <span
-                                                            class="price-num">₹{{ $getDiscountPriceDetails['final_price'] ?? 0 }}</span>
-                                                        <del>₹{{ $getDiscountPriceDetails['product_price'] ?? 0 }}</del>
-                                                    @else
-                                                        <span
-                                                            class="price-num">₹{{ $getDiscountPriceDetails['final_price'] ?? 0 }}</span>
+
+                                                {{-- ⭐ STAR RATING --}}
+                                                <div class="d-flex align-items-center mb-1">
+                                                    <div class="d-flex me-2">
+
+                                                        @for ($i = 1; $i <= 5; $i++)
+                                                            @if ($i <= $fullStars)
+                                                                {{-- FULL STAR --}}
+                                                                <i class="flaticon-star me-1"
+                                                                    style="color:#f4b400;font-size:14px;"></i>
+                                                            @elseif ($halfStar && $i == $fullStars + 1)
+                                                                {{-- TRUE HALF STAR (INLINE OVERLAY) --}}
+                                                                <span class="me-1"
+                                                                    style="position:relative;display:inline-block;width:14px;height:14px;">
+                                                                    {{-- Empty star --}}
+                                                                    <i class="flaticon-star"
+                                                                        style="color:#ddd;font-size:14px;position:absolute;left:0;top:0;"></i>
+
+                                                                    {{-- Half filled star --}}
+                                                                    <i class="flaticon-star"
+                                                                        style="color:#f4b400;font-size:14px;position:absolute;left:0;top:0;
+                              clip-path: inset(0 50% 0 0);"></i>
+                                                                </span>
+                                                            @else
+                                                                {{-- EMPTY STAR --}}
+                                                                <i class="flaticon-star me-1"
+                                                                    style="color:#ddd;font-size:14px;"></i>
+                                                            @endif
+                                                        @endfor
+
+                                                    </div>
+
+                                                    <small class="text-muted">
+                                                        {{ $avgRating > 0 ? number_format($avgRating, 1) . '/5' : 'No ratings' }}
+                                                        @if ($ratingCount > 0)
+                                                            ({{ $ratingCount }})
+                                                        @endif
+                                                    </small>
+                                                </div>
+
+
+
+                                                {{-- PRICE --}}
+                                                <div class="price mb-2">
+                                                    <span class="price-num">
+                                                        ₹{{ number_format($priceDetails['final_price'], 2) }}
+                                                    </span>
+                                                    @if ($priceDetails['discount'] > 0)
+                                                        <del>₹{{ number_format($priceDetails['product_price'], 2) }}</del>
                                                     @endif
                                                 </div>
-                                                <form action="{{ url('cart/add') }}" method="POST" class="d-inline">
+
+                                                {{-- ADD TO CART --}}
+                                                <form action="{{ url('cart/add') }}" method="POST">
                                                     @csrf
-                                                    <input type="hidden" name="product_id"
-                                                        value="{{ $similarProduct['id'] }}">
+                                                    <input type="hidden" name="product_attribute_id"
+                                                        value="{{ $similarProduct->id }}">
                                                     <input type="hidden" name="quantity" value="1">
-                                                    <button type="submit" class="btn btn-primary btnhover2"><i
-                                                            class="flaticon-shopping-cart-1"></i> <span>&nbsp;&nbsp;Add to
-                                                            cart</span></button>
+
+                                                    <button type="submit" class="btn btn-primary btnhover2">
+                                                        <i class="flaticon-shopping-cart-1"></i>
+                                                        <span>&nbsp;&nbsp;Add to cart</span>
+                                                    </button>
                                                 </form>
+
                                             </div>
                                         </div>
                                     </div>
@@ -451,6 +541,9 @@
                         </div>
                     </div>
                 </div>
+
+
+
             </div>
         </div>
     </section>

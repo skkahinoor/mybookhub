@@ -215,7 +215,8 @@ class Product extends Model
 
     public static function getDiscountPriceDetailsByAttribute($attribute_id)
     {
-        $attribute = ProductsAttribute::with('product')->where('id', $attribute_id)
+        $attribute = ProductsAttribute::with('product')
+            ->where('id', $attribute_id)
             ->where('status', 1)
             ->first();
 
@@ -227,17 +228,12 @@ class Product extends Model
             ];
         }
 
-        $originalPrice = (float) $attribute->product->product_price;
+        $originalPrice  = (float) $attribute->product->product_price;
         $productDiscount = (float) $attribute->product_discount;
 
-        // Category discount fallback
-        $categoryDiscount = Category::where('id', $attribute->product->category_id)
-            ->value('category_discount') ?? 0;
-
+        // ✅ Apply ONLY product discount
         if ($productDiscount > 0) {
             $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
-        } elseif ($categoryDiscount > 0) {
-            $finalPrice = $originalPrice - ($originalPrice * $categoryDiscount / 100);
         } else {
             $finalPrice = $originalPrice;
         }
@@ -248,6 +244,7 @@ class Product extends Model
             'discount'      => round($originalPrice - $finalPrice),
         ];
     }
+
 
 
     public static function isProductNew($product_id)
