@@ -258,7 +258,8 @@
                                                     style="font-size: 12px;">
                                                     <i class="fas fa-user" style="margin-right:8px;"></i> Login
                                                 </a> --}}
-                                                <a href="{{ route('user.login') }}" class="btn btn-primary btnhover">Login</a>
+                                                <a href="{{ route('user.login') }}"
+                                                    class="btn btn-primary btnhover">Login</a>
                                             </div>
                                             <div class="col" style="padding-left: 3px;">
                                                 {{-- <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
@@ -266,7 +267,8 @@
                                                     style="font-size: 12px;">
                                                     <i class="fas fa-user-plus" style="margin-right:4px;"></i> Register
                                                 </a> --}}
-                                                <a href="{{ route('user.register') }}" class="btn btn-primary btnhover">Register</a>
+                                                <a href="{{ route('user.register') }}"
+                                                    class="btn btn-primary btnhover">Register</a>
                                             </div>
                                         </div>
                                     </li>
@@ -274,18 +276,23 @@
                                     <li class="nav-item dropdown profile-dropdown  ms-4">
                                         <a class="nav-link" href="javascript:void(0);" role="button"
                                             data-bs-toggle="dropdown" aria-expanded="false">
-                                            <img src="{{ asset(Auth::user()->ImageUpload->filename ?? 'assets/images/avatar.png') }}"
-                                                alt="/">
+                                            @php
+                                                $avatar = optional(Auth::user())->profile_image ?? null;
+                                                // Check if avatar exists and handle both new location (asset/user) and old location (storage)
+                                                if ($avatar) {
+                                                    // Works for both asset/user/ and storage/ paths
+                                                    $avatarSrc = asset($avatar);
+                                                } else {
+                                                    $avatarSrc = asset('assets/images/avatar.png');
+                                                }
+                                            @endphp
+                                            <img src="{{ $avatarSrc }}" alt="profile" id="front-nav-avatar" />
                                             <div class="profile-info">
                                                 <h6 class="title">{{ Auth::user()->name }}</h6>
                                                 <span>{{ Auth::user()->email ?? 'Email Not Set' }}</span>
                                             </div>
                                         </a>
                                         <div class="dropdown-menu py-0 dropdown-menu-end">
-                                            <div class="dropdown-header">
-                                                <h6 class="m-0">{{ Auth::user()->name }}</h6>
-                                                <span>{{ Auth::user()->email ?? 'Email Not Set' }}</span>
-                                            </div>
                                             <div class="dropdown-body">
                                                 <a href="{{ route('user.account') }}"
                                                     class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
@@ -458,8 +465,17 @@
                                 <li class="nav-item"><a href="{{ url('/') }}"
                                         class="nav-link"><span>Home</span></a>
                                 </li>
-                                <li class="nav-item"><a href="{{ url('/about') }}" class="nav-link"><span>About
-                                            Us</span></a></li>
+                                
+
+                                {{-- When logged in: send to actual dashboard --}}
+                                @auth
+                                    <li class="nav-item">
+                                        <a href="{{ route('user.index') }}" class="nav-link">
+                                            <span>Dashboard</span>
+                                        </a>
+                                    </li>
+                                @endauth
+
                                 <li class="sub-menu-down"><a href="javascript:void(0);"><span><i
                                                 class="fas fa-tag me-2"></i> Condition
                                             ({{ ucfirst($condition) }})</span></a>
@@ -582,7 +598,10 @@
                             <div class="widget widget_services">
                                 <h5 class="footer-title">Our Links</h5>
                                 <ul>
-                                    <li><a href="{{ url('/about') }}">About us</a></li>
+                                    <li>
+                                        <a href="{{ url('/about') }}">About us</a>
+                                    </li>
+
                                     <li><a href="{{ url('/contact') }}">Contact us</a></li>
                                     <li><a href="{{ url('/privacy-policy') }}">Privacy Policy</a></li>
                                 </ul>

@@ -144,17 +144,40 @@ class AccountController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Delete old image if exists
-        if (! empty($user->profile_image)) {
-            $oldPath = str_replace('storage/', '', $user->profile_image);
-            if (Storage::disk('public')->exists($oldPath)) {
-                Storage::disk('public')->delete($oldPath);
+        // Define upload directory in public folder
+        $uploadDir = public_path('asset/user');
+
+        // Create directory if it doesn't exist
+        if (!file_exists($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Delete old image if exists (handle both storage/ and asset/user/ paths)
+        if (!empty($user->profile_image)) {
+            $oldImagePath = $user->profile_image;
+
+            // If old path is in storage, try to delete from storage
+            if (strpos($oldImagePath, 'storage/') !== false) {
+                $oldPath = str_replace('storage/', '', $oldImagePath);
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            } else {
+                // If old path is in asset/user/, delete from public directory
+                $oldFullPath = public_path($oldImagePath);
+                if (file_exists($oldFullPath)) {
+                    unlink($oldFullPath);
+                }
             }
         }
 
-                                                                              // Store new image
-        $path         = $request->file('avatar')->store('avatars', 'public'); // storage/app/public/avatars/...
-        $relativePath = 'storage/' . $path;                                   // accessible via asset()
+        // Store new image in public/asset/user directory
+        $file = $request->file('avatar');
+        $fileName = 'avatar_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+        $file->move($uploadDir, $fileName);
+
+        // Store relative path for database (asset/user/filename)
+        $relativePath = 'asset/user/' . $fileName;
 
         $user->profile_image = $relativePath;
         $user->save();

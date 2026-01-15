@@ -13,18 +13,11 @@
                 <div class="input-group">
                     <div class="input-group-prepend hover-cursor" id="navbar-search-icon">
                         <span class="input-group-text" id="search">
-                            {{-- <i class="icon-search"></i> --}}
+                            <i class="icon-search"></i>
                         </span>
                     </div>
-                    <input type="text" class="form-control" id="headerSearchInput" placeholder="Search Books Here"
+                    <input type="text" class="form-control" id="sidebarSearchInput" placeholder="Search Sidebar Menu"
                         aria-label="search" aria-describedby="search">
-                        <button class="btn" id="headerSearchButton" type="button"><i class="icon-search"></i></button>
-
-
-                       {{-- <input type="text" class="form-control" id="headerSearchInput"
-                        aria-label="Text input with dropdown button" placeholder="Search Books Here"
-                        style="border-top-left-radius:0px !important; border-bottom-left-radius:0px !important;">
-                    <button class="btn" id="headerSearchButton" type="button"><i class="flaticon-loupe"></i></button> --}}
                 </div>
             </li>
         </ul>
@@ -83,7 +76,18 @@
                 <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
                     @php
                         $avatar = optional(Auth::user())->profile_image ?? null;
-                        $avatarSrc = $avatar ? asset($avatar) : asset('user/images/faces/face28.jpg');
+                        // Check if avatar exists and is in the new location (asset/user) or old location (storage)
+                        if ($avatar) {
+                            // If it's already in asset/user format, use it directly
+                            if (strpos($avatar, 'asset/user/') !== false) {
+                                $avatarSrc = asset($avatar);
+                            } else {
+                                // If it's in old storage format, still support it for backward compatibility
+                                $avatarSrc = asset($avatar);
+                            }
+                        } else {
+                            $avatarSrc = asset('user/images/faces/face28.jpg');
+                        }
                     @endphp
                     <img src="{{ $avatarSrc }}" alt="profile" id="nav-avatar" />
                 </a>
@@ -115,36 +119,60 @@
 
 
 <script>
-    // Global search handlers for header and sticky inputs
+    // Sidebar menu search functionality
     (function() {
-        function goToSearch(term) {
-            // User-side search route
-            var url = '{{ route('user.query.index') }}';
-            if (term && term.trim().length) {
-                window.location.href = url + '?search=' + encodeURIComponent(term.trim());
-            } else {
-                window.location.href = url;
+        var searchInput = document.getElementById('sidebarSearchInput');
+        if (!searchInput) return;
+
+        searchInput.addEventListener('input', function(e) {
+            var searchTerm = e.target.value.toLowerCase().trim();
+            filterSidebarMenu(searchTerm);
+        });
+
+        function filterSidebarMenu(searchTerm) {
+            var sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            var menuItems = sidebar.querySelectorAll('.nav-item');
+
+            if (!searchTerm) {
+                // Show all items if search is empty
+                menuItems.forEach(function(item) {
+                    item.style.display = '';
+                });
+                return;
             }
-        }
 
-        function bindSearch(inputId, buttonId) {
-            var input = document.getElementById(inputId);
-            var button = document.getElementById(buttonId);
-            if (!input || !button) return;
-
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                goToSearch(input.value);
-            });
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    goToSearch(input.value);
+            menuItems.forEach(function(item) {
+                var menuTitle = item.querySelector('.menu-title');
+                if (menuTitle) {
+                    var titleText = menuTitle.textContent.toLowerCase();
+                    if (titleText.includes(searchTerm)) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                } else {
+                    // For items without menu-title, check the link text
+                    var link = item.querySelector('a.nav-link');
+                    if (link) {
+                        var linkText = link.textContent.toLowerCase();
+                        if (linkText.includes(searchTerm)) {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    }
                 }
             });
         }
 
-        bindSearch('headerSearchInput', 'headerSearchButton');
-        bindSearch('mobileSearchInput', 'mobileSearchButton');
+        // Clear search on escape key
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                e.target.value = '';
+                filterSidebarMenu('');
+            }
+        });
     })();
 </script>
