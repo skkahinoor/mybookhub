@@ -214,6 +214,12 @@
                     <span class="menu-title">My Orders</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('user.sell-book.index') }}">
+                    <i class="icon-paper menu-icon"></i>
+                    <span class="menu-title">Sell Old Book</span>
+                </a>
+            </li>
 
             {{-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false"
