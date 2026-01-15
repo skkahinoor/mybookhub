@@ -31,7 +31,7 @@
                                     <i class="mdi mdi-book-open-variant mdi-48px text-muted mb-3"></i>
                                     <h4 class="text-muted">No requests yet</h4>
                                     <p class="text-muted">You haven't made any book requests yet.</p>
-                                    <a href="{{ route('user.book.request') }}" class="btn btn-primary" style="background-color:#cf8938;border:none;">
+                                    <a href="{{ route('user.book.indexrequest') }}" class="btn btn-primary" style="background-color:#cf8938;border:none;">
                                         Search & Request Books
                                     </a>
                                 </div>
