@@ -202,6 +202,7 @@
                         Session::get('page') == 'authors' ||
                         Session::get('page') == 'subjects' ||
                         Session::get('page') == 'requestedbooks' ||
+                        Session::get('page') == 'sellBookRequests' ||
                         Session::get('page') == 'coupons') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-catalogue" aria-expanded="false"
                     aria-controls="ui-catalogue">
@@ -248,6 +249,9 @@
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'bookRequests') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('admin/requestedbooks') }}">Requested Books</a></li>
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'sellBookRequests') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ url('admin/sell-book-requests') }}">Sell Old Books Requests</a></li>
                     </ul>
                 </div>
             </li>

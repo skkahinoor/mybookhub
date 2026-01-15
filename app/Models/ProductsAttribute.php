@@ -58,6 +58,11 @@ class ProductsAttribute extends Model
         return (int) self::where('product_id', $product_id)->sum('stock');
     }
 
+    public function ratings()
+    {
+        return $this->hasMany(\App\Models\Rating::class, 'product_attribute_id');
+    }
+
     /**
      * Get attribute status (enabled/disabled)
      */

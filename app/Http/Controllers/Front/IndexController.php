@@ -25,17 +25,14 @@ class IndexController extends Controller
         $condition      = session('condition', 'new');
         $sliderProducts = ProductsAttribute::with([
             'product:id,product_name,product_isbn,product_image,product_price,category_id,section_id',
-            'product.category:id,category_name',
-            'product.section:id,name',
-            'vendor:id,name',
             'vendor.vendorbusinessdetails',
-            'admin:id,name',
+            'ratings:id,product_attribute_id,rating'
         ])
             ->where('status', 1)
             ->orderBy('id', 'desc')
             ->limit(10)
-            ->get()
-            ->toArray();
+            ->get();
+
 
         // // Get 'condition' from query string (default to 'new' if not set or invalid)
         // $condition = $request->query('condition');
@@ -114,32 +111,22 @@ class IndexController extends Controller
 
         // Discounted Products - now from ProductsAttribute table
         $discountedProducts = ProductsAttribute::with([
-            'product' => function ($query) {
-                $query->where('status', 1);
-            }
+            'product.authors',
+            'ratings:id,product_attribute_id,rating'
         ])
             ->where('status', 1)
             ->where('product_discount', '>=', 20)
             ->whereHas('product', function ($query) {
                 $query->where('status', 1);
             })
-            ->orderBy('product_discount', 'desc') // best discounts first
+            ->orderBy('product_discount', 'desc')
             ->get();
-
-
 
 
         // Featured Products - now from ProductsAttribute table
         $featuredProducts = ProductsAttribute::with([
-            'product' => function ($query) use ($condition) {
-                $query->where('status', 1)
-                    ->when($condition !== 'all', function ($q) use ($condition) {
-                        $q->where('condition', $condition);
-                    })
-                    ->when(session('language') && session('language') !== 'all', function ($q) {
-                        $q->where('language_id', session('language'));
-                    });
-            }
+            'product.authors',
+            'ratings:id,product_attribute_id,rating'
         ])
             ->where('is_featured', 'Yes')
             ->where('status', 1)
@@ -154,6 +141,7 @@ class IndexController extends Controller
             })
             ->limit(10)
             ->get();
+
 
         $meta_title       = 'BookHub - The Only Hub For Students';
         $meta_description = 'The cross platform where students meets their career through books.';

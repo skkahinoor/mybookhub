@@ -525,22 +525,35 @@ class ProductsController extends Controller
         $categoryDetails = Category::categoryDetails($product->category->url);
         $categoryId = $product->category->id;
 
-        $similarProducts = Product::with('publisher', 'authors')
-            ->where('category_id', $categoryId)
-            ->where('id', '!=', $productId)
+        $similarProducts = ProductsAttribute::with([
+            'product.publisher',
+            'product.authors',
+        ])
+            ->where('status', 1)              // attribute active
+            ->where('stock', '>', 0)          // optional but recommended
+            ->whereHas('product', function ($query) use ($categoryId, $productId) {
+                $query->where('status', 1)
+                    ->where('category_id', $categoryId)
+                    ->where('id', '!=', $productId);
+            })
             ->inRandomOrder()
-            ->take(3)
             ->get()
-            ->toArray();
+            ->groupBy('product_id')            // 🔥 remove duplicates
+            ->map(fn($items) => $items->first()) // take one vendor per product
+            ->take(3)
+            ->values();
+
+
+        $attributeId = $productAttribute->id;
 
         $ratings = Rating::with('user')
             ->where('product_id', $productId)
+            ->where('product_attribute_id', $attributeId)
             ->where('status', 1)
-            ->get()
-            ->toArray();
+            ->get();
 
-        $ratingSum   = Rating::where('product_id', $productId)->where('status', 1)->sum('rating');
-        $ratingCount = Rating::where('product_id', $productId)->where('status', 1)->count();
+        $ratingCount = $ratings->count();
+        $ratingSum   = $ratings->sum('rating');
 
         $avgRating     = $ratingCount ? round($ratingSum / $ratingCount, 2) : 0;
         $avgStarRating = $ratingCount ? round($ratingSum / $ratingCount) : 0;
@@ -564,6 +577,7 @@ class ProductsController extends Controller
             'categoryDetails',
             'similarProducts',
             'ratings',
+            'ratingCount',
             'avgRating',
             'avgStarRating',
             'condition',
