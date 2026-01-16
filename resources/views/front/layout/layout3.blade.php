@@ -286,7 +286,8 @@
                                                     $avatarSrc = asset('assets/images/avatar.png');
                                                 }
                                             @endphp
-                                            <img src="{{ $avatarSrc }}" alt="profile" id="front-nav-avatar" />
+                                            <img src="{{ $avatarSrc }}" alt="profile" id="front-nav-avatar"
+                                                style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;" />
                                             <div class="profile-info">
                                                 <h6 class="title">{{ Auth::user()->name }}</h6>
                                                 <span>{{ Auth::user()->email ?? 'Email Not Set' }}</span>
@@ -465,7 +466,7 @@
                                 <li class="nav-item"><a href="{{ url('/') }}"
                                         class="nav-link"><span>Home</span></a>
                                 </li>
-                                
+
 
                                 {{-- When logged in: send to actual dashboard --}}
                                 @auth
@@ -786,12 +787,22 @@
 
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
-                    goToSearch(input.value);
+                    var searchTerm = input.value.trim();
+                    if (searchTerm.length > 0) {
+                        goToSearch(searchTerm);
+                    } else {
+                        alert('Please enter a book name to search.');
+                    }
                 });
                 input.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        goToSearch(input.value);
+                        var searchTerm = input.value.trim();
+                        if (searchTerm.length > 0) {
+                            goToSearch(searchTerm);
+                        } else {
+                            alert('Please enter a book name to search.');
+                        }
                     }
                 });
             }

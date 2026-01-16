@@ -2,10 +2,21 @@
 
 @section('content')
     <div class="container py-5">
+        <!-- Login/Register Prompt for Guest Users -->
+        @guest
+            <div class="alert alert-info alert-dismissible fade show" role="alert" style="background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
+                <strong><i class="fas fa-info-circle"></i> Notice:</strong> Please
+                <a href="{{ route('user.login') }}" class="alert-link fw-bold">login</a> or
+                <a href="{{ route('user.register') }}" class="alert-link fw-bold">register</a>
+                your account to request books.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endguest
+
         <div class="row">
 
             <!-- Search Results -->
-            <div class="col-lg-9">
+            <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <h4 class="mb-1">Search Results</h4>
@@ -21,50 +32,8 @@
                     </div>
                 </div>
 
-                <!-- Active Filters -->
-                {{-- @if (request('search') || request('section_id') || request('condition') || request('language_id') || request('min_price') || request('max_price'))
-                    <div class="mb-4">
-                        <div class="d-flex flex-wrap gap-2">
-                            @if (request('search'))
-                                <span class="badge bg-light text-dark p-2">
-                                    Search: {{ request('search') }}
-                                </span>
-                            @endif
-                            @if (request('section_id'))
-                                <span class="badge bg-light text-dark p-2">
-                                    Category: {{ \App\Models\Section::find(request('section_id'))->name }}
-                                </span>
-                            @endif
-                            @if (request('condition'))
-                                <span class="badge bg-light text-dark p-2">
-                                    Condition: {{ ucfirst(request('condition')) }}
-                                </span>
-                            @endif
-                            @if (request('language_id'))
-                                <span class="badge bg-light text-dark p-2">
-                                    Language: {{ \App\Models\Language::find(request('language_id'))->name }}
-                                </span>
-                            @endif
-                            @if (request('min_price') || request('max_price'))
-                                <span class="badge bg-light text-dark p-2">
-                                    Price:
-                                    @if (request('min_price'))
-                                        ₹{{ request('min_price') }}
-                                    @endif
-                                    @if (request('min_price') && request('max_price'))
-                                        -
-                                    @endif
-                                    @if (request('max_price'))
-                                        ₹{{ request('max_price') }}
-                                    @endif
-                                </span>
-                            @endif
-                        </div>
-                    </div>
-                @endif --}}
-
                 <!-- Products Grid -->
-                <div class="row g-4">
+                <div class="row {{ $products->total() > 0 ? 'g-4' : '' }}">
                     @forelse($products as $product)
                         @php
                             // Master product
@@ -134,18 +103,117 @@
                         </div>
 
                     @empty
-                        <div class="col-12 alert alert-info">
-                            No products found.
-                        </div>
+                       <!-- Message -->
+                       <div class="alert alert-info mb-4" role="alert">
+                        <h6 class="alert-heading"><i class="fas fa-info-circle"></i> Your book is not here?</h6>
+                        <p class="mb-0">You can also request for this book. Fill out the form below and we'll help you find it!</p>
+                    </div>
                     @endforelse
                 </div>
 
-                <div class="d-flex justify-content-center mt-4">
-                    {{ $products->links() }}
-                </div>
-
+                @if($products->total() > 0)
+                    <div class="d-flex justify-content-center mt-4">
+                        {{ $products->links() }}
+                    </div>
+                @endif
 
             </div>
+        </div>
+
+        <!-- Book Request Form (Only for logged-in users when no products found) -->
+        @auth
+            @if($products->total() == 0)
+            <div class="row mt-0">
+                <div class="col-12">
+                    <div class="card shadow-sm border-0 mt-0">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-book"></i> Request a Book</h5>
+                        </div>
+                        <div class="card-body">
+
+
+                            @if (session('success'))
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-check-circle"></i> {{ session('success') }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            @endif
+
+                            @if ($errors->any())
+                                <div class="alert alert-danger">
+                                    <ul class="mb-0" style="font-size: 0.9rem;">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            <form action="{{ route('user.book.request.store') }}" method="POST">
+                                @csrf
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="book_title" class="form-label">
+                                            Book Title <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text"
+                                               class="form-control @error('book_title') is-invalid @enderror"
+                                               id="book_title"
+                                               name="book_title"
+                                               placeholder="Enter book title"
+                                               value="{{ old('book_title', request('search')) }}"
+                                               required>
+                                        @error('book_title')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label for="author_name" class="form-label">
+                                            Author Name <small class="text-muted">(Optional)</small>
+                                        </label>
+                                        <input type="text"
+                                               class="form-control @error('author_name') is-invalid @enderror"
+                                               id="author_name"
+                                               name="author_name"
+                                               placeholder="Enter author name"
+                                               value="{{ old('author_name') }}">
+                                        @error('author_name')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="message" class="form-label">
+                                        Additional Message <small class="text-muted">(Optional)</small>
+                                    </label>
+                                    <textarea class="form-control @error('message') is-invalid @enderror"
+                                              id="message"
+                                              name="message"
+                                              rows="4"
+                                              placeholder="Provide any additional details about the book you're looking for...">{{ old('message') }}</textarea>
+                                    @error('message')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button type="submit" class="btn btn-primary" style="background-color:#cf8938;border:none;">
+                                        <i class="fas fa-paper-plane"></i> Submit Request
+                                    </button>
+                                    <a href="{{ route('user.book.indexrequest') }}" class="text-decoration-none">
+                                        View My Requests <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+        @endauth
 
             <style>
                 .product-card {
