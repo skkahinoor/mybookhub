@@ -63,7 +63,7 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
             Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('updateadminstatus');
     
             // otp
-            Route::get('admin/otps', [OtpController::class, 'otps'])->name('otps');
+            // Route::get('admin/otps', [OtpController::class, 'otps'])->name('otps');
     
             // Update Admin Status using AJAX in admins.blade.php
     
