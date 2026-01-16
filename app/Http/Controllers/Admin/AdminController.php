@@ -1042,6 +1042,7 @@ class AdminController extends Controller
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         ContactUs::where('id', $id)->delete();
+        
 
         return redirect('admin/contact-queries')->with('success_message', 'Query deleted successfully!');
     }

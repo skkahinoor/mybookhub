@@ -365,7 +365,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('contact-queries', 'AdminController@contactQueries');
         Route::post('update-contact-status', 'AdminController@updateContactStatus');
         Route::match(['get', 'post'], 'contact-queries/reply/{id}', 'AdminController@updateContactReply');
-        Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery');
+        Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery')->name('admin.delete.contact.query');
     });
 
     // AJAX routes for cascading location dropdowns (outside admin middleware for AJAX access)

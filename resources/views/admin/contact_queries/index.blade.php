@@ -65,9 +65,13 @@
                                             </a>
                                             &nbsp; --}}
                                             
-                                            <a href="javascript:void(0)" class="confirmDelete" module="contact_query" moduleid="{{ $query['id'] }}" title="Delete">
-                                                <i style="font-size:25px;" class="mdi mdi-file-excel-box"></i>
-                                            </a>
+                                            <a href="{{ route('admin.delete.contact.query', $query['id']) }}"
+                                            onclick="return confirm('Are you sure you want to delete this query?')"
+                                            title="Delete">
+                                             <i style="font-size:25px;" class="mdi mdi-file-excel-box"></i>
+                                         </a>
+                                         
+                                             
                                         </td>
                                     </tr>
                                     @endforeach
