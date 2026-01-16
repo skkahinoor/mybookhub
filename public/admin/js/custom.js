@@ -322,12 +322,12 @@ $(document).ready(function () {
     $(document).on('click', '.updateImageStatus', function () { // '.updateImageStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateAttributetatus').on('click', function() {
         var status = $(this).children('i').attr('status'); // Using HTML Custom Attributes
         var image_id = $(this).attr('image_id'); // Using HTML Custom Attributes
-
+        var updateUrl = $(this).data('url');
 
         $.ajax({
             headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
             type: 'post',
-            url: '/admin/update-image-status', // check the web.php for this route and check the ProductsController for the updateImageStatus() method
+            url: updateUrl, // check the web.php for this route and check the ProductsController for the updateImageStatus() method
             data: { status: status, image_id: image_id }, // we pass the status and image_id
             success: function (resp) {
                 if (resp.status == 0) { // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
@@ -616,11 +616,11 @@ $(document).ready(function () {
     $(document).on('click', '.confirmDelete', function () { // correcting the issue of .confirmDelete (Delete button is not working) is not working when going to the next page (using pagination)
         var module = $(this).attr('module');
         var moduleid = $(this).attr('moduleid');
-
+var url = $(this).data('url');
 
         // After the CDNs block in the country, I resorted to this solution:
         if (confirm('Are you sure you want to delete this?')) {
-            window.location = '/admin/delete-' + module + '/' + moduleid; // e.g.    '/admin/delete-sections/3'    or    '/admin/delete-category/5'    or    '/admin/delete-category-image/4'    or    /admin/delete-subscriber/43
+            window.location = url + '/' + moduleid; // e.g.    '/admin/delete-sections/3'    or    '/admin/delete-category/5'    or    '/admin/delete-category-image/4'    or    /admin/delete-subscriber/43
         } else {
             return false; // return true    means STOP THE EXECUTION! Don't Do Anything! You can't do what you want to do!
         }

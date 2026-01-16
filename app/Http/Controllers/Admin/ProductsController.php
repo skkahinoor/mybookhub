@@ -40,7 +40,7 @@ class ProductsController extends Controller
         if ($adminType == 'vendor') {
             $vendorStatus = Auth::guard('admin')->user()->status;
             if ($vendorStatus == 0) {
-                return redirect('admin/update-vendor-details/personal')
+                return redirect('vendor/update-vendor-details/personal')
                     ->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.');
             }
         }
@@ -381,7 +381,7 @@ class ProductsController extends Controller
                     ->count();
 
                     if ($productsThisMonth >= $freePlanBookLimit) {
-                        return redirect('admin/products')
+                        return redirect('vendor/products')
                             ->with('error_message', "You have reached the monthly limit of {$freePlanBookLimit} products for Free plan. Please upgrade to Pro plan for unlimited uploads.");
                     }
                 }
@@ -419,7 +419,7 @@ class ProductsController extends Controller
                 ]);
 
                 return response()->json([
-                    'status' => 'success',
+                    'status' => 'success', 
                     'message' => $message,
                     'product_id' => $product->id,
                     'show_modal' => true
@@ -663,6 +663,8 @@ class ProductsController extends Controller
 
     public function addImages(Request $request, $id)
     { // $id is the URL Paramter (slug) passed from the URL
+        $adminType = Auth::guard('admin')->user()->type;
+
         Session::put('page', 'products');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -718,7 +720,7 @@ class ProductsController extends Controller
         }
 
 
-        return view('admin.images.add_images')->with(compact('product', 'logos', 'headerLogo'));
+        return view('admin.images.add_images')->with(compact('product', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function updateImageStatus(Request $request)

@@ -57,7 +57,12 @@
                     <div class="row">
                         <div class="col-12 col-xl-8 mb-4 mb-xl-0">
                             <h3 class="font-weight-bold">Order Details</h3>
+                            @if ($adminType == 'vendor')
+                            <h6 class="font-weight-normal mb-0"><a href="{{ url('vendor/orders') }}">Back to Orders</a></h6>
+                            @else
                             <h6 class="font-weight-normal mb-0"><a href="{{ url('admin/orders') }}">Back to Orders</a></h6>
+                            @endif
+                            
                         </div>
                         <div class="col-12 col-xl-4">
                             <div class="justify-content-end d-flex">
@@ -125,6 +130,63 @@
                         </div>
                     </div>
                 </div>
+                @if ( $orderDetails['user_id'] == 0 )
+                <div class="col-md-6 grid-margin stretch-card">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Customer Details</h4>
+                            <div class="form-group" style="height: 15px">
+                                <label style="font-weight: 550">Name: </label>
+                                <label>{{ $userDetails['name'] }}</label>
+                            </div>
+
+                            @if (!empty($userDetails['address']))
+                                <div class="form-group" style="height: 15px">
+                                    <label style="font-weight: 550">Address: </label>
+                                    <label>{{ $userDetails['address'] }}</label>
+                                </div>
+                            @endif
+
+                            @if (!empty($userDetails['city']))
+                                <div class="form-group" style="height: 15px">
+                                    <label style="font-weight: 550">City: </label>
+                                    <label>{{ $userDetails['city'] }}</label>
+                                </div>
+                            @endif
+
+                            @if (!empty($userDetails['state']))
+                                <div class="form-group" style="height: 15px">
+                                    <label style="font-weight: 550">State: </label>
+                                    <label>{{ $userDetails['state'] }}</label>
+                                </div>
+                            @endif
+
+                            @if (!empty($userDetails['country']))
+                                <div class="form-group" style="height: 15px">
+                                    <label style="font-weight: 550">Country: </label>
+                                    <label>{{ $userDetails['country'] }}</label>
+                                </div>
+                            @endif
+
+                            @if (!empty($userDetails['pincode']))
+                                <div class="form-group" style="height: 15px">
+                                    <label style="font-weight: 550">Pincode: </label>
+                                    <label>{{ $userDetails['pincode'] }}</label>
+                                </div>
+                            @endif
+
+                            <div class="form-group" style="height: 15px">
+                                <label style="font-weight: 550">Mobile: </label>
+                                <label>{{ $userDetails['mobile'] }}</label>
+                            </div>
+                            <div class="form-group" style="height: 15px">
+                                <label style="font-weight: 550">Email: </label>
+                                <label>{{ $userDetails['email'] }}</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @else
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
@@ -180,6 +242,8 @@
                         </div>
                     </div>
                 </div>
+                @endif
+                
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">

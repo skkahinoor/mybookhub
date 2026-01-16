@@ -50,7 +50,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
             ->name('admin.book.isbnLookup');
         Route::post('/book/name-suggestions', [AdminProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
-        Route::get('dashboard', 'AdminController@dashboard');                                                 // Admin login
+        Route::get('dashboard', 'AdminController@dashboard')->name('admin.dashboard');                                                 // Admin login
         Route::get('logout', 'AdminController@logout');                                                       // Admin logout
         Route::match(['get', 'post'], 'update-admin-password', 'AdminController@updateAdminPassword');        // GET request to view the update password <form>, and a POST request to submit the update password <form>
         Route::post('check-admin-password', 'AdminController@checkAdminPassword');                            // Check Admin Password // This route is called from the AJAX call in admin/js/custom.js page
@@ -89,7 +89,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('updateadminstatus');
 
         // otp
-        Route::get('admin/otps', [OtpController::class, 'otps'])->name('otps');
+        Route::get('otps', [OtpController::class, 'otps'])->name('admin.otps');
 
         // Update Admin Status using AJAX in admins.blade.php
 
@@ -109,7 +109,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-category-image/{id}', 'CategoryController@deleteCategoryImage');             // Delete a category image in add_edit_category.blade.php from BOTH SERVER (FILESYSTEM) & DATABASE
 
         //Logo
-        Route::match(['get', 'post'], 'header-logo', [AdminController::class, 'headerLogo'])->name('logo');
+        Route::match(['get', 'post'], 'header-logo', [AdminController::class, 'headerLogo'])->name('admin.logo');
         //Favicon
         Route::match(['get', 'post'], 'favicon', [AdminController::class, 'favicon'])->name('favicon');
         Route::post('update-favicon', [AdminController::class, 'updateFavicon'])->name('update.favicon');

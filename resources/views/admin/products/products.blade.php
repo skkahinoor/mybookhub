@@ -8,12 +8,15 @@
                         <div class="card-body">
                             <h4 class="card-title">Books</h4>
 
-
-
-
+                            @if ($adminType == 'vendor')
+                            <a href="{{ url('vendor/add-edit-product') }}"
+                                    style="max-width: 150px; float: right; display: inline-block"
+                                    class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Book</a>
+                            @else
                             <a href="{{ url('admin/add-edit-product') }}"
                                 style="max-width: 150px; float: right; display: inline-block"
                                 class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Book</a>
+                            @endif
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
@@ -145,7 +148,7 @@
                                                     @if ($adminType === 'vendor')
                                                         {{-- Vendor: Show edit, add stock, delete attribute --}}
                                                         {{-- <a title="Edit Book"
-                                                            href="{{ url('admin/add-edit-product/' . $product->product_id) }}">
+                                                            href="{{ url('vendor/add-edit-product/' . $product->product_id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                         </a> --}}
 
@@ -159,11 +162,11 @@
                                                         </a>
 
                                                         <a title="Add Multiple Images"
-                                                            href="{{ url('admin/add-images/' . $product->product_id) }}">
+                                                            href="{{ url('vendor/add-images/' . $product->product_id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
                                                         </a>
 
-                                                        <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
+                                                        <a href="{{ url('vendor/delete-product-attribute/' . $product->id) }}"
                                                             onclick="return confirm('Are you sure you want to delete this product attribute?')"
                                                             title="Delete Product Attribute">
                                                             <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>

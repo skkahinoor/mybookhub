@@ -21,7 +21,7 @@
                         <h3 class="text-success mb-3">Payment Successful!</h3>
                         <p class="text-muted mb-4">Your Pro plan has been activated successfully.</p>
                         <p class="mb-4">You can now enjoy unlimited book uploads and coupons.</p>
-                        <a href="{{ route('admin.login') }}" class="btn btn-primary">Go to Login</a>
+                        <a href="{{ route('vendor.login') }}" class="btn btn-primary">Go to Login</a>
                     </div>
                 </div>
             </div>
