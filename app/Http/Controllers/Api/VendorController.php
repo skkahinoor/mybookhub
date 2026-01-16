@@ -65,7 +65,7 @@ class VendorController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
+            'name'     => 'required|string|max:255|regex:/^[\pL\s\-&.,\'()\/]+$/u',
             'email'    => 'required|email|unique:vendors,email|unique:admins,email',
             'mobile'   => 'required|string|min:10|max:15|unique:vendors,mobile|unique:admins,mobile',
             'password' => 'required|min:6|confirmed',
@@ -101,6 +101,7 @@ class VendorController extends Controller
             'message' => 'OTP sent successfully'
         ]);
     }
+
 
     public function verifyOtp(Request $request)
     {
@@ -229,8 +230,8 @@ class VendorController extends Controller
                 'district' => $profileDetail->district?->name,
                 'block' => $profileDetail->block?->name,
                 'image' => $admin->image
-                        ? url('admin/images/photos/' . $admin->image)
-                        : null
+                    ? url('admin/images/photos/' . $admin->image)
+                    : null
             ]
         ]);
     }
