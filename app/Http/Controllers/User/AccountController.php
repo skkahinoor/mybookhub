@@ -56,7 +56,8 @@ class AccountController extends Controller
                     'pincode'     => 'required|digits:6',
                 ]);
 
-                User::where('id', Auth::id())->update([
+                $user = User::where('id', Auth::id())->first();
+                $user->update([
                     'email'       => $validated['email'],
                     'name'        => $validated['name'],
                     'phone'       => $validated['mobile'],
@@ -68,11 +69,35 @@ class AccountController extends Controller
                     'address'     => $validated['address'] ?? null,
                 ]);
 
+                // Refresh user model to get updated values
+                $user->refresh();
+
+                // Recalculate profile completion after update
+                $completionFields = [
+                    'name'        => $user->name ?? null,
+                    'email'       => $user->email ?? null,
+                    'phone'       => $user->phone ?? null,
+                    'pincode'     => $user->pincode ?? null,
+                    'address'     => $user->address ?? null,
+                    'country_id'  => $user->country_id ?? null,
+                    'state_id'    => $user->state_id ?? null,
+                    'district_id' => $user->district_id ?? null,
+                    'block_id'    => $user->block_id ?? null,
+                ];
+
+                $totalFields  = count($completionFields);
+                $filledFields = collect($completionFields)->filter(function ($value) {
+                    return ! is_null($value) && $value !== '';
+                })->count();
+
+                $profileCompletion = $totalFields > 0 ? round(($filledFields / $totalFields) * 100) : 0;
+
                 // Return JSON response for AJAX requests
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => true,
                         'message' => 'Account details updated successfully!',
+                        'profileCompletion' => $profileCompletion,
                     ]);
                 }
 
