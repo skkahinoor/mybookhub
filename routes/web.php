@@ -227,7 +227,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::middleware(['vendor.plan'])->group(function () {
             Route::get('products/getauthors', [AdminProductsController::class, 'getAuthor']);
             Route::get('products', [AdminProductsController::class, 'products']);                                        // render products.blade.php in the Admin Panel
-            Route::post('update-product-status', [AdminProductsController::class, 'updateProductStatus'])->name('updateproductstatus');               // Update Products Status using AJAX in products.blade.php
+            Route::post('update-product-status', [AdminProductsController::class, 'updateProductStatus'])->name('admin.updateproductstatus');               // Update Products Status using AJAX in products.blade.php
             Route::get('delete-product/{id}', [AdminProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
             Route::get('delete-product-attribute/{id}', [AdminProductsController::class, 'deleteProductAttribute']);     // Delete a product attribute (ProductsAttribute)
             Route::match(['get', 'post'], 'add-edit-product/{id?}', [AdminProductsController::class, 'addEditProduct'])->name('admin.products.add'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
@@ -365,7 +365,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('contact-queries', 'AdminController@contactQueries');
         Route::post('update-contact-status', 'AdminController@updateContactStatus');
         Route::match(['get', 'post'], 'contact-queries/reply/{id}', 'AdminController@updateContactReply');
-        Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery');
+        Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery')->name('admin.delete.contact.query');
     });
 
     // AJAX routes for cascading location dropdowns (outside admin middleware for AJAX access)
@@ -466,7 +466,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::post('cart/delete', [ProductsController::class, 'cartDelete'])->name('cartDelete');
 
     // Render User Login/Register page (front/users/login_register.blade.php)
-    Route::get('user/login-register', ['as' => 'login', 'uses' => 'UserController@loginRegister']); // 'as' => 'login'    is Giving this route a name 'login' route in order for the 'auth' middleware ('auth' middleware is the Authenticate.php) to redirect to the right page
+    // Route::get('user/login-register', ['as' => 'login', 'uses' => 'UserController@loginRegister']); // 'as' => 'login'    is Giving this route a name 'login' route in order for the 'auth' middleware ('auth' middleware is the Authenticate.php) to redirect to the right page
 
     // User Registration (in front/users/login_register.blade.php) <form> submission using an AJAX request. Check front/js/custom.js
     //Route::post('user/register', 'UserController@userRegister')->name('user.register');

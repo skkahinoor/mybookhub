@@ -65,7 +65,7 @@ class VendorController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
+            'name'     => 'required|string|max:255|regex:/^[\pL\s\-&.,\'()\/]+$/u',
             'email'    => 'required|email|unique:vendors,email|unique:admins,email',
             'mobile'   => 'required|string|min:10|max:15|unique:vendors,mobile|unique:admins,mobile',
             'password' => 'required|min:6|confirmed',
@@ -74,33 +74,34 @@ class VendorController extends Controller
                 'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/'
             ],
         ]);
-
+    
         $phone = $request->mobile;
-
+    
         Cache::put("reg_name_$phone", $request->name, now()->addMinutes(10));
         Cache::put("reg_email_$phone", $request->email, now()->addMinutes(10));
         Cache::put("reg_password_$phone", Hash::make($request->password), now()->addMinutes(10));
         Cache::put("reg_location_$phone", $request->location, now()->addMinutes(10));
-
+    
         $otp = rand(100000, 999999);
-
+    
         DB::table('otps')->updateOrInsert(
             ['phone' => $phone],
             ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
         );
-
+    
         if (!$this->sendSMS($phone, $otp)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to send OTP'
             ], 500);
         }
-
+    
         return response()->json([
             'status' => true,
             'message' => 'OTP sent successfully'
         ]);
     }
+    
 
     public function verifyOtp(Request $request)
     {
@@ -229,8 +230,8 @@ class VendorController extends Controller
                 'district' => $profileDetail->district?->name,
                 'block' => $profileDetail->block?->name,
                 'image' => $admin->image
-                        ? url('admin/images/photos/' . $admin->image)
-                        : null
+                    ? url('admin/images/photos/' . $admin->image)
+                    : null
             ]
         ]);
     }

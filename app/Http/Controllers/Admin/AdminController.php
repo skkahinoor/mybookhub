@@ -186,19 +186,16 @@ class AdminController extends Controller
             }
         }
 
-        $adminDetails = Admin::where('email', Auth::guard('admin')->user()->email)->first()->toArray(); // 'Admin' is the Admin.php model    // Auth::guard('admin') is the authenticated user using the 'admin' guard we created in auth.php    // https://laravel.com/docs/9.x/eloquent#retrieving-models    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
+        $adminDetails = Admin::where('email', Auth::guard('admin')->user()->email)->first()->toArray();
 
         return view('admin/settings/update_admin_password', compact('adminDetails', 'logos', 'headerLogo'));
     }
 
     public function checkAdminPassword(Request $request)
-    { // This method is called from the AJAX call in admin/js/custom.js page
-
+    {
         $data = $request->all();
-        // dd($data);
 
-        // Hashing Passwords: https://laravel.com/docs/9.x/hashing#hashing-passwords
-        if (Hash::check($data['current_password'], Auth::guard('admin')->user()->password)) { // ['current_password'] comes from the AJAX call in admin/js/custom.js page from the 'data' object inside $.ajax() method    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
+        if (Hash::check($data['current_password'], Auth::guard('admin')->user()->password)) {
             return 'true';
         } else {
             return 'false';
@@ -206,23 +203,18 @@ class AdminController extends Controller
     }
 
     public function updateAdminDetails(Request $request)
-    { // the update_admin_details.blade.php
-        // Correcting issues in the Skydash Admin Panel Sidebar using Session
+    {
         Session::put('page', 'update_admin_details');
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        if ($request->isMethod('post')) { // if the update <form> is submitted
+        if ($request->isMethod('post')) {
             $data = $request->all();
-            // dd($data);
-
-            // Laravel's Validation
-            // Customizing Laravel's Validation Error Messages: https://laravel.com/docs/9.x/validation#customizing-the-error-messages    // Customizing Validation Rules: https://laravel.com/docs/9.x/validation#custom-validation-rules
             $rules = [
-                'admin_name'   => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
+                'admin_name'   => 'required|regex:/^[\pL\s\-]+$/u',
                 'admin_mobile' => 'required|numeric',
             ];
 
-            $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
+            $customMessages = [
                 'admin_name.required'   => 'Name is required',
                 'admin_name.regex'      => 'Valid Name is required',
                 'admin_mobile.required' => 'Mobile is required',
@@ -231,8 +223,7 @@ class AdminController extends Controller
 
             $this->validate($request, $rules, $customMessages);
 
-            // Uploading Admin Photo    // Using the Intervention package for uploading images
-            if ($request->hasFile('admin_image')) { // the HTML name attribute    name="admin_name"    in update_admin_details.blade.php
+            if ($request->hasFile('admin_image')) {
                 $image_tmp = $request->file('admin_image');
                 // dd($image_tmp);
 
@@ -1051,6 +1042,7 @@ class AdminController extends Controller
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         ContactUs::where('id', $id)->delete();
+        
 
         return redirect('admin/contact-queries')->with('success_message', 'Query deleted successfully!');
     }

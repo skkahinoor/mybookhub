@@ -166,7 +166,7 @@ class VendorController extends Controller
     public function sendOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'   => 'required|string|max:150',
+            'name'   => 'required|string|max:150|regex:/^[\pL\s\-&.,\'()\/]+$/u',
             'email'  => 'required|email|unique:admins,email|unique:vendors,email',
             'mobile' => 'required|digits:10|unique:admins,mobile|unique:vendors,mobile',
             'location' => 'required',
@@ -275,7 +275,7 @@ class VendorController extends Controller
 
             // Validation
             $rules = [
-                'name'   => 'required|regex:/^[\pL\s\-]+$/u',
+                'name'   => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
                 'email'  => 'required|email|unique:admins,email,' . ($adminId ?? '') . ',id',
                 'mobile' => 'required|numeric',
                 'location' => ['required', 'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/']

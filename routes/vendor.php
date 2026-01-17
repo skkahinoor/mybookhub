@@ -189,7 +189,7 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
             Route::middleware(['vendor.plan'])->group(function () {
                 Route::get('products/getauthors', [ProductsController::class, 'getAuthor']);
                 Route::get('products', [ProductsController::class, 'products']);                                        // render products.blade.php in the Admin Panel
-                Route::post('update-product-status', [ProductsController::class, 'updateProductStatus'])->name('updateproductstatus');               // Update Products Status using AJAX in products.blade.php
+                Route::post('update-product-status', [ProductsController::class, 'updateProductStatus'])->name('vendor.updateproductstatus');               // Update Products Status using AJAX in products.blade.php
                 Route::get('delete-product/{id}', [ProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
                 Route::get('delete-product-attribute/{id}', [ProductsController::class, 'deleteProductAttribute']);     // Delete a product attribute (ProductsAttribute)
                 Route::match(['get', 'post'], 'add-edit-product/{id?}', [ProductsController::class, 'addEditProduct'])->name('vendor.products.add'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
