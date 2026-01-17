@@ -281,32 +281,116 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $('#saveProfileBtn').on('click', function() {
+    $('#saveProfileBtn').on('click', function(e) {
+        e.preventDefault();
 
-        let formData = new FormData(document.getElementById('accountForm'));
+        var form = $('#accountForm');
+        // Serialize all form fields including those in hidden tabs
+        var formData = form.serializeArray();
+        // Also include any fields that might be in hidden tabs
+        form.find('input, select, textarea').each(function() {
+            var $field = $(this);
+            var name = $field.attr('name');
+            if (name && !$field.is(':disabled') && !formData.some(function(item) { return item.name === name; })) {
+                formData.push({name: name, value: $field.val()});
+            }
+        });
+        // Convert to URL-encoded string
+        var formDataString = $.param(formData);
+
+        var submitButton = $(this);
+        var originalButtonText = submitButton.html();
+
+        // Disable submit button and show loading state
+        submitButton.prop('disabled', true).html(
+            '<i class="mdi mdi-loading mdi-spin mr-1"></i> Saving...');
+
+        // Remove previous alert messages
+        $('.alert').remove();
 
         $.ajax({
-            url: "{{ route('user.profile.update') }}",
+            url: form.attr('action'),
             type: "POST",
-            data: formData,
-            processData: false,
-            contentType: false,
+            data: formDataString,
+            dataType: 'json',
             headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') || $('input[name="_token"]').val()
             },
             success: function(response) {
+                // Show success message
+                var successAlert =
+                    '<div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="margin-top: 20px;">' +
+                    '<i class="mdi mdi-check-circle mr-2"></i>' +
+                    response.message +
+                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                    '<span aria-hidden="true">&times;</span>' +
+                    '</button>' +
+                    '</div>';
 
-                // Update progress bar
-                $('#profileProgressBar')
-                    .css('width', response.profileCompletion + '%')
-                    .attr('aria-valuenow', response.profileCompletion);
+                $('.row.mb-3 .col-lg-8').html(successAlert);
 
-                $('#profilePercent').text(response.profileCompletion);
+                // Update profile completion percentage if provided
+                if (response.profileCompletion !== undefined) {
+                    $('#profileProgressBar')
+                        .css('width', response.profileCompletion + '%')
+                        .attr('aria-valuenow', response.profileCompletion);
+                    $('#profilePercent').text(response.profileCompletion);
+                }
 
-                toastr.success('Profile updated successfully');
+                // Scroll to top to show message
+                $('html, body').animate({
+                    scrollTop: 0
+                }, 500);
+
+                // Re-enable submit button
+                submitButton.prop('disabled', false).html(originalButtonText);
+
+                console.log('Account updated successfully:', response);
             },
-            error: function() {
-                toastr.error('Something went wrong');
+            error: function(xhr, status, error) {
+                console.error('Error updating account:', error);
+                console.error('Response:', xhr.responseText);
+
+                var errorMessage =
+                    'An error occurred while updating your account. Please try again.';
+                var errorsHtml = '';
+
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                    // Validation errors
+                    var errors = xhr.responseJSON.errors;
+                    errorsHtml = '<ul class="mb-0 pl-3">';
+                    $.each(errors, function(field, messages) {
+                        $.each(messages, function(index, message) {
+                            errorsHtml += '<li>' + message + '</li>';
+                        });
+                    });
+                    errorsHtml += '</ul>';
+                    errorMessage = 'Please fix the following errors:';
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+
+                var errorAlert =
+                    '<div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" style="margin-top: 20px;">' +
+                    '<i class="mdi mdi-alert-circle-outline mr-2"></i>' +
+                    errorMessage +
+                    errorsHtml +
+                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                    '<span aria-hidden="true">&times;</span>' +
+                    '</button>' +
+                    '</div>';
+
+                $('.row.mb-3 .col-lg-8').html(errorAlert);
+
+                // Scroll to top to show error
+                $('html, body').animate({
+                    scrollTop: 0
+                }, 500);
+
+                // Re-enable submit button
+                submitButton.prop('disabled', false).html(originalButtonText);
             }
         });
     });
@@ -589,8 +673,20 @@
             e.preventDefault(); // Prevent default form submission
 
             var form = $(this);
-            var formData = form.serialize();
-            var submitButton = form.find('button[type="submit"]');
+            // Serialize all form fields including those in hidden tabs
+            var formData = form.serializeArray();
+            // Also include any fields that might be disabled or in hidden tabs
+            form.find('input, select, textarea').each(function() {
+                var $field = $(this);
+                var name = $field.attr('name');
+                if (name && !$field.is(':disabled') && !formData.some(function(item) { return item.name === name; })) {
+                    formData.push({name: name, value: $field.val()});
+                }
+            });
+            // Convert to URL-encoded string
+            var formDataString = $.param(formData);
+
+            var submitButton = form.find('button[type="submit"], #saveProfileBtn');
             var originalButtonText = submitButton.html();
 
             // Disable submit button and show loading state
@@ -603,7 +699,7 @@
             $.ajax({
                 url: form.attr('action'),
                 type: 'POST',
-                data: formData,
+                data: formDataString,
                 dataType: 'json',
                 xhrFields: {
                     withCredentials: true
@@ -626,6 +722,13 @@
                         '</div>';
 
                     $('.row.mb-3 .col-lg-8').html(successAlert);
+
+                    // Update profile completion percentage if provided
+                    if (response.profileCompletion !== undefined) {
+                        $('#profileProgressBar').css('width', response.profileCompletion + '%')
+                            .attr('aria-valuenow', response.profileCompletion);
+                        $('#profilePercent').text(response.profileCompletion);
+                    }
 
                     // Scroll to top to show message
                     $('html, body').animate({

@@ -92,11 +92,11 @@
                         </li>
                         <li class="mb-2">
                             <i class="fas fa-envelope text-primary"></i>
-                            <span class="ms-2">support@srdcindia.co.in</span>
+                            <span class="ms-2">support@mybookhub.in</span>
                         </li>
                         <li>
                             <i class="fas fa-phone-alt text-primary"></i>
-                            <span class="ms-2">+91 (0) 84807 46394, +91 (0) 84807 46395</span>
+                            <span class="ms-2">+91-9876543210</span>
                         </li>
                     </ul>
                 </div>
