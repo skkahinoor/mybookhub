@@ -66,11 +66,16 @@
                                                         @endif
                                                     </td>
                                                     <td>
+                                                        @if ($adminType === 'vendor')
+                                                            <a class="updateAdminStatus" id="admin-{{ $admin['id'] }}" admin_id="{{ $admin['id'] }}" data-url="{{ route('vendor.updateadminstatus') }}" href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                            </a>
+                                                        @else
                                                         @if (isset($admin['status']) && $admin['status'] == 1)
                                                             <a class="updateAdminStatus"
                                                                id="admin-{{ $admin['id'] }}"
                                                                admin_id="{{ $admin['id'] }}"
-                                                               data-url="{{ route('updateadminstatus') }}"
+                                                               data-url="{{ route('admin.updateadminstatus') }}"
                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                             </a>
@@ -78,10 +83,11 @@
                                                             <a class="updateAdminStatus"
                                                                id="admin-{{ $admin['id'] }}"
                                                                admin_id="{{ $admin['id'] }}"
-                                                               data-url="{{ route('updateadminstatus') }}"
+                                                               data-url="{{ route('admin.updateadminstatus') }}"
                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                             </a>
+                                                        @endif
                                                         @endif
                                                     </td>
                                                     <td>

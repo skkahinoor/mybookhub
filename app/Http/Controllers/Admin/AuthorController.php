@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\HeaderLogo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class AuthorController extends Controller
@@ -16,7 +17,8 @@ class AuthorController extends Controller
         Session::put('page', 'authors');
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        return view('admin.authors.author', compact('authors', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function add()

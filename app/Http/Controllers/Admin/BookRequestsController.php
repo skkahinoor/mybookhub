@@ -18,7 +18,8 @@ class BookRequestsController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'bookRequests');
         $bookRequests = BookRequest::with('user')->get();
-        return view('admin.requestedbooks.index', compact('bookRequests', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.requestedbooks.index', compact('bookRequests', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function reply(Request $request, $id)

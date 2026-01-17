@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
 use App\Models\ShippingCharge;
+use Illuminate\Support\Facades\Auth;
 
 class ShippingController extends Controller
 {
@@ -24,8 +25,8 @@ class ShippingController extends Controller
 
         $shippingCharges = ShippingCharge::get()->toArray();
 
-
-        return view('admin.shipping.shipping_charges')->with(compact('shippingCharges', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.shipping.shipping_charges')->with(compact('shippingCharges', 'logos', 'headerLogo', 'adminType'));
     }
 
     // Update Shipping Status (active/inactive) via AJAX in admin/shipping/shipping_charages.blade.php, check admin/js/custom.js    

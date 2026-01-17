@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
 use Illuminate\Http\Request;
 use App\Models\Language;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class LanguageController extends Controller
@@ -16,7 +17,8 @@ class LanguageController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'languages');
         $languages = Language::get();
-        return view('admin.languages.languages')->with(compact('languages', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.languages.languages')->with(compact('languages', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function updateLanguageStatus(Request $request)

@@ -32,14 +32,20 @@
                                         <td>{{ $language['id'] }}</td>
                                         <td>{{ $language['name'] }}</td>
                                         <td>
-                                            @if($language['status']==1)
-                                                <a class="updateLanguageStatus" id="language-{{ $language['id'] }}" language_id="{{ $language['id'] }}" data-url="{{ route('updatelanguagestatus') }}" href="javascript:void(0)">
-                                                <i style="font-size:25px;" class="mdi mdi-bookmark-check" status="Active"></i>
+                                            @if ($adminType === 'vendor')
+                                                <a class="updateLanguageStatus" id="language-{{ $language['id'] }}" language_id="{{ $language['id'] }}" data-url="{{ route('vendor.updatelanguagestatus') }}" href="javascript:void(0)">
+                                                    <i style="font-size:25px;" class="mdi mdi-bookmark-check" status="Active"></i>
                                                 </a>
                                             @else
-                                                <a class="updateLanguageStatus" id="language-{{ $language['id'] }}" language_id="{{ $language['id'] }}" data-url="{{ route('updatelanguagestatus') }}" href="javascript:void(0)">
-                                                <i style="font-size:25px;" class="mdi mdi-bookmark-outline" status="Inactive"></i>
-                                                </a>
+                                            @if($language['status']==1)
+                                                    <a class="updateLanguageStatus" id="language-{{ $language['id'] }}" language_id="{{ $language['id'] }}" data-url="{{ route('admin.updatelanguagestatus') }}" href="javascript:void(0)">
+                                                        <i style="font-size:25px;" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                    </a>
+                                                @else
+                                                    <a class="updateLanguageStatus" id="language-{{ $language['id'] }}" language_id="{{ $language['id'] }}" data-url="{{ route('admin.updatelanguagestatus') }}" href="javascript:void(0)">
+                                                        <i style="font-size:25px;" class="mdi mdi-bookmark-outline" status="Inactive"></i>
+                                                    </a>
+                                                @endif
                                             @endif
                                         </td>
                                         <td>

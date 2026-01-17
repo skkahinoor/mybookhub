@@ -86,7 +86,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
         Route::get('delete-admin/{id}', 'AdminController@deleteAdmin');                        // Delete an Admin
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
-        Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('updateadminstatus');
+        Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('admin.updateadminstatus');
 
         // otp
         Route::get('otps', [OtpController::class, 'otps'])->name('admin.otps');
@@ -96,13 +96,13 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Sections (Sections, Categories, Subcategories, Products, Attributes)
         // Route::get('sections', 'SectionController@sections');
         Route::get('sections', [SectionController::class, 'sections'])->name('sections');
-        Route::post('update-section-status', 'SectionController@updateSectionStatus')->name('updatesectionstatus');               // Update Sections Status using AJAX in sections.blade.php
+        Route::post('update-section-status', 'SectionController@updateSectionStatus')->name('admin.updatesectionstatus');               // Update Sections Status using AJAX in sections.blade.php
         Route::get('delete-section/{id}', 'SectionController@deleteSection');                        // Delete a section in sections.blade.php
         Route::match(['get', 'post'], 'add-edit-section/{id?}', 'SectionController@addEditSection'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the section, and if not passed, this means Add a Section
 
         // Categories
         Route::get('categories', 'CategoryController@categories');                                      // Categories in Catalogue Management in Admin Panel
-        Route::post('update-category-status', 'CategoryController@updateCategoryStatus')->name('updatecategorystatus');               // Update Categories Status using AJAX in categories.blade.php
+        Route::post('update-category-status', 'CategoryController@updateCategoryStatus')->name('admin.updatecategorystatus');               // Update Categories Status using AJAX in categories.blade.php
         Route::match(['get', 'post'], 'add-edit-category/{id?}', 'CategoryController@addEditCategory'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Category, and if not passed, this means Add a Category
         Route::get('append-categories-level', 'CategoryController@appendCategoryLevel');                // Show Categories <select> <option> depending on the chosen Section (show the relevant categories of the chosen section) using AJAX in admin/js/custom.js in append_categories_level.blade.php page
         Route::get('delete-category/{id}', 'CategoryController@deleteCategory');                        // Delete a category in categories.blade.php
@@ -116,15 +116,15 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         //Publishers
         Route::get('publisher', 'PublisherController@publisher');
-        Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
+        Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('admin.updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
 
         Route::post('/admin/add-publisher-ajax', [App\Http\Controllers\Admin\PublisherController::class, 'addPublisherAjax'])->name('admin.addPublisherAjax');
 
         // Authors
-        Route::post('update-author-status', [AuthorController::class, 'updateStatus'])->name('updateauthorstatus');
+        Route::post('update-author-status', [AuthorController::class, 'updateStatus'])->name('admin.updateauthorstatus');
 
         // Subjects
-        Route::post('update-subject-status', [SubjectController::class, 'updateStatus'])->name('updatesubjectstatus');
+        Route::post('update-subject-status', [SubjectController::class, 'updateStatus'])->name('admin.updatesubjectstatus');
 
         // Update Brands Status using AJAX in brands.blade.php
         Route::get('delete-publisher/{id}', 'PublisherController@deletePublisher');                        // Delete a brand in brands.blade.php
@@ -142,7 +142,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('requestedbooks', [BookRequestsController::class, 'index'])->name('requestbook.index');
         Route::match(['get', 'post'], 'requestedbooks/reply/{id}', [BookRequestsController::class, 'reply'])->name('requestbook.reply');
         Route::delete('book-requests/{id}', [BookRequestsController::class, 'delete'])->name('bookrequests.delete');
-        Route::post('admin/bookrequests/update-status', [BookRequestsController::class, 'updateStatus'])->name('bookrequests.updateStatus');
+        Route::post('admin/bookrequests/update-status', [BookRequestsController::class, 'updateStatus'])->name('admin.bookrequests.updateStatus');
 
         // Sell Book Requests (Users selling their old books)
         Route::get('sell-book-requests', [App\Http\Controllers\Admin\SellBookRequestController::class, 'index'])->name('admin.sell-book-requests.index');
@@ -265,14 +265,14 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Coupons (with vendor plan check middleware)
         Route::middleware(['vendor.plan'])->group(function () {
             Route::get('coupons', 'CouponsController@coupons');                          // Render admin/coupons/coupons.blade.php page in the Admin Panel
-            Route::post('update-coupon-status', 'CouponsController@updateCouponStatus')->name('updatecouponstatus'); // Update Coupon Status (active/inactive) via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
+            Route::post('update-coupon-status', 'CouponsController@updateCouponStatus')->name('admin.updatecouponstatus'); // Update Coupon Status (active/inactive) via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
             Route::get('delete-coupon/{id}', 'CouponsController@deleteCoupon');          // Delete a Coupon via AJAX in admin/coupons/coupons.blade.php, check admin/js/custom.js
             Route::match(['get', 'post'], 'add-edit-coupon/{id?}', 'CouponsController@addEditCoupon'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Coupon', and if not passed, this means' Add a Coupon'    // GET request to render the add_edit_coupon.blade.php view (whether Add or Edit depending on passing or not passing the Optional Parameter {id?}), and POST request to submit the <form> in that same page
         });
 
         // Users
         Route::get('users', 'UserController@users');                          // Render admin/users/users.blade.php page in the Admin Panel
-        Route::post('update-user-status', 'UserController@updateUserStatus')->name('updateuserstatus'); // Update User Status (active/inactive) via AJAX in admin/users/users.blade.php, check admin/js/custom.js
+        Route::post('update-user-status', 'UserController@updateUserStatus')->name('admin.updateuserstatus'); // Update User Status (active/inactive) via AJAX in admin/users/users.blade.php, check admin/js/custom.js
 
         // Orders
         // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel
@@ -308,7 +308,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('shipping-charges', 'ShippingController@shippingCharges');
 
         // Update Shipping Status (active/inactive) via AJAX in admin/shipping/shipping_charages.blade.php, check admin/js/custom.js
-        Route::post('update-shipping-status', 'ShippingController@updateShippingStatus');
+        Route::post('update-shipping-status', 'ShippingController@updateShippingStatus')->name('admin.updateshippingstatus');
 
         // Render admin/shipping/edit_shipping_charges.blade.php page in case of HTTP 'GET' request ('Edit/Update Shipping Charges'), or hadle the HTML Form submission in the same page in case of HTTP 'POST' request
         Route::match(['get', 'post'], 'edit-shipping-charges/{id}', 'ShippingController@editShippingCharges');
@@ -318,7 +318,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('subscribers', 'NewsletterController@subscribers');
 
         // Update Subscriber Status (active/inactive) via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
-        Route::post('update-subscriber-status', 'NewsletterController@updateSubscriberStatus');
+        Route::post('update-subscriber-status', 'NewsletterController@updateSubscriberStatus')->name('admin.updatesubscriberstatus');
 
         // Delete a Subscriber via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
         Route::get('delete-subscriber/{id}', 'NewsletterController@deleteSubscriber');
@@ -331,14 +331,14 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('ratings', 'RatingController@ratings');
 
         // Update Rating Status (active/inactive) via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
-        Route::post('update-rating-status', 'RatingController@updateRatingStatus');
+        Route::post('update-rating-status', 'RatingController@updateRatingStatus')->name('admin.updateratingstatus');
 
         // Delete a Rating via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
         Route::get('delete-rating/{id}', 'RatingController@deleteRating');
 
         // Languages Routes
         Route::get('languages', 'App\Http\Controllers\Admin\LanguageController@languages');
-        Route::post('update-language-status', 'App\Http\Controllers\Admin\LanguageController@updateLanguageStatus')->name('updatelanguagestatus'); // Update Language Status using AJAX in languages.blade.php
+        Route::post('update-language-status', 'App\Http\Controllers\Admin\LanguageController@updateLanguageStatus')->name('admin.updatelanguagestatus'); // Update Language Status using AJAX in languages.blade.php
         Route::match(['get', 'post'], 'add-edit-language/{id?}', 'App\Http\Controllers\Admin\LanguageController@addEditLanguage');
         Route::get('delete-language/{id}', 'App\Http\Controllers\Admin\LanguageController@deleteLanguage');
 

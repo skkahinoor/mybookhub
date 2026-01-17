@@ -7,6 +7,7 @@ use App\Models\HeaderLogo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Models\NewsletterSubscriber;
+use Illuminate\Support\Facades\Auth;
 
 class NewsletterController extends Controller
 {
@@ -20,9 +21,9 @@ class NewsletterController extends Controller
 
         $subscribers = NewsletterSubscriber::get()->toArray();
         // dd($subscribers);
+        $adminType = Auth::guard('admin')->user()->type;
 
-
-        return view('admin.subscribers.subscribers')->with(compact('subscribers', 'logos', 'headerLogo'));
+        return view('admin.subscribers.subscribers')->with(compact('subscribers', 'logos', 'headerLogo', 'adminType'));
     }
 
     // Update Subscriber Status (active/inactive) via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js    

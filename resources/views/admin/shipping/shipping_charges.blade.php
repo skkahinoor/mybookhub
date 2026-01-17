@@ -54,14 +54,20 @@
                                                 <td>{{ $shipping['2001g_5000g'] }}</td>
                                                 <td>{{ $shipping['above_5000g'] }}</td>
                                                 <td>
+                                                    @if ($adminType === 'vendor')
+                                                        <a class="updateShippingStatus" id="shipping-{{ $shipping['id'] }}" shipping_id="{{ $shipping['id'] }}" data-url="{{ route('vendor.updateshippingstatus') }}" href="javascript:void(0)">
+                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                        </a>
+                                                    @else   
                                                     @if ($shipping['status'] == 1)
-                                                        <a class="updateShippingStatus" id="shipping-{{ $shipping['id'] }}" shipping_id="{{ $shipping['id'] }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                        <a class="updateShippingStatus" id="shipping-{{ $shipping['id'] }}" shipping_id="{{ $shipping['id'] }}" data-url="{{ route('admin.updateshippingstatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
                                                     @else {{-- if the admin status is inactive --}}
-                                                        <a class="updateShippingStatus" id="shipping-{{ $shipping['id'] }}" shipping_id="{{ $shipping['id'] }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                        <a class="updateShippingStatus" id="shipping-{{ $shipping['id'] }}" shipping_id="{{ $shipping['id'] }}" data-url="{{ route('admin.updateshippingstatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
+                                                    @endif
                                                     @endif
                                                 </td>
                                                 <td>

@@ -13,16 +13,19 @@
 
 
 
-                            <a href="{{ url('admin/add-edit-category') }}" style="max-width: 150px; float: right; display: inline-block" class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Category</a>
+                            <a href="{{ url('admin/add-edit-category') }}"
+                                style="max-width: 150px; float: right; display: inline-block"
+                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Category</a>
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
                             {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
-                            @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
+                            @if (Session::has('success_message'))
+                                <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <strong>Success:</strong> {{ Session::get('success_message') }}
                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
+                                        <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
                             @endif
@@ -43,7 +46,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($categories as $key=>$category)
+                                        @foreach ($categories as $key => $category)
                                             {{-- @php echo '<pre>', var_dump($category['parent_category']), '</pre>'; @endphp --}}
                                             @if (isset($category['parent_category']['category_name']) && !empty($category['parent_category']['category_name']))
                                                 @php $parent_category = $category['parent_category']['category_name']; @endphp
@@ -51,33 +54,55 @@
                                                 @php $parent_category = 'Root'; @endphp
                                             @endif
                                             <tr>
-                                                <td>{{ __($key+1)}}</td>
+                                                <td>{{ __($key + 1) }}</td>
                                                 <td>{{ $category['category_name'] }}</td>
                                                 <td>{{ $parent_category }}</td> {{-- Through the relationship --}}
-                                                <td>{{ $category['section']['name']   ?? 'N/A'}}</td>
+                                                <td>{{ $category['section']['name'] ?? 'N/A' }}</td>
                                                 <td>{{ $category['url'] }}</td>
                                                 <td>
-                                                    @if ($category['status'] == 1)
-                                                        <a class="updateCategoryStatus" id="category-{{ $category['id'] }}" category_id="{{ $category['id'] }}" data-url="{{ route('updatecategorystatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                    @if ($adminType === 'vendor')
+                                                        <a class="updateCategoryStatus"
+                                                           id="category-{{ $category['id'] }}"
+                                                           category_id="{{ $category['id'] }}"
+                                                           data-url="{{ route('vendor.updatecategorystatus') }}"
+                                                           href="javascript:void(0)">
+                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
                                                         </a>
-                                                    @else {{-- if the admin status is inactive --}}
-                                                        <a class="updateCategoryStatus" id="category-{{ $category['id'] }}" category_id="{{ $category['id'] }}" data-url="{{ route('updatecategorystatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
+                                                    @else
+                                                        @if ($category['status'] == 1)
+                                                            <a class="updateCategoryStatus"
+                                                               id="category-{{ $category['id'] }}"
+                                                               category_id="{{ $category['id'] }}"
+                                                               data-url="{{ route('admin.updatecategorystatus') }}"
+                                                               href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                            </a>
+                                                        @else
+                                                            <a class="updateCategoryStatus"
+                                                               id="category-{{ $category['id'] }}"
+                                                               category_id="{{ $category['id'] }}"
+                                                               data-url="{{ route('admin.updatecategorystatus') }}"
+                                                               href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>
+                                                            </a>
+                                                        @endif
                                                     @endif
                                                 </td>
+                                                
                                                 <td>
                                                     <a href="{{ url('admin/add-edit-category/' . $category['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                        {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
 
                                                     {{-- Confirm Deletion JS alert and Sweet Alert --}}
                                                     {{-- <a title="Category" class="confirmDelete" href="{{ url('admin/delete-category/' . $category['id']) }}"> --}}
-                                                        {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}} {{-- Icons from Skydash Admin Panel Template --}}
+                                                    {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}} {{-- Icons from Skydash Admin Panel Template --}}
                                                     {{-- </a> --}}
-                                                    <a href="{{ url('admin/delete-category/' .$category['id']) }}"  > {{-- Check admin/js/custom.js and web.php (routes) --}}
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                    <a href="{{ url('admin/delete-category/' . $category['id']) }}">
+                                                        {{-- Check admin/js/custom.js and web.php (routes) --}}
+                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                                        {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
                                                 </td>
                                             </tr>
@@ -94,7 +119,8 @@
         <!-- partial:../../partials/_footer.html -->
         <footer class="footer">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights reserved.</span>
+                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
+                    reserved.</span>
             </div>
         </footer>
         <!-- partial -->

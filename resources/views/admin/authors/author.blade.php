@@ -47,9 +47,16 @@
                                                 <td>{{ __($key + 1) }}</td>
                                                 <td>{{ $author['name'] }}</td>
                                             <td>
+                                                @if ($adminType === 'vendor')
+                                                    <a class="updateAuthorStatus" id="author-{{ $author['id'] }}"
+                                                        author_id="{{ $author['id'] }}" data-url="{{ route('vendor.updateauthorstatus') }}" href="javascript:void(0)">
+                                                        <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                            status="Active"></i>
+                                                    </a>
+                                                @else   
                                                     @if ($author['status'] == 1)
                                                         <a class="updateAuthorStatus" id="author-{{ $author['id'] }}"
-                                                            author_id="{{ $author['id'] }}" data-url="{{ route('updateauthorstatus') }}" href="javascript:void(0)">
+                                                            author_id="{{ $author['id'] }}" data-url="{{ route('admin.updateauthorstatus') }}" href="javascript:void(0)">
                                                             {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                 status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
@@ -57,12 +64,13 @@
                                                     @else
                                                         {{-- if the admin status is inactive --}}
                                                         <a class="updateAuthorStatus" id="author-{{ $author['id'] }}"
-                                                            author_id="{{ $author['id'] }}" data-url="{{ route('updateauthorstatus') }}" href="javascript:void(0)">
+                                                            author_id="{{ $author['id'] }}" data-url="{{ route('admin.updateauthorstatus') }}" href="javascript:void(0)">
                                                             {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
                                                                 status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
                                                     @endif
+                                                @endif
                                                 </td>
                                                 <td>
                                                     <a href="{{ route('edit.author', $author->id) }}">

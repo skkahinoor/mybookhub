@@ -39,14 +39,20 @@
                                         <td>{{ $book['message'] }}</td>
                                         <td>{{ $book->user->name ?? 'User not found' }}</td>
                                         <td>
+                                            @if ($adminType === 'vendor')
+                                                <a class="updateBookStatus" id="book-{{ $book['id'] }}" book_id="{{ $book['id'] }}" data-url="{{ route('vendor.bookrequests.updateStatus') }}" href="javascript:void(0)">
+                                                    <i style="font-size:25px;" title="Book Available" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                </a>
+                                            @else         
                                             @if($book['status']==1)
-                                                <a class="updateBookStatus" id="book-{{ $book['id'] }}" book_id="{{ $book['id'] }}" href="javascript:void(0)">
+                                                <a class="updateBookStatus" id="book-{{ $book['id'] }}" book_id="{{ $book['id'] }}" data-url="{{ route('admin.bookrequests.updateStatus') }}" href="javascript:void(0)">
                                                 <i style="font-size:25px;" title="Book Available" class="mdi mdi-bookmark-check" status="Active"></i>
                                                 </a>
                                             @else
-                                                <a class="updateBookStatus" id="book-{{ $book['id'] }}" book_id="{{ $book['id'] }}" href="javascript:void(0)">
+                                                <a class="updateBookStatus" id="book-{{ $book['id'] }}" book_id="{{ $book['id'] }}" data-url="{{ route('admin.bookrequests.updateStatus') }}" href="javascript:void(0)">
                                                 <i style="font-size:25px;" title="Book Requested" class="mdi mdi-bookmark-outline" status="Inactive"></i>
                                                 </a>
+                                            @endif
                                             @endif
                                         </td>
                                         <td>
@@ -94,7 +100,7 @@ $(document).ready(function(){
         var $icon = $(this).find('i');
         $.ajax({
             type: 'POST',
-            url: '{{ route("bookrequests.updateStatus") }}',
+            url: '{{ route("admin.bookrequests.updateStatus") }}',
             data: {
                 _token: '{{ csrf_token() }}',
                 book_id: book_id

@@ -57,14 +57,20 @@
                                                 <td>{{ $user['mobile'] }}</td>
                                                 <td>{{ $user['email'] }}</td>
                                                 <td>
+                                                    @if ($adminType === 'vendor')
+                                                        <a class="updateUserStatus" id="user-{{ $user['id'] }}" user_id="{{ $user['id'] }}" data-url="{{ route('vendor.updateuserstatus') }}" href="javascript:void(0)">
+                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                        </a>
+                                                    @else   
                                                     @if ($user['status'] == 1)
-                                                        <a class="updateUserStatus" id="user-{{ $user['id'] }}" user_id="{{ $user['id'] }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                        <a class="updateUserStatus" id="user-{{ $user['id'] }}" user_id="{{ $user['id'] }}" data-url="{{ route('admin.updateuserstatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
                                                     @else {{-- if the admin status is inactive --}}
-                                                        <a class="updateUserStatus" id="user-{{ $user['id'] }}" user_id="{{ $user['id'] }}" data-url="{{ route('updateuserstatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                        <a class="updateUserStatus" id="user-{{ $user['id'] }}" user_id="{{ $user['id'] }}" data-url="{{ route('admin.updateuserstatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
+                                                    @endif
                                                     @endif
                                                 </td>
                                             </tr>

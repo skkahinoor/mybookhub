@@ -10,7 +10,7 @@ use Intervention\Image\Facades\Image;
 use App\Models\Category;
 use App\Models\HeaderLogo;
 use App\Models\Section;
-
+use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
@@ -23,8 +23,8 @@ class CategoryController extends Controller
         $categories = Category::orderBy('id','desc')->with(['section', 'parentCategory'])->get()->toArray();
         // dd($categories);
 
-
-        return view('admin.categories.categories')->with(compact('categories', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.categories.categories')->with(compact('categories', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function updateCategoryStatus(Request $request) { // Update Category Status using AJAX in categories.blade.php

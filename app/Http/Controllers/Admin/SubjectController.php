@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
 use App\Models\Subject;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class SubjectController extends Controller
@@ -17,7 +18,8 @@ class SubjectController extends Controller
         $logos = HeaderLogo::first();
         $subjects = Subject::orderBy('id','desc')->get();
         Session::put('page', 'subjects');
-        return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function add()

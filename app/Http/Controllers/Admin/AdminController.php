@@ -349,7 +349,7 @@ class AdminController extends Controller
                 $data = $request->all();
                 // dd($data);
 
-                // Laravel's Validation    // Customizing Laravel's Validation Error Messages: https://laravel.com/docs/9.x/validation#customizing-the-error-messages    // Customizing Validation Rules: https://laravel.com/docs/9.x/validation#custom-validation-rules
+             
                 $rules = [
                     'shop_name'     => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                     'shop_city'     => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
@@ -587,11 +587,11 @@ class AdminController extends Controller
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
             Session::put('page', 'view_all');
         }
-
+        $adminType = Auth::guard('admin')->user()->type;
         // Order by id descending to show newest first, then convert to array
         $admins = $admins->orderBy('id', 'desc')->get()->toArray(); // toArray() method converts the Collection object to a plain PHP array
 
-        return view('admin/admins/admins', compact('admins', 'title', 'logos', 'headerLogo'));
+        return view('admin/admins/admins', compact('admins', 'title', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function viewVendorDetails($id)
@@ -639,24 +639,7 @@ class AdminController extends Controller
             $adminDetails = Admin::where('id', $data['admin_id'])->first()->toArray(); // get the admin that his `status` has been approved
 
             if ($adminDetails['type'] == 'vendor' && $status == 1) {                        // if the `type` column value (in `admins` table) is 'vendor', and their `status` became 1 (got approved), send them a THIRD confirmation mail
-                Vendor::where('id', $adminDetails['vendor_id'])->update(['status' => $status]); // update the `status` of the vendor in `vendors` table
-
-                // Note: Vendor CONFIRMATION occurs automatically through vendor clicking on the confirmation link sent in the email, but vendor ACTIVATION (active/inactive/disabled) occurs manually where 'superadmin' or 'admin' activates the `status` from the Admin Panel in 'Admin Management' tab, then clicks Status. Also, Vendor CONFIRMATION is related to the `confirm` columns in BOTH `admins` and `vendors` tables, but vendor ACTIVATION (active/inactive/disabled) is related to the `status` columns in BOTH `admins` and `vendors` tables!
-                // Note: Vendor receives THREE emails: the first one when they register (please click on the confirmation link mail (in emails/vendor_confirmation.blade.php)), the second one when they click on the confirmation link sent in the first email (telling them that they have been confirmed and asking them to complete filling in their personal, business and bank details to get ACTIVATED/APPROVED (`status gets 1) (in emails/vendor_confirmed.blade.php)), the third email when the 'admin' or 'superadmin' manually activates (`status` becomes 1) the vendor from the Admin Panel from 'Admin Management' tab, then clicks Status (the email tells them they have been approved (activated and `status` became 1) and asks them to add their products on the website (in emails/vendor_approved.blade.php))
-
-                // Send the Approval Success Email to the new vendor
-                // $email = $adminDetails['email']; // the vendor's email
-
-                // The email message data/variables that will be passed in to the email view
-                // $messageData = [
-                //     'email'  => $adminDetails['email'],
-                //     'name'   => $adminDetails['name'],
-                //     'mobile' => $adminDetails['mobile'],
-                // ];
-
-                // \Illuminate\Support\Facades\Mail::send('emails.vendor_approved', $messageData, function ($message) use ($email) { // Sending Mail: https://laravel.com/docs/9.x/mail#sending-mail    // 'emails.vendor_approved' is the vendor_approved.blade.php file inside the 'resources/views/emails' folder that will be sent as an email    // We pass in all the variables that vendor_approved.blade.php will use    // https://www.php.net/manual/en/functions.anonymous.php
-                //     $message->to($email)->subject('Vendor Account is Approved');
-                // });
+                Vendor::where('id', $adminDetails['vendor_id'])->update(['status' => $status]); // 
             }
 
             $adminType = Auth::guard('admin')->user()->type; // `type` is the column in `admins` table    // Retrieving The Authenticated User and getting their `type`      column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
@@ -1043,7 +1026,6 @@ class AdminController extends Controller
         $headerLogo = HeaderLogo::first();
         ContactUs::where('id', $id)->delete();
         
-
         return redirect('admin/contact-queries')->with('success_message', 'Query deleted successfully!');
     }
 }

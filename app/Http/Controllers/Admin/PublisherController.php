@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Session;
 
 use App\Models\Publisher;
 use App\Models\HeaderLogo;
-
+use Illuminate\Support\Facades\Auth;
 
 class PublisherController extends Controller
 {
@@ -18,12 +18,11 @@ class PublisherController extends Controller
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'publisher');
 
-
         $publishers = Publisher::orderBy('id', 'desc')->get()->toArray();
  // Plain PHP array
         // dd($publisher);
-
-        return view('admin.publisher.publisher')->with(compact('publishers', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.publisher.publisher')->with(compact('publishers', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function updatePublisherStatus(Request $request) { // Update publisher Status using AJAX in publisher.blade.php

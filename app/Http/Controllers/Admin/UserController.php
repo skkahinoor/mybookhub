@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Session;
 
 use App\Models\User;
 use App\Models\HeaderLogo;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -41,8 +42,9 @@ class UserController extends Controller
                 ];
             })
             ->toArray();
+        $adminType = Auth::guard('admin')->user()->type;
 
-        return view('admin.users.users')->with(compact('users', 'logos', 'headerLogo'));
+        return view('admin.users.users')->with(compact('users', 'logos', 'headerLogo', 'adminType'));
     }
 
 

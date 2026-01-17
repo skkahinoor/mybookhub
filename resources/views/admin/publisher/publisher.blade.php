@@ -5,7 +5,6 @@
 
 
 @section('content')
-
     <div class="main-panel">
         <div class="content-wrapper">
             <div class="row">
@@ -13,16 +12,19 @@
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Publisher</h4>
-                            <a href="{{ url('admin/add-edit-publisher') }}" style="max-width: 150px; float: right; display: inline-block" class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Publisher</a>
+                            <a href="{{ url('admin/add-edit-publisher') }}"
+                                style="max-width: 150px; float: right; display: inline-block"
+                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Publisher</a>
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
                             {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
-                            @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
+                            @if (Session::has('success_message'))
+                                <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <strong>Success:</strong> {{ Session::get('success_message') }}
                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
+                                        <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
                             @endif
@@ -40,31 +42,54 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($publishers as $key=> $publisher)
+                                        @foreach ($publishers as $key => $publisher)
                                             <tr>
-                                                <td>{{__($key+1) }}</td>
+                                                <td>{{ __($key + 1) }}</td>
                                                 <td>{{ $publisher['name'] }}</td>
                                                 <td>
-                                                    @if ($publisher['status'] == 1)
-                                                        <a class="updatePublisherStatus" id="publisher-{{ $publisher['id'] }}"
-                                                            publisher_id="{{ $publisher['id'] }}" data-url="{{ route('updatepublisherstatus') }}" href="javascript:void(0)">
-                                                            {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
+                                                    @if ($adminType === 'vendor')
+                                                        @if ($publisher['status'] == 1)
+                                                            <a class="updatePublisherStatus"
+                                                               id="publisher-{{ $publisher['id'] }}"
+                                                               publisher_id="{{ $publisher['id'] }}"
+                                                               data-url="{{ route('vendor.updatepublisherstatus') }}"
+                                                               href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                            </a>
+                                                        @else
+                                                            <a class="updatePublisherStatus"
+                                                               id="publisher-{{ $publisher['id'] }}"
+                                                               publisher_id="{{ $publisher['id'] }}"
+                                                               data-url="{{ route('vendor.updatepublisherstatus') }}"
+                                                               href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>
+                                                            </a>
+                                                        @endif
                                                     @else
-                                                        {{-- if the admin status is inactive --}}
-                                                        <a class="updatePublisherStatus" id="publisher-{{ $publisher['id'] }}"
-                                                            publisher_id="{{ $publisher['id'] }}" data-url="{{ route('updatepublisherstatus') }}" href="javascript:void(0)">
-                                                            {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
+                                                        @if ($publisher['status'] == 1)
+                                                            <a class="updatePublisherStatus"
+                                                               id="publisher-{{ $publisher['id'] }}"
+                                                               publisher_id="{{ $publisher['id'] }}"
+                                                               data-url="{{ route('admin.updatepublisherstatus') }}"
+                                                               href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                            </a>
+                                                        @else
+                                                            <a class="updatePublisherStatus"
+                                                               id="publisher-{{ $publisher['id'] }}"
+                                                               publisher_id="{{ $publisher['id'] }}"
+                                                               data-url="{{ route('admin.updatepublisherstatus') }}"
+                                                               href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>
+                                                            </a>
+                                                        @endif
                                                     @endif
                                                 </td>
+                                                
                                                 <td>
                                                     <a href="{{ url('admin/add-edit-publisher/' . $publisher['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                        {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
 
                                                     {{-- <a href="JavaScript:void(0)" class="confirmDelete" module="publisher" moduleid="{{ $publisher['id'] }}">
@@ -72,7 +97,8 @@
                                                     </a> --}}
 
 
-                                                    <a href="{{ url('admin/delete-publisher/' . $publisher['id']) }}" onclick="return confirm('Are you sure you want to delete this publisher?')">
+                                                    <a href="{{ url('admin/delete-publisher/' . $publisher['id']) }}"
+                                                        onclick="return confirm('Are you sure you want to delete this publisher?')">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>
                                                 </td>
@@ -90,7 +116,8 @@
         <!-- partial:../../partials/_footer.html -->
         <footer class="footer">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights reserved.</span>
+                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
+                    reserved.</span>
             </div>
         </footer>
         <!-- partial -->
@@ -110,6 +137,3 @@
         });
     </script>
 @endsection
-
-
-
