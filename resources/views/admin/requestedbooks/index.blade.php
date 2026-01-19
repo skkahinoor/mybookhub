@@ -68,13 +68,16 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if ($adminType !== 'vendor')
+                                                    {{-- @if ($adminType !== 'vendor')
                                                         <a href="{{ url('admin/requestedbooks/reply/' . $book['id']) }}"
                                                             title="Reply">
                                                             <i style="font-size:25px;" class="mdi mdi-reply"></i>
                                                         </a>
-                                                    @endif
-
+                                                    @endif --}}
+                                                    <a href="{{ url('admin/requestedbooks/reply/' . $book['id']) }}"
+                                                        title="Reply">
+                                                        <i style="font-size:25px;" class="mdi mdi-reply"></i>
+                                                    </a>
 
                                                     @if ($adminType === 'vendor')
                                                         {{-- VENDOR DASHBOARD DELETE --}}
