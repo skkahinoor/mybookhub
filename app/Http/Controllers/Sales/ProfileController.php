@@ -68,7 +68,8 @@ class ProfileController extends Controller
     public function update(Request $request)
     {
         $sales = Auth::guard('sales')->user();
-
+        $headerLogo = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         // Check if name/email fields are present in the request
         $hasNameEmail = $request->has('name') || $request->has('email');
 

@@ -78,14 +78,19 @@
                                 </div>
                             @endif
 
-
-
-
-
-
-                            <form class="forms-sample" action="{{ route('store.author')}}"   method="post" enctype="multipart/form-data"> <!-- If the id is not passed in from the route, this measn 'Add a new author', but if the id is passed in from the route, this means 'Edit the author' --> <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
-                                @csrf {{-- Preventing CSRF Requests: https://laravel.com/docs/9.x/csrf#preventing-csrf-requests --}}
-
+                            @if ($adminType === 'vendor')
+                            <form class="forms-sample" action="{{ route('vendor.store.author')}}"   method="post" enctype="multipart/form-data">
+                                @csrf
+                                <div class="form-group">
+                                    <label for="author_name">Author Name</label>
+                                    <input type="text" class="form-control" id="author_name" placeholder="Enter Author Name" name="name" @if (!empty($author['name'])) value="{{ $author['name'] }}" @else value="{{ old('author_name') }}" @endif>
+                                </div>
+                                <button type="submit" class="btn btn-primary mr-2">Submit</button>
+                                <a href="{{ url('vendor/authors') }}" class="btn btn-light">Cancel</a>
+                            </form>
+                            @else
+                            <form class="forms-sample" action="{{ route('admin.store.author')}}"   method="post" enctype="multipart/form-data">
+                                @csrf
                                 <div class="form-group">
                                     <label for="author_name">Author Name</label>
                                     <input type="text" class="form-control" id="author_name" placeholder="Enter Author Name" name="name" @if (!empty($author['name'])) value="{{ $author['name'] }}" @else value="{{ old('author_name') }}" @endif>
@@ -93,6 +98,7 @@
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
                                 <a href="{{ url('admin/authors') }}" class="btn btn-light">Cancel</a>
                             </form>
+                            @endif
                         </div>
                     </div>
                 </div>

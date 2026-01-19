@@ -13,8 +13,13 @@
 
 
 
-                            <a href="{{ route('add.author') }}" style="max-width: 150px; float: right; display: inline-block"
+                            @if ($adminType === 'vendor')
+                            <a href="{{ route('vendor.add.author') }}" style="max-width: 150px; float: right; display: inline-block"
                                 class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Author</a>
+                                @else
+                                <a href="{{ route('admin.add.author') }}" style="max-width: 150px; float: right; display: inline-block"
+                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Author</a>
+                                @endif
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
@@ -73,14 +78,16 @@
                                                 @endif
                                                 </td>
                                                 <td>
-                                                    <a href="{{ route('edit.author', $author->id) }}">
+                                                    
+                                                @if ($adminType === 'vendor')
+                                                    <a href="{{ route('vendor.edit.author', $author->id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                         {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
 
                                                     {{-- Confirm Deletion JS alert and Sweet Alert  --}}
                                                     <a title="author" class="confirmDelete"
-                                                        href="{{ route('delete.author', $author->id) }}">
+                                                        href="{{ route('vendor.delete.author', $author->id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                         {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
@@ -88,6 +95,23 @@
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> Icons from Skydash Admin Panel Template
                                                     </a> --}}
                                                 </td>
+                                                @else
+                                                <a href="{{ route('admin.edit.author', $author->id) }}">
+                                                    <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                    {{-- Icons from Skydash Admin Panel Template --}}
+                                                </a>
+
+                                                {{-- Confirm Deletion JS alert and Sweet Alert  --}}
+                                                <a title="author" class="confirmDelete"
+                                                    href="{{ route('admin.delete.author', $author->id) }}">
+                                                    <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                                    {{-- Icons from Skydash Admin Panel Template --}}
+                                                </a>
+                                                {{-- <a href="JavaScript:void(0)" class="confirmDelete" module="author" moduleid="{{ $subject['id'] }}">
+                                                    <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> Icons from Skydash Admin Panel Template
+                                                </a> --}}
+                                            </td>
+                                                @endif
                                             </tr>
                                         @endforeach
                                     </tbody>

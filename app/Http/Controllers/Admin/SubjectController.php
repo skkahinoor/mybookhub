@@ -16,6 +16,7 @@ class SubjectController extends Controller
     {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
+        $adminType = Auth::guard('admin')->user()->type;
         $subjects = Subject::orderBy('id','desc')->get();
         Session::put('page', 'subjects');
         $adminType = Auth::guard('admin')->user()->type;
@@ -26,7 +27,8 @@ class SubjectController extends Controller
     {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        return view('admin.subject.add_subject', compact('logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.subject.add_subject', compact('logos', 'headerLogo', 'adminType'));
     }
 
     public function store(Request $request)
@@ -39,8 +41,8 @@ class SubjectController extends Controller
         $store = Subject::create([
             'name' => $request->name,
         ]);
-        return redirect()->route('subject')->with('success', 'Subject inserted successfully', 'logos');
-        return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));
+        
+        return redirect()->back()->with('success', 'Subject inserted successfully');
     }
 
     public function edit($id)
@@ -48,7 +50,8 @@ class SubjectController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $subjects = Subject::find($id);
-        return view('admin.subject.edit_subject', compact('subjects', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.subject.edit_subject', compact('subjects', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function update(Request $request)
@@ -62,7 +65,7 @@ class SubjectController extends Controller
         $update->update([
             'name' => $request->name,
         ]);
-        return redirect()->route('subject')->with('success', 'Subject updated successfully', 'logos');
+        return redirect()->back()->with('success', 'Subject updated successfully');
         return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));
     }
 

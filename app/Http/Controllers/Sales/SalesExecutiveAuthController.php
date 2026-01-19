@@ -32,10 +32,9 @@ class SalesExecutiveAuthController extends Controller
         $language = Language::get();
         $sections = Section::all();
         $condition      = session('condition', 'new');
-        // $headerLogo = HeaderLogo::first();
-        // $logos      = $headerLogo;
+        $headerLogo = HeaderLogo::first();
 
-        return view('sales.login', compact('logos', 'language', 'sections', 'condition'));
+        return view('sales.login', compact('logos', 'language', 'sections', 'condition', 'headerLogo'));
     }
 
     public function login(Request $request)
@@ -93,7 +92,7 @@ class SalesExecutiveAuthController extends Controller
     public function showRegister()
     {
         $headerLogo = HeaderLogo::first();
-        $logos      = $headerLogo;
+        $logos      = HeaderLogo::first();
 
         return view('sales.register', compact('logos', 'headerLogo'));
     }
@@ -184,6 +183,8 @@ class SalesExecutiveAuthController extends Controller
 
     public function register(Request $request)
     {
+        $headerLogo = HeaderLogo::first();
+        $logos      = HeaderLogo::first();
         $request->validate([
             'otp'                   => 'required',
             'phone'                 => 'required',
@@ -244,7 +245,7 @@ class SalesExecutiveAuthController extends Controller
     public function dashboard()
     {
         $headerLogo = HeaderLogo::first();
-        $logos      = $headerLogo;
+        $logos      = HeaderLogo::first();
 
         $salesExecutive = auth('sales')->user();
         $salesExecutiveId = $salesExecutive->id;
@@ -317,8 +318,8 @@ class SalesExecutiveAuthController extends Controller
         }
 
         return view('sales.dashboard', compact(
-            'logos',
             'headerLogo',
+            'logos',
             'totalInstitutions',
             'totalStudents',
             'todayStudents',

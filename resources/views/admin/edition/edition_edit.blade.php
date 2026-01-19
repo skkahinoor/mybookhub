@@ -16,7 +16,8 @@
                                     </ul>
                                 </div>
                             @endif
-                            <form action="{{ route('edition.update', $edition->id) }}" method="POST">
+
+                            <form action="{{ route('admin.edition.update', $edition->id) }}" method="POST">
                                 @csrf
                                 @method('PUT')
                                 <div class="form-group">
@@ -24,7 +25,7 @@
                                     <input type="text" name="edition" class="form-control" id="edition" value="{{ old('edition', $edition->edition) }}" required>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Update</button>
-                                <a href="{{ route('edition.index') }}" class="btn btn-secondary">Cancel</a>
+                                <a href="{{ route('admin.edition.index') }}" class="btn btn-secondary">Cancel</a>
                             </form>
                         </div>
                     </div>

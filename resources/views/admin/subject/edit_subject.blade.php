@@ -83,15 +83,23 @@
 
 
 
-                            <form class="forms-sample" action="{{ route('update.subject', $subjects->id)}}"   method="post" enctype="multipart/form-data"> <!-- If the id is not passed in from the route, this measn 'Add a new subject', but if the id is passed in from the route, this means 'Edit the subject' --> <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
-                                @csrf {{-- Preventing CSRF Requests: https://laravel.com/docs/9.x/csrf#preventing-csrf-requests --}}
+                            @if ($adminType === 'vendor')
+                            <form class="forms-sample" action="{{ route('vendor.update.subject', $subjects->id)}}"   method="post" enctype="multipart/form-data">
+                            @else
+                            <form class="forms-sample" action="{{ route('admin.update.subject', $subjects->id)}}"   method="post" enctype="multipart/form-data">
+                            @endif
+                                @csrf 
 
                                 <div class="form-group">
                                     <label for="subject_name">Subject Name</label>
                                     <input type="text" class="form-control" id="subject_name" value="{{$subjects->name}}" placeholder="Enter Subject Name" name="name" @if (!empty($subject['name'])) value="{{ $subject['name'] }}" @else value="{{ old('subject_name') }}" @endif>
                                 </div>
                                 <button type="submit" class="btn btn-primary mr-2">Update</button>
+                                @if ($adminType === 'vendor')
+                                <a href="{{ url('vendor/subjects') }}" class="btn btn-light">Cancel</a>
+                                @else
                                 <a href="{{ url('admin/subjects') }}" class="btn btn-light">Cancel</a>
+                                @endif
                             </form>
                         </div>
                     </div>

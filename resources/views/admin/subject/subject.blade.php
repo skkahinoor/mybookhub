@@ -9,11 +9,11 @@
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Subject</h4>
-
-
-
-
-                            <a href=" {{ route('add.subject')}}" style="max-width: 150px; float: right; display: inline-block" class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Subject</a>
+                            @if ($adminType === 'vendor')
+                            <a href=" {{ route('vendor.add.subject')}}" style="max-width: 150px; float: right; display: inline-block" class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Subject</a>
+                            @else
+                            <a href=" {{ route('admin.add.subject')}}" style="max-width: 150px; float: right; display: inline-block" class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Subject</a>
+                            @endif
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
@@ -62,7 +62,9 @@
                                                 @endif
                                                 </td>
                                                 <td>
-                                                    <a href="{{ route('edit.subject',$subject->id)}}">
+                                                    @if ($adminType === 'vendor')  
+
+                                                    <a href="{{ route('vendor.edit.subject',$subject->id)}}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
 
@@ -74,6 +76,17 @@
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> Icons from Skydash Admin Panel Template
                                                     </a> --}}
                                                 </td>
+                                                @else
+                                                
+                                                <a href="{{ route('admin.edit.subject',$subject->id)}}">
+                                                    <i style="font-size: 25px" class="mdi mdi-pencil-box"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                </a>
+
+                                                {{-- Confirm Deletion JS alert and Sweet Alert  --}}
+                                                <a title="subject" class="confirmDelete" href="{{ route('admin.delete.subject',$subject->id)}}">
+                                                    <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>  {{-- Icons from Skydash Admin Panel Template --}}
+                                                </a>
+                                                @endif
                                             </tr>
                                         @endforeach
                                     </tbody>

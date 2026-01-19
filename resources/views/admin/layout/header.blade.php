@@ -132,12 +132,21 @@
                             </div>
                         </div>
                         <div class="dropdown-divider"></div>
+                        @if (Auth::guard('admin')->user()->type === 'vendor')
+                        <a class="dropdown-item preview-item" href="{{ url('vendor/notifications') }}">
+                            <p class="mb-0 font-weight-normal float-left">See all notifications</p>
+                            <span class="float-right">
+                                <i class="ti-arrow-right"></i>
+                            </span>
+                        </a>
+                        @else
                         <a class="dropdown-item preview-item" href="{{ url('admin/notifications') }}">
                             <p class="mb-0 font-weight-normal float-left">See all notifications</p>
                             <span class="float-right">
                                 <i class="ti-arrow-right"></i>
                             </span>
                         </a>
+                        @endif
                     </div>
                 </li>
                 <li class="nav-item nav-profile dropdown">

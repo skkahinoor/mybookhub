@@ -82,9 +82,12 @@
 
 
 
-
-                            <form class="forms-sample" action="{{ route('update.author',$authors->id)}}"  method="post" enctype="multipart/form-data"> <!-- If the id is not passed in from the route, this measn 'Add a new author', but if the id is passed in from the route, this means 'Edit the author' --> <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
-                                @csrf {{-- Preventing CSRF Requests: https://laravel.com/docs/9.x/csrf#preventing-csrf-requests --}}
+                            @if ($adminType === 'vendor')
+                            <form class="forms-sample" action="{{ route('vendor.update.author',$authors->id)}}"  method="post" enctype="multipart/form-data"> 
+                            @else
+                            <form class="forms-sample" action="{{ route('admin.update.author',$authors->id)}}"  method="post" enctype="multipart/form-data"> 
+                            @endif
+                                @csrf 
 
                                 <div class="form-group">
                                     <label for="author_name">Author Name</label>

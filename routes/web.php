@@ -131,12 +131,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-publisher/{id?}', 'PublisherController@addEditPublisher'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the brand, and if not passed, this means Add a Brand
 
         //Author
-        Route::get('authors', [AuthorController::class, 'index'])->name('author');
-        Route::get('add_author', [AuthorController::class, 'add'])->name('add.author');
-        Route::post('store_author', [AuthorController::class, 'store'])->name('store.author');
-        Route::get('author_edit/{id}', [AuthorController::class, 'edit'])->name('edit.author');
-        Route::post('author_update/{id}', [AuthorController::class, 'update'])->name('update.author');
-        Route::get('author_delete/{id}', [AuthorController::class, 'delete'])->name('delete.author');
+        Route::get('authors', [AuthorController::class, 'index'])->name('admin.author');
+        Route::get('add_author', [AuthorController::class, 'add'])->name('admin.add.author');
+        Route::post('store_author', [AuthorController::class, 'store'])->name('admin.store.author');
+        Route::get('author_edit/{id}', [AuthorController::class, 'edit'])->name('admin.edit.author');
+        Route::post('author_update/{id}', [AuthorController::class, 'update'])->name('admin.update.author');
+        Route::get('author_delete/{id}', [AuthorController::class, 'delete'])->name('admin.delete.author');
 
         //RequestedBooks
         Route::get('requestedbooks', [BookRequestsController::class, 'index'])->name('requestbook.index');
@@ -152,12 +152,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::delete('sell-book-requests/{id}', [App\Http\Controllers\Admin\SellBookRequestController::class, 'destroy'])->name('admin.sell-book-requests.destroy');
 
         //Subject
-        Route::get('subjects', [SubjectController::class, 'index'])->name('subject');
-        Route::get('add_subject', [SubjectController::class, 'add'])->name('add.subject');
-        Route::post('store_subject', [SubjectController::class, 'store'])->name('store.subject');
-        Route::get('edit/{id}', [SubjectController::class, 'edit'])->name('edit.subject');
-        Route::post('update/{id}', [SubjectController::class, 'update'])->name('update.subject');
-        Route::get('delete/{id}', [SubjectController::class, 'delete'])->name('delete.subject');
+        Route::get('subjects', [SubjectController::class, 'index'])->name('admin.subject');
+        Route::get('add_subject', [SubjectController::class, 'add'])->name('admin.add.subject');
+        Route::post('store_subject', [SubjectController::class, 'store'])->name('admin.store.subject');
+        Route::get('edit/{id}', [SubjectController::class, 'edit'])->name('admin.edit.subject');
+        Route::post('update/{id}', [SubjectController::class, 'update'])->name('admin.update.subject');
+        Route::get('delete/{id}', [SubjectController::class, 'delete'])->name('admin.delete.subject');
 
         // Schools
         Route::resource('schools', SchoolController::class)->names([
@@ -350,12 +350,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Editions
         Route::resource('edition', EditionController::class)->names([
-            'index'   => 'edition.index',
-            'create'  => 'edition.create',
-            'store'   => 'edition.store',
-            'edit'    => 'edition.edit',
-            'update'  => 'edition.update',
-            'destroy' => 'edition.destroy',
+            'index'   => 'admin.edition.index',
+            'create'  => 'admin.edition.create',
+            'store'   => 'admin.edition.store',
+            'edit'    => 'admin.edition.edit',
+            'update'  => 'admin.edition.update',
+            'destroy' => 'admin.edition.destroy',
         ])->except(['show']);
 
         Route::get('product/{id}/editions', [BookAttributeController::class, 'getEditions']);

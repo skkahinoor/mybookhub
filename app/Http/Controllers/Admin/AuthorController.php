@@ -25,7 +25,8 @@ class AuthorController extends Controller
     {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        return view('admin.authors.add_author', compact('logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        return view('admin.authors.add_author', compact('logos', 'headerLogo', 'adminType'));
     }
 
     public function store(Request $request)
@@ -38,16 +39,17 @@ class AuthorController extends Controller
         $store = Author::create([
             'name' => $request->name,
         ]);
-        return redirect()->route('author')->with('success', 'Author name inserted successfully!!', 'logos', 'headerLogo');
-        return view('admin.authors.author', compact('authors', 'logos', 'headerLogo'));
+        return redirect()->back()->with('success', 'Author name inserted successfully!!');
+        // return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function edit($id)
     {
         $authors = Author::find($id);
+        $adminType = Auth::guard('admin')->user()->type;
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        return view('admin.authors.edit_author', compact('authors', 'logos', 'headerLogo'));
+        return view('admin.authors.edit_author', compact('authors', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function update(Request $request){
@@ -60,8 +62,8 @@ class AuthorController extends Controller
         $update->update([
             'name'=> $request->name,
         ]);
-        return redirect()->route('author')->with('success', 'Author name updated successfully!!', 'logos', 'headerLogo');
-        return view('admin.authors.author', compact('authors', 'logos', 'headerLogo'));
+        return redirect()->route('admin.author.index')->with('success', 'Author name updated successfully!!');
+        return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
         
     }
 
@@ -71,7 +73,7 @@ class AuthorController extends Controller
         $logos = HeaderLogo::first();
         $delete->delete();
         return redirect()->back()->with('success', 'Author name deleted successfully!!', 'logos');
-        return view('admin.authors.author', compact('authors', 'logos', 'headerLogo'));
+        return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
     }
 
     /**

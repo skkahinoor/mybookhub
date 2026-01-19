@@ -16,7 +16,9 @@
                                     </ul>
                                 </div>
                             @endif
-                            <form action="{{ route('edition.store') }}" method="POST">
+
+                            @if ($adminType === 'vendor')
+                            <form action="{{ route('vendor.edition.store') }}" method="POST">
                                 @csrf
                                 <div class="form-group">
                                     <label for="edition">Edition <span class="text-danger">*</span></label>
@@ -25,6 +27,17 @@
                                 <button type="submit" class="btn btn-primary">Save</button>
                                 <a href="{{ route('edition.index') }}" class="btn btn-secondary">Cancel</a>
                             </form>
+                            @else
+                            <form action="{{ route('admin.edition.store') }}" method="POST">
+                                @csrf
+                                <div class="form-group">
+                                    <label for="edition">Edition <span class="text-danger">*</span></label>
+                                    <input type="text" name="edition" class="form-control" id="edition" value="{{ old('edition') }}" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                                <a href="{{ route('admin.edition.index') }}" class="btn btn-secondary">Cancel</a>
+                            </form>
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -7,9 +7,15 @@
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Editions</h4>
-                            <a href="{{ route('edition.create') }}"
+                            @if ($adminType === 'vendor')
+                            <a href="{{ route('vendor.edition.create') }}"
                                 style="max-width: 150px; float: right; display: inline-block"
                                 class="btn btn-block btn-primary mb-3"><i class="mdi mdi-plus"></i> Add Edition</a>
+                            @else
+                            <a href="{{ route('admin.edition.create') }}"
+                                style="max-width: 150px; float: right; display: inline-block"
+                                class="btn btn-block btn-primary mb-3"><i class="mdi mdi-plus"></i> Add Edition</a>
+                            @endif
 
                             {{-- Displaying The Validation Errors and Success Messages --}}
                             @if (Session::has('success'))
@@ -37,16 +43,35 @@
                                                 <td>{{ $edition->edition ?? 'Not set'}}</td>
 
                                                 <td>
-                                                    <a title="Edit Edition" href="{{ route('edition.edit', $edition->id) }}">
+                                                    @if ($adminType === 'vendor')
+                                                    <a title="Edit Edition" href="{{ route('vendor.edition.edit', $edition->id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
-                                                    <form action="{{ route('edition.destroy', $edition->id) }}" method="POST" style="display:inline-block;">
+                                                    @else
+                                                    <a title="Edit Edition" href="{{ route('admin.edition.edit', $edition->id) }}">
+                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                    </a>
+
+                                                    @endif
+
+                                                    @if ($adminType === 'vendor')
+                                                    <form action="{{ route('vendor.edition.destroy', $edition->id) }}" method="POST" style="display:inline-block;">
                                                         @csrf
                                                         @method('DELETE')
                                                         <button type="submit" class="btn btn-link p-0" onclick="return confirm('Are you sure?')">
                                                             <i style="font-size: 25px; color: #dc3545;" class="mdi mdi-file-excel-box"></i>
                                                         </button>
                                                     </form>
+                                                    @else
+                                                    <form action="{{ route('admin.edition.destroy', $edition->id) }}" method="POST" style="display:inline-block;">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-link p-0" onclick="return confirm('Are you sure?')">
+                                                            <i style="font-size: 25px; color: #dc3545;" class="mdi mdi-file-excel-box"></i>
+                                                        </button>
+                                                    </form>
+                                                    @endif
+
                                                 </td>
                                             </tr>
                                         @endforeach
