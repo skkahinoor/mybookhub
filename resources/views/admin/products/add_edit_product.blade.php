@@ -536,6 +536,14 @@
     background-color: #e9ecef;
 }</style>
 
+<script>
+    const isbnLookupUrl = "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
+        ? url('vendor/book/isbn-lookup')
+        : url('admin/book/isbn-lookup') }}";
+    const nameSuggestion = "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
+        ? url('vendor/book/name-suggestions')
+        : url('admin/book/name-suggestions') }}";
+</script>
 
     {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
     <!-- Include Select2 CSS -->
@@ -564,7 +572,7 @@
                 debounceTimer = setTimeout(function() {
 
                     $.ajax({
-                        url: "{{ url('/admin/book/name-suggestions') }}",
+                        url: nameSuggestion,
                         type: "POST",
                         data: {
                             _token: "{{ csrf_token() }}",
@@ -632,7 +640,7 @@
     if (!isbn) return;
 
     $.ajax({
-        url: "{{ route('admin.book.isbnLookup') }}",
+        url: isbnLookupUrl,
         type: "POST",
         data: {
             isbn: isbn,

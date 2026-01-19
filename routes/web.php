@@ -49,8 +49,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     // This a Route Group for routes that ALL start with 'admin/-something' and utilizes the 'admin' Authentication Guard    // Note: You must remove the '/admin'/ part from the routes that are written inside this Route Group (e.g.    Route::get('logout');    , NOT    Route::get('admin/logout');    )
     Route::group(['middleware' => ['auth:admin']], function () {
         // check isbn
-        Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
-            ->name('admin.book.isbnLookup');
+        Route::post('/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
+            ->name('book.isbnLookup');
         Route::post('/book/name-suggestions', [AdminProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
         Route::get('dashboard', 'AdminController@dashboard')->name('admin.dashboard');                                                 // Admin login
         Route::get('logout', 'AdminController@logout');                                                       // Admin logout
