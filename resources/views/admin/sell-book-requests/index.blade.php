@@ -74,11 +74,20 @@
                                             <a href="{{ route('admin.sell-book-requests.show', $request->id) }}" title="View Details">
                                                 <i style="font-size:25px;" class="mdi mdi-eye"></i>
                                             </a>
-                                            <a href="javascript:void(0)" class="confirmDelete" 
-                                               module="sell-book-request" moduleid="{{ $request->id }}" title="Delete">
-                                                <i style="font-size:25px;" class="mdi mdi-delete"></i>
-                                            </a>
+                                        
+                                            <form action="{{ route('admin.sell-book-requests.destroy', $request->id) }}"
+                                                  method="POST"
+                                                  style="display:inline;"
+                                                  onsubmit="return confirm('Are you sure you want to delete this sell book request?')">
+                                                @csrf
+                                                @method('DELETE')
+                                        
+                                                <button type="submit" style="background:none;border:none;padding:0;">
+                                                    <i style="font-size:25px;color:red;" class="mdi mdi-delete"></i>
+                                                </button>
+                                            </form>
                                         </td>
+                                        
                                     </tr>
                                     @endforeach
                                 </tbody>

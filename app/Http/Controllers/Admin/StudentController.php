@@ -9,6 +9,7 @@ use App\Models\InstitutionManagement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Hash;
 
 class StudentController extends Controller
 {
@@ -51,7 +52,7 @@ class StudentController extends Controller
 
         $data = $request->all();
 
-
+        $data['password']  = Hash::make('123456');
         $data['status'] = 1;
         $data['user_type'] = 'student';
         $data['added_by'] = Auth::guard('admin')->user()->id;

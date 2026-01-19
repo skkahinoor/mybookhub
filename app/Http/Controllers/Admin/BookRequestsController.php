@@ -26,7 +26,7 @@ class BookRequestsController extends Controller
     {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        
+
         if ($request->isMethod('post')) {
             $data = $request->all();
 
@@ -112,7 +112,20 @@ class BookRequestsController extends Controller
             return response()->json(['error' => 'Book Request not found.'], 404);
         }
     }
+    public function delete($id)
+    {
+        $bookRequest = BookRequest::find($id);
+
+        if (!$bookRequest) {
+            return redirect()->back()->with('error_message', 'Book request not found!');
+        }
+
+        // ✅ Delete replies FIRST
+        BookRequestReply::where('book_request_id', $id)->delete();
+
+        // ✅ Now delete book request
+        $bookRequest->delete();
+
+        return redirect()->back()->with('success_message', 'Book request deleted successfully!');
+    }
 }
-
-
-

@@ -237,12 +237,11 @@ class AdminController extends Controller
                     // Assigning the uploaded images path inside the 'public' folder
                     $imagePath = 'admin/images/photos/' . $imageName;
 
-                    // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                     Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
                 }
             } else if (! empty($data['current_admin_image'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
                 $imageName = $data['current_admin_image'];
-            } else { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), and originally there wasn't any image uploaded in the first place
+            } else {
                 $imageName = '';
             }
 
@@ -272,7 +271,6 @@ class AdminController extends Controller
                 $data = $request->all();
                 // dd($data);
 
-                // Laravel's Validation    // Customizing Laravel's Validation Error Messages: https://laravel.com/docs/9.x/validation#customizing-the-error-messages    // Customizing Validation Rules: https://laravel.com/docs/9.x/validation#custom-validation-rules
                 $rules = [
                     'vendor_name'   => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                     'vendor_mobile' => 'required|numeric',
@@ -282,7 +280,7 @@ class AdminController extends Controller
                     'block_id'      => 'nullable|exists:blocks,id',
                 ];
 
-                $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
+                $customMessages = [
                     'vendor_name.required'   => 'Name is required',
                     'vendor_name.regex'      => 'Valid Name is required',
                     'vendor_mobile.required' => 'Mobile is required',
@@ -291,9 +289,6 @@ class AdminController extends Controller
 
                 $this->validate($request, $rules, $customMessages);
 
-                // Uploading Admin Photo
-
-                // Using the Intervention package for uploading images
                 if ($request->hasFile('vendor_image')) { // the HTML name attribute    name="admin_name"    in update_admin_details.blade.php
                     $image_tmp = $request->file('vendor_image');
 
@@ -349,7 +344,7 @@ class AdminController extends Controller
                 $data = $request->all();
                 // dd($data);
 
-             
+
                 $rules = [
                     'shop_name'     => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                     'shop_city'     => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
@@ -392,8 +387,7 @@ class AdminController extends Controller
                 }
 
                 $vendorCount = VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->count(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-                if ($vendorCount > 0) {                                                                                     // if there's a vendor already existing, them UPDATE
-                    // UPDATE `vendors_business_details` table
+                if ($vendorCount > 0) {                                                                                     // if there's a 
                     VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->update([                // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'shop_name'               => $data['shop_name'],
                         'shop_mobile'             => $data['shop_mobile'],
@@ -446,8 +440,6 @@ class AdminController extends Controller
             if ($request->isMethod('post')) { // if the <form> is submitted
                 $data = $request->all();
                 // dd($data);
-
-                // Laravel's Validation    // Customizing Laravel's Validation Error Messages: https://laravel.com/docs/9.x/validation#customizing-the-error-messages    // Customizing Validation Rules: https://laravel.com/docs/9.x/validation#custom-validation-rules
                 $rules = [
                     'account_holder_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                     'bank_name'           => 'required',                       // only alphabetical characters and spaces
@@ -565,9 +557,7 @@ class AdminController extends Controller
         $logos = HeaderLogo::first();
         $admins = Admin::query();
 
-        if (! empty($type)) { // in this case, $type can be: superadmin, admin, subadmin or vendor
-            // Map URL parameter to database type
-            // If URL says 'admin', it might actually be 'superadmin' in the database
+        if (! empty($type)) {
             $typeMapping = [
                 'admin' => 'superadmin', // Map 'admin' URL to 'superadmin' database type
             ];
@@ -736,7 +726,7 @@ class AdminController extends Controller
 
             // Laravel's Validation
             $rules = [
-                'name'   => 'required|regex:/^[\pL\s\-]+$/u',
+                'name'   => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
                 'email'  => [
                     'required',
                     'email',
@@ -906,33 +896,22 @@ class AdminController extends Controller
 
     public function deleteAdmin($id)
     {
-        $logos = HeaderLogo::first();
-        $headerLogo = HeaderLogo::first();
-        // Don't allow deleting the currently logged-in admin
         if ($id == Auth::guard('admin')->user()->id) {
-            return redirect('admin/admins')->with('error_message', 'You cannot delete yourself!');
+            return redirect()->back()->with('error_message', 'You cannot delete yourself!');
         }
 
-        // Get admin details
-        $admin = Admin::find($id);
+        $admin = Admin::findOrFail($id);
 
-        if (!$admin) {
-            return redirect('admin/admins')->with('error_message', 'Admin not found!');
+        if (!empty($admin->image) && file_exists(public_path('admin/images/photos/' . $admin->image))) {
+            unlink(public_path('admin/images/photos/' . $admin->image));
         }
 
-        // Delete admin image if exists
-        if (!empty($admin['image'])) {
-            $imagePath = public_path('admin/images/photos/' . $admin['image']);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
-        }
+        $admin->delete();
 
-        // Delete the admin
-        Admin::where('id', $id)->delete();
-
-        return redirect('admin/admins')->with('success_message', 'Admin deleted successfully!');
+        return redirect()->back()->with('success_message', 'Admin deleted successfully!');
     }
+
+
 
     public function contactQueries()
     {
@@ -1025,7 +1004,7 @@ class AdminController extends Controller
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         ContactUs::where('id', $id)->delete();
-        
+
         return redirect('admin/contact-queries')->with('success_message', 'Query deleted successfully!');
     }
 }
