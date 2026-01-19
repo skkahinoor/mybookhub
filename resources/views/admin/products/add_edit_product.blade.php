@@ -222,10 +222,6 @@
                                 </div>
                             </div>
 
-
-
-                            {{-- Our Bootstrap error code in case of wrong current password or the new password and confirm password are not matching: --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
                             @if (Session::has('error_message'))
                                 <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -236,9 +232,6 @@
                                 </div>
                             @endif
 
-
-
-                            {{-- Displaying Laravel Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors --}}
                             @if ($errors->any())
                                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
 
@@ -255,9 +248,7 @@
 
 
 
-                            {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
+
                             @if (Session::has('success_message'))
                                 <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -273,8 +264,7 @@
                                 @else
                                     action="{{ url('admin/add-edit-product/' . $product['id']) }}" @endif
                                 method="post" enctype="multipart/form-data">
-                                <!-- If the id is not passed in from the route, this measn 'Add a new Product', but if the id is passed in from the route, this means 'Edit the Product' -->
-                                <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
+
                                 @csrf
 
                                 <div class="d-flex align-items-center condition-toggle" role="group"
@@ -333,11 +323,11 @@
 
 
                                     <label for="category_id">Select Category</label>
-                                    {{-- <input type="text" class="form-control" id="category_id" placeholder="Enter Category Name" name="category_id" @if (!empty($product['name'])) value="{{ $product['category_id'] }}" @else value="{{ old('category_id') }}" @endif>  --}} {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
+
                                     <select name="category_id" id="category_id" class="form-control text-dark">
                                         <option value="">Select Category</option>
                                         @foreach ($categories as $section)
-                                            {{-- $categories are ALL the `sections` with their related 'parent' categories (if any (if exist)) and their subcategories or `child` categories (if any (if exist)) --}} {{-- Check ProductsController.php --}}
+
                                             <optgroup label="{{ $section['name'] }}"> {{-- sections --}}
                                                 @foreach ($section['categories'] as $category)
                                                     {{-- parent categories --}} {{-- Check ProductsController.php --}}
@@ -354,13 +344,10 @@
                                                 @endforeach
                                             </optgroup>
                                         @endforeach
-                                        {{-- <option value="{{ $category['id'] }}" @if (!empty($product['category_id']) && $product['category_id'] == $category['id']) selected @endif >{{ $category['name'] }}</option> --}}
+
                                     </select>
                                 </div>
 
-
-
-                                {{-- Including the related filters <select> box of a product DEPENDING ON THE SELECTED CATEGORY of the product --}}
                                 <div class="loadFilters">
                                     @include('admin.filters.category_filters')
                                 </div>
@@ -449,18 +436,15 @@
                                     <input type="text" class="form-control" id="product_price"
                                         placeholder="Enter Book Price" name="product_price"
                                         @if (!empty($product['product_price'])) value="{{ $product['product_price'] }}" @else value="{{ old('product_price') }}" @endif>
-                                    {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
+
                                 </div>
 
                                 <div class="form-group">
                                     <label for="product_image">Image (Recommended Size: 1000x1000)</label>
-                                    {{-- Important Note: There are going to be 3 three sizes for the product image: Admin will upload the image with the recommended size which 1000*1000 which is the 'large' size (will store it in 'large' folder), but then we're going to use 'Intervention' package to get another two sizes: 500*500 which is the 'medium' size (will store it in 'medium' folder) and 250*250 which is the 'small' size (will store it in 'small' folder) --}}
+
                                     <input type="file" class="form-control" id="product_image" name="product_image">
                                     <div id="isbnImagePreview"></div>
                                     {{-- Show the admin image if exists --}}
-
-
-
 
                                     {{-- Show the product image, if any (if exits) --}}
                                     @if (!empty($product['product_image']))
@@ -469,7 +453,7 @@
                                             Book Image</a>&nbsp;|&nbsp; {{-- Showing the 'large' image inside the 'large' folder --}}
                                         <a href="JavaScript:void(0)" class="confirmDelete" module="product-image"
                                             moduleid="{{ $product['id'] }}">Delete Book Image</a>
-                                        {{-- Delete the product image from BOTH SERVER (FILESYSTEM) & DATABASE --}} {{-- Check admin/js/custom.js and web.php (routes) --}}
+
                                     @endif
                                 </div>
 

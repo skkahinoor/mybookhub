@@ -1,6 +1,3 @@
-{{-- This is the HTML Order Invoice. This page is rendered by viewOrderInvoice() method inside Admin/OrderController.php --}}
-
-
 
 <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
 <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
@@ -15,10 +12,9 @@
                 <h3 class="pull-right">
                     Order # {{ $orderDetails['id'] }}
 
-                    {{-- Laravel barcode/QR code generation package (to show barcodes/QR codes for both Product ID and Product Code): https://github.com/milon/barcode --}}
+
                     @php
-                        echo DNS1D::getBarcodeHTML($orderDetails['id'], 'C39');       // This is the product `id` Barcode
-                        // echo DNS2D::getBarcodeHTML($orderDetails['id'], 'QRCODE'); // This is the product `id` QR code
+                        echo DNS1D::getBarcodeHTML($orderDetails['id'], 'C39');
                     @endphp
                 </h3>
     		</div>
@@ -87,9 +83,6 @@
     					<table class="table table-condensed">
     						<thead>
                                 <tr>
-        							{{-- <td><strong>Product Code</strong></td>
-        							<td class="text-center"><strong>Size</strong></td>
-        							<td class="text-center"><strong>Color</strong></td> --}}
                                     <td><strong>Product Name</strong></td>
         							<td class="text-center"><strong>Price</strong></td>
         							<td class="text-center"><strong>Quantity</strong></td>
@@ -106,9 +99,6 @@
 
                                 @foreach ($orderDetails['orders_products'] as $product)
                                     <tr>
-
-                                        {{-- <td class="text-center">{{ $product['product_size'] }}</td> --}}
-                                        {{-- <td class="text-center">{{ $product['product_color'] }}</td> --}}
                                         <td class="text-center">{{ $product['product_name'] }}</td>
                                         <td class="text-center">INR {{ $product['product_price'] }}</td>
                                         <td class="text-center">{{ $product['product_qty'] }}</td>
