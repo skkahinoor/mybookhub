@@ -80,7 +80,6 @@
                                                     </a>
 
                                                     @if ($adminType === 'vendor')
-                                                        {{-- VENDOR DASHBOARD DELETE --}}
                                                         <form
                                                             action="{{ route('vendor.bookrequests.delete', $book['id']) }}"
                                                             method="POST" style="display:inline;"
