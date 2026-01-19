@@ -1,6 +1,4 @@
 @extends('admin.layout.layout')
-
-
 @section('content')
     <div class="main-panel">
         <div class="content-wrapper">
@@ -9,16 +7,11 @@
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Coupons</h4>
-
-
-
-
                             <a href="{{ url('admin/add-edit-coupon') }}"
                                 style="max-width: 150px; float: right; display: inline-block"
                                 class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Coupon</a>
 
                             @if (Session::has('success_message'))
-                                <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <strong>Success:</strong> {{ Session::get('success_message') }}
                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -27,10 +20,9 @@
                                 </div>
                             @endif
 
-
                             <div class="table-responsive pt-3">
                                 {{-- DataTable --}}
-                                <table id="coupons" class="table table-bordered"> {{-- using the id here for the DataTable --}}
+                                <table id="coupons" class="table table-bordered">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
@@ -45,7 +37,6 @@
                                     <tbody>
                                         @foreach ($coupons as $coupon)
                                             <tr>
-
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $coupon['coupon_code'] }}</td>
                                                 <td>{{ $coupon['coupon_type'] }}</td>
@@ -72,18 +63,17 @@
                                                             <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}"
                                                                 coupon_id="{{ $coupon['id'] }}"
                                                                 data-url="{{ route('admin.updatecouponstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                                    status="Active"></i>
                                                             </a>
                                                         @else
-                                                            {{-- if the admin status is inactive --}}
                                                             <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}"
                                                                 coupon_id="{{ $coupon['id'] }}"
                                                                 data-url="{{ route('admin.updatecouponstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                                    status="Inactive"></i>
                                                             </a>
                                                         @endif
                                                     @endif
@@ -92,7 +82,6 @@
                                                     <a href="{{ url('admin/add-edit-coupon/' . $coupon['id']) }}">
                                                         <i style="font-size:25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
-
                                                     <a href="{{ url('admin/delete-coupon/' . $coupon['id']) }}"
                                                         onclick="return confirm('Are you sure you want to delete this coupon?')"
                                                         title="Delete Coupon">
@@ -111,8 +100,7 @@
                 </div>
             </div>
         </div>
-        <!-- content-wrapper ends -->
-        <!-- partial:../../partials/_footer.html -->
+
         <footer class="footer">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
                 <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights

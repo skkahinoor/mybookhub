@@ -62,7 +62,7 @@ class AuthorController extends Controller
         $update->update([
             'name'=> $request->name,
         ]);
-        return redirect()->route('admin.author.index')->with('success', 'Author name updated successfully!!');
+        return redirect()->route('admin.author')->with('success', 'Author name updated successfully!!');
         return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
         
     }
