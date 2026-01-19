@@ -1285,7 +1285,7 @@
                 <div class="col-lg-5 text-lg-end text-center text-white">
                     <div
                         class="bg-white bg-opacity-10 border border-light border-opacity-25 rounded-3 p-4 d-inline-block shadow-lg">
-                        <h5 class="fw-semibold mb-2" style="color: #181818; font-weight: bold;">Free Plan & Pro Plan</h5>
+                        <h5 class="fw-semibold mb-2" style="color: #181818; font-weight: bold; text-align: center;">Free Plan & Pro Plan</h5>
                         <p class="mb-2">
                             Start free with up to 100 books per month, or switch to Pro for unlimited uploads and coupons
                             at just ₹499/month.
