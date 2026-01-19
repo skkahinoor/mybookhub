@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\AuthorController;
 use App\Http\Controllers\Admin\BookAttributeController;
 use App\Http\Controllers\Admin\BookRequestsController;
 use App\Http\Controllers\Admin\EditionController;
+use App\Http\Controllers\Admin\NewsletterController;
+use App\Http\Controllers\Admin\RatingController;
 use App\Http\Controllers\Admin\InstitutionManagementController;
 use App\Http\Controllers\Admin\ProductsController as AdminProductsController;
 use App\Http\Controllers\Admin\SalesExecutiveController;
@@ -41,8 +43,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one 
     Route::group(['middleware' => ['auth:admin']], function () {
         // check isbn
-        Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
-            ->name('admin.book.isbnLookup');
+        Route::post('/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
+            ->name('book.isbnLookup');
         Route::post('/book/name-suggestions', [AdminProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
         Route::get('dashboard', 'AdminController@dashboard')->name('admin.dashboard');                                                 // Admin login
         Route::get('logout', 'AdminController@logout');                                                       // Admin logout
@@ -311,26 +313,39 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Newsletter Subscribers module
         // Render admin/subscribers/subscribers.blade.php page (Show all Newsletter subscribers in the Admin Panel)
-        Route::get('subscribers', 'NewsletterController@subscribers');
+        // Route::get('subscribers', 'NewsletterController@subscribers');
 
-        // Update Subscriber Status (active/inactive) via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
-        Route::post('update-subscriber-status', 'NewsletterController@updateSubscriberStatus')->name('admin.updatesubscriberstatus');
+        // // Update Subscriber Status (active/inactive) via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
+        // Route::post('update-subscriber-status', 'NewsletterController@updateSubscriberStatus')->name('admin.updatesubscriberstatus');
 
-        // Delete a Subscriber via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
-        Route::get('delete-subscriber/{id}', 'NewsletterController@deleteSubscriber');
+        // // Delete a Subscriber via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
+        // Route::get('delete-subscriber/{id}', 'NewsletterController@deleteSubscriber');
+
+        Route::get('subscribers', [NewsletterController::class, 'subscribers']);
+
+        Route::post('update-subscriber-status',[NewsletterController::class, 'updateSubscriberStatus'])->name('admin.updatesubscriberstatus');
+
+        Route::get('delete-subscriber/{id}',[NewsletterController::class, 'deleteSubscriber']);
 
         // Export subscribers (`newsletter_subscribers` database table) as an Excel file using Maatwebsite/Laravel Excel Package in admin/subscribers/subscribers.blade.php
         Route::get('export-subscribers', 'NewsletterController@exportSubscribers');
 
         // User Ratings & Reviews
         // Render admin/ratings/ratings.blade.php page in the Admin Panel
-        Route::get('ratings', 'RatingController@ratings');
+        // Route::get('ratings', 'RatingController@ratings');
 
-        // Update Rating Status (active/inactive) via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
-        Route::post('update-rating-status', 'RatingController@updateRatingStatus')->name('admin.updateratingstatus');
+        // // Update Rating Status (active/inactive) via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
+        // Route::post('update-rating-status', 'RatingController@updateRatingStatus')->name('admin.updateratingstatus');
 
-        // Delete a Rating via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
-        Route::get('delete-rating/{id}', 'RatingController@deleteRating');
+        // // Delete a Rating via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
+        // Route::get('delete-rating/{id}', 'RatingController@deleteRating');
+
+        Route::get('ratings', [RatingController::class, 'ratings']);
+
+        Route::post('update-rating-status', [RatingController::class, 'updateRatingStatus'])->name('admin.updateratingstatus');
+
+        Route::get('delete-rating/{id}', [RatingController::class, 'deleteRating'])->name('admin.deleteRating');
+
 
         // Languages Routes
         Route::get('languages', 'App\Http\Controllers\Admin\LanguageController@languages');
