@@ -60,49 +60,79 @@
                                                     <td>{{ $admin['email'] }}</td>
                                                     <td>
                                                         @if (!empty($admin['image']))
-                                                            <img src="{{ asset('admin/images/photos/' . $admin['image']) }}" alt="Admin Image" style="width: 50px; height: 50px; object-fit: cover;">
+                                                            <img src="{{ asset('admin/images/photos/' . $admin['image']) }}"
+                                                                alt="Admin Image"
+                                                                style="width: 50px; height: 50px; object-fit: cover;">
                                                         @else
-                                                            <img src="{{ asset('admin/images/photos/no-image.gif') }}" alt="No Image" style="width: 50px; height: 50px; object-fit: cover;">
+                                                            <img src="{{ asset('admin/images/photos/no-image.gif') }}"
+                                                                alt="No Image"
+                                                                style="width: 50px; height: 50px; object-fit: cover;">
                                                         @endif
                                                     </td>
                                                     <td>
                                                         @if ($adminType === 'vendor')
-                                                            <a class="updateAdminStatus" id="admin-{{ $admin['id'] }}" admin_id="{{ $admin['id'] }}" data-url="{{ route('vendor.updateadminstatus') }}" href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                            <a class="updateAdminStatus" id="admin-{{ $admin['id'] }}"
+                                                                admin_id="{{ $admin['id'] }}"
+                                                                data-url="{{ route('vendor.updateadminstatus') }}"
+                                                                href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                    status="Active"></i>
                                                             </a>
                                                         @else
-                                                        @if (isset($admin['status']) && $admin['status'] == 1)
-                                                            <a class="updateAdminStatus"
-                                                               id="admin-{{ $admin['id'] }}"
-                                                               admin_id="{{ $admin['id'] }}"
-                                                               data-url="{{ route('admin.updateadminstatus') }}"
-                                                               href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @else {{-- if the admin status is inactive --}}
-                                                            <a class="updateAdminStatus"
-                                                               id="admin-{{ $admin['id'] }}"
-                                                               admin_id="{{ $admin['id'] }}"
-                                                               data-url="{{ route('admin.updateadminstatus') }}"
-                                                               href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @endif
+                                                            @if (isset($admin['status']) && $admin['status'] == 1)
+                                                                <a class="updateAdminStatus" id="admin-{{ $admin['id'] }}"
+                                                                    admin_id="{{ $admin['id'] }}"
+                                                                    data-url="{{ route('admin.updateadminstatus') }}"
+                                                                    href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                    <i style="font-size: 25px"
+                                                                        class="mdi mdi-bookmark-check" status="Active"></i>
+                                                                    {{-- Icons from Skydash Admin Panel Template --}}
+                                                                </a>
+                                                            @else
+                                                                {{-- if the admin status is inactive --}}
+                                                                <a class="updateAdminStatus" id="admin-{{ $admin['id'] }}"
+                                                                    admin_id="{{ $admin['id'] }}"
+                                                                    data-url="{{ route('admin.updateadminstatus') }}"
+                                                                    href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                    <i style="font-size: 25px"
+                                                                        class="mdi mdi-bookmark-outline"
+                                                                        status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                                </a>
+                                                            @endif
                                                         @endif
                                                     </td>
                                                     <td>
                                                         <div class="d-flex align-items-center" style="gap: 10px;">
-                                                            <a href="{{ url('admin/add-edit-admin/' . $admin['id']) }}" title="Edit">
+                                                            <a href="{{ url('admin/add-edit-admin/' . $admin['id']) }}"
+                                                                title="Edit">
                                                                 <i style="font-size: 20px" class="mdi mdi-pencil"></i>
                                                             </a>
-                                                        @if (isset($admin['type']) && $admin['type'] == 'vendor') {{-- if the admin `type` is vendor, show their further details --}}
-                                                                <a href="{{ url('admin/view-vendor-details/' . $admin['id']) }}" title="View Details">
-                                                                    <i style="font-size: 20px" class="mdi mdi-file-document"></i>
+                                                            @if (isset($admin['type']) && $admin['type'] == 'vendor')
+                                                                {{-- if the admin `type` is vendor, show their further details --}}
+                                                                <a href="{{ url('admin/view-vendor-details/' . $admin['id']) }}"
+                                                                    title="View Details">
+                                                                    <i style="font-size: 20px"
+                                                                        class="mdi mdi-file-document"></i>
                                                                 </a>
                                                             @endif
-                                                            <a href="javascript:void(0);" class="confirmDelete" admin_id="{{ $admin['id'] }}" title="Delete">
-                                                                <i style="font-size: 20px; color: #e74c3c;" class="mdi mdi-delete"></i>
-                                                            </a>
+                                                            {{-- <a href="javascript:void(0);" class="confirmDelete" admin_id="{{ $admin['id'] }}" title="Delete">
+                                                               <i style="font-size: 20px; color: #e74c3c;"
+                                                                        class="mdi mdi-delete"></i>
+                                                            </a> --}}
+                                                            <form action="{{ route('admin.delete', $admin['id']) }}"
+                                                                method="POST"
+                                                                onsubmit="return confirm('Are you sure you want to delete this admin?')"
+                                                                style="display:inline;">
+                                                                @csrf
+
+                                                                <button type="submit"
+                                                                    style="background:none;border:none;padding:0;">
+                                                                    <i class="mdi mdi-delete"
+                                                                        style="font-size:20px;color:#e74c3c;"></i>
+                                                                </button>
+                                                            </form>
+
+
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -126,7 +156,8 @@
         <!-- partial:../../partials/_footer.html -->
         <footer class="footer">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights reserved.</span>
+                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
+                    reserved.</span>
             </div>
         </footer>
         <!-- partial -->
@@ -146,19 +177,21 @@
                 "pageLength": 10,
                 "lengthMenu": [5, 10, 25, 50, 100],
                 "ordering": true,
-                "columnDefs": [
-                    { "orderable": false, "targets": [5, 7] } // Disable sorting for Image and Actions columns
+                "columnDefs": [{
+                        "orderable": false,
+                        "targets": [5, 7]
+                    } // Disable sorting for Image and Actions columns
                 ]
             });
 
-            // Delete confirmation
-            $(document).on('click', '.confirmDelete', function() {
-                var adminId = $(this).attr('admin_id');
+            // // Delete confirmation
+            // $(document).on('click', '.confirmDelete', function() {
+            //     var adminId = $(this).attr('admin_id');
 
-                if (confirm('Are you sure you want to delete this admin? This action cannot be undone.')) {
-                    window.location.href = "{{ url('admin/delete-admin') }}/" + adminId;
-                }
-            });
+            //     if (confirm('Are you sure you want to delete this admin? This action cannot be undone.')) {
+            //         window.location.href = "{{ url('admin/delete-admin') }}/" + adminId;
+            //     }
+            // });
         });
     </script>
 @endsection

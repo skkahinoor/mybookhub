@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\AuthorController;
 use App\Http\Controllers\Admin\BookAttributeController;
 use App\Http\Controllers\Admin\BookRequestsController;
 use App\Http\Controllers\Admin\EditionController;
+use App\Http\Controllers\Admin\NewsletterController;
+use App\Http\Controllers\Admin\RatingController;
 use App\Http\Controllers\Admin\InstitutionManagementController;
 use App\Http\Controllers\Admin\ProductsController as AdminProductsController;
 use App\Http\Controllers\Admin\SalesExecutiveController;
@@ -37,25 +39,19 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__ . '/auth.php';
 
-// Note: OUR WEBSITE WILL HAVE TWO MAJOR SECTIONS: ADMIN ROUTES (for the Admin Panel) & FRONT ROUTES (for the Frontend section routes)!:
-
-// First: Admin Panel routes:
-// The website 'ADMIN' Section: Route Group for routes starting with the 'admin' word (Admin Route Group)    // NOTE: ALL THE ROUTES INSIDE THIS PREFIX STATRT WITH 'admin/', SO THOSE ROUTES INSIDE THE PREFIX, YOU DON'T WRITE '/admin' WHEN YOU DEFINE THEM, IT'LL BE DEFINED AUTOMATICALLY!!
 Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function () {
-    Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one HTTP request method for the same route, so GET for rendering the login.php page, and POST for the login.php page <form> submission (e.g. GET and POST)    // Matches the '/admin/dashboard' URL (i.e. http://127.0.0.1:8000/admin/dashboard)
-
-    // This a Route Group for routes that ALL start with 'admin/-something' and utilizes the 'admin' Authentication Guard    // Note: You must remove the '/admin'/ part from the routes that are written inside this Route Group (e.g.    Route::get('logout');    , NOT    Route::get('admin/logout');    )
+    Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one 
     Route::group(['middleware' => ['auth:admin']], function () {
         // check isbn
-        Route::post('/admin/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
-            ->name('admin.book.isbnLookup');
+        Route::post('/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
+            ->name('book.isbnLookup');
         Route::post('/book/name-suggestions', [AdminProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
         Route::get('dashboard', 'AdminController@dashboard')->name('admin.dashboard');                                                 // Admin login
         Route::get('logout', 'AdminController@logout');                                                       // Admin logout
         Route::match(['get', 'post'], 'update-admin-password', 'AdminController@updateAdminPassword');        // GET request to view the update password <form>, and a POST request to submit the update password <form>
         Route::post('check-admin-password', 'AdminController@checkAdminPassword');                            // Check Admin Password // This route is called from the AJAX call in admin/js/custom.js page
         Route::match(['get', 'post'], 'update-admin-details', 'AdminController@updateAdminDetails');          // Update Admin Details in update_admin_details.blade.php page    // 'GET' method to show the update_admin_details.blade.php page, and 'POST' method for the <form> submission in the same page
-        Route::match(['get', 'post'], 'update-vendor-details/{slug}', 'AdminController@updateVendorDetails'); // Update Vendor Details    // In the slug we can pass: 'personal' which means update vendor personal details, or 'business' which means update vendor business details, or 'bank' which means update vendor bank details    // We'll create one view (not 3) for the 3 pages, but parts inside it will change depending on the $slug value    // GET method to show the update admin details page, POST method for <form> submission
+        Route::match(['get', 'post'], 'update-vendor-details/{slug}', 'AdminController@updateVendorDetails'); // Update Vendor Details    // 
 
         // Vendor Plan Settings (Admin only)
         Route::get('plan-settings', [App\Http\Controllers\Admin\PlanSettingsController::class, 'index'])->name('admin.plan.settings');
@@ -84,7 +80,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         Route::get('admins/{type?}', 'AdminController@admins');                                // In case the authenticated user (logged-in user) is superadmin, admin, subadmin, vendor these are the three Admin Management URLs depending on the slug. The slug is the `type` column in `admins` table which can only be: superadmin, admin, subadmin, or vendor    // Used an Optional Route Parameters (or Optional Route Parameters) using a '?' question mark sign, for in case that there's no any {type} passed, the page will show ALL superadmins, admins, subadmins and vendors at the same page
         Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
-        Route::get('delete-admin/{id}', 'AdminController@deleteAdmin');                        // Delete an Admin
+        Route::post('delete-admin/{id}', [AdminController::class, 'deleteAdmin'])
+            ->name('admin.delete');
+        // Delete an Admin
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
         Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('admin.updateadminstatus');
 
@@ -141,7 +139,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         //RequestedBooks
         Route::get('requestedbooks', [BookRequestsController::class, 'index'])->name('requestbook.index');
         Route::match(['get', 'post'], 'requestedbooks/reply/{id}', [BookRequestsController::class, 'reply'])->name('requestbook.reply');
-        Route::delete('book-requests/{id}', [BookRequestsController::class, 'delete'])->name('bookrequests.delete');
+        Route::delete('book-requests/{id}', [BookRequestsController::class, 'delete'])->name('admin.bookrequests.delete');
         Route::post('admin/bookrequests/update-status', [BookRequestsController::class, 'updateStatus'])->name('admin.bookrequests.updateStatus');
 
         // Sell Book Requests (Users selling their old books)
@@ -315,26 +313,39 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Newsletter Subscribers module
         // Render admin/subscribers/subscribers.blade.php page (Show all Newsletter subscribers in the Admin Panel)
-        Route::get('subscribers', 'NewsletterController@subscribers');
+        // Route::get('subscribers', 'NewsletterController@subscribers');
 
-        // Update Subscriber Status (active/inactive) via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
-        Route::post('update-subscriber-status', 'NewsletterController@updateSubscriberStatus')->name('admin.updatesubscriberstatus');
+        // // Update Subscriber Status (active/inactive) via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
+        // Route::post('update-subscriber-status', 'NewsletterController@updateSubscriberStatus')->name('admin.updatesubscriberstatus');
 
-        // Delete a Subscriber via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
-        Route::get('delete-subscriber/{id}', 'NewsletterController@deleteSubscriber');
+        // // Delete a Subscriber via AJAX in admin/subscribers/subscribers.blade.php, check admin/js/custom.js
+        // Route::get('delete-subscriber/{id}', 'NewsletterController@deleteSubscriber');
+
+        Route::get('subscribers', [NewsletterController::class, 'subscribers']);
+
+        Route::post('update-subscriber-status',[NewsletterController::class, 'updateSubscriberStatus'])->name('admin.updatesubscriberstatus');
+
+        Route::get('delete-subscriber/{id}',[NewsletterController::class, 'deleteSubscriber']);
 
         // Export subscribers (`newsletter_subscribers` database table) as an Excel file using Maatwebsite/Laravel Excel Package in admin/subscribers/subscribers.blade.php
         Route::get('export-subscribers', 'NewsletterController@exportSubscribers');
 
         // User Ratings & Reviews
         // Render admin/ratings/ratings.blade.php page in the Admin Panel
-        Route::get('ratings', 'RatingController@ratings');
+        // Route::get('ratings', 'RatingController@ratings');
 
-        // Update Rating Status (active/inactive) via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
-        Route::post('update-rating-status', 'RatingController@updateRatingStatus')->name('admin.updateratingstatus');
+        // // Update Rating Status (active/inactive) via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
+        // Route::post('update-rating-status', 'RatingController@updateRatingStatus')->name('admin.updateratingstatus');
 
-        // Delete a Rating via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
-        Route::get('delete-rating/{id}', 'RatingController@deleteRating');
+        // // Delete a Rating via AJAX in admin/ratings/ratings.blade.php, check admin/js/custom.js
+        // Route::get('delete-rating/{id}', 'RatingController@deleteRating');
+
+        Route::get('ratings', [RatingController::class, 'ratings']);
+
+        Route::post('update-rating-status', [RatingController::class, 'updateRatingStatus'])->name('admin.updateratingstatus');
+
+        Route::get('delete-rating/{id}', [RatingController::class, 'deleteRating'])->name('admin.deleteRating');
+
 
         // Languages Routes
         Route::get('languages', 'App\Http\Controllers\Admin\LanguageController@languages');

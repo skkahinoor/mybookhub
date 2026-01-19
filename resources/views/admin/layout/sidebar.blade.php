@@ -192,9 +192,9 @@
                                 @if (Session::get('page') == 'view_sales') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('admin/sales-executive') }}">Sales
                                 Executives</a></li>
-                        <li class="nav-item"> <a
+                        {{-- <li class="nav-item"> <a
                                 @if (Session::get('page') == 'view_all') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                class="nav-link" href="{{ url('admin/admins') }}">All</a></li>
+                                class="nav-link" href="{{ url('admin/admins') }}">All</a></li> --}}
                     </ul>
                 </div>
             </li>

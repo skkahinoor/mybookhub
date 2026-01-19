@@ -13,13 +13,16 @@
 
 
 
-                            <a href="{{ url('admin/add-edit-coupon') }}" style="max-width: 150px; float: right; display: inline-block" class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Coupon</a>
+                            <a href="{{ url('admin/add-edit-coupon') }}"
+                                style="max-width: 150px; float: right; display: inline-block"
+                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Coupon</a>
 
-                            @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
+                            @if (Session::has('success_message'))
+                                <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <strong>Success:</strong> {{ Session::get('success_message') }}
                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
+                                        <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
                             @endif
@@ -57,34 +60,47 @@
                                                 <td>{{ $coupon['expiry_date'] }}</td>
                                                 <td>
                                                     @if ($adminType === 'vendor')
-                                                        <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}" coupon_id="{{ $coupon['id'] }}" data-url="{{ route('vendor.updatecouponstatus') }}" href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                        <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}"
+                                                            coupon_id="{{ $coupon['id'] }}"
+                                                            data-url="{{ route('vendor.updatecouponstatus') }}"
+                                                            href="javascript:void(0)">
+                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                status="Active"></i>
                                                         </a>
-                                                    @else   
-                                                    @if ($coupon['status'] == 1)
-                                                        <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}" coupon_id="{{ $coupon['id'] }}" data-url="{{ route('admin.updatecouponstatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @else {{-- if the admin status is inactive --}}
-                                                        <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}" coupon_id="{{ $coupon['id'] }}" data-url="{{ route('admin.updatecouponstatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @endif
+                                                    @else
+                                                        @if ($coupon['status'] == 1)
+                                                            <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}"
+                                                                coupon_id="{{ $coupon['id'] }}"
+                                                                data-url="{{ route('admin.updatecouponstatus') }}"
+                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                    status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                            </a>
+                                                        @else
+                                                            {{-- if the admin status is inactive --}}
+                                                            <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}"
+                                                                coupon_id="{{ $coupon['id'] }}"
+                                                                data-url="{{ route('admin.updatecouponstatus') }}"
+                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
+                                                                    status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                            </a>
+                                                        @endif
                                                     @endif
                                                 </td>
                                                 <td>
                                                     <a href="{{ url('admin/add-edit-coupon/' . $coupon['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                        <i style="font-size:25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
 
-                                                    {{-- Confirm Deletion JS alert and Sweet Alert --}}
-                                                    {{-- <a title="Coupon" class="confirmDelete" href="{{ url('admin/delete-coupon/' . $coupon['id']) }}"> --}}
-                                                        {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}} {{-- Icons from Skydash Admin Panel Template --}}
-                                                    {{-- </a> --}}
-                                                    <a href="JavaScript:void(0)" class="confirmDelete" module="coupon" moduleid="{{ $coupon['id'] }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                    <a href="{{ url('admin/delete-coupon/' . $coupon['id']) }}"
+                                                        onclick="return confirm('Are you sure you want to delete this coupon?')"
+                                                        title="Delete Coupon">
+                                                        <i style="font-size:25px;color:red;"
+                                                            class="mdi mdi-file-excel-box"></i>
                                                     </a>
                                                 </td>
+
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -99,7 +115,8 @@
         <!-- partial:../../partials/_footer.html -->
         <footer class="footer">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights reserved.</span>
+                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
+                    reserved.</span>
             </div>
         </footer>
         <!-- partial -->
