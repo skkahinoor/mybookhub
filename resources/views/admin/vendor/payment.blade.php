@@ -35,7 +35,7 @@
                         </form>
 
                         <div class="mt-3 text-center">
-                            <a href="{{ route('admin.login') }}" class="text-muted">Cancel and go back</a>
+                            <a href="{{ route('vendor.login') }}" class="text-muted">Cancel and go back</a>
                         </div>
                     </div>
                 </div>

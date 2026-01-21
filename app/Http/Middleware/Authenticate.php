@@ -6,20 +6,19 @@ use Illuminate\Auth\Middleware\Authenticate as Middleware;
 
 class Authenticate extends Middleware
 {
-    /**
-     * Get the path the user should be redirected to when they are not authenticated.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return string|null
-     */
-    // protected function redirectTo($request)
-    // {
-    //     if (! $request->expectsJson()) {
-    //         // return route('login');
+    protected function redirectTo($request)
+    {
+        // If admin routes → admin login
+        if ($request->is('admin/*')) {
+            return route('admin.login');
+        }
 
+        // If vendor routes → vendor login
+        if ($request->is('vendor/*')) {
+            return route('vendor.login');
+        }
 
-    //         // Change the default route that the 'auth' middleware redirects unauthenticated/not logged in (logged out) users to    
-    //         redirect('user/login-register');
-    //     }
-    // }
+        // Default fallback
+        return route('admin.login');
+    }
 }
