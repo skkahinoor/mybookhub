@@ -55,37 +55,24 @@
                                                 <td>{{ $shipping['2001g_5000g'] }}</td>
                                                 <td>{{ $shipping['above_5000g'] }}</td>
                                                 <td>
-                                                    @if ($adminType === 'vendor')
-                                                        <a class="updateShippingStatus" id="shipping-{{ $shipping['id'] }}"
-                                                            shipping_id="{{ $shipping['id'] }}"
-                                                            data-url="{{ route('vendor.updateshippingstatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        @if ($shipping['status'] == 1)
-                                                            <a class="updateShippingStatus"
-                                                                id="shipping-{{ $shipping['id'] }}"
-                                                                shipping_id="{{ $shipping['id'] }}"
-                                                                data-url="{{ route('admin.updateshippingstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @else
-                                                            {{-- if the admin status is inactive --}}
-                                                            <a class="updateShippingStatus"
-                                                                id="shipping-{{ $shipping['id'] }}"
-                                                                shipping_id="{{ $shipping['id'] }}"
-                                                                data-url="{{ route('admin.updateshippingstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @endif
-                                                    @endif
+                                                    @php
+                                                        $statusValue = $shipping['status'] == 1 ? 'Active' : 'Inactive';
+                                                        $iconClass   = $shipping['status'] == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                                                        $updateUrl   = ($adminType === 'vendor')
+                                                                        ? route('vendor.updateshippingstatus')
+                                                                        : route('admin.updateshippingstatus');
+                                                    @endphp
+
+                                                    <a class="updateShippingStatus"
+                                                        id="shipping-{{ $shipping['id'] }}"
+                                                        shipping_id="{{ $shipping['id'] }}"
+                                                        data-url="{{ $updateUrl }}"
+                                                        status="{{ $statusValue }}"
+                                                        href="javascript:void(0)">
+                                                        <i style="font-size: 25px" class="mdi {{ $iconClass }}"></i>
+                                                    </a>
                                                 </td>
+
                                                 <td>
                                                     <a href="{{ url('admin/edit-shipping-charges/' . $shipping['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
@@ -118,7 +105,46 @@
                 <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
                     reserved.</span>
             </div>
+            <script>
+                $(document).on("click", ".updateShippingStatus", function () {
+
+                    let status     = $(this).attr("status");
+                    let shippingID = $(this).attr("shipping_id");
+                    let updateUrl  = $(this).data("url");
+                    let element    = $(this);
+
+                    $.ajax({
+                        url: updateUrl,
+                        type: "POST",
+                        data: {
+                            shipping_id: shippingID,
+                            status: status,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function (resp) {
+
+                            if (resp.status == 1) {
+                                // Active
+                                element.attr("status", "Active");
+                                element.find("i").removeClass("mdi-bookmark-outline")
+                                                 .addClass("mdi-bookmark-check");
+                            } else {
+                                // Inactive
+                                element.attr("status", "Inactive");
+                                element.find("i").removeClass("mdi-bookmark-check")
+                                                 .addClass("mdi-bookmark-outline");
+                            }
+                        },
+                        error: function () {
+                            alert("Something went wrong. Try again!");
+                        }
+                    });
+
+                });
+                </script>
+
         </footer>
         <!-- partial -->
     </div>
+
 @endsection

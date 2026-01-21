@@ -41,7 +41,7 @@ class SubjectController extends Controller
         $store = Subject::create([
             'name' => $request->name,
         ]);
-        
+
         return redirect()->back()->with('success', 'Subject inserted successfully');
     }
 
@@ -65,7 +65,7 @@ class SubjectController extends Controller
         $update->update([
             'name' => $request->name,
         ]);
-        return redirect()->back()->with('success', 'Subject updated successfully');
+        return redirect()->route('admin.subject')->with('success', 'Subject updated successfully');
         return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));
     }
 
@@ -79,9 +79,7 @@ class SubjectController extends Controller
         return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));
     }
 
-    /**
-     * Toggle subject status (active/inactive) via AJAX.
-     */
+    
     public function updateStatus(Request $request)
     {
         if (!$request->ajax()) {

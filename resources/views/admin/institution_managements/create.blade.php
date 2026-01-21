@@ -234,7 +234,7 @@
                                 @enderror
                             </div>
                         </div>
-                        
+
 
                         <div class="form-row">
                             <div class="form-group">
@@ -259,7 +259,8 @@
                                     <i class="fas fa-user form-icon"></i>
                                     Principal Name<span class="required">*</span>
                                 </label>
-                                <input type="text" name="principal_name" class="form-control" value="{{ old('principal_name') }}" placeholder="Enter principal name" required>
+                                <input type="text" name="principal_name" class="form-control"
+                                    value="{{ old('principal_name') }}" placeholder="Enter principal name" required>
                                 @error('principal_name')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
@@ -340,13 +341,10 @@
                                     <i class="fas fa-cube form-icon"></i>
                                     Block <span class="required">*</span>
                                 </label>
-                                <input
-                                    type="text"
-                                    name="block_id"
-                                    class="form-control"
-                                    id="block-input"
-                                    placeholder="Enter block name"
-                                    value="{{ old('block_id') }}">
+                                <select name="block_id" class="form-control" id="block-select" required>
+                                    <option value="">Select Block</option>
+                                </select>
+
                                 @error('block_id')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
@@ -501,7 +499,7 @@
             // Load countries on page load
             function loadCountries() {
                 $.ajax({
-                    url: '{{ route('institution_countries') }}',
+                    url: '{{ route('admin.institution.countries') }}',
                     type: 'GET',
                     dataType: 'json',
                     success: function(response) {
@@ -531,42 +529,33 @@
                 if (!country) {
                     $('#state-select').empty().append('<option value="">Select State</option>');
                     $('#district-select').empty().append('<option value="">Select District</option>');
-                    // $('#city-select').empty().append('<option value="">Select City</option>');
-                    $('#block-input').val('');
+                    $('#block-select').empty().append('<option value="">Select Block</option>');
                     return;
                 }
 
                 $.ajax({
-                    url: '{{ route('institution_states') }}',
+                    url: '{{ route('admin.institution.states') }}',
                     type: 'GET',
                     data: {
                         country: country
                     },
                     dataType: 'json',
                     success: function(response) {
-                        var stateSelect = $('#state-select');
-                        stateSelect.empty();
-                        stateSelect.append('<option value="">Select State</option>');
+                        let stateSelect = $('#state-select');
+                        stateSelect.empty().append('<option value="">Select State</option>');
 
                         $.each(response, function(key, value) {
-                            stateSelect.append('<option value="' + key + '">' + value +
-                                '</option>');
+                            stateSelect.append(`<option value="${key}">${value}</option>`);
                         });
 
-                        // Clear dependent dropdowns
                         $('#district-select').empty().append(
                             '<option value="">Select District</option>');
-                        // $('#city-select').empty().append('<option value="">Select City</option>');
-                        $('#block-input').val('');
+                        $('#block-select').empty().append('<option value="">Select Block</option>');
 
-                        // Set old value if exists and trigger change to load districts
                         @if (old('state_id'))
                             stateSelect.val('{{ old('state_id') }}');
                             loadDistricts('{{ old('state_id') }}');
                         @endif
-                    },
-                    error: function(xhr, status, error) {
-                        console.log('Error loading states:', error);
                     }
                 });
             }
@@ -575,43 +564,64 @@
             function loadDistricts(state) {
                 if (!state) {
                     $('#district-select').empty().append('<option value="">Select District</option>');
-                    // $('#city-select').empty().append('<option value="">Select City</option>');
-                    $('#block-input').val('');
+                    $('#block-select').empty().append('<option value="">Select Block</option>');
                     return;
                 }
 
                 $.ajax({
-                    url: '{{ route('institution_districts') }}',
+                    url: '{{ route('admin.institution.districts') }}',
                     type: 'GET',
                     data: {
                         state: state
                     },
                     dataType: 'json',
                     success: function(response) {
-                        var districtSelect = $('#district-select');
-                        districtSelect.empty();
-                        districtSelect.append('<option value="">Select District</option>');
+                        let districtSelect = $('#district-select');
+                        districtSelect.empty().append('<option value="">Select District</option>');
 
                         $.each(response, function(key, value) {
-                            districtSelect.append('<option value="' + key + '">' + value +
-                                '</option>');
+                            districtSelect.append(`<option value="${key}">${value}</option>`);
                         });
 
-                        // Clear dependent dropdowns
-                        // $('#city-select').empty().append('<option value="">Select City</option>');
-                        $('#block-input').val('');
+                        $('#block-select').empty().append('<option value="">Select Block</option>');
 
-                        // Set old value if exists and trigger change to load blocks
                         @if (old('district_id'))
                             districtSelect.val('{{ old('district_id') }}');
                             loadBlocks('{{ old('district_id') }}');
                         @endif
-                    },
-                    error: function(xhr, status, error) {
-                        console.log('Error loading districts:', error);
                     }
                 });
             }
+
+
+            function loadBlocks(district) {
+                if (!district) {
+                    $('#block-select').empty().append('<option value="">Select Block</option>');
+                    return;
+                }
+
+                $.ajax({
+                    url: '{{ route('admin.institution.blocks') }}',
+                    type: 'GET',
+                    data: {
+                        district: district
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        let blockSelect = $('#block-select');
+                        blockSelect.empty().append('<option value="">Select Block</option>');
+
+                        $.each(response, function(key, value) {
+                            blockSelect.append(`<option value="${key}">${value}</option>`);
+                        });
+
+                        @if (old('block_id'))
+                            blockSelect.val('{{ old('block_id') }}');
+                        @endif
+                    }
+                });
+            }
+
 
 
 
@@ -626,14 +636,11 @@
                 loadDistricts(state);
             });
 
-            // $('#district-select').on('change', function() {
-            //     var district = $(this).val();
-            //     loadCities(district);
-            // });
-
             $('#district-select').on('change', function() {
-                $('#block-input').val('');
+                let district = $(this).val();
+                loadBlocks(district);
             });
+
 
             // Load countries on page load
             loadCountries();
