@@ -133,19 +133,19 @@
                         </div>
                         <div class="dropdown-divider"></div>
                         @if (Auth::guard('admin')->user()->type === 'vendor')
-                        <a class="dropdown-item preview-item" href="{{ url('vendor/notifications') }}">
-                            <p class="mb-0 font-weight-normal float-left">See all notifications</p>
-                            <span class="float-right">
-                                <i class="ti-arrow-right"></i>
-                            </span>
-                        </a>
+                            <a class="dropdown-item preview-item" href="{{ url('vendor/notifications') }}">
+                                <p class="mb-0 font-weight-normal float-left">See all notifications</p>
+                                <span class="float-right">
+                                    <i class="ti-arrow-right"></i>
+                                </span>
+                            </a>
                         @else
-                        <a class="dropdown-item preview-item" href="{{ url('admin/notifications') }}">
-                            <p class="mb-0 font-weight-normal float-left">See all notifications</p>
-                            <span class="float-right">
-                                <i class="ti-arrow-right"></i>
-                            </span>
-                        </a>
+                            <a class="dropdown-item preview-item" href="{{ url('admin/notifications') }}">
+                                <p class="mb-0 font-weight-normal float-left">See all notifications</p>
+                                <span class="float-right">
+                                    <i class="ti-arrow-right"></i>
+                                </span>
+                            </a>
                         @endif
                     </div>
                 </li>
@@ -194,10 +194,14 @@
                                 Plan Management
                             </a>
                         @endif
-                        <a href="{{ url('admin/logout') }}" class="dropdown-item">
-                            <i class="ti-power-off text-primary"></i>
-                            Logout
-                        </a>
+                        <form action="{{ route('admin.logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="dropdown-item">
+                                <i class="ti-power-off text-primary"></i>
+                                Logout
+                            </button>
+                        </form>
+
                     </div>
                 </li>
             </ul>
@@ -315,10 +319,13 @@
                                 Plan Management
                             </a>
                         @endif
-                        <a href="{{ url('vendor/logout') }}" class="dropdown-item">
-                            <i class="ti-power-off text-primary"></i>
-                            Logout
-                        </a>
+                        <form action="{{ route('vendor.logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="dropdown-item">
+                                <i class="ti-power-off text-primary"></i>
+                                Logout
+                            </button>
+                        </form>
                     </div>
                 </li>
             </ul>

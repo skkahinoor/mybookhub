@@ -13,7 +13,7 @@ class Vendor
         // Require authentication via the admin guard
         if (! Auth::guard('admin')->check()) {
             // Use the existing admin login route
-            return redirect()->route('admin.login');
+           return redirect('/vendor/login');
         }
 
         // Only allow admins that are vendors
