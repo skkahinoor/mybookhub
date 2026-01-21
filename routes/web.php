@@ -14,7 +14,6 @@ use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\OtpController;
-use App\Http\Controllers\Api\InstitutionController;
 use App\Http\Controllers\User\BookRequestController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\ProductsController;
