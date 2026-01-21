@@ -132,9 +132,7 @@ class AdminController extends Controller
             }
 
             if (Auth::guard('admin')->attempt($credentials)) {
-                if (Auth::guard('admin')->user()->type == 'vendor') {
-                    return redirect()->back()->with('error_message', 'Please confirm your email to activate your Vendor Account');
-                } else if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->status == '0') {
+                 if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->status == '0') {
                     return redirect()->back()->with('error_message', 'Your vendor account is not active');
                 } else {
                     if (Auth::guard('admin')->user()->type === 'vendor') {
