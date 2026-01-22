@@ -1,7 +1,7 @@
 <!-- partial:partials/_sidebar.html -->
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
     <ul class="nav">
-       
+
         {{-- In case the authenticated user (the logged-in user) (using the 'admin' Authentication Guard in auth.php) type is 'vendor' --}}
         @if (Auth::guard('admin')->user()->type == 'vendor')
         <li class="nav-item">
@@ -342,9 +342,9 @@
                         </li>
                         {{-- <li class="nav-item"> <a
                                 {{-- Cities removed --}}
-                        {{-- <li class="nav-item"> <a
+                        <li class="nav-item"> <a
                                 @if (Session::get('page') == 'blocks') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                class="nav-link" href="{{ url('admin/blocks') }}">Blocks</a></li> --}}
+                                class="nav-link" href="{{ url('admin/blocks') }}">Blocks</a></li>
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'students') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('admin/students') }}">Students</a></li>

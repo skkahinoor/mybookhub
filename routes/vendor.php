@@ -31,7 +31,8 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
                 ->name('book.isbnLookup');
             Route::post('/book/name-suggestions', [ProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
             Route::get('dashboard', 'AdminController@dashboard')->name('vendor.dashboard'); // /vendor/dashboard
-            Route::get('logout', 'AdminController@logout');                                                       // Admin logout
+            // Route::get('logout', 'AdminController@logout');
+            Route::post('logout', [AdminController::class, 'vendorlogout'])->name('vendor.logout');
             Route::match(['get', 'post'], 'update-vendor-password', 'AdminController@updateAdminPassword');        // GET request to view the update password <form>, and a POST request to submit the update password <form>
             Route::post('check-vendor-password', 'AdminController@checkAdminPassword');                            // Check Admin Password // This route is called from the AJAX call in admin/js/custom.js page
             Route::match(['get', 'post'], 'update-vendor-details', 'AdminController@updateAdminDetails');          // Update Admin Details in update_admin_details.blade.php page    // 'GET' method to show the update_admin_details.blade.php page, and 'POST' method for the <form> submission in the same page

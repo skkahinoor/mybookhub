@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Auth;
 class ShippingController extends Controller
 {
     // We got two Shipping Charges modules: Simple one (every country has its own shipping rate (price/cost/charges) based on the Delivery Address in the Checkout page) and Advanced one (every country has its own shipping rate based on the Delivery Address in the Checkout page, plus, other charges are calculated based on shipment weight). We created the `shipping_charges` database table for that matter. Also, the Shipping Charge module will be available in the Admin Panel for 'admin'-s only, not for 'vendor'-s
-    
 
 
-    // Render the Shipping Charges page (admin/shipping/shipping_charges.blade.php) in the Admin Panel for 'admin'-s only, not for vendors    
+
+    // Render the Shipping Charges page (admin/shipping/shipping_charges.blade.php) in the Admin Panel for 'admin'-s only, not for vendors
     public function shippingCharges() {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -29,33 +29,28 @@ class ShippingController extends Controller
         return view('admin.shipping.shipping_charges')->with(compact('shippingCharges', 'logos', 'headerLogo', 'adminType'));
     }
 
-    // Update Shipping Status (active/inactive) via AJAX in admin/shipping/shipping_charages.blade.php, check admin/js/custom.js    
+    // Update Shipping Status (active/inactive) via AJAX in admin/shipping/shipping_charages.blade.php, check admin/js/custom.js
     public function updateShippingStatus(Request $request) {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        if ($request->ajax()) { // if the request is coming via an AJAX call
-            $data = $request->all(); // Getting the name/value pairs array that are sent from the AJAX request (AJAX call)
-            // dd($data);
+        if ($request->ajax()) {
 
-            if ($data['status'] == 'Active') { // $data['status'] comes from the 'data' object inside the $.ajax() method    // reverse the 'status' from (ative/inactive) 0 to 1 and 1 to 0 (and vice versa)
-                $status = 0;
-            } else {
-                $status = 1;
-            }
+            $shipping = ShippingCharge::find($request->shipping_id);
 
+            // Toggle status
+            $newStatus = $shipping->status == 1 ? 0 : 1;
 
-            ShippingCharge::where('id', $data['shipping_id'])->update(['status' => $status]); // $data['shipping_id'] comes from the 'data' object inside the $.ajax() method
-            // echo '<pre>', var_dump($data), '</pre>';
+            $shipping->update(['status' => $newStatus]);
 
-            return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
-                'status'      => $status,
-                'shipping_id' => $data['shipping_id']
+            return response()->json([
+                'status' => $newStatus,  // return 1 or 0
+                'shipping_id' => $request->shipping_id
             ]);
         }
         return view('admin.shipping.shipping_charges', compact('shippingCharges', 'logos', 'headerLogo'));
     }
 
-    // Render admin/shipping/edit_shipping_charges.blade.php page in case of HTTP 'GET' request ('Edit/Update Shipping Charges'), or hadle the HTML Form submission in the same page in case of HTTP 'POST' request    
+    // Render admin/shipping/edit_shipping_charges.blade.php page in case of HTTP 'GET' request ('Edit/Update Shipping Charges'), or hadle the HTML Form submission in the same page in case of HTTP 'POST' request
     public function editShippingCharges($id, Request $request) { // Route Parameters: Required Parameters: https://laravel.com/docs/9.x/routing#required-parameters
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();

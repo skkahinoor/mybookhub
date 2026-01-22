@@ -14,7 +14,6 @@ use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\OtpController;
-use App\Http\Controllers\Api\InstitutionController;
 use App\Http\Controllers\User\BookRequestController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\ProductsController;
@@ -40,18 +39,19 @@ use Illuminate\Support\Facades\Route;
 require __DIR__ . '/auth.php';
 
 Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function () {
-    Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one 
+    Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one
     Route::group(['middleware' => ['auth:admin']], function () {
         // check isbn
         Route::post('/book/isbn-lookup', [AdminProductsController::class, 'lookupByIsbn'])
             ->name('book.isbnLookup');
         Route::post('/book/name-suggestions', [AdminProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
         Route::get('dashboard', 'AdminController@dashboard')->name('admin.dashboard');                                                 // Admin login
-        Route::get('logout', 'AdminController@logout');                                                       // Admin logout
+        // Route::post('logout', 'AdminController@logout');                                                       // Admin logout
+        Route::post('logout', [AdminController::class, 'adminlogout'])->name('admin.logout');
         Route::match(['get', 'post'], 'update-admin-password', 'AdminController@updateAdminPassword');        // GET request to view the update password <form>, and a POST request to submit the update password <form>
         Route::post('check-admin-password', 'AdminController@checkAdminPassword');                            // Check Admin Password // This route is called from the AJAX call in admin/js/custom.js page
         Route::match(['get', 'post'], 'update-admin-details', 'AdminController@updateAdminDetails');          // Update Admin Details in update_admin_details.blade.php page    // 'GET' method to show the update_admin_details.blade.php page, and 'POST' method for the <form> submission in the same page
-        Route::match(['get', 'post'], 'update-vendor-details/{slug}', 'AdminController@updateVendorDetails'); // Update Vendor Details    // 
+        Route::match(['get', 'post'], 'update-vendor-details/{slug}', 'AdminController@updateVendorDetails'); // Update Vendor Details    //
 
         // Vendor Plan Settings (Admin only)
         Route::get('plan-settings', [App\Http\Controllers\Admin\PlanSettingsController::class, 'index'])->name('admin.plan.settings');
@@ -389,6 +389,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
     Route::get('institution-blocks', [InstitutionManagementController::class, 'getBlocks'])
         ->name('admin.institution.blocks');
+
+
+
 
 
     // AJAX routes for vendor location dropdowns

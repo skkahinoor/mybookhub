@@ -66,11 +66,11 @@
                                     </div>
                                     <a href="#" class="auth-link text-black">Forgot password?</a>
                                 </div>
-                                <div class="mb-2">
+                                {{-- <div class="mb-2">
                                     <button type="button" class="btn btn-block btn-facebook auth-form-btn">
                                         <i class="ti-facebook mr-2"></i>Connect using facebook
                                     </button>
-                                </div>
+                                </div> --}}
                                 <div class="text-center mt-4 font-weight-light">
                                     Don't have an account? <a href="{{ route('user.register') }}"
                                         class="text-primary">Create</a>

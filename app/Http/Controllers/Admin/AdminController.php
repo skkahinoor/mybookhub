@@ -132,9 +132,7 @@ class AdminController extends Controller
             }
 
             if (Auth::guard('admin')->attempt($credentials)) {
-                if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->confirm == 'No') {
-                    return redirect()->back()->with('error_message', 'Please confirm your email to activate your Vendor Account');
-                } else if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->status == '0') {
+                if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->status == '0') {
                     return redirect()->back()->with('error_message', 'Your vendor account is not active');
                 } else {
                     if (Auth::guard('admin')->user()->type === 'vendor') {
@@ -150,12 +148,32 @@ class AdminController extends Controller
         return view('admin/login', compact('logos', 'headerLogo'));
     }
 
-    public function logout()
+    public function adminlogout(Request $request)
     {
-        $logos = HeaderLogo::first();
-        $headerLogo = HeaderLogo::first();
         Auth::guard('admin')->logout();
-        return view('admin/login', compact('logos', 'headerLogo'));
+
+        // Invalidate session
+        $request->session()->invalidate();
+
+        // Regenerate CSRF token
+        $request->session()->regenerateToken();
+
+        return redirect()->route('admin.login')
+            ->with('success_message', 'You have been logged out successfully.');
+    }
+
+    public function vendorlogout(Request $request)
+    {
+        Auth::guard('admin')->logout();
+
+        // Invalidate session
+        $request->session()->invalidate();
+
+        // Regenerate CSRF token
+        $request->session()->regenerateToken();
+
+        return redirect()->route('vendor.login')
+            ->with('success_message', 'You have been logged out successfully.');
     }
 
     public function updateAdminPassword(Request $request)
@@ -387,7 +405,7 @@ class AdminController extends Controller
                 }
 
                 $vendorCount = VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->count(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-                if ($vendorCount > 0) {                                                                                     // if there's a 
+                if ($vendorCount > 0) {                                                                                     // if there's a
                     VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->update([                // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'shop_name'               => $data['shop_name'],
                         'shop_mobile'             => $data['shop_mobile'],
@@ -629,7 +647,7 @@ class AdminController extends Controller
             $adminDetails = Admin::where('id', $data['admin_id'])->first()->toArray(); // get the admin that his `status` has been approved
 
             if ($adminDetails['type'] == 'vendor' && $status == 1) {                        // if the `type` column value (in `admins` table) is 'vendor', and their `status` became 1 (got approved), send them a THIRD confirmation mail
-                Vendor::where('id', $adminDetails['vendor_id'])->update(['status' => $status]); // 
+                Vendor::where('id', $adminDetails['vendor_id'])->update(['status' => $status]); //
             }
 
             $adminType = Auth::guard('admin')->user()->type; // `type` is the column in `admins` table    // Retrieving The Authenticated User and getting their `type`      column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances

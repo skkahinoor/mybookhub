@@ -61,7 +61,7 @@
                                                                 id="shipping-{{ $shipping['id'] }}"
                                                                 shipping_id="{{ $shipping['id'] }}"
                                                                 data-url="{{ route('admin.updateshippingstatus') }}"
-                                                                href="javascript:void(0)">
+                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                     status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                             </a>
@@ -71,13 +71,14 @@
                                                                 id="shipping-{{ $shipping['id'] }}"
                                                                 shipping_id="{{ $shipping['id'] }}"
                                                                 data-url="{{ route('admin.updateshippingstatus') }}"
-                                                                href="javascript:void(0)">
+                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
                                                                     status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                             </a>
                                                         @endif
                                                     @endif
                                                 </td>
+
                                                 <td>
                                                     <a href="{{ url('admin/edit-shipping-charges/' . $shipping['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
@@ -110,7 +111,46 @@
                 <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
                     reserved.</span>
             </div>
+            <script>
+                $(document).on("click", ".updateShippingStatus", function () {
+
+                    let status     = $(this).attr("status");
+                    let shippingID = $(this).attr("shipping_id");
+                    let updateUrl  = $(this).data("url");
+                    let element    = $(this);
+
+                    $.ajax({
+                        url: updateUrl,
+                        type: "POST",
+                        data: {
+                            shipping_id: shippingID,
+                            status: status,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function (resp) {
+
+                            if (resp.status == 1) {
+                                // Active
+                                element.attr("status", "Active");
+                                element.find("i").removeClass("mdi-bookmark-outline")
+                                                 .addClass("mdi-bookmark-check");
+                            } else {
+                                // Inactive
+                                element.attr("status", "Inactive");
+                                element.find("i").removeClass("mdi-bookmark-check")
+                                                 .addClass("mdi-bookmark-outline");
+                            }
+                        },
+                        error: function () {
+                            alert("Something went wrong. Try again!");
+                        }
+                    });
+
+                });
+                </script>
+
         </footer>
         <!-- partial -->
     </div>
+
 @endsection
