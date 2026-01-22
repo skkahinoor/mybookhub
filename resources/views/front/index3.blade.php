@@ -287,9 +287,9 @@
                                     <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
                                     <input type="hidden" name="quantity" value="1">
 
-                                    <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                                    {{-- <button type="submit" class="btn btn-outline-primary btn-sm w-100">
                                         <i class="flaticon-shopping-cart-1"></i> Add to cart
-                                    </button>
+                                    </button> --}}
                                 </form>
 
                             </div>
@@ -483,9 +483,9 @@
                                 @csrf
                                 <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
                                 <input type="hidden" name="quantity" value="1">
-                                <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                                {{-- <button type="submit" class="btn btn-outline-primary btn-sm w-100">
                                     <i class="flaticon-shopping-cart-1"></i> Add to cart
-                                </button>
+                                </button> --}}
                             </form>
 
                         </div>
@@ -640,9 +640,9 @@
                                 @csrf
                                 <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
                                 <input type="hidden" name="quantity" value="1">
-                                <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                                {{-- <button type="submit" class="btn btn-outline-primary btn-sm w-100">
                                     <i class="flaticon-shopping-cart-1"></i> Add to cart
-                                </button>
+                                </button> --}}
                             </form>
 
                         </div>

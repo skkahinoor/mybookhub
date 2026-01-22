@@ -119,6 +119,8 @@
                                                                <i style="font-size: 20px; color: #e74c3c;"
                                                                         class="mdi mdi-delete"></i>
                                                             </a> --}}
+
+                                                            @if (isset($admin['type']) && $admin['type'] == 'vendor')
                                                             <form action="{{ route('admin.delete', $admin['id']) }}"
                                                                 method="POST"
                                                                 onsubmit="return confirm('Are you sure you want to delete this admin?')"
@@ -131,6 +133,7 @@
                                                                         style="font-size:20px;color:#e74c3c;"></i>
                                                                 </button>
                                                             </form>
+                                                            @endif
 
 
                                                         </div>
