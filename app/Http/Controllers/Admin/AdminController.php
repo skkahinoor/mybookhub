@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorsBankDetail;
 use App\Models\VendorsBusinessDetail;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -1019,5 +1020,82 @@ class AdminController extends Controller
         ContactUs::where('id', $id)->delete();
 
         return redirect('admin/contact-queries')->with('success_message', 'Query deleted successfully!');
+    }
+
+    public function comingSoonSettings(Request $request)
+    {
+        Session::put('page', 'coming_soon_settings');
+        
+        $logos      = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
+        
+        if ($request->isMethod('post')) {
+            // Coming Soon Settings
+            $comingSoonEnabled = $request->has('coming_soon_enabled') ? 1 : 0;
+            Setting::setValue('coming_soon_enabled', $comingSoonEnabled);
+            
+            $showCountdown = $request->has('show_countdown') ? 1 : 0;
+            Setting::setValue('show_countdown', $showCountdown);
+            
+            $countdownDate = $request->input('countdown_date');
+            if ($countdownDate) {
+                Setting::setValue('countdown_date', $countdownDate);
+            }
+            
+            $countdownTime = $request->input('countdown_time');
+            if ($countdownTime) {
+                Setting::setValue('countdown_time', $countdownTime);
+            }
+            
+            // Maintenance Mode Settings
+            $maintenanceModeEnabled = $request->has('maintenance_mode_enabled') ? 1 : 0;
+            Setting::setValue('maintenance_mode_enabled', $maintenanceModeEnabled);
+            
+            // Social Media URLs
+            Setting::setValue('social_facebook', $request->input('social_facebook', ''));
+            Setting::setValue('social_twitter', $request->input('social_twitter', ''));
+            Setting::setValue('social_instagram', $request->input('social_instagram', ''));
+            Setting::setValue('social_linkedin', $request->input('social_linkedin', ''));
+            Setting::setValue('social_youtube', $request->input('social_youtube', ''));
+            Setting::setValue('social_pinterest', $request->input('social_pinterest', ''));
+            Setting::setValue('social_whatsapp', $request->input('social_whatsapp', ''));
+            Setting::setValue('social_telegram', $request->input('social_telegram', ''));
+            
+            return back()->with('success_message', 'Settings updated successfully.');
+        }
+        
+        $comingSoonEnabled = Setting::getValue('coming_soon_enabled', 0);
+        $showCountdown = Setting::getValue('show_countdown', 1);
+        $countdownDate = Setting::getValue('countdown_date', '');
+        $countdownTime = Setting::getValue('countdown_time', '');
+        $maintenanceModeEnabled = Setting::getValue('maintenance_mode_enabled', 0);
+        
+        // Social Media URLs
+        $socialFacebook = Setting::getValue('social_facebook', '');
+        $socialTwitter = Setting::getValue('social_twitter', '');
+        $socialInstagram = Setting::getValue('social_instagram', '');
+        $socialLinkedin = Setting::getValue('social_linkedin', '');
+        $socialYoutube = Setting::getValue('social_youtube', '');
+        $socialPinterest = Setting::getValue('social_pinterest', '');
+        $socialWhatsapp = Setting::getValue('social_whatsapp', '');
+        $socialTelegram = Setting::getValue('social_telegram', '');
+        
+        return view('admin/settings/coming_soon', compact(
+            'logos', 
+            'headerLogo', 
+            'comingSoonEnabled',
+            'showCountdown',
+            'countdownDate',
+            'countdownTime',
+            'maintenanceModeEnabled',
+            'socialFacebook',
+            'socialTwitter',
+            'socialInstagram',
+            'socialLinkedin',
+            'socialYoutube',
+            'socialPinterest',
+            'socialWhatsapp',
+            'socialTelegram'
+        ));
     }
 }

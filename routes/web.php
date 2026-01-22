@@ -112,6 +112,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'favicon', [AdminController::class, 'favicon'])->name('favicon');
         Route::post('update-favicon', [AdminController::class, 'updateFavicon'])->name('update.favicon');
 
+        //Coming Soon Settings
+        Route::match(['get', 'post'], 'coming-soon-settings', [AdminController::class, 'comingSoonSettings'])->name('admin.coming.soon.settings');
+
         //Publishers
         Route::get('publisher', 'PublisherController@publisher');
         Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('admin.updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
@@ -407,7 +410,7 @@ require __DIR__ . '/vendor.php';
 Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Admin\OrderController@viewPDFInvoice');
 
 // Second: FRONT section routes:
-Route::namespace('App\Http\Controllers\Front')->group(function () {
+Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->group(function () {
     Route::get('/', 'IndexController@index');
     Route::post('set-condition', [IndexController::class, 'setCondition'])->name('set.condition');
     Route::post('/set-language', [IndexController::class, 'setLanguage']);
