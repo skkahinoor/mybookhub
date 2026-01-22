@@ -1,6 +1,5 @@
 @extends('admin.layout.layout')
 
-
 @section('content')
     <div class="main-panel">
         <div class="content-wrapper">
@@ -28,7 +27,6 @@
                                     </button>
                                 </div>
                             @endif
-
 
                             <div class="table-responsive pt-3">
                                 {{-- DataTable --}}
@@ -79,13 +77,11 @@
                                                     @endif
                                                 </td>
                                                 <td>
-
                                                     @if ($adminType === 'vendor')
                                                         <a href="{{ route('vendor.edit.author', $author->id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                             {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
-
                                                         {{-- Confirm Deletion JS alert and Sweet Alert  --}}
                                                         <a title="author" class="confirmDelete"
                                                             href="{{ route('vendor.delete.author', $author->id) }}">
