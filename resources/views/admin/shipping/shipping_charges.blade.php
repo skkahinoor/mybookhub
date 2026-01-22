@@ -10,14 +10,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Shipping Charges</h4>
-
-
-
-                            {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
                             @if (Session::has('success_message'))
-                                <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <strong>Success:</strong> {{ Session::get('success_message') }}
                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -25,7 +18,6 @@
                                     </button>
                                 </div>
                             @endif
-
 
                             <div class="table-responsive pt-3">
                                 {{-- DataTable --}}
@@ -69,7 +61,7 @@
                                                                 id="shipping-{{ $shipping['id'] }}"
                                                                 shipping_id="{{ $shipping['id'] }}"
                                                                 data-url="{{ route('admin.updateshippingstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                     status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                             </a>
@@ -79,7 +71,7 @@
                                                                 id="shipping-{{ $shipping['id'] }}"
                                                                 shipping_id="{{ $shipping['id'] }}"
                                                                 data-url="{{ route('admin.updateshippingstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
+                                                                href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
                                                                     status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                             </a>
