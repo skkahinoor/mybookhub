@@ -177,7 +177,7 @@
                                         {{-- Debug: {{ var_dump($headerWishlistItemsCount ?? 'not set') }} --}}
                                     </a>
                                 </li>
-                                <li class="nav-item">
+                                {{-- <li class="nav-item">
                                     <button type="button" class="nav-link box cart-btn">
                                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
                                             width="24px" fill="#000000">
@@ -248,7 +248,7 @@
                                             </li>
                                         @endif
                                     </ul>
-                                </li>
+                                </li> --}}
                                 @guest
                                     <li class="nav-item">
                                         <div class="row">

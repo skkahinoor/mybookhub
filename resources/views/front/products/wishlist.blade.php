@@ -57,7 +57,7 @@
 												<th class="col-name">Product Name</th>
 												<th class="col-price">Unit Price</th>
 											{{-- <th>Quantity</th> --}}
-												<th class="col-action">Add to Cart</th>
+												{{-- <th class="col-action">Add to Cart</th> --}}
 												<th class="col-action">Actions</th>
 										</tr>
 									</thead>

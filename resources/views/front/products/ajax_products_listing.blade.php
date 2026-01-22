@@ -25,7 +25,7 @@
                         <a class="item-quick-look" data-toggle="modal" href="#quick-view">Quick Look</a>
                         <a class="item-mail" href="javascript:void(0)">Mail</a>
                                                                             <a class="item-addwishlist" href="javascript:void(0)" data-product-id="{{ $product['id'] }}">Add to Wishlist</a>
-                        <a class="item-addCart" href="javascript:void(0)">Add to Cart</a>
+                        {{-- <a class="item-addCart" href="javascript:void(0)">Add to Cart</a> --}}
                     </div>
                 </div>
                 <div class="item-content">

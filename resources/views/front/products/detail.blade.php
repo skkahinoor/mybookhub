@@ -175,9 +175,9 @@
                                                 <input id="quantity_top" type="number" value="1" min="1"
                                                     name="quantity" />
                                             </div>
-                                            <button type="submit" class="btn btn-primary btnhover2"><i
+                                            {{-- <button type="submit" class="btn btn-primary btnhover2"><i
                                                     class="flaticon-shopping-cart-1"></i> <span>&nbsp;&nbsp;Add to
-                                                    cart</span></button>
+                                                    cart</span></button> --}}
                                         </form>
 
                                         <form action="{{ url('wishlist/add') }}" method="POST"
@@ -517,7 +517,7 @@
                                                 </div>
 
                                                 {{-- ADD TO CART --}}
-                                                <form action="{{ url('cart/add') }}" method="POST">
+                                                {{-- <form action="{{ url('cart/add') }}" method="POST">
                                                     @csrf
                                                     <input type="hidden" name="product_attribute_id"
                                                         value="{{ $similarProduct->id }}">
@@ -527,7 +527,7 @@
                                                         <i class="flaticon-shopping-cart-1"></i>
                                                         <span>&nbsp;&nbsp;Add to cart</span>
                                                     </button>
-                                                </form>
+                                                </form> --}}
 
                                             </div>
                                         </div>
