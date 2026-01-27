@@ -162,6 +162,10 @@
                                 @if (Session::get('page') == 'plan_settings') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ route('admin.plan.settings') }}">Vendor Plan Settings</a>
                         </li>
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'coming_soon_settings') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.coming.soon.settings') }}">Coming Soon Settings</a>
+                        </li>
                     </ul>
                 </div>
             </li>

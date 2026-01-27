@@ -19,6 +19,7 @@ use App\Models\Language;
 use App\Models\Edition;
 use App\Models\Coupon;
 use App\Models\BookRequest;
+use App\Models\BookRequestReply;
 
 class CatalogueController extends Controller
 {
@@ -885,6 +886,87 @@ class CatalogueController extends Controller
         return response()->json([
             'status' => true,
             'data'   => $bookRequests
+        ], 200);
+    }
+
+    public function replyBookRequest(Request $request, $id)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $admin = $request->user();
+
+        // Find book request
+        $bookRequest = BookRequest::find($id);
+        if (!$bookRequest) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Book Request not found'
+            ], 404);
+        }
+
+        // Optional vendor ownership check
+        if ($admin->type === 'vendor' && isset($bookRequest->vendor_id)) {
+            if ($bookRequest->vendor_id !== $admin->vendor_id) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
+        }
+
+        // Validation
+        $rules = [
+            'status' => 'required|in:pending,in_progress,resolved',
+        ];
+
+        if ($request->filled('admin_reply')) {
+            $rules['admin_reply'] = 'required|string|min:10';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
+            'status.required'     => 'Status is required',
+            'admin_reply.required' => 'Reply message is required',
+            'admin_reply.min'     => 'Reply must be at least 10 characters',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Update request
+        $updateData = [
+            'status' => $request->status,
+        ];
+
+        if ($request->filled('admin_reply')) {
+            $updateData['admin_reply'] = $request->admin_reply;
+        }
+
+        $bookRequest->update($updateData);
+
+        // Save conversation reply
+        if ($request->filled('admin_reply')) {
+            BookRequestReply::create([
+                'book_request_id' => $bookRequest->id,
+                'reply_by'        => 'admin',
+                'message'         => $request->admin_reply,
+            ]);
+        }
+
+        return response()->json([
+            'status'  => true,
+            'message' => $request->status === 'resolved'
+                ? 'Book request resolved successfully'
+                : 'Reply sent successfully',
+            'data' => [
+                'book_request_id' => $bookRequest->id,
+                'status'          => $bookRequest->status,
+            ]
         ], 200);
     }
 

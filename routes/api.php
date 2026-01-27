@@ -149,6 +149,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('vendor/book-requests', [CatalogueController::class, 'getBookRequest']);
     Route::delete('vendor/book-requests/{id}', [CatalogueController::class, 'deleteBookRequest']);
     Route::patch('vendor/book-requests/{id}/status', [CatalogueController::class, 'updateBookRequestStatus']);
+    Route::patch('vendor/book-requests/{id}/reply', [CatalogueController::class, 'replyBookRequest']);
 
     Route::get('/vendor/products', [BookController::class, 'getproduct']);
     Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);

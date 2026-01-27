@@ -31,14 +31,14 @@
 
             {{-- Add to Cart --}}
             <td>
-                <form action="{{ url('cart/add') }}" method="POST">
+                {{-- <form action="{{ url('cart/add') }}" method="POST">
                     @csrf
                     <input type="hidden" name="product_attribute_id" value="{{ $item['product_attribute_id'] }}">
                     <input type="hidden" name="quantity" value="{{ $item['quantity'] }}">
                     <button class="btn btn-primary btn-sm">
                         <i class="fas fa-shopping-cart"></i> Add to Cart
                     </button>
-                </form>
+                </form> --}}
             </td>
 
             {{-- Remove --}}

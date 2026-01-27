@@ -72,5 +72,6 @@ class Kernel extends HttpKernel
         'sales' => \App\Http\Middleware\SalesExecutiveMiddleware::class,
         'vendor.plan' => \App\Http\Middleware\CheckVendorPlan::class,
         'vendor' => \App\Http\Middleware\Vendor::class,
+        'coming.soon' => \App\Http\Middleware\ComingSoon::class,
     ];
 }
