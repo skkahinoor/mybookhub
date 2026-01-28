@@ -126,8 +126,6 @@
     </div>
 
 
-
-
     <!-- DataTables Bootstrap 4 CSS CDN -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
 
@@ -142,32 +140,34 @@
         });
     </script>
     <script>
-        $(document).ready(function() {
-            $('.updateBookStatus').click(function() {
-                var book_id = $(this).attr('book_id');
-                var $icon = $(this).find('i');
-                $.ajax({
-                    type: 'POST',
-                    url: '{{ route('admin.bookrequests.updateStatus') }}',
-                    data: {
-                        _token: '{{ csrf_token() }}',
-                        book_id: book_id
-                    },
-                    success: function(resp) {
-                        if (resp.status == 1) {
-                            $icon.removeClass('mdi-bookmark-outline').addClass(
-                                    'mdi-bookmark-check')
-                                .attr('title', 'Book Available').attr('status', 'Active');
-                        } else {
-                            $icon.removeClass('mdi-bookmark-check').addClass(
-                                    'mdi-bookmark-outline')
-                                .attr('title', 'Book Requested').attr('status', 'Inactive');
-                        }
-                    },
-                    error: function(xhr) {
-                        alert('Failed to update status.');
+        $(document).on("click", ".updateBookStatus", function() {
+            var book_id = $(this).attr("book_id");
+            var url = $(this).data("url");
+            var $icon = $(this).find("i");
+
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    book_id: book_id
+                },
+                success: function(resp) {
+                    if (resp.status == 1) {
+                        $icon.removeClass('mdi-bookmark-outline')
+                            .addClass('mdi-bookmark-check')
+                            .attr('title', 'Book Available')
+                            .attr('status', 'Active');
+                    } else {
+                        $icon.removeClass('mdi-bookmark-check')
+                            .addClass('mdi-bookmark-outline')
+                            .attr('title', 'Book Requested')
+                            .attr('status', 'Inactive');
                     }
-                });
+                },
+                error: function() {
+                    alert('Failed to update status.');
+                }
             });
         });
     </script>
