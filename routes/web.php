@@ -561,3 +561,5 @@ require __DIR__ . '/user.php';
 // Route::get('test-ajax-endpoints', function() {
 //     return view('test_ajax_endpoints');
 // })->name('test_ajax_endpoints');
+
+
