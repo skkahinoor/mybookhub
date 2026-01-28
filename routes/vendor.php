@@ -287,6 +287,10 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
             Route::post('sales-concept/add-to-cart', 'OrderController@addToSalesCart');
             Route::post('sales-concept/remove-from-cart', 'OrderController@removeFromSalesCart');
             Route::post('sales-concept/process-sale', 'OrderController@processSale');
+            Route::post('sales-concept/apply-coupon', 'OrderController@applyCoupon')->name('sales.applyCoupon');
+            Route::post('sales-concept/apply-extra-discount', 'OrderController@applyExtraDiscount')->name('sales.applyExtraDiscount');
+            // Route::post('sales-concept/apply-coupon',[OrderController::class, 'applyCoupon'])->name('sales.applyCoupon');
+
 
 
             // Update Order Status (which is determined by 'admin'-s ONLY, not 'vendor'-s, in contrast to "Update Item Status" which can be updated by both 'vendor'-s and 'admin'-s) (Pending, Shipped, In Progress, Canceled, ...) in admin/orders/order_details.blade.php in Admin Panel
