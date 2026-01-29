@@ -576,11 +576,11 @@ class OrderController extends Controller
             ], 404);
         }
 
-        $basePrice       = $attribute->price ?? $product->product_price;
-        $discountPercent = $attribute->product_discount ?? 0;
+        $basePrice       = $product->product_price;
+        // $discountPercent = $attribute->product_discount ?? 0;
 
-        $discountAmount = round(($basePrice * $discountPercent) / 100);
-        $finalPrice     = round($basePrice - $discountAmount);
+        // $discountAmount = round(($basePrice * $discountPercent) / 100);
+        // $finalPrice     = round($basePrice - $discountAmount);
 
         return response()->json([
             'status' => true,
@@ -589,9 +589,9 @@ class OrderController extends Controller
                 'product_name'     => $product->product_name,
                 'product_isbn'     => $product->product_isbn,
                 'base_price'       => round($basePrice),
-                'discount_percent' => $discountPercent,
-                'discount_amount'  => $discountAmount,
-                'final_price'      => $finalPrice,
+                // 'discount_percent' => $discountPercent,
+                // 'discount_amount'  => $discountAmount,
+                // 'final_price'      => $finalPrice,
                 'stock'            => $attribute->stock,
                 'product_image'    => $product->product_image ?? ''
             ]
@@ -623,10 +623,10 @@ class OrderController extends Controller
         }
 
         // GLOBAL DISCOUNT
-        $basePrice = $attribute->price ?? $product->product_price;
-        $discountPercent = $attribute->product_discount ?? 0;
-        $discountAmount = round(($basePrice * $discountPercent) / 100);
-        $finalUnitPrice = round($basePrice - $discountAmount);
+        $basePrice = $product->product_price;
+        // $discountPercent = $attribute->product_discount ?? 0;
+        // $discountAmount = round(($basePrice * $discountPercent) / 100);
+        // $finalUnitPrice = round($basePrice - $discountAmount);
 
         $cart = Session::get('sales_cart', []);
         $found = false;
@@ -643,7 +643,7 @@ class OrderController extends Controller
                 }
 
                 $item['quantity'] = $newQty;
-                $item['total']    = $finalUnitPrice * $newQty;
+                $item['total']    = $basePrice * $newQty;
                 $found = true;
                 break;
             }
@@ -654,10 +654,10 @@ class OrderController extends Controller
                 'product_id'   => $product->id,
                 'product_name' => $product->product_name,
                 'product_isbn' => $product->product_isbn,
-                'price'        => $finalUnitPrice,
+                'price'        => $basePrice,
                 'quantity'     => $request->quantity,
                 'stock'        => $attribute->stock,
-                'total'        => $finalUnitPrice * $request->quantity
+                'total'        => $basePrice * $request->quantity
             ];
         }
 
@@ -672,10 +672,11 @@ class OrderController extends Controller
     public function applyExtraDiscount(Request $request)
     {
         $request->validate([
-            'extra_discount' => 'required|numeric|min:0'
+            'extra_discount' => 'required|numeric|min:0|max:100'
         ]);
 
-        $cart = Session::get('sales_cart', []);
+        $cart = session()->get('sales_cart', []);
+
         if (empty($cart)) {
             return response()->json([
                 'status' => false,
@@ -684,15 +685,29 @@ class OrderController extends Controller
         }
 
         $subTotal = array_sum(array_column($cart, 'total'));
-        $extraDiscount = min($request->extra_discount, $subTotal);
 
-        Session::put('sales_extra_discount', $extraDiscount);
+        // % to amount
+        $discountPercent = $request->extra_discount;
+        $discountAmount  = ($subTotal * $discountPercent) / 100;
+
+        // Safety
+        $discountAmount = min($discountAmount, $subTotal);
+
+        session()->put('sales_extra_discount', round($discountAmount));
+        session()->put('sales_extra_discount_percent', $discountPercent);
 
         return response()->json([
             'status' => true,
-            'message' => 'Extra discount applied'
+            'message' => 'Extra discount applied',
+            'data' => [
+                'discount_percent' => $discountPercent,
+                'discount_amount' => round($discountAmount),
+                'sub_total' => $subTotal,
+                'payable_amount' => round($subTotal - $discountAmount)
+            ]
         ]);
     }
+
 
     public function applyCoupon(Request $request)
     {

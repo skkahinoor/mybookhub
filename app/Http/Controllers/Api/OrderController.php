@@ -263,12 +263,11 @@ class OrderController extends Controller
             ], 404);
         }
 
-        // ✅ SAME PRICE LOGIC AS WEBSITE
         $basePrice       = $attribute->price ?? $product->product_price;
-        $discountPercent = $attribute->product_discount ?? 0;
+        // $discountPercent = $attribute->product_discount ?? 0;
 
-        $discountAmount = round(($basePrice * $discountPercent) / 100);
-        $finalPrice     = round($basePrice - $discountAmount);
+        // $discountAmount = round(($basePrice * $discountPercent) / 100);
+        // $finalPrice     = round($basePrice - $discountAmount);
 
         $basePath = url('front/images/product_images');
 
@@ -278,10 +277,10 @@ class OrderController extends Controller
                 'product_id'       => $product->id,
                 'product_name'     => $product->product_name,
                 'product_isbn'     => $product->product_isbn,
-                'base_price'       => round($basePrice),
-                'discount_percent' => $discountPercent,
-                'discount_amount'  => $discountAmount,
-                'final_price'      => $finalPrice,
+                'mrp'       => round($basePrice),
+                // 'discount_percent' => $discountPercent,
+                // 'discount_amount'  => $discountAmount,
+                // 'final_price'      => $finalPrice,
                 'stock'            => $attribute->stock,
 
                 'image_urls' => [
@@ -304,8 +303,8 @@ class OrderController extends Controller
             'customer_email'   => 'nullable|email',
             'customer_address' => 'nullable|string',
 
-            'extra_discount'   => 'nullable|numeric|min:0',
-            'coupon_code'      => 'nullable|string|max:50',
+            'extra_discount'   => 'nullable|numeric|min:0|max:100',
+            'coupon_code'      => 'nullable|string',
 
             'cart' => 'required|array|min:1',
             'cart.*.product_id' => 'required|integer',
@@ -346,26 +345,32 @@ class OrderController extends Controller
                     throw new \Exception('Product not found. ID: ' . $item['product_id']);
                 }
 
-                // ✅ SAME PRICE LOGIC AS WEBSITE
-                $basePrice       = $attribute->price ?? $product->product_price;
-                $discountPercent = $attribute->product_discount ?? 0;
+                $basePrice       = $product->product_price;
+                // $discountPercent = $attribute->product_discount ?? 0;
 
-                $discountAmount = round(($basePrice * $discountPercent) / 100);
-                $finalPrice     = round($basePrice - $discountAmount);
+                // $discountAmount = round(($basePrice * $discountPercent) / 100);
+                // $finalPrice     = round($basePrice - $discountAmount);
 
-                $lineTotal = $finalPrice * $item['quantity'];
+                $lineTotal = $basePrice * $item['quantity'];
                 $subTotal += $lineTotal;
 
                 $resolvedItems[] = [
                     'product'     => $product,
                     'attribute'   => $attribute,
-                    'final_price' => $finalPrice,
+                    'final_price' => $basePrice,
                     'quantity'    => $item['quantity']
                 ];
             }
 
-            /* ================= EXTRA DISCOUNT (SUBTOTAL) ================= */
-            $extraDiscount = min($request->extra_discount ?? 0, $subTotal);
+            /* ================= EXTRA DISCOUNT (PERCENTAGE ON SUBTOTAL) ================= */
+            $extraDiscountPercent = $request->extra_discount ?? 0;
+
+            $extraDiscountAmount = 0;
+            if ($extraDiscountPercent > 0) {
+                $extraDiscountAmount = round(($subTotal * $extraDiscountPercent) / 100);
+                $extraDiscountAmount = min($extraDiscountAmount, $subTotal);
+            }
+
 
             /* ================= COUPON (SUBTOTAL) ================= */
             $couponAmount = 0;
@@ -392,7 +397,7 @@ class OrderController extends Controller
             }
 
             /* ================= GRAND TOTAL ================= */
-            $grandTotal = max(0, $subTotal - $extraDiscount - $couponAmount);
+            $grandTotal = max(0, $subTotal - $extraDiscountAmount - $couponAmount);
 
             /* ================= CREATE ORDER ================= */
             $order = Order::create([
@@ -413,7 +418,7 @@ class OrderController extends Controller
 
                 'coupon_code'      => $couponCode,
                 'coupon_amount'    => $couponAmount,
-                'extra_discount'   => $extraDiscount,
+                'extra_discount' => $extraDiscountAmount,
 
                 'grand_total'      => $grandTotal
             ]);
@@ -443,7 +448,8 @@ class OrderController extends Controller
                 'message'     => 'Sale completed successfully',
                 'order_id'    => $order->id,
                 'sub_total'   => $subTotal,
-                'extra_discount' => $extraDiscount,
+                'extra_discount_percent' => $extraDiscountPercent,
+                'extra_discount_amount'  => $extraDiscountAmount,
                 'coupon_discount' => $couponAmount,
                 'grand_total' => $grandTotal
             ], 200);

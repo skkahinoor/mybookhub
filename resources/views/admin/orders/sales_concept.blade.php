@@ -43,11 +43,11 @@
                                                 <div class="col-md-6">
                                                     <h5 id="product_name"></h5>
                                                     <p><strong>ISBN:</strong> <span id="product_isbn"></span></p>
-                                                    <p><strong>Base Price:</strong> ₹<span id="base_price"></span></p>
-                                                    <p><strong>Global Discount:</strong>
+                                                    <p><strong>MRP:</strong> ₹<span id="base_price"></span></p>
+                                                    {{-- <p><strong>Global Discount:</strong>
                                                         <span id="discount_percent"></span>% (₹<span id="discount_amount"></span>)
-                                                    </p>
-                                                    <p><strong>Final Price:</strong> ₹<span id="final_price"></span></p>
+                                                    </p> --}}
+                                                    {{-- <p><strong>Final Price:</strong> ₹<span id="final_price"></span></p> --}}
                                                     <p><strong>Stock:</strong> <span id="product_stock"></span></p>
                                                 </div>
 
@@ -153,11 +153,11 @@
                         @if(!empty($cart))
                         <div class="card mt-3">
                             <div class="card-body">
-                                <h5>Extra Discount (On Subtotal)</h5>
+                                <h5>Extra Discount (%)</h5>
                                 <div class="row">
                                     <div class="col-md-8">
                                         <input type="number" id="extra_discount_input" class="form-control"
-                                            placeholder="Enter extra discount amount">
+                                            placeholder="Enter discount %" min="0" max="100">
                                     </div>
                                     <div class="col-md-4">
                                         <button id="apply_extra_discount" class="btn btn-warning btn-block">
