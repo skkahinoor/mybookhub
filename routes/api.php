@@ -97,6 +97,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Vendor Plan Management
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('vendor/plan/getplan', [VendorPlanController::class, 'getPlan']);
     Route::get('vendor/plan/status', [VendorPlanController::class, 'status']);
     Route::post('vendor/plan/upgrade', [VendorPlanController::class, 'upgrade']);
     Route::post('vendor/plan/verify', [VendorPlanController::class, 'verify']);
