@@ -40,7 +40,7 @@
                                     {{ session('error') }}
                                 </div>
                             @endif
-
+                            {{-- Link --}}
                             @if ($queries->isEmpty())
                                 <div class="empty-state" style="text-align: center; padding: 60px 20px;">
                                     <div class="empty-state-icon" style="font-size: 64px; margin-bottom: 20px;">💬</div>

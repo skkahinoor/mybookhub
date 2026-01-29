@@ -27,6 +27,7 @@ Route::prefix('/user')->namespace('App\Http\Controllers\User')->group(function (
         Route::match(['GET', 'POST'], '/account', [AccountController::class, 'index'])->name('user.account');
         Route::post('/avatar', [AccountController::class, 'updateAvatar'])->name('user.avatar.update');
 
+        // Book Request
         Route::post('/book-request', [BookRequestController::class, 'store'])->name('user.book.request.store');
         Route::get('/book-requests', [BookRequestController::class, 'indexbookrequest'])->name('user.book.indexrequest');
         Route::post('/book-request/{id}/reply', [BookRequestController::class, 'replyToQuery'])->name('user.book.reply');
