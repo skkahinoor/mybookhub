@@ -292,6 +292,50 @@ class OrderController extends Controller
         ], 200);
     }
 
+    public function validateCoupon(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        $request->validate([
+            'coupon_code' => 'required|string',
+            'sub_total'   => 'required|numeric|min:1'
+        ]);
+
+        $vendorId = $request->user()->vendor_id;
+        $subTotal = $request->sub_total;
+
+        $coupon = Coupon::where('coupon_code', $request->coupon_code)
+            ->where('vendor_id', $vendorId)
+            ->where('status', 1)
+            ->whereDate('expiry_date', '>=', now())
+            ->first();
+
+        if (!$coupon) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Invalid or expired coupon'
+            ], 200);
+        }
+
+        // Calculate discount (preview only)
+        if ($coupon->amount_type === 'percent') {
+            $discountAmount = round(($subTotal * $coupon->amount) / 100);
+        } else {
+            $discountAmount = $coupon->amount;
+        }
+
+        $discountAmount = min($discountAmount, $subTotal);
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'coupon_code'     => $coupon->coupon_code,
+                'amount_type'     => $coupon->amount_type, // percent | flat
+                'amount'          => $coupon->amount,
+                'discount_amount' => $discountAmount
+            ]
+        ], 200);
+    }
 
     public function processSale(Request $request)
     {
@@ -378,6 +422,7 @@ class OrderController extends Controller
 
             if ($request->coupon_code) {
                 $coupon = Coupon::where('coupon_code', $request->coupon_code)
+                    ->where('vendor_id', $vendorId)
                     ->where('status', 1)
                     ->whereDate('expiry_date', '>=', now())
                     ->first();

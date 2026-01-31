@@ -715,7 +715,11 @@ class OrderController extends Controller
             'coupon_code' => 'required|string|max:50'
         ]);
 
+        $admin     = Auth::guard('admin')->user();
+        // $adminType = $admin->type;
+
         $coupon = Coupon::where('coupon_code', $request->coupon_code)
+            ->where('vendor_id', $admin->vendor_id)
             ->where('status', 1)
             ->whereDate('expiry_date', '>=', now())
             ->first();

@@ -176,6 +176,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::get('vendor/sales/cart', [OrderController::class, 'cart']);
     Route::post('vendor/sales/search-isbn', [OrderController::class, 'searchByIsbn']);
     Route::post('/vendor/sales/process', [OrderController::class, 'processSale']);
+    Route::post('/vendor/coupon/validate', [OrderController::class, 'validateCoupon']);
     // Route::post('vendor/sales/cart/add', [OrderController::class, 'addToCart']);
     // Route::post('vendor/cart/remove', [OrderController::class, 'removeFromCart']);
     // Route::post('vendor/process', [OrderController::class, 'processSale']);
