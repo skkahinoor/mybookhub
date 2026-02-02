@@ -606,46 +606,21 @@ class OrderController extends Controller
             'quantity'   => 'required|integer|min:1'
         ]);
 
-        $admin     = Auth::guard('admin')->user();
-        $adminType = $admin->type;
+        $product   = Product::findOrFail($request->product_id);
+        $attribute = ProductsAttribute::where('product_id', $product->id)->first();
 
-        $product = Product::findOrFail($request->product_id);
-
-        $attribute = ProductsAttribute::where('product_id', $product->id)
-            ->when($adminType === 'vendor', fn($q) => $q->where('vendor_id', $admin->vendor_id))
-            ->first();
-
-        if (!$attribute || $attribute->stock < $request->quantity) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Insufficient stock'
-            ], 400);
+        if ($attribute->stock < $request->quantity) {
+            return response()->json(['status' => false, 'message' => 'Insufficient stock'], 400);
         }
 
-        // GLOBAL DISCOUNT
-        $basePrice = $product->product_price;
-        // $discountPercent = $attribute->product_discount ?? 0;
-        // $discountAmount = round(($basePrice * $discountPercent) / 100);
-        // $finalUnitPrice = round($basePrice - $discountAmount);
-
-        $cart = Session::get('sales_cart', []);
+        $cart  = session()->get('sales_cart', []);
         $found = false;
 
         foreach ($cart as &$item) {
             if ($item['product_id'] == $product->id) {
-                $newQty = $item['quantity'] + $request->quantity;
-
-                if ($newQty > $attribute->stock) {
-                    return response()->json([
-                        'status' => false,
-                        'message' => 'Insufficient stock'
-                    ], 400);
-                }
-
-                $item['quantity'] = $newQty;
-                $item['total']    = $basePrice * $newQty;
+                $item['quantity'] += $request->quantity;
+                $item['total']     = $item['price'] * $item['quantity'];
                 $found = true;
-                break;
             }
         }
 
@@ -654,19 +629,22 @@ class OrderController extends Controller
                 'product_id'   => $product->id,
                 'product_name' => $product->product_name,
                 'product_isbn' => $product->product_isbn,
-                'price'        => $basePrice,
+                'price'        => $product->product_price,
                 'quantity'     => $request->quantity,
-                'stock'        => $attribute->stock,
-                'total'        => $basePrice * $request->quantity
+                'total'        => $product->product_price * $request->quantity
             ];
         }
 
-        Session::put('sales_cart', $cart);
+        session()->put('sales_cart', $cart);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Product added to cart'
+        // 🔥 reset discounts on cart change
+        session()->forget([
+            'sales_coupon',
+            'sales_extra_discount_amount',
+            'sales_extra_discount_percent'
         ]);
+
+        return response()->json(['status' => true, 'message' => 'Added to cart']);
     }
 
     public function applyExtraDiscount(Request $request)
@@ -676,35 +654,39 @@ class OrderController extends Controller
         ]);
 
         $cart = session()->get('sales_cart', []);
-
         if (empty($cart)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Cart is empty'
-            ], 400);
+            return response()->json(['status' => false, 'message' => 'Cart is empty'], 400);
         }
 
         $subTotal = array_sum(array_column($cart, 'total'));
 
-        // % to amount
-        $discountPercent = $request->extra_discount;
-        $discountAmount  = ($subTotal * $discountPercent) / 100;
+        // Extra discount
+        $percent = $request->extra_discount;
+        $amount  = round(($subTotal * $percent) / 100);
+        $amount  = min($amount, $subTotal);
 
-        // Safety
-        $discountAmount = min($discountAmount, $subTotal);
+        session()->put('sales_extra_discount_percent', $percent);
+        session()->put('sales_extra_discount_amount', $amount);
 
-        session()->put('sales_extra_discount', round($discountAmount));
-        session()->put('sales_extra_discount_percent', $discountPercent);
+        // 🔥 RE-CALCULATE COUPON IF EXISTS
+        $coupon = session('sales_coupon');
+        if ($coupon) {
+            $afterExtra = $subTotal - $amount;
+
+            if ($coupon['type'] === 'Percentage') {
+                $couponDiscount = round(($afterExtra * $coupon['value']) / 100);
+            } else {
+                $couponDiscount = $coupon['value'];
+            }
+
+            $couponDiscount = min($couponDiscount, $afterExtra);
+
+            session()->put('sales_coupon.discount', $couponDiscount);
+        }
 
         return response()->json([
-            'status' => true,
-            'message' => 'Extra discount applied',
-            'data' => [
-                'discount_percent' => $discountPercent,
-                'discount_amount' => round($discountAmount),
-                'sub_total' => $subTotal,
-                'payable_amount' => round($subTotal - $discountAmount)
-            ]
+            'status'  => true,
+            'message' => 'Extra discount applied'
         ]);
     }
 
@@ -715,8 +697,7 @@ class OrderController extends Controller
             'coupon_code' => 'required|string|max:50'
         ]);
 
-        $admin     = Auth::guard('admin')->user();
-        // $adminType = $admin->type;
+        $admin = Auth::guard('admin')->user();
 
         $coupon = Coupon::where('coupon_code', $request->coupon_code)
             ->where('vendor_id', $admin->vendor_id)
@@ -725,75 +706,60 @@ class OrderController extends Controller
             ->first();
 
         if (!$coupon) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Invalid or expired coupon'
-            ], 400);
+            return response()->json(['status' => false, 'message' => 'Invalid or expired coupon'], 400);
         }
 
-        // Get cart subtotal
-        $cart = Session::get('sales_cart', []);
+        $cart = session()->get('sales_cart', []);
         if (empty($cart)) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Cart is empty'
-            ], 400);
+            return response()->json(['status' => false, 'message' => 'Cart is empty'], 400);
         }
 
-        $subTotal = array_sum(array_column($cart, 'total'));
+        $subTotal      = array_sum(array_column($cart, 'total'));
+        $extraDiscount = session('sales_extra_discount_amount', 0);
+        $afterExtra    = max(0, $subTotal - $extraDiscount);
 
-        // Calculate discount
-        if ($coupon->amount_type === 'percent') {
-            $discount = round(($subTotal * $coupon->amount) / 100);
+        if ($coupon->amount_type === 'Percentage') {
+            $discount = round(($afterExtra * $coupon->amount) / 100);
         } else {
-            // flat
             $discount = $coupon->amount;
         }
 
-        // Discount should not exceed subtotal
-        $discount = min($discount, $subTotal);
+        $discount = min($discount, $afterExtra);
 
-        // Store coupon in session
-        Session::put('sales_coupon', [
-            'code'        => $coupon->coupon_code,
-            'type'        => $coupon->amount_type,
-            'amount'      => $coupon->amount,
-            'discount'    => $discount
+        session()->put('sales_coupon', [
+            'code'     => $coupon->coupon_code,
+            'type'     => $coupon->amount_type,
+            'value'    => $coupon->amount,
+            'discount' => $discount
         ]);
 
         return response()->json([
-            'status'   => true,
-            'message'  => 'Coupon applied successfully',
-            'discount' => $discount
+            'status'  => true,
+            'message' => 'Coupon applied successfully'
         ]);
     }
 
     // Sales Concept - Remove from cart
     public function removeFromSalesCart(Request $request)
     {
-        // Remove product from cart
         $cart = array_values(array_filter(
-            Session::get('sales_cart', []),
+            session()->get('sales_cart', []),
             fn($item) => $item['product_id'] != $request->product_id
         ));
 
-        // Update cart session
-        Session::put('sales_cart', $cart);
+        session()->put('sales_cart', $cart);
 
-        // ✅ IMPORTANT: if cart is empty, remove coupon also
         if (empty($cart)) {
-            Session::forget('sales_coupon');
-            Session::forget('sales_extra_discount');
+            session()->forget([
+                'sales_coupon',
+                'sales_extra_discount_amount',
+                'sales_extra_discount_percent'
+            ]);
         }
 
-        return response()->json([
-            'status'  => true,
-            'message' => 'Product removed',
-            'cart'    => $cart
-        ]);
+        return response()->json(['status' => true]);
     }
 
-    // Sales Concept - Process sale (create order and update stock)
     public function processSale(Request $request)
     {
         $request->validate([
@@ -803,59 +769,76 @@ class OrderController extends Controller
             'customer_address' => 'nullable|string'
         ]);
 
-        $cart   = Session::get('sales_cart', []);
-        $coupon = Session::get('sales_coupon', null);
-
+        $cart = session()->get('sales_cart', []);
         if (empty($cart)) {
             return back()->with('error_message', 'Cart is empty');
         }
 
         DB::beginTransaction();
         try {
-            // Calculate totals
-            $subTotal       = array_sum(array_column($cart, 'total'));
-            $extra = Session::get('sales_extra_discount', 0);
-            $couponAmount   = $coupon['discount'] ?? 0;
-            $grandTotal = max(0, $subTotal - $extra - $couponAmount);
 
-            // Create Order
+            // 1️⃣ Sub total
+            $subTotal = array_sum(array_column($cart, 'total'));
+
+            // 2️⃣ Extra discount (AMOUNT only)
+            $extraDiscount = session('sales_extra_discount_amount', 0);
+            $extraDiscount = min($extraDiscount, $subTotal);
+
+            $afterExtra = $subTotal - $extraDiscount;
+
+            // 3️⃣ Coupon (AMOUNT only)
+            $coupon       = session('sales_coupon');
+            $couponAmount = $coupon ? min($coupon['discount'], $afterExtra) : 0;
+            $couponCode   = $coupon['code'] ?? null;
+
+            // 4️⃣ Final total
+            $grandTotal = max(0, $afterExtra - $couponAmount);
+
+            // 5️⃣ Create Order
             $order = Order::create([
-                'user_id'        => 0,
-                'name'           => $request->customer_name,
-                'mobile'         => $request->customer_mobile,
-                'email'          => $request->customer_email ?? 'N/A',
-                'address'        => $request->customer_address ?? 'N/A',
-                'city'           => 'N/A',
-                'state'          => 'N/A',
-                'country'        => 'N/A',
-                'pincode'        => 'N/A',
+                'user_id'          => 0,
+                'name'             => $request->customer_name,
+                'mobile'           => $request->customer_mobile,
+                'email'            => $request->customer_email ?? 'N/A',
+                'address'          => $request->customer_address ?? 'N/A',
+                'city'             => 'N/A',
+                'state'            => 'N/A',
+                'country'          => 'N/A',
+                'pincode'          => 'N/A',
                 'shipping_charges' => 0,
-                'payment_method' => 'Cash',
-                'payment_gateway' => 'Cash',
-                'order_status'   => 'New',
+                'payment_method'   => 'Cash',
+                'payment_gateway'  => 'Cash',
+                'order_status'     => 'New',
 
-                'coupon_code'    => $coupon['code'] ?? null,
-                'coupon_amount'  => $couponAmount,
-                'extra_discount' => $extra,
-
-                'grand_total'    => $grandTotal
+                // ✅ FIXED FIELDS
+                'coupon_code'      => $couponCode,
+                'coupon_amount'    => $couponAmount,
+                'extra_discount'   => $extraDiscount,
+                'grand_total'      => $grandTotal
             ]);
 
-            // Order products + stock update
+            // 6️⃣ Order items + stock update
             foreach ($cart as $item) {
-
-                $attribute = ProductsAttribute::where('product_id', $item['product_id'])
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($attribute->stock < $item['quantity']) {
-                    throw new \Exception('Insufficient stock for ' . $item['product_name']);
-                }
-
-                $attribute->decrement('stock', $item['quantity']);
 
                 $admin     = Auth::guard('admin')->user();
                 $adminType = $admin->type;
+
+                $attrQuery = ProductsAttribute::where('product_id', $item['product_id']);
+
+                if ($adminType === 'vendor') {
+                    $attrQuery->where('vendor_id', $admin->vendor_id);
+                }
+
+                $attr = $attrQuery->lockForUpdate()->first();
+
+                if (!$attr || $attr->stock < $item['quantity']) {
+                    throw new \Exception(
+                        'Insufficient stock for ' . $item['product_name']
+                    );
+                }
+
+                // ✅ THIS WILL NOW UPDATE CORRECTLY
+                $attr->decrement('stock', $item['quantity']);
 
                 OrdersProduct::create([
                     'order_id'      => $order->id,
@@ -870,13 +853,18 @@ class OrderController extends Controller
                 ]);
             }
 
+
             DB::commit();
 
-            Session::forget('sales_cart');
-            Session::forget('sales_coupon');
-            Session::forget('sales_extra_discount');
+            // 7️⃣ Clear session
+            session()->forget([
+                'sales_cart',
+                'sales_coupon',
+                'sales_extra_discount_amount',
+                'sales_extra_discount_percent'
+            ]);
 
-            return redirect('admin/sales-concept')
+            return redirect()->back()
                 ->with('success_message', 'Sale completed successfully');
         } catch (\Exception $e) {
             DB::rollBack();

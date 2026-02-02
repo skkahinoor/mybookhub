@@ -297,12 +297,18 @@ class OrderController extends Controller
         if ($resp = $this->checkAccess($request)) return $resp;
 
         $request->validate([
-            'coupon_code' => 'required|string',
-            'sub_total'   => 'required|numeric|min:1'
+            'coupon_code'     => 'required|string',
+            'sub_total'       => 'required|numeric|min:1',
+            'extra_discount'  => 'nullable|numeric|min:0|max:100'
         ]);
 
-        $vendorId = $request->user()->vendor_id;
-        $subTotal = $request->sub_total;
+        $vendorId      = $request->user()->vendor_id;
+        $subTotal      = $request->sub_total;
+        $extraPercent  = $request->extra_discount ?? 0;
+
+        /* ================= APPLY STORE DISCOUNT FIRST ================= */
+        $storeDiscountAmount = round(($subTotal * $extraPercent) / 100);
+        $priceAfterStoreDiscount = $subTotal - $storeDiscountAmount;
 
         $coupon = Coupon::where('coupon_code', $request->coupon_code)
             ->where('vendor_id', $vendorId)
@@ -317,22 +323,23 @@ class OrderController extends Controller
             ], 200);
         }
 
-        // Calculate discount (preview only)
-        if ($coupon->amount_type === 'percent') {
-            $discountAmount = round(($subTotal * $coupon->amount) / 100);
+        /* ================= COUPON ON DISCOUNTED PRICE ================= */
+        if ($coupon->amount_type === 'Percentage') {
+            $discountAmount = round(($priceAfterStoreDiscount * $coupon->amount) / 100);
         } else {
             $discountAmount = $coupon->amount;
         }
 
-        $discountAmount = min($discountAmount, $subTotal);
+        $discountAmount = min($discountAmount, $priceAfterStoreDiscount);
 
         return response()->json([
             'status' => true,
             'data' => [
-                'coupon_code'     => $coupon->coupon_code,
-                'amount_type'     => $coupon->amount_type, // percent | flat
-                'amount'          => $coupon->amount,
-                'discount_amount' => $discountAmount
+                'coupon_code'      => $coupon->coupon_code,
+                'amount_type'      => $coupon->amount_type,
+                'amount'           => $coupon->amount,
+                'discount_amount'  => $discountAmount,
+                'price_after_store_discount' => $priceAfterStoreDiscount
             ]
         ], 200);
     }
@@ -358,7 +365,7 @@ class OrderController extends Controller
         $vendorId = $request->user()->vendor_id;
         $adminId  = $request->user()->id;
 
-        // Merge duplicate products
+        /* ================= MERGE DUPLICATE ITEMS ================= */
         $cart = collect($request->cart)
             ->groupBy('product_id')
             ->map(fn($items) => [
@@ -373,6 +380,7 @@ class OrderController extends Controller
             $subTotal = 0;
             $resolvedItems = [];
 
+            /* ================= CART RESOLUTION ================= */
             foreach ($cart as $item) {
 
                 $attribute = ProductsAttribute::where([
@@ -389,34 +397,24 @@ class OrderController extends Controller
                     throw new \Exception('Product not found. ID: ' . $item['product_id']);
                 }
 
-                $basePrice       = $product->product_price;
-                // $discountPercent = $attribute->product_discount ?? 0;
-
-                // $discountAmount = round(($basePrice * $discountPercent) / 100);
-                // $finalPrice     = round($basePrice - $discountAmount);
-
-                $lineTotal = $basePrice * $item['quantity'];
+                $price = $product->product_price;
+                $lineTotal = $price * $item['quantity'];
                 $subTotal += $lineTotal;
 
                 $resolvedItems[] = [
-                    'product'     => $product,
-                    'attribute'   => $attribute,
-                    'final_price' => $basePrice,
-                    'quantity'    => $item['quantity']
+                    'product'   => $product,
+                    'attribute' => $attribute,
+                    'price'     => $price,
+                    'quantity'  => $item['quantity']
                 ];
             }
 
-            /* ================= EXTRA DISCOUNT (PERCENTAGE ON SUBTOTAL) ================= */
-            $extraDiscountPercent = $request->extra_discount ?? 0;
+            /* ================= EXTRA DISCOUNT FIRST ================= */
+            $extraPercent = $request->extra_discount ?? 0;
+            $extraDiscountAmount = round(($subTotal * $extraPercent) / 100);
+            $priceAfterStoreDiscount = $subTotal - $extraDiscountAmount;
 
-            $extraDiscountAmount = 0;
-            if ($extraDiscountPercent > 0) {
-                $extraDiscountAmount = round(($subTotal * $extraDiscountPercent) / 100);
-                $extraDiscountAmount = min($extraDiscountAmount, $subTotal);
-            }
-
-
-            /* ================= COUPON (SUBTOTAL) ================= */
+            /* ================= COUPON AFTER STORE DISCOUNT ================= */
             $couponAmount = 0;
             $couponCode   = null;
 
@@ -431,18 +429,18 @@ class OrderController extends Controller
                     throw new \Exception('Invalid or expired coupon');
                 }
 
-                if ($coupon->amount_type === 'percent') {
-                    $couponAmount = round(($subTotal * $coupon->amount) / 100);
+                if ($coupon->amount_type === 'Percentage') {
+                    $couponAmount = round(($priceAfterStoreDiscount * $coupon->amount) / 100);
                 } else {
                     $couponAmount = $coupon->amount;
                 }
 
-                $couponAmount = min($couponAmount, $subTotal);
+                $couponAmount = min($couponAmount, $priceAfterStoreDiscount);
                 $couponCode   = $coupon->coupon_code;
             }
 
             /* ================= GRAND TOTAL ================= */
-            $grandTotal = max(0, $subTotal - $extraDiscountAmount - $couponAmount);
+            $grandTotal = max(0, $priceAfterStoreDiscount - $couponAmount);
 
             /* ================= CREATE ORDER ================= */
             $order = Order::create([
@@ -468,6 +466,8 @@ class OrderController extends Controller
                 'grand_total'      => $grandTotal
             ]);
 
+
+
             /* ================= ORDER ITEMS + STOCK ================= */
             foreach ($resolvedItems as $item) {
 
@@ -480,7 +480,7 @@ class OrderController extends Controller
                     'vendor_id'     => $vendorId,
                     'product_id'    => $item['product']->id,
                     'product_name'  => $item['product']->product_name,
-                    'product_price' => $item['final_price'],
+                    'product_price' => $item['price'],
                     'product_qty'   => $item['quantity'],
                     'item_status'   => 'New'
                 ]);
@@ -493,8 +493,7 @@ class OrderController extends Controller
                 'message'     => 'Sale completed successfully',
                 'order_id'    => $order->id,
                 'sub_total'   => $subTotal,
-                'extra_discount_percent' => $extraDiscountPercent,
-                'extra_discount_amount'  => $extraDiscountAmount,
+                'extra_discount_amount' => $extraDiscountAmount,
                 'coupon_discount' => $couponAmount,
                 'grand_total' => $grandTotal
             ], 200);
