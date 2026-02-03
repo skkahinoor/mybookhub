@@ -550,6 +550,9 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
 
 Route::get('/dashboard', [App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');
 
+Route::get('/payment-success', function () {
+    return view('payment-success');
+});
 
 // Sales Executives routes
 require __DIR__ . '/sales.php';

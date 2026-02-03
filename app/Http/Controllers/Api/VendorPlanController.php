@@ -234,7 +234,10 @@ class VendorPlanController extends Controller
         $user = $request->user();
 
         if ($user->type !== 'vendor' || !$user->vendor_id) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized'
+            ], 401);
         }
 
         $vendor = Vendor::findOrFail($user->vendor_id);
@@ -249,54 +252,55 @@ class VendorPlanController extends Controller
         $amount = (int) Setting::getValue('pro_plan_price');
 
         try {
-            $client = new \GuzzleHttp\Client();
+            $client = new Client();
 
-            // 🔹 Create Razorpay order
-            $response = $client->post('https://api.razorpay.com/v1/orders', [
-                'auth' => [
-                    env('RAZORPAY_KEY_ID'),
-                    env('RAZORPAY_KEY_SECRET')
-                ],
-                'json' => [
-                    'amount' => $amount * 100,
-                    'currency' => 'INR',
-                    'receipt' => 'vendor_plan_' . $vendor->id . '_' . time(),
-                    'notes' => [
-                        'vendor_id' => $vendor->id,
-                        'plan' => 'pro'
+            // ✅ CREATE PAYMENT LINK (THIS OPENS REAL UI)
+            $response = $client->post(
+                'https://api.razorpay.com/v1/payment_links',
+                [
+                    'auth' => [
+                        env('RAZORPAY_KEY_ID'),
+                        env('RAZORPAY_KEY_SECRET')
+                    ],
+                    'json' => [
+                        'amount' => $amount * 100,
+                        'currency' => 'INR',
+                        'description' => 'Upgrade to Pro Plan',
+                        'customer' => [
+                            'name' => $vendor->name ?? 'Vendor',
+                            'email' => $user->email,
+                            'contact' => $vendor->mobile,
+                        ],
+                        'notes' => [
+                            'vendor_id' => $vendor->id,
+                            'plan' => 'pro'
+                        ],
+                        'callback_url' => 'https://mybookhub.in/payment-success',
+                        'callback_method' => 'get'
                     ]
                 ]
-            ]);
+            );
 
-            $order = json_decode($response->getBody(), true);
+            $link = json_decode($response->getBody(), true);
 
+            // Optional but useful for tracking
             $vendor->update([
-                'razorpay_order_id' => $order['id']
-            ]);
-
-            // 🔥 Razorpay hosted checkout
-            $paymentUrl = "https://checkout.razorpay.com/v1/checkout.js?" . http_build_query([
-                'key_id'   => env('RAZORPAY_KEY_ID'),
-                'order_id' => $order['id'],
-                'amount'   => $amount * 100,
-                'currency' => 'INR',
-                'name'     => 'MyBookHub',
-                'description' => 'Upgrade to Pro Plan',
-                'prefill[email]'   => $user->email,
-                'prefill[contact]' => $vendor->mobile,
-                'theme[color]'     => '#FF9F1C'
+                'razorpay_payment_link_id' => $link['id']
             ]);
 
             return response()->json([
                 'status' => true,
-                'payment_url' => $paymentUrl
+                'payment_url' => $link['short_url']
             ]);
+
         } catch (\Exception $e) {
-            Log::error('Razorpay Order Error', ['error' => $e->getMessage()]);
+            Log::error('Razorpay Payment Link Error', [
+                'error' => $e->getMessage()
+            ]);
 
             return response()->json([
                 'status' => false,
-                'message' => 'Payment order failed'
+                'message' => 'Unable to create payment link'
             ], 500);
         }
     }
@@ -313,34 +317,56 @@ class VendorPlanController extends Controller
         );
 
         if (!hash_equals($expected, $signature)) {
+            Log::warning('Razorpay webhook signature mismatch');
             return response()->json(['status' => false], 403);
         }
 
-        if ($request->event === 'payment.captured') {
+        $event = $request->event;
 
-            $entity = $request->payload['payment']['entity'];
-            $orderId = $entity['order_id'];
-            $paymentId = $entity['id'];
+        // ✅ HANDLE PAYMENT LINK EVENTS
+        if (in_array($event, ['payment_link.paid', 'payment.captured'])) {
 
-            $vendor = Vendor::where('razorpay_order_id', $orderId)->first();
+            $entity =
+                $request->payload['payment']['entity']
+                ?? $request->payload['payment_link']['entity']
+                ?? null;
 
-            if ($vendor) {
-                $expiry = ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture())
-                    ? $vendor->plan_expires_at->addMonth()
-                    : now()->addMonth();
-
-                $vendor->update([
-                    'plan' => 'pro',
-                    'plan_started_at' => now(),
-                    'plan_expires_at' => $expiry,
-                    'razorpay_payment_id' => $paymentId
-                ]);
+            if (!$entity) {
+                return response()->json(['status' => true]);
             }
+
+            $notes = $entity['notes'] ?? [];
+            $vendorId = $notes['vendor_id'] ?? null;
+
+            if (!$vendorId) {
+                return response()->json(['status' => true]);
+            }
+
+            $vendor = Vendor::find($vendorId);
+
+            if (!$vendor) {
+                return response()->json(['status' => true]);
+            }
+
+            $expiry = ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture())
+                ? $vendor->plan_expires_at->addMonth()
+                : now()->addMonth();
+
+            $vendor->update([
+                'plan' => 'pro',
+                'plan_started_at' => now(),
+                'plan_expires_at' => $expiry,
+                'razorpay_payment_id' => $entity['id'] ?? null,
+            ]);
+
+            Log::info('Vendor plan upgraded', [
+                'vendor_id' => $vendor->id,
+                'expires_at' => $expiry,
+            ]);
         }
 
         return response()->json(['status' => true]);
     }
-
 
     public function downgrade(Request $request)
     {
