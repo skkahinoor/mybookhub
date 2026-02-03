@@ -36,7 +36,7 @@ Route::post('/vendor/verify-otp', [VendorController::class, 'verifyOtp']);
 
 // rozerpay webhook for payment
 Route::post('razorpay/webhook', [VendorPlanController::class, 'razorpayWebhook']);
-// end rozerpay webhook for payment
+// end rozerpay webhook for payment**
 
 // Protected routes: logout (requires valid Sanctum token)
 Route::middleware('auth:sanctum')->group(function () {
