@@ -34,6 +34,10 @@ Route::post('/sales/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/vendor/register', [VendorController::class, 'register']);
 Route::post('/vendor/verify-otp', [VendorController::class, 'verifyOtp']);
 
+// rozerpay webhook for payment
+Route::post('razorpay/webhook', [VendorPlanController::class, 'razorpayWebhook']);
+// end rozerpay webhook for payment
+
 // Protected routes: logout (requires valid Sanctum token)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -102,7 +106,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('vendor/plan/upgrade', [VendorPlanController::class, 'upgrade']);
     Route::post('vendor/plan/webhookupgrade', [VendorPlanController::class, 'webhookupgrade']);
     // Route::post('vendor/plan/webhook', [VendorPlanController::class, 'razorpayWebhook']);
-    Route::post('razorpay/webhook', [VendorPlanController::class, 'razorpayWebhook']);
+
     Route::post('vendor/plan/verify', [VendorPlanController::class, 'verify']);
     Route::post('vendor/plan/downgrade', [VendorPlanController::class, 'downgrade']);
 });
