@@ -100,6 +100,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('vendor/plan/getplan', [VendorPlanController::class, 'getPlan']);
     Route::get('vendor/plan/status', [VendorPlanController::class, 'status']);
     Route::post('vendor/plan/upgrade', [VendorPlanController::class, 'upgrade']);
+    Route::post('vendor/plan/webhookupgrade', [VendorPlanController::class, 'webhookupgrade']);
+    Route::post('vendor/plan/webhook', [VendorPlanController::class, 'razorpayWebhook']);
     Route::post('vendor/plan/verify', [VendorPlanController::class, 'verify']);
     Route::post('vendor/plan/downgrade', [VendorPlanController::class, 'downgrade']);
 });
