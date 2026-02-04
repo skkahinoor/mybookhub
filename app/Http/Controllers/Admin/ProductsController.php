@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Intervention\Image\Facades\Image;
-
+use Illuminate\Support\Facades\Response;
 use App\Models\Product;
 use App\Models\ProductsImage;
 use App\Models\ProductsFilter;
@@ -24,9 +24,144 @@ use App\Models\Notification;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Validator;
 use App\Models\HeaderLogo;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class ProductsController extends Controller
 {
+    public function importIndex()
+    {
+        $headerLogo = HeaderLogo::first();
+        $logos = HeaderLogo::first();
+        return view('admin.products.importbook', compact('logos', 'headerLogo'));
+    }
+
+    public function downloadTemplate()
+    {
+        $filePath = public_path('templates/Book-Import-Template.xlsx');
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('error_message', 'Template file not found.');
+        }
+
+        return response()->download(
+            $filePath,
+            'Book-Import-Template.xlsx',
+            ['Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
+        );
+    }
+
+    public function importStore(Request $request)
+    {
+        $request->validate([
+            'import' => 'required|file|mimes:xlsx,xls,csv|max:2048',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $rows = Excel::toArray([], $request->file('import'))[0];
+
+            // Normalize header
+            $header = array_map(fn($h) => strtolower(trim($h)), $rows[0]);
+            unset($rows[0]);
+
+            $inserted = 0;
+            $skippedDuplicate = 0;
+            $skippedInvalid = 0;
+
+            foreach ($rows as $rowIndex => $row) {
+
+                if (count(array_filter($row)) == 0) {
+                    $skippedInvalid++;
+                    continue;
+                }
+
+                $data = array_combine($header, $row);
+
+                // Required fields check
+                if (
+                    empty($data['section_id']) ||
+                    empty($data['category_id']) ||
+                    empty($data['product_name'])
+                ) {
+                    $skippedInvalid++;
+                    continue;
+                }
+
+                $isbn      = trim($data['isbn_number'] ?? '');
+                $condition = trim($data['book_condition'] ?? 'new');
+
+                /* =====================
+             | DUPLICATE CHECK
+             ===================== */
+                $exists = DB::table('products')
+                    ->where('product_isbn', $isbn)
+                    ->where('condition', $condition)
+                    ->exists();
+
+                if ($exists) {
+                    $skippedDuplicate++;
+                    continue;
+                }
+
+                /* =====================
+             | INSERT PRODUCT
+             ===================== */
+                $productId = DB::table('products')->insertGetId([
+                    'section_id'    => (int) $data['section_id'],
+                    'category_id'   => (int) $data['category_id'],
+                    'publisher_id'  => $data['publisher_id'] ?? null,
+                    'subject_id'    => $data['subject_id'] ?? null,
+                    'edition_id'    => $data['edition_id'] ?? null,
+                    'language_id'   => $data['language_id'] ?? null,
+                    'product_name'  => trim($data['product_name']),
+                    'condition'     => $condition,
+                    'product_isbn'  => $isbn,
+                    'product_price' => $data['price'] ?? 0,
+                    'status'        => 1,
+                    'created_at'    => now(),
+                    'updated_at'    => now(),
+                ]);
+
+                /* =====================
+             | AUTHORS
+             ===================== */
+                if (!empty($data['authors'])) {
+                    $authorIds = explode(',', $data['authors']);
+
+                    foreach ($authorIds as $authorId) {
+                        DB::table('author_product')->insert([
+                            'author_id'  => (int) trim($authorId),
+                            'product_id' => $productId,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+
+                $inserted++;
+            }
+
+            DB::commit();
+
+            return back()->with(
+                'success_message',
+                "Import completed ✅
+            Inserted: {$inserted} |
+            Skipped (Duplicate): {$skippedDuplicate} |
+            Skipped (Invalid): {$skippedInvalid}"
+            );
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($e->getMessage());
+
+            return back()->with('error_message', 'Import failed');
+        }
+    }
+
     public function products()
     {
         Session::put('page', 'products');
@@ -59,7 +194,7 @@ class ProductsController extends Controller
 
             // Apply vendor filter
             $productsQuery->where('vendor_id', $vendor_id)
-                         ->where('admin_type', 'vendor');
+                ->where('admin_type', 'vendor');
 
             // Execute query
             $products = $productsQuery->get();
@@ -88,7 +223,6 @@ class ProductsController extends Controller
 
         return view('admin.products.products', compact('products', 'logos', 'headerLogo', 'adminType'));
     }
-
 
     public function updateProductStatus(Request $request)
     { // Update Product Status using AJAX in products.blade.php
@@ -153,17 +287,17 @@ class ProductsController extends Controller
             // Check if product with this ISBN AND condition already exists (BEFORE validation)
             $existingProduct = null;
             $skipProductSave = false;
-            
+
             if ($id == null) {
                 // Check for product with same ISBN AND same condition
                 $existingProduct = Product::where('product_isbn', $data['product_isbn'])
                     ->where('condition', $data['condition'])
                     ->first();
-                
+
                 if ($existingProduct) {
                     // Check if current admin/vendor already has this product (same ISBN + same condition)
                     $existingAttributeQuery = ProductsAttribute::where('product_id', $existingProduct->id);
-                    
+
                     if ($user->type === 'vendor') {
                         $existingAttributeQuery->where('vendor_id', $user->vendor_id)
                             ->where('admin_type', 'vendor');
@@ -171,9 +305,9 @@ class ProductsController extends Controller
                         $existingAttributeQuery->where('admin_id', $user->id)
                             ->where('admin_type', 'admin');
                     }
-                    
+
                     $existingAttribute = $existingAttributeQuery->first();
-                    
+
                     if ($existingAttribute) {
                         $userType = $user->type === 'vendor' ? 'vendor' : 'admin';
                         $conditionText = $data['condition'] === 'new' ? 'new' : 'old';
@@ -190,13 +324,13 @@ class ProductsController extends Controller
                                 'product_discount' => (float) ($existingAttribute->product_discount ?? 0),
                             ], 422);
                         }
-                        
+
                         // Return redirect for regular form submissions
                         return redirect()->back()
                             ->withInput()
                             ->with('error_message', $errorMessage);
                     }
-                    
+
                     // Product exists with same ISBN + condition but current user doesn't have it - we'll reuse it
                     $skipProductSave = true;
                 } else {
@@ -205,7 +339,7 @@ class ProductsController extends Controller
                     $productWithDifferentCondition = Product::where('product_isbn', $data['product_isbn'])
                         ->where('condition', '!=', $data['condition'])
                         ->first();
-                    
+
                     // If product exists with different condition, it's a new product entry (not reusing)
                     // So we don't set skipProductSave = true
                 }
@@ -214,7 +348,7 @@ class ProductsController extends Controller
             // Conditional validation: ISBN uniqueness is now based on ISBN + condition combination
             // Since we allow same ISBN with different conditions, we need custom validation
             $isbnValidationRule = 'required|digits_between:10,13';
-            
+
             if ($id == null) {
                 // For new products, check if ISBN + condition combination already exists
                 // We'll handle this in custom validation after checking existingProduct
@@ -248,7 +382,7 @@ class ProductsController extends Controller
                         $exists = Product::where('product_isbn', $data['product_isbn'])
                             ->where('condition', $data['condition'])
                             ->exists();
-                        
+
                         if ($exists) {
                             $conditionText = $data['condition'] === 'new' ? 'new' : 'old';
                             $validator->errors()->add('product_isbn', "A {$conditionText} product with this ISBN already exists. You can reuse it by selecting the same condition, or add it as a different condition.");
@@ -263,7 +397,7 @@ class ProductsController extends Controller
                         ->where('condition', $data['condition'])
                         ->where('id', '!=', $id)
                         ->exists();
-                    
+
                     if ($exists) {
                         $conditionText = $data['condition'] === 'new' ? 'new' : 'old';
                         $validator->errors()->add('product_isbn', "A {$conditionText} product with this ISBN already exists.");
@@ -373,12 +507,12 @@ class ProductsController extends Controller
 
                     // Count products added this month
                     $currentMonthStart = now()->startOfMonth();
-                    $productsThisMonth = Product::whereHas('firstAttribute', function($q) use ($vendor) {
+                    $productsThisMonth = Product::whereHas('firstAttribute', function ($q) use ($vendor) {
                         $q->where('vendor_id', $vendor->id)
-                          ->where('admin_type', 'vendor');
+                            ->where('admin_type', 'vendor');
                     })
-                    ->where('created_at', '>=', $currentMonthStart)
-                    ->count();
+                        ->where('created_at', '>=', $currentMonthStart)
+                        ->count();
 
                     if ($productsThisMonth >= $freePlanBookLimit) {
                         return redirect('vendor/products')
@@ -419,7 +553,7 @@ class ProductsController extends Controller
                 ]);
 
                 return response()->json([
-                    'status' => 'success', 
+                    'status' => 'success',
                     'message' => $message,
                     'product_id' => $product->id,
                     'show_modal' => true
@@ -480,8 +614,8 @@ class ProductsController extends Controller
                 ->where('admin_type', 'vendor');
         } else {
             $attributeQuery->where('admin_id', $user->id)
-            ->where('admin_type', 'admin')
-            ->orWhere('admin_type', 'superadmin');
+                ->where('admin_type', 'admin')
+                ->orWhere('admin_type', 'superadmin');
         }
 
         $existingAttribute = $attributeQuery->first();

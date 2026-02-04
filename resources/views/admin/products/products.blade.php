@@ -9,13 +9,19 @@
                             <h4 class="card-title">Books</h4>
 
                             @if ($adminType == 'vendor')
-                            <a href="{{ url('vendor/add-edit-product') }}"
+                                <a href="{{ url('vendor/add-edit-product') }}"
                                     style="max-width: 150px; float: right; display: inline-block"
                                     class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Book</a>
                             @else
-                            <a href="{{ url('admin/add-edit-product') }}"
-                                style="max-width: 150px; float: right; display: inline-block"
-                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Book</a>
+                                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                                    <a href="{{ url('admin/add-edit-product') }}" class="btn btn-primary">
+                                        <i class="mdi mdi-plus"></i> Add Book
+                                    </a>
+
+                                    <a href="{{ url('admin/import-product') }}" class="btn btn-success">
+                                        <i class="mdi mdi-plus"></i> Import Book
+                                    </a>
+                                </div>
                             @endif
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
@@ -54,11 +60,13 @@
                                         @foreach ($products as $key => $product)
                                             <tr>
                                                 <td>{{ __($key + 1) }}</td>
-                                                
+
                                                 @if ($adminType === 'vendor')
                                                     {{-- Vendor: Display from ProductsAttribute --}}
                                                     <td> {{ $product->product->product_name ?? 'N/A' }}</td>
-                                                    <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }} <span class="text-muted">({{ ucfirst($product->product->condition ?? 'N/A') }})</span></td>
+                                                    <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }} <span
+                                                            class="text-muted">({{ ucfirst($product->product->condition ?? 'N/A') }})</span>
+                                                    </td>
                                                     <td>
                                                         @if (!empty($product->product->product_image))
                                                             <img style="width:120px; height:100px"
@@ -73,7 +81,9 @@
                                                 @else
                                                     {{-- Admin/Superadmin: Display from Product --}}
                                                     <td> {{ $product->product_name ?? 'N/A' }}</td>
-                                                    <td>ISBN-{{ $product->product_isbn ?? 'N/A' }} <span class="text-muted">({{ ucfirst($product->condition ?? 'N/A') }})</span></td>
+                                                    <td>ISBN-{{ $product->product_isbn ?? 'N/A' }} <span
+                                                            class="text-muted">({{ ucfirst($product->condition ?? 'N/A') }})</span>
+                                                    </td>
                                                     <td>
                                                         @if (!empty($product->product_image))
                                                             <img style="width:120px; height:100px"
@@ -86,7 +96,8 @@
                                                     <td>{{ $product->category->category_name ?? 'N/A' }}</td>
                                                     <td>{{ $product->section->name ?? 'N/A' }}</td>
                                                     <td>
-                                                        <span class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
+                                                        <span
+                                                            class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
                                                     </td>
                                                 @endif
                                                 {{-- <td>
@@ -112,14 +123,20 @@
                                                     @if ($adminType === 'vendor')
                                                         {{-- Vendor: Use attribute status --}}
                                                         @if ($product->status == 1)
-                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
-                                                                product_id="{{ $product->product_id }}" data-url="{{ route('vendor.updateproductstatus') }}" href="javascript:void(0)">
+                                                            <a class="updateProductStatus"
+                                                                id="product-{{ $product->product_id }}"
+                                                                product_id="{{ $product->product_id }}"
+                                                                data-url="{{ route('vendor.updateproductstatus') }}"
+                                                                href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                     status="Active"></i>
                                                             </a>
                                                         @else
-                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
-                                                                product_id="{{ $product->product_id }}" data-url="{{ route('vendor.updateproductstatus') }}" href="javascript:void(0)">
+                                                            <a class="updateProductStatus"
+                                                                id="product-{{ $product->product_id }}"
+                                                                product_id="{{ $product->product_id }}"
+                                                                data-url="{{ route('vendor.updateproductstatus') }}"
+                                                                href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
                                                                     status="Inactive"></i>
                                                             </a>
@@ -128,13 +145,17 @@
                                                         {{-- Admin/Superadmin: Use product status --}}
                                                         @if ($product->status == 1)
                                                             <a class="updateProductStatus" id="product-{{ $product->id }}"
-                                                                product_id="{{ $product->id }}" data-url="{{ route('admin.updateproductstatus') }}" href="javascript:void(0)">
+                                                                product_id="{{ $product->id }}"
+                                                                data-url="{{ route('admin.updateproductstatus') }}"
+                                                                href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                     status="Active"></i>
                                                             </a>
                                                         @else
                                                             <a class="updateProductStatus" id="product-{{ $product->id }}"
-                                                                product_id="{{ $product->id }}" data-url="{{ route('admin.updateproductstatus') }}" href="javascript:void(0)">
+                                                                product_id="{{ $product->id }}"
+                                                                data-url="{{ route('admin.updateproductstatus') }}"
+                                                                href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
                                                                     status="Inactive"></i>
                                                             </a>
@@ -153,7 +174,8 @@
                                                         </a> --}}
 
                                                         <a href="#" title="Add Stock" data-bs-toggle="modal"
-                                                            data-bs-target="#addAttributeModal" data-id="{{ $product->product_id }}"
+                                                            data-bs-target="#addAttributeModal"
+                                                            data-id="{{ $product->product_id }}"
                                                             data-name="{{ $product->product->product_name ?? 'N/A' }}"
                                                             data-stock="{{ $product->stock ?? 0 }}"
                                                             data-discount="{{ $product->product_discount ?? 0 }}"
@@ -180,7 +202,10 @@
 
                                                         @php
                                                             // Get the first attribute for this product and current admin to show current stock/discount
-                                                            $firstAttribute = \App\Models\ProductsAttribute::where('product_id', $product->id)
+                                                            $firstAttribute = \App\Models\ProductsAttribute::where(
+                                                                'product_id',
+                                                                $product->id,
+                                                            )
                                                                 ->where('admin_id', Auth::guard('admin')->user()->id)
                                                                 ->where('admin_type', 'admin')
                                                                 ->first();
@@ -199,7 +224,6 @@
                                                             href="{{ url('admin/add-images/' . $product->id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
                                                         </a>
-
                                                     @endif
                                                 </td>
                                             </tr>
@@ -259,17 +283,19 @@
                                     <input type="number" class="form-control" id="bookStock" placeholder="0" required
                                         min="0" step="1">
                                 </div>
-                                <div class="form-text">Available quantity: <span id="availableQuantity" class="fw-bold text-primary">0</span></div>
+                                <div class="form-text">Available quantity: <span id="availableQuantity"
+                                        class="fw-bold text-primary">0</span></div>
                             </div>
 
                             <!-- Discount input -->
                             <div class="col-md-6 mb-4">
                                 <label for="bookDiscount" class="form-label fw-semibold">
-                                    <i class="fas fa-percent me-2 text-info"></i>Discount (%) <span class="text-danger">*</span>
+                                    <i class="fas fa-percent me-2 text-info"></i>Discount (%) <span
+                                        class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control" id="bookDiscount" placeholder="0" required
-                                        min="0" max="100" step="0.01">
+                                    <input type="number" class="form-control" id="bookDiscount" placeholder="0"
+                                        required min="0" max="100" step="0.01">
                                 </div>
                                 <div class="form-text">Enter discount percentage (0-100)</div>
                             </div>
@@ -278,7 +304,7 @@
 
                     <div class="modal-footer bg-light border-0 p-4">
                         <button type="submit" class="btn btn-primary  px-4 fw-semibold">
-                            <i class="fas fa-save me-2"></i> Update 
+                            <i class="fas fa-save me-2"></i> Update
                         </button>
                         <button type="button" class="btn btn-outline-secondary  px-4" data-bs-dismiss="modal">
                             <i class="fas fa-times me-2"></i> Cancel
@@ -302,22 +328,22 @@
                 var productName = $(this).data('name');
                 var stock = parseInt($(this).data('stock')) || 0; // current available stock
                 var discount = $(this).data('discount') || 0;
-                
+
                 $('#bookNameEdition').val(productName);
-                
+
                 // Store productId in modal for later use
                 $('#addAttributeForm').data('product-id', productId);
                 // Store current available stock separately for calculations
                 $('#addAttributeForm').data('current-stock', stock);
-                
+
                 // Populate form fields with existing values
                 $('#bookStock').val('0'); // start from 0 to add more stock
                 $('#bookDiscount').val(discount);
-                
+
                 // Display available quantity (current stock)
                 $('#availableQuantity').text(stock);
             });
-            
+
             // Update available quantity in real-time when stock input changes
             $(document).on('input', '#bookStock', function() {
                 var newStockValue = parseInt($(this).val()) || 0;

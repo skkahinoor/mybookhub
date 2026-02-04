@@ -231,6 +231,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             Route::post('save-product-attributes', [AdminProductsController::class, 'saveProductAttributes'])->name('admin.products.saveAttributes'); // Save product attributes (stock and discount) via AJAX
             Route::get('delete-product-image/{id}', [AdminProductsController::class, 'deleteProductImage']);             // Delete a product images (in the three folders: small, medium and large) in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
             Route::get('delete-product-video/{id}', [AdminProductsController::class, 'deleteProductVideo']);             // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
+            Route::get('import-product', [AdminProductsController::class, 'importindex']);
+            Route::post('import-product', [AdminProductsController::class, 'importStore']);
+            Route::get('import-product/template', [AdminProductsController::class, 'downloadTemplate']);
         });
 
         // Attributes
@@ -564,5 +567,3 @@ require __DIR__ . '/user.php';
 // Route::get('test-ajax-endpoints', function() {
 //     return view('test_ajax_endpoints');
 // })->name('test_ajax_endpoints');
-
-
