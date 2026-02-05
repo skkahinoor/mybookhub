@@ -64,82 +64,125 @@ class ProductsController extends Controller
         try {
             $rows = Excel::toArray([], $request->file('import'))[0];
 
-            // Normalize header
+            // Normalize headers
             $header = array_map(fn($h) => strtolower(trim($h)), $rows[0]);
             unset($rows[0]);
+
+            // Case-insensitive maps
+            $sections   = Section::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
+            $categories = Category::pluck('id', 'category_name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
+            $publishers = Publisher::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
+            $subjects   = Subject::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
+            $languages  = Language::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
+            $editions   = Edition::pluck('id', 'edition')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
+            $authorsMap = Author::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
 
             $inserted = 0;
             $skippedDuplicate = 0;
             $skippedInvalid = 0;
 
-            foreach ($rows as $rowIndex => $row) {
+            foreach ($rows as $row) {
 
-                if (count(array_filter($row)) == 0) {
+                if (!array_filter($row)) {
                     $skippedInvalid++;
                     continue;
                 }
 
                 $data = array_combine($header, $row);
 
-                // Required fields check
-                if (
-                    empty($data['section_id']) ||
-                    empty($data['category_id']) ||
-                    empty($data['product_name'])
-                ) {
+                $productName = trim($data['product name'] ?? '');
+                $isbn        = trim($data['isbn number'] ?? '');
+                $condition   = strtolower(trim($data['book condition'] ?? 'new'));
+
+                if (!$productName || !$isbn) {
                     $skippedInvalid++;
                     continue;
                 }
 
-                $isbn      = trim($data['isbn_number'] ?? '');
-                $condition = trim($data['book_condition'] ?? 'new');
+                // ---------- SECTION ----------
+                $sectionName = trim($data['section'] ?? '');
+                if (!$sectionName) {
+                    $skippedInvalid++;
+                    continue;
+                }
 
-                /* =====================
-             | DUPLICATE CHECK
-             ===================== */
-                $exists = DB::table('products')
-                    ->where('product_isbn', $isbn)
-                    ->where('condition', $condition)
-                    ->exists();
+                if (!isset($sections[strtolower($sectionName)])) {
+                    $section = Section::create([
+                        'name'   => ucwords($sectionName),
+                        'status' => 1
+                    ]);
+                    $sections[strtolower($sectionName)] = $section->id;
+                }
+                $sectionId = $sections[strtolower($sectionName)];
 
-                if ($exists) {
+                // ---------- CATEGORY ----------
+                $categoryName = trim($data['category'] ?? '');
+                if (!$categoryName) {
+                    $skippedInvalid++;
+                    continue;
+                }
+
+                $ROOT_CATEGORY_ID = 0;
+
+                if (!isset($categories[strtolower($categoryName)])) {
+                    $category = Category::create([
+                        'category_name' => ucwords($categoryName),
+                        'section_id'    => $sectionId,
+                        'parent_id'     => $ROOT_CATEGORY_ID,
+                        'status'        => 1
+                    ]);
+                    $categories[strtolower($categoryName)] = $category->id;
+                }
+                $categoryId = $categories[strtolower($categoryName)];
+
+                // ---------- OTHER FOREIGN KEYS ----------
+                $publisherId = $this->autoCreate($publishers, Publisher::class, $data['publisher'] ?? null);
+                $subjectId   = $this->autoCreate($subjects, Subject::class, $data['subject'] ?? null);
+                $languageId  = $this->autoCreate($languages, Language::class, $data['language'] ?? null);
+                $editionId   = $this->autoCreate($editions, Edition::class, $data['edition'] ?? null, [
+                    'edition' => trim($data['edition'] ?? '')
+                ]);
+
+                // ---------- DUPLICATE CHECK ----------
+                if (Product::where('product_isbn', $isbn)->where('condition', $condition)->exists()) {
                     $skippedDuplicate++;
                     continue;
                 }
 
-                /* =====================
-             | INSERT PRODUCT
-             ===================== */
-                $productId = DB::table('products')->insertGetId([
-                    'section_id'    => (int) $data['section_id'],
-                    'category_id'   => (int) $data['category_id'],
-                    'publisher_id'  => $data['publisher_id'] ?? null,
-                    'subject_id'    => $data['subject_id'] ?? null,
-                    'edition_id'    => $data['edition_id'] ?? null,
-                    'language_id'   => $data['language_id'] ?? null,
-                    'product_name'  => trim($data['product_name']),
+                // ---------- PRODUCT ----------
+                $product = Product::create([
+                    'section_id'    => $sectionId,
+                    'category_id'   => $categoryId,
+                    'publisher_id'  => $publisherId,
+                    'subject_id'    => $subjectId,
+                    'edition_id'    => $editionId,
+                    'language_id'   => $languageId,
+                    'product_name'  => $productName,
                     'condition'     => $condition,
                     'product_isbn'  => $isbn,
                     'product_price' => $data['price'] ?? 0,
                     'status'        => 1,
-                    'created_at'    => now(),
-                    'updated_at'    => now(),
                 ]);
 
-                /* =====================
-             | AUTHORS
-             ===================== */
+                // ---------- AUTHORS (MANY-TO-MANY) ----------
                 if (!empty($data['authors'])) {
-                    $authorIds = explode(',', $data['authors']);
+                    $authorIds = [];
 
-                    foreach ($authorIds as $authorId) {
-                        DB::table('author_product')->insert([
-                            'author_id'  => (int) trim($authorId),
-                            'product_id' => $productId,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    foreach (explode(',', $data['authors']) as $authorName) {
+                        $key = strtolower(trim($authorName));
+
+                        if (!isset($authorsMap[$key])) {
+                            $author = Author::create([
+                                'name'   => ucwords(trim($authorName)),
+                                'status' => 1
+                            ]);
+                            $authorsMap[$key] = $author->id;
+                        }
+
+                        $authorIds[] = $authorsMap[$key];
                     }
+
+                    $product->authors()->sync($authorIds);
                 }
 
                 $inserted++;
@@ -150,16 +193,35 @@ class ProductsController extends Controller
             return back()->with(
                 'success_message',
                 "Import completed ✅
-            Inserted: {$inserted} |
-            Skipped (Duplicate): {$skippedDuplicate} |
-            Skipped (Invalid): {$skippedInvalid}"
+        Inserted: {$inserted}
+        Skipped (Duplicate): {$skippedDuplicate}
+        Skipped (Invalid): {$skippedInvalid}"
             );
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($e->getMessage());
-
             return back()->with('error_message', 'Import failed');
         }
+    }
+
+    private function autoCreate(&$map, $model, $name, $extra = [])
+    {
+        if (!$name) {
+            return null;
+        }
+
+        $key = strtolower(trim($name));
+
+        if (!isset($map[$key])) {
+            $record = $model::create(array_merge([
+                'name'   => ucwords(trim($name)),
+                'status' => 1
+            ], $extra));
+
+            $map[$key] = $record->id;
+        }
+
+        return $map[$key];
     }
 
     public function products()
@@ -654,8 +716,7 @@ class ProductsController extends Controller
     }
 
     public function deleteProductImage($id)
-    { // AJAX call from admin/js/custom.js    // Delete the product image from BOTH SERVER (FILESYSTEM) & DATABASE    // $id is passed as a Route Parameter
-        // Get the product image record stored in the database
+    {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $productImage = Product::select('product_image')->where('id', $id)->first();
@@ -694,7 +755,7 @@ class ProductsController extends Controller
     }
 
     public function addAttributes(Request $request, $id)
-    { // Add/Edit Attributes function
+    {
         Session::put('page', 'products');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -746,12 +807,11 @@ class ProductsController extends Controller
     }
 
     public function updateAttributeStatus(Request $request)
-    { // Update Attribute Status using AJAX in add_edit_attributes.blade.php
+    {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        if ($request->ajax()) { // if the request is coming via an AJAX call
-            $data = $request->all(); // Getting the name/value pairs array that are sent from the AJAX request (AJAX call)
-            // dd($data);
+        if ($request->ajax()) {
+            $data = $request->all();
 
             if ($data['status'] == 'Active') { // $data['status'] comes from the 'data' object inside the $.ajax() method    // reverse the 'status' from (ative/inactive) 0 to 1 and 1 to 0 (and vice versa)
                 $status = 0;
@@ -775,7 +835,7 @@ class ProductsController extends Controller
         Session::put('page', 'products');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        if ($request->isMethod('post')) { // if the <form> is submitted
+        if ($request->isMethod('post')) {
             $data = $request->all();
             // dd($data);
 
