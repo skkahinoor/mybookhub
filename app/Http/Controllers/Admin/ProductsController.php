@@ -149,6 +149,19 @@ class ProductsController extends Controller
                     continue;
                 }
 
+                // ---------- IMAGE (JUST VERIFY & SAVE NAME) ----------
+                $imageName = null;
+
+                if (!empty($data['image'])) {
+
+                    $tempImage = trim($data['image']);
+
+                    // Check image exists in ANY size folder (large is enough)
+                    if (file_exists(public_path('front/images/product_images/large/' . $tempImage))) {
+                        $imageName = $tempImage;
+                    }
+                }
+
                 // ---------- PRODUCT ----------
                 $product = Product::create([
                     'section_id'    => $sectionId,
@@ -161,6 +174,7 @@ class ProductsController extends Controller
                     'condition'     => $condition,
                     'product_isbn'  => $isbn,
                     'product_price' => $data['price'] ?? 0,
+                    'product_image' => $imageName,
                     'status'        => 1,
                 ]);
 
