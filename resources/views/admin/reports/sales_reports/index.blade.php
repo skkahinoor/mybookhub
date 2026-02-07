@@ -23,8 +23,8 @@
                                     <select name="country_id" id="filter-country" class="form-control">
                                         <option value="">All</option>
                                         @foreach ($countries as $country)
-                                            <option value="{{ $country->name ?? $country['name'] ?? '' }}"
-                                                {{ request('country_id') == ($country->name ?? $country['name'] ?? '') ? 'selected' : '' }}>
+                                            <option value="{{ $country->id ?? $country['id'] ?? '' }}"
+                                                {{ request('country_id') == ($country->id ?? $country['id'] ?? '') ? 'selected' : '' }}>
                                                 {{ $country->name ?? $country['name'] ?? '' }}
                                             </option>
                                         @endforeach
@@ -35,8 +35,8 @@
                                     <select name="state_id" id="filter-state" class="form-control">
                                         <option value="">All</option>
                                         @foreach ($states as $state)
-                                            <option value="{{ $state->name ?? $state['name'] ?? '' }}"
-                                                {{ request('state_id') == ($state->name ?? $state['name'] ?? '') ? 'selected' : '' }}>
+                                            <option value="{{ $state->id ?? $state['id'] ?? '' }}"
+                                                {{ request('state_id') == ($state->id ?? $state['id'] ?? '') ? 'selected' : '' }}>
                                                 {{ $state->name ?? $state['name'] ?? '' }}
                                             </option>
                                         @endforeach
@@ -47,8 +47,8 @@
                                     <select name="district_id" id="filter-district" class="form-control">
                                         <option value="">All</option>
                                         @foreach ($districts as $district)
-                                            <option value="{{ $district->name ?? $district['name'] ?? '' }}"
-                                                {{ request('district_id') == ($district->name ?? $district['name'] ?? '') ? 'selected' : '' }}>
+                                            <option value="{{ $district->id ?? $district['id'] ?? '' }}"
+                                                {{ request('district_id') == ($district->id ?? $district['id'] ?? '') ? 'selected' : '' }}>
                                                 {{ $district->name ?? $district['name'] ?? '' }}
                                             </option>
                                         @endforeach
@@ -59,8 +59,8 @@
                                     <select name="block_id" id="filter-block" class="form-control">
                                         <option value="">All</option>
                                         @foreach ($blocks as $block)
-                                            <option value="{{ $block->name ?? $block['name'] ?? '' }}"
-                                                {{ request('block_id') == ($block->name ?? $block['name'] ?? '') ? 'selected' : '' }}>
+                                            <option value="{{ $block->id ?? $block['id'] ?? '' }}"
+                                                {{ request('block_id') == ($block->id ?? $block['id'] ?? '') ? 'selected' : '' }}>
                                                 {{ $block->name ?? $block['name'] ?? '' }}
                                             </option>
                                         @endforeach
