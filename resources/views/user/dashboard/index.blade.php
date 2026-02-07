@@ -49,6 +49,7 @@
             </div>
           </div>
         </div>
+        @if(Auth::user()->can('view_orders'))
         <div class="col-md-6 grid-margin transparent">
           <div class="row">
             <div class="col-md-6 mb-4 stretch-card transparent">
@@ -91,8 +92,10 @@
             </div>
           </div>
         </div>
+        @endif
       </div>
       <div class="row">
+        @if(Auth::user()->can('view_orders'))
         <div class="col-md-6 grid-margin stretch-card">
           <div class="card">
             <!-- Spending Chart Card -->
@@ -108,7 +111,7 @@
         </div>
         <div class="col-md-6 grid-margin stretch-card">
           <div class="card">
-
+ 
            <!-- Order Status Pie Chart -->
            <div class="card">
             <div class="card-body">
@@ -120,6 +123,7 @@
         </div>
           </div>
         </div>
+        @endif
       </div>
 
       {{-- <div class="row">
@@ -304,6 +308,7 @@
       </div> --}}
 
       <div class="row">
+        @if(Auth::user()->can('view_orders'))
         <div class="col-md-7 grid-margin stretch-card">
           <div class="card">
             <div class="card-body">
@@ -361,6 +366,7 @@
             </div>
           </div>
         </div>
+        @endif
         <div class="col-md-5 grid-margin stretch-card">
             <div class="card">
                 <div class="card-body">

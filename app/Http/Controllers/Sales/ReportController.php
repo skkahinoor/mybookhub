@@ -25,11 +25,12 @@ class ReportController extends Controller
         $salesExecutive = Auth::guard('sales')->user();
         $salesExecutiveId = $salesExecutive->id;
 
-        // Get income_per_target from sales executive
-        $incomePerTarget = $salesExecutive->income_per_target ?? 0;
+        // Get income_per_target from sales executive relation
+        $incomePerTarget = $salesExecutive->salesExecutive->income_per_target ?? 0;
 
-        // Only count approved students (status = 1) for stats/earnings
+        // Only count approved students (status = 1, role_id = 5) for stats/earnings
         $approvedStudents = User::where('added_by', $salesExecutiveId)
+            ->where('role_id', 5)
             ->where('status', 1);
 
         // Calculate today's students
@@ -71,6 +72,7 @@ class ReportController extends Controller
 
         $studentData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesExecutiveId)
+            ->where('role_id', 5)
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')

@@ -68,7 +68,7 @@ class UserController extends Controller
 
         // Save the user
         $user           = new User;
-        $user->user_type = 'user';
+        $user->role_id  = 4; // 'user' role
         $user->name     = $data['name'];
         $user->phone   = $data['mobile'];
         $user->password = bcrypt($data['password']);

@@ -14,9 +14,11 @@
             <h2 class="page-title mb-0">Vendor Management</h2>
             <p class="text-muted mb-0">Review vendors added by sales team</p>
         </div>
+        @if(Auth::guard('sales')->user()->can('add_vendors'))
         <a href="{{ route('sales.vendors.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Add New Vendor
         </a>
+        @endif
     </div>
 
     @if(Session::has('success_message'))
@@ -45,9 +47,9 @@
                         @forelse($vendors as $index => $vendor)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td>{{ $vendor->name }}</td>
-                                <td>{{ $vendor->email }}</td>
-                                <td>{{ $vendor->mobile }}</td>
+                                <td>{{ $vendor->user->name ?? 'N/A' }}</td>
+                                <td>{{ $vendor->user->email ?? 'N/A' }}</td>
+                                <td>{{ $vendor->user->phone ?? 'N/A' }}</td>
                                 <td>
                                     @if($vendor->status)
                                         <span class="badge bg-success">Active</span>
@@ -63,13 +65,13 @@
                                     @endif
                                 </td> --}}
                                 <td>
+                                    @if(Auth::guard('sales')->user()->can('view_vendors'))
                                     <a href="{{ route('sales.vendors.show', $vendor) }}" class="btn btn-sm btn-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    @php
-                                        $adminStatus = $adminStatuses[$vendor->id] ?? 0;
-                                    @endphp
-                                    @if(!($vendor->status == 1 && $adminStatus == 1))
+                                    @endif
+                                    
+                                    @if($vendor->status == 0 && Auth::guard('sales')->user()->can('delete_vendors'))
                                         <form action="{{ route('sales.vendors.destroy', $vendor) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
@@ -82,7 +84,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-4">No vendors found.</td>
+                                <td colspan="6" class="text-center py-4">No vendors found.</td>
                             </tr>
                         @endforelse
                     </tbody>

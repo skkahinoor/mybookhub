@@ -23,6 +23,21 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
+                // Get the authenticated user
+                $user = Auth::guard($guard)->user();
+                
+                // Redirect based on user role
+                if ($user->hasRole('admin')) {
+                    return redirect('/admin/dashboard');
+                } elseif ($user->hasRole('vendor')) {
+                    return redirect('/vendor/dashboard');
+                } elseif ($user->hasRole('sales')) {
+                    return redirect('/sales/dashboard');
+                } elseif ($user->hasRole('student')) {
+                    return redirect('/student/dashboard');
+                }
+                
+                // Default redirect if no specific role is found
                 return redirect(RouteServiceProvider::HOME);
             }
         }
@@ -30,3 +45,4 @@ class RedirectIfAuthenticated
         return $next($request);
     }
 }
+

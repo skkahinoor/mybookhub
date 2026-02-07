@@ -50,7 +50,7 @@
                                 <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
                                     <div class="mb-4 text-center">
                                         <h2 class="text-primary fw-bold mb-1">My Profile</h2>
-                                        <p class="text-muted mb-0 fs-6">Welcome back, <strong>{{ $sales->name }}</strong>.</p>
+                                        <p class="text-muted mb-0 fs-6">Welcome back, <strong>{{ $user->name }}</strong>.</p>
                                     </div>
 
                                     @if(session('success_message'))
@@ -61,19 +61,19 @@
                                         <div class="col-md-6">
                                             <div class="p-3 border rounded bg-light h-100">
                                                 <div class="small text-muted">Email</div>
-                                                <div class="fw-semibold">{{ $sales->email }}</div>
+                                                <div class="fw-semibold">{{ $user->email }}</div>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="p-3 border rounded bg-light h-100">
                                                 <div class="small text-muted">Phone</div>
-                                                <div class="fw-semibold">{{ $sales->phone ?: 'Not provided' }}</div>
+                                                <div class="fw-semibold">{{ $user->phone ?: 'Not provided' }}</div>
                                             </div>
                                         </div>
                                         <div class="col-md-12">
                                             <div class="p-3 border rounded bg-light h-100">
                                                 <div class="small text-muted">Address</div>
-                                                <div class="fw-semibold">{{ $sales->address ?: 'Not provided' }}</div>
+                                                <div class="fw-semibold">{{ $user->address ?: 'Not provided' }}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -100,7 +100,7 @@
                                                 <div class="d-flex align-items-center gap-3 flex-wrap">
                                                     <div class="rounded-circle border overflow-hidden" style="width: 72px; height: 72px;">
                                                         @php
-                                                            $profilePicturePath = $sales->profile_picture ? asset($sales->profile_picture) : asset('assets/images/avatar.png');
+                                                            $profilePicturePath = $user->profile_image ? asset($user->profile_image) : asset('assets/images/avatar.png');
                                                         @endphp
                                                         <img
                                                             id="profile-picture-preview"
@@ -117,15 +117,15 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label fw-semibold">Name</label>
-                                                <input type="text" name="name" class="form-control" value="{{ old('name', $sales->name) }}" required>
+                                                <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label fw-semibold">Email</label>
-                                                <input type="email" name="email" class="form-control" value="{{ old('email', $sales->email) }}" required>
+                                                <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
                                             </div>
                                             <div class="col-md-6">
                                                 <label class="form-label fw-semibold">Phone</label>
-                                                <input type="text" name="phone" class="form-control" value="{{ old('phone', $sales->phone) }}">
+                                                <input type="text" name="phone" class="form-control" value="{{ old('phone', $user->phone) }}">
                                             </div>
 
                                         </div>
@@ -133,7 +133,7 @@
                                         <div class="row g-3 mb-2">
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">Address</label>
-                                                <input type="text" name="address" class="form-control" value="{{ old('address', $sales->address) }}">
+                                                <input type="text" name="address" class="form-control" value="{{ old('address', $user->address) }}">
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label fw-semibold">Country</label>
@@ -164,7 +164,7 @@
                                             </div>
                                             <div class="col-md-4">
                                                 <label class="form-label fw-semibold">Pincode</label>
-                                                <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $sales->pincode) }}">
+                                                <input type="text" name="pincode" class="form-control" value="{{ old('pincode', $user->pincode) }}">
                                             </div>
                                         </div>
 
@@ -183,23 +183,23 @@
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
                                                         <label class="form-label fw-semibold">Bank Name</label>
-                                                        <input type="text" name="bank_name" class="form-control" value="{{ old('bank_name', $sales->bank_name) }}">
+                                                        <input type="text" name="bank_name" class="form-control" value="{{ old('bank_name', $salesExecutive->bank_name ?? '') }}">
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label fw-semibold">Branch</label>
-                                                        <input type="text" name="bank_branch" class="form-control" value="{{ old('bank_branch', $sales->bank_branch) }}">
+                                                        <input type="text" name="bank_branch" class="form-control" value="{{ old('bank_branch', $salesExecutive->bank_branch ?? '') }}">
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label fw-semibold">Account Number</label>
-                                                        <input type="text" name="account_number" class="form-control" value="{{ old('account_number', $sales->account_number) }}">
+                                                        <input type="text" name="account_number" class="form-control" value="{{ old('account_number', $salesExecutive->account_number ?? '') }}">
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label fw-semibold">IFSC Code</label>
-                                                        <input type="text" name="ifsc_code" class="form-control" value="{{ old('ifsc_code', $sales->ifsc_code) }}">
+                                                        <input type="text" name="ifsc_code" class="form-control" value="{{ old('ifsc_code', $salesExecutive->ifsc_code ?? '') }}">
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label fw-semibold">UPI ID</label>
-                                                        <input type="text" name="upi_id" class="form-control" value="{{ old('upi_id', $sales->upi_id) }}">
+                                                        <input type="text" name="upi_id" class="form-control" value="{{ old('upi_id', $salesExecutive->upi_id ?? '') }}">
                                                     </div>
                                                 </div>
                                             </div>
@@ -214,8 +214,8 @@
                                     <form class="" method="POST" action="{{ route('sales.profile.update') }}" style="max-width: 520px;">
                                         @csrf
                                         <!-- Preserve required fields for validation -->
-                                        <input type="hidden" name="name" value="{{ $sales->name }}">
-                                        <input type="hidden" name="email" value="{{ $sales->email }}">
+                                        <input type="hidden" name="name" value="{{ $user->name }}">
+                                        <input type="hidden" name="email" value="{{ $user->email }}">
 
                                         <div class="row g-3">
                                             <div class="col-12">

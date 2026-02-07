@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use App\Models\HeaderLogo;
 use App\Models\Vendor;
-use App\Models\Admin;
+use App\Models\User;
 use App\Models\Language;
+use Spatie\Permission\Models\Role;
 use App\Models\Notification;
 use App\Models\Section;
 use App\Models\Setting;
@@ -40,10 +41,9 @@ class VendorController extends Controller
         if ($request->isMethod('post')) {
             $data = $request->all();
             $rules = [
-
                             'name'          => 'required',
-                            'email'         => 'required|email|unique:admins|unique:vendors',
-                            'mobile'        => 'required|min:10|numeric|unique:admins|unique:vendors',
+                            'email'         => 'required|email|unique:users,email',
+                            'mobile'        => 'required|min:10|numeric|unique:users,phone',
                             'accept'        => 'required'
             ];
 
@@ -63,36 +63,32 @@ class VendorController extends Controller
 
             DB::beginTransaction();
 
+            // Create user first
+            $role = Role::where('name', 'vendor')->first();
+            $user = User::create([
+                'name'      => $data['name'],
+                'email'     => $data['email'],
+                'phone'     => $data['mobile'],
+                'password'  => bcrypt($data['password']),
+                'role_id'   => $role ? $role->id : null,
+                'status'    => 0,
+                'confirm'   => 'No',
+            ]);
 
-            $vendor = new Vendor; // Vendor.php model which models (represents) the `vendors` database table
+            if ($role) {
+                $user->assignRole($role);
+            }
 
-            $vendor->name   = $data['name'];
-            $vendor->mobile = $data['mobile'];
-            $vendor->email  = $data['email'];
+            // Create vendor record with only vendor-specific fields
+            $vendor = new Vendor;
+            $vendor->user_id = $user->id;
+            $vendor->location = $data['location'] ?? null;
             $vendor->status = 0;
-            date_default_timezone_set('Africa/Cairo'); // https://www.php.net/manual/en/timezones.php and https://www.php.net/manual/en/timezones.africa.php
-            $vendor->created_at = date('Y-m-d H:i:s'); // enter `created_at` MANUALLY!    // Formatting the date for MySQL: https://www.php.net/manual/en/function.date.php
-            $vendor->updated_at = date('Y-m-d H:i:s'); // enter `updated_at` MANUALLY!
-
-            $vendor->save();
-
-
-            $vendor_id = DB::getPdo()->lastInsertId();
-            $admin = new Admin;
-
-            $admin->type      = 'vendor';
-            $admin->vendor_id = $vendor_id; // take the generated `id` of the `vendors` table to store it a `vendor_id` in the `admins` table
-            $admin->name      = $data['name'];
-            $admin->mobile    = $data['mobile'];
-            $admin->email     = $data['email'];
-            $admin->password  = bcrypt($data['password']);
-            $admin->status    = 0;
-
+            $vendor->confirm = 'No';
             date_default_timezone_set('Africa/Cairo');
-            $admin->created_at = date('Y-m-d H:i:s');
-            $admin->updated_at = date('Y-m-d H:i:s'); // enter `updated_at` MANUALLY!
-
-            $admin->save();
+            $vendor->created_at = date('Y-m-d H:i:s');
+            $vendor->updated_at = date('Y-m-d H:i:s');
+            $vendor->save();
 
 
             // Send the Confirmation Email to the new vendor who has just registered
@@ -148,10 +144,15 @@ class VendorController extends Controller
                 ],
             ]);
 
+            $body = json_decode($response->getBody()->getContents(), true);
             Log::info("Vendor MSG91 Response:", [
                 'status' => $response->getStatusCode(),
-                'body'   => $response->getBody()->getContents(),
+                'body'   => $body,
             ]);
+
+            if (isset($body['type']) && $body['type'] === 'error') {
+                return false;
+            }
 
             return true;
         } catch (\Exception $e) {
@@ -167,8 +168,8 @@ class VendorController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name'   => 'required|string|max:150|regex:/^[\pL\s\-&.,\'()\/]+$/u',
-            'email'  => 'required|email|unique:admins,email|unique:vendors,email',
-            'mobile' => 'required|digits:10|unique:admins,mobile|unique:vendors,mobile',
+            'email'  => 'required|email|unique:users,email',
+            'mobile' => 'required|digits:10|unique:users,phone',
             'location' => 'required',
         ]);
 
@@ -185,6 +186,11 @@ class VendorController extends Controller
             ['phone' => $request->mobile],
             ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
         );
+
+        Log::info("Stored OTP for vendor registration", [
+            'phone' => $request->mobile,
+            'otp'   => $otp
+        ]);
 
         // Store basic data in session (optional, similar to sales)
         session([
@@ -213,35 +219,40 @@ class VendorController extends Controller
         $condition = session('condition', 'new');
 
         $email = base64_decode($email);
-        $vendorCount = Vendor::where('email', $email)->count();
-        if ($vendorCount > 0) { // if the vendor email exists
-            // Check if the vendor is alreay active
-            $vendorDetails = Vendor::where('email', $email)->first();
-            if ($vendorDetails->confirm == 'Yes') { // if the vendor is already confirmed
-
-                // Redirect vendor to vendor Login/Register page with an 'error' message
-                $message = 'Your Vendor Account is already confirmed. You can login';
-                return redirect('vendor/login-register')->with('error_message', $message);
-
-            } else {
-
-                Admin::where( 'email', $email)->update(['confirm' => 'Yes']);
-                Vendor::where('email', $email)->update(['confirm' => 'Yes']);
-
-                $messageData = [
-                    'email'  => $email,
-                    'name'   => $vendorDetails->name,
-                    'mobile' => $vendorDetails->mobile
-                ];
-                \Illuminate\Support\Facades\Mail::send('emails.vendor_confirmed', $messageData, function ($message) use ($email) {
-                    $message->to($email)->subject('You Vendor Account Confirmed');
-                });
-
-                $message = 'Your Vendor Email account is confirmed. You can login and add your personal, business and bank details to activate your Vendor Account to add products';
-                return redirect('vendor/login-register')->with('success_message', $message);
-            }
-        } else {
+        
+        // Find user by email
+        $user = User::where('email', $email)->first();
+        
+        if (!$user) {
             abort(404);
+        }
+        
+        // Find vendor by user_id
+        $vendor = Vendor::where('user_id', $user->id)->first();
+        
+        if (!$vendor) {
+            abort(404);
+        }
+        
+        if ($vendor->confirm == 'Yes') { // if the vendor is already confirmed
+            // Redirect vendor to vendor Login/Register page with an 'error' message
+            $message = 'Your Vendor Account is already confirmed. You can login';
+            return redirect('vendor/login-register')->with('error_message', $message);
+        } else {
+            User::where('email', $email)->update(['confirm' => 'Yes']);
+            $vendor->update(['confirm' => 'Yes']);
+
+            $messageData = [
+                'email'  => $email,
+                'name'   => $user->name,
+                'mobile' => $user->phone
+            ];
+            \Illuminate\Support\Facades\Mail::send('emails.vendor_confirmed', $messageData, function ($message) use ($email) {
+                $message->to($email)->subject('You Vendor Account Confirmed');
+            });
+
+            $message = 'Your Vendor Email account is confirmed. You can login and add your personal, business and bank details to activate your Vendor Account to add products';
+            return redirect('vendor/login-register')->with('success_message', $message);
         }
     }
 
@@ -276,7 +287,7 @@ class VendorController extends Controller
             // Validation
             $rules = [
                 'name'   => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
-                'email'  => 'required|email|unique:admins,email,' . ($adminId ?? '') . ',id',
+                'email'  => 'required|email|unique:users,email,' . ($adminId ?? '') . ',id',
                 'mobile' => 'required|numeric',
                 'location' => ['required', 'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/']
             ];
@@ -316,11 +327,10 @@ class VendorController extends Controller
             }
 
             // Prepare Admin Data (NO IMAGE)
-            $adminData = [
+            $userData = [
                 'name'   => $data['name'],
                 'email'  => $data['email'],
-                'mobile' => $data['mobile'],
-                'type'   => 'vendor',
+                'phone'  => $data['mobile'],
             ];
 
             if (empty($id)) {
@@ -348,33 +358,34 @@ class VendorController extends Controller
                     'confirm' => 'Yes',
                     'status'  => isset($data['status']) ? 1 : 0,
                     'plan'    => $selectedPlan,
+                    'plan_started_at' => now(),
+                    'plan_expires_at' => ($selectedPlan === 'pro' && ($giveNewUsersProPlan || $isInvitePro)) ? now()->addDays($proPlanTrialDurationDays) : null,
                 ];
 
-                // Set plan dates
-                if ($selectedPlan === 'pro') {
-                    $vendorData['plan_started_at'] = now();
-                    // If this is a trial (from setting or invite), set expiry date
-                    if ($giveNewUsersProPlan || $isInvitePro) {
-                        $vendorData['plan_expires_at'] = now()->addDays($proPlanTrialDurationDays);
-                    } else {
-                        // Regular Pro plan - will be set after payment
-                        $vendorData['plan_expires_at'] = null;
-                    }
-                } else {
-                    // Free plan
-                    $vendorData['plan_started_at'] = now();
-                    $vendorData['plan_expires_at'] = null;
+                $vendor = Vendor::create($vendorData);
+                $vendorId = $vendor->id;
+
+                // Insert User instead of Admin
+                $role = Role::where('name', 'vendor')->first();
+                $user = User::create([
+                    'name'     => $data['name'],
+                    'email'    => $data['email'],
+                    'phone'    => $data['mobile'],
+                    'password' => Hash::make($data['password']),
+                    'role_id'  => $role ? $role->id : null,
+                    'status'   => isset($data['status']) ? 1 : 0,
+                    // If we still need to support legacy Admin table/field:
+                    // 'type'     => 'vendor', 
+                ]);
+
+                if ($role) {
+                    $user->assignRole($role);
                 }
 
-                $vendorId = Vendor::insertGetId($vendorData);
+                // Link Vendor to User
+                $vendor->update(['user_id' => $user->id]);
 
-                // Insert Admin
-                $adminData['vendor_id'] = $vendorId;
-                $adminData['password']  = Hash::make($data['password']);
-                $adminData['confirm']   = 'Yes';
-                $adminData['status']    = isset($data['status']) ? 1 : 0;
 
-                Admin::insert($adminData);
 
                 // Clear OTP and session after successful registration
                 DB::table('otps')->where('phone', $data['mobile'])->delete();
@@ -398,8 +409,8 @@ class VendorController extends Controller
             } else {
                 // ================= EDIT MODE =================
 
-                $admin = Admin::where('id', $adminId)->first();
-                Admin::where('id', $adminId)->update($adminData);
+                $admin = User::where('id', $adminId)->first();
+                User::where('id', $adminId)->update($userData);
 
                 if ($admin && $admin->type === 'vendor' && $admin->vendor_id) {
                     Vendor::where('id', $admin->vendor_id)->update([
@@ -417,7 +428,7 @@ class VendorController extends Controller
 
         // GET request
         if (!empty($id)) {
-            $admin = Admin::where('id', $id)->first()->toArray();
+            $admin = User::where('id', $id)->first()->toArray();
             return view('admin/login', compact('admin'));
         }
 

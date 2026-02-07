@@ -81,18 +81,20 @@ class SalesReportController extends Controller
 
         // Institutions added by this sales executive
         $institutions = InstitutionManagement::with(['country', 'state', 'district', 'block'])
-            ->where('added_by', $salesExecutive->id)
+            ->where('added_by', $salesExecutive->user_id)
             ->get();
 
-        // Students added by this sales executive
+        // Students added by this sales executive (role_id 5)
         $students = User::with(['institution', 'country', 'state', 'district', 'block'])
-            ->where('added_by', $salesExecutive->id)
+            ->where('added_by', $salesExecutive->user_id)
+            ->where('role_id', 5)
             ->get();
 
         // Report stats (same logic as sales-side report, but for this specific executive)
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
 
-        $approvedStudents = User::where('added_by', $salesExecutive->id)
+        $approvedStudents = User::where('added_by', $salesExecutive->user_id)
+            ->where('role_id', 5)
             ->where('status', 1);
 
         $todayStudentsCount = (clone $approvedStudents)
@@ -128,7 +130,8 @@ class SalesReportController extends Controller
         }
 
         $studentData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->where('added_by', $salesExecutive->id)
+            ->where('added_by', $salesExecutive->user_id)
+            ->where('role_id', 5)
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')

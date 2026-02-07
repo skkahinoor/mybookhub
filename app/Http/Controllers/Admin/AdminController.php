@@ -2,7 +2,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin;
+
 use App\Models\Block;
 use App\Models\ContactReply;
 use App\Models\ContactUs;
@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Intervention\Image\Facades\Image;
+use Spatie\Permission\Models\Role; // Import Role model
 
 class AdminController extends Controller
 {
@@ -128,14 +129,26 @@ class AdminController extends Controller
             }
 
             if (Auth::guard('admin')->attempt($credentials)) {
-                if (Auth::guard('admin')->user()->type == 'vendor' && Auth::guard('admin')->user()->status == '0') {
+                $user = Auth::guard('admin')->user();
+                
+                // Check if vendor account is inactive
+                if ($user->type == 'vendor' && $user->status == '0') {
                     return redirect()->back()->with('error_message', 'Your vendor account is not active');
-                } else {
-                    if (Auth::guard('admin')->user()->type === 'vendor') {
-                        return redirect()->route('vendor.dashboard'); // which is /vendor/dashboard
-                    }
-                    return redirect('/admin/dashboard');
                 }
+                
+                // Dynamic role-based redirection
+                if ($user->hasRole('admin')) {
+                    return redirect('/admin/dashboard');
+                } elseif ($user->hasRole('vendor')) {
+                    return redirect('/vendor/dashboard');
+                } elseif ($user->hasRole('sales')) {
+                    return redirect('/sales/dashboard');
+                } elseif ($user->hasRole('student')) {
+                    return redirect('/student/dashboard');
+                }
+                
+                // Fallback to admin dashboard if no specific role found
+                return redirect('/admin/dashboard');
             } else {
                 return redirect()->back()->with('error_message', 'Invalid Email or Password');
             }
@@ -143,6 +156,7 @@ class AdminController extends Controller
 
         return view('admin/login', compact('logos', 'headerLogo'));
     }
+
 
     public function adminlogout(Request $request)
     {
@@ -181,15 +195,16 @@ class AdminController extends Controller
 
         if ($request->isMethod('post')) {
             $data = $request->all();
+            $user = Auth::guard('admin')->user();
 
-            if (Hash::check($data['current_password'], Auth::guard('admin')->user()->password)) {
+            if (Hash::check($data['current_password'], $user->password)) {
                 if ($data['confirm_password'] == $data['new_password']) {
-                    Admin::where('id', Auth::guard('admin')->user()->id)->update([
+                    $user->update([
                         'password' => bcrypt($data['new_password']),
-                    ]); // we persist (update) the hashed password (not the password itself)
+                    ]);
 
                     return redirect()->back()->with('success_message', 'Admin Password has been updated successfully!');
-                } else { // If new password and confirm password are not matching each other
+                } else { 
                     return redirect()->back()->with('error_message', 'New Password and Confirm Password does not match!');
                 }
             } else {
@@ -197,7 +212,9 @@ class AdminController extends Controller
             }
         }
 
-        $adminDetails = Admin::where('email', Auth::guard('admin')->user()->email)->first()->toArray();
+        $adminDetails = Auth::guard('admin')->user()->toArray();
+        // Ensure image maps to profile_image if view expects it, or update view. 
+        // User model accessor 'image' -> 'profile_image' handles this.
 
         return view('admin/settings/update_admin_password', compact('adminDetails', 'logos', 'headerLogo'));
     }
@@ -236,34 +253,27 @@ class AdminController extends Controller
 
             if ($request->hasFile('admin_image')) {
                 $image_tmp = $request->file('admin_image');
-                // dd($image_tmp);
-
                 if ($image_tmp->isValid()) {
-                    // Get the image extension
                     $extension = $image_tmp->getClientOriginalExtension();
-
-                    // Generate a random name for the uploaded image (to avoid that the image might get overwritten if its name is repeated)
                     $imageName = rand(111, 99999) . '.' . $extension;
-
-                    // Assigning the uploaded images path inside the 'public' folder
                     $imagePath = 'admin/images/photos/' . $imageName;
-
-                    Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
+                    Image::make($image_tmp)->save($imagePath);
                 }
-            } else if (! empty($data['current_admin_image'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
+            } else if (! empty($data['current_admin_image'])) { 
                 $imageName = $data['current_admin_image'];
             } else {
                 $imageName = '';
             }
 
-                                                                           // Update Admin Details
-            Admin::where('id', Auth::guard('admin')->user()->id)->update([ // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-                'name'   => $data['admin_name'],
-                'mobile' => $data['admin_mobile'],
-                'image'  => $imageName,
-            ]); // Note that the image name is the random image name that we generated
+            // Update User Details
+            $user = Auth::guard('admin')->user();
+            $user->update([
+                'name'    => $data['admin_name'],
+                'phone'   => $data['admin_mobile'], // Map to phone
+                'profile_image' => $imageName,      // Map to profile_image
+            ]);
 
-            return redirect()->back()->with('success_message', 'Admin details updated successfully!');
+            return redirect()->back()->with('success_message', 'Details updated successfully!');
         }
 
         return view('admin/settings/update_admin_details', compact('logos', 'headerLogo'));
@@ -322,25 +332,26 @@ class AdminController extends Controller
                     $imageName = '';
                 }
 
-                                                                               // Vendor details need to be updated in BOTH `admins` and `vendors` tables:
-                                                                               // Update Vendor Details in 'admins' table
-                Admin::where('id', Auth::guard('admin')->user()->id)->update([ // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-                    'name'   => $data['vendor_name'],
-                    'mobile' => $data['vendor_mobile'],
-                    'image'  => $imageName,
-                ]); // Note that the image name is the random image name that we generated
-
-                                                                                       // Update Vendor Details in 'vendors' table
-                Vendor::where('id', Auth::guard('admin')->user()->vendor_id)->update([ // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-                    'name'        => $data['vendor_name'],
-                    'mobile'      => $data['vendor_mobile'],
-                    'address'     => $data['vendor_address'] ?? null,
-                    'country_id'  => $data['country_id'] ?? null,
-                    'state_id'    => $data['state_id'] ?? null,
-                    'district_id' => $data['district_id'] ?? null,
-                    'block_id'    => $data['block_id'] ?? null,
-                    'pincode'     => $data['vendor_pincode'] ?? null,
+                                                                               // Vendor details need to be updated in BOTH `users` and `vendors` tables:
+                                                                               // Update Vendor Details in 'users' table
+                User::where('id', Auth::guard('admin')->user()->id)->update([
+                    'name'          => $data['vendor_name'],
+                    'phone'         => $data['vendor_mobile'],
+                    'profile_image' => $imageName,
+                    'address'       => $data['vendor_address'] ?? null,
+                    'country_id'    => $data['country_id'] ?? null,
+                    'state_id'      => $data['state_id'] ?? null,
+                    'district_id'   => $data['district_id'] ?? null,
+                    'block_id'      => $data['block_id'] ?? null,
+                    'pincode'       => $data['vendor_pincode'] ?? null,
                 ]);
+
+                // Update location in vendors table if needed
+                if (isset($data['vendor_location'])) {
+                    Vendor::where('user_id', Auth::guard('admin')->user()->id)->update([
+                        'location' => $data['vendor_location'],
+                    ]);
+                }
 
                 return redirect()->back()->with('success_message', 'Vendor details updated successfully!');
             }
@@ -561,35 +572,55 @@ class AdminController extends Controller
         }
     }
 
-    public function admins($type = null)
-    { // $type is the `type` column in the `admins` which can only be: superadmin, admin, subadmin or vendor    // A default value of null (to allow not passing a {type} slug, and in this case, the page will view ALL of the superadmin, admins, subadmins and vendors at the same time)
+  public function admins($type = null)
+    { // $type can be: admin, subadmin, vendor
         $headerLogo = HeaderLogo::first();
         $logos      = HeaderLogo::first();
-        $admins     = Admin::query();
+
+        $query = User::query();
 
         if (! empty($type)) {
-            $typeMapping = [
-                'admin' => 'superadmin', // Map 'admin' URL to 'superadmin' database type
-            ];
+            $role = strtolower($type);
+            // Map legacy types to roles if needed
+            if ($role === 'superadmin') $role = 'admin';
+            
+            if ($role === 'admin') {
+                $query->where('role_id', 1);
+            } else {
+                $query->role($role, 'web');
+            }
 
-            // Use mapped type if exists, otherwise use the original type
-            $dbType = isset($typeMapping[strtolower($type)]) ? $typeMapping[strtolower($type)] : $type;
-
-            // Use case-insensitive comparison to handle any case variations
-            $admins = $admins->whereRaw('LOWER(type) = ?', [strtolower($dbType)]);
-            $title  = ucfirst($type);
-
-            // Correcting issues in the Skydash Admin Panel Sidebar using Session
+            $title = ucfirst($type);
             Session::put('page', 'view_' . strtolower($title));
-        } else { // if there's no $type is passed, show ALL of the admins, subadmins and vendors
+        } else {
+            // Show all staff: admins, vendors, etc. (excluding basic users/students if desired?)
+            // Assuming "Admins/Vendors" page usually implies staff.
+            $query->role(['admin', 'vendor'], 'web');
             $title = 'All Admins/Vendors';
-
-            // Correcting issues in the Skydash Admin Panel Sidebar using Session
             Session::put('page', 'view_all');
         }
-        $adminType = Auth::guard('admin')->user()->type;
-                                                                    // Order by id descending to show newest first, then convert to array
-        $admins = $admins->orderBy('id', 'desc')->get()->toArray(); // toArray() method converts the Collection object to a plain PHP array
+
+        $adminType = Auth::guard('admin')->user()->type; // Works via Accessor
+
+        $admins = $query->with('vendorPersonal')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($user) {
+                // Map User model to legacy array structure expected by view
+                $arr = $user->toArray();
+                $arr['type'] = $user->type; // uses getTypeAttribute
+                $arr['mobile'] = $user->phone;
+                $arr['image'] = $user->profile_image;
+                
+                if ($user->vendorPersonal) {
+                    $arr['vendor_id'] = $user->vendorPersonal->id;
+                } else {
+                    $arr['vendor_id'] = 0;
+                }
+                
+                return $arr;
+            })
+            ->toArray();
 
         return view('admin/admins/admins', compact('admins', 'title', 'logos', 'headerLogo', 'adminType'));
     }
@@ -598,18 +629,28 @@ class AdminController extends Controller
     {
         $logos         = HeaderLogo::first();
         $headerLogo    = HeaderLogo::first();
-        $vendorDetails = Admin::with('vendorPersonal', 'vendorBusiness', 'vendorBank')->where('id', $id)->first(); // Using the relationship defined in the Admin.php model to be able to get data from `vendors`, `vendors_business_details` and `vendors_bank_details` tables
-        $vendorDetails = json_decode(json_encode($vendorDetails), true);                                           // We used json_decode(json_encode($variable), true) to convert $vendorDetails to an array instead of Laravel's toArray() method
+        $vendorDetails = User::with('vendorPersonal', 'vendorBusiness', 'vendorBank')->where('id', $id)->first();
+        $vendorDetails = $vendorDetails ? $vendorDetails->toArray() : null;
                                                                                                                    // dd($vendorDetails);
 
         // Fetch countries for dropdowns
         $countries = Country::where('status', true)->get()->toArray();
 
         // Get current location IDs from vendor personal details
-        $currentCountryId  = $vendorDetails['vendor_personal']['country_id'] ?? null;
-        $currentStateId    = $vendorDetails['vendor_personal']['state_id'] ?? null;
-        $currentDistrictId = $vendorDetails['vendor_personal']['district_id'] ?? null;
-        $currentBlockId    = $vendorDetails['vendor_personal']['block_id'] ?? null;
+        $currentCountryId  = $vendorDetails['vendor_personal']['country_id'] ?? $vendorDetails['vendor_personal']['country_id'] ?? null;
+        // The array key might be camelCase or snake_case depending on toArray behavior or manual mapping.
+        // Let's try to be safe.
+        if (isset($vendorDetails['vendorPersonal'])) {
+            $currentCountryId = $vendorDetails['vendorPersonal']['country_id'] ?? null;
+            $currentStateId = $vendorDetails['vendorPersonal']['state_id'] ?? null;
+            $currentDistrictId = $vendorDetails['vendorPersonal']['district_id'] ?? null;
+            $currentBlockId = $vendorDetails['vendorPersonal']['block_id'] ?? null;
+        } else {
+            $currentCountryId  = $vendorDetails['vendor_personal']['country_id'] ?? null;
+            $currentStateId    = $vendorDetails['vendor_personal']['state_id'] ?? null;
+            $currentDistrictId = $vendorDetails['vendor_personal']['district_id'] ?? null;
+            $currentBlockId    = $vendorDetails['vendor_personal']['block_id'] ?? null;
+        }
 
         return view('admin/admins/view_vendor_details', compact('vendorDetails', 'logos', 'headerLogo', 'countries', 'currentCountryId', 'currentStateId', 'currentDistrictId', 'currentBlockId'));
     }
@@ -621,7 +662,17 @@ class AdminController extends Controller
                                  // Update Admin Status using AJAX in admins.blade.php
         if ($request->ajax()) {  // if the request is coming via an AJAX call
             $data = $request->all(); // Getting the name/value pairs array that are sent from the AJAX request (AJAX call)
-                                     // dd($data);
+            
+            $adminUser = User::where('id', $data['admin_id'])->first();
+            if (!$adminUser) {
+                return response()->json(['status' => 'error', 'message' => 'User not found.'], 404);
+            }
+
+            // Check permissions based on user type
+            $permission = $adminUser->type === 'vendor' ? 'update_vendors_status' : 'update_admins_status';
+            if (!Auth::guard('admin')->user()->can($permission)) {
+                return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+            }
 
             if ($data['status'] == 'Active') { // $data['status'] comes from the 'data' object inside the $.ajax() method    // reverse the 'status' from (ative/inactive) 0 to 1 and 1 to 0 (and vice versa)
                 $status = 0;
@@ -629,14 +680,14 @@ class AdminController extends Controller
                 $status = 1;
             }
 
-            Admin::where('id', $data['admin_id'])->update(['status' => $status]); // $data['admin_id'] comes from the 'data' object inside the $.ajax() method
+            User::where('id', $data['admin_id'])->update(['status' => $status]);
                                                                                   // echo '<pre>', var_dump($data), '</pre>';
 
                                                                                        // Send a THIRD Approval Email to the vendor when the superadmin or admin approves their account (`status` column in the `admins` table becomes 1 instead of 0) so that they can add their products on the website now
-            $adminDetails = Admin::where('id', $data['admin_id'])->first()->toArray(); // get the admin that his `status` has been approved
+            $adminUser = User::where('id', $data['admin_id'])->first();
 
-            if ($adminDetails['type'] == 'vendor' && $status == 1) {                        // if the `type` column value (in `admins` table) is 'vendor', and their `status` became 1 (got approved), send them a THIRD confirmation mail
-                Vendor::where('id', $adminDetails['vendor_id'])->update(['status' => $status]); //
+            if ($adminUser->type == 'vendor' && $status == 1) {                        // if the `type` column value (in `admins` table) is 'vendor', and their `status` became 1 (got approved), send them a THIRD confirmation mail
+                Vendor::where('id', $adminUser->vendor_id)->update(['status' => $status]); //
             }
 
             $adminType = Auth::guard('admin')->user()->type; // `type` is the column in `admins` table    // Retrieving The Authenticated User and getting their `type`      column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
@@ -720,30 +771,18 @@ class AdminController extends Controller
 
         if ($request->isMethod('post')) {
             $data = $request->all();
-            // dd($data);
 
-            // Get the admin_id from the form if it exists, otherwise use route parameter
-            $adminId = $data['admin_id'] ?? $id ?? null;
-
-            // Get related vendor_id if this admin already exists (for unique email validation on vendors table)
-            $vendorId = null;
-            if (! empty($adminId)) {
-                $vendorId = Admin::where('id', $adminId)->value('vendor_id');
+            $userId = $data['admin_id'] ?? $id ?? null;
+            $emailRule = 'required|email|unique:users,email';
+            if (!empty($userId)) {
+                $emailRule .= ',' . $userId;
             }
 
             // Laravel's Validation
             $rules = [
                 'name'   => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
-                'email'  => [
-                    'required',
-                    'email',
-                    // Unique in admins table except for current admin (when updating)
-                    Rule::unique('admins', 'email')->ignore($adminId),
-                    // Also unique in vendors table except for linked vendor (when updating)
-                    Rule::unique('vendors', 'email')->ignore($vendorId),
-                ],
+                'email'  => $emailRule,
                 'mobile' => 'required|numeric',
-
             ];
 
             $customMessages = [
@@ -756,147 +795,165 @@ class AdminController extends Controller
                 'mobile.numeric'  => 'Valid Mobile is required',
             ];
 
-            if (empty($adminId)) {
+            if (empty($userId)) {
                 // Add mode: require password
                 $rules['password']                    = 'required|min:6|confirmed';
                 $rules['password_confirmation']       = 'required';
-                $customMessages['password.required']  = 'Password is required';
-                $customMessages['password.min']       = 'Password must be at least 6 characters';
-                $customMessages['password.confirmed'] = 'Password confirmation does not match';
             }
 
             $this->validate($request, $rules, $customMessages);
 
-            // Uploading Admin Photo
+            // Uploading Photo
             if ($request->hasFile('admin_image')) {
                 $image_tmp = $request->file('admin_image');
-
                 if ($image_tmp->isValid()) {
-                    // Get the image extension
                     $extension = $image_tmp->getClientOriginalExtension();
-
-                    // Generate a random name for the uploaded image
                     $imageName = rand(111, 99999) . '.' . $extension;
-
-                    // Assigning the uploaded images path inside the 'public' folder
                     $imagePath = 'admin/images/photos/' . $imageName;
-
-                    // Upload the image using the Intervention package
                     Image::make($image_tmp)->save($imagePath);
                 }
             } else if (! empty($data['current_admin_image'])) {
-                // Keep existing image
                 $imageName = $data['current_admin_image'];
             } else {
-                // No image
                 $imageName = '';
             }
 
-            // Prepare admin data (common for add & edit)
-            $adminData = [
-                'name'   => $data['name'],
-                'email'  => $data['email'],
-                'mobile' => $data['mobile'],
-                'type'   => 'vendor',
-                'image'  => $imageName,
+            // Prepare User Data
+            $userData = [
+                'name'    => $data['name'],
+                'email'   => $data['email'],
+                'phone'   => $data['mobile'], // User model uses 'phone'
+                'status'  => isset($data['status']) ? 1 : 0,
+                'profile_image' => $imageName, // User model uses 'profile_image'
             ];
 
-            // Decide between Add vs Edit using resolved $adminId
-            if (empty($adminId)) {
-                // ADD mode
+            if (!empty($data['password'])) {
+                $userData['password'] = Hash::make($data['password']);
+            }
 
-                // First, insert into vendors table
+            // Determine Role (Default to Admin if not specified or context implies)
+            // The form should ideally have a role selector or implied type
+            // Based on original code `type` was often 'vendor' or 'admin'
+            // We'll stick to 'vendor' if it's a vendor add, else 'admin'
+            // For now, let's assume if it is NOT a vendor add, it is an ADMIN add
+            // Only 'admin' and 'vendor' were primary types here.
+            
+            // Check if we are adding a vendor specifically (usually from a specific route or hidden field)
+            // But here it seems general. Let's look at `type` input or default.
+            // Original code: $adminData['type'] = 'vendor'; (Wait, it forced 'vendor'??)
+            // Line 800 in original: 'type' => 'vendor'.
+            // Actually, the original code looked like it defaulted to 'vendor' in `addEditAdmin` for some reason? 
+            // Ah, looking closer at line 564 `public function admins($type = null)`...
+            // It seems this controller handles both.
+            // Let's assume if it creates a Vendor profile, account is Vendor.
+            
+            // BUT wait, line 800 in viewed file said `'type' => 'vendor'`.
+            // Let's assume this form is used for Vendors mostly? 
+            // Or maybe I missed where type is set.
+            // Let's look at existing `admins()` method logic.
+            
+            // Re-reading logic: If it creates a Vendor profile (lines 809+), then it IS a vendor.
+            
+// ... (existing code).
+
+            if (empty($userId)) {
+                // ADD MODE
+                $roleName = 'admin'; // Default
+
+                // Check if we are adding a vendor specifically
+                $roleName = 'vendor'; // As per existing logic
+
+                // Dynamic Role Fetching as per user request
+                $role = Role::where('name', $roleName)->where('guard_name', 'web')->first();
+                if (!$role) {
+                    return redirect()->back()->with('error_message', "Role '$roleName' not found for web guard.");
+                }
+
+                $userData['role_id'] = $role->id;
+
+                $user = User::create($userData);
+                $user->assignRole($role); // Assign Spatie Role
+
+                // Create Vendor Profile
                 $vendorData = [
                     'name'       => $data['name'],
                     'email'      => $data['email'],
                     'mobile'     => $data['mobile'],
-                    'address'    => null,
-                    'city'       => null,
-                    'state'      => null,
-                    'country'    => null,
-                    'pincode'    => null,
                     'confirm'    => 'Yes',
-                    'commission' => null,
                     'status'     => isset($data['status']) ? 1 : 0,
+                    'user_id'    => $user->id, // LINK HERE
                 ];
+                Vendor::create($vendorData);
 
-                $vendorId = Vendor::insertGetId($vendorData);
+                return redirect('admin/admins')->with('success_message', 'Vendor added successfully!');
 
-                // Then, insert into admins table with the vendor_id
-                $adminData['vendor_id'] = $vendorId;
-                $adminData['password']  = Hash::make($data['password']);
-                $adminData['confirm']   = 'Yes';
-                $adminData['status']    = isset($data['status']) ? 1 : 0;
-
-                Admin::insert($adminData);
-
-                return redirect('admin/admins')->with('success_message', 'Admin added successfully!');
             } else {
-                // EDIT mode: update existing admin
-                $admin = Admin::where('id', $adminId)->first();
-                Admin::where('id', $adminId)->update($adminData);
+                // EDIT MODE
+                $user = User::findOrFail($userId);
+                
+                // Remove password from update if empty
+                if (empty($data['password'])) {
+                    unset($userData['password']);
+                }
+                
+                $user->update($userData);
 
-                // If this admin is a vendor, also update the vendors table
-                if ($admin && $admin->type == 'vendor' && ! empty($admin->vendor_id)) {
+                // Update Vendor Profile if linked
+                $vendor = Vendor::where('user_id', $user->id)->first();
+                if ($vendor) {
                     $vendorUpdateData = [
                         'name'   => $data['name'],
                         'email'  => $data['email'],
                         'mobile' => $data['mobile'],
                     ];
-
                     // Update location fields if provided
-                    if (isset($data['vendor_address'])) {
-                        $vendorUpdateData['address'] = $data['vendor_address'];
-                    }
-                    if (isset($data['vendor_pincode'])) {
-                        $vendorUpdateData['pincode'] = $data['vendor_pincode'];
-                    }
-                    if (isset($data['vendor_country_id'])) {
-                        $vendorUpdateData['country_id'] = $data['vendor_country_id'];
-                    }
-                    if (isset($data['vendor_state_id'])) {
-                        $vendorUpdateData['state_id'] = $data['vendor_state_id'];
-                    }
-                    if (isset($data['vendor_district_id'])) {
-                        $vendorUpdateData['district_id'] = $data['vendor_district_id'];
-                    }
-                    if (isset($data['vendor_block_id'])) {
-                        $vendorUpdateData['block_id'] = $data['vendor_block_id'];
-                    }
+                    if (isset($data['vendor_address'])) $vendorUpdateData['address'] = $data['vendor_address'];
+                    if (isset($data['vendor_pincode'])) $vendorUpdateData['pincode'] = $data['vendor_pincode'];
+                    if (isset($data['vendor_country_id'])) $vendorUpdateData['country_id'] = $data['vendor_country_id'];
+                    if (isset($data['vendor_state_id'])) $vendorUpdateData['state_id'] = $data['vendor_state_id'];
+                    if (isset($data['vendor_district_id'])) $vendorUpdateData['district_id'] = $data['vendor_district_id'];
+                    if (isset($data['vendor_block_id'])) $vendorUpdateData['block_id'] = $data['vendor_block_id'];
 
-                    Vendor::where('id', $admin->vendor_id)->update($vendorUpdateData);
+                    $vendor->update($vendorUpdateData);
                 }
 
-                return redirect('admin/admins')->with('success_message', 'Vendor updated successfully!');
+                return redirect('admin/admins')->with('success_message', 'Details updated successfully!');
             }
         }
 
-        // GET request: show the form
-        // Fetch all countries for dropdowns
+        // GET request
         $countries = Country::where('status', true)->get()->toArray();
-
         if (! empty($id)) {
-            // Edit mode: get admin data
-            $admin = Admin::where('id', $id)->first()->toArray();
+            $admin = User::findOrFail($id); // Using User model
+            // Map User fields to what view expects if necessary (User has phone, view might expect mobile)
+            $adminArray = $admin->toArray();
+            $adminArray['mobile'] = $admin->phone; // Accessor handles this? Yes, I added getMobileAttribute.
+            $adminArray['image'] = $admin->profile_image;
+            $admin = $adminArray; // View expects array
 
-            // Get vendor details if admin is a vendor
             $vendorPersonal = [];
             $vendorBusiness = [];
             $vendorBank     = [];
 
-            if ($admin['type'] == 'vendor' && ! empty($admin['vendor_id'])) {
-                $vendorPersonal = Vendor::where('id', $admin['vendor_id'])->first();
-                $vendorBusiness = VendorsBusinessDetail::where('vendor_id', $admin['vendor_id'])->first();
-                $vendorBank     = VendorsBankDetail::where('vendor_id', $admin['vendor_id'])->first();
+            // Find linked vendor
+            $vendorProfile = Vendor::where('user_id', $id)->first(); // Use user_id link
+            
+            if ($vendorProfile) {
+                $vendorPersonal = $vendorProfile->toArray();
+                $vendorBusiness = VendorsBusinessDetail::where('vendor_id', $vendorProfile->id)->first();
+                $vendorBank     = VendorsBankDetail::where('vendor_id', $vendorProfile->id)->first();
 
-                $vendorPersonal = $vendorPersonal ? $vendorPersonal->toArray() : [];
                 $vendorBusiness = $vendorBusiness ? $vendorBusiness->toArray() : [];
                 $vendorBank     = $vendorBank ? $vendorBank->toArray() : [];
+                // Add type 'vendor' for view logic compatibility
+                $admin['type'] = 'vendor';
+                $admin['vendor_id'] = $vendorProfile->id;
+            } else {
+                 $admin['type'] = 'admin'; // Or check role
             }
 
             return view('admin/admins/edit', compact('admin', 'vendorPersonal', 'vendorBusiness', 'vendorBank', 'countries', 'logos', 'headerLogo'));
         } else {
-            // Add mode
             return view('admin/admins/add', compact('logos', 'headerLogo'));
         }
     }
@@ -908,23 +965,30 @@ class AdminController extends Controller
             return redirect()->back()->with('error_message', 'You cannot delete yourself!');
         }
 
-        // Fetch admin
-        $admin = Admin::findOrFail($id);
+        // Fetch User
+        $user = User::findOrFail($id);
+
+        // Check permissions
+        $permission = $user->type === 'vendor' ? 'delete_vendors' : 'delete_admins';
+        if (!Auth::guard('admin')->user()->can($permission)) {
+            return redirect()->back()->with('error_message', 'You do not have permission to delete this user.');
+        }
 
         // Delete admin profile image if exists
-        if (! empty($admin->image) && file_exists(public_path('admin/images/photos/' . $admin->image))) {
-            unlink(public_path('admin/images/photos/' . $admin->image));
+        if (! empty($user->profile_image) && file_exists(public_path('admin/images/photos/' . $user->profile_image))) {
+            unlink(public_path('admin/images/photos/' . $user->profile_image));
         }
 
-        // Delete vendor from vendors table too
-        if (! empty($admin->vendor_id)) {
-            Vendor::where('id', $admin->vendor_id)->delete();
+        // Delete vendor from vendors table too if accessible via relation or user_id
+        $vendor = Vendor::where('user_id', $user->id)->first();
+        if ($vendor) {
+           $vendor->delete();
         }
 
-        // Delete admin from admins table
-        $admin->delete();
+        // Delete user
+        $user->delete();
 
-        return redirect()->back()->with('success_message', 'Admin and Vendor deleted successfully!');
+        return redirect()->back()->with('success_message', 'Admin/Vendor deleted successfully!');
     }
 
     public function contactQueries()

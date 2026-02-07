@@ -9,10 +9,14 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 // use Laravel\Sanctum\HasApiTokens; // Adding the HasApiTokens trait of "Laravel Passport" package (different from Sanctum's one)        // https://laravel.com/docs/9.x/passport#:~:text=add%20the,Laravel%5CPassport%5CHasApiTokens
 
+use Spatie\Permission\Traits\HasRoles;
+
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
     // use  HasApiTokens,  HasFactory, Notifiable, \Laravel\Passport\HasApiTokens; // Adding the HasApiTokens trait of "Laravel Passport" package (different from Sanctum's one)        // https://laravel.com/docs/9.x/passport#:~:text=add%20the,Laravel%5CPassport%5CHasApiTokens
+
+    protected $guard_name = 'web';
 
     /**
      * The attributes that are mass assignable.
@@ -38,8 +42,9 @@ class User extends Authenticatable
         'block_id',
         'address',
         'pincode',
-        'user_type',
         'profile_image',
+        'role_id',
+        'confirm'
     ];
 
     /**
@@ -61,6 +66,25 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    public function getTypeAttribute()
+    {
+        // Check Spatie Roles first (force 'web' guard checks)
+        if ($this->hasRole('admin', 'web')) {
+            return 'superadmin';
+        }
+        if ($this->hasRole('vendor', 'web')) {
+            return 'vendor';
+        }
+        if ($this->hasRole('sales', 'web')) {
+            return 'sales'; // Not in original Admin types, but useful
+        }
+        // Fallback to legacy behavior if needed (e.g. checks role_id directly)
+        if ($this->role_id === 1) return 'superadmin';
+        if ($this->role_id === 2) return 'vendor';
+
+        return 'user'; // Default
+    }
+
     public function institution()
     {
         return $this->belongsTo(InstitutionManagement::class, 'institution_id');
@@ -80,5 +104,62 @@ class User extends Authenticatable
     public function block()
     {
         return $this->belongsTo(Block::class, 'block_id');
+    }
+    public function assignedRole()
+    {
+        return $this->belongsTo(\Spatie\Permission\Models\Role::class, 'role_id');
+    }
+
+    public function salesExecutive()
+    {
+        return $this->hasOne(SalesExecutive::class, 'user_id');
+    }
+
+    public function vendorPersonal()
+    {
+        return $this->hasOne(Vendor::class, 'user_id');
+    }
+
+    public function vendorBusiness()
+    {
+        // Link to VendorsBusinessDetail through the Vendor model
+        // Note: This assumes one user has one vendor profile
+        return $this->hasOneThrough(
+            VendorsBusinessDetail::class,
+            Vendor::class,
+            'user_id',    // Foreign key on vendors table
+            'vendor_id',  // Foreign key on vendors_business_details table
+            'id',         // Local key on users table
+            'id'          // Local key on vendors table
+        );
+    }
+
+    public function vendorBank()
+    {
+        return $this->hasOneThrough(
+            VendorsBankDetail::class,
+            Vendor::class,
+            'user_id',
+            'vendor_id',
+            'id',
+            'id'
+        );
+    }
+
+    // Accessor for AdminController compatibility ('mobile' -> 'phone')
+    public function getMobileAttribute()
+    {
+        return $this->phone;
+    }
+
+    // Accessor for AdminController compatibility ('image' -> 'profile_image')
+    public function getImageAttribute()
+    {
+        return $this->profile_image;
+    }
+
+    public function getVendorIdAttribute()
+    {
+        return $this->vendorPersonal ? $this->vendorPersonal->id : 0;
     }
 }

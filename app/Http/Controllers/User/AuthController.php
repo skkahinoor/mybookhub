@@ -64,13 +64,18 @@ class AuthController extends Controller
             'password'=>'required|min:8',
             'phone'=>'required|numeric|digits:10',
         ]);
+        $role = \Spatie\Permission\Models\Role::where('name', 'user')->first();
         $user=User::create([
             'name'=>$request->name,
             'email'=>$request->email,
             'phone'=>$request->phone,
             'password'=>Hash::make($request->password),
-            'user_type'=>'user',
+            'role_id'=>$role ? $role->id : null,
+            'status' => 1,
         ]);
+        if ($role) {
+            $user->assignRole($role);
+        }
         return redirect()->route('user.login')->with('success','Account created successfully');
     }
     public function logout(Request $request)

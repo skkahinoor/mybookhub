@@ -31,7 +31,6 @@
                                 </div>
                             @endif
 
-
                             <div class="table-responsive pt-3">
                                 {{-- DataTable --}}
                                 <table id="products" class="table table-bordered"> {{-- using the id here for the DataTable --}}
@@ -141,8 +140,6 @@
                                                         @endif
                                                     @endif
                                                 </td>
-
-
 
                                                 <td>
                                                     @if ($adminType === 'vendor')

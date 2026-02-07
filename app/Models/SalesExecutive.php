@@ -14,17 +14,7 @@ class SalesExecutive extends Authenticatable
     protected $guard = 'sales_executives';
 
     protected $fillable = [
-        'profile_picture',
-        'name',
-        'email',
-        'phone',
-        'address',
-        'city',
-        'block',
-        'district',
-        'state',
-        'pincode',
-        'country',
+        'user_id',
         'bank_name',
         'account_number',
         'ifsc_code',
@@ -34,13 +24,16 @@ class SalesExecutive extends Authenticatable
         'completed_target',
         'income_per_target',
         'status',
-        'password',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
     ];
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }
 
 

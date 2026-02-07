@@ -13,9 +13,11 @@
             <h2 class="page-title mb-0">Student Management</h2>
             <p class="text-muted mb-0">Manage student records and information</p>
         </div>
+        @if(Auth::guard('sales')->user()->can('add_students'))
         <a href="{{ url('sales/students/create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Add New Student
         </a>
+        @endif
     </div>
 
     @if(Session::has('success_message'))
@@ -64,9 +66,11 @@
                                     @endif
                                 </td>
                                 <td>
+                                    @if(Auth::guard('sales')->user()->can('edit_students'))
                                     <a href="{{ url('sales/students/'.$student->id.'/edit') }}" class="btn btn-sm btn-success">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    @endif
                                     {{-- <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $student->id }})">
                                         <i class="fas fa-trash"></i>
                                     </button> --}}

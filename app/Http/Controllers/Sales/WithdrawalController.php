@@ -24,22 +24,29 @@ class WithdrawalController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'withdrawals');
 
-        $salesExecutive = Auth::guard('sales')->user();
-        $salesExecutiveId = $salesExecutive->id;
+        $user = Auth::guard('sales')->user();
+        $salesExecutive = $user->salesExecutive;
+        $salesExecId = $salesExecutive->id ?? 0;
+        $userId = $user->id;
 
-        $withdrawals = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $withdrawals = Withdrawal::where('sales_executive_id', $salesExecId)
             ->orderBy('created_at', 'desc')
             ->get();
 
         // Calculate available balance
-        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        // Only count approved students (status = 1, role_id = 5)
+        $totalStudents = User::where('added_by', $userId)
+            ->where('role_id', 5)
+            ->where('status', 1)
+            ->count();
+        
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 
         $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
 
         // Calculate total withdrawn amount
-        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
@@ -55,6 +62,7 @@ class WithdrawalController extends Controller
             'totalWithdrawn',
             'canWithdraw',
             'minimumWithdrawal',
+            'salesExecutive',
             'logos',
             'headerLogo'
         ));
@@ -69,17 +77,24 @@ class WithdrawalController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'withdrawals');
 
-        $salesExecutive = Auth::guard('sales')->user();
-        $salesExecutiveId = $salesExecutive->id;
+        $user = Auth::guard('sales')->user();
+        $salesExecutive = $user->salesExecutive;
+        $salesExecId = $salesExecutive->id ?? 0;
+        $userId = $user->id;
 
         // Calculate available balance
-        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        // Only count approved students (status = 1, role_id = 5)
+        $totalStudents = User::where('added_by', $userId)
+            ->where('role_id', 5)
+            ->where('status', 1)
+            ->count();
+
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 
         $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
 
-        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
@@ -92,7 +107,7 @@ class WithdrawalController extends Controller
         }
 
         // Check if there's a pending withdrawal
-        $pendingWithdrawal = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $pendingWithdrawal = Withdrawal::where('sales_executive_id', $salesExecId)
             ->where('status', 'pending')
             ->first();
 
@@ -115,17 +130,24 @@ class WithdrawalController extends Controller
      */
     public function store(Request $request)
     {
-        $salesExecutive = Auth::guard('sales')->user();
-        $salesExecutiveId = $salesExecutive->id;
+        $user = Auth::guard('sales')->user();
+        $salesExecutive = $user->salesExecutive;
+        $salesExecId = $salesExecutive->id ?? 0;
+        $userId = $user->id;
 
         // Calculate available balance
-        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        // Only count approved students (status = 1, role_id = 5)
+        $totalStudents = User::where('added_by', $userId)
+            ->where('role_id', 5)
+            ->where('status', 1)
+            ->count();
+
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 
         $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
 
-        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
@@ -146,7 +168,7 @@ class WithdrawalController extends Controller
         ]);
 
         // Check if there's a pending withdrawal
-        $pendingWithdrawal = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $pendingWithdrawal = Withdrawal::where('sales_executive_id', $salesExecId)
             ->where('status', 'pending')
             ->first();
 
@@ -157,7 +179,7 @@ class WithdrawalController extends Controller
 
         // Create withdrawal request
         $withdrawal = Withdrawal::create([
-            'sales_executive_id' => $salesExecutiveId,
+            'sales_executive_id' => $salesExecId,
             'amount' => $request->amount,
             'status' => 'pending',
             'payment_method' => $request->payment_method,
@@ -168,7 +190,7 @@ class WithdrawalController extends Controller
         Notification::create([
             'type' => 'withdrawal_request',
             'title' => 'New Withdrawal Request',
-            'message' => "Sales executive '{$salesExecutive->name}' has requested a withdrawal of ₹{$request->amount} via {$request->payment_method}.",
+            'message' => "Sales executive '{$user->name}' has requested a withdrawal of ₹{$request->amount} via {$request->payment_method}.",
             'related_id' => $withdrawal->id,
             'related_type' => 'App\Models\Withdrawal',
             'is_read' => false,

@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Admin;
+use App\Models\User;
+use Spatie\Permission\Models\Role;
 use App\Models\Vendor;
 use App\Models\Setting;
 use Illuminate\Support\Facades\DB;
@@ -66,8 +67,8 @@ class VendorController extends Controller
     {
         $request->validate([
             'name'     => 'required|string|max:255|regex:/^[\pL\s\-&.,\'()\/]+$/u',
-            'email'    => 'required|email|unique:vendors,email|unique:admins,email',
-            'mobile'   => 'required|string|min:10|max:15|unique:vendors,mobile|unique:admins,mobile',
+            'email'    => 'required|email|unique:vendors,email|unique:users,email',
+            'mobile'   => 'required|string|min:10|max:15|unique:vendors,mobile|unique:users,phone',
             'password' => 'required|min:6|confirmed',
             'location' => [
                 'required',
@@ -153,16 +154,18 @@ class VendorController extends Controller
                 'confirm' => 'No'
             ]);
 
-            Admin::create([
-                'name' => $name,
-                'type' => 'vendor',
-                'vendor_id' => $vendor->id,
-                'email' => $email,
-                'mobile' => $phone,
+            $role = Role::where('name', 'vendor')->first();
+            $user = User::create([
+                'name'     => $name,
+                'email'    => $email,
+                'phone'   => $phone,
                 'password' => $password,
-                'status' => 0,
-                'confirm' => 'No'
+                'role_id'  => $role ? $role->id : null,
+                'status'   => 0
             ]);
+            if ($role) $user->assignRole($role);
+
+            $vendor->update(['user_id' => $user->id]);
 
             DB::table('otps')->where('phone', $phone)->delete();
             Cache::forget("reg_name_$phone");
@@ -190,16 +193,16 @@ class VendorController extends Controller
 
     public function getprofile(Request $request)
     {
-        $admin = $request->user();
+        $user = $request->user();
 
-        if (!$admin instanceof Admin || $admin->type !== 'vendor') {
+        if (!$user->hasRole('vendor')) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
 
-        if ($admin->status != 1) {
+        if ($user->status != 1) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your account is inactive.'
@@ -229,8 +232,8 @@ class VendorController extends Controller
                 'state'    => $profileDetail->state?->name,
                 'district' => $profileDetail->district?->name,
                 'block' => $profileDetail->block?->name,
-                'image' => $admin->image
-                    ? url('admin/images/photos/' . $admin->image)
+                'image' => $user->profile_image
+                    ? url('admin/images/photos/' . $user->profile_image)
                     : null
             ]
         ]);
@@ -238,16 +241,16 @@ class VendorController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $admin = $request->user();
+        $user = $request->user();
 
-        if (!$admin instanceof Admin || $admin->type !== 'vendor') {
+        if (!$user->hasRole('vendor')) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
 
-        if ($admin->status != 1) {
+        if ($user->status != 1) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your account is inactive.'
@@ -281,7 +284,7 @@ class VendorController extends Controller
                 'email',
                 'max:255',
                 Rule::unique('vendors', 'email')->ignore($vendor->id),
-                Rule::unique('admins', 'email')->ignore($admin->id),
+                Rule::unique('users', 'email')->ignore($user->id),
             ],
 
             'mobile' => [
@@ -290,7 +293,7 @@ class VendorController extends Controller
                 'min:10',
                 'max:15',
                 Rule::unique('vendors', 'mobile')->ignore($vendor->id),
-                Rule::unique('admins', 'mobile')->ignore($admin->id),
+                Rule::unique('users', 'phone')->ignore($user->id),
             ],
 
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
@@ -312,23 +315,23 @@ class VendorController extends Controller
                 'location'
             ]));
 
-            $admin->update([
+            $user->update([
                 'name'   => $request->name,
-                'mobile' => $request->mobile,
+                'phone' => $request->mobile,
                 'email'  => $request->email,
             ]);
 
             if ($request->hasFile('image')) {
                 $path = public_path('admin/images/photos');
 
-                if ($admin->image && file_exists($path . '/' . $admin->image)) {
-                    unlink($path . '/' . $admin->image);
+                if ($user->profile_image && file_exists($path . '/' . $user->profile_image)) {
+                    unlink($path . '/' . $user->profile_image);
                 }
 
                 $imageName = time() . '_' . uniqid() . '.' . $request->image->extension();
                 $request->image->move($path, $imageName);
 
-                $admin->update(['image' => $imageName]);
+                $user->update(['profile_image' => $imageName]);
             }
 
             DB::commit();
@@ -366,16 +369,16 @@ class VendorController extends Controller
 
     public function saveBusinessDetails(Request $request)
     {
-        $admin = $request->user();
+        $user = $request->user();
 
-        if (!$admin instanceof Admin || $admin->type !== 'vendor') {
+        if (!$user->hasRole('vendor')) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
 
-        if ($admin->status != 1) {
+        if ($user->status != 1) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your account is inactive.'
@@ -399,7 +402,7 @@ class VendorController extends Controller
         ]);
 
         $businessDetail = VendorsBusinessDetail::updateOrCreate(
-            ['vendor_id' => $admin->vendor_id],
+            ['vendor_id' => $user->vendor_id],
             $request->all()
         );
 
@@ -412,16 +415,16 @@ class VendorController extends Controller
 
     public function saveBankDetails(Request $request)
     {
-        $admin = $request->user();
+        $user = $request->user();
 
-        if (!$admin instanceof Admin || $admin->type !== 'vendor') {
+        if (!$user->hasRole('vendor')) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
 
-        if ($admin->status != 1) {
+        if ($user->status != 1) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your account is inactive.'
@@ -436,7 +439,7 @@ class VendorController extends Controller
         ]);
 
         $bankDetail = VendorsBankDetail::updateOrCreate(
-            ['vendor_id' => $admin->vendor_id],
+            ['vendor_id' => $user->vendor_id],
             $request->only([
                 'account_holder_name',
                 'bank_name',
@@ -454,30 +457,23 @@ class VendorController extends Controller
 
     public function getBusinessDetails(Request $request)
     {
-        $admin = $request->user();
+        $user = $request->user();
 
-        if (!$admin instanceof Admin) {
+        if (!$user->hasRole('vendor')) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
 
-        if ($admin->type !== 'vendor') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Vendor can access this profile.'
-            ], 403);
-        }
-
-        if ($admin->status != 1) {
+        if ($user->status != 1) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your account is inactive.'
             ], 403);
         }
 
-        $businessDetail = VendorsBusinessDetail::where('vendor_id', $admin->vendor_id)->first();
+        $businessDetail = VendorsBusinessDetail::where('vendor_id', $user->vendor_id)->first();
 
         if (!$businessDetail) {
             return response()->json([
@@ -495,30 +491,23 @@ class VendorController extends Controller
 
     public function getBankDetails(Request $request)
     {
-        $admin = $request->user();
+        $user = $request->user();
 
-        if (!$admin instanceof Admin) {
+        if (!$user->hasRole('vendor')) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
 
-        if ($admin->type !== 'vendor') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Vendor can access this profile.'
-            ], 403);
-        }
-
-        if ($admin->status != 1) {
+        if ($user->status != 1) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your account is inactive.'
             ], 403);
         }
 
-        $bankDetail = VendorsBankDetail::where('vendor_id', $admin->vendor_id)->first();
+        $bankDetail = VendorsBankDetail::where('vendor_id', $user->vendor_id)->first();
 
         if (!$bankDetail) {
             return response()->json([

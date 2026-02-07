@@ -14,7 +14,7 @@ class SalesReportController extends Controller
     {
         $sales = auth()->user();
 
-        if (!$sales instanceof SalesExecutive) {
+        if (!$sales->hasRole('sales', 'web') && $sales->role_id != 3) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Sales Executives allowed'
@@ -22,17 +22,17 @@ class SalesReportController extends Controller
         }
 
         $salesId = $sales->id;
-        $incomePerTarget = $sales->income_per_target ?? 0;
+        $incomePerTarget = $sales->salesExecutive->income_per_target ?? 0;
 
         $today = Carbon::today();
         $startOfWeek = Carbon::now()->startOfWeek();
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        $todayStudents     = User::where('added_by', $salesId)->where('status', 1)->whereDate('created_at', $today)->count();
-        $weeklyStudents    = User::where('added_by', $salesId)->where('status', 1)->whereDate('created_at', '>=', $startOfWeek)->count();
-        $monthlyStudents   = User::where('added_by', $salesId)->where('status', 1)->whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->count();
-        $totalStudents     = User::where('added_by', $salesId)->where('status', 1)->count();
+        $todayStudents     = User::where('added_by', $salesId)->where('role_id', 5)->where('status', 1)->whereDate('created_at', $today)->count();
+        $weeklyStudents    = User::where('added_by', $salesId)->where('role_id', 5)->where('status', 1)->whereDate('created_at', '>=', $startOfWeek)->count();
+        $monthlyStudents   = User::where('added_by', $salesId)->where('role_id', 5)->where('status', 1)->whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->count();
+        $totalStudents     = User::where('added_by', $salesId)->where('role_id', 5)->where('status', 1)->count();
 
         $todayEarning   = $incomePerTarget * $todayStudents;
         $weeklyEarning  = $incomePerTarget * $weeklyStudents;
@@ -54,6 +54,7 @@ class SalesReportController extends Controller
         // Students per Day
         $studentGraph = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesId)
+            ->where('role_id', 5)
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')

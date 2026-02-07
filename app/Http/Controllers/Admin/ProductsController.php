@@ -53,7 +53,7 @@ class ProductsController extends Controller
                     'product:id,product_name,product_isbn,product_image,category_id,section_id,condition',
                     'product.category:id,category_name',
                     'product.section:id,name',
-                    'vendor:id,name',
+                    'vendor:id,user_id',
                     'admin:id,name',
                 ]);
 
@@ -95,6 +95,10 @@ class ProductsController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($request->ajax()) { // if the request is coming via an AJAX call
+            if (!Auth::guard('admin')->user()->can('update_product_status')) {
+                return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+            }
+
             $data = $request->all(); // Getting the name/value pairs array that are sent from the AJAX request (AJAX call)
             // dd($data);
 
@@ -957,5 +961,48 @@ class ProductsController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function deleteProduct($id)
+    {
+        $user = Auth::guard('admin')->user();
+        if (!$user->can('delete_products')) {
+            return redirect()->back()->with('error_message', 'You do not have permission to delete products.');
+        }
+
+        $product = Product::findOrFail($id);
+
+        // If vendor, check if they own this product (via attributes)
+        if ($user->type === 'vendor') {
+            $hasAttribute = ProductsAttribute::where('product_id', $id)
+                ->where('vendor_id', $user->vendor_id)
+                ->exists();
+            if (!$hasAttribute) {
+                return redirect()->back()->with('error_message', 'Unauthorized action for this product.');
+            }
+        }
+
+        // Delete product image if exists
+        $small_image_path  = 'front/images/product_images/small/';
+        $medium_image_path = 'front/images/product_images/medium/';
+        $large_image_path  = 'front/images/product_images/large/';
+
+        if (!empty($product->product_image)) {
+            if (file_exists($small_image_path . $product->product_image)) {
+                unlink($small_image_path . $product->product_image);
+            }
+            if (file_exists($medium_image_path . $product->product_image)) {
+                unlink($medium_image_path . $product->product_image);
+            }
+            if (file_exists($large_image_path . $product->product_image)) {
+                unlink($large_image_path . $product->product_image);
+            }
+        }
+
+        // Delete attributes and product
+        ProductsAttribute::where('product_id', $id)->delete();
+        $product->delete();
+
+        return redirect()->back()->with('success_message', 'Book has been deleted successfully!');
     }
 }

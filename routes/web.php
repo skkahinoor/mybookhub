@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\OtpController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\User\BookRequestController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\ProductsController;
@@ -67,6 +68,18 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-sales-executive/{id}', [SalesExecutiveController::class, 'delete'])->name('sales_executives.delete');
         Route::post('update-sales-executive-status', [SalesExecutiveController::class, 'updateStatus'])->name('sales_executives.update_status');
         Route::get('sales-executive/{id}/details', [SalesExecutiveController::class, 'getDetails'])->name('sales_executives.get_details');
+
+        // Roles & Permissions Management
+        Route::get('roles/assign-permissions', [RoleController::class, 'assignPermissions'])->name('admin.roles.assign_permissions');
+        Route::post('roles/update-permissions', [RoleController::class, 'updatePermissions'])->name('admin.roles.update_permissions');
+        Route::resource('roles', RoleController::class)->names([
+            'index'   => 'admin.roles.index',
+            'create'  => 'admin.roles.create',
+            'store'   => 'admin.roles.store',
+            'edit'    => 'admin.roles.edit',
+            'update'  => 'admin.roles.update',
+            'destroy' => 'admin.roles.destroy',
+        ]);
 
         // Sales Reports (Admin)
         Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('admin.reports.sales_reports.index');

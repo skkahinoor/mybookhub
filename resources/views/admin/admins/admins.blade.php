@@ -41,7 +41,7 @@
                                         <tr>
                                             <th>{{ $title }} ID</th>
                                             <th>Name</th>
-                                            <th>Type</th>
+                                            
                                             <th>Mobile</th>
                                             <th>Email</th>
                                             <th>Image</th>
@@ -55,7 +55,7 @@
                                                 <tr>
                                                     <td>{{ $loop->iteration }}</td>
                                                     <td>{{ $admin['name'] }}</td>
-                                                    <td>{{ $admin['type'] }}</td>
+                    
                                                     <td>{{ $admin['mobile'] }}</td>
                                                     <td>{{ $admin['email'] }}</td>
                                                     <td>

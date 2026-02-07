@@ -107,7 +107,7 @@ class StudentApiController extends Controller
             $validated['class'] = $request->branch;
         }
 
-        $validated['user_type'] = 'student';
+        $validated['role_id'] = 5; // student role
         $validated['status']   = ($type === 'superadmin') ? 1 : 0;
         $validated['added_by'] = $user->id;
         $validated['password'] = Hash::make('12345678');

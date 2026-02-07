@@ -93,7 +93,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="vendor_address">Address</label>
-                                        <input type="text" class="form-control" id="vendor_address" placeholder="Enter Address" name="vendor_address" value="{{ $vendorDetails['address'] ?? '' }}"> {{-- $vendorDetails was passed from AdminController --}}
+                                        <input type="text" class="form-control" id="vendor_address" placeholder="Enter Address" name="vendor_address" value="{{ Auth::guard('admin')->user()->address }}"> {{-- Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances --}}
                                     </div>
 
                                     <div class="form-group">
@@ -101,7 +101,7 @@
                                         <select class="form-control" id="vendor_country_id" name="country_id" style="color: #495057">
                                             <option value="">Select Country</option>
                                             @foreach ($countries as $country)
-                                                <option value="{{ $country['id'] }}" @if (isset($vendorDetails['country_id']) && $country['id'] == $vendorDetails['country_id']) selected @endif>{{ $country['name'] }}</option>
+                                                <option value="{{ $country['id'] }}" @if (isset(Auth::guard('admin')->user()->country_id) && $country['id'] == Auth::guard('admin')->user()->country_id) selected @endif>{{ $country['name'] }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -130,7 +130,7 @@
 
                                     <div class="form-group">
                                         <label for="vendor_pincode">Pincode</label>
-                                        <input type="text" class="form-control" id="vendor_pincode" placeholder="Enter Pincode" name="vendor_pincode" value="{{ $vendorDetails['pincode'] }}"> {{-- $vendorDetails was passed from AdminController --}}
+                                        <input type="text" class="form-control" id="vendor_pincode" placeholder="Enter Pincode" name="vendor_pincode" value="{{ Auth::guard('admin')->user()->pincode }}"> {{-- Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances --}}
                                     </div>
                                     <div class="form-group">
                                         <label for="vendor_mobile">Mobile</label>
@@ -382,10 +382,12 @@
     <script>
         $(document).ready(function() {
             // Current vendor location values
-            var currentCountryId = @json($vendorDetails['country_id'] ?? null);
-            var currentStateId = @json($vendorDetails['state_id'] ?? null);
-            var currentDistrictId = @json($vendorDetails['district_id'] ?? null);
-            var currentBlockId = @json($vendorDetails['block_id'] ?? null);
+
+            // Current vendor location values
+            var currentCountryId = @json(Auth::guard('admin')->user()->country_id ?? null);
+            var currentStateId = @json(Auth::guard('admin')->user()->state_id ?? null);
+            var currentDistrictId = @json(Auth::guard('admin')->user()->district_id ?? null);
+            var currentBlockId = @json(Auth::guard('admin')->user()->block_id ?? null);
 
             // Load states based on country
             function loadVendorStates(countryId) {

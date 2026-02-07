@@ -25,7 +25,7 @@ class StudentController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'students');
 
-        $students = User::where('added_by', Auth::guard('sales')->user()->id)->where('user_type', 'student')->with('institution')->orderBy('id', 'desc')->get();
+        $students = User::where('added_by', Auth::guard('sales')->user()->id)->where('role_id', 5)->with('institution')->orderBy('id', 'desc')->get();
 
         return view('sales.students.index')->with(compact('students','logos', 'headerLogo'));
     }
@@ -64,7 +64,7 @@ class StudentController extends Controller
         $data['status'] = 0;
         $data['added_by'] = Auth::guard('sales')->user()->id;
         $data['password'] = Hash::make('12345678');
-        $data['user_type'] = 'student';
+        $data['role_id'] = 5;
         $user = User::create($data);
 
         // User::create([
@@ -95,7 +95,7 @@ class StudentController extends Controller
         Session::put('page', 'students');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        $student = User::where('user_type', 'student')->findOrFail($id);
+        $student = User::where('role_id', 5)->findOrFail($id);
 
         return view('sales.students.show')->with(compact('student', 'logos', 'headerLogo'));
     }
@@ -108,7 +108,7 @@ class StudentController extends Controller
         Session::put('page', 'students');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        $student = User::where('user_type', 'student')->findOrFail($id);
+        $student = User::where('role_id', 5)->findOrFail($id);
         $institutions = InstitutionManagement::where('status', 1)->orderBy('name')->get();
 
         return view('sales.students.edit')->with(compact('student', 'institutions', 'headerLogo', 'logos'));
@@ -131,7 +131,7 @@ class StudentController extends Controller
             'roll_number' => 'nullable|string|max:255',
         ]);
 
-        $student = User::where('user_type', 'student')->findOrFail($id);
+        $student = User::where('role_id', 5)->findOrFail($id);
         $data = $request->all();
 
         $student->update($data);
@@ -144,7 +144,7 @@ class StudentController extends Controller
      */
     public function destroy(string $id)
     {
-        $student = User::where('user_type', 'student')->findOrFail($id);
+        $student = User::where('role_id', 5)->findOrFail($id);
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $student->delete();

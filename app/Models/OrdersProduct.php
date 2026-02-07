@@ -46,7 +46,7 @@ class OrdersProduct extends Model
 
     public function vendor()
     {
-        return $this->belongsTo(Admin::class, 'vendor_id');
+        return $this->belongsTo(User::class, 'vendor_id');
     }
 
     public function product()

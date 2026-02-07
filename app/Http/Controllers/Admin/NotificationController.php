@@ -22,15 +22,14 @@ class NotificationController extends Controller
         // Build query based on admin type
         $query = Notification::orderBy('created_at', 'desc');
         
-        // Filter notifications based on admin type
-        if ($admin->type === 'superadmin') {
-            // Superadmin sees all notifications (no filtering)
-        } elseif ($admin->type === 'vendor') {
-            // Vendor sees ONLY their own notifications (vendor_id matches their vendor_id)
-            // Vendors CANNOT see admin notifications (where vendor_id is null)
+        // Filter notifications based on role
+        if ($admin->role_id == 2) {
+            // Vendor sees ONLY their own notifications (vendor_id matches their vendor profile ID)
             $query->where('vendor_id', $admin->vendor_id);
+        } elseif ($admin->role_id == 1) {
+            // Superadmin sees all
         } else {
-            // Other admin types (admin, subadmin) see all notifications (no filtering)
+            // Other admins see all (or you can add more specific filtering)
         }
         
         $notifications = $query->limit(5)
@@ -52,7 +51,7 @@ class NotificationController extends Controller
 
         // Count unread notifications with same filter
         $unreadQuery = Notification::where('is_read', false);
-        if ($admin->type === 'vendor') {
+        if ($admin->role_id == 2) {
             // Vendor sees ONLY their own unread notifications
             $unreadQuery->where('vendor_id', $admin->vendor_id);
         }
@@ -73,7 +72,7 @@ class NotificationController extends Controller
         $notification = Notification::findOrFail($id);
         
         // Check if vendor can access this notification
-        if ($admin->type === 'vendor') {
+        if ($admin->role_id == 2) {
             if ($notification->vendor_id !== null && $notification->vendor_id != $admin->vendor_id) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
@@ -94,7 +93,7 @@ class NotificationController extends Controller
         $query = Notification::where('is_read', false);
         
         // Filter based on admin type
-        if ($admin->type === 'vendor') {
+        if ($admin->role_id == 2) {
             // Vendor can only mark their own notifications as read
             $query->where('vendor_id', $admin->vendor_id);
         }
@@ -121,13 +120,11 @@ class NotificationController extends Controller
             // Build query based on admin type
             $query = Notification::latest();
             
-            // Filter notifications based on admin type
-            if ($admin->type === 'vendor') {
-                // Vendor sees ONLY their own notifications (vendor_id matches their vendor_id)
-                // Vendors CANNOT see admin notifications (where vendor_id is null)
+            // Filter notifications based on role
+            if ($admin->role_id == 2) {
+                // Vendor sees ONLY their own notifications
                 $query->where('vendor_id', $admin->vendor_id);
             }
-            // superadmin and other admin types see all notifications (no filtering)
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -197,13 +194,13 @@ class NotificationController extends Controller
                         </a>';
                     }
 
-                    // Student
+                    // Student or User profile
                     if ($n->related_type === 'App\Models\User' && $n->related_id) {
                         $html .= '
                         <a href="#" class="view-student"
                            data-id="' . $n->related_id . '"
                            data-notification-id="' . $n->id . '"
-                           title="View Student">
+                           title="View Details">
                            <i class="mdi mdi-account text-info" style="font-size:20px"></i>
                         </a>';
                     }

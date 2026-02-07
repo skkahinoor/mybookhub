@@ -13,7 +13,23 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $userId = Auth::user()->id;
+        $user = Auth::user();
+        
+        // Fix: Auto-assign 'user' role if the user has no role assigned
+        if (empty($user->role_id)) {
+            $role = \Spatie\Permission\Models\Role::where('name', 'user')->where('guard_name', 'web')->first();
+            if ($role) {
+                $user->role_id = $role->id;
+                $user->save();
+                
+                // Also sync with Spatie permissions
+                if (!$user->hasRole('user')) {
+                    $user->assignRole($role);
+                }
+            }
+        }
+
+        $userId = $user->id;
         
         // Total Orders
         $totalOrders = Order::where('user_id', $userId)->count();

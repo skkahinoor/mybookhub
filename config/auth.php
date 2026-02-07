@@ -90,13 +90,13 @@ return [
         // Multiple Authentication    // https://laravel.com/docs/9.x/passport#multiple-authentication-guards
         'admins' => [
             'driver' => 'eloquent',
-            'model'  => App\Models\Admin::class, // the Admin.php Model of the `admins` database table
+            'model'  => App\Models\User::class, // Changed to User::class for consolidated authentication
         ],
 
         // Sales Executives provider
         'sales_executives' => [
             'driver' => 'eloquent',
-            'model'  => App\Models\SalesExecutive::class,
+            'model'  => App\Models\User::class, // Changed to User::class
         ],
 
         // 'users' => [

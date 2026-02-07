@@ -27,6 +27,9 @@ class OrderController extends Controller
 
     // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel
     public function orders() {
+        if (!Auth::guard('admin')->user()->can('view_orders')) {
+            abort(403, 'Unauthorized action.');
+        }
         $adminType = Auth::guard('admin')->user()->type;
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -285,6 +288,9 @@ class OrderController extends Controller
 
     
     public function updateOrderStatus(Request $request) {
+        if (!Auth::guard('admin')->user()->can('update_order_status')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($request->isMethod('post')) {
@@ -381,6 +387,9 @@ class OrderController extends Controller
     // Update Item Status (which can be determined by both 'vendor'-s and 'admin'-s, in contrast to "Update Order Status" which is updated by 'admin'-s ONLY, not 'vendor'-s) (Pending, In Progress, Shipped, Delivered, ...) in admin/orders/order_details.blade.php in Admin Panel
     // Note: The `order_statuses` table contains all kinds of order statuses (that can be updated by 'admin'-s ONLY in `orders` table) like: pending, in progress, shipped, canceled, ...etc. In `order_statuses` table, the `name` column can be: 'New', 'Pending', 'Canceled', 'In Progress', 'Shipped', 'Partially Shipped', 'Delivered', 'Partially Delivered' and 'Paid'. 'Partially Shipped': If one order has products from different vendors, and one vendor has shipped their product to the customer while other vendor (or vendors) didn't!. 'Partially Delivered': if one order has products from different vendors, and one vendor has shipped and DELIVERED their product to the customer while other vendor (or vendors) didn't!    // The `order_item_statuses` table contains all kinds of order statuses (that can be updated by both 'vendor'-s and 'admin'-s in `orders_products` table) like: pending, in progress, shipped, canceled, ...etc.
     public function updateOrderItemStatus(Request $request) {
+        if (!Auth::guard('admin')->user()->can('update_order_item_status')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
             if ($request->isMethod('post')) {

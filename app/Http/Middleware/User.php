@@ -27,7 +27,7 @@ class User
 
         // Optionally ensure this account is a normal 'user'
         $authUser = Auth::user();
-        if (isset($authUser->user_type) && $authUser->user_type !== 'user') {
+        if ($authUser->type !== 'user') {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

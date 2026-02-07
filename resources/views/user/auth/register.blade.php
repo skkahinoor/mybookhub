@@ -37,7 +37,7 @@
                             <h6 class="font-weight-light">Signing up is easy. It only takes a few steps</h6>
                             <form class="pt-3" action="{{ route('user.registerstore') }}" method="post">
                                 @csrf
-                                <input type="hidden" name="user_type" value="user">
+                                <input type="hidden" name="role_id" value="4">
                                 <div class="form-group">
                                     <input type="text" class="form-control form-control-lg"
                                         id="exampleInputUsername1" name="name" placeholder="Username">

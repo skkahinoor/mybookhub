@@ -23,6 +23,7 @@
                     @endif
                 </li>
                 @if (auth('sales')->check())
+                    @if(auth('sales')->user()->can('view_institutions'))
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="salesInstitutionsDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -35,6 +36,9 @@
                             </li>
                         </ul>
                     </li>
+                    @endif
+
+                    @if(auth('sales')->user()->can('view_students'))
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="salesStudentsDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -46,16 +50,25 @@
                             </li>
                         </ul>
                     </li>
+                    @endif
+
+                    @if(auth('sales')->user()->can('view_reports'))
                     <li class="nav-item" style="padding-top: 4px;">
                         <x-nav-link :href="route('sales.reports.index')" :active="request()->routeIs('sales.reports.*')" class="nav-link">
                             <i class="bi bi-file-earmark-text me-1"></i>{{ __('Reports') }}
                         </x-nav-link>
                     </li>
+                    @endif
+
+                    @if(auth('sales')->user()->can('view_withdrawals'))
                     <li class="nav-item" style="padding-top: 4px;">
                         <x-nav-link :href="route('sales.withdrawals.index')" :active="request()->routeIs('sales.withdrawals.*')" class="nav-link">
                             <i class="bi bi-wallet2 me-1"></i>{{ __('Withdrawals') }}
                         </x-nav-link>
                     </li>
+                    @endif
+
+                    @if(auth('sales')->user()->can('view_vendors'))
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="salesVendorsDropdown" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -70,6 +83,8 @@
                             </li>
                         </ul>
                     </li>
+                    @endif
+                    
                     {{-- <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="salesBlocksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-person-lines-fill me-1"></i> Blocks

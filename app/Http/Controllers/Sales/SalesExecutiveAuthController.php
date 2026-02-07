@@ -48,11 +48,14 @@ class SalesExecutiveAuthController extends Controller
         $loginInput   = trim($data['login']);
         $numericLogin = preg_replace('/\D/', '', $loginInput);
 
-        // Identify user by email or phone
+        // Identify user by email or phone in the User table
+        $userQuery = User::query()->role('sales', 'web');
+
         if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
-            $user = SalesExecutive::where('email', $loginInput)->first();
+            $user = $userQuery->where('email', $loginInput)->first();
         } elseif (strlen($numericLogin) >= 10 && strlen($numericLogin) <= 11) {
-            $user = SalesExecutive::where('phone', $numericLogin)->first();
+            // User model uses 'phone'
+            $user = $userQuery->where('phone', $numericLogin)->first();
         } else {
             return back()
                 ->withErrors(['login' => 'Enter a valid email or 10/11-digit mobile number.'])
@@ -61,7 +64,7 @@ class SalesExecutiveAuthController extends Controller
 
         if (!$user) {
             return back()->withErrors([
-                'login' => 'The provided credentials do not match our records.',
+                'login' => 'The provided credentials do not match our records or you do not have permission.',
             ])->onlyInput('login');
         }
 
@@ -71,9 +74,10 @@ class SalesExecutiveAuthController extends Controller
             ])->onlyInput('login');
         }
 
+        // Use the default 'web' guard or 'sales' guard if it's pointing to User model
         if (Auth::guard('sales')->attempt(
             [
-                isset($user->email) ? 'email' : 'phone' => $user->email ?? $user->phone,
+                'email' => $user->email,
                 'password' => $data['password']
             ],
             $request->boolean('remember')
@@ -141,8 +145,8 @@ class SalesExecutiveAuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name'  => 'required|string|max:150',
-            'email' => 'required|email|unique:sales_executives,email',
-            'phone' => 'required|digits:10|unique:sales_executives,phone',
+            'email' => 'required|email|unique:users,email',
+            'phone' => 'required|digits:10|unique:users,phone',
         ]);
 
         if ($validator->fails()) {
@@ -208,13 +212,24 @@ class SalesExecutiveAuthController extends Controller
             return back()->with('error', 'Session expired. Please register again.');
         }
 
-        $sales = SalesExecutive::create([
+        $role = \Spatie\Permission\Models\Role::where('name', 'sales')->first();
+        $user = User::create([
             'name'     => $name,
             'email'    => $email,
             'phone'    => $phone,
+            'password' => Hash::make($request->password),
+            'role_id'  => $role ? $role->id : null,
+            'status'   => 0, // initially inactive
+        ]);
+
+        if ($role) {
+            $user->assignRole($role);
+        }
+
+        $sales = SalesExecutive::create([
+            'user_id'  => $user->id,
             'status'   => 0,
             'income_per_target' => 10,
-            'password' => Hash::make($request->password),
         ]);
 
         // Create notification for admin
@@ -230,7 +245,7 @@ class SalesExecutiveAuthController extends Controller
         DB::table('otps')->where('phone', $phone)->delete();
         session()->forget(['reg_name', 'reg_email', 'reg_phone']);
 
-        Auth::guard('sales')->login($sales);
+        Auth::guard('sales')->login($user);
 
         // $headerLogo = HeaderLogo::first();
         // $logos      = $headerLogo;

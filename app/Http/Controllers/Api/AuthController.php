@@ -6,8 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Models\Admin;
-use App\Models\SalesExecutive;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -27,62 +25,34 @@ class AuthController extends Controller
 
         $loginInput = $request->login;   // can be email or mobile/phone
 
-        // All user types and their models
-        $userTypes = [
-            'superadmin' => Admin::class,
-            'vendor'     => Admin::class,
-            'sales'      => SalesExecutive::class,
-            'user'       => User::class,
-        ];
+        $loginInput = $request->login;
+        $numericLogin = preg_replace('/\D/', '', $loginInput);
 
-        foreach ($userTypes as $type => $model) {
+        $user = User::where(function($q) use ($loginInput, $numericLogin) {
+            $q->where('email', $loginInput)
+              ->orWhere('phone', $numericLogin);
+        })->first();
 
-            // Determine the login field based on model
-            if ($model === Admin::class) {
-                $user = $model::where('email', $loginInput)
-                    ->orWhere('mobile', $loginInput)
-                    ->first();
-            } elseif ($model === SalesExecutive::class) {
-                $user = $model::where('email', $loginInput)
-                    ->orWhere('phone', $loginInput)
-                    ->first();
-            } elseif ($model === User::class) {
-                $user = $model::where('email', $loginInput)
-                    ->orWhere('phone', $loginInput)
-                    ->first();
-            } else {
-                $user = null;
-            }
-
-            // If user found and password matches
-            if ($user && Hash::check($request->password, $user->password)) {
-
-                // Admin has type field → superadmin / vendor
-                if (in_array($type, ['superadmin', 'vendor'])) {
-                    if ($user->type !== $type) {
-                        continue; // Skip wrong type
-                    }
-                }
-
-                // Check active/inactive
-                if (isset($user->status) && $user->status == 0) {
-                    return response()->json([
-                        'status'  => false,
-                        'message' => 'Your account is inactive. Please contact admin.',
-                    ], 403);
-                }
-
-                // Create token
-                $token = $user->createToken("{$type}-token")->plainTextToken;
-
+        if ($user && Hash::check($request->password, $user->password)) {
+            // Check active/inactive
+            if ($user->status == 0) {
                 return response()->json([
-                    'status'  => true,
-                    'message' => ucfirst($type) . ' login successful',
-                    'type'    => $type,
-                    'token'   => $token,
-                    'data'    => $user,
-                ]);
+                    'status'  => false,
+                    'message' => 'Your account is inactive. Please contact admin.',
+                ], 403);
             }
+
+            $type = $user->type; // Uses getTypeAttribute accessor
+
+            $token = $user->createToken("{$type}-token")->plainTextToken;
+
+            return response()->json([
+                'status'  => true,
+                'message' => ucfirst($type) . ' login successful',
+                'type'    => $type,
+                'token'   => $token,
+                'data'    => $user,
+            ]);
         }
 
         return response()->json([
@@ -113,12 +83,7 @@ class AuthController extends Controller
         }
 
 
-        $type = 'user';
-        if ($user instanceof Admin) {
-            $type = $user->type;
-        } elseif ($user instanceof SalesExecutive) {
-            $type = 'sales';
-        }
+        $type = $user->type; // getTypeAttribute() on User model
 
         return response()->json([
             'status'  => true,
@@ -244,13 +209,21 @@ class AuthController extends Controller
             ], 400);
         }
 
-        $sales = SalesExecutive::create([
-            'name' => $name,
-            'email' => $email,
-            'phone' => $phone,
-            'status' => '0',
-            'income_per_target' => '10',
-            'password' => $password,
+        $role = \Spatie\Permission\Models\Role::where('name', 'sales')->first();
+        $user = User::create([
+            'name'     => $name,
+            'email'    => $email,
+            'phone'    => $phone,
+            'password' => $password, // Already hashed in register()
+            'role_id'  => $role ? $role->id : null,
+            'status'   => 0,
+        ]);
+        if ($role) $user->assignRole($role);
+
+        $sales = \App\Models\SalesExecutive::create([
+            'user_id' => $user->id,
+            'status'  => 0,
+            'income_per_target' => 10,
         ]);
 
         // Create notification for admin

@@ -10,7 +10,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <h3 class="mb-1">{{ $vendor->name }}</h3>
+                    <h3 class="mb-1">{{ $vendor->user->name ?? 'N/A' }}</h3>
                     <p class="text-muted mb-0">Vendor details and login information</p>
                 </div>
                 <a href="{{ route('sales.vendors.index') }}" class="btn btn-outline-secondary">
@@ -23,9 +23,9 @@
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
                             <h5 class="card-title mb-3">Vendor Profile</h5>
-                            <div class="mb-2"><strong>Name:</strong> {{ $vendor->name }}</div>
-                            <div class="mb-2"><strong>Email:</strong> {{ $vendor->email }}</div>
-                            <div class="mb-2"><strong>Mobile:</strong> {{ $vendor->mobile }}</div>
+                            <div class="mb-2"><strong>Name:</strong> {{ $vendor->user->name ?? 'N/A' }}</div>
+                            <div class="mb-2"><strong>Email:</strong> {{ $vendor->user->email ?? 'N/A' }}</div>
+                            <div class="mb-2"><strong>Mobile:</strong> {{ $vendor->user->phone ?? 'N/A' }}</div>
                             <div class="mb-2">
                                 <strong>Status:</strong>
                                 @if($vendor->status)

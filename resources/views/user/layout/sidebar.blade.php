@@ -202,24 +202,32 @@
             </li> --}}
 
 
+            @if(Auth::user()->can('view_requested_books') || optional(Auth::user()->assignedRole)->hasPermissionTo('view_requested_books'))
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('user.book.indexrequest') }}">
                     <i class="icon-paper menu-icon"></i>
                     <span class="menu-title">Book Request Queries</span>
                 </a>
             </li>
+            @endif
+            @if(Auth::user()->can('view_orders') || optional(Auth::user()->assignedRole)->hasPermissionTo('view_orders'))
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('user.orders.index') }}">
                     <i class="icon-paper menu-icon"></i>
                     <span class="menu-title">My Orders</span>
                 </a>
             </li>
+            @endif
+            @if(Auth::user()->can('view_sell_old_books') || optional(Auth::user()->assignedRole)->hasPermissionTo('view_sell_old_books'))
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('user.sell-book.index') }}">
                     <i class="icon-paper menu-icon"></i>
                     <span class="menu-title">Sell Old Book</span>
                 </a>
             </li>
+            @endif
+
+
 
             {{-- <li class="nav-item">
                 <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false"

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Sales;
 use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
 use App\Models\SalesExecutive;
+use App\Models\User;
 use App\Models\Country;
 use App\Models\State;
 use App\Models\District;
@@ -22,54 +23,29 @@ class ProfileController extends Controller
     {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        $sales = Auth::guard('sales')->user();
+        $user = Auth::guard('sales')->user(); // Get the User model
+        $salesExecutive = $user->salesExecutive; // Get the SalesExecutive profile
 
         // Fetch countries for dropdown
         $countries = Country::where('status', true)->get()->toArray();
 
-        // Try to find current location IDs from stored names
-        $currentCountryId = null;
-        $currentStateId = null;
-        $currentDistrictId = null;
-        $currentBlockId = null;
+        // Get current location IDs from User model
+        $currentCountryId = $user->country_id;
+        $currentStateId = $user->state_id;
+        $currentDistrictId = $user->district_id;
+        $currentBlockId = $user->block_id;
 
-        if ($sales->country) {
-            $country = Country::where('name', $sales->country)->where('status', true)->first();
-            $currentCountryId = $country ? $country->id : null;
-        }
-
-        if ($sales->state && $currentCountryId) {
-            $state = State::where('name', $sales->state)
-                ->where('country_id', $currentCountryId)
-                ->where('status', true)
-                ->first();
-            $currentStateId = $state ? $state->id : null;
-        }
-
-        if ($sales->district && $currentStateId) {
-            $district = District::where('name', $sales->district)
-                ->where('state_id', $currentStateId)
-                ->where('status', true)
-                ->first();
-            $currentDistrictId = $district ? $district->id : null;
-        }
-
-        if ($sales->block && $currentDistrictId) {
-            $block = Block::where('name', $sales->block)
-                ->where('district_id', $currentDistrictId)
-                ->where('status', true)
-                ->first();
-            $currentBlockId = $block ? $block->id : null;
-        }
-
-        return view('sales.profile', compact('sales', 'logos', 'headerLogo', 'countries', 'currentCountryId', 'currentStateId', 'currentDistrictId', 'currentBlockId'));
+        return view('sales.profile', compact('user', 'salesExecutive', 'logos', 'headerLogo', 'countries', 'currentCountryId', 'currentStateId', 'currentDistrictId', 'currentBlockId'));
     }
 
     public function update(Request $request)
     {
-        $sales = Auth::guard('sales')->user();
+        $user = Auth::guard('sales')->user(); // This is the User model
+        $salesExecutive = $user->salesExecutive; // Get the SalesExecutive profile
+        
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
+        
         // Check if name/email fields are present in the request
         $hasNameEmail = $request->has('name') || $request->has('email');
 
@@ -79,17 +55,16 @@ class ProfileController extends Controller
         // Name and email - only required if they're present in the request
         if ($hasNameEmail) {
             $rules['name'] = ['required', 'string', 'max:255'];
-            $rules['email'] = ['required', 'email', 'max:255', 'unique:sales_executives,email,' . $sales->id];
+            $rules['email'] = ['required', 'email', 'max:255', 'unique:users,email,' . $user->id];
         } else {
             // Make name/email optional when not being updated (e.g., bank details only)
             $rules['name'] = ['nullable', 'string', 'max:255'];
-            $rules['email'] = ['nullable', 'email', 'max:255', 'unique:sales_executives,email,' . $sales->id];
+            $rules['email'] = ['nullable', 'email', 'max:255', 'unique:users,email,' . $user->id];
         }
 
         $rules = array_merge($rules, [
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:255'],
-            'city' => ['nullable', 'string', 'max:100'],
             'country_id' => ['nullable', 'exists:countries,id'],
             'state_id' => ['nullable', 'exists:states,id'],
             'district_id' => ['nullable', 'exists:districts,id'],
@@ -106,73 +81,49 @@ class ProfileController extends Controller
 
         $validated = $request->validate($rules);
 
-        // Update profile fields only if they're provided
+        // Update User model fields
         if (isset($validated['name']) && $request->filled('name')) {
-            $sales->name = $validated['name'];
+            $user->name = $validated['name'];
         }
         if (isset($validated['email']) && $request->filled('email')) {
-            $sales->email = $validated['email'];
+            $user->email = $validated['email'];
         }
         if (isset($validated['phone']) && $request->filled('phone')) {
-            $sales->phone = $validated['phone'];
+            $user->phone = $validated['phone'];
         }
         if (isset($validated['address']) && $request->filled('address')) {
-            $sales->address = $validated['address'];
-        }
-        if (isset($validated['city']) && $request->filled('city')) {
-            $sales->city = $validated['city'];
+            $user->address = $validated['address'];
         }
         if (isset($validated['pincode']) && $request->filled('pincode')) {
-            $sales->pincode = $validated['pincode'];
+            $user->pincode = $validated['pincode'];
         }
 
-        // Update location fields from IDs
+        // Update location fields as IDs in User model
         if ($request->filled('country_id')) {
-            $country = Country::find($validated['country_id']);
-            $sales->country = $country ? $country->name : null;
+            $user->country_id = $validated['country_id'];
         }
         if ($request->filled('state_id')) {
-            $state = State::find($validated['state_id']);
-            $sales->state = $state ? $state->name : null;
+            $user->state_id = $validated['state_id'];
         }
         if ($request->filled('district_id')) {
-            $district = District::find($validated['district_id']);
-            $sales->district = $district ? $district->name : null;
+            $user->district_id = $validated['district_id'];
         }
         if ($request->filled('block_id')) {
-            $block = Block::find($validated['block_id']);
-            $sales->block = $block ? $block->name : null;
-        }
-
-        // Update bank details - always update if present in request
-        if ($request->has('bank_name')) {
-            $sales->bank_name = $validated['bank_name'] ?: null;
-        }
-        if ($request->has('account_number')) {
-            $sales->account_number = $validated['account_number'] ?: null;
-        }
-        if ($request->has('ifsc_code')) {
-            $sales->ifsc_code = $validated['ifsc_code'] ?: null;
-        }
-        if ($request->has('bank_branch')) {
-            $sales->bank_branch = $validated['bank_branch'] ?: null;
-        }
-        if ($request->has('upi_id')) {
-            $sales->upi_id = $validated['upi_id'] ?: null;
+            $user->block_id = $validated['block_id'];
         }
 
         // Handle password update
         if (!empty($validated['password'])) {
-            $sales->password = Hash::make($validated['password']);
+            $user->password = Hash::make($validated['password']);
         }
 
         // Handle profile picture upload
         if ($request->hasFile('profile_picture')) {
-            if (!empty($sales->profile_picture)) {
-                if (Str::startsWith($sales->profile_picture, 'assets/')) {
-                    File::delete(public_path($sales->profile_picture));
+            if (!empty($user->profile_image)) {
+                if (Str::startsWith($user->profile_image, 'assets/')) {
+                    File::delete(public_path($user->profile_image));
                 } else {
-                    Storage::disk('public')->delete($sales->profile_picture);
+                    Storage::disk('public')->delete($user->profile_image);
                 }
             }
 
@@ -183,10 +134,31 @@ class ProfileController extends Controller
 
             $filename = Str::uuid()->toString() . '.' . $request->file('profile_picture')->getClientOriginalExtension();
             $request->file('profile_picture')->move($destinationPath, $filename);
-            $sales->profile_picture = 'assets/sales/profile_pictures/' . $filename;
+            $user->profile_image = 'assets/sales/profile_pictures/' . $filename;
         }
 
-        $sales->save();
+        $user->save();
+
+        // Update SalesExecutive model (bank details only)
+        if ($salesExecutive) {
+            if ($request->has('bank_name')) {
+                $salesExecutive->bank_name = $validated['bank_name'] ?: null;
+            }
+            if ($request->has('account_number')) {
+                $salesExecutive->account_number = $validated['account_number'] ?: null;
+            }
+            if ($request->has('ifsc_code')) {
+                $salesExecutive->ifsc_code = $validated['ifsc_code'] ?: null;
+            }
+            if ($request->has('bank_branch')) {
+                $salesExecutive->bank_branch = $validated['bank_branch'] ?: null;
+            }
+            if ($request->has('upi_id')) {
+                $salesExecutive->upi_id = $validated['upi_id'] ?: null;
+            }
+            
+            $salesExecutive->save();
+        }
 
         return redirect()->route('sales.profile.edit')->with('success_message', 'Profile updated successfully.');
     }

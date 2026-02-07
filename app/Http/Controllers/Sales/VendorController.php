@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Sales;
 
 use App\Http\Controllers\Controller;
-use App\Models\Admin;
+use App\Models\User;
+use Spatie\Permission\Models\Role;
 use App\Models\HeaderLogo;
 use App\Models\Notification;
 use App\Models\Vendor;
@@ -24,10 +25,8 @@ class VendorController extends Controller
         Session::put('page', 'vendors');
 
         $vendors = Vendor::orderByDesc('id')->get();
-        $adminStatuses = Admin::where('type', 'vendor')
-            ->pluck('status', 'vendor_id');
 
-        return view('sales.vendors.index', compact('vendors', 'adminStatuses', 'logos', 'headerLogo'));
+        return view('sales.vendors.index', compact('vendors', 'logos', 'headerLogo'));
     }
 
     /**
@@ -49,31 +48,33 @@ class VendorController extends Controller
      {
          $data = $request->validate([
              'name'                  => 'required|string|max:255',
-             'email'                 => 'required|email|unique:vendors,email|unique:admins,email',
-             'mobile'                => 'required|string|min:10|max:15|unique:vendors,mobile|unique:admins,mobile',
+             'email'                 => 'required|email|unique:users,email',
+             'mobile'                => 'required|string|min:10|max:15|unique:users,phone',
              'password'              => 'required|string|min:6',
          ]);
 
-         $vendor = null;
-
-         DB::transaction(function () use ($data, &$vendor) {
-             $vendor = Vendor::create([
-                 'name'    => $data['name'],
-                 'email'   => $data['email'],
-                 'mobile'  => $data['mobile'],
-                 'confirm' => 'Yes',
-                 'status'  => 0,
-             ]);
-
-             Admin::create([
+         DB::transaction(function () use ($data) {
+             // 1. Create User first
+             $role = Role::where('name', 'vendor')->first();
+             
+             $user = User::create([
                  'name'      => $data['name'],
                  'email'     => $data['email'],
-                 'mobile'    => $data['mobile'],
-                 'type'      => 'vendor',
-                 'vendor_id' => $vendor->id,
+                 'phone'     => $data['mobile'],
                  'password'  => Hash::make($data['password']),
-                 'confirm'   => 'Yes',
-                 'status'    => 0,
+                 'role_id'   => $role ? $role->id : null,
+                 'status'    => 0, // Inactive by default
+             ]);
+             
+             if ($role) {
+                 $user->assignRole($role);
+             }
+
+             // 2. Create Vendor linked to User
+             $vendor = Vendor::create([
+                 'user_id' => $user->id,
+                 'confirm' => 'Yes',
+                 'status'  => 0,
              ]);
 
              Notification::create([
@@ -91,6 +92,7 @@ class VendorController extends Controller
              ->with('success_message', 'Vendor added successfully.');
      }
 
+
      /**
       * Remove the specified vendor (only if inactive).
       */
@@ -103,7 +105,9 @@ class VendorController extends Controller
         }
 
         DB::transaction(function () use ($vendor) {
-            Admin::where('vendor_id', $vendor->id)->delete();
+            if ($vendor->user_id) {
+                User::where('id', $vendor->user_id)->delete();
+            }
             $vendor->delete();
         });
 
@@ -121,7 +125,7 @@ class VendorController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'vendors');
 
-        $adminAccount = Admin::where('vendor_id', $vendor->id)->first();
+        $adminAccount = User::find($vendor->user_id);
 
         return view('sales.vendors.show', compact('vendor', 'adminAccount', 'logos', 'headerLogo'));
     }

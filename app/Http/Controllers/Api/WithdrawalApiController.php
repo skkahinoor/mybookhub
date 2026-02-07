@@ -20,26 +20,28 @@ class WithdrawalApiController extends Controller
     {
         $sales = $request->user();
 
-        if (!$sales instanceof SalesExecutive) {
+        if (!$sales->hasRole('sales', 'web') && $sales->role_id != 3) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Sales Executives can access this.'
             ], 403);
         }
 
-        $salesExecutiveId = $sales->id;
+        $salesExecutiveProfile = $sales->salesExecutive;
+        $salesExecProfileId = $salesExecutiveProfile->id ?? 0;
+        $userId = $sales->id;
 
-        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
-        $incomePerTarget = $sales->income_per_target ?? 0;
+        $totalStudents = User::where('added_by', $userId)->where('role_id', 5)->where('status', 1)->count();
+        $incomePerTarget = $salesExecutiveProfile->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 
-        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecProfileId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
         $availableBalance = $totalEarning - $totalWithdrawn;
 
-        $withdrawals = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $withdrawals = Withdrawal::where('sales_executive_id', $salesExecProfileId)
             ->orderBy('created_at', 'desc')
             ->get();
         $minWithdraw = Setting::where('key', 'min_withdrawal_amount')->value('value');
@@ -59,18 +61,21 @@ class WithdrawalApiController extends Controller
     }
     public function requestWithdraw(Request $request)
     {
-        $sales = $request->user();
-        $salesExecutiveId = $sales->id;
+        $user = $request->user();
+        $salesExecutiveProfile = $user->salesExecutive;
+        $salesExecProfileId = $salesExecutiveProfile->id ?? 0;
+        $userId = $user->id;
 
 
-        $totalStudents = User::where('added_by', $salesExecutiveId)
+        $totalStudents = User::where('added_by', $userId)
+            ->where('role_id', 5)
             ->where('status', 1)
             ->count();
 
-        $incomePerTarget = (float) ($sales->income_per_target ?? 0);
+        $incomePerTarget = (float) ($salesExecutiveProfile->income_per_target ?? 0);
         $totalEarning = $incomePerTarget * $totalStudents;
 
-        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecProfileId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
@@ -86,7 +91,7 @@ class WithdrawalApiController extends Controller
             ], 403);
         }
 
-        $pending = Withdrawal::where('sales_executive_id', $salesExecutiveId)
+        $pending = Withdrawal::where('sales_executive_id', $salesExecProfileId)
             ->where('status', 'pending')
             ->first();
 
@@ -115,10 +120,10 @@ class WithdrawalApiController extends Controller
 
         if ($validated['payment_method'] === 'bank_transfer') {
             if (
-                empty($sales->bank_name) ||
-                empty($sales->account_number) ||
-                empty($sales->ifsc_code) ||
-                empty($sales->bank_branch)
+                empty($salesExecutiveProfile->bank_name) ||
+                empty($salesExecutiveProfile->account_number) ||
+                empty($salesExecutiveProfile->ifsc_code) ||
+                empty($salesExecutiveProfile->bank_branch)
             ) {
                 return response()->json([
                     'status' => false,
@@ -128,7 +133,7 @@ class WithdrawalApiController extends Controller
         }
 
         if ($validated['payment_method'] === 'upi') {
-            if (empty($sales->upi_id)) {
+            if (empty($salesExecutiveProfile->upi_id)) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Please add your UPI ID before requesting a UPI withdrawal.'
@@ -137,7 +142,7 @@ class WithdrawalApiController extends Controller
         }
 
         $withdrawal = Withdrawal::create([
-            'sales_executive_id' => $salesExecutiveId,
+            'sales_executive_id' => $salesExecProfileId,
             'amount' => $validated['amount'],
             'payment_method' => $validated['payment_method'],
             'remarks' => $validated['remarks'] ?? null,
@@ -147,14 +152,14 @@ class WithdrawalApiController extends Controller
         Notification::create([
             'type' => 'withdrawal_request',
             'title' => 'New Withdrawal Request',
-            'message' => "Sales executive '{$sales->name}' requested ₹{$validated['amount']} via {$validated['payment_method']}.",
+            'message' => "Sales executive '{$user->name}' requested ₹{$validated['amount']} via {$validated['payment_method']}.",
             'related_id' => $withdrawal->id,
             'related_type' => Withdrawal::class,
             'is_read' => false,
         ]);
 
 
-        $this->sendWithdrawRequestSMS($sales->phone, $validated['amount']);
+        $this->sendWithdrawRequestSMS($user->phone, $validated['amount']);
 
         return response()->json([
             'status' => true,

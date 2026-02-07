@@ -10,16 +10,8 @@ class Vendor extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name',
+        'user_id',
         'location',
-        'address',
-        'country_id',
-        'state_id',
-        'district_id',
-        'block_id',
-        'pincode',
-        'mobile',
-        'email',
         'confirm',
         'commission',
         'status',
@@ -47,44 +39,14 @@ class Vendor extends Model
         );
     }
 
-    // Vendor → Country
-    public function country()
+    // Vendor belongs to User
+    public function user()
     {
-        return $this->belongsTo(
-            Country::class,
-            'country_id',
-            'id'
-        );
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Vendor → State
-    public function state()
-    {
-        return $this->belongsTo(
-            State::class,
-            'state_id',
-            'id'
-        );
-    }
 
-    // Vendor → District
-    public function district()
-    {
-        return $this->belongsTo(
-            District::class,
-            'district_id',
-            'id'
-        );
-    }
 
-    public function block()
-    {
-        return $this->belongsTo(
-            Block::class,
-            'block_id',
-            'id'
-        );
-    }
 
     /* =======================
        Helper Functions

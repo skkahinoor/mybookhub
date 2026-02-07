@@ -17,6 +17,7 @@
 
     <!-- Key Metrics Cards -->
     <div class="row g-4 mb-4">
+        @if(auth('sales')->user()->can('view_students'))
          <div class="col-md-6 col-lg-4">
             <div class="card shadow-sm border-0 h-100 text-white" style="background-color: rgb(83 155 122)" !important>
                 <div class="card-body">
@@ -32,6 +33,9 @@
                 </div>
             </div>
         </div>
+        @endif
+
+        @if(auth('sales')->user()->can('view_institutions'))
         <div class="col-md-6 col-lg-4" >
             <div class="card shadow-sm border-0 h-100" style="background-color: #b3d9e1" !important>
                 <div class="card-body">
@@ -47,6 +51,9 @@
                 </div>
             </div>
         </div>
+        @endif
+
+        @if(auth('sales')->user()->can('view_students'))
         <div class="col-md-6 col-lg-4">
             <div class="card shadow-sm border-0 h-100 bg-primary text-white">
                 <div class="card-body">
@@ -62,12 +69,12 @@
                 </div>
             </div>
         </div>
-       
-        
+        @endif
     </div>
 
     <!-- Earnings Cards -->
     <div class="row g-4 mb-4">
+        @if(auth('sales')->user()->can('view_sales'))
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100 bg-success text-white">
                 <div class="card-body">
@@ -116,6 +123,7 @@
                 </div>
             </div>
         </div>
+        @endif
     </div>
 
     <!-- Performance Bar Graph -->
@@ -151,6 +159,7 @@
             </div>
         </div>
     </div>
+
 </div>
 
 <!-- Chart.js -->

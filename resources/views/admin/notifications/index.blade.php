@@ -96,11 +96,11 @@
                                                                         class="mdi mdi-school text-warning"></i>
                                                                 </a>
                                                             @endif
-                                                            @if ($notification->related_type == 'App\Models\Student' && $notification->related_id)
+                                                            @if ($notification->related_type == 'App\Models\User' && $notification->related_id)
                                                                 <a href="#" class="view-student"
                                                                     data-id="{{ $notification->related_id }}"
                                                                     data-notification-id="{{ $notification->id }}"
-                                                                    title="View Student">
+                                                                    title="View Details">
                                                                     <i style="font-size: 20px"
                                                                         class="mdi mdi-account text-info"></i>
                                                                 </a>
@@ -223,37 +223,6 @@
         </div>
     </div>
 
-    <!-- Institution Details Modal -->
-    <div class="modal fade" id="institutionModal" tabindex="-1" role="dialog" aria-labelledby="institutionModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="institutionModalLabel">Institution Details</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body" id="institutionModalBody">
-                    <div class="text-center">
-                        <div class="spinner-border" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" id="approveInstitutionBtn" style="display: none;">
-                        <i class="mdi mdi-check"></i> Approve (Activate)
-                    </button>
-                    <button type="button" class="btn btn-danger" id="rejectInstitutionBtn" style="display: none;">
-                        <i class="mdi mdi-close"></i> Reject (Deactivate)
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     @push('scripts')
         <script>
             $('#notificationsTable').DataTable({
@@ -298,8 +267,6 @@
                     }
                 ]
             });
-
-
 
             $(document).ready(function() {
                 var currentSalesExecutiveId = null;

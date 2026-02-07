@@ -14,6 +14,9 @@ class UserController extends Controller
 {
     // Render admin/users/users.blade.php page in the Admin Panel
     public function users() {
+        if (!Auth::guard('admin')->user()->can('view_users')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
@@ -22,8 +25,8 @@ class UserController extends Controller
         // Get all users (excluding admins) and load relationships
         $users = User::with(['country', 'state', 'district', 'block'])
             ->where(function($query) {
-                $query->whereNull('user_type')
-                      ->orWhere('user_type', '!=', 'admin');
+                $query->whereNull('role_id')
+                      ->orWhere('role_id', '!=', 1);
             })
             ->get()
             ->map(function($user) {
@@ -51,6 +54,10 @@ class UserController extends Controller
 
     // Update User Status (active/inactive) via AJAX in admin/users/users.blade.php, check admin/js/custom.js
     public function updateUserStatus(Request $request) {
+        if (!Auth::guard('admin')->user()->can('update_users_status')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($request->ajax()) { // if the request is coming via an AJAX call

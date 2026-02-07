@@ -47,6 +47,23 @@ class AdminsTableSeeder extends Seeder
             ],
         ];
         // Note: Check DatabaseSeeder.php
-        \App\Models\Admin::insert($adminRecords);
+        foreach ($adminRecords as $record) {
+            $user = \App\Models\User::create([
+                'name'     => $record['name'],
+                'email'    => $record['email'],
+                'phone'   => $record['mobile'],
+                'password' => $record['password'],
+                'status'   => $record['status'],
+                'profile_image' => $record['image'],
+                'vendor_id' => $record['vendor_id'] ?? 0,
+            ]);
+
+            $roleName = ($record['type'] === 'superadmin') ? 'admin' : $record['type'];
+            $role = \Spatie\Permission\Models\Role::where('name', $roleName)->first();
+            if ($role) {
+                $user->assignRole($role);
+                $user->update(['role_id' => $role->id]);
+            }
+        }
     }
 }

@@ -38,12 +38,24 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
+        
+        // Dynamic Role Fetching
+        $role = \Spatie\Permission\Models\Role::where('name', 'user')->where('guard_name', 'web')->first();
+        $roleId = $role ? $role->id : 4;
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role_id' => $roleId,
         ]);
+
+        if ($role) {
+            $user->assignRole($role);
+        } else {
+            // Fallback just in case
+            // $user->assignRole('user'); // might fail if guard mismatch
+        }
 
         event(new Registered($user));
 

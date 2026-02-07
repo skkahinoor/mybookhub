@@ -19,7 +19,7 @@ class StudentController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'students');
 
-        $students = User::where('user_type', 'student')->with('institution')->orderBy('id', 'desc')->get();
+        $students = User::where('role_id', 5)->with('institution')->orderBy('id', 'desc')->get();
 
         return view('admin.students.index')->with(compact('students', 'logos', 'headerLogo'));
     }
@@ -54,7 +54,7 @@ class StudentController extends Controller
 
         $data['password']  = Hash::make('123456');
         $data['status'] = 1;
-        $data['user_type'] = 'student';
+        $data['role_id'] = 5;
         $data['added_by'] = Auth::guard('admin')->user()->id;
 
         User::create($data);
@@ -147,7 +147,7 @@ class StudentController extends Controller
             'status' => 'required|in:0,1',
         ]);
 
-        $student = User::where('user_type', 'student')->findOrFail($id);
+        $student = User::where('role_id', 5)->findOrFail($id);
         $student->status = (int) $data['status'];
         $student->save();
 
