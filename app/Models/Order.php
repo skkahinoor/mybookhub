@@ -24,6 +24,7 @@ class Order extends Model
         'shipping_charges',
         'coupon_code',
         'coupon_amount',
+        'extra_discount',
         'order_status',
         'payment_method',
         'payment_gateway',

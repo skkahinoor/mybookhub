@@ -966,6 +966,7 @@ class CatalogueController extends Controller
             'data' => [
                 'book_request_id' => $bookRequest->id,
                 'status'          => $bookRequest->status,
+                'reply'          => $bookRequest->admin_reply,
             ]
         ], 200);
     }
@@ -993,40 +994,40 @@ class CatalogueController extends Controller
         ], 200);
     }
 
-    public function updateBookRequestStatus(Request $request, $id)
-    {
-        if ($resp = $this->checkAccess($request)) {
-            return $resp;
-        }
+    // public function updateBookRequestStatus(Request $request, $id)
+    // {
+    //     if ($resp = $this->checkAccess($request)) {
+    //         return $resp;
+    //     }
 
-        $admin = $request->user();
-        $bookRequest = BookRequest::find($id);
+    //     $admin = $request->user();
+    //     $bookRequest = BookRequest::find($id);
 
-        if (!$bookRequest) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Book request not found'
-            ], 404);
-        }
+    //     if (!$bookRequest) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Book request not found'
+    //         ], 404);
+    //     }
 
-        // Optional: Vendor ownership check (if book_requests has vendor_id)
-        if ($admin->type === 'vendor' && isset($bookRequest->vendor_id)) {
-            if ($bookRequest->vendor_id !== $admin->vendor_id) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Unauthorized'
-                ], 403);
-            }
-        }
+    //     // Optional: Vendor ownership check (if book_requests has vendor_id)
+    //     if ($admin->type === 'vendor' && isset($bookRequest->vendor_id)) {
+    //         if ($bookRequest->vendor_id !== $admin->vendor_id) {
+    //             return response()->json([
+    //                 'status' => false,
+    //                 'message' => 'Unauthorized'
+    //             ], 403);
+    //         }
+    //     }
 
-        $bookRequest->update([
-            'status' => !$bookRequest->status
-        ]);
+    //     $bookRequest->update([
+    //         'status' => !$bookRequest->status
+    //     ]);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Book request status updated',
-            'book_request_status' => $bookRequest->status
-        ], 200);
-    }
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Book request status updated',
+    //         'book_request_status' => $bookRequest->status
+    //     ], 200);
+    // }
 }

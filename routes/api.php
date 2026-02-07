@@ -34,6 +34,10 @@ Route::post('/sales/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/vendor/register', [VendorController::class, 'register']);
 Route::post('/vendor/verify-otp', [VendorController::class, 'verifyOtp']);
 
+// rozerpay webhook for payment
+Route::post('razorpay/webhook', [VendorPlanController::class, 'razorpayWebhook']);
+// end rozerpay webhook for payment**
+
 // Protected routes: logout (requires valid Sanctum token)
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -97,8 +101,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Vendor Plan Management
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('vendor/plan/getplan', [VendorPlanController::class, 'getPlan']);
     Route::get('vendor/plan/status', [VendorPlanController::class, 'status']);
     Route::post('vendor/plan/upgrade', [VendorPlanController::class, 'upgrade']);
+    Route::post('vendor/plan/webhookupgrade', [VendorPlanController::class, 'webhookupgrade']);
+    // Route::post('vendor/plan/webhook', [VendorPlanController::class, 'razorpayWebhook']);
+
     Route::post('vendor/plan/verify', [VendorPlanController::class, 'verify']);
     Route::post('vendor/plan/downgrade', [VendorPlanController::class, 'downgrade']);
 });
@@ -148,8 +156,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('vendor/book-requests', [CatalogueController::class, 'getBookRequest']);
     Route::delete('vendor/book-requests/{id}', [CatalogueController::class, 'deleteBookRequest']);
-    Route::patch('vendor/book-requests/{id}/status', [CatalogueController::class, 'updateBookRequestStatus']);
-    Route::patch('vendor/book-requests/{id}/reply', [CatalogueController::class, 'replyBookRequest']);
+    // Route::patch('vendor/book-requests/{id}/status', [CatalogueController::class, 'updateBookRequestStatus']);
+    Route::put('vendor/book-requests/{id}/reply', [CatalogueController::class, 'replyBookRequest']);
 
     Route::get('/vendor/products', [BookController::class, 'getproduct']);
     Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);
@@ -175,6 +183,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::get('vendor/sales/cart', [OrderController::class, 'cart']);
     Route::post('vendor/sales/search-isbn', [OrderController::class, 'searchByIsbn']);
     Route::post('/vendor/sales/process', [OrderController::class, 'processSale']);
+    Route::post('/vendor/coupon/validate', [OrderController::class, 'validateCoupon']);
     // Route::post('vendor/sales/cart/add', [OrderController::class, 'addToCart']);
     // Route::post('vendor/cart/remove', [OrderController::class, 'removeFromCart']);
     // Route::post('vendor/process', [OrderController::class, 'processSale']);

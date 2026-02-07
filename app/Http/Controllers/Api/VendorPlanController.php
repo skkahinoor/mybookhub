@@ -103,9 +103,137 @@ class VendorPlanController extends Controller
 
     public function upgrade(Request $request)
     {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
         $user = $request->user();
 
-        if (!$user || $user->type !== 'vendor' || !$user->vendor_id) {
+        if ($user->type !== 'vendor' || !$user->vendor_id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $vendor = Vendor::findOrFail($user->vendor_id);
+
+        if ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'You already have an active Pro plan'
+            ], 400);
+        }
+
+        $amount = (int) Setting::getValue('pro_plan_price');
+
+        try {
+            $client = new Client();
+
+            $response = $client->post('https://api.razorpay.com/v1/orders', [
+                'auth' => [env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET')],
+                'json' => [
+                    'amount' => $amount * 100,
+                    'currency' => 'INR',
+                    'receipt' => 'vendor_plan_' . $vendor->id . '_' . time(),
+                    'notes' => [
+                        'vendor_id' => $vendor->id,
+                        'plan' => 'pro',
+                        'type' => 'vendor_subscription'
+                    ]
+                ]
+            ]);
+
+            $order = json_decode($response->getBody(), true);
+
+            $vendor->update(['razorpay_order_id' => $order['id']]);
+
+            return response()->json([
+                'status' => true,
+                'data' => [
+                    'order_id' => $order['id'],
+                    'amount' => $amount,
+                    'currency' => 'INR',
+                    'key' => env('RAZORPAY_KEY_ID')
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Razorpay Order Error', ['error' => $e->getMessage()]);
+            return response()->json(['status' => false, 'message' => 'Payment order failed'], 500);
+        }
+    }
+
+    public function verify(Request $request)
+    {
+        $request->validate([
+            'razorpay_order_id' => 'required',
+            'razorpay_payment_id' => 'required',
+            'razorpay_signature' => 'required',
+        ]);
+
+        $user = $request->user();
+
+        if ($user->type !== 'vendor') {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $vendor = Vendor::findOrFail($user->vendor_id);
+
+        // Signature verify
+        $generatedSignature = hash_hmac(
+            'sha256',
+            $request->razorpay_order_id . '|' . $request->razorpay_payment_id,
+            env('RAZORPAY_KEY_SECRET')
+        );
+
+        if ($generatedSignature !== $request->razorpay_signature) {
+            return response()->json(['status' => false, 'message' => 'Invalid signature'], 400);
+        }
+
+        try {
+            $client = new Client();
+
+            $payment = $client->get(
+                'https://api.razorpay.com/v1/payments/' . $request->razorpay_payment_id,
+                ['auth' => [env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET')]]
+            );
+
+            $paymentData = json_decode($payment->getBody(), true);
+
+            if (!in_array($paymentData['status'], ['captured', 'authorized'])) {
+                return response()->json(['status' => false, 'message' => 'Payment not completed'], 400);
+            }
+
+            // Renewal logic
+            $expiry = ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture())
+                ? $vendor->plan_expires_at->addMonth()
+                : now()->addMonth();
+
+            $vendor->update([
+                'plan' => 'pro',
+                'plan_started_at' => now(),
+                'plan_expires_at' => $expiry,
+                'razorpay_payment_id' => $request->razorpay_payment_id,
+                'razorpay_signature' => $request->razorpay_signature,
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Pro plan activated successfully',
+                'expires_at' => $expiry
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Payment Verify Error', ['error' => $e->getMessage()]);
+            return response()->json(['status' => false, 'message' => 'Verification failed'], 500);
+        }
+    }
+
+    public function webhookupgrade(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $user = $request->user();
+
+        if ($user->type !== 'vendor' || !$user->vendor_id) {
             return response()->json([
                 'status' => false,
                 'message' => 'Unauthorized'
@@ -126,96 +254,118 @@ class VendorPlanController extends Controller
         try {
             $client = new Client();
 
-            $response = $client->post('https://api.razorpay.com/v1/orders', [
-                'auth' => [
-                    env('RAZORPAY_KEY_ID'),
-                    env('RAZORPAY_KEY_SECRET')
-                ],
-                'json' => [
-                    'amount'   => $amount * 100,
-                    'currency' => 'INR',
-                    'receipt'  => 'vendor_plan_' . $vendor->id . '_' . time(),
+            // ✅ CREATE PAYMENT LINK (THIS OPENS REAL UI)
+            $response = $client->post(
+                'https://api.razorpay.com/v1/payment_links',
+                [
+                    'auth' => [
+                        env('RAZORPAY_KEY_ID'),
+                        env('RAZORPAY_KEY_SECRET')
+                    ],
+                    'json' => [
+                        'amount' => $amount * 100,
+                        'currency' => 'INR',
+                        'description' => 'Upgrade to Pro Plan',
+                        'customer' => [
+                            'name' => $vendor->name ?? 'Vendor',
+                            'email' => $user->email,
+                            'contact' => $vendor->mobile,
+                        ],
+                        'notes' => [
+                            'vendor_id' => $vendor->id,
+                            'plan' => 'pro'
+                        ],
+                        'callback_url' => 'https://mybookhub.in/payment-success',
+                        'callback_method' => 'get'
+                    ]
                 ]
-            ]);
+            );
 
-            $order = json_decode($response->getBody()->getContents(), true);
+            $link = json_decode($response->getBody(), true);
 
+            // Optional but useful for tracking
             $vendor->update([
-                'razorpay_order_id' => $order['id']
+                'razorpay_payment_link_id' => $link['id']
             ]);
 
             return response()->json([
                 'status' => true,
-                'order' => [
-                    'order_id' => $order['id'],
-                    'amount'   => $amount,
-                    'currency' => $order['currency'],
-                    'key'      => env('RAZORPAY_KEY_ID')
-                ]
+                'payment_url' => $link['short_url']
             ]);
+
         } catch (\Exception $e) {
-            Log::error('Razorpay Order Error', ['error' => $e->getMessage()]);
+            Log::error('Razorpay Payment Link Error', [
+                'error' => $e->getMessage()
+            ]);
 
             return response()->json([
                 'status' => false,
-                'message' => 'Unable to create payment order'
+                'message' => 'Unable to create payment link'
             ], 500);
         }
     }
 
-    public function verify(Request $request)
+    public function razorpayWebhook(Request $request)
     {
-        $request->validate([
-            'razorpay_order_id'   => 'required',
-            'razorpay_payment_id' => 'required',
-            'razorpay_signature'  => 'required'
-        ]);
+        $signature = $request->header('X-Razorpay-Signature');
+        $secret = env('RAZORPAY_WEBHOOK_SECRET');
 
-        $user = $request->user();
-
-        if (!$user || $user->type !== 'vendor') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized'
-            ], 401);
-        }
-
-        $vendor = Vendor::findOrFail($user->vendor_id);
-
-        if ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Pro plan is still active'
-            ], 400);
-        }
-
-        $generatedSignature = hash_hmac(
+        $expected = hash_hmac(
             'sha256',
-            $request->razorpay_order_id . '|' . $request->razorpay_payment_id,
-            env('RAZORPAY_KEY_SECRET')
+            $request->getContent(),
+            $secret
         );
 
-        if ($generatedSignature !== $request->razorpay_signature) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid signature'
-            ], 400);
+        if (!hash_equals($expected, $signature)) {
+            Log::warning('Razorpay webhook signature mismatch');
+            return response()->json(['status' => false], 403);
         }
 
-        $durationDays = (int) Setting::getValue('pro_plan_trial_duration_days');
+        $event = $request->event;
 
-        $vendor->update([
-            'plan'                => 'pro',
-            'plan_started_at'     => now(),
-            'plan_expires_at'     => now()->addDays($durationDays),
-            'razorpay_payment_id' => $request->razorpay_payment_id,
-            'razorpay_signature'  => $request->razorpay_signature,
-        ]);
+        // ✅ HANDLE PAYMENT LINK EVENTS
+        if (in_array($event, ['payment_link.paid', 'payment.captured'])) {
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Pro plan activated successfully'
-        ]);
+            $entity =
+                $request->payload['payment']['entity']
+                ?? $request->payload['payment_link']['entity']
+                ?? null;
+
+            if (!$entity) {
+                return response()->json(['status' => true]);
+            }
+
+            $notes = $entity['notes'] ?? [];
+            $vendorId = $notes['vendor_id'] ?? null;
+
+            if (!$vendorId) {
+                return response()->json(['status' => true]);
+            }
+
+            $vendor = Vendor::find($vendorId);
+
+            if (!$vendor) {
+                return response()->json(['status' => true]);
+            }
+
+            $expiry = ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture())
+                ? $vendor->plan_expires_at->addMonth()
+                : now()->addMonth();
+
+            $vendor->update([
+                'plan' => 'pro',
+                'plan_started_at' => now(),
+                'plan_expires_at' => $expiry,
+                'razorpay_payment_id' => $entity['id'] ?? null,
+            ]);
+
+            Log::info('Vendor plan upgraded', [
+                'vendor_id' => $vendor->id,
+                'expires_at' => $expiry,
+            ]);
+        }
+
+        return response()->json(['status' => true]);
     }
 
     public function downgrade(Request $request)
@@ -240,6 +390,58 @@ class VendorPlanController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Downgraded to Free plan'
+        ]);
+    }
+
+    public function getPlan(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
+
+        $user = $request->user();
+        $vendor = Vendor::findOrFail($user->vendor_id);
+
+        // Auto downgrade if expired
+        if ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isPast()) {
+            $vendor->update([
+                'plan' => 'free',
+                'plan_started_at' => null,
+                'plan_expires_at' => null,
+            ]);
+            $vendor->refresh();
+        }
+
+        $freeLimit = (int) Setting::getValue('free_plan_book_limit', 100);
+        $proPrice  = (int) Setting::getValue('pro_plan_price', 499);
+
+        $booksThisMonth = \App\Models\ProductsAttribute::where('vendor_id', $vendor->id)
+            ->where('admin_type', 'vendor')
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->distinct('product_id')
+            ->count('product_id');
+
+        return response()->json([
+            'status' => true,
+            'data' => [
+                'current_plan' => $vendor->plan,
+                'is_pro_active' => $vendor->plan === 'pro'
+                    && $vendor->plan_expires_at
+                    && $vendor->plan_expires_at->isFuture(),
+
+                'free_plan' => [
+                    'monthly_limit' => $freeLimit,
+                    'books_uploaded' => $booksThisMonth,
+                    'remaining_books' => max(0, $freeLimit - $booksThisMonth),
+                    'coupons_enabled' => false,
+                ],
+
+                'pro_plan' => [
+                    'price' => $proPrice,
+                    'currency' => 'INR',
+                    'duration' => '1 Month',
+                ]
+            ]
         ]);
     }
 }
