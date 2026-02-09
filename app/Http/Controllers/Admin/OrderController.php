@@ -611,7 +611,7 @@ class OrderController extends Controller
 
         $basePrice       = $product->product_price;
         $discountPercent = $attribute->product_discount ?? 0;
-        $discountAmount  = round(($basePrice * $discountPercent) / 100, 2);
+        $discountAmount  = round(($basePrice * $discountPercent) / 100);
         $finalPrice      = round($basePrice - $discountAmount, 2);
 
         return response()->json([
@@ -648,8 +648,8 @@ class OrderController extends Controller
         // Calculate discount
         $originalPrice   = $product->product_price;
         $discountPercent = $attribute->product_discount ?? 0;
-        $discountAmount  = round(($originalPrice * $discountPercent) / 100, 2);
-        $discountedPrice = round($originalPrice - $discountAmount, 2);
+        $discountAmount  = round(($originalPrice * $discountPercent) / 100);
+        $discountedPrice = round($originalPrice - $discountAmount);
 
         $cart  = session()->get('sales_cart', []);
         $found = false;

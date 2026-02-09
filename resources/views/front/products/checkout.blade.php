@@ -299,6 +299,21 @@
                                                 <div class="payment-badge">No extra fee</div>
                                             </label>
                                         </div>
+
+                                        <div class="payment-option razorpayMethod">
+                                            <input type="radio" class="radio-box" name="payment_gateway"
+                                                id="razorpay" value="Razorpay">
+                                            <label class="payment-label" for="razorpay">
+                                                <div class="payment-info">
+                                                    <div class="payment-title">
+                                                        <i class="fas fa-credit-card"></i>
+                                                        <span>Razorpay</span>
+                                                    </div>
+                                                    <small class="payment-note">Pay securely with Razorpay</small>
+                                                </div>
+                                                <div class="payment-badge">Online Payment</div>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -324,10 +339,11 @@
                                         <div class="modal-content">
 
                                             <div class="modal-header">
-                                                <a href="javascript:void(0)" class="terms-link" data-toggle="modal" data-target="#termsModal">
+                                                <a href="javascript:void(0)" class="terms-link" data-toggle="modal"
+                                                    data-target="#termsModal">
                                                     terms & conditions
                                                 </a>
-                                                
+
                                                 {{-- <button type="button" class="close" data-dismiss="modal"
                                                     aria-label="Close">
                                                     <span aria-hidden="true">&times;</span>
@@ -337,19 +353,26 @@
                                             <div class="modal-body">
                                                 <!-- Customize your T&C content here -->
                                                 <p>
-                                                    By completing a purchase on BookHub, you agree to abide by our Terms & Conditions, which are designed to provide 
-                                                    clarity, fairness, and a trusted experience for every customer. These terms outline important policies related to 
-                                                    product availability, pricing, order confirmation, payment processing, shipping timelines, returns and refunds, 
-                                                    cancellations, and the use of your customer information.  
+                                                    By completing a purchase on BookHub, you agree to abide by our Terms &
+                                                    Conditions, which are designed to provide
+                                                    clarity, fairness, and a trusted experience for every customer. These
+                                                    terms outline important policies related to
+                                                    product availability, pricing, order confirmation, payment processing,
+                                                    shipping timelines, returns and refunds,
+                                                    cancellations, and the use of your customer information.
                                                     <br><br>
-                                                    We recommend reviewing these guidelines before placing an order to ensure complete understanding of your rights 
-                                                    and responsibilities as a BookHub user. Our team works continuously to maintain accurate product listings, timely 
-                                                    deliveries, and secure transactions; however, occasional delays or changes may occur due to unforeseen circumstances.  
+                                                    We recommend reviewing these guidelines before placing an order to
+                                                    ensure complete understanding of your rights
+                                                    and responsibilities as a BookHub user. Our team works continuously to
+                                                    maintain accurate product listings, timely
+                                                    deliveries, and secure transactions; however, occasional delays or
+                                                    changes may occur due to unforeseen circumstances.
                                                     <br><br>
-                                                    By continuing, you acknowledge these conditions and consent to follow the policies set forth. For any clarification 
+                                                    By continuing, you acknowledge these conditions and consent to follow
+                                                    the policies set forth. For any clarification
                                                     or assistance, our customer support team is always ready to help.
                                                 </p>
-                                                
+
                                             </div>
 
                                             <div class="modal-footer">

@@ -555,6 +555,12 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
 
         // Make an iyzipay payment (redirect the user to iyzico payment gateway with the order details)
         Route::get('iyzipay/pay', 'IyzipayController@pay');
+
+        // Razorpay routes:
+        Route::get('razorpay', 'RazorpayController@razorpay');
+        Route::post('razorpay/pay', 'RazorpayController@payment')->name('razorpay.payment');
+        Route::get('razorpay/success', 'RazorpayController@success');
+        Route::get('razorpay/fail', 'RazorpayController@fail');
     });
 
     // Category Products Route

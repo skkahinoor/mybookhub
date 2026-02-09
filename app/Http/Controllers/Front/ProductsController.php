@@ -487,7 +487,7 @@ class ProductsController extends Controller
             'product.language',
             'product.publisher',
             'product.authors',
-            'product.images',
+            // 'product.images',
             'vendor',
         ])
             ->where('id', $id)
@@ -1374,10 +1374,10 @@ class ProductsController extends Controller
                 // redirect the user to the PayPalController.php (after saving the order details in `orders` and `orders_products` tables)
                 return redirect('/paypal');
 
-                // iyzico Payment Gateway integration in/with Laravel
-            } elseif ($data['payment_gateway'] == 'iyzipay') {
                 // redirect the user to the IyzipayController.php (after saving the order details in `orders` and `orders_products` tables)
                 return redirect('/iyzipay');
+            } elseif ($data['payment_gateway'] == 'Razorpay') {
+                return redirect('/razorpay');
             } else {
                 echo 'Other Prepaid payment methods coming soon';
             }
