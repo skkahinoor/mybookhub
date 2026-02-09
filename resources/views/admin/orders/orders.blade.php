@@ -18,6 +18,7 @@
                                 <table id="orders" class="table table-bordered"> {{-- using the id here for the DataTable --}}
                                     <thead>
                                         <tr>
+                                            <th>S.No</th>
                                             <th>Order ID</th>
                                             <th>Order Date</th>
                                             <th>Customer Name</th>
@@ -30,19 +31,18 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @php
-
-                                        @endphp
-                                        @foreach ($orders as $order)
+                                        @foreach ($orders as $key => $order)
                                             @if ($order['orders_products'])
                                                 <tr>
-                                                    <td>{{ $loop->iteration }}</td>
+                                                    <td>{{ $key + 1 }}</td>
+                                                    <td>#{{ $order['id'] }}</td>
                                                     <td>{{ date('Y-m-d h:i:s', strtotime($order['created_at'])) }}</td>
                                                     <td>{{ $order['name'] }}</td>
                                                     <td>{{ $order['email'] }}</td>
                                                     <td>
                                                         @foreach ($order['orders_products'] as $product)
-                                                        {{ $loop->iteration }}. {{ $product['product_name'] }}({{ $product['product_qty'] }})
+                                                            {{ $loop->iteration }}.
+                                                            {{ $product['product_name'] }}({{ $product['product_qty'] }})
                                                             <br>
                                                         @endforeach
                                                     </td>
@@ -51,37 +51,53 @@
                                                     <td>{{ $order['payment_method'] }}</td>
                                                     <td>
                                                         @if ($adminType == 'vendor')
-                                                        <a title="View Order Details" href="{{ url('vendor/orders/' . $order['id']) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-file-document"></i>
-                                                        </a>
-                                                        &nbsp;&nbsp;
+                                                            <a title="View Order Details"
+                                                                href="{{ url('vendor/orders/' . $order['id']) }}">
+                                                                <i style="font-size: 25px"
+                                                                    class="mdi mdi-file-document"></i>
+                                                            </a>
+                                                            &nbsp;&nbsp;
 
-                                                        {{-- View HTML invoice --}}
-                                                        <a title="View Order Invoice" href="{{ url('vendor/orders/invoice/' . $order['id']) }}" target="_blank">
-                                                            <i style="font-size: 25px" class="mdi mdi-printer"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                        &nbsp;&nbsp;
+                                                            {{-- View HTML invoice --}}
+                                                            <a title="View Order Invoice"
+                                                                href="{{ url('vendor/orders/invoice/' . $order['id']) }}"
+                                                                target="_blank">
+                                                                <i style="font-size: 25px" class="mdi mdi-printer"></i>
+                                                                {{-- Icons from Skydash Admin Panel Template --}}
+                                                            </a>
+                                                            &nbsp;&nbsp;
 
-                                                        {{-- View PDF invoice --}}
-                                                        <a title="Print PDF Invoice" href="{{ url('vendor/orders/invoice/pdf/' . $order['id']) }}" target="_blank">
-                                                            <i style="font-size: 25px" class="mdi mdi-file-pdf"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
+                                                            {{-- View PDF invoice --}}
+                                                            <a title="Print PDF Invoice"
+                                                                href="{{ url('vendor/orders/invoice/pdf/' . $order['id']) }}"
+                                                                target="_blank">
+                                                                <i style="font-size: 25px" class="mdi mdi-file-pdf"></i>
+                                                                {{-- Icons from Skydash Admin Panel Template --}}
+                                                            </a>
                                                         @else
-                                                        <a title="View Order Details" href="{{ url('admin/orders/' . $order['id']) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-file-document"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                        &nbsp;&nbsp;
+                                                            <a title="View Order Details"
+                                                                href="{{ url('admin/orders/' . $order['id']) }}">
+                                                                <i style="font-size: 25px"
+                                                                    class="mdi mdi-file-document"></i> {{-- Icons from Skydash Admin Panel Template --}}
+                                                            </a>
+                                                            &nbsp;&nbsp;
 
-                                                        {{-- View HTML invoice --}}
-                                                        <a title="View Order Invoice" href="{{ url('admin/orders/invoice/' . $order['id']) }}" target="_blank">
-                                                            <i style="font-size: 25px" class="mdi mdi-printer"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                        &nbsp;&nbsp;
+                                                            {{-- View HTML invoice --}}
+                                                            <a title="View Order Invoice"
+                                                                href="{{ url('admin/orders/invoice/' . $order['id']) }}"
+                                                                target="_blank">
+                                                                <i style="font-size: 25px" class="mdi mdi-printer"></i>
+                                                                {{-- Icons from Skydash Admin Panel Template --}}
+                                                            </a>
+                                                            &nbsp;&nbsp;
 
-                                                        {{-- View PDF invoice --}}
-                                                        <a title="Print PDF Invoice" href="{{ url('admin/orders/invoice/pdf/' . $order['id']) }}" target="_blank">
-                                                            <i style="font-size: 25px" class="mdi mdi-file-pdf"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
+                                                            {{-- View PDF invoice --}}
+                                                            <a title="Print PDF Invoice"
+                                                                href="{{ url('admin/orders/invoice/pdf/' . $order['id']) }}"
+                                                                target="_blank">
+                                                                <i style="font-size: 25px" class="mdi mdi-file-pdf"></i>
+                                                                {{-- Icons from Skydash Admin Panel Template --}}
+                                                            </a>
                                                         @endif
                                                     </td>
                                                 </tr>
@@ -99,7 +115,8 @@
         <!-- partial:../../partials/_footer.html -->
         <footer class="footer">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights reserved.</span>
+                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
+                    reserved.</span>
             </div>
         </footer>
         <!-- partial -->
@@ -107,36 +124,46 @@
 @endsection
 
 @push('scripts')
-<script>
-    $(document).ready(function() {
-        // Destroy existing DataTable instance if it exists
-        if ($.fn.DataTable.isDataTable('#orders')) {
-            $('#orders').DataTable().destroy();
-        }
+    <script>
+        $(document).ready(function() {
+            // Destroy existing DataTable instance if it exists
+            if ($.fn.DataTable.isDataTable('#orders')) {
+                $('#orders').DataTable().destroy();
+            }
 
-        // Initialize DataTable
-        $('#orders').DataTable({
-            "order": [[0, "desc"]], // Sort by Order ID descending
-            "pageLength": 10, // Show 10 entries per page
-            "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]], // Page length options
-            "language": {
-                "search": "Search:",
-                "lengthMenu": "Show _MENU_ entries",
-                "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-                "infoEmpty": "Showing 0 to 0 of 0 entries",
-                "infoFiltered": "(filtered from _MAX_ total entries)",
-                "paginate": {
-                    "first": "First",
-                    "last": "Last",
-                    "next": "Next",
-                    "previous": "Previous"
-                }
-            },
-            "columnDefs": [
-                { "orderable": false, "targets": [4, 8] }, // Disable sorting on Ordered Products and Actions columns
-                { "searchable": false, "targets": [8] } // Disable search on Actions column
-            ]
+            // Initialize DataTable
+            $('#orders').DataTable({
+                "order": [
+                    [1, "desc"]
+                ], // Sort by Order ID (column 1) descending - latest first
+                "pageLength": 10, // Show 10 entries per page
+                "lengthMenu": [
+                    [10, 25, 50, 100, -1],
+                    [10, 25, 50, 100, "All"]
+                ], // Page length options
+                "language": {
+                    "search": "Search:",
+                    "lengthMenu": "Show _MENU_ entries",
+                    "info": "Showing _START_ to _END_ of _TOTAL_ entries",
+                    "infoEmpty": "Showing 0 to 0 of 0 entries",
+                    "infoFiltered": "(filtered from _MAX_ total entries)",
+                    "paginate": {
+                        "first": "First",
+                        "last": "Last",
+                        "next": "Next",
+                        "previous": "Previous"
+                    }
+                },
+                "columnDefs": [{
+                        "orderable": false,
+                        "targets": [5, 9]
+                    }, // Disable sorting on Ordered Products and Actions columns
+                    {
+                        "searchable": false,
+                        "targets": [9]
+                    } // Disable search on Actions column
+                ]
+            });
         });
-    });
-</script>
+    </script>
 @endpush

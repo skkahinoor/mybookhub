@@ -45,11 +45,21 @@
                                                     <div class="col-md-6">
                                                         <h5 id="product_name"></h5>
                                                         <p><strong>ISBN:</strong> <span id="product_isbn"></span></p>
-                                                        <p><strong>MRP:</strong> ₹<span id="base_price"></span></p>
-                                                        {{-- <p><strong>Global Discount:</strong>
-                                                        <span id="discount_percent"></span>% (₹<span id="discount_amount"></span>)
-                                                    </p> --}}
-                                                        {{-- <p><strong>Final Price:</strong> ₹<span id="final_price"></span></p> --}}
+                                                        <p>
+                                                            <strong>MRP:</strong>
+                                                            <span id="base_price_display"></span>
+                                                        </p>
+                                                        <p id="discount_info" style="display:none;">
+                                                            <strong>Discount:</strong>
+                                                            <span id="discount_percent"></span>% (₹<span
+                                                                id="discount_amount"></span>)
+                                                        </p>
+                                                        <p id="final_price_info" style="display:none;">
+                                                            <strong>Final Price:</strong>
+                                                            <span
+                                                                style="color: #28a745; font-size: 18px; font-weight: bold;">₹<span
+                                                                    id="final_price"></span></span>
+                                                        </p>
                                                         <p><strong>Stock:</strong> <span id="product_stock"></span></p>
                                                     </div>
 
@@ -103,7 +113,18 @@
                                                 <tr>
                                                     <td>{{ $item['product_name'] }}</td>
                                                     <td>{{ $item['product_isbn'] }}</td>
-                                                    <td>₹{{ $item['price'] }}</td>
+                                                    <td>
+                                                        @if (isset($item['discount_percent']) && $item['discount_percent'] > 0)
+                                                            <span
+                                                                style="text-decoration: line-through; color: #999;">₹{{ $item['original_price'] }}</span>
+                                                            <br>
+                                                            <strong style="color: #28a745;">₹{{ $item['price'] }}</strong>
+                                                            <span class="badge badge-danger"
+                                                                style="font-size: 10px;">-{{ $item['discount_percent'] }}%</span>
+                                                        @else
+                                                            ₹{{ $item['price'] }}
+                                                        @endif
+                                                    </td>
                                                     <td>{{ $item['quantity'] }}</td>
                                                     <td>₹{{ $item['total'] }}</td>
                                                     <td>
@@ -134,7 +155,7 @@
                                             @if ($extraDiscount > 0)
                                                 <tr>
                                                     <th colspan="4" class="text-right">
-                                                        Extra Discount ({{ session('sales_extra_discount_percent') }}%)
+                                                        Extra Discount
                                                     </th>
                                                     <th colspan="2">- ₹{{ $extraDiscount }}</th>
                                                 </tr>
@@ -165,11 +186,11 @@
                             @if (!empty($cart))
                                 <div class="card mt-3">
                                     <div class="card-body">
-                                        <h5>Extra Discount (%)</h5>
+                                        <h5>Extra Discount (₹)</h5>
                                         <div class="row">
                                             <div class="col-md-8">
                                                 <input type="number" id="extra_discount_input" class="form-control"
-                                                    placeholder="Enter discount %" min="0" max="100">
+                                                    placeholder="Enter discount amount in ₹" min="0" step="0.01">
                                             </div>
                                             <div class="col-md-4">
                                                 <button id="apply_extra_discount" class="btn btn-warning btn-block">
@@ -211,25 +232,9 @@
                                             @csrf
                                             <div class="row">
                                                 <div class="col-md-6">
-                                                    <label>Name</label>
-                                                    <input type="text" name="customer_name" class="form-control"
-                                                        required>
-                                                </div>
-                                                <div class="col-md-6">
                                                     <label>Mobile</label>
                                                     <input type="text" name="customer_mobile" class="form-control"
                                                         required>
-                                                </div>
-                                            </div>
-
-                                            <div class="row mt-2">
-                                                <div class="col-md-6">
-                                                    <label>Email</label>
-                                                    <input type="email" name="customer_email" class="form-control">
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <label>Address</label>
-                                                    <textarea name="customer_address" class="form-control"></textarea>
                                                 </div>
                                             </div>
 
@@ -251,111 +256,127 @@
 
 {{-- ================= SCRIPTS ================= --}}
 @push('scripts')
-<script>
-    let currentProductId = null;
-    let currentStock = 0; // 🔥 NEW
+    <script>
+        let currentProductId = null;
+        let currentStock = 0; // 🔥 NEW
 
-    /* ================= ISBN SEARCH ================= */
-    $('#search_btn').click(function () {
-        $.post('{{ url('admin/sales-concept/search-isbn') }}', {
-            _token: '{{ csrf_token() }}',
-            isbn: $('#isbn_search').val()
-        }, function (res) {
+        /* ================= ISBN SEARCH ================= */
+        $('#search_btn').click(function() {
+            $.post('{{ url('admin/sales-concept/search-isbn') }}', {
+                _token: '{{ csrf_token() }}',
+                isbn: $('#isbn_search').val()
+            }, function(res) {
 
-            currentProductId = res.data.product_id;
-            currentStock = parseInt(res.data.stock); // 🔥 STORE STOCK
+                currentProductId = res.data.product_id;
+                currentStock = parseInt(res.data.stock); // 🔥 STORE STOCK
 
-            $('#product_name').text(res.data.product_name);
-            $('#product_isbn').text(res.data.product_isbn);
-            $('#base_price').text(res.data.base_price);
-            $('#product_stock').text(currentStock);
+                $('#product_name').text(res.data.product_name);
+                $('#product_isbn').text(res.data.product_isbn);
+                $('#product_stock').text(currentStock);
 
-            if (res.data.product_image) {
-                $('#product_image')
-                    .attr('src', '{{ url('front/images/product_images/small') }}/' + res.data.product_image)
-                    .show();
+                // Display price with discount
+                if (res.data.discount_percent > 0) {
+                    $('#base_price_display').html(
+                        '<span style="text-decoration: line-through; color: #999;">₹' + res.data
+                        .base_price + '</span>'
+                    );
+                    $('#discount_percent').text(res.data.discount_percent);
+                    $('#discount_amount').text(res.data.discount_amount);
+                    $('#final_price').text(res.data.final_price);
+                    $('#discount_info').show();
+                    $('#final_price_info').show();
+                } else {
+                    $('#base_price_display').text('₹' + res.data.base_price);
+                    $('#discount_info').hide();
+                    $('#final_price_info').hide();
+                }
+
+                if (res.data.product_image) {
+                    $('#product_image')
+                        .attr('src', '{{ url('front/images/product_images/small') }}/' + res.data
+                            .product_image)
+                        .show();
+                }
+
+                // 🔥 RESET QUANTITY & WARNINGS
+                $('#quantity').val(1);
+                $('#quantity').attr('max', currentStock);
+                $('#stock_warning').hide();
+                $('#add_to_cart_btn').prop('disabled', false);
+
+                $('#search_result').show();
+                $('#search_error').hide();
+            }).fail(function(xhr) {
+                $('#search_error').text(xhr.responseJSON.message).show();
+                $('#search_result').hide();
+            });
+        });
+
+        /* ================= LIVE QUANTITY CHECK ================= */
+        $(document).on('input', '#quantity', function() {
+            const qty = parseInt($(this).val()) || 0;
+
+            if (qty < 1) {
+                $('#stock_warning').hide();
+                $('#add_to_cart_btn').prop('disabled', true);
+                return;
             }
 
-            // 🔥 RESET QUANTITY & WARNINGS
-            $('#quantity').val(1);
-            $('#quantity').attr('max', currentStock);
-            $('#stock_warning').hide();
-            $('#add_to_cart_btn').prop('disabled', false);
-
-            $('#search_result').show();
-            $('#search_error').hide();
-        }).fail(function (xhr) {
-            $('#search_error').text(xhr.responseJSON.message).show();
-            $('#search_result').hide();
+            if (qty > currentStock) {
+                $('#stock_warning').show();
+                $('#add_to_cart_btn').prop('disabled', true);
+            } else {
+                $('#stock_warning').hide();
+                $('#add_to_cart_btn').prop('disabled', false);
+            }
         });
-    });
 
-    /* ================= LIVE QUANTITY CHECK ================= */
-    $(document).on('input', '#quantity', function () {
-        const qty = parseInt($(this).val()) || 0;
-
-        if (qty < 1) {
-            $('#stock_warning').hide();
-            $('#add_to_cart_btn').prop('disabled', true);
-            return;
-        }
-
-        if (qty > currentStock) {
-            $('#stock_warning').show();
-            $('#add_to_cart_btn').prop('disabled', true);
-        } else {
-            $('#stock_warning').hide();
-            $('#add_to_cart_btn').prop('disabled', false);
-        }
-    });
-
-    /* ================= ADD TO CART ================= */
-    $('#add_to_cart_btn').click(function () {
-        $.post('{{ url('admin/sales-concept/add-to-cart') }}', {
-            _token: '{{ csrf_token() }}',
-            product_id: currentProductId,
-            quantity: $('#quantity').val()
-        }, function () {
-            location.reload();
-        }).fail(function (xhr) {
-            alert(xhr.responseJSON.message);
+        /* ================= ADD TO CART ================= */
+        $('#add_to_cart_btn').click(function() {
+            $.post('{{ url('admin/sales-concept/add-to-cart') }}', {
+                _token: '{{ csrf_token() }}',
+                product_id: currentProductId,
+                quantity: $('#quantity').val()
+            }, function() {
+                location.reload();
+            }).fail(function(xhr) {
+                alert(xhr.responseJSON.message);
+            });
         });
-    });
 
-    /* ================= APPLY EXTRA DISCOUNT ================= */
-    $(document).on('click', '#apply_extra_discount', function () {
-        $.post('{{ url('vendor/sales-concept/apply-extra-discount') }}', {
-            _token: '{{ csrf_token() }}',
-            extra_discount: $('#extra_discount_input').val()
-        }, function () {
-            location.reload();
-        }).fail(function (xhr) {
-            alert(xhr.responseJSON.message);
+        /* ================= APPLY EXTRA DISCOUNT ================= */
+        $(document).on('click', '#apply_extra_discount', function() {
+            $.post('{{ url('vendor/sales-concept/apply-extra-discount') }}', {
+                _token: '{{ csrf_token() }}',
+                extra_discount: $('#extra_discount_input').val()
+            }, function() {
+                location.reload();
+            }).fail(function(xhr) {
+                alert(xhr.responseJSON.message);
+            });
         });
-    });
 
-    /* ================= APPLY COUPON ================= */
-    $(document).on('click', '#apply_coupon_btn', function () {
-        $.post('{{ url('vendor/sales-concept/apply-coupon') }}', {
-            _token: '{{ csrf_token() }}',
-            coupon_code: $('#coupon_code').val()
-        }, function (res) {
-            alert(res.message);
-            location.reload();
-        }).fail(function (xhr) {
-            alert(xhr.responseJSON.message);
+        /* ================= APPLY COUPON ================= */
+        $(document).on('click', '#apply_coupon_btn', function() {
+            $.post('{{ url('vendor/sales-concept/apply-coupon') }}', {
+                _token: '{{ csrf_token() }}',
+                coupon_code: $('#coupon_code').val()
+            }, function(res) {
+                alert(res.message);
+                location.reload();
+            }).fail(function(xhr) {
+                alert(xhr.responseJSON.message);
+            });
         });
-    });
 
-    /* ================= REMOVE ITEM ================= */
-    $(document).on('click', '.remove-item', function () {
-        $.post('{{ url('admin/sales-concept/remove-from-cart') }}', {
-            _token: '{{ csrf_token() }}',
-            product_id: $(this).data('product-id')
-        }, function () {
-            location.reload();
+        /* ================= REMOVE ITEM ================= */
+        $(document).on('click', '.remove-item', function() {
+            $.post('{{ url('admin/sales-concept/remove-from-cart') }}', {
+                _token: '{{ csrf_token() }}',
+                product_id: $(this).data('product-id')
+            }, function() {
+                location.reload();
+            });
         });
-    });
-</script>
+    </script>
 @endpush
-

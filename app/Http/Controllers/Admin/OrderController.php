@@ -22,8 +22,6 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    // Note: In the Admin Panel, in the Orders Management section, if the authenticated/logged-in user is 'vendor', we'll show the orders of the products added by/related to that 'vendor' ONLY, but if the authenticated/logged-in user is 'admin', we'll show ALL orders
-
 
 
     // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel
@@ -31,40 +29,44 @@ class OrderController extends Controller
         if (!Auth::guard('admin')->user()->can('view_orders')) {
             abort(403, 'Unauthorized action.');
         }
-        $adminType = Auth::guard('admin')->user()->type;
+        
+        $user = Auth::guard('admin')->user();
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
+        
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'orders');
 
+        // Check user role using Spatie
+        $isVendor = $user->hasRole('vendor');
+        $isAdmin = $user->hasRole('admin');
 
-        // We determine the authenticated/logged-in user. If the authenticated/logged-in user is 'vendor', we show ONLY the orders of the products added by that specific 'vendor' ONLY, but if the authenticated/logged-in user is 'admin', we show ALL orders
-        $adminType = Auth::guard('admin')->user()->type;      // `type`      is the column in `admins` table    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances    // Retrieving The Authenticated User and getting their `type`      column in `admins` table
-        $vendor_id = Auth::guard('admin')->user()->vendor_id; // `vendor_id` is the column in `admins` table    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances    // Retrieving The Authenticated User and getting their `vendor_id` column in `admins` table
+        if ($isVendor) {
+            // Check vendor status
+            $vendorStatus = $user->status ?? 0;
 
-
-        if ($adminType == 'vendor') { // if the authenticated user (the logged in user) is 'vendor', check his `status`
-            $vendorStatus = Auth::guard('admin')->user()->status; // `status` is the column in `admins` table    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances    // Retrieving The Authenticated User and getting their `status` column in `admins` table
-
-            if ($vendorStatus == 0) { // if the 'vendor' is inactive/disabled
-                return redirect('admin/update-vendor-details/personal')->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.'); // the error_message will appear to the vendor in the route: 'admin/update-vendor-details/personal' which is the update_vendor_details.blade.php page
+            if ($vendorStatus == 0) {
+                return redirect('admin/update-vendor-details/personal')
+                    ->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.');
             }
-        }
 
+            // Get vendor_id from the vendor relationship
+            $vendor_id = $user->vendor_id; // Using the accessor from User model
 
-        if ($adminType == 'vendor') { // If the authenticated/logged-in user is 'vendor', we show ONLY the orders of the products added by that specific 'vendor' ONLY
-            $orders = Order::with([ // Eager Loading: https://laravel.com/docs/9.x/eloquent-relationships#eager-loading    // 'orders_products' is the relationship method name in Order.php model    // Constraining Eager Loads: https://laravel.com/docs/9.x/eloquent-relationships#constraining-eager-loads    // Subquery Where Clauses: https://laravel.com/docs/9.x/queries#subquery-where-clauses    // Advanced Subqueries: https://laravel.com/docs/9.x/eloquent#advanced-subqueries
-                'orders_products' => function ($query) use ($vendor_id) { // function () use ()     syntax: https://www.php.net/manual/en/functions.anonymous.php#:~:text=the%20use%20language%20construct     // 'orders_products' is the Relationship method name in Order.php model
-                    $query->where('vendor_id', $vendor_id); // `vendor_id` in `orders_products` table
+            // Show only orders containing this vendor's products
+            $orders = Order::with([
+                'orders_products' => function ($query) use ($vendor_id) {
+                    $query->where('vendor_id', $vendor_id);
                 }
             ])->orderBy('id', 'Desc')->get()->toArray();
-            // dd($orders);
 
-        } else { // if the authenticated/logged-in user is 'admin', we show ALL orders
-            $orders = Order::with('orders_products')->orderBy('id', 'Desc')->get()->toArray(); // Eager Loading: https://laravel.com/docs/9.x/eloquent-relationships#eager-loading    // 'orders_products' is the relationship method name in Order.php model
-            // dd($orders);
+        } else {
+            // Admin or other roles - show ALL orders
+            $orders = Order::with('orders_products')->orderBy('id', 'Desc')->get()->toArray();
         }
 
+        // Pass role information to view
+        $adminType = $isVendor ? 'vendor' : ($isAdmin ? 'admin' : 'user');
 
         return view('admin.orders.orders')->with(compact('orders', 'logos', 'headerLogo', 'adminType'));
     }
@@ -80,23 +82,24 @@ class OrderController extends Controller
         Session::put('page', 'orders');
 
         $admin = Auth::guard('admin')->user();
-        $adminType = $admin->type;
+        $isVendor = $admin->hasRole('vendor');
+        $isAdmin = $admin->hasRole('admin');
         $vendor_id = $admin->vendor_id;
 
         // Vendor status check
-        if ($adminType === 'vendor' && $admin->status == 0) {
+        if ($isVendor && $admin->status == 0) {
             return redirect('admin/update-vendor-details/personal')
                 ->with('error_message', 'Your Vendor Account is not approved yet. Please complete your details.');
         }
 
-        if ($adminType === 'vendor') {
+        if ($isVendor) {
             $order = Order::with([
                 'orders_products' => function ($query) use ($vendor_id) {
-                    $query->where('vendor_id', $vendor_id);
+                    $query->with(['product.attributes'])->where('vendor_id', $vendor_id);
                 }
             ])->where('id', $id)->first();
         } else {
-            $order = Order::with('orders_products')->where('id', $id)->first();
+            $order = Order::with(['orders_products.product.attributes'])->where('id', $id)->first();
         }
 
         if (!$order) {
@@ -106,7 +109,7 @@ class OrderController extends Controller
         $orderDetails = $order->toArray();
 
         // Vendor must have products in this order
-        if ($adminType === 'vendor' && empty($orderDetails['orders_products'])) {
+        if ($isVendor && empty($orderDetails['orders_products'])) {
             abort(403, 'You are not authorized to view this order');
         }
 
@@ -148,12 +151,16 @@ class OrderController extends Controller
             $total_items += $product['product_qty'];
         }
 
-        if ($orderDetails['coupon_amount'] > 0 && $total_items > 0) {
-            $item_discount = round($orderDetails['coupon_amount'] / $total_items, 2);
+        $totalDiscount = ($orderDetails['coupon_amount'] ?? 0) + ($orderDetails['extra_discount'] ?? 0);
+
+        if ($totalDiscount > 0 && $total_items > 0) {
+            $item_discount = round($totalDiscount / $total_items, 2);
         } else {
             $item_discount = 0;
         }
 
+        // Set adminType for view compatibility
+        $adminType = $isVendor ? 'vendor' : ($isAdmin ? 'admin' : 'user');
 
         return view('admin.orders.order_details')->with(compact(
             'orderDetails',
@@ -162,6 +169,7 @@ class OrderController extends Controller
             'orderItemStatuses',
             'orderLog',
             'item_discount',
+            'total_items',
             'logos',
             'headerLogo',
             'adminType'
@@ -367,7 +375,7 @@ class OrderController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 
-        $order = Order::with('orders_products')
+        $order = Order::with('orders_products.product.attributes')
             ->where('id', $order_id)
             ->first();
 
@@ -415,7 +423,7 @@ class OrderController extends Controller
         $logos = HeaderLogo::first();
 
 
-        $order = Order::with('orders_products')->where('id', $order_id)->first();
+        $order = Order::with('orders_products.product.attributes')->where('id', $order_id)->first();
 
         if (!$order) {
             abort(404, 'Order not found');
@@ -479,12 +487,14 @@ class OrderController extends Controller
 <b>Status:</b> ' . $orderDetails['order_status'] . '
 </p>
 
-<table border="1">
+<table border="1" width="100%" cellpadding="5" cellspacing="0">
 <thead>
 <tr>
     <th>Product</th>
-    <th>Qty</th>
+    <th>MRP</th>
+    <th>Disc.</th>
     <th>Price</th>
+    <th>Qty</th>
     <th>Total</th>
 </tr>
 </thead>
@@ -496,12 +506,18 @@ class OrderController extends Controller
             $lineTotal = $product['product_price'] * $product['product_qty'];
             $subTotal += $lineTotal;
 
+            $mrp = $product['product']['product_price'] ?? 'N/A';
+            $prodAttr = collect($product['product']['attributes'] ?? [])->where('vendor_id', $product['vendor_id'])->first();
+            $disc = ($prodAttr['product_discount'] ?? 0) . '%';
+
             $invoiceHTML .= '
 <tr>
     <td>' . $product['product_name'] . '</td>
-    <td>' . $product['product_qty'] . '</td>
-    <td>INR ' . $product['product_price'] . '</td>
-    <td>INR ' . $lineTotal . '</td>
+    <td style="text-align:center;">' . ($mrp != 'N/A' ? 'INR ' . $mrp : $mrp) . '</td>
+    <td style="text-align:center;">' . $disc . '</td>
+    <td style="text-align:center;">INR ' . $product['product_price'] . '</td>
+    <td style="text-align:center;">' . $product['product_qty'] . '</td>
+    <td style="text-align:right;">INR ' . $lineTotal . '</td>
 </tr>';
         }
 
@@ -509,11 +525,22 @@ class OrderController extends Controller
 </tbody>
 </table>
 
-<p>
-<b>Subtotal:</b> INR ' . $subTotal . '<br>
-<b>Discount:</b> INR ' . ($orderDetails['coupon_amount'] ?? 0) . '<br>
-<b>Grand Total:</b> INR ' . $orderDetails['grand_total'] . '
-</p>
+<div style="text-align: right; margin-top: 20px;">
+    <p><b>Subtotal:</b> INR ' . $subTotal . '</p>';
+
+        if (!empty($orderDetails['coupon_amount']) && $orderDetails['coupon_amount'] > 0) {
+            $invoiceHTML .= '<p><b>Coupon Discount (' . ($orderDetails['coupon_code'] ?? 'N/A') . '):</b> - INR ' . $orderDetails['coupon_amount'] . '</p>';
+        }
+
+        if (!empty($orderDetails['extra_discount']) && $orderDetails['extra_discount'] > 0) {
+            $invoiceHTML .= '<p><b>Extra Discount:</b> - INR ' . $orderDetails['extra_discount'] . '</p>';
+        }
+
+        $invoiceHTML .= '
+    <p style="font-size: 16px; border-top: 1px solid #ccc; padding-top: 10px;">
+        <b>Grand Total:</b> INR ' . $orderDetails['grand_total'] . '
+    </p>
+</div>
 
 <p>Thank you for your order.</p>
 
@@ -557,8 +584,8 @@ class OrderController extends Controller
             'isbn' => 'required|string|max:20'
         ]);
 
-        $admin     = Auth::guard('admin')->user();
-        $adminType = $admin->type;
+        $admin = Auth::guard('admin')->user();
+        $isVendor = $admin->hasRole('vendor');
 
         $product = Product::where('product_isbn', $request->isbn)->first();
 
@@ -570,7 +597,7 @@ class OrderController extends Controller
         }
 
         $attribute = ProductsAttribute::where('product_id', $product->id)
-            ->when($adminType === 'vendor', function ($q) use ($admin) {
+            ->when($isVendor, function ($q) use ($admin) {
                 $q->where('vendor_id', $admin->vendor_id);
             })
             ->first();
@@ -583,10 +610,9 @@ class OrderController extends Controller
         }
 
         $basePrice       = $product->product_price;
-        // $discountPercent = $attribute->product_discount ?? 0;
-
-        // $discountAmount = round(($basePrice * $discountPercent) / 100);
-        // $finalPrice     = round($basePrice - $discountAmount);
+        $discountPercent = $attribute->product_discount ?? 0;
+        $discountAmount  = round(($basePrice * $discountPercent) / 100, 2);
+        $finalPrice      = round($basePrice - $discountAmount, 2);
 
         return response()->json([
             'status' => true,
@@ -595,9 +621,9 @@ class OrderController extends Controller
                 'product_name'     => $product->product_name,
                 'product_isbn'     => $product->product_isbn,
                 'base_price'       => round($basePrice),
-                // 'discount_percent' => $discountPercent,
-                // 'discount_amount'  => $discountAmount,
-                // 'final_price'      => $finalPrice,
+                'discount_percent' => $discountPercent,
+                'discount_amount'  => $discountAmount,
+                'final_price'      => $finalPrice,
                 'stock'            => $attribute->stock,
                 'product_image'    => $product->product_image ?? ''
             ]
@@ -619,6 +645,12 @@ class OrderController extends Controller
             return response()->json(['status' => false, 'message' => 'Insufficient stock'], 400);
         }
 
+        // Calculate discount
+        $originalPrice   = $product->product_price;
+        $discountPercent = $attribute->product_discount ?? 0;
+        $discountAmount  = round(($originalPrice * $discountPercent) / 100, 2);
+        $discountedPrice = round($originalPrice - $discountAmount, 2);
+
         $cart  = session()->get('sales_cart', []);
         $found = false;
 
@@ -632,12 +664,14 @@ class OrderController extends Controller
 
         if (!$found) {
             $cart[] = [
-                'product_id'   => $product->id,
-                'product_name' => $product->product_name,
-                'product_isbn' => $product->product_isbn,
-                'price'        => $product->product_price,
-                'quantity'     => $request->quantity,
-                'total'        => $product->product_price * $request->quantity
+                'product_id'      => $product->id,
+                'product_name'    => $product->product_name,
+                'product_isbn'    => $product->product_isbn,
+                'original_price'  => $originalPrice,
+                'discount_percent'=> $discountPercent,
+                'price'           => $discountedPrice, // Use discounted price
+                'quantity'        => $request->quantity,
+                'total'           => $discountedPrice * $request->quantity
             ];
         }
 
@@ -646,8 +680,7 @@ class OrderController extends Controller
         // 🔥 reset discounts on cart change
         session()->forget([
             'sales_coupon',
-            'sales_extra_discount_amount',
-            'sales_extra_discount_percent'
+            'sales_extra_discount_amount'
         ]);
 
         return response()->json(['status' => true, 'message' => 'Added to cart']);
@@ -656,7 +689,7 @@ class OrderController extends Controller
     public function applyExtraDiscount(Request $request)
     {
         $request->validate([
-            'extra_discount' => 'required|numeric|min:0|max:100'
+            'extra_discount' => 'required|numeric|min:0'
         ]);
 
         $cart = session()->get('sales_cart', []);
@@ -666,12 +699,17 @@ class OrderController extends Controller
 
         $subTotal = array_sum(array_column($cart, 'total'));
 
-        // Extra discount
-        $percent = $request->extra_discount;
-        $amount  = round(($subTotal * $percent) / 100);
-        $amount  = min($amount, $subTotal);
+        // Extra discount as fixed amount
+        $amount = round($request->extra_discount, 2);
+        
+        // Ensure discount doesn't exceed subtotal
+        if ($amount > $subTotal) {
+            return response()->json([
+                'status' => false, 
+                'message' => 'Discount amount cannot exceed subtotal (₹' . $subTotal . ')'
+            ], 400);
+        }
 
-        session()->put('sales_extra_discount_percent', $percent);
         session()->put('sales_extra_discount_amount', $amount);
 
         // 🔥 RE-CALCULATE COUPON IF EXISTS
@@ -758,8 +796,7 @@ class OrderController extends Controller
         if (empty($cart)) {
             session()->forget([
                 'sales_coupon',
-                'sales_extra_discount_amount',
-                'sales_extra_discount_percent'
+                'sales_extra_discount_amount'
             ]);
         }
 
@@ -769,7 +806,7 @@ class OrderController extends Controller
     public function processSale(Request $request)
     {
         $request->validate([
-            'customer_name'    => 'required|string|max:255',
+            'customer_name'    => 'string|max:255',
             'customer_mobile'  => 'required|string|max:20',
             'customer_email'   => 'nullable|email',
             'customer_address' => 'nullable|string'
@@ -803,10 +840,10 @@ class OrderController extends Controller
             // 5️⃣ Create Order
             $order = Order::create([
                 'user_id'          => 0,
-                'name'             => $request->customer_name,
+                'name'             => 'N/A',
                 'mobile'           => $request->customer_mobile,
-                'email'            => $request->customer_email ?? 'N/A',
-                'address'          => $request->customer_address ?? 'N/A',
+                'email'            => 'N/A',
+                'address'          => 'N/A',
                 'city'             => 'N/A',
                 'state'            => 'N/A',
                 'country'          => 'N/A',
@@ -826,12 +863,12 @@ class OrderController extends Controller
             // 6️⃣ Order items + stock update
             foreach ($cart as $item) {
 
-                $admin     = Auth::guard('admin')->user();
-                $adminType = $admin->type;
+                $admin = Auth::guard('admin')->user();
+                $isVendor = $admin->hasRole('vendor');
 
                 $attrQuery = ProductsAttribute::where('product_id', $item['product_id']);
 
-                if ($adminType === 'vendor') {
+                if ($isVendor) {
                     $attrQuery->where('vendor_id', $admin->vendor_id);
                 }
 
@@ -849,8 +886,8 @@ class OrderController extends Controller
                 OrdersProduct::create([
                     'order_id'      => $order->id,
                     'user_id'       => 0,
-                    'admin_id'      => ($adminType !== 'vendor') ? $admin->id : 0,
-                    'vendor_id'     => ($adminType === 'vendor') ? $admin->vendor_id : 0,
+                    'admin_id'      => (!$isVendor) ? $admin->id : 0,
+                    'vendor_id'     => ($isVendor) ? $admin->vendor_id : 0,
                     'product_id'    => $item['product_id'],
                     'product_name'  => $item['product_name'],
                     'product_price' => $item['price'],
@@ -866,8 +903,7 @@ class OrderController extends Controller
             session()->forget([
                 'sales_cart',
                 'sales_coupon',
-                'sales_extra_discount_amount',
-                'sales_extra_discount_percent'
+                'sales_extra_discount_amount'
             ]);
 
             return redirect()->back()
