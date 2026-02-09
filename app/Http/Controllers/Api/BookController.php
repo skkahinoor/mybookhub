@@ -21,31 +21,36 @@ use App\Models\ProductsAttribute;
 
 class BookController extends Controller
 {
-    private function checkAccess($request)
+    private function checkAccess(Request $request, array $allowedRoles = ['vendor'])
     {
-        $admin = $request->user();
+        /** @var \App\Models\User $user */
+        $user = $request->user();
 
-        if (!$admin instanceof Admin) {
+        // 🔐 Auth check
+        if (!$user) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // 🔎 Fetch role from roles table
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || !in_array($role->name, $allowedRoles)) {
+            return response()->json([
+                'status'  => false,
                 'message' => 'Only Admin or Vendor can access this.'
             ], 403);
         }
 
-        if (!in_array($admin->type, ['superadmin', 'vendor'])) {
+        // 🔒 Status check
+        if ($user->status != 1) {
             return response()->json([
-                'status' => false,
-                'message' => 'Only Admin or Vendor can access this.'
-            ], 403);
-        }
-
-        if ($admin->status != 1) {
-            return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Your account is inactive.'
             ], 403);
         }
-
         return null;
     }
 

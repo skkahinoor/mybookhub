@@ -14,12 +14,29 @@ class SalesReportController extends Controller
     {
         $sales = auth()->user();
 
-        if (!$sales->hasRole('sales', 'web') && $sales->role_id != 3) {
+        if (!$sales) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $role = \Spatie\Permission\Models\Role::find($sales->role_id);
+
+        if (!$role || $role->name !== 'sales') {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Sales Executives allowed'
             ], 403);
         }
+
+        if ($sales->status != 1) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your account is inactive.'
+            ], 403);
+        }
+
 
         $salesId = $sales->id;
         $incomePerTarget = $sales->salesExecutive->income_per_target ?? 0;

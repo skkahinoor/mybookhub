@@ -36,9 +36,23 @@ class InstitutionController extends Controller
 
     private function detectUserType($user)
     {
-        if ($user instanceof Admin && $user->type === 'superadmin') {
+        if (!$user) {
+            return null;
+        }
+
+        // Fetch role using role_id → roles table
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role) {
+            return null;
+        }
+
+        // Preserve old behavior
+        if ($role->name === 'superadmin') {
             return 'superadmin';
-        } elseif ($user instanceof SalesExecutive) {
+        }
+
+        if ($role->name === 'sales') {
             return 'sales';
         }
 
