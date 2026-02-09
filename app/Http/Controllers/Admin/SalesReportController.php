@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Country;
+use App\Models\State;
+use App\Models\District;
+use App\Models\Block;
 use App\Models\HeaderLogo;
 use App\Models\InstitutionManagement;
 use App\Models\SalesExecutive;
@@ -20,44 +24,66 @@ class SalesReportController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 
-        // Distinct options for filters (by name text)
-        $countries = SalesExecutive::whereNotNull('country')->where('country', '!=', '')->select('country as name')->distinct()->get();
-        $states = SalesExecutive::whereNotNull('state')->where('state', '!=', '')->select('state as name')->distinct()->get();
-        $districts = SalesExecutive::whereNotNull('district')->where('district', '!=', '')->select('district as name')->distinct()->get();
-        $blocks = SalesExecutive::whereNotNull('block')->where('block', '!=', '')->select('block as name')->distinct()->get();
+        // Distinct options for filters (from related Users)
+        $countries = Country::select('countries.id', 'countries.name')
+            ->join('users', 'users.country_id', '=', 'countries.id')
+            ->join('sales_executives', 'sales_executives.user_id', '=', 'users.id')
+            ->distinct()
+            ->orderBy('countries.name')
+            ->get();
 
-        $query = SalesExecutive::query();
+        $states = State::select('states.id', 'states.name')
+            ->join('users', 'users.state_id', '=', 'states.id')
+            ->join('sales_executives', 'sales_executives.user_id', '=', 'users.id')
+            ->distinct()
+            ->orderBy('states.name')
+            ->get();
+
+        $districts = District::select('districts.id', 'districts.name')
+            ->join('users', 'users.district_id', '=', 'districts.id')
+            ->join('sales_executives', 'sales_executives.user_id', '=', 'users.id')
+            ->distinct()
+            ->orderBy('districts.name')
+            ->get();
+
+        $blocks = Block::select('blocks.id', 'blocks.name')
+            ->join('users', 'users.block_id', '=', 'blocks.id')
+            ->join('sales_executives', 'sales_executives.user_id', '=', 'users.id')
+            ->distinct()
+            ->orderBy('blocks.name')
+            ->get();
+
+        $query = SalesExecutive::query()
+            ->select('sales_executives.*', 'users.name', 'users.phone')
+            ->join('users', 'sales_executives.user_id', '=', 'users.id');
 
         if ($request->filled('country_id')) {
-            $query->where('country', $request->get('country_id'));
+            $query->where('users.country_id', $request->get('country_id'));
         }
 
         if ($request->filled('state_id')) {
-            $query->where('state', $request->get('state_id'));
+            $query->where('users.state_id', $request->get('state_id'));
         }
 
         if ($request->filled('district_id')) {
-            $query->where('district', $request->get('district_id'));
+            $query->where('users.district_id', $request->get('district_id'));
         }
 
         if ($request->filled('block_id')) {
-            $query->where('block', $request->get('block_id'));
+            $query->where('users.block_id', $request->get('block_id'));
         }
 
         // Global search
         $search = $request->input('search');
-        if (! empty($search)) {
+        if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('phone', 'like', '%' . $search . '%')
-                    ->orWhere('country', 'like', '%' . $search . '%')
-                    ->orWhere('state', 'like', '%' . $search . '%')
-                    ->orWhere('district', 'like', '%' . $search . '%')
-                    ->orWhere('block', 'like', '%' . $search . '%');
+                // Name and phone have been moved to users table
+                $q->where('users.name', 'like', '%' . $search . '%')
+                    ->orWhere('users.phone', 'like', '%' . $search . '%');
             });
         }
 
-        $salesExecutives = $query->orderBy('name')->get();
+        $salesExecutives = $query->orderBy('users.name')->get();
 
         return view('admin.reports.sales_reports.index', compact(
             'countries',
@@ -77,7 +103,7 @@ class SalesReportController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 
-        $salesExecutive = SalesExecutive::findOrFail($id);
+        $salesExecutive = SalesExecutive::with(['user.country', 'user.state', 'user.district', 'user.block'])->findOrFail($id);
 
         // Institutions added by this sales executive
         $institutions = InstitutionManagement::with(['country', 'state', 'district', 'block'])

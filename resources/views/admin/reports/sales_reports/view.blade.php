@@ -7,7 +7,10 @@
                 <div class="col-12 d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="mb-1">Sales Executive Details</h4>
-                        <p class="text-muted mb-0">{{ $salesExecutive->name }} ({{ $salesExecutive->phone }})</p>
+                        <p class="text-muted mb-0">
+                            {{ $salesExecutive->user->name ?? 'N/A' }} 
+                            ({{ $salesExecutive->user->phone ?? 'N/A' }})
+                        </p>
                     </div>
                     <a href="{{ route('admin.reports.sales_reports.index') }}" class="btn btn-light border">
                         Back to Reports
@@ -46,9 +49,9 @@
                             <h5 class="mb-3">Profile Details</h5>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p><strong>Name:</strong> {{ $salesExecutive->name }}</p>
-                                    <p><strong>Email:</strong> {{ $salesExecutive->email }}</p>
-                                    <p><strong>Phone:</strong> {{ $salesExecutive->phone }}</p>
+                                    <p><strong>Name:</strong> {{ $salesExecutive->user->name ?? 'N/A' }}</p>
+                                    <p><strong>Email:</strong> {{ $salesExecutive->user->email ?? 'N/A' }}</p>
+                                    <p><strong>Phone:</strong> {{ $salesExecutive->user->phone ?? 'N/A' }}</p>
                                     <p><strong>Status:</strong>
                                         @if ($salesExecutive->status)
                                             <span class="badge badge-success">Active</span>
@@ -58,11 +61,11 @@
                                     </p>
                                 </div>
                                 <div class="col-md-6">
-                                    <p><strong>Address:</strong> {{ $salesExecutive->address }}</p>
-                                    <p><strong>Block:</strong> {{ $salesExecutive->block }}</p>
-                                    <p><strong>District:</strong> {{ $salesExecutive->district }}</p>
-                                    <p><strong>State:</strong> {{ $salesExecutive->state }}</p>
-                                    <p><strong>Country:</strong> {{ $salesExecutive->country }}</p>
+                                    <p><strong>Address:</strong> {{ $salesExecutive->user->address ?? 'N/A' }}</p>
+                                    <p><strong>Block:</strong> {{ optional($salesExecutive->user->block)->name ?? 'N/A' }}</p>
+                                    <p><strong>District:</strong> {{ optional($salesExecutive->user->district)->name ?? 'N/A' }}</p>
+                                    <p><strong>State:</strong> {{ optional($salesExecutive->user->state)->name ?? 'N/A' }}</p>
+                                    <p><strong>Country:</strong> {{ optional($salesExecutive->user->country)->name ?? 'N/A' }}</p>
                                 </div>
                             </div>
                         </div>
