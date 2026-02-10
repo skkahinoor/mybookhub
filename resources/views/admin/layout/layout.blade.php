@@ -39,7 +39,11 @@
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ url('admin/css/vertical-layout-light/style.css') }}">
     <!-- endinject -->
-    <link rel="shortcut icon" href="{{ asset('uploads/favicons/' . $headerLogo->favicon) }}" />
+    @if(!empty($headerLogo))
+    <link rel="shortcut icon"
+          href="{{ asset('uploads/favicons/' . $headerLogo->favicon) }}" />
+@endif
+
 
     {{-- DataTable --}}
     <link rel="stylesheet" href="{{ url('admin/css/bootstrap.css') }}">
