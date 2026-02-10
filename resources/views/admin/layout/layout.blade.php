@@ -42,7 +42,7 @@
     @if(!empty($headerLogo))
     <link rel="shortcut icon"
           href="{{ asset('uploads/favicons/' . $headerLogo->favicon) }}" />
-@endif
+    @endif
 
 
     {{-- DataTable --}}
@@ -65,8 +65,10 @@
 
         <div class="navbar-brand-wrapper">
             <a class="navbar-brand" href="{{ url('admin/dashboard') }}">
+                 @if (!empty($headerLogo))
                 <img src="{{ asset('uploads/logos/' . ($headerLogo->logo ?? 'default.png')) }}" alt="logo"
                     height="50">
+                    @endif
             </a>
         </div>
 

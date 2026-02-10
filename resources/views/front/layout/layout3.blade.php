@@ -26,7 +26,7 @@
     <meta name="app-url" content="{{ config('app.url') }}">
 
     <!-- FAVICONS ICON -->
-    @if(!empty($logos) && $logos->isNotEmpty())
+    @if(!empty($logos))
     <link rel="icon" type="image/x-icon"
           href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}">
 @endif
@@ -160,7 +160,7 @@
                 <div class="container clearfix">
                     <!-- Website Logo -->
                     <div class="logo-header logo-dark">
-                        @if(!empty($logos) && $logos->isNotEmpty())
+                        @if(!empty($logos))
     <a href="{{ url('/') }}">
         <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
     </a>
@@ -435,7 +435,7 @@
                     <div class="container clearfix">
                         <!-- Website Logo -->
                         <div class="logo-header logo-dark">
-                            @if(!empty($logos) && $logos->isNotEmpty())
+                            @if(!empty($logos))
     <a href="{{ url('/') }}">
         <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
     </a>
@@ -462,7 +462,7 @@
                         <!-- Main Nav -->
                         <div class="header-nav navbar-collapse collapse justify-content-start" id="navbarNavDropdown">
                             <div class="logo-header logo-dark">
-                                @if(!empty($logos) && $logos->isNotEmpty())
+                                @if(!empty($logos))
     <a href="{{ url('/') }}">
         <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
     </a>
@@ -588,7 +588,7 @@
                         <div class="col-xl-3 col-lg-12 wow fadeInUp" data-wow-delay="0.1s">
                             <div class="widget widget_about">
                                 <div class="footer-logo logo-white">
-                                    @if(!empty($logos) && $logos->isNotEmpty())
+                                    @if(!empty($logos))
     <a href="{{ url('/') }}">
         <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
     </a>

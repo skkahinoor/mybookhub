@@ -81,7 +81,7 @@
     <!-- partial:partials/_navbar.html -->
     <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
         <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-            @if (!empty($logos) && $logos->isNotEmpty())
+            @if (!empty($logos))
                 <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub" height="50"
                     width="150">
             @endif
@@ -218,8 +218,10 @@
 @elseif (Auth::guard('admin')->user()->type == 'vendor')
     <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
         <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-            <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="" height="50"
-                width="150">
+            @if (!empty($logos))
+                <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="" height="50"
+                    width="150">
+            @endif  
         </div>
         <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
             <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
