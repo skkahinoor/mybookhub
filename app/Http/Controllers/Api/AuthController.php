@@ -48,7 +48,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'status'  => true,
-                'message' => ucfirst($type) . ' login successful',
+                'message' => ucfirst($type) . 'login successful',
                 'type'    => $type,
                 'token'   => $token,
                 'data'    => $user,

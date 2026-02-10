@@ -67,42 +67,41 @@ class VendorController extends Controller
     {
         $request->validate([
             'name'     => 'required|string|max:255|regex:/^[\pL\s\-&.,\'()\/]+$/u',
-            'email'    => 'required|email|unique:vendors,email|unique:users,email',
-            'mobile'   => 'required|string|min:10|max:15|unique:vendors,mobile|unique:users,phone',
+            'email'    => 'required|email|unique:users,email',
+            'mobile'   => 'required|string|min:10|max:15|unique:users,phone',
             'password' => 'required|min:6|confirmed',
             'location' => [
                 'required',
                 'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/'
             ],
         ]);
-    
+
         $phone = $request->mobile;
-    
+
         Cache::put("reg_name_$phone", $request->name, now()->addMinutes(10));
         Cache::put("reg_email_$phone", $request->email, now()->addMinutes(10));
         Cache::put("reg_password_$phone", Hash::make($request->password), now()->addMinutes(10));
         Cache::put("reg_location_$phone", $request->location, now()->addMinutes(10));
-    
+
         $otp = rand(100000, 999999);
-    
+
         DB::table('otps')->updateOrInsert(
             ['phone' => $phone],
             ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
         );
-    
+
         if (!$this->sendSMS($phone, $otp)) {
             return response()->json([
                 'status' => false,
                 'message' => 'Failed to send OTP'
             ], 500);
         }
-    
+
         return response()->json([
             'status' => true,
             'message' => 'OTP sent successfully'
         ]);
     }
-    
 
     public function verifyOtp(Request $request)
     {
@@ -137,36 +136,46 @@ class VendorController extends Controller
         }
 
         DB::beginTransaction();
-        try {
 
-            $givePro = (bool) Setting::getValue('give_new_users_pro_plan', 0);
+        try {
+            // 🔹 Settings
+            $givePro   = (bool) Setting::getValue('give_new_users_pro_plan', 0);
             $trialDays = (int) Setting::getValue('pro_plan_trial_duration_days', 30);
 
-            $vendor = Vendor::create([
-                'name' => $name,
-                'email' => $email,
-                'mobile' => $phone,
-                'location' => $location,
-                'plan' => $givePro ? 'pro' : 'free',
-                'plan_started_at' => now(),
-                'plan_expires_at' => $givePro ? now()->addDays($trialDays) : null,
-                'status' => 0,
-                'confirm' => 'No'
-            ]);
+            // 🔹 Fetch vendor role (Spatie)
+            $role = \Spatie\Permission\Models\Role::where([
+                'name'       => 'vendor'
+            ])->first();
 
-            $role = Role::where('name', 'vendor')->first();
+            if (!$role) {
+                throw new \Exception('Vendor role not found');
+            }
+
+            // 🔹 Create User
             $user = User::create([
                 'name'     => $name,
                 'email'    => $email,
-                'phone'   => $phone,
+                'phone'    => $phone,
                 'password' => $password,
-                'role_id'  => $role ? $role->id : null,
-                'status'   => 0
+                'status'   => 0,
+                'role_id'  => $role->id
             ]);
-            if ($role) $user->assignRole($role);
 
-            $vendor->update(['user_id' => $user->id]);
+            // 🔹 Assign Spatie Role
+            $user->assignRole($role);
 
+            // 🔹 Create Vendor (ONLY vendor fields)
+            $vendor = Vendor::create([
+                'user_id'          => $user->id,
+                'location'         => $location,
+                'plan'             => $givePro ? 'pro' : 'free',
+                'plan_started_at'  => now(),
+                'plan_expires_at'  => $givePro ? now()->addDays($trialDays) : null,
+                'status'           => 0,
+                'confirm'          => 'No'
+            ]);
+
+            // 🔹 Cleanup
             DB::table('otps')->where('phone', $phone)->delete();
             Cache::forget("reg_name_$phone");
             Cache::forget("reg_email_$phone");
@@ -176,16 +185,19 @@ class VendorController extends Controller
             DB::commit();
 
             return response()->json([
-                'status' => true,
+                'status'  => true,
                 'message' => 'Registration successful',
-                'data' => $vendor
+                'data'    => [
+                    'user'   => $user,
+                    'vendor' => $vendor
+                ]
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error($e->getMessage());
+            Log::error('Vendor Registration Error: ' . $e->getMessage());
 
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Registration failed'
             ], 500);
         }
@@ -193,46 +205,62 @@ class VendorController extends Controller
 
     public function getprofile(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = $request->user();
 
-        if (!$user->hasRole('vendor')) {
+        if (!$user) {
             return response()->json([
                 'status' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || $role->name !== 'vendor') {
+            return response()->json([
+                'status'  => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
 
+        // 🔒 Account status check
         if ($user->status != 1) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Your account is inactive.'
             ], 403);
         }
 
-        $profileDetail = Vendor::with([
-            'country:id,name',
-            'state:id,name',
-            'district:id,name',
-            'block:id,name'
-        ])->where('id', $admin->vendor_id)->first();
+        // 🔗 Fetch Vendor with User relation
+        $vendor = Vendor::with('user')
+            ->where('user_id', $user->id)
+            ->first();
 
-        if (!$profileDetail) {
+        if (!$vendor) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Profile details not found'
             ], 404);
         }
 
         return response()->json([
-            'status' => true,
+            'status'  => true,
             'message' => 'Profile details fetched successfully',
-            'data' => [
-                'vendor'   => $profileDetail,
-                'country'  => $profileDetail->country?->name,
-                'state'    => $profileDetail->state?->name,
-                'district' => $profileDetail->district?->name,
-                'block' => $profileDetail->block?->name,
-                'image' => $user->profile_image
+            'data'    => [
+                'vendor'   => $vendor,
+                'user'     => [
+                    'name'     => $user->name,
+                    'email'    => $user->email,
+                    'phone'    => $user->phone,
+                    'address'  => $user->address,
+                    'pincode'  => $user->pincode,
+                ],
+                'country'  => $user->country?->name,
+                'state'    => $user->state?->name,
+                'district' => $user->district?->name,
+                'block'    => $user->block?->name,
+                'image'    => $user->profile_image
                     ? url('admin/images/photos/' . $user->profile_image)
                     : null
             ]
@@ -241,30 +269,43 @@ class VendorController extends Controller
 
     public function updateProfile(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = $request->user();
 
-        if (!$user->hasRole('vendor')) {
+        if (!$user) {
             return response()->json([
                 'status' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || $role->name !== 'vendor') {
+            return response()->json([
+                'status'  => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
 
+        // 🔒 Status check
         if ($user->status != 1) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Your account is inactive.'
             ], 403);
         }
 
-        $vendor = Vendor::find($admin->vendor_id);
+        // 🔗 Vendor linked to user
+        $vendor = Vendor::where('user_id', $user->id)->first();
         if (!$vendor) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Vendor not found.'
             ], 404);
         }
 
+        // ✅ Validation
         $request->validate([
             'name'        => 'required|string|max:255',
             'address'     => 'nullable|string',
@@ -283,7 +324,6 @@ class VendorController extends Controller
                 'required',
                 'email',
                 'max:255',
-                Rule::unique('vendors', 'email')->ignore($vendor->id),
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
 
@@ -292,7 +332,6 @@ class VendorController extends Controller
                 'string',
                 'min:10',
                 'max:15',
-                Rule::unique('vendors', 'mobile')->ignore($vendor->id),
                 Rule::unique('users', 'phone')->ignore($user->id),
             ],
 
@@ -300,27 +339,29 @@ class VendorController extends Controller
         ]);
 
         DB::beginTransaction();
+
         try {
-
-            $vendor->update($request->only([
-                'name',
-                'address',
-                'country_id',
-                'state_id',
-                'district_id',
-                'block_id',
-                'pincode',
-                'mobile',
-                'email',
-                'location'
-            ]));
-
+            // 🔹 Update USER (identity + location)
             $user->update([
-                'name'   => $request->name,
-                'phone' => $request->mobile,
-                'email'  => $request->email,
+                'name'        => $request->name,
+                'email'       => $request->email,
+                'phone'       => $request->mobile,
+                'address'     => $request->address,
+                'country_id'  => $request->country_id,
+                'state_id'    => $request->state_id,
+                'district_id' => $request->district_id,
+                'block_id'    => $request->block_id,
+                'pincode'     => $request->pincode,
             ]);
 
+            // 🔹 Update VENDOR (vendor-only fields)
+            if ($request->filled('location')) {
+                $vendor->update([
+                    'location' => $request->location,
+                ]);
+            }
+
+            // 🖼 Image Upload
             if ($request->hasFile('image')) {
                 $path = public_path('admin/images/photos');
 
@@ -336,32 +377,27 @@ class VendorController extends Controller
 
             DB::commit();
 
-            $vendor = Vendor::with([
-                'country:id,name',
-                'state:id,name',
-                'district:id,name',
-                'block:id,name'
-            ])->find($vendor->id);
-
             return response()->json([
-                'status' => true,
+                'status'  => true,
                 'message' => 'Profile updated successfully',
-                'data' => [
-                    'vendor'   => $vendor,
-                    'country'  => $vendor->country?->name,
-                    'state'    => $vendor->state?->name,
-                    'district' => $vendor->district?->name,
-                    'block'    => $vendor->block?->name,
-                    'location' => $vendor->location,
-                    'image' => $admin->image
-                        ? url('admin/images/photos/' . $admin->image)
+                'data'    => [
+                    'vendor'   => $vendor->fresh(),
+                    'user'     => $user->fresh(),
+                    'country'  => $user->country?->name,
+                    'state'    => $user->state?->name,
+                    'district' => $user->district?->name,
+                    'block'    => $user->block?->name,
+                    'image'    => $user->profile_image
+                        ? url('admin/images/photos/' . $user->profile_image)
                         : null
                 ]
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Profile Update Error: ' . $e->getMessage());
+
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Profile update failed'
             ], 500);
         }
@@ -371,9 +407,19 @@ class VendorController extends Controller
     {
         $user = $request->user();
 
-        if (!$user->hasRole('vendor')) {
+        if (!$user) {
             return response()->json([
                 'status' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // 🔐 Dynamic role check via roles table
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || $role->name !== 'vendor') {
+            return response()->json([
+                'status'  => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
@@ -385,6 +431,15 @@ class VendorController extends Controller
             ], 403);
         }
 
+        $vendor = Vendor::where('user_id', $user->id)->first();
+        if (!$vendor) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Vendor not found.'
+            ], 404);
+        }
+
+        // ✅ Validation (updated)
         $request->validate([
             'shop_name' => 'required|string|max:255',
             'shop_address' => 'required|string',
@@ -395,15 +450,47 @@ class VendorController extends Controller
             'shop_mobile' => 'required|string|min:10|max:15',
             'shop_email' => 'nullable|email',
             'shop_website' => 'nullable|url',
-            'address_proof' => 'nullable|string',
-            'business_license_number' => 'nullable|string',
-            'gst_number' => 'nullable|string',
-            'pan_number' => 'nullable|string',
+
+            'address_proof' => 'nullable|string|max:255',
+            'address_proof_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+            'business_license_number' => 'nullable|string|max:100',
+            'gst_number' => 'nullable|string|max:50',
+            'pan_number' => 'nullable|string|max:20',
         ]);
 
+        // 🖼 Handle Address Proof Image Upload
+        $addressProofImage = null;
+        if ($request->hasFile('address_proof_image')) {
+            $path = public_path('admin/images/proofs');
+
+            if (!file_exists($path)) {
+                mkdir($path, 0755, true);
+            }
+
+            $addressProofImage = time() . '_' . uniqid() . '.' . $request->address_proof_image->extension();
+            $request->address_proof_image->move($path, $addressProofImage);
+        }
+
+        // 💾 Save / Update Business Details
         $businessDetail = VendorsBusinessDetail::updateOrCreate(
-            ['vendor_id' => $user->vendor_id],
-            $request->all()
+            ['vendor_id' => $vendor->id],
+            [
+                'shop_name' => $request->shop_name,
+                'shop_address' => $request->shop_address,
+                'shop_city' => $request->shop_city,
+                'shop_state' => $request->shop_state,
+                'shop_country' => $request->shop_country,
+                'shop_pincode' => $request->shop_pincode,
+                'shop_mobile' => $request->shop_mobile,
+                'shop_email' => $request->shop_email,
+                'shop_website' => $request->shop_website,
+                'address_proof' => $request->address_proof,
+                'address_proof_image' => $addressProofImage,
+                'business_license_number' => $request->business_license_number,
+                'gst_number' => $request->gst_number,
+                'pan_number' => $request->pan_number,
+            ]
         );
 
         return response()->json([
@@ -413,13 +500,23 @@ class VendorController extends Controller
         ]);
     }
 
+
     public function saveBankDetails(Request $request)
     {
         $user = $request->user();
 
-        if (!$user->hasRole('vendor')) {
+        if (!$user) {
             return response()->json([
                 'status' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || $role->name !== 'vendor') {
+            return response()->json([
+                'status'  => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
@@ -431,6 +528,14 @@ class VendorController extends Controller
             ], 403);
         }
 
+        $vendor = Vendor::where('user_id', $user->id)->first();
+        if (!$vendor) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Vendor not found.'
+            ], 404);
+        }
+
         $request->validate([
             'account_holder_name' => 'required|string|max:255',
             'bank_name' => 'required|string|max:255',
@@ -439,7 +544,7 @@ class VendorController extends Controller
         ]);
 
         $bankDetail = VendorsBankDetail::updateOrCreate(
-            ['vendor_id' => $user->vendor_id],
+            ['vendor_id' => $vendor->id],
             $request->only([
                 'account_holder_name',
                 'bank_name',
@@ -455,13 +560,23 @@ class VendorController extends Controller
         ]);
     }
 
+
     public function getBusinessDetails(Request $request)
     {
         $user = $request->user();
 
-        if (!$user->hasRole('vendor')) {
+        if (!$user) {
             return response()->json([
                 'status' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || $role->name !== 'vendor') {
+            return response()->json([
+                'status'  => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
@@ -473,7 +588,15 @@ class VendorController extends Controller
             ], 403);
         }
 
-        $businessDetail = VendorsBusinessDetail::where('vendor_id', $user->vendor_id)->first();
+        $vendor = Vendor::where('user_id', $user->id)->first();
+        if (!$vendor) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Vendor not found.'
+            ], 404);
+        }
+
+        $businessDetail = VendorsBusinessDetail::where('vendor_id', $vendor->id)->first();
 
         if (!$businessDetail) {
             return response()->json([
@@ -489,13 +612,23 @@ class VendorController extends Controller
         ]);
     }
 
+
     public function getBankDetails(Request $request)
     {
         $user = $request->user();
 
-        if (!$user->hasRole('vendor')) {
+        if (!$user) {
             return response()->json([
                 'status' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || $role->name !== 'vendor') {
+            return response()->json([
+                'status'  => false,
                 'message' => 'Only Vendor can access this profile.'
             ], 403);
         }
@@ -507,7 +640,15 @@ class VendorController extends Controller
             ], 403);
         }
 
-        $bankDetail = VendorsBankDetail::where('vendor_id', $user->vendor_id)->first();
+        $vendor = Vendor::where('user_id', $user->id)->first();
+        if (!$vendor) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Vendor not found.'
+            ], 404);
+        }
+
+        $bankDetail = VendorsBankDetail::where('vendor_id', $vendor->id)->first();
 
         if (!$bankDetail) {
             return response()->json([

@@ -13,33 +13,41 @@ use GuzzleHttp\Client;
 
 class VendorPlanController extends Controller
 {
-    private function checkAccess(Request $request)
+    private function checkAccess(Request $request, array $allowedRoles = ['vendor'])
     {
-        $admin = $request->user();
+        /** @var \App\Models\User $user */
+        $user = $request->user();
 
-        if (!$admin || !$admin instanceof Admin) {
+        // 🔐 Auth check
+        if (!$user) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // 🔎 Fetch role from roles table
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || !in_array($role->name, $allowedRoles)) {
+            return response()->json([
+                'status'  => false,
                 'message' => 'Only Admin or Vendor can access this.'
             ], 403);
         }
 
-        if (!in_array($admin->type, ['superadmin', 'vendor'])) {
+        // 🔒 Status check
+        if ($user->status != 1) {
             return response()->json([
-                'status' => false,
-                'message' => 'Only Admin or Vendor can access this.'
-            ], 403);
-        }
-
-        if ($admin->status != 1) {
-            return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Your account is inactive.'
             ], 403);
         }
 
+        // ✅ Access granted
         return null;
     }
+
 
     public function status(Request $request)
     {
@@ -292,7 +300,6 @@ class VendorPlanController extends Controller
                 'status' => true,
                 'payment_url' => $link['short_url']
             ]);
-
         } catch (\Exception $e) {
             Log::error('Razorpay Payment Link Error', [
                 'error' => $e->getMessage()

@@ -20,31 +20,38 @@ use App\Models\ProductsAttribute;
 class OrderController extends Controller
 {
 
-    private function checkAccess(Request $request)
+    private function checkAccess(Request $request, array $allowedRoles = ['vendor'])
     {
-        $admin = $request->user();
+        /** @var \App\Models\User $user */
+        $user = $request->user();
 
-        if (!$admin instanceof Admin) {
+        // 🔐 Auth check
+        if (!$user) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // 🔎 Fetch role from roles table
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || !in_array($role->name, $allowedRoles)) {
+            return response()->json([
+                'status'  => false,
                 'message' => 'Only Admin or Vendor can access this.'
             ], 403);
         }
 
-        if (!in_array($admin->type, ['superadmin', 'vendor'])) {
+        // 🔒 Status check
+        if ($user->status != 1) {
             return response()->json([
-                'status' => false,
-                'message' => 'Unauthorized role.'
+                'status'  => false,
+                'message' => 'Your account is inactive.'
             ], 403);
         }
 
-        if ((int) $admin->status !== 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Account inactive.'
-            ], 403);
-        }
-
+        // ✅ Access granted
         return null;
     }
 
@@ -239,8 +246,17 @@ class OrderController extends Controller
             'isbn' => 'required|string|max:20'
         ]);
 
-        $isbn     = trim($request->isbn);
-        $vendorId = $request->user()->vendor_id;
+        $isbn = trim($request->isbn);
+
+        $user = $request->user();
+        $vendorId = $user->vendor_id;
+
+        if (!$vendorId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Vendor profile not found'
+            ], 404);
+        }
 
         $product = Product::where('product_isbn', $isbn)->first();
 
@@ -264,10 +280,10 @@ class OrderController extends Controller
         }
 
         $basePrice       = $attribute->price ?? $product->product_price;
-        // $discountPercent = $attribute->product_discount ?? 0;
+        $discountPercent = $attribute->product_discount ?? 0;
 
-        // $discountAmount = round(($basePrice * $discountPercent) / 100);
-        // $finalPrice     = round($basePrice - $discountAmount);
+        $discountAmount = round(($basePrice * $discountPercent) / 100);
+        $finalPrice     = round($basePrice - $discountAmount);
 
         $basePath = url('front/images/product_images');
 
@@ -277,12 +293,11 @@ class OrderController extends Controller
                 'product_id'       => $product->id,
                 'product_name'     => $product->product_name,
                 'product_isbn'     => $product->product_isbn,
-                'mrp'       => round($basePrice),
-                // 'discount_percent' => $discountPercent,
-                // 'discount_amount'  => $discountAmount,
-                // 'final_price'      => $finalPrice,
+                'mrp'              => round($basePrice),
+                'discount_percent' => $discountPercent,
+                'discount_amount'  => $discountAmount,
+                'final_price'      => $finalPrice,
                 'stock'            => $attribute->stock,
-
                 'image_urls' => [
                     'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
                     'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
@@ -297,19 +312,32 @@ class OrderController extends Controller
         if ($resp = $this->checkAccess($request)) return $resp;
 
         $request->validate([
-            'coupon_code'     => 'required|string',
-            'sub_total'       => 'required|numeric|min:1',
-            'extra_discount'  => 'nullable|numeric|min:0|max:100'
+            'coupon_code'    => 'required|string',
+            'sub_total'      => 'required|numeric|min:1',
+            'extra_discount' => 'nullable|numeric|min:0'
         ]);
 
-        $vendorId      = $request->user()->vendor_id;
-        $subTotal      = $request->sub_total;
-        $extraPercent  = $request->extra_discount ?? 0;
+        $user = $request->user();
+        $vendorId = $user->vendor_id;
 
-        /* ================= APPLY STORE DISCOUNT FIRST ================= */
-        $storeDiscountAmount = round(($subTotal * $extraPercent) / 100);
-        $priceAfterStoreDiscount = $subTotal - $storeDiscountAmount;
+        if (!$vendorId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Vendor profile not found'
+            ], 404);
+        }
 
+        // Normalize values
+        $subTotal    = round((float) $request->sub_total, 2);
+        $storeDiscount = round((float) ($request->extra_discount ?? 0), 2);
+
+        // 🔒 Prevent over-discount
+        $storeDiscount = min($storeDiscount, $subTotal);
+
+        // Price after store discount (₹)
+        $priceAfterStoreDiscount = round($subTotal - $storeDiscount, 2);
+
+        // 🔍 Fetch valid coupon
         $coupon = Coupon::where('coupon_code', $request->coupon_code)
             ->where('vendor_id', $vendorId)
             ->where('status', 1)
@@ -323,26 +351,28 @@ class OrderController extends Controller
             ], 200);
         }
 
-        /* ================= COUPON ON DISCOUNTED PRICE ================= */
+        // 🧮 Coupon calculation
         if ($coupon->amount_type === 'Percentage') {
-            $discountAmount = round(($priceAfterStoreDiscount * $coupon->amount) / 100);
+            $couponDiscount = round(($priceAfterStoreDiscount * $coupon->amount) / 100, 2);
         } else {
-            $discountAmount = $coupon->amount;
+            $couponDiscount = round($coupon->amount, 2);
         }
 
-        $discountAmount = min($discountAmount, $priceAfterStoreDiscount);
+        // 🔒 Prevent coupon over-discount
+        $couponDiscount = min($couponDiscount, $priceAfterStoreDiscount);
 
         return response()->json([
             'status' => true,
             'data' => [
-                'coupon_code'      => $coupon->coupon_code,
-                'amount_type'      => $coupon->amount_type,
-                'amount'           => $coupon->amount,
-                'discount_amount'  => $discountAmount,
+                'coupon_code' => $coupon->coupon_code,
+                'amount_type' => $coupon->amount_type,
+                'amount' => $coupon->amount,
+                'discount_amount' => $couponDiscount,
                 'price_after_store_discount' => $priceAfterStoreDiscount
             ]
         ], 200);
     }
+
 
     public function processSale(Request $request)
     {
@@ -354,7 +384,7 @@ class OrderController extends Controller
             'customer_email'   => 'nullable|email',
             'customer_address' => 'nullable|string',
 
-            'extra_discount'   => 'nullable|numeric|min:0|max:100',
+            'extra_discount'   => 'nullable|numeric|min:0',
             'coupon_code'      => 'nullable|string',
 
             'cart' => 'required|array|min:1',
@@ -368,15 +398,18 @@ class OrderController extends Controller
         /* ================= MERGE DUPLICATE ITEMS ================= */
         $cart = collect($request->cart)
             ->groupBy('product_id')
-            ->map(fn($items) => [
-                'product_id' => $items[0]['product_id'],
-                'quantity'   => $items->sum('quantity')
-            ])
+            ->map(function ($items) {
+                return [
+                    'product_id' => $items[0]['product_id'],
+                    'quantity'   => collect($items)->sum('quantity')
+                ];
+            })
             ->values();
 
         DB::beginTransaction();
 
         try {
+
             $subTotal = 0;
             $resolvedItems = [];
 
@@ -388,7 +421,11 @@ class OrderController extends Controller
                     'vendor_id'  => $vendorId
                 ])->lockForUpdate()->first();
 
-                if (!$attribute || $attribute->stock < $item['quantity']) {
+                if (!$attribute) {
+                    throw new \Exception('Product not available for vendor. ID: ' . $item['product_id']);
+                }
+
+                if ($attribute->stock < $item['quantity']) {
                     throw new \Exception('Insufficient stock for product ID: ' . $item['product_id']);
                 }
 
@@ -397,28 +434,41 @@ class OrderController extends Controller
                     throw new \Exception('Product not found. ID: ' . $item['product_id']);
                 }
 
-                $price = $product->product_price;
-                $lineTotal = $price * $item['quantity'];
+                /* Use vendor price if exists */
+                $price =  $product->product_price;
+                $discountPercent = $attribute->product_discount ?? 0;
+                $discountAmount = round(($price * $discountPercent) / 100);
+                $finalPrice     = round($price - $discountAmount);
+
+
+
+
+
+                $lineTotal = $finalPrice * $item['quantity'];
                 $subTotal += $lineTotal;
 
                 $resolvedItems[] = [
                     'product'   => $product,
                     'attribute' => $attribute,
-                    'price'     => $price,
+                    'price'     => $finalPrice,
                     'quantity'  => $item['quantity']
                 ];
             }
 
-            /* ================= EXTRA DISCOUNT FIRST ================= */
-            $extraPercent = $request->extra_discount ?? 0;
-            $extraDiscountAmount = round(($subTotal * $extraPercent) / 100);
+            /* ================= STORE DISCOUNT (FLAT ₹) ================= */
+            $extraDiscountAmount = $request->extra_discount ?? 0;
+
+            /* Prevent over-discount */
+            $extraDiscountAmount = min($extraDiscountAmount, $subTotal);
+
             $priceAfterStoreDiscount = $subTotal - $extraDiscountAmount;
 
-            /* ================= COUPON AFTER STORE DISCOUNT ================= */
+            /* ================= COUPON DISCOUNT ================= */
             $couponAmount = 0;
             $couponCode   = null;
 
             if ($request->coupon_code) {
+
                 $coupon = Coupon::where('coupon_code', $request->coupon_code)
                     ->where('vendor_id', $vendorId)
                     ->where('status', 1)
@@ -435,6 +485,7 @@ class OrderController extends Controller
                     $couponAmount = $coupon->amount;
                 }
 
+                /* Prevent coupon over-discount */
                 $couponAmount = min($couponAmount, $priceAfterStoreDiscount);
                 $couponCode   = $coupon->coupon_code;
             }
@@ -461,14 +512,11 @@ class OrderController extends Controller
 
                 'coupon_code'      => $couponCode,
                 'coupon_amount'    => $couponAmount,
-                'extra_discount' => $extraDiscountAmount,
-
+                'extra_discount'   => $extraDiscountAmount,
                 'grand_total'      => $grandTotal
             ]);
 
-
-
-            /* ================= ORDER ITEMS + STOCK ================= */
+            /* ================= SAVE ORDER ITEMS + UPDATE STOCK ================= */
             foreach ($resolvedItems as $item) {
 
                 $item['attribute']->decrement('stock', $item['quantity']);
@@ -494,11 +542,14 @@ class OrderController extends Controller
                 'order_id'    => $order->id,
                 'sub_total'   => $subTotal,
                 'extra_discount_amount' => $extraDiscountAmount,
+                'price_after_store_discount' => $priceAfterStoreDiscount,
                 'coupon_discount' => $couponAmount,
                 'grand_total' => $grandTotal
             ], 200);
         } catch (\Exception $e) {
+
             DB::rollBack();
+
             return response()->json([
                 'status'  => false,
                 'message' => $e->getMessage()
