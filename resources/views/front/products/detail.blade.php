@@ -175,9 +175,9 @@
                                                 <input id="quantity_top" type="number" value="1" min="1"
                                                     name="quantity" />
                                             </div>
-                                            {{-- <button type="submit" class="btn btn-primary btnhover2"><i
+                                          <button type="submit" class="btn btn-primary btnhover2"><i
                                                     class="flaticon-shopping-cart-1"></i> <span>&nbsp;&nbsp;Add to
-                                                    cart</span></button> --}}
+                                                    cart</span></button>
                                         </form>
 
                                         <form action="{{ url('wishlist/add') }}" method="POST"
