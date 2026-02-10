@@ -219,23 +219,24 @@ class BookController extends Controller
                 'authors'
             ])->where('product_isbn', $query)->first();
 
-            $basePath = url('front/images/product_images');
-
-            $product->image_urls = [
-                'large' => $product->product_image
-                    ? $basePath . '/large/' . $product->product_image
-                    : null,
-
-                'medium' => $product->product_image
-                    ? $basePath . '/medium/' . $product->product_image
-                    : null,
-
-                'small' => $product->product_image
-                    ? $basePath . '/small/' . $product->product_image
-                    : null,
-            ];
-
             if ($product) {
+
+                $basePath = url('front/images/product_images');
+
+                $product->image_urls = [
+                    'large' => $product->product_image
+                        ? $basePath . '/large/' . $product->product_image
+                        : null,
+
+                    'medium' => $product->product_image
+                        ? $basePath . '/medium/' . $product->product_image
+                        : null,
+
+                    'small' => $product->product_image
+                        ? $basePath . '/small/' . $product->product_image
+                        : null,
+                ];
+
                 return response()->json([
                     'status' => true,
                     'source' => 'local',
@@ -244,8 +245,10 @@ class BookController extends Controller
                 ]);
             }
 
+            // If not found locally → fetch from external
             return $this->fetchFromIsbnDb($query);
         }
+
 
 
         $books = Product::where('product_name', 'LIKE', "%{$query}%")
