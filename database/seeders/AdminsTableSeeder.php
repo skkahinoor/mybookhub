@@ -14,9 +14,6 @@ class AdminsTableSeeder extends Seeder
      */
     public function run()
     {
-        //
-
-
         // My code: (Check DatabaseSeeder.php page too)
         // Database Seeding    // https://laravel.com/docs/9.x/seeding
         // Note: Check DatabaseSeeder.php
@@ -24,42 +21,40 @@ class AdminsTableSeeder extends Seeder
             [
                 'id'        => 1,
                 'name'      => 'Ahmed Yahya',
-                'type'      => 'superadmin',
-                'vendor_id' => 0, // `vendor_id` is zero 0 because 'type' is not 'vendor' (it's actually 'superadmin')
-                'mobile'    => '9800000000',
+                'type'      => 'admin',
+                'phone'    => '9800000000',
                 'email'     => 'admin@admin.com',
-                'password'  => '$2a$12$xvkjSScUPRexfcJTAy9ATutIeGUuRgJrjDIdL/.xlrddEvRZINpeC', // This is the encryption of '123456'    // using https://bcrypt-generator.com/
+                'password'  => '$2a$12$xvkjSScUPRexfcJTAy9ATutIeGUuRgJrjDIdL/.xlrddEvRZINpeC',
                 'image'     => '',
                 'status'    => 1,
             ],
 
-            
+
             [
                 'id'        => 2,
                 'name'      => 'John Singh - Vendor',
                 'type'      => 'vendor',
-                'vendor_id' => 1, // `vendor_id` is one 1 because 'type' is 'vendor'
-                'mobile'    => '9700000000',
+                'phone'    => '9700000000',
                 'email'     => 'john@admin.com',
-                'password'  => '$2a$12$xvkjSScUPRexfcJTAy9ATutIeGUuRgJrjDIdL/.xlrddEvRZINpeC', // This is the encryption of '123456'    // using https://bcrypt-generator.com/
+                'password'  => '$2a$12$xvkjSScUPRexfcJTAy9ATutIeGUuRgJrjDIdL/.xlrddEvRZINpeC',
                 'image'     => '',
-                'status'    => 1, // Our authentication logic in the login() method in the AdminController won't allow this admin logging in in case of 'status' = 0
+                'status'    => 1,
             ],
         ];
         // Note: Check DatabaseSeeder.php
         foreach ($adminRecords as $record) {
-            $user = \App\Models\User::create([
-                'name'     => $record['name'],
-                'email'    => $record['email'],
-                'phone'   => $record['mobile'],
-                'password' => $record['password'],
-                'status'   => $record['status'],
-                'profile_image' => $record['image'],
-                'vendor_id' => $record['vendor_id'] ?? 0,
-            ]);
+            $user = \App\Models\User::updateOrCreate(
+                ['email' => $record['email']],
+                [
+                    'name'     => $record['name'],
+                    'phone'   => $record['phone'],
+                    'password' => $record['password'],
+                    'status'   => $record['status'],
+                    'profile_image' => $record['image'],
+                ]
+            );
 
-            $roleName = ($record['type'] === 'superadmin') ? 'admin' : $record['type'];
-            $role = \Spatie\Permission\Models\Role::where('name', $roleName)->first();
+            $role = \Spatie\Permission\Models\Role::where('name', $record['type'])->first();
             if ($role) {
                 $user->assignRole($role);
                 $user->update(['role_id' => $role->id]);

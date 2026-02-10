@@ -242,63 +242,57 @@ class ProductsController extends Controller
     {
         Session::put('page', 'products');
 
-        $logos = HeaderLogo::first();
+        $logos      = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
-        $adminType = Auth::guard('admin')->user()->type;
-        $vendor_id = Auth::guard('admin')->user()->vendor_id;
+        $admin      = Auth::guard('admin')->user();
+        $adminType  = $admin->type;
+        $vendor_id  = $admin->vendor_id;
 
-        if ($adminType == 'vendor') {
-            $vendorStatus = Auth::guard('admin')->user()->status;
-            if ($vendorStatus == 0) {
-                return redirect('vendor/update-vendor-details/personal')
-                    ->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.');
-            }
+        // Vendor approval check
+        if ($adminType === 'vendor' && $admin->status == 0) {
+            return redirect('vendor/update-vendor-details/personal')
+                ->with(
+                    'error_message',
+                    'Your Vendor Account is not approved yet. Please complete your personal, business, and bank details.'
+                );
         }
 
-        // Different logic for vendor vs admin/superadmin
         if ($adminType === 'vendor') {
-            // For vendors: Fetch from ProductsAttribute table (old logic)
-            $productsQuery = ProductsAttribute::orderBy('id', 'desc')
+
+            $products = ProductsAttribute::where('vendor_id', $vendor_id)
+                ->where('admin_type', 'vendor')
+                ->orderBy('id', 'desc')
                 ->with([
                     'product:id,product_name,product_isbn,product_image,category_id,section_id,condition',
                     'product.category:id,category_name',
                     'product.section:id,name',
                     'vendor:id,user_id',
                     'admin:id,name',
-                ]);
+                ])
+                ->get();
+        }
+        else {
 
-            // Apply vendor filter
-            $productsQuery->where('vendor_id', $vendor_id)
-                ->where('admin_type', 'vendor');
-
-            // Execute query
-            $products = $productsQuery->get();
-        } else {
-            // For admin/superadmin: Fetch from products table with total stock
-            $productsQuery = Product::orderBy('id', 'desc')
+            $products = Product::orderBy('id', 'desc')
                 ->with([
                     'category:id,category_name',
                     'section:id,name',
-                ]);
+                ])
+                ->get();
 
-            // For admin/superadmin: Show all products that have any attributes (from any source)
-            // They can see products uploaded by vendors, admins, or superadmins
-            $productsQuery->whereHas('attributes');
-
-            // Execute query
-            $products = $productsQuery->get();
-
-            // Calculate total stock for each product from ALL sources (vendor, admin, superadmin)
             foreach ($products as $product) {
-                // Sum ALL stock from ALL sources for this product
                 $product->total_stock = ProductsAttribute::where('product_id', $product->id)
                     ->sum('stock');
             }
         }
 
-        return view('admin.products.products', compact('products', 'logos', 'headerLogo', 'adminType'));
+        return view(
+            'admin.products.products',
+            compact('products', 'logos', 'headerLogo', 'adminType')
+        );
     }
+
 
     public function updateProductStatus(Request $request)
     { // Update Product Status using AJAX in products.blade.php

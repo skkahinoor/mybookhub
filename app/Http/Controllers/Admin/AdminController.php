@@ -123,7 +123,7 @@ class AdminController extends Controller
             if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
                 $credentials['email'] = $loginInput;
             } elseif (strlen($numericLogin) >= 10 && strlen($numericLogin) <= 11) {
-                $credentials['mobile'] = $numericLogin;
+                $credentials['phone'] = $numericLogin;
             } else {
                 return redirect()->back()->withErrors(['login' => 'Enter a valid email or 10/11-digit mobile number.'])->withInput();
             }

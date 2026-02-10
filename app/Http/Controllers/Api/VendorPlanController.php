@@ -233,6 +233,100 @@ class VendorPlanController extends Controller
         }
     }
 
+    public function expoverify(Request $request)
+    {
+        $request->validate([
+            'razorpay_order_id' => 'required',
+            'razorpay_payment_id' => 'required',
+            'razorpay_signature' => 'required',
+        ]);
+
+        $user = $request->user();
+
+        if ($user->type !== 'vendor' || !$user->vendor_id) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $vendor = Vendor::findOrFail($user->vendor_id);
+
+        // 🔐 Verify order belongs to vendor
+        if ($vendor->razorpay_order_id !== $request->razorpay_order_id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order mismatch'
+            ], 400);
+        }
+
+        // 🔐 Signature Verification
+        $generatedSignature = hash_hmac(
+            'sha256',
+            $request->razorpay_order_id . '|' . $request->razorpay_payment_id,
+            env('RAZORPAY_KEY_SECRET')
+        );
+
+        if (!hash_equals($generatedSignature, $request->razorpay_signature)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid signature'
+            ], 400);
+        }
+
+        try {
+
+            $client = new Client();
+
+            $payment = $client->get(
+                'https://api.razorpay.com/v1/payments/' . $request->razorpay_payment_id,
+                ['auth' => [env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET')]]
+            );
+
+            $paymentData = json_decode($payment->getBody(), true);
+
+            if ($paymentData['status'] !== 'captured') {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Payment not captured'
+                ], 400);
+            }
+
+            // 🚫 Prevent duplicate processing
+            if ($vendor->razorpay_payment_id === $request->razorpay_payment_id) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Payment already processed'
+                ]);
+            }
+
+            // 🔥 Renewal Logic
+            $expiry = ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture())
+                ? $vendor->plan_expires_at->copy()->addMonth()
+                : now()->addMonth();
+
+            $vendor->update([
+                'plan' => 'pro',
+                'plan_started_at' => now(),
+                'plan_expires_at' => $expiry,
+                'razorpay_payment_id' => $request->razorpay_payment_id,
+                'razorpay_signature' => $request->razorpay_signature,
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Pro plan activated successfully',
+                'expires_at' => $expiry
+            ]);
+        } catch (\Exception $e) {
+
+            Log::error('Payment Verify Error', ['error' => $e->getMessage()]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Verification failed'
+            ], 500);
+        }
+    }
+
+
     public function webhookupgrade(Request $request)
     {
         if ($resp = $this->checkAccess($request)) {
@@ -314,66 +408,72 @@ class VendorPlanController extends Controller
 
     public function razorpayWebhook(Request $request)
     {
-        $signature = $request->header('X-Razorpay-Signature');
-        $secret = env('RAZORPAY_WEBHOOK_SECRET');
+        Log::info('Webhook hit');
 
-        $expected = hash_hmac(
-            'sha256',
-            $request->getContent(),
-            $secret
-        );
+        $secret = env('RAZORPAY_WEBHOOK_SECRET');
+        $signature = $request->header('X-Razorpay-Signature');
+        $payload = $request->getContent();
+
+        $expected = hash_hmac('sha256', $payload, $secret);
 
         if (!hash_equals($expected, $signature)) {
-            Log::warning('Razorpay webhook signature mismatch');
+            Log::warning('Webhook signature mismatch');
             return response()->json(['status' => false], 403);
         }
 
-        $event = $request->event;
+        $data = json_decode($payload, true);
 
-        // ✅ HANDLE PAYMENT LINK EVENTS
-        if (in_array($event, ['payment_link.paid', 'payment.captured'])) {
+        Log::info('Webhook Data:', $data);
 
-            $entity =
-                $request->payload['payment']['entity']
-                ?? $request->payload['payment_link']['entity']
-                ?? null;
+        $event = $data['event'] ?? null;
 
-            if (!$entity) {
-                return response()->json(['status' => true]);
-            }
+        if ($event === 'payment_link.paid') {
 
-            $notes = $entity['notes'] ?? [];
-            $vendorId = $notes['vendor_id'] ?? null;
+            $entity = $data['payload']['payment_link']['entity'] ?? null;
+        } elseif ($event === 'payment.captured') {
 
-            if (!$vendorId) {
-                return response()->json(['status' => true]);
-            }
-
-            $vendor = Vendor::find($vendorId);
-
-            if (!$vendor) {
-                return response()->json(['status' => true]);
-            }
-
-            $expiry = ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture())
-                ? $vendor->plan_expires_at->addMonth()
-                : now()->addMonth();
-
-            $vendor->update([
-                'plan' => 'pro',
-                'plan_started_at' => now(),
-                'plan_expires_at' => $expiry,
-                'razorpay_payment_id' => $entity['id'] ?? null,
-            ]);
-
-            Log::info('Vendor plan upgraded', [
-                'vendor_id' => $vendor->id,
-                'expires_at' => $expiry,
-            ]);
+            $entity = $data['payload']['payment']['entity'] ?? null;
+        } else {
+            return response()->json(['status' => true]);
         }
 
-        return response()->json(['status' => true]);
+        if (!$entity) {
+            return response()->json(['status' => true]);
+        }
+
+        $notes = $entity['notes'] ?? [];
+        $vendorId = $notes['vendor_id'] ?? null;
+
+        if (!$vendorId) {
+            Log::warning('Vendor ID missing in notes');
+            return response()->json(['status' => true]);
+        }
+
+        $vendor = Vendor::find($vendorId);
+
+        if (!$vendor) {
+            Log::warning('Vendor not found');
+            return response()->json(['status' => true]);
+        }
+
+        $expiry = ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture())
+            ? $vendor->plan_expires_at->copy()->addMonth()
+            : now()->addMonth();
+
+        $vendor->update([
+            'plan' => 'pro',
+            'plan_started_at' => now(),
+            'plan_expires_at' => $expiry,
+            'razorpay_payment_id' => $entity['id'] ?? null,
+        ]);
+
+        Log::info('Vendor upgraded successfully', [
+            'vendor_id' => $vendor->id,
+        ]);
+
+        return response()->json(['status' => true], 200);
     }
+
 
     public function downgrade(Request $request)
     {

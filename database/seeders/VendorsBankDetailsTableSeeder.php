@@ -15,7 +15,7 @@ class VendorsBankDetailsTableSeeder extends Seeder
     public function run()
     {
 
-        
+
         // Note: Check DatabaseSeeder.php
         $vendorsBankDetailsRecords = [
             [
@@ -28,6 +28,11 @@ class VendorsBankDetailsTableSeeder extends Seeder
             ],
         ];
         // Note: Check DatabaseSeeder.php
-        \App\Models\VendorsBankDetail::insert($vendorsBankDetailsRecords);
+        foreach ($vendorsBankDetailsRecords as $record) {
+            \App\Models\VendorsBankDetail::updateOrCreate(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

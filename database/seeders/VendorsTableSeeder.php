@@ -14,25 +14,25 @@ class VendorsTableSeeder extends Seeder
      */
     public function run()
     {
-        //
-        // Databas Seeding
-        // Note: Check DatabaseSeeder.php
-        $vendorRecords = [
-            [
-                'id'      => 1,
-                'name'    => 'Yasser Fouaad - Vendor',
-                'address' => '17 El-Salam St.',
-                'city'    => 'Maadi',
-                'state'   => 'Cairo',
-                'country' => 'Egypt',
-                'pincode' => '110001',
-                'mobile'  => '9700000000',
-                'email'   => 'yasser@admin.com',
-                'status'  => 1,
-            ],
-        ];
+        // Find existing vendor user (created in AdminsTableSeeder)
+        $user = \App\Models\User::where('email', 'john@admin.com')->first();
 
-        // Note: Check DatabaseSeeder.php
-        \App\Models\Vendor::insert($vendorRecords);
+        if ($user) {
+            $vendorRecords = [
+                [
+                    'id'      => 1,
+                    'user_id' => $user->id,
+                    'status'  => 1,
+                    'confirm' => 'Yes',
+                ],
+            ];
+
+            foreach ($vendorRecords as $record) {
+                \App\Models\Vendor::updateOrCreate(
+                    ['id' => $record['id']],
+                    $record
+                );
+            }
+        }
     }
 }

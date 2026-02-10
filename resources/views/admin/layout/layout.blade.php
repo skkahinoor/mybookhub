@@ -39,7 +39,11 @@
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ url('admin/css/vertical-layout-light/style.css') }}">
     <!-- endinject -->
-    <link rel="shortcut icon" href="{{ asset('uploads/favicons/' . $headerLogo->favicon) }}" />
+    @if(!empty($headerLogo))
+    <link rel="shortcut icon"
+          href="{{ asset('uploads/favicons/' . $headerLogo->favicon) }}" />
+    @endif
+
 
     {{-- DataTable --}}
     <link rel="stylesheet" href="{{ url('admin/css/bootstrap.css') }}">
@@ -61,8 +65,10 @@
 
         <div class="navbar-brand-wrapper">
             <a class="navbar-brand" href="{{ url('admin/dashboard') }}">
+                 @if (!empty($headerLogo))
                 <img src="{{ asset('uploads/logos/' . ($headerLogo->logo ?? 'default.png')) }}" alt="logo"
                     height="50">
+                    @endif
             </a>
         </div>
 
