@@ -168,72 +168,72 @@ class VendorPlanController extends Controller
         }
     }
 
-    // public function verify(Request $request)
-    // {
-    //     $request->validate([
-    //         'razorpay_order_id' => 'required',
-    //         'razorpay_payment_id' => 'required',
-    //         'razorpay_signature' => 'required',
-    //     ]);
-
-    //     $user = $request->user();
-
-    //     if ($user->type !== 'vendor') {
-    //         return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
-    //     }
-
-    //     $vendor = Vendor::findOrFail($user->vendor_id);
-
-    //     // Signature verify
-    //     $generatedSignature = hash_hmac(
-    //         'sha256',
-    //         $request->razorpay_order_id . '|' . $request->razorpay_payment_id,
-    //         env('RAZORPAY_KEY_SECRET')
-    //     );
-
-    //     if ($generatedSignature !== $request->razorpay_signature) {
-    //         return response()->json(['status' => false, 'message' => 'Invalid signature'], 400);
-    //     }
-
-    //     try {
-    //         $client = new Client();
-
-    //         $payment = $client->get(
-    //             'https://api.razorpay.com/v1/payments/' . $request->razorpay_payment_id,
-    //             ['auth' => [env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET')]]
-    //         );
-
-    //         $paymentData = json_decode($payment->getBody(), true);
-
-    //         if (!in_array($paymentData['status'], ['captured', 'authorized'])) {
-    //             return response()->json(['status' => false, 'message' => 'Payment not completed'], 400);
-    //         }
-
-    //         // Renewal logic
-    //         $expiry = ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture())
-    //             ? $vendor->plan_expires_at->addMonth()
-    //             : now()->addMonth();
-
-    //         $vendor->update([
-    //             'plan' => 'pro',
-    //             'plan_started_at' => now(),
-    //             'plan_expires_at' => $expiry,
-    //             'razorpay_payment_id' => $request->razorpay_payment_id,
-    //             'razorpay_signature' => $request->razorpay_signature,
-    //         ]);
-
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Pro plan activated successfully',
-    //             'expires_at' => $expiry
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         Log::error('Payment Verify Error', ['error' => $e->getMessage()]);
-    //         return response()->json(['status' => false, 'message' => 'Verification failed'], 500);
-    //     }
-    // }
-
     public function verify(Request $request)
+    {
+        $request->validate([
+            'razorpay_order_id' => 'required',
+            'razorpay_payment_id' => 'required',
+            'razorpay_signature' => 'required',
+        ]);
+
+        $user = $request->user();
+
+        if ($user->type !== 'vendor') {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $vendor = Vendor::findOrFail($user->vendor_id);
+
+        // Signature verify
+        $generatedSignature = hash_hmac(
+            'sha256',
+            $request->razorpay_order_id . '|' . $request->razorpay_payment_id,
+            env('RAZORPAY_KEY_SECRET')
+        );
+
+        if ($generatedSignature !== $request->razorpay_signature) {
+            return response()->json(['status' => false, 'message' => 'Invalid signature'], 400);
+        }
+
+        try {
+            $client = new Client();
+
+            $payment = $client->get(
+                'https://api.razorpay.com/v1/payments/' . $request->razorpay_payment_id,
+                ['auth' => [env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET')]]
+            );
+
+            $paymentData = json_decode($payment->getBody(), true);
+
+            if (!in_array($paymentData['status'], ['captured', 'authorized'])) {
+                return response()->json(['status' => false, 'message' => 'Payment not completed'], 400);
+            }
+
+            // Renewal logic
+            $expiry = ($vendor->plan === 'pro' && $vendor->plan_expires_at?->isFuture())
+                ? $vendor->plan_expires_at->addMonth()
+                : now()->addMonth();
+
+            $vendor->update([
+                'plan' => 'pro',
+                'plan_started_at' => now(),
+                'plan_expires_at' => $expiry,
+                'razorpay_payment_id' => $request->razorpay_payment_id,
+                'razorpay_signature' => $request->razorpay_signature,
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Pro plan activated successfully',
+                'expires_at' => $expiry
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Payment Verify Error', ['error' => $e->getMessage()]);
+            return response()->json(['status' => false, 'message' => 'Verification failed'], 500);
+        }
+    }
+
+    public function expoverify(Request $request)
     {
         $request->validate([
             'razorpay_order_id' => 'required',
