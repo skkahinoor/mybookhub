@@ -21,6 +21,10 @@
                                     <a href="{{ url('admin/import-product') }}" class="btn btn-success">
                                         <i class="mdi mdi-plus"></i> Import Book
                                     </a>
+
+                                    <a href="{{ url('admin/import-images') }}" class="btn btn-warning">
+                                    <i class="mdi mdi-camera"></i> Import Images
+                                    </a>
                                 </div>
                             @endif
 

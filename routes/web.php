@@ -247,6 +247,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             Route::get('import-product', [AdminProductsController::class, 'importindex']);
             Route::post('import-product', [AdminProductsController::class, 'importStore']);
             Route::get('import-product/template', [AdminProductsController::class, 'downloadTemplate']);
+            Route::get('import-images', [AdminProductsController::class, 'importImages'])->name('admin.import.images');
+            Route::post('import-images', [AdminProductsController::class, 'uploadImages'])->name('admin.import.images.upload');
         });
 
         // Attributes

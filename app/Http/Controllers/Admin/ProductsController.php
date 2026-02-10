@@ -218,6 +218,49 @@ class ProductsController extends Controller
         }
     }
 
+    public function importImages()
+    {
+        return view('admin.products.import_images');
+    }
+
+    public function uploadImages(Request $request)
+    {
+        $request->validate([
+            'images'   => 'required',
+            'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:5120',
+        ]);
+
+        if ($request->hasFile('images')) {
+
+            foreach ($request->file('images') as $image) {
+
+                // ORIGINAL IMAGE NAME (NOT CHANGED)
+                $imageName = $image->getClientOriginalName();
+                $image_tmp = $image->getRealPath();
+
+                // Large
+                Image::make($image_tmp)->resize(1000, 1000, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })->save('front/images/product_images/large/' . $imageName);
+
+                // Medium
+                Image::make($image_tmp)->resize(500, 500, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })->save('front/images/product_images/medium/' . $imageName);
+
+                // Small
+                Image::make($image_tmp)->resize(250, 250, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })->save('front/images/product_images/small/' . $imageName);
+            }
+        }
+
+        return redirect()->back()->with('success_message', 'Images uploaded successfully!');
+    }
+
     private function autoCreate(&$map, $model, $name, $extra = [])
     {
         if (!$name) {
@@ -271,8 +314,7 @@ class ProductsController extends Controller
                     'admin:id,name',
                 ])
                 ->get();
-        }
-        else {
+        } else {
 
             $products = Product::orderBy('id', 'desc')
                 ->with([
