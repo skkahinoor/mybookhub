@@ -195,6 +195,21 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             'destroy' => 'admin.institution_managements.destroy',
         ]);
         Route::post('update-institution-status', [InstitutionManagementController::class, 'updateStatus'])->name('admin.institution_managements.update_status');
+        // Country & State Management
+        Route::get('countries-states', [App\Http\Controllers\Admin\CountryStateController::class, 'index'])->name('admin.countries_states.index');
+        Route::match(['get', 'post'], 'add-edit-country/{id?}', [App\Http\Controllers\Admin\CountryStateController::class, 'addEditCountry'])->name('admin.add_edit_country');
+        Route::get('delete-country/{id}', [App\Http\Controllers\Admin\CountryStateController::class, 'deleteCountry'])->name('admin.delete_country');
+        Route::post('update-country-status', [App\Http\Controllers\Admin\CountryStateController::class, 'updateCountryStatus'])->name('admin.update_country_status');
+        Route::match(['get', 'post'], 'add-edit-state/{id?}', [App\Http\Controllers\Admin\CountryStateController::class, 'addEditState'])->name('admin.add_edit_state');
+        Route::get('delete-state/{id}', [App\Http\Controllers\Admin\CountryStateController::class, 'deleteState'])->name('admin.delete_state');
+        Route::post('update-state-status', [App\Http\Controllers\Admin\CountryStateController::class, 'updateStateStatus'])->name('admin.update_state_status');
+
+        // District Management
+        Route::get('districts', [App\Http\Controllers\Admin\DistrictController::class, 'index'])->name('admin.districts.index');
+        Route::match(['get', 'post'], 'add-edit-district/{id?}', [App\Http\Controllers\Admin\DistrictController::class, 'addEditDistrict'])->name('admin.add_edit_district');
+        Route::get('delete-district/{id}', [App\Http\Controllers\Admin\DistrictController::class, 'deleteDistrict'])->name('admin.delete_district');
+        Route::post('update-district-status', [App\Http\Controllers\Admin\DistrictController::class, 'updateDistrictStatus'])->name('admin.update_district_status');
+        
         Route::get('institution-management/{id}/details', [InstitutionManagementController::class, 'getDetails'])->name('institution_managements.get_details');
         // Cities removed
 

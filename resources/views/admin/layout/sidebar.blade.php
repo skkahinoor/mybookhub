@@ -397,6 +397,12 @@
                                 @if (Session::get('page') == 'students') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('admin/students') }}">Students</a></li>
                         @endcan
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'districts') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.districts.index') }}">Districts</a></li>
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'countries_states') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.countries_states.index') }}">Country & State</a></li>
                     </ul>
                 </div>
 
