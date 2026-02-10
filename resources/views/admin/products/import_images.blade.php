@@ -5,12 +5,17 @@
 
     <div class="row">
         <div class="col-12">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-body">
-                    <h4 class="card-title mb-4">Import Product Images - Media Gallery</h4>
+
+                    <h4 class="card-title mb-4">
+                        Import Product Images - Media Gallery
+                    </h4>
 
                     @if(session('success_message'))
-                        <div class="alert alert-success">{{ session('success_message') }}</div>
+                        <div class="alert alert-success">
+                            {{ session('success_message') }}
+                        </div>
                     @endif
 
                     @if ($errors->any())
@@ -23,36 +28,78 @@
                         </div>
                     @endif
 
-                    <form method="POST" action="{{ route('admin.import.images.upload') }}" enctype="multipart/form-data" id="upload-form">
+                    <form method="POST"
+                          action="{{ route('admin.import.images.upload') }}"
+                          enctype="multipart/form-data"
+                          id="upload-form">
                         @csrf
 
+                        <!-- Dropzone -->
                         <div class="upload-container">
-                            <div class="dropzone" id="dropzone">
-                                <div class="dropzone-text">
+
+                            <div class="dropzone position-relative">
+
+                                <div class="dropzone-text text-center">
                                     <i class="mdi mdi-cloud-upload display-3 text-muted"></i>
                                     <h5>Drag & Drop images here or click to browse</h5>
-                                    <p class="text-muted">Supported formats: JPG, JPEG, PNG, WEBP</p>
+                                    <p class="text-muted">
+                                        Supported: JPG, JPEG, PNG, WEBP
+                                    </p>
                                 </div>
-                                <input type="file" name="images[]" id="file-input" class="file-input" multiple accept="image/*" required>
+
+                                <!-- IMPORTANT FIX -->
+                                <input type="file"
+                                       name="images[]"
+                                       id="file-input"
+                                       class="file-input"
+                                       multiple
+                                       accept="image/*"
+                                       required>
                             </div>
 
-                            <div class="gallery-preview mt-4" id="gallery-preview" style="display: none;">
-                                <h5 class="mb-3">Selected Images (<span id="selected-count">0</span>)</h5>
-                                <div class="row" id="gallery-grid">
-                                    <!-- Preview items will be added here -->
+                            <!-- Preview -->
+                            <div class="gallery-preview mt-4"
+                                 id="gallery-preview"
+                                 style="display:none;">
+                                <h5>
+                                    Selected Images
+                                    (<span id="selected-count">0</span>)
+                                </h5>
+                                <div class="row g-3"
+                                     id="gallery-grid"></div>
+                            </div>
+
+                            <!-- Progress -->
+                            <div class="progress mt-4"
+                                 id="progress-wrapper"
+                                 style="height:25px; display:none;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     id="progress-bar"
+                                     style="width:0%">
+                                    0%
                                 </div>
                             </div>
+
                         </div>
 
+                        <!-- Buttons -->
                         <div class="mt-4">
-                            <button type="submit" class="btn btn-primary mr-2">
-                                <i class="mdi mdi-cloud-upload"></i> Upload Images
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    id="upload-btn">
+                                Upload Images
                             </button>
-                            <button type="button" class="btn btn-light" id="clear-all-btn" style="display: none;">
+
+                            <button type="button"
+                                    class="btn btn-danger"
+                                    id="clear-btn"
+                                    style="display:none;">
                                 Clear All
                             </button>
                         </div>
+
                     </form>
+
                 </div>
             </div>
         </div>
@@ -60,195 +107,191 @@
 
 </div>
 
+<!-- ================= STYLE ================= -->
 <style>
-    .upload-container {
-        border: 1px solid #e3e3e3;
-        border-radius: 8px;
-        padding: 20px;
-        background: #f9f9f9;
+
+.upload-container {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.dropzone {
+    border: 2px dashed #bbb;
+    border-radius: 8px;
+    padding: 60px 20px;
+    text-align: center;
+    background: #fff;
+    cursor: pointer;
+    transition: 0.3s;
+    position: relative;
+}
+
+.dropzone:hover {
+    border-color: #4B49AC;
+    background: #f0f0fa;
+}
+
+/* MAIN FIX */
+.file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.gallery-item {
+    position: relative;
+}
+
+.gallery-img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.remove-btn {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    background: red;
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.file-info {
+    font-size: 12px;
+    text-align: center;
+    margin-top: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .gallery-img {
+        height: 120px;
     }
-    .dropzone {
-        border: 2px dashed #b1b1b1;
-        border-radius: 6px;
-        padding: 40px 20px;
-        text-align: center;
-        background: #fff;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-    }
-    .dropzone:hover, .dropzone.dragover {
-        border-color: #4B49AC;
-        background-color: #f0f0fa;
-    }
-    .file-input {
-        display: none;
-    }
-    .gallery-item {
-        position: relative;
-        margin-bottom: 20px;
-    }
-    /* ... existing CSS ... */
-    .dropzone-text {
-        pointer-events: none;
-    }
+}
+
 </style>
 
+<!-- ================= SCRIPT ================= -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const dropzone = document.getElementById('dropzone');
-        const fileInput = document.getElementById('file-input');
-        const galleryPreview = document.getElementById('gallery-preview');
-        const galleryGrid = document.getElementById('gallery-grid');
-        const selectedCount = document.getElementById('selected-count');
-        const clearAllBtn = document.getElementById('clear-all-btn');
-        
-        // DataTransfer object to manage files
-        const dataTransfer = new DataTransfer();
-        let dragCounter = 0;
+document.addEventListener("DOMContentLoaded", function () {
 
-        // Open file selector when clicking dropzone
-        dropzone.addEventListener('click', function() {
-            fileInput.click();
+    const fileInput = document.getElementById("file-input");
+    const galleryGrid = document.getElementById("gallery-grid");
+    const galleryPreview = document.getElementById("gallery-preview");
+    const selectedCount = document.getElementById("selected-count");
+    const clearBtn = document.getElementById("clear-btn");
+
+    // IMPORTANT
+    let dataTransfer = new DataTransfer();
+
+    // When selecting files
+    fileInput.addEventListener("change", function () {
+
+        Array.from(fileInput.files).forEach(file => {
+            dataTransfer.items.add(file);
+            previewFile(file);
         });
 
-        // Handle Drag & Drop events
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropzone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        dropzone.addEventListener('dragenter', function(e) {
-            dragCounter++;
-            dropzone.classList.add('dragover');
-        });
-
-        dropzone.addEventListener('dragleave', function(e) {
-            dragCounter--;
-            if (dragCounter <= 0) {
-                dropzone.classList.remove('dragover');
-                dragCounter = 0;
-            }
-        });
-
-        dropzone.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            dragCounter = 0;
-            dropzone.classList.remove('dragover');
-            
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
-        }
-
-        // Handle File Input Change
-        fileInput.addEventListener('change', function() {
-            // Add new files to our dataTransfer
-            const newFiles = Array.from(fileInput.files);
-            handleFiles(newFiles);
-            
-            // Note: We don't need to reset fileInput value because we overwrite it in updateMainInput
-            // But if user clicks Cancel, change doesn't fire.
-        });
-        
-        function handleFiles(files) {
-            if (files.length > 0) {
-                Array.from(files).forEach(file => {
-                    // Check for duplicates based on name, size, lastModified
-                    let exists = Array.from(dataTransfer.files).some(f => 
-                        f.name === file.name && 
-                        f.size === file.size && 
-                        f.lastModified === file.lastModified
-                    );
-                    
-                    if (!exists && file.type.startsWith('image/')) {
-                        dataTransfer.items.add(file);
-                        previewFile(file);
-                    }
-                });
-
-                updateMainInput();
-            }
-        }
-
-        function previewFile(file) {
-            galleryPreview.style.display = 'block';
-            clearAllBtn.style.display = 'inline-block';
-
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onloadend = function() {
-                const col = document.createElement('div');
-                col.className = 'col-6 col-sm-4 col-md-3 col-lg-2 gallery-item';
-                
-                col.innerHTML = `
-                    <div class="card">
-                        <div class="remove-btn" title="Remove">&times;</div>
-                        <img src="${reader.result}" class="gallery-img" alt="${file.name}">
-                        <div class="file-info text-center" title="${file.name}">${file.name}</div>
-                    </div>
-                `;
-                
-                // Add remove event
-                col.querySelector('.remove-btn').addEventListener('click', function(e) {
-                    e.stopPropagation(); // prevent other clicks
-                    removeFile(file, col);
-                });
-
-                galleryGrid.appendChild(col);
-                updateCount();
-            }
-        }
-
-        function removeFile(fileToRemove, colElement) {
-            const newDataTransfer = new DataTransfer();
-            
-            // Copy all files EXCEPT the one we are removing
-            Array.from(dataTransfer.files).forEach(file => {
-                // Unique identification: name + size + lastModified
-                if (file !== fileToRemove && 
-                   (file.name !== fileToRemove.name || file.size !== fileToRemove.size || file.lastModified != fileToRemove.lastModified)) {
-                    newDataTransfer.items.add(file);
-                }
-            });
-            
-            // Update the global dataTransfer
-            dataTransfer.items.clear();
-            Array.from(newDataTransfer.files).forEach(file => dataTransfer.items.add(file));
-            
-            // Update UI
-            colElement.remove();
-            updateMainInput();
-            
-            if (dataTransfer.files.length === 0) {
-                galleryPreview.style.display = 'none';
-                clearAllBtn.style.display = 'none';
-            }
-        }
-
-        function updateMainInput() {
-            fileInput.files = dataTransfer.files;
-            updateCount();
-        }
-
-        function updateCount() {
-            selectedCount.textContent = dataTransfer.files.length;
-        }
-
-        clearAllBtn.addEventListener('click', function() {
-            dataTransfer.items.clear();
-            fileInput.files = dataTransfer.files;
-            galleryGrid.innerHTML = '';
-            galleryPreview.style.display = 'none';
-            clearAllBtn.style.display = 'none';
-            updateCount();
-        });
+        updateInputFiles();
     });
-</script>
-@endsection
 
+    // Preview image
+    function previewFile(file) {
+
+        galleryPreview.style.display = "block";
+        clearBtn.style.display = "inline-block";
+
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+
+            const col = document.createElement("div");
+            col.className = "col-6 col-sm-4 col-md-3 col-lg-2 gallery-item";
+
+            col.innerHTML = `
+                <div class="position-relative">
+                    <div class="remove-btn">&times;</div>
+                    <img src="${e.target.result}" class="gallery-img">
+                    <div class="file-info">${file.name}</div>
+                </div>
+            `;
+
+            // REMOVE BUTTON EVENT
+            col.querySelector(".remove-btn").addEventListener("click", function () {
+                removeFile(file, col);
+            });
+
+            galleryGrid.appendChild(col);
+            updateCount();
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    // Remove file properly
+    function removeFile(fileToRemove, element) {
+
+        const newTransfer = new DataTransfer();
+
+        Array.from(dataTransfer.files).forEach(file => {
+            if (
+                file.name !== fileToRemove.name ||
+                file.size !== fileToRemove.size ||
+                file.lastModified !== fileToRemove.lastModified
+            ) {
+                newTransfer.items.add(file);
+            }
+        });
+
+        dataTransfer = newTransfer;
+
+        updateInputFiles();
+        element.remove();
+
+        if (dataTransfer.files.length === 0) {
+            galleryPreview.style.display = "none";
+            clearBtn.style.display = "none";
+        }
+    }
+
+    function updateInputFiles() {
+        fileInput.files = dataTransfer.files;
+        updateCount();
+    }
+
+    function updateCount() {
+        selectedCount.innerText = dataTransfer.files.length;
+    }
+
+    // Clear All
+    clearBtn.addEventListener("click", function () {
+        dataTransfer = new DataTransfer();
+        fileInput.files = dataTransfer.files;
+        galleryGrid.innerHTML = "";
+        galleryPreview.style.display = "none";
+        clearBtn.style.display = "none";
+        updateCount();
+    });
+
+});
+</script>
+
+
+@endsection
