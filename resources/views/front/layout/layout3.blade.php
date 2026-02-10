@@ -26,7 +26,11 @@
     <meta name="app-url" content="{{ config('app.url') }}">
 
     <!-- FAVICONS ICON -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}" />
+    @if(!empty($logos) && $logos->isNotEmpty())
+    <link rel="icon" type="image/x-icon"
+          href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}">
+@endif
+
 
     <!-- PAGE TITLE HERE -->
     <title>
@@ -156,8 +160,12 @@
                 <div class="container clearfix">
                     <!-- Website Logo -->
                     <div class="logo-header logo-dark">
-                        <a href="{{ url('/') }}"><img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
-                                alt="BookHub"></a>
+                        @if(!empty($logos) && $logos->isNotEmpty())
+    <a href="{{ url('/') }}">
+        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
+    </a>
+@endif
+
                     </div>
 
                     <!-- EXTRA NAV -->
@@ -427,8 +435,12 @@
                     <div class="container clearfix">
                         <!-- Website Logo -->
                         <div class="logo-header logo-dark">
-                            <a href="{{ url('/') }}"><img
-                                    src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub"></a>
+                            @if(!empty($logos) && $logos->isNotEmpty())
+    <a href="{{ url('/') }}">
+        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
+    </a>
+@endif
+
                         </div>
 
                         <!-- Nav Toggle Button -->
@@ -450,9 +462,12 @@
                         <!-- Main Nav -->
                         <div class="header-nav navbar-collapse collapse justify-content-start" id="navbarNavDropdown">
                             <div class="logo-header logo-dark">
-                                <a href="{{ url('/') }}"><img
-                                        src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
-                                        alt=""></a>
+                                @if(!empty($logos) && $logos->isNotEmpty())
+    <a href="{{ url('/') }}">
+        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
+    </a>
+@endif
+
                             </div>
                             <div class="search-input">
                                 <div class="input-group">
@@ -573,9 +588,12 @@
                         <div class="col-xl-3 col-lg-12 wow fadeInUp" data-wow-delay="0.1s">
                             <div class="widget widget_about">
                                 <div class="footer-logo logo-white">
-                                    <a href="index.html"><img
-                                            src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
-                                            alt=""></a>
+                                    @if(!empty($logos) && $logos->isNotEmpty())
+    <a href="{{ url('/') }}">
+        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
+    </a>
+@endif
+
                                 </div>
                                 <p class="text">Bookhub - BookStore Script System is an online Discovering great
                                     books website
