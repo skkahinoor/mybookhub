@@ -85,6 +85,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('admin.reports.sales_reports.index');
         Route::get('reports/sales_reports/{id}', [SalesReportController::class, 'show'])->name('admin.reports.sales_reports.show');
 
+        // Stock Report (Admin)
+        Route::get('reports/stock_report', [App\Http\Controllers\Admin\StockReportController::class, 'index'])->name('admin.reports.stock_report');
+
         // Notifications
         Route::get('notifications', 'NotificationController@index')->name('notifications.index');
         Route::get('notifications/get', 'NotificationController@getNotifications')->name('notifications.get');
@@ -209,7 +212,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-district/{id?}', [App\Http\Controllers\Admin\DistrictController::class, 'addEditDistrict'])->name('admin.add_edit_district');
         Route::get('delete-district/{id}', [App\Http\Controllers\Admin\DistrictController::class, 'deleteDistrict'])->name('admin.delete_district');
         Route::post('update-district-status', [App\Http\Controllers\Admin\DistrictController::class, 'updateDistrictStatus'])->name('admin.update_district_status');
-        
+
         Route::get('institution-management/{id}/details', [InstitutionManagementController::class, 'getDetails'])->name('institution_managements.get_details');
         // Cities removed
 
