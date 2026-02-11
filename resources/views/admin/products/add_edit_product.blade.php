@@ -272,7 +272,7 @@
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="new"
                                             value="new" autocomplete="off"
-                                            {{ old('condition', !empty($product->id) ? ($product->condition ?? 'new') : 'new') === 'new' ? 'checked' : '' }}>
+                                            {{ old('condition', !empty($product->id) ? $product->condition ?? 'new' : 'new') === 'new' ? 'checked' : '' }}>
                                         <label for="new">
                                             <i class="mdi mdi-book-open-page-variant"></i> New
                                         </label>
@@ -281,7 +281,7 @@
                                     <div>
                                         <input type="radio" class="btn-check" name="condition" id="old"
                                             value="old" autocomplete="off"
-                                            {{ old('condition', !empty($product->id) ? ($product->condition ?? 'new') : 'new') === 'old' ? 'checked' : '' }}>
+                                            {{ old('condition', !empty($product->id) ? $product->condition ?? 'new' : 'new') === 'old' ? 'checked' : '' }}>
                                         <label for="old">
                                             <i class="mdi mdi-history"></i> Old
                                         </label>
@@ -292,7 +292,8 @@
 
                                 <div class="form-group">
                                     <div class="form-group">
-                                        <label for="product_isbn">ISBN Number <small class="text-muted">(10-13 digits)</small></label>
+                                        <label for="product_isbn">ISBN Number <small class="text-muted">(10-13
+                                                digits)</small></label>
                                         <input type="text" class="form-control" id="product_isbn" name="product_isbn"
                                             placeholder="Enter ISBN (10-13 digits)" maxlength="13"
                                             value="{{ old('product_isbn', $product['product_isbn'] ?? '') }}">
@@ -327,7 +328,6 @@
                                     <select name="category_id" id="category_id" class="form-control text-dark">
                                         <option value="">Select Category</option>
                                         @foreach ($categories as $section)
-
                                             <optgroup label="{{ $section['name'] }}"> {{-- sections --}}
                                                 @foreach ($section['categories'] as $category)
                                                     {{-- parent categories --}} {{-- Check ProductsController.php --}}
@@ -453,7 +453,6 @@
                                             Book Image</a>&nbsp;|&nbsp; {{-- Showing the 'large' image inside the 'large' folder --}}
                                         <a href="JavaScript:void(0)" class="confirmDelete" module="product-image"
                                             moduleid="{{ $product['id'] }}">Delete Book Image</a>
-
                                     @endif
                                 </div>
 
@@ -531,19 +530,23 @@
             </div>
         </div>
     </div>
-    <style>.readonly-select {
-    pointer-events: none;
-    background-color: #e9ecef;
-}</style>
+    <style>
+        .readonly-select {
+            pointer-events: none;
+            background-color: #e9ecef;
+        }
+    </style>
 
-<script>
-    const isbnLookupUrl = "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
-        ? url('vendor/book/isbn-lookup')
-        : url('admin/book/isbn-lookup') }}";
-    const nameSuggestion = "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
-        ? url('vendor/book/name-suggestions')
-        : url('admin/book/name-suggestions') }}";
-</script>
+    <script>
+        const isbnLookupUrl =
+            "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
+                ? url('vendor/book/isbn-lookup')
+                : url('admin/book/isbn-lookup') }}";
+        const nameSuggestion =
+            "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
+                ? url('vendor/book/name-suggestions')
+                : url('admin/book/name-suggestions') }}";
+    </script>
 
     {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
     <!-- Include Select2 CSS -->
@@ -637,79 +640,79 @@
 
         function fetchBookByISBN(isbn) {
 
-    if (!isbn) return;
+            if (!isbn) return;
 
-    $.ajax({
-        url: isbnLookupUrl,
-        type: "POST",
-        data: {
-            isbn: isbn,
-            _token: "{{ csrf_token() }}"
-        },
+            $.ajax({
+                url: isbnLookupUrl,
+                type: "POST",
+                data: {
+                    isbn: isbn,
+                    _token: "{{ csrf_token() }}"
+                },
 
-        success: function (res) {
+                success: function(res) {
 
-            if (!res.status) {
-                setReadonly(false);
-                alert(res.message);
-                return;
-            }
+                    if (!res.status) {
+                        setReadonly(false);
+                        alert(res.message);
+                        return;
+                    }
 
-            let d = res.data || {};
+                    let d = res.data || {};
 
-            // 🔓 ENABLE EVERYTHING FIRST
-            setReadonly(false);
+                    // 🔓 ENABLE EVERYTHING FIRST
+                    setReadonly(false);
 
-            // text fields
-            $("#product_name").val(d.product_name || '');
-            $("#product_price").val(d.product_price || '');
-            $("#description").val(d.description || '');
+                    // text fields
+                    $("#product_name").val(d.product_name || '');
+                    $("#product_price").val(d.product_price || '');
+                    $("#description").val(d.description || '');
 
-            // dropdowns (NO trigger)
-            $("#category_id").val(d.category_id || '');
-            $("#language_id").val(d.language_id || '');
-            $("#publisher_id").val(d.publisher_id || '');
-            $("#subject_id").val(d.subject_id || '');
-            $("#edition_id").val(d.edition_id || '');
+                    // dropdowns (NO trigger)
+                    $("#category_id").val(d.category_id || '');
+                    $("#language_id").val(d.language_id || '');
+                    $("#publisher_id").val(d.publisher_id || '');
+                    $("#subject_id").val(d.subject_id || '');
+                    $("#edition_id").val(d.edition_id || '');
 
-            // authors (SAFE CHECK)
-            if (Array.isArray(d.author_ids) && typeof authors !== 'undefined') {
-                selected = [];
-                d.author_ids.forEach(id => {
-                    const author = authors.find(a => a.id == id);
-                    if (author) selected.push(author);
-                });
+                    // authors (SAFE CHECK)
+                    if (Array.isArray(d.author_ids) && typeof authors !== 'undefined') {
+                        selected = [];
+                        d.author_ids.forEach(id => {
+                            const author = authors.find(a => a.id == id);
+                            if (author) selected.push(author);
+                        });
 
-                if (typeof renderSelected === 'function') {
-                    renderSelected();
+                        if (typeof renderSelected === 'function') {
+                            renderSelected();
+                        }
+                    }
+
+                    // image
+                    if (d.image) {
+                        $("#isbnImagePreview").html(
+                            `<img src="{{ asset('front/images/product_images/small') }}/${d.image}" width="150">`
+                        );
+                    } else {
+                        $("#isbnImagePreview").html('');
+                    }
+
+                    // 🔒 DISABLE AFTER ALL VALUES SET
+                    setReadonly(true);
+                },
+
+                error: function() {
+
+                    setReadonly(false);
+
+                    $("#product_name, #product_price, #description").val('');
+                    $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id").val('');
+                    $("#isbnImagePreview").html('');
+
+                    alert("No book found for this ISBN. Please enter all details manually.");
                 }
-            }
-
-            // image
-            if (d.image) {
-                $("#isbnImagePreview").html(
-                    `<img src="{{ asset('front/images/product_images/small') }}/${d.image}" width="150">`
-                );
-            } else {
-                $("#isbnImagePreview").html('');
-            }
-
-            // 🔒 DISABLE AFTER ALL VALUES SET
-            setReadonly(true);
-        },
-
-        error: function () {
-
-            setReadonly(false);
-
-            $("#product_name, #product_price, #description").val('');
-            $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id").val('');
-            $("#isbnImagePreview").html('');
-
-            alert("No book found for this ISBN. Please enter all details manually.");
+            });
         }
-    });
-}
 
 
 
@@ -872,13 +875,16 @@
                     processData: false,
                     contentType: false,
                     success: function(response) {
-                        if (response.show_modal && response.product_id) {
-                            // Show modal for new products
+                        var userType = "{{ auth('admin')->user()->type }}";
+
+                        if (response.show_modal && response.product_id && userType ===
+                            'vendor') {
+                            // Show modal for new products (Vendors only)
                             $('#modal_product_id').val(response.product_id);
                             $('#attributesModal').modal('show');
                             submitBtn.prop('disabled', false).text('Submit');
                         } else {
-                            // Redirect for existing products or if no modal needed
+                            // Redirect for existing products or Admins
                             window.location.href = "{{ url('admin/products') }}";
                         }
                     },
@@ -886,14 +892,16 @@
                         submitBtn.prop('disabled', false).text('Submit');
 
                         // Check if product already exists for this admin/vendor
-                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.product_exists) {
+                        if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON
+                            .product_exists) {
                             const resp = xhr.responseJSON;
 
                             // First info message
                             Swal.fire({
                                 icon: 'warning',
                                 title: 'Product Already Exists',
-                                text: resp.message || 'This product has already been added to your account.',
+                                text: resp.message ||
+                                    'This product has already been added to your account.',
                                 confirmButtonText: 'OK',
                                 confirmButtonColor: '#dc3545'
                             }).then(() => {
@@ -910,12 +918,15 @@
                                 }).then((result) => {
                                     if (result.isConfirmed && resp.product_id) {
                                         // Prefill and open the same attributes modal used on products list
-                                        $('#modal_product_id').val(resp.product_id);
+                                        $('#modal_product_id').val(resp
+                                            .product_id);
                                         if (typeof resp.stock !== 'undefined') {
                                             $('#modal_stock').val(resp.stock);
                                         }
-                                        if (typeof resp.product_discount !== 'undefined') {
-                                            $('#modal_product_discount').val(resp.product_discount);
+                                        if (typeof resp.product_discount !==
+                                            'undefined') {
+                                            $('#modal_product_discount').val(
+                                                resp.product_discount);
                                         }
                                         $('#attributesModal').modal('show');
                                     }
