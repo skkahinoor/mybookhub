@@ -80,6 +80,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('admin.reports.sales_reports.index');
         Route::get('reports/sales_reports/{id}', [SalesReportController::class, 'show'])->name('admin.reports.sales_reports.show');
 
+        // Stock Report (Admin)
+        Route::get('reports/stock_report', [App\Http\Controllers\Admin\StockReportController::class, 'index'])->name('admin.reports.stock_report');
+
         // Notifications
         Route::get('notifications', 'NotificationController@index')->name('notifications.index');
         Route::get('notifications/get', 'NotificationController@getNotifications')->name('notifications.get');
