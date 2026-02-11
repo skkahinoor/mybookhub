@@ -319,13 +319,12 @@
                                         @endforeach
                                     </select>
 
-
                                     <input type="text" name="courier_name" id="courier_name"
                                         placeholder="Courier Name"> {{-- This input field will only show up when 'Shipped' <option> is selected. Check admin/js/custom.js --}}
                                     <input type="text" name="tracking_number" id="tracking_number"
                                         placeholder="Tracking Number"> {{-- This input field will only show up when 'Shipped' <option> is selected. Check admin/js/custom.js --}}
 
-                                    <button type="submit">Update</button>
+                                    <button type="submit" class="btn btn-secondary">Update</button>
                                 </form>
                                 <br>
 
@@ -398,14 +397,9 @@
                                         <th>Unit Price (after product discount)</th>
                                         <th>Product Qty</th>
                                         <th>Total Price</th>
-
-
                                         @if (\Illuminate\Support\Facades\Auth::guard('admin')->user()->type != 'vendor')
                                             <th>Product by</th>
                                         @endif
-
-
-
                                         <th>Coupon/Extra Discount (Distributed)</th>
                                         <th>Total Price</th>
                                         <th>Commission</th>
@@ -514,13 +508,10 @@
                                                 <td>₹0</td>
                                                 <td>₹{{ round($total_price, 2) }}</td>
                                             @endif
-
                                             <td>
-
                                                 <form action="{{ url('admin/update-order-item-status') }}"
                                                     method="post">
                                                     @csrf
-
                                                     <input type="hidden" name="order_item_id"
                                                         value="{{ $product['id'] }}">
 
@@ -532,16 +523,16 @@
                                                                 {{ $status['name'] }}</option>
                                                         @endforeach
                                                     </select>
-                                                    <input style="width: 110px" type="text" name="item_courier_name"
+                                                    {{-- <input style="width: 110px" type="text" name="item_courier_name"
                                                         id="item_courier_name" placeholder="Item Courier Name"
                                                         @if (!empty($product['courier_name'])) value="{{ $product['courier_name'] }}" @endif>
                                                     <input style="width: 110px" type="text"
                                                         name="item_tracking_number" id="item_tracking_number"
                                                         placeholder="Item Tracking Number"
-                                                        @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif>
-                                                    <button type="submit">Update</button>
+                                                        @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif> --}}                                                  
                                                 </form>
                                             </td>
+                                            <td><button type="submit" class="btn btn-primary btn-sm">Update</button></td>
                                         </tr>
                                     @endforeach
                                 </table>
@@ -549,13 +540,9 @@
                         </div>
                     </div>
                 </div>
-
             </div>
-
-
         </div>
         <!-- content-wrapper ends -->
-
         {{-- Footer --}}
         @include('admin.layout.footer')
         <!-- partial -->

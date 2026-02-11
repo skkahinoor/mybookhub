@@ -37,11 +37,10 @@
                                         <div class="card bg-light">
                                             <div class="card-body">
                                                 <div class="row">
-                                                    <div class="col-md-3">
+                                                    <!-- <div class="col-md-3">
                                                         <img id="product_image" class="img-fluid"
                                                             style="display:none;max-height:150px;">
-                                                    </div>
-
+                                                    </div> -->
                                                     <div class="col-md-6">
                                                         <h5 id="product_name"></h5>
                                                         <p><strong>ISBN:</strong> <span id="product_isbn"></span></p>
@@ -291,14 +290,13 @@
                     $('#final_price_info').hide();
                 }
 
-                if (res.data.product_image) {
-                    $('#product_image')
-                        .attr('src', '{{ url('front/images/product_images/small') }}/' + res.data
-                            .product_image)
-                        .show();
-                }
+                // if (res.data.product_image) {
+                //     $('#product_image')
+                //         .attr('src', '{{ url('front/images/product_images/small') }}/' + res.data
+                //             .product_image)
+                //         .show();
+                // }
 
-                // 🔥 RESET QUANTITY & WARNINGS
                 $('#quantity').val(1);
                 $('#quantity').attr('max', currentStock);
                 $('#stock_warning').hide();

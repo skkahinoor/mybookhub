@@ -5,25 +5,20 @@ use App\Http\Controllers\Admin\AuthorController;
 use App\Http\Controllers\Admin\BookAttributeController;
 use App\Http\Controllers\Admin\BookRequestsController;
 use App\Http\Controllers\Admin\EditionController;
-use App\Http\Controllers\Admin\NewsletterController;
-use App\Http\Controllers\Admin\RatingController;
 use App\Http\Controllers\Admin\InstitutionManagementController;
+use App\Http\Controllers\Admin\NewsletterController;
+use App\Http\Controllers\Admin\OtpController;
 use App\Http\Controllers\Admin\ProductsController as AdminProductsController;
+use App\Http\Controllers\Admin\RatingController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SalesExecutiveController;
+use App\Http\Controllers\Admin\SalesReportController;
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SubjectController;
-use App\Http\Controllers\Admin\OtpController;
-use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\User\BookRequestController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\ProductsController;
-use App\Http\Controllers\Sales\SalesExecutiveAuthController;
-use App\Http\Controllers\Admin\SalesReportController;
-use App\Http\Controllers\User\AccountController;
-use App\Http\Controllers\User\AuthController;
-use App\Http\Controllers\User\DashboardController;
-use App\Http\Controllers\User\OrderController;
+use App\Http\Controllers\User\BookRequestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,7 +32,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';
 
 Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function () {
     Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one
@@ -73,11 +68,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('roles/assign-permissions', [RoleController::class, 'assignPermissions'])->name('admin.roles.assign_permissions');
         Route::post('roles/update-permissions', [RoleController::class, 'updatePermissions'])->name('admin.roles.update_permissions');
         Route::resource('roles', RoleController::class)->names([
-            'index'   => 'admin.roles.index',
-            'create'  => 'admin.roles.create',
-            'store'   => 'admin.roles.store',
-            'edit'    => 'admin.roles.edit',
-            'update'  => 'admin.roles.update',
+            'index' => 'admin.roles.index',
+            'create' => 'admin.roles.create',
+            'store' => 'admin.roles.store',
+            'edit' => 'admin.roles.edit',
+            'update' => 'admin.roles.update',
             'destroy' => 'admin.roles.destroy',
         ]);
 
@@ -122,16 +117,16 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-category/{id}', 'CategoryController@deleteCategory');                        // Delete a category in categories.blade.php
         Route::get('delete-category-image/{id}', 'CategoryController@deleteCategoryImage');             // Delete a category image in add_edit_category.blade.php from BOTH SERVER (FILESYSTEM) & DATABASE
 
-        //Logo
+        // Logo
         Route::match(['get', 'post'], 'header-logo', [AdminController::class, 'headerLogo'])->name('admin.logo');
-        //Favicon
+        // Favicon
         Route::match(['get', 'post'], 'favicon', [AdminController::class, 'favicon'])->name('favicon');
         Route::post('update-favicon', [AdminController::class, 'updateFavicon'])->name('update.favicon');
 
-        //Coming Soon Settings
+        // Coming Soon Settings
         Route::match(['get', 'post'], 'coming-soon-settings', [AdminController::class, 'comingSoonSettings'])->name('admin.coming.soon.settings');
 
-        //Publishers
+        // Publishers
         Route::get('publisher', 'PublisherController@publisher');
         Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('admin.updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
 
@@ -147,7 +142,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-publisher/{id}', 'PublisherController@deletePublisher');                        // Delete a brand in brands.blade.php
         Route::match(['get', 'post'], 'add-edit-publisher/{id?}', 'PublisherController@addEditPublisher'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the brand, and if not passed, this means Add a Brand
 
-        //Author
+        // Author
         Route::get('authors', [AuthorController::class, 'index'])->name('admin.author');
         Route::get('add_author', [AuthorController::class, 'add'])->name('admin.add.author');
         Route::post('store_author', [AuthorController::class, 'store'])->name('admin.store.author');
@@ -155,7 +150,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('author_update/{id}', [AuthorController::class, 'update'])->name('admin.update.author');
         Route::get('author_delete/{id}', [AuthorController::class, 'delete'])->name('admin.delete.author');
 
-        //RequestedBooks
+        // RequestedBooks
         Route::get('requestedbooks', [BookRequestsController::class, 'index'])->name('requestbook.index');
         Route::match(['get', 'post'], 'requestedbooks/reply/{id}', [BookRequestsController::class, 'reply'])->name('requestbook.reply');
         Route::delete('book-requests/{id}', [BookRequestsController::class, 'delete'])->name('admin.bookrequests.delete');
@@ -168,7 +163,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('sell-book-requests/{id}/update-book-status', [App\Http\Controllers\Admin\SellBookRequestController::class, 'updateBookStatus'])->name('admin.sell-book-requests.update-book-status');
         Route::delete('sell-book-requests/{id}', [App\Http\Controllers\Admin\SellBookRequestController::class, 'destroy'])->name('admin.sell-book-requests.destroy');
 
-        //Subject
+        // Subject
         Route::get('subjects', [SubjectController::class, 'index'])->name('admin.subject');
         Route::get('add_subject', [SubjectController::class, 'add'])->name('admin.add.subject');
         Route::post('store_subject', [SubjectController::class, 'store'])->name('admin.store.subject');
@@ -178,23 +173,23 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Schools
         Route::resource('schools', SchoolController::class)->names([
-            'index'   => 'admin.schools.index',
-            'create'  => 'admin.schools.create',
-            'store'   => 'admin.schools.store',
-            'show'    => 'admin.schools.show',
-            'edit'    => 'admin.schools.edit',
-            'update'  => 'admin.schools.update',
+            'index' => 'admin.schools.index',
+            'create' => 'admin.schools.create',
+            'store' => 'admin.schools.store',
+            'show' => 'admin.schools.show',
+            'edit' => 'admin.schools.edit',
+            'update' => 'admin.schools.update',
             'destroy' => 'admin.schools.destroy',
         ]);
 
         // Institution Management
         Route::resource('institution-managements', 'InstitutionManagementController')->names([
-            'index'   => 'admin.institution_managements.index',
-            'create'  => 'admin.institution_managements.create',
-            'store'   => 'admin.institution_managements.store',
-            'show'    => 'admin.institution_managements.show',
-            'edit'    => 'admin.institution_managements.edit',
-            'update'  => 'admin.institution_managements.update',
+            'index' => 'admin.institution_managements.index',
+            'create' => 'admin.institution_managements.create',
+            'store' => 'admin.institution_managements.store',
+            'show' => 'admin.institution_managements.show',
+            'edit' => 'admin.institution_managements.edit',
+            'update' => 'admin.institution_managements.update',
             'destroy' => 'admin.institution_managements.destroy',
         ]);
         Route::post('update-institution-status', [InstitutionManagementController::class, 'updateStatus'])->name('admin.institution_managements.update_status');
@@ -218,22 +213,22 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Blocks Management
         Route::resource('blocks', 'BlockController')->names([
-            'index'   => 'admin.blocks.index',
-            'create'  => 'admin.blocks.create',
-            'store'   => 'admin.blocks.store',
-            'edit'    => 'admin.blocks.edit',
-            'update'  => 'admin.blocks.update',
+            'index' => 'admin.blocks.index',
+            'create' => 'admin.blocks.create',
+            'store' => 'admin.blocks.store',
+            'edit' => 'admin.blocks.edit',
+            'update' => 'admin.blocks.update',
             'destroy' => 'admin.blocks.destroy',
         ]);
         Route::post('update-block-status', 'BlockController@updateStatus');
         // Students Management
         Route::resource('students', 'StudentController')->names([
-            'index'   => 'admin.students.index',
-            'create'  => 'admin.students.create',
-            'store'   => 'admin.students.store',
-            'show'    => 'admin.students.show',
-            'edit'    => 'admin.students.edit',
-            'update'  => 'admin.students.update',
+            'index' => 'admin.students.index',
+            'create' => 'admin.students.create',
+            'store' => 'admin.students.store',
+            'show' => 'admin.students.show',
+            'edit' => 'admin.students.edit',
+            'update' => 'admin.students.update',
             'destroy' => 'admin.students.destroy',
         ]);
         Route::get('students/{id}/details', 'StudentController@details')->name('admin.students.details');
@@ -388,11 +383,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Editions
         Route::resource('edition', EditionController::class)->names([
-            'index'   => 'admin.edition.index',
-            'create'  => 'admin.edition.create',
-            'store'   => 'admin.edition.store',
-            'edit'    => 'admin.edition.edit',
-            'update'  => 'admin.edition.update',
+            'index' => 'admin.edition.index',
+            'create' => 'admin.edition.create',
+            'store' => 'admin.edition.store',
+            'edit' => 'admin.edition.edit',
+            'update' => 'admin.edition.update',
             'destroy' => 'admin.edition.destroy',
         ])->except(['show']);
 
@@ -419,7 +414,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 });
 
 // Vendor routes (separate prefix /vendor, vendor-only access)
-require __DIR__ . '/vendor.php';
+require __DIR__.'/vendor.php';
 
 Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Admin\OrderController@viewPDFInvoice');
 
@@ -432,7 +427,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     $catUrls = \App\Models\Category::select('url')->where('status', 1)->get()->pluck('url')->toArray(); // Routes like: /men, /women, /shirts, ...
     // dd($catUrls);
     foreach ($catUrls as $key => $url) {
-        Route::match(['get', 'post'], '/' . $url, 'ProductsController@listing');
+        Route::match(['get', 'post'], '/'.$url, 'ProductsController@listing');
     }
 
     // Vendor Login/Register
@@ -448,7 +443,6 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     Route::post('vendor/payment/verify', [App\Http\Controllers\Admin\VendorPlanController::class, 'verifyPayment'])->name('vendor.payment.verify');
     Route::get('vendor/payment/success', [App\Http\Controllers\Admin\VendorPlanController::class, 'paymentSuccess'])->name('vendor.payment.success');
     Route::get('vendor/payment/failure', [App\Http\Controllers\Admin\VendorPlanController::class, 'paymentFailure'])->name('vendor.payment.failure');
-
     // Vendor Plan Management Routes (requires admin middleware)
     Route::middleware(['admin', 'vendor.plan'])->group(function () {
         Route::get('vendor/plan/manage', [App\Http\Controllers\Admin\VendorPlanController::class, 'manage'])->name('vendor.plan.manage');
@@ -491,7 +485,6 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     // Delete a Cart Item AJAX call in front/products/cart_items.blade.php. Check front/js/custom.js
     Route::post('cart/delete', [ProductsController::class, 'cartDelete'])->name('cartDelete');
 
-
     Route::match(['get', 'post'], 'user/forgot-password', 'UserController@forgotPassword');
     Route::get('user/confirm/{code}', 'UserController@confirmAccount');
 
@@ -525,9 +518,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
 
     // Add Rating & Review on a product in front/products/detail.blade.php
     Route::post('add-rating', 'RatingController@addRating');
-    // Protecting the routes of user (user must be authenticated/logged in) (to prevent access to these links while being unauthenticated/not being logged in (logged out))
     Route::group(['middleware' => ['auth']], function () {
-        // Render User Account page with 'GET' request (front/users/user_account.blade.php), or the HTML Form submission in the same page with 'POST' request using AJAX (to update user details). Check front/js/custom.js
         Route::match(['GET', 'POST'], 'user/account', 'UserController@userAccount')->name('useraccount');
 
         // User Account Update Password HTML Form submission via AJAX. Check front/js/custom.js
@@ -553,11 +544,6 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
         // Rendering Thanks page (after placing an order)
         Route::get('thanks', 'ProductsController@thanks');
 
-        // OLD FRONT ORDERS ROUTE - COMMENTED OUT TO USE USER DASHBOARD ORDERS INSTEAD
-        // Route::get('user/orders/{id?}', 'OrderController@orders'); // This route conflicts with user dashboard orders. Use /user/orders instead.
-
-        // PayPal routes:
-        // PayPal payment gateway integration in Laravel (this route is accessed from checkout() method in Front/ProductsController.php). Rendering front/paypal/paypal.blade.php page
         Route::get('paypal', 'PaypalController@paypal');
 
         // Make a PayPal payment
@@ -568,9 +554,6 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
 
         // PayPal failed payment
         Route::get('error', 'PaypalController@error');
-
-        // iyzipay (iyzico) routes:    // iyzico Payment Gateway integration in/with Laravel
-        // iyzico payment gateway integration in Laravel (this route is accessed from checkout() method in Front/ProductsController.php). Rendering front/iyzipay/iyzipay.blade.php page
         Route::get('iyzipay', 'IyzipayController@iyzipay');
 
         // Make an iyzipay payment (redirect the user to iyzico payment gateway with the order details)
@@ -597,10 +580,10 @@ Route::get('/payment-success', function () {
 });
 
 // Sales Executives routes
-require __DIR__ . '/sales.php';
+require __DIR__.'/sales.php';
 
 // User routes
-require __DIR__ . '/user.php';
+require __DIR__.'/user.php';
 
 // Test route for AJAX endpoints
 // Route::get('test-ajax-endpoints', function() {
