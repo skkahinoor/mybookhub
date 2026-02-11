@@ -14,8 +14,6 @@ class ProductDemoController extends Controller
             'p_name'=>'required',
             'sku'=>'required',
             'qty'=>'required'
-
-
         ]);
 
         ProductDemo::create($request->all());
@@ -25,7 +23,6 @@ class ProductDemoController extends Controller
     }
     public function update(Request $request,$id)
     {
-        //
         // $product=ProductDemo::find($id);
         $product = $request->input();
         // dd($product);
