@@ -307,9 +307,12 @@ class ProductsController extends Controller
                 ->where('admin_type', 'vendor')
                 ->orderBy('id', 'desc')
                 ->with([
-                    'product:id,product_name,product_isbn,product_image,category_id,section_id,condition',
+                    'product:id,product_name,product_isbn,product_image,category_id,section_id,condition,publisher_id,edition_id,language_id',
                     'product.category:id,category_name',
                     'product.section:id,name',
+                    'product.publisher:id,name',
+                    'product.edition:id,edition',
+                    'product.language:id,name',
                     'vendor:id,user_id',
                     'admin:id,name',
                 ])
@@ -320,6 +323,9 @@ class ProductsController extends Controller
                 ->with([
                     'category:id,category_name',
                     'section:id,name',
+                    'publisher:id,name',
+                    'edition:id,edition',
+                    'language:id,name',
                 ])
                 ->get();
 
@@ -337,33 +343,32 @@ class ProductsController extends Controller
 
 
     public function updateProductStatus(Request $request)
-    { // Update Product Status using AJAX in products.blade.php
-        $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        if ($request->ajax()) { // if the request is coming via an AJAX call
-            if (!Auth::guard('admin')->user()->can('update_product_status')) {
-                return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+    {
+        try {
+            if ($request->ajax()) {
+                $data = $request->all();
+                $status = ($data['status'] == 'Active') ? 0 : 1;
+                $admin = Auth::guard('admin')->user();
+
+                if ($admin->type === 'vendor') {
+                    // Vendors update their own product attributes status
+                    ProductsAttribute::where('id', $data['product_id'])
+                        ->where('vendor_id', $admin->vendor_id)
+                        ->update(['status' => $status]);
+                } else {
+                    // Admin/Superadmin updates the global product status
+                    Product::where('id', $data['product_id'])->update(['status' => $status]);
+                }
+
+                return response()->json([
+                    'status'     => $status,
+                    'product_id' => $data['product_id']
+                ]);
             }
-
-            $data = $request->all(); // Getting the name/value pairs array that are sent from the AJAX request (AJAX call)
-            // dd($data);
-
-            if ($data['status'] == 'Active') { // $data['status'] comes from the 'data' object inside the $.ajax() method    // reverse the 'status' from (ative/inactive) 0 to 1 and 1 to 0 (and vice versa)
-                $status = 0;
-            } else {
-                $status = 1;
-            }
-
-
-            Product::where('id', $data['product_id'])->update(['status' => $status]); // $data['product_id'] comes from the 'data' object inside the $.ajax() method
-            // echo '<pre>', var_dump($data), '</pre>';
-
-            return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
-                'status'     => $status,
-                'product_id' => $data['product_id']
-            ]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
-        return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
+        return redirect()->back();
     }
 
     public function deleteProductAttribute($id)

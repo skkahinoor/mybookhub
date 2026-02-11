@@ -23,7 +23,7 @@
                                     </a>
 
                                     <a href="{{ url('admin/import-images') }}" class="btn btn-warning">
-                                    <i class="mdi mdi-camera"></i> Import Images
+                                        <i class="mdi mdi-camera"></i> Import Images
                                     </a>
                                 </div>
                             @endif
@@ -47,12 +47,16 @@
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Book Name</th>
                                             <th>ISBN</th>
                                             <th>Image</th>
+                                            <th>Book Name</th>
+                                            <th>Price</th>
+                                            <th>Section</th>
                                             <th>Category</th> {{-- Through the relationship --}}
-                                            <th>Section</th> {{-- Through the relationship --}}
-                                            @if ($adminType == 'admin' || $adminType == 'superadmin')
+                                            <th>Edition</th>
+                                            <th>Publisher</th>
+                                            <th>Language</th>
+                                            @if ($adminType == 'vendor')
                                                 <th>Stock</th>
                                             @endif
                                             <th>Status</th>
@@ -65,8 +69,6 @@
                                                 <td>{{ __($key + 1) }}</td>
 
                                                 @if ($adminType === 'vendor')
-                                                    {{-- Vendor: Display from ProductsAttribute --}}
-                                                    <td> {{ $product->product->product_name ?? 'N/A' }}</td>
                                                     <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }} <span
                                                             class="text-muted">({{ ucfirst($product->product->condition ?? 'N/A') }})</span>
                                                     </td>
@@ -79,11 +81,18 @@
                                                                 src="{{ asset('front/images/product_images/small/no-image.png') }}">
                                                         @endif
                                                     </td>
-                                                    <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
+                                                    {{-- Vendor: Display from ProductsAttribute --}}
+                                                    <td> {{ $product->product->product_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product_price ?? 'N/A' }}</td>
                                                     <td>{{ $product->product->section->name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->edition->edition ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->publisher->name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->language->name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->stock ?? 'N/A' }}</td>
                                                 @else
                                                     {{-- Admin/Superadmin: Display from Product --}}
-                                                    <td> {{ $product->product_name ?? 'N/A' }}</td>
+
                                                     <td>ISBN-{{ $product->product_isbn ?? 'N/A' }} <span
                                                             class="text-muted">({{ ucfirst($product->condition ?? 'N/A') }})</span>
                                                     </td>
@@ -96,12 +105,18 @@
                                                                 src="{{ asset('front/images/product_images/small/no-image.png') }}">
                                                         @endif
                                                     </td>
-                                                    <td>{{ $product->category->category_name ?? 'N/A' }}</td>
+                                                    <td> {{ $product->product_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product_price ?? 'N/A' }}</td>
                                                     <td>{{ $product->section->name ?? 'N/A' }}</td>
-                                                    <td>
-                                                        <span
-                                                            class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
-                                                    </td>
+                                                    <td>{{ $product->category->category_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->edition->edition ?? 'N/A' }}</td>
+                                                    <td>{{ $product->publisher->name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->language->name ?? 'N/A' }}</td>
+
+                                                    <!-- <td>
+                                                                <span
+                                                                    class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
+                                                            </td> -->
                                                 @endif
                                                 {{-- <td>
                                                     @php
@@ -126,18 +141,16 @@
                                                     @if ($adminType === 'vendor')
                                                         {{-- Vendor: Use attribute status --}}
                                                         @if ($product->status == 1)
-                                                            <a class="updateProductStatus"
-                                                                id="product-{{ $product->product_id }}"
-                                                                product_id="{{ $product->product_id }}"
+                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
+                                                                product_id="{{ $product->id }}"
                                                                 data-url="{{ route('vendor.updateproductstatus') }}"
                                                                 href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                     status="Active"></i>
                                                             </a>
                                                         @else
-                                                            <a class="updateProductStatus"
-                                                                id="product-{{ $product->product_id }}"
-                                                                product_id="{{ $product->product_id }}"
+                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
+                                                                product_id="{{ $product->id }}"
                                                                 data-url="{{ route('vendor.updateproductstatus') }}"
                                                                 href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
@@ -184,11 +197,6 @@
                                                             <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
                                                         </a>
 
-                                                        <a title="Add Multiple Images"
-                                                            href="{{ url('vendor/add-images/' . $product->product_id) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
-                                                        </a>
-
                                                         <a href="{{ url('vendor/delete-product-attribute/' . $product->id) }}"
                                                             onclick="return confirm('Are you sure you want to delete this product attribute?')"
                                                             title="Delete Product Attribute">
@@ -220,11 +228,6 @@
                                                             id="openAddAttributeModal">
                                                             <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
                                                         </a> --}}
-
-                                                        <a title="Add Multiple Images"
-                                                            href="{{ url('admin/add-images/' . $product->id) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-library-plus"></i>
-                                                        </a>
                                                     @endif
                                                 </td>
                                             </tr>
