@@ -540,6 +540,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
         Route::post('save-delivery-address', 'AddressController@saveDeliveryAddress');
 
         Route::post('remove-delivery-address', 'AddressController@removeDeliveryAddress');
+        Route::get('remove-delivery-address/{id}', 'AddressController@removeDeliveryAddress');
 
         // Rendering Thanks page (after placing an order)
         Route::get('thanks', 'ProductsController@thanks');

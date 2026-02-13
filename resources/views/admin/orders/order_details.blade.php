@@ -319,12 +319,13 @@
                                         @endforeach
                                     </select>
 
+
                                     <input type="text" name="courier_name" id="courier_name"
                                         placeholder="Courier Name"> {{-- This input field will only show up when 'Shipped' <option> is selected. Check admin/js/custom.js --}}
                                     <input type="text" name="tracking_number" id="tracking_number"
                                         placeholder="Tracking Number"> {{-- This input field will only show up when 'Shipped' <option> is selected. Check admin/js/custom.js --}}
 
-                                    <button type="submit" class="btn btn-secondary">Update</button>
+                                    <button type="submit">Update</button>
                                 </form>
                                 <br>
 
@@ -380,7 +381,6 @@
                     </div>
                 </div>
 
-
                 <div class="col-md-12 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
@@ -402,7 +402,7 @@
                                         @endif
                                         <th>Coupon/Extra Discount (Distributed)</th>
                                         <th>Total Price</th>
-                                        <th>Commission</th>
+                                        {{-- <th>Commission</th> --}}
                                         <th>Final Amount</th>
                                         <th>Item Status</th>
                                     </tr>
@@ -508,10 +508,13 @@
                                                 <td>₹0</td>
                                                 <td>₹{{ round($total_price, 2) }}</td>
                                             @endif
+
                                             <td>
+
                                                 <form action="{{ url('admin/update-order-item-status') }}"
                                                     method="post">
                                                     @csrf
+
                                                     <input type="hidden" name="order_item_id"
                                                         value="{{ $product['id'] }}">
 
@@ -529,10 +532,10 @@
                                                     <input style="width: 110px" type="text"
                                                         name="item_tracking_number" id="item_tracking_number"
                                                         placeholder="Item Tracking Number"
-                                                        @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif> --}}                                                  
+                                                        @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif> --}}
+                                                   <button type="submit" class="btn btn-primary btn-sm">Update</button>
                                                 </form>
                                             </td>
-                                            <td><button type="submit" class="btn btn-primary btn-sm">Update</button></td>
                                         </tr>
                                     @endforeach
                                 </table>
@@ -540,9 +543,13 @@
                         </div>
                     </div>
                 </div>
+
             </div>
+
+
         </div>
         <!-- content-wrapper ends -->
+
         {{-- Footer --}}
         @include('admin.layout.footer')
         <!-- partial -->
