@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
@@ -130,12 +131,12 @@ class AdminController extends Controller
 
             if (Auth::guard('admin')->attempt($credentials)) {
                 $user = Auth::guard('admin')->user();
-                
+
                 // Check if vendor account is inactive
                 if ($user->type == 'vendor' && $user->status == '0') {
                     return redirect()->back()->with('error_message', 'Your vendor account is not active');
                 }
-                
+
                 // Dynamic role-based redirection
                 if ($user->hasRole('admin')) {
                     return redirect('/admin/dashboard');
@@ -146,7 +147,7 @@ class AdminController extends Controller
                 } elseif ($user->hasRole('student')) {
                     return redirect('/student/dashboard');
                 }
-                
+
                 // Fallback to admin dashboard if no specific role found
                 return redirect('/admin/dashboard');
             } else {
@@ -204,7 +205,7 @@ class AdminController extends Controller
                     ]);
 
                     return redirect()->back()->with('success_message', 'Admin Password has been updated successfully!');
-                } else { 
+                } else {
                     return redirect()->back()->with('error_message', 'New Password and Confirm Password does not match!');
                 }
             } else {
@@ -259,7 +260,7 @@ class AdminController extends Controller
                     $imagePath = 'admin/images/photos/' . $imageName;
                     Image::make($image_tmp)->save($imagePath);
                 }
-            } else if (! empty($data['current_admin_image'])) { 
+            } else if (! empty($data['current_admin_image'])) {
                 $imageName = $data['current_admin_image'];
             } else {
                 $imageName = '';
@@ -287,7 +288,7 @@ class AdminController extends Controller
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
             Session::put('page', 'update_personal_details');
 
-                                              // Handling update vendor personal details <form> submission
+            // Handling update vendor personal details <form> submission
             if ($request->isMethod('post')) { // if the <form> is submitted
                 $data = $request->all();
                 // dd($data);
@@ -323,7 +324,7 @@ class AdminController extends Controller
                         // Assigning the uploaded images path inside the 'public' folder
                         $imagePath = 'admin/images/photos/' . $imageName;
 
-                                                                   // Upload the image using the Intervention package and save it in our path inside the 'public' folder
+                        // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                         Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
                     }
                 } else if (! empty($data['current_vendor_image'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
@@ -332,8 +333,8 @@ class AdminController extends Controller
                     $imageName = '';
                 }
 
-                                                                               // Vendor details need to be updated in BOTH `users` and `vendors` tables:
-                                                                               // Update Vendor Details in 'users' table
+                // Vendor details need to be updated in BOTH `users` and `vendors` tables:
+                // Update Vendor Details in 'users' table
                 User::where('id', Auth::guard('admin')->user()->id)->update([
                     'name'          => $data['vendor_name'],
                     'phone'         => $data['vendor_mobile'],
@@ -384,7 +385,7 @@ class AdminController extends Controller
 
                 $this->validate($request, $rules, $customMessages);
 
-                                                                // Uploading Admin Photo    // Using the Intervention package for uploading images
+                // Uploading Admin Photo    // Using the Intervention package for uploading images
                 if ($request->hasFile('address_proof_image')) { // the HTML name attribute    name="admin_name"    in update_admin_details.blade.php
                     $image_tmp = $request->file('address_proof_image');
 
@@ -398,7 +399,7 @@ class AdminController extends Controller
                         // Assigning the uploaded images path inside the 'public' folder
                         $imagePath = 'admin/images/proofs/' . $imageName;
 
-                                                                   // Upload the image using the Intervention package and save it in our path inside the 'public' folder
+                        // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                         Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
                     }
                 } else if (! empty($data['current_address_proof'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
@@ -425,7 +426,7 @@ class AdminController extends Controller
                         'address_proof_image'     => $imageName,
                     ]);
                 } else { // if there's no vendor already existing, then INSERT
-                             // INSERT INTO `vendors_business_details` table
+                    // INSERT INTO `vendors_business_details` table
                     VendorsBusinessDetail::insert([
                         'vendor_id'               => Auth::guard('admin')->user()->vendor_id, // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'shop_name'               => $data['shop_name'],
@@ -481,7 +482,7 @@ class AdminController extends Controller
 
                 $vendorCount = VendorsBankDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->count(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                 if ($vendorCount > 0) {                                                                                 // if there's a vendor already existing, them UPDATE
-                                                                                                                            // UPDATE `vendors_bank_details` table
+                    // UPDATE `vendors_bank_details` table
                     VendorsBankDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->update([                // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'account_holder_name' => $data['account_holder_name'],
                         'bank_name'           => $data['bank_name'],
@@ -489,7 +490,7 @@ class AdminController extends Controller
                         'bank_ifsc_code'      => $data['bank_ifsc_code'],
                     ]);
                 } else { // if there's no vendor already existing, then INSERT
-                             // INSERT INTO `vendors_bank_details` table
+                    // INSERT INTO `vendors_bank_details` table
                     VendorsBankDetail::insert([
                         'vendor_id'           => Auth::guard('admin')->user()->vendor_id, // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'account_holder_name' => $data['account_holder_name'],
@@ -510,9 +511,9 @@ class AdminController extends Controller
             }
         }
 
-                                                                       // Fetch all of the world countries from the database table `countries`
+        // Fetch all of the world countries from the database table `countries`
         $countries = Country::where('status', true)->get()->toArray(); // get the countries which have `status` = true (to ignore the blacklisted countries, in case)
-                                                                       // dd($countries);
+        // dd($countries);
 
         // The 'GET' request: to show the update_vendor_details.blade.php page
         // We'll create one view (not 3) for the 3 pages, but parts inside it will change depending on the $slug value
@@ -572,10 +573,29 @@ class AdminController extends Controller
         }
     }
 
-  public function admins($type = null)
+    public function admins($type = null)
     { // $type can be: admin, subadmin, vendor
         $headerLogo = HeaderLogo::first();
         $logos      = HeaderLogo::first();
+
+        // Permission Check
+        if (!empty($type)) {
+            $role = strtolower($type);
+            if ($role === 'vendor') {
+                if (!Auth::guard('admin')->user()->can('view_vendors')) {
+                    abort(403, 'Unauthorized action.');
+                }
+            } elseif (in_array($role, ['admin', 'subadmin', 'superadmin'])) {
+                if (!Auth::guard('admin')->user()->can('view_admins')) {
+                    abort(403, 'Unauthorized action.');
+                }
+            }
+        } else {
+            // General view - requires either or both
+            if (!Auth::guard('admin')->user()->can('view_admins') && !Auth::guard('admin')->user()->can('view_vendors')) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
 
         $query = User::query();
 
@@ -583,7 +603,7 @@ class AdminController extends Controller
             $role = strtolower($type);
             // Map legacy types to roles if needed
             if ($role === 'superadmin') $role = 'admin';
-            
+
             if ($role === 'admin') {
                 $query->where('role_id', 1);
             } else {
@@ -611,13 +631,13 @@ class AdminController extends Controller
                 $arr['type'] = $user->type; // uses getTypeAttribute
                 $arr['mobile'] = $user->phone;
                 $arr['image'] = $user->profile_image;
-                
+
                 if ($user->vendorPersonal) {
                     $arr['vendor_id'] = $user->vendorPersonal->id;
                 } else {
                     $arr['vendor_id'] = 0;
                 }
-                
+
                 return $arr;
             })
             ->toArray();
@@ -627,11 +647,15 @@ class AdminController extends Controller
 
     public function viewVendorDetails($id)
     {
+        if (!Auth::guard('admin')->user()->can('view_vendors')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $logos         = HeaderLogo::first();
         $headerLogo    = HeaderLogo::first();
         $vendorDetails = User::with('vendorPersonal', 'vendorBusiness', 'vendorBank')->where('id', $id)->first();
         $vendorDetails = $vendorDetails ? $vendorDetails->toArray() : null;
-                                                                                                                   // dd($vendorDetails);
+        // dd($vendorDetails);
 
         // Fetch countries for dropdowns
         $countries = Country::where('status', true)->get()->toArray();
@@ -659,10 +683,10 @@ class AdminController extends Controller
     {
         $logos      = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-                                 // Update Admin Status using AJAX in admins.blade.php
+        // Update Admin Status using AJAX in admins.blade.php
         if ($request->ajax()) {  // if the request is coming via an AJAX call
             $data = $request->all(); // Getting the name/value pairs array that are sent from the AJAX request (AJAX call)
-            
+
             $adminUser = User::where('id', $data['admin_id'])->first();
             if (!$adminUser) {
                 return response()->json(['status' => 'error', 'message' => 'User not found.'], 404);
@@ -681,9 +705,9 @@ class AdminController extends Controller
             }
 
             User::where('id', $data['admin_id'])->update(['status' => $status]);
-                                                                                  // echo '<pre>', var_dump($data), '</pre>';
+            // echo '<pre>', var_dump($data), '</pre>';
 
-                                                                                       // Send a THIRD Approval Email to the vendor when the superadmin or admin approves their account (`status` column in the `admins` table becomes 1 instead of 0) so that they can add their products on the website now
+            // Send a THIRD Approval Email to the vendor when the superadmin or admin approves their account (`status` column in the `admins` table becomes 1 instead of 0) so that they can add their products on the website now
             $adminUser = User::where('id', $data['admin_id'])->first();
 
             if ($adminUser->type == 'vendor' && $status == 1) {                        // if the `type` column value (in `admins` table) is 'vendor', and their `status` became 1 (got approved), send them a THIRD confirmation mail
@@ -837,7 +861,7 @@ class AdminController extends Controller
             // We'll stick to 'vendor' if it's a vendor add, else 'admin'
             // For now, let's assume if it is NOT a vendor add, it is an ADMIN add
             // Only 'admin' and 'vendor' were primary types here.
-            
+
             // Check if we are adding a vendor specifically (usually from a specific route or hidden field)
             // But here it seems general. Let's look at `type` input or default.
             // Original code: $adminData['type'] = 'vendor'; (Wait, it forced 'vendor'??)
@@ -846,15 +870,15 @@ class AdminController extends Controller
             // Ah, looking closer at line 564 `public function admins($type = null)`...
             // It seems this controller handles both.
             // Let's assume if it creates a Vendor profile, account is Vendor.
-            
+
             // BUT wait, line 800 in viewed file said `'type' => 'vendor'`.
             // Let's assume this form is used for Vendors mostly? 
             // Or maybe I missed where type is set.
             // Let's look at existing `admins()` method logic.
-            
+
             // Re-reading logic: If it creates a Vendor profile (lines 809+), then it IS a vendor.
-            
-// ... (existing code).
+
+            // ... (existing code).
 
             if (empty($userId)) {
                 // ADD MODE
@@ -886,16 +910,15 @@ class AdminController extends Controller
                 Vendor::create($vendorData);
 
                 return redirect('admin/admins')->with('success_message', 'Vendor added successfully!');
-
             } else {
                 // EDIT MODE
                 $user = User::findOrFail($userId);
-                
+
                 // Remove password from update if empty
                 if (empty($data['password'])) {
                     unset($userData['password']);
                 }
-                
+
                 $user->update($userData);
 
                 // Update Vendor Profile if linked
@@ -937,7 +960,7 @@ class AdminController extends Controller
 
             // Find linked vendor
             $vendorProfile = Vendor::where('user_id', $id)->first(); // Use user_id link
-            
+
             if ($vendorProfile) {
                 $vendorPersonal = $vendorProfile->toArray();
                 $vendorBusiness = VendorsBusinessDetail::where('vendor_id', $vendorProfile->id)->first();
@@ -949,7 +972,7 @@ class AdminController extends Controller
                 $admin['type'] = 'vendor';
                 $admin['vendor_id'] = $vendorProfile->id;
             } else {
-                 $admin['type'] = 'admin'; // Or check role
+                $admin['type'] = 'admin'; // Or check role
             }
 
             return view('admin/admins/edit', compact('admin', 'vendorPersonal', 'vendorBusiness', 'vendorBank', 'countries', 'logos', 'headerLogo'));
@@ -982,7 +1005,7 @@ class AdminController extends Controller
         // Delete vendor from vendors table too if accessible via relation or user_id
         $vendor = Vendor::where('user_id', $user->id)->first();
         if ($vendor) {
-           $vendor->delete();
+            $vendor->delete();
         }
 
         // Delete user
@@ -1089,32 +1112,32 @@ class AdminController extends Controller
     public function comingSoonSettings(Request $request)
     {
         Session::put('page', 'coming_soon_settings');
-        
+
         $logos      = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        
+
         if ($request->isMethod('post')) {
             // Coming Soon Settings
             $comingSoonEnabled = $request->has('coming_soon_enabled') ? 1 : 0;
             Setting::setValue('coming_soon_enabled', $comingSoonEnabled);
-            
+
             $showCountdown = $request->has('show_countdown') ? 1 : 0;
             Setting::setValue('show_countdown', $showCountdown);
-            
+
             $countdownDate = $request->input('countdown_date');
             if ($countdownDate) {
                 Setting::setValue('countdown_date', $countdownDate);
             }
-            
+
             $countdownTime = $request->input('countdown_time');
             if ($countdownTime) {
                 Setting::setValue('countdown_time', $countdownTime);
             }
-            
+
             // Maintenance Mode Settings
             $maintenanceModeEnabled = $request->has('maintenance_mode_enabled') ? 1 : 0;
             Setting::setValue('maintenance_mode_enabled', $maintenanceModeEnabled);
-            
+
             // Social Media URLs
             Setting::setValue('social_facebook', $request->input('social_facebook', ''));
             Setting::setValue('social_twitter', $request->input('social_twitter', ''));
@@ -1124,16 +1147,16 @@ class AdminController extends Controller
             Setting::setValue('social_pinterest', $request->input('social_pinterest', ''));
             Setting::setValue('social_whatsapp', $request->input('social_whatsapp', ''));
             Setting::setValue('social_telegram', $request->input('social_telegram', ''));
-            
+
             return back()->with('success_message', 'Settings updated successfully.');
         }
-        
+
         $comingSoonEnabled = Setting::getValue('coming_soon_enabled', 0);
         $showCountdown = Setting::getValue('show_countdown', 1);
         $countdownDate = Setting::getValue('countdown_date', '');
         $countdownTime = Setting::getValue('countdown_time', '');
         $maintenanceModeEnabled = Setting::getValue('maintenance_mode_enabled', 0);
-        
+
         // Social Media URLs
         $socialFacebook = Setting::getValue('social_facebook', '');
         $socialTwitter = Setting::getValue('social_twitter', '');
@@ -1143,10 +1166,10 @@ class AdminController extends Controller
         $socialPinterest = Setting::getValue('social_pinterest', '');
         $socialWhatsapp = Setting::getValue('social_whatsapp', '');
         $socialTelegram = Setting::getValue('social_telegram', '');
-        
+
         return view('admin/settings/coming_soon', compact(
-            'logos', 
-            'headerLogo', 
+            'logos',
+            'headerLogo',
             'comingSoonEnabled',
             'showCountdown',
             'countdownDate',

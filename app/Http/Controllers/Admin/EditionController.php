@@ -13,6 +13,9 @@ class EditionController extends Controller
 {
     public function index()
     {
+        if (!Auth::guard('admin')->user()->can('view_editions')) {
+            abort(403, 'Unauthorized action.');
+        }
         $adminType = Auth::guard('admin')->user()->type;
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -23,14 +26,20 @@ class EditionController extends Controller
 
     public function create()
     {
+        if (!Auth::guard('admin')->user()->can('add_editions')) {
+            abort(403, 'Unauthorized action.');
+        }
         $adminType = Auth::guard('admin')->user()->type;
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        return view('admin.edition.edition_create', compact('logos','headerLogo','adminType'));
+        return view('admin.edition.edition_create', compact('logos', 'headerLogo', 'adminType'));
     }
 
     public function store(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('add_editions')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
@@ -44,6 +53,9 @@ class EditionController extends Controller
 
     public function edit($id)
     {
+        if (!Auth::guard('admin')->user()->can('edit_editions')) {
+            abort(403, 'Unauthorized action.');
+        }
         $adminType = Auth::guard('admin')->user()->type;
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
@@ -53,6 +65,9 @@ class EditionController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!Auth::guard('admin')->user()->can('edit_editions')) {
+            abort(403, 'Unauthorized action.');
+        }
         $adminType = Auth::guard('admin')->user()->type;
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -67,6 +82,9 @@ class EditionController extends Controller
 
     public function destroy($id)
     {
+        if (!Auth::guard('admin')->user()->can('delete_editions')) {
+            abort(403, 'Unauthorized action.');
+        }
         $adminType = Auth::guard('admin')->user()->type;
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();

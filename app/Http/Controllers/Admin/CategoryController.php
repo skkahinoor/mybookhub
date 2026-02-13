@@ -14,20 +14,30 @@ use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
-    public function categories() {
+    public function categories()
+    {
+        if (!Auth::guard('admin')->user()->can('view_categories')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'categories');
 
-        $categories = Category::orderBy('id','desc')->with(['section', 'parentCategory'])->get()->toArray();
+        $categories = Category::orderBy('id', 'desc')->with(['section', 'parentCategory'])->get()->toArray();
         // dd($categories);
 
         $adminType = Auth::guard('admin')->user()->type;
         return view('admin.categories.categories')->with(compact('categories', 'logos', 'headerLogo', 'adminType'));
     }
 
-    public function updateCategoryStatus(Request $request) { // Update Category Status using AJAX in categories.blade.php
+    public function updateCategoryStatus(Request $request)
+    { // Update Category Status using AJAX in categories.blade.php
+        if (!Auth::guard('admin')->user()->can('edit_categories')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
+
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         if ($request->ajax()) { // if the request is coming via an AJAX call
@@ -52,13 +62,17 @@ class CategoryController extends Controller
         return view('admin.categories.categories', compact('categories', 'logos', 'headerLogo'));
     }
 
-    public function addEditCategory(Request $request, $id = null) { // If the $id is not passed, this means Add a Category, if not, this means Edit the Category
+    public function addEditCategory(Request $request, $id = null)
+    { // If the $id is not passed, this means Add a Category, if not, this means Edit the Category
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'categories');
 
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         if ($id == '') { // if there's no $id is passed in the route/URL parameters, this means Add a new Category
+            if (!Auth::guard('admin')->user()->can('add_categories')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Add Category';
             $category = new Category();
             // dd($category);
@@ -67,6 +81,9 @@ class CategoryController extends Controller
 
             $message = 'Category added successfully!';
         } else { // if the $id is passed in the route/URL parameters, this means Edit the Category
+            if (!Auth::guard('admin')->user()->can('edit_categories')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Edit Category';
             $category = Category::find($id);
             // dd($category->parentCategory);
@@ -128,7 +145,6 @@ class CategoryController extends Controller
                     // Insert the image name in the database table
                     $category->category_image = $imageName;
                 }
-
             } else { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), and originally there wasn't any image uploaded in the first place
                 $category->category_image = '';
             }
@@ -159,19 +175,20 @@ class CategoryController extends Controller
         return view('admin.categories.add_edit_category')->with(compact('title', 'category', 'getSections', 'getCategories', 'logos', 'headerLogo'));
     }
 
-    public function appendCategoryLevel(Request $request) { // (AJAX) Show Categories <select> <option> depending on the chosen Section (show the relevant categories of the chosen section) using AJAX in admin/js/custom.js in append_categories_level.blade.php page
+    public function appendCategoryLevel(Request $request)
+    { // (AJAX) Show Categories <select> <option> depending on the chosen Section (show the relevant categories of the chosen section) using AJAX in admin/js/custom.js in append_categories_level.blade.php page
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         // Note: We created the <div> in a separate file in order for the appendCategoryLevel() method inside the CategoryController to be able to return the whole file as a response to the AJAX call in admin/js/custom.js to show the proper/relevant categories <select> box <option> depending on the selected (chosen) Section
         if ($request->ajax()) { // if the request is coming via an AJAX call
             // if ($request->isMethod('get')) {
-                $data = $request->all();
-                // dd($data);
+            $data = $request->all();
+            // dd($data);
 
-                $getCategories = Category::with('subCategories')->where([ // 'subCategories' is the relationship method inside the Category.php model    // $getCategories are all the parent categories, and their child categories
-                    'parent_id'  => 0,
-                    'section_id' => $data['section_id'] // $data['section_id'] comes from the 'data' object inside the $.ajax() method in admin/js/custom.js
-                ])->get();
+            $getCategories = Category::with('subCategories')->where([ // 'subCategories' is the relationship method inside the Category.php model    // $getCategories are all the parent categories, and their child categories
+                'parent_id'  => 0,
+                'section_id' => $data['section_id'] // $data['section_id'] comes from the 'data' object inside the $.ajax() method in admin/js/custom.js
+            ])->get();
             // }
 
             return view('admin.categories.append_categories_level')->with(compact('getCategories')); // return-ing the WHOLE append_categories_level.blade.php page
@@ -179,7 +196,12 @@ class CategoryController extends Controller
         return view('admin.categories.append_categories_level', compact('getCategories', 'logos', 'headerLogo'));
     }
 
-    public function deleteCategory($id) {
+    public function deleteCategory($id)
+    {
+        if (!Auth::guard('admin')->user()->can('delete_categories')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         Category::where('id', $id)->delete();
@@ -190,7 +212,12 @@ class CategoryController extends Controller
         return view('admin.categories.categories', compact('categories', 'logos', 'headerLogo'));
     }
 
-    public function deleteCategoryImage($id) { // AJAX call from admin/js/custom.js    // Delete the category image from BOTH SERVER (FILESYSTEM) & DATABASE    // $id is passed as a Route Parameter
+    public function deleteCategoryImage($id)
+    { // AJAX call from admin/js/custom.js    // Delete the category image from BOTH SERVER (FILESYSTEM) & DATABASE    // $id is passed as a Route Parameter
+        if (!Auth::guard('admin')->user()->can('edit_categories')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         // Category image record in the database

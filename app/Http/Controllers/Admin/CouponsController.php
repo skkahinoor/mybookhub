@@ -14,6 +14,9 @@ class CouponsController extends Controller
 {
     public function coupons()
     {
+        if (!Auth::guard('admin')->user()->can('view_coupons')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'coupons');
@@ -41,6 +44,9 @@ class CouponsController extends Controller
     }
     public function updateCouponStatus(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('edit_coupons')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         // Check if vendor is on Free plan
         $adminType = Auth::guard('admin')->user()->type;
         if ($adminType == 'vendor') {
@@ -76,6 +82,9 @@ class CouponsController extends Controller
 
     public function deleteCoupon($id)
     {
+        if (!Auth::guard('admin')->user()->can('delete_coupons')) {
+            abort(403, 'Unauthorized action.');
+        }
         $adminType = Auth::guard('admin')->user()->type;
         if ($adminType == 'vendor') {
             $vendor = \App\Models\Vendor::find(Auth::guard('admin')->user()->vendor_id);
@@ -99,6 +108,7 @@ class CouponsController extends Controller
     {
         Session::put('page', 'coupons');
         $adminType = Auth::guard('admin')->user()->type;
+
         if ($adminType == 'vendor') {
             $vendor = \App\Models\Vendor::find(Auth::guard('admin')->user()->vendor_id);
             if ($vendor && $vendor->plan === 'free') {
@@ -109,13 +119,20 @@ class CouponsController extends Controller
 
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
+
         if ($id == '') {
+            if (!Auth::guard('admin')->user()->can('add_coupons')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Add Coupon';
             $coupon = new Coupon;
             $selCats   = array();
             $selUsers  = array();
             $message = 'Coupon added successfully!';
         } else {
+            if (!Auth::guard('admin')->user()->can('edit_coupons')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Edit Coupon';
             $coupon = Coupon::find($id);
             $selCats   = explode(',', $coupon['categories']);

@@ -14,10 +14,13 @@ class SubjectController extends Controller
 
     public function index()
     {
+        if (!Auth::guard('admin')->user()->can('view_subjects')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
-        $subjects = Subject::orderBy('id','desc')->get();
+        $subjects = Subject::orderBy('id', 'desc')->get();
         Session::put('page', 'subjects');
         $adminType = Auth::guard('admin')->user()->type;
         return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo', 'adminType'));
@@ -25,6 +28,9 @@ class SubjectController extends Controller
 
     public function add()
     {
+        if (!Auth::guard('admin')->user()->can('add_subjects')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
@@ -33,6 +39,9 @@ class SubjectController extends Controller
 
     public function store(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('add_subjects')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $request->validate([
@@ -47,6 +56,9 @@ class SubjectController extends Controller
 
     public function edit($id)
     {
+        if (!Auth::guard('admin')->user()->can('edit_subjects')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $subjects = Subject::find($id);
@@ -56,6 +68,9 @@ class SubjectController extends Controller
 
     public function update(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('edit_subjects')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $request->validate([
@@ -71,6 +86,9 @@ class SubjectController extends Controller
 
     public function delete($id)
     {
+        if (!Auth::guard('admin')->user()->can('delete_subjects')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $delete = Subject::find($id);
@@ -79,9 +97,12 @@ class SubjectController extends Controller
         return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));
     }
 
-    
+
     public function updateStatus(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('edit_subjects')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         if (!$request->ajax()) {
             abort(404);
         }

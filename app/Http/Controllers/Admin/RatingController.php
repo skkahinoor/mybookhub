@@ -15,6 +15,9 @@ class RatingController extends Controller
 
     public function ratings()
     {
+        if (!Auth::guard('admin')->user()->can('view_ratings')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 
@@ -29,6 +32,9 @@ class RatingController extends Controller
 
     public function updateRatingStatus(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('update_ratings_status')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         if (!$request->ajax()) {
             return response()->json(['error' => true], 400);
         }
@@ -48,6 +54,9 @@ class RatingController extends Controller
 
     public function deleteRating($id)
     {
+        if (!Auth::guard('admin')->user()->can('delete_ratings')) {
+            abort(403, 'Unauthorized action.');
+        }
         Rating::findOrFail($id)->delete();
 
         return redirect()->back()->with('success_message', 'Rating deleted successfully!');

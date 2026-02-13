@@ -12,7 +12,12 @@ use Illuminate\Support\Facades\Auth;
 
 class SectionController extends Controller
 {
-    public function sections() {
+    public function sections()
+    {
+        if (!Auth::guard('admin')->user()->can('view_sections')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
@@ -21,38 +26,48 @@ class SectionController extends Controller
 
         // $sections = Section::get(); // Eloquent Collection
 
-        $sections = Section::orderBy('id','desc')->get()->toArray(); // Plain PHP array
+        $sections = Section::orderBy('id', 'desc')->get()->toArray(); // Plain PHP array
         // dd($sections);
         $adminType = Auth::guard('admin')->user()->type;
 
         return view('admin.sections.sections')->with(compact('sections', 'logos', 'headerLogo', 'adminType'));
     }
 
-    public function updateSectionStatus(Request $request) { // Update Section Status using AJAX in sections.blade.php
+    public function updateSectionStatus(Request $request)
+    { // Update Section Status using AJAX in sections.blade.php
+        if (!Auth::guard('admin')->user()->can('edit_categories')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        if ($request->ajax()) { 
-            $data = $request->all(); 
+        if ($request->ajax()) {
+            $data = $request->all();
 
-            if ($data['status'] == 'Active') { 
+            if ($data['status'] == 'Active') {
                 $status = 0;
             } else {
                 $status = 1;
             }
 
 
-            Section::where('id', $data['section_id'])->update(['status' => $status]); 
+            Section::where('id', $data['section_id'])->update(['status' => $status]);
 
-            return response()->json([ 
+            return response()->json([
                 'status'     => $status,
                 'section_id' => $data['section_id']
             ]);
         }
-        
+
         return view('admin.sections.sections', compact('sections', 'logos', 'headerLogo'));
     }
 
-    public function deleteSection($id) {
+    public function deleteSection($id)
+    {
+        if (!Auth::guard('admin')->user()->can('delete_categories')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Section::where('id', $id)->delete();
@@ -63,18 +78,25 @@ class SectionController extends Controller
         return view('admin.sections.sections', compact('sections', 'logos', 'headerLogo'));
     }
 
-    public function addEditSection(Request $request, $id = null) { // If the $id is not passed, this means Add a Section, if not, this means Edit the Section
+    public function addEditSection(Request $request, $id = null)
+    { // If the $id is not passed, this means Add a Section, if not, this means Edit the Section
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'sections');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 
         if ($id == '') { // if there's no $id is passed in the route/URL parameters, this means Add a new section
+            if (!Auth::guard('admin')->user()->can('add_categories')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Add Section';
             $section = new Section();
             // dd($section);
             $message = 'Section added successfully!';
         } else { // if the $id is passed in the route/URL parameters, this means Edit the Section
+            if (!Auth::guard('admin')->user()->can('edit_categories')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Edit Section';
             $section = Section::find($id);
             // dd($section);

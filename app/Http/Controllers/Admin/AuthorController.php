@@ -13,7 +13,10 @@ class AuthorController extends Controller
 {
     public function index()
     {
-        $authors = Author::orderBy('id','desc')->get();
+        if (!Auth::guard('admin')->user()->can('view_authors')) {
+            abort(403, 'Unauthorized action.');
+        }
+        $authors = Author::orderBy('id', 'desc')->get();
         Session::put('page', 'authors');
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
@@ -23,6 +26,9 @@ class AuthorController extends Controller
 
     public function add()
     {
+        if (!Auth::guard('admin')->user()->can('add_authors')) {
+            abort(403, 'Unauthorized action.');
+        }
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
@@ -31,6 +37,9 @@ class AuthorController extends Controller
 
     public function store(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('add_authors')) {
+            abort(403, 'Unauthorized action.');
+        }
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $request->validate([
@@ -45,6 +54,9 @@ class AuthorController extends Controller
 
     public function edit($id)
     {
+        if (!Auth::guard('admin')->user()->can('edit_authors')) {
+            abort(403, 'Unauthorized action.');
+        }
         $authors = Author::find($id);
         $adminType = Auth::guard('admin')->user()->type;
         $headerLogo = HeaderLogo::first();
@@ -52,7 +64,11 @@ class AuthorController extends Controller
         return view('admin.authors.edit_author', compact('authors', 'logos', 'headerLogo', 'adminType'));
     }
 
-    public function update(Request $request){
+    public function update(Request $request)
+    {
+        if (!Auth::guard('admin')->user()->can('edit_authors')) {
+            abort(403, 'Unauthorized action.');
+        }
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $request->validate([
@@ -60,15 +76,18 @@ class AuthorController extends Controller
         ]);
         $update = Author::find($request->id);
         $update->update([
-            'name'=> $request->name,
+            'name' => $request->name,
         ]);
         return redirect()->route('admin.author')->with('success', 'Author name updated successfully!!');
         return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
-        
     }
 
-    public function delete($id){
-        $delete=Author::find($id);
+    public function delete($id)
+    {
+        if (!Auth::guard('admin')->user()->can('delete_authors')) {
+            abort(403, 'Unauthorized action.');
+        }
+        $delete = Author::find($id);
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $delete->delete();
@@ -81,6 +100,9 @@ class AuthorController extends Controller
      */
     public function updateStatus(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('edit_authors')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         if (!$request->ajax()) {
             abort(404);
         }

@@ -13,6 +13,9 @@ class LanguageController extends Controller
 {
     public function languages()
     {
+        if (!Auth::guard('admin')->user()->can('view_languages')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'languages');
@@ -23,6 +26,9 @@ class LanguageController extends Controller
 
     public function updateLanguageStatus(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('edit_languages')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($request->ajax()) {
@@ -43,10 +49,16 @@ class LanguageController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($id == "") {
+            if (!Auth::guard('admin')->user()->can('add_languages')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = "Add Language";
             $language = new Language;
             $message = "Language added successfully!";
         } else {
+            if (!Auth::guard('admin')->user()->can('edit_languages')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = "Edit Language";
             $language = Language::find($id);
             $message = "Language updated successfully!";
@@ -77,6 +89,9 @@ class LanguageController extends Controller
 
     public function deleteLanguage($id)
     {
+        if (!Auth::guard('admin')->user()->can('delete_languages')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Language::where('id', $id)->delete();

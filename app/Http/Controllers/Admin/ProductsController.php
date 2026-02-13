@@ -33,13 +33,24 @@ class ProductsController extends Controller
 {
     public function importIndex()
     {
+        if (!Auth::guard('admin')->user()->can('add_products')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         return view('admin.products.importbook', compact('logos', 'headerLogo'));
     }
 
+
+
+
     public function downloadTemplate()
     {
+        if (!Auth::guard('admin')->user()->can('add_products')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $filePath = public_path('templates/Book-Import-Template.xlsx');
 
         if (!file_exists($filePath)) {
@@ -55,6 +66,10 @@ class ProductsController extends Controller
 
     public function importStore(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('add_products')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $request->validate([
             'import' => 'required|file|mimes:xlsx,xls,csv|max:2048',
         ]);
@@ -283,6 +298,10 @@ class ProductsController extends Controller
 
     public function products()
     {
+        if (!Auth::guard('admin')->user()->can('view_products')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         Session::put('page', 'products');
 
         $logos      = HeaderLogo::first();
@@ -351,11 +370,24 @@ class ProductsController extends Controller
                 $admin = Auth::guard('admin')->user();
 
                 if ($admin->type === 'vendor') {
+                    // Vendors might not have specific permissions assigned in Seeder,
+                    // but they should be able to update their own products status if the system is designed that way.
+                    // However, if we strictly enforce permissions, they need 'update_product_status'.
+                    // Assuming vendors SHOULD have this permission or we bypass for 'vendor' type.
+                    // Given the prompt "check all value is implement", I will enforce it.
+                    // If vendor role doesn't have it, they should be given it.
+                    if (!$admin->can('update_product_status')) {
+                        return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+                    }
+
                     // Vendors update their own product attributes status
                     ProductsAttribute::where('id', $data['product_id'])
                         ->where('vendor_id', $admin->vendor_id)
                         ->update(['status' => $status]);
                 } else {
+                    if (!$admin->can('update_product_status')) {
+                        return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+                    }
                     // Admin/Superadmin updates the global product status
                     Product::where('id', $data['product_id'])->update(['status' => $status]);
                 }
@@ -373,6 +405,9 @@ class ProductsController extends Controller
 
     public function deleteProductAttribute($id)
     {
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
         // Delete a specific product attribute (not the product itself)
         $attribute = ProductsAttribute::find($id);
 
@@ -391,10 +426,16 @@ class ProductsController extends Controller
         $logos = HeaderLogo::first();
 
         if ($id == '') {
+            if (!Auth::guard('admin')->user()->can('add_products')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Add Book';
             $product = new Product();
             $message = 'Book added successfully!';
         } else {
+            if (!Auth::guard('admin')->user()->can('edit_products')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Edit Book';
             $product = Product::findOrFail($id);
             $message = 'Book updated successfully!';
@@ -719,6 +760,10 @@ class ProductsController extends Controller
 
     public function saveProductAttributes(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
+
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'stock' => 'required|integer|min:0',
@@ -776,6 +821,10 @@ class ProductsController extends Controller
 
     public function deleteProductImage($id)
     {
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $productImage = Product::select('product_image')->where('id', $id)->first();
@@ -815,6 +864,10 @@ class ProductsController extends Controller
 
     public function addAttributes(Request $request, $id)
     {
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
         Session::put('page', 'products');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -867,6 +920,10 @@ class ProductsController extends Controller
 
     public function updateAttributeStatus(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($request->ajax()) {
@@ -891,6 +948,10 @@ class ProductsController extends Controller
 
     public function editAttributes(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
         Session::put('page', 'products');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -916,6 +977,10 @@ class ProductsController extends Controller
 
     public function addImages(Request $request, $id)
     { // $id is the URL Paramter (slug) passed from the URL
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
         $adminType = Auth::guard('admin')->user()->type;
 
         Session::put('page', 'products');
@@ -978,6 +1043,10 @@ class ProductsController extends Controller
 
     public function updateImageStatus(Request $request)
     { // Update Image Status using AJAX in add_images.blade.php
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($request->ajax()) { // if the request is coming via an AJAX call
@@ -1003,8 +1072,11 @@ class ProductsController extends Controller
 
     public function deleteImage($id)
     { // AJAX call from admin/js/custom.js    // Delete the product image from BOTH SERVER (FILESYSTEM) & DATABASE    // $id is passed as a Route Parameter
-        // Get the product image record stored in the database
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
 
+        // Get the product image record stored in the database
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $productImage = ProductsImage::select('image')->where('id', $id)->first();
@@ -1041,6 +1113,10 @@ class ProductsController extends Controller
 
     public function deleteAttribute($id)
     {
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         ProductsAttribute::where('id', $id)->delete();
@@ -1053,6 +1129,10 @@ class ProductsController extends Controller
 
     public function deleteProductVideo($id)
     {
+        if (!Auth::guard('admin')->user()->can('edit_products')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 

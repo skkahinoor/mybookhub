@@ -510,7 +510,6 @@
                                             @endif
 
                                             <td>
-
                                                 @if (Auth::guard('admin')->user()->can('update_order_item_status'))
                                                     <form action="{{ url('admin/update-order-item-status') }}"
                                                         method="post">

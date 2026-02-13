@@ -12,20 +12,28 @@ use Illuminate\Support\Facades\Auth;
 
 class PublisherController extends Controller
 {
-    public function publisher() {
+    public function publisher()
+    {
+        if (!Auth::guard('admin')->user()->can('view_publishers')) {
+            abort(403, 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'publisher');
 
         $publishers = Publisher::orderBy('id', 'desc')->get()->toArray();
- // Plain PHP array
+        // Plain PHP array
         // dd($publisher);
         $adminType = Auth::guard('admin')->user()->type;
         return view('admin.publisher.publisher')->with(compact('publishers', 'logos', 'headerLogo', 'adminType'));
     }
 
-    public function updatePublisherStatus(Request $request) { // Update publisher Status using AJAX in publisher.blade.php
+    public function updatePublisherStatus(Request $request)
+    { // Update publisher Status using AJAX in publisher.blade.php
+        if (!Auth::guard('admin')->user()->can('edit_publishers')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($request->ajax()) { // if the request is coming via an AJAX call
@@ -51,7 +59,11 @@ class PublisherController extends Controller
     }
 
 
-    public function deletePublisher($id) {
+    public function deletePublisher($id)
+    {
+        if (!Auth::guard('admin')->user()->can('delete_publishers')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Publisher::where('id', $id)->delete();
@@ -60,11 +72,14 @@ class PublisherController extends Controller
 
         return redirect()->back()->with('success_message', $message);
         return view('admin.publisher.publisher', compact('publishers', 'logos', 'headerLogo'));
-        }
+    }
 
 
     public function addPublisherAjax(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('add_publishers')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         if ($request->ajax()) {
@@ -102,7 +117,8 @@ class PublisherController extends Controller
 
 
 
-    public function addEditPublisher(Request $request, $id = null) { // If the $id is not passed, this means Add a publisher, if not, this means Edit the publisher
+    public function addEditPublisher(Request $request, $id = null)
+    { // If the $id is not passed, this means Add a publisher, if not, this means Edit the publisher
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
@@ -110,11 +126,17 @@ class PublisherController extends Controller
 
 
         if ($id == '') { // if there's no $id is passed in the route/URL parameters, this means Add a new publisher
+            if (!Auth::guard('admin')->user()->can('add_publishers')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Add Publisher';
             $publisher = new Publisher();
             // dd($publisher);
             $message = 'publisher added successfully!';
         } else { // if the $id is passed in the route/URL parameters, this means Edit the publisher
+            if (!Auth::guard('admin')->user()->can('edit_publishers')) {
+                abort(403, 'Unauthorized action.');
+            }
             $title = 'Edit Publisher';
             $publisher = Publisher::find($id);
             // dd($publisher);

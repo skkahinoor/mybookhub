@@ -13,12 +13,16 @@ use App\Models\SalesExecutive;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class SalesReportController extends Controller
 {
     public function index(Request $request): \Illuminate\Contracts\View\View
     {
+        if (!Auth::guard('admin')->user()->can('view_reports')) {
+            abort(403, 'Unauthorized action.');
+        }
         Session::put('page', 'report_management');
 
         $headerLogo = HeaderLogo::first();
@@ -98,6 +102,9 @@ class SalesReportController extends Controller
 
     public function show($id)
     {
+        if (!Auth::guard('admin')->user()->can('view_reports')) {
+            abort(403, 'Unauthorized action.');
+        }
         Session::put('page', 'report_management');
 
         $headerLogo = HeaderLogo::first();
@@ -195,4 +202,3 @@ class SalesReportController extends Controller
         ));
     }
 }
-
