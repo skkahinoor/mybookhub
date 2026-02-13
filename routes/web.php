@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
 
 Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function () {
     Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one
@@ -414,7 +414,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 });
 
 // Vendor routes (separate prefix /vendor, vendor-only access)
-require __DIR__.'/vendor.php';
+require __DIR__ . '/vendor.php';
 
 Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Admin\OrderController@viewPDFInvoice');
 
@@ -424,10 +424,12 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     Route::post('set-condition', [IndexController::class, 'setCondition'])->name('set.condition');
     Route::post('/set-language', [IndexController::class, 'setLanguage']);
     Route::post('/set-location-session', [App\Http\Controllers\Front\LocationController::class, 'setLocationSession']);
-    $catUrls = \App\Models\Category::select('url')->where('status', 1)->get()->pluck('url')->toArray(); // Routes like: /men, /women, /shirts, ...
-    // dd($catUrls);
+    $catUrls = \App\Models\Category::select('url')->where('status', 1)->pluck('url')->reject(function ($url) {
+        return empty($url) || $url === '/' || $url === '#';
+    })->toArray(); // Routes like: /men, /women, /shirts, ...
+
     foreach ($catUrls as $key => $url) {
-        Route::match(['get', 'post'], '/'.$url, 'ProductsController@listing');
+        Route::match(['get', 'post'], '/' . $url, 'ProductsController@listing');
     }
 
     // Vendor Login/Register
@@ -580,10 +582,10 @@ Route::get('/payment-success', function () {
 });
 
 // Sales Executives routes
-require __DIR__.'/sales.php';
+require __DIR__ . '/sales.php';
 
 // User routes
-require __DIR__.'/user.php';
+require __DIR__ . '/user.php';
 
 // Test route for AJAX endpoints
 // Route::get('test-ajax-endpoints', function() {
