@@ -511,30 +511,35 @@
 
                                             <td>
 
-                                                <form action="{{ url('admin/update-order-item-status') }}"
-                                                    method="post">
-                                                    @csrf
+                                                @if (Auth::guard('admin')->user()->can('update_order_item_status'))
+                                                    <form action="{{ url('admin/update-order-item-status') }}"
+                                                        method="post">
+                                                        @csrf
 
-                                                    <input type="hidden" name="order_item_id"
-                                                        value="{{ $product['id'] }}">
+                                                        <input type="hidden" name="order_item_id"
+                                                            value="{{ $product['id'] }}">
 
-                                                    <select id="order_item_status" name="order_item_status" required>
-                                                        <option value="">Select</option>
-                                                        @foreach ($orderItemStatuses as $status)
-                                                            <option value="{{ $status['name'] }}"
-                                                                @if (!empty($product['item_status']) && $product['item_status'] == $status['name']) selected @endif>
-                                                                {{ $status['name'] }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    {{-- <input style="width: 110px" type="text" name="item_courier_name"
-                                                        id="item_courier_name" placeholder="Item Courier Name"
-                                                        @if (!empty($product['courier_name'])) value="{{ $product['courier_name'] }}" @endif>
-                                                    <input style="width: 110px" type="text"
-                                                        name="item_tracking_number" id="item_tracking_number"
-                                                        placeholder="Item Tracking Number"
-                                                        @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif> --}}
-                                                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
-                                                </form>
+                                                        <select id="order_item_status" name="order_item_status" required>
+                                                            <option value="">Select</option>
+                                                            @foreach ($orderItemStatuses as $status)
+                                                                <option value="{{ $status['name'] }}"
+                                                                    @if (!empty($product['item_status']) && $product['item_status'] == $status['name']) selected @endif>
+                                                                    {{ $status['name'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                        {{-- <input style="width: 110px" type="text" name="item_courier_name"
+                                                            id="item_courier_name" placeholder="Item Courier Name"
+                                                            @if (!empty($product['courier_name'])) value="{{ $product['courier_name'] }}" @endif>
+                                                        <input style="width: 110px" type="text"
+                                                            name="item_tracking_number" id="item_tracking_number"
+                                                            placeholder="Item Tracking Number"
+                                                            @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif> --}}
+                                                        <button type="submit"
+                                                            class="btn btn-primary btn-sm">Update</button>
+                                                    </form>
+                                                @else
+                                                    {{ $product['item_status'] }}
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach
