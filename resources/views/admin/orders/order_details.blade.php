@@ -304,7 +304,7 @@
                         <div class="card-body">
                             <h4 class="card-title">Update Order Status</h4> {{-- determined by 'admin'-s ONLY, not 'vendor'-s --}}
 
-                            @if (Auth::guard('admin')->user()->type != 'vendor')
+                            @if (Auth::guard('admin')->user()->can('update_order_status'))
                                 <form action="{{ url('admin/update-order-status') }}" method="post">
                                     @csrf
 
@@ -533,7 +533,7 @@
                                                         name="item_tracking_number" id="item_tracking_number"
                                                         placeholder="Item Tracking Number"
                                                         @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif> --}}
-                                                   <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                                                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
                                                 </form>
                                             </td>
                                         </tr>
