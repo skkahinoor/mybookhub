@@ -54,23 +54,29 @@ class IndexController extends Controller
         //     ->orderBy('id', 'desc')
         //     ->get();
 
-        $newProducts = Product::with(['authors', 'publisher', 'edition'])
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($query) {
-                $query->where('language_id', session('language'));
+        $newProducts = ProductsAttribute::with(['product.authors', 'product.publisher', 'product.edition'])
+            ->whereHas('product', function ($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    })
+                    ->when(session('language') && session('language') !== 'all', function ($q) {
+                        $q->where('language_id', session('language'));
+                    });
             })
             ->where('status', 1)
             ->orderBy('id', 'desc')
             ->paginate(8);
 
-        $slidingProducts = Product::with(['authors', 'publisher', 'edition'])
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($query) {
-                $query->where('language_id', session('language'));
+        $slidingProducts = ProductsAttribute::with(['product.authors', 'product.publisher', 'product.edition'])
+            ->whereHas('product', function ($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    })
+                    ->when(session('language') && session('language') !== 'all', function ($q) {
+                        $q->where('language_id', session('language'));
+                    });
             })
             ->where('status', 1)
             ->orderBy('id', 'desc')
@@ -79,11 +85,15 @@ class IndexController extends Controller
 
         $category = Category::limit(10)->get();
 
-        $footerProducts = Product::orderBy('id', 'Desc')
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
+        $footerProducts = ProductsAttribute::with('product')
+            ->whereHas('product', function ($query) use ($condition) {
+                $query->where('status', 1)
+                    ->when($condition !== 'all', function ($q) use ($condition) {
+                        $q->where('condition', $condition);
+                    });
             })
             ->where('status', 1)
+            ->orderBy('id', 'Desc')
             ->take(3)
             ->get()
             ->toArray();
