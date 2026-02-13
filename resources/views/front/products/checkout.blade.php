@@ -159,7 +159,6 @@
                         <div class="col-lg-6">
                             <form name="checkoutForm" id="checkoutForm" action="{{ url('/checkout') }}" method="post">
                                 @csrf
-
                                 <!-- Delivery Addresses Selection -->
                                 @if (collect($deliveryAddresses)->count() > 0)
                                     <div class="checkout-section">
