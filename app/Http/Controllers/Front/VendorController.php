@@ -21,7 +21,8 @@ use GuzzleHttp\Client;
 
 class VendorController extends Controller
 {
-    public function loginRegister(Request $request) {
+    public function loginRegister(Request $request)
+    {
         $condition = session('condition', 'new');
         $logos     = HeaderLogo::all();
         $sections  = Section::all();
@@ -29,10 +30,11 @@ class VendorController extends Controller
         if (!in_array($condition, ['new', 'old'])) {
             $condition = 'new';
         }
-        return view('front.vendors.login_register',compact('condition', 'logos', 'sections', 'language'));
+        return view('front.vendors.login_register', compact('condition', 'logos', 'sections', 'language'));
     }
 
-    public function vendorRegister(Request $request) {
+    public function vendorRegister(Request $request)
+    {
         $condition = session('condition', 'new');
 
         if (!in_array($condition, ['new', 'old'])) {
@@ -41,19 +43,19 @@ class VendorController extends Controller
         if ($request->isMethod('post')) {
             $data = $request->all();
             $rules = [
-                            'name'          => 'required',
-                            'email'         => 'required|email|unique:users,email',
-                            'mobile'        => 'required|min:10|numeric|unique:users,phone',
-                            'accept'        => 'required'
+                'name'          => 'required',
+                'email'         => 'required|email|unique:users,email',
+                'mobile'        => 'required|min:10|numeric|unique:users,phone',
+                'accept'        => 'required'
             ];
 
             $customMessages = [
-                                'name.required'             => 'Name is required',
-                                'email.required'            => 'Email is required',
-                                'email.unique'              => 'Email alreay exists',
-                                'mobile.required'           => 'Mobile is required',
-                                'mobile.unique'             => 'Mobile alreay exists',
-                                'accept.required'           => 'Please accept Terms & Conditions',
+                'name.required'             => 'Name is required',
+                'email.required'            => 'Email is required',
+                'email.unique'              => 'Email alreay exists',
+                'mobile.required'           => 'Mobile is required',
+                'mobile.unique'             => 'Mobile alreay exists',
+                'accept.required'           => 'Please accept Terms & Conditions',
             ];
 
             $validator = Validator::make($data, $rules, $customMessages);
@@ -124,7 +126,7 @@ class VendorController extends Controller
             $client = new Client();
 
             $payload = [
-                "template_id" => env('MSG91_TEMPLATE_ID'),
+                "template_id" => config('services.msg91.template_id'),
                 "recipients"  => [
                     [
                         "mobiles" => $to,
@@ -139,7 +141,7 @@ class VendorController extends Controller
                 'json' => $payload,
                 'headers' => [
                     'accept' => 'application/json',
-                    'authkey' => env('MSG91_AUTH_KEY'),
+                    'authkey' => config('services.msg91.key'),
                     'content-type' => 'application/json',
                 ],
             ]);
@@ -215,25 +217,26 @@ class VendorController extends Controller
         ]);
     }
 
-    public function confirmVendor($email,Request $request) {
+    public function confirmVendor($email, Request $request)
+    {
         $condition = session('condition', 'new');
 
         $email = base64_decode($email);
-        
+
         // Find user by email
         $user = User::where('email', $email)->first();
-        
+
         if (!$user) {
             abort(404);
         }
-        
+
         // Find vendor by user_id
         $vendor = Vendor::where('user_id', $user->id)->first();
-        
+
         if (!$vendor) {
             abort(404);
         }
-        
+
         if ($vendor->confirm == 'Yes') { // if the vendor is already confirmed
             // Redirect vendor to vendor Login/Register page with an 'error' message
             $message = 'Your Vendor Account is already confirmed. You can login';
@@ -434,5 +437,4 @@ class VendorController extends Controller
 
         return view('admin/login');
     }
-
 }

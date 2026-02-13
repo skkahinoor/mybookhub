@@ -109,7 +109,7 @@ class SalesExecutiveAuthController extends Controller
             $client = new Client();
 
             $payload = [
-                "template_id" => env('MSG91_TEMPLATE_ID'),
+                "template_id" => config('services.msg91.template_id'),
                 "recipients"  => [
                     [
                         "mobiles" => $to,
@@ -124,7 +124,7 @@ class SalesExecutiveAuthController extends Controller
                 'json' => $payload,
                 'headers' => [
                     'accept' => 'application/json',
-                    'authkey' => env('MSG91_AUTH_KEY'),
+                    'authkey' => config('services.msg91.key'),
                     'content-type' => 'application/json'
                 ],
             ]);
@@ -251,8 +251,6 @@ class SalesExecutiveAuthController extends Controller
         // $logos      = $headerLogo;
 
         return redirect()->route('sales.login')->with('success', 'Registration successful plz wait for admin verification !');
-
-
     }
 
 
@@ -281,7 +279,7 @@ class SalesExecutiveAuthController extends Controller
 
         // Calculate total classes (sum of classes from all institutions added by this sales executive)
         $institutionIds = InstitutionManagement::where('added_by', $salesExecutiveId)->pluck('id');
-        
+
 
         // Calculate total blocks (distinct blocks from institutions)
         $totalBlocks = InstitutionManagement::where('added_by', $salesExecutiveId)

@@ -46,4 +46,9 @@ return [
         'secret' => env('RAZORPAY_KEY_SECRET'),
     ],
 
+    'msg91' => [
+        'key' => env('MSG91_AUTH_KEY'),
+        'template_id' => env('MSG91_TEMPLATE_ID'),
+    ],
+
 ];
