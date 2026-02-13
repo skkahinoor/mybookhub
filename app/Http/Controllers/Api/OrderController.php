@@ -280,10 +280,10 @@ class OrderController extends Controller
         }
 
         $basePrice       = $attribute->price ?? $product->product_price;
-        $discountPercent = $attribute->product_discount ?? 0;
+        $discountAmount = round((float) ($attribute->product_discount ?? 0));
 
-        $discountAmount = round(($basePrice * $discountPercent) / 100);
-        $finalPrice     = round($basePrice - $discountAmount);
+        $discountAmount = min($discountAmount, $basePrice);
+        $finalPrice = round($basePrice - $discountAmount);
 
         $basePath = url('front/images/product_images');
 
@@ -294,7 +294,7 @@ class OrderController extends Controller
                 'product_name'     => $product->product_name,
                 'product_isbn'     => $product->product_isbn,
                 'mrp'              => round($basePrice),
-                'discount_percent' => $discountPercent,
+                'discount_amount'  => $discountAmount,
                 'discount_amount'  => $discountAmount,
                 'final_price'      => $finalPrice,
                 'stock'            => $attribute->stock,
@@ -328,14 +328,14 @@ class OrderController extends Controller
         }
 
         // Normalize values
-        $subTotal    = round((float) $request->sub_total, 2);
-        $storeDiscount = round((float) ($request->extra_discount ?? 0), 2);
+        $subTotal    = round((float) $request->sub_total);
+        $storeDiscount = round((float) ($request->extra_discount ?? 0));
 
         // 🔒 Prevent over-discount
         $storeDiscount = min($storeDiscount, $subTotal);
 
         // Price after store discount (₹)
-        $priceAfterStoreDiscount = round($subTotal - $storeDiscount, 2);
+        $priceAfterStoreDiscount = round($subTotal - $storeDiscount);
 
         // 🔍 Fetch valid coupon
         $coupon = Coupon::where('coupon_code', $request->coupon_code)
@@ -353,7 +353,7 @@ class OrderController extends Controller
 
         // 🧮 Coupon calculation
         if ($coupon->amount_type === 'Percentage') {
-            $couponDiscount = round(($priceAfterStoreDiscount * $coupon->amount) / 100, 2);
+            $couponDiscount = round(($priceAfterStoreDiscount * $coupon->amount) / 100);
         } else {
             $couponDiscount = round($coupon->amount, 2);
         }
@@ -372,7 +372,6 @@ class OrderController extends Controller
             ]
         ], 200);
     }
-
 
     public function processSale(Request $request)
     {
@@ -436,12 +435,9 @@ class OrderController extends Controller
 
                 /* Use vendor price if exists */
                 $price =  $product->product_price;
-                $discountPercent = $attribute->product_discount ?? 0;
-                $discountAmount = round(($price * $discountPercent) / 100);
-                $finalPrice     = round($price - $discountAmount);
-
-
-
+                $discountAmount = round((float) ($attribute->product_discount ?? 0));
+                $discountAmount = min($discountAmount, $price);
+                $finalPrice = round($price - $discountAmount);
 
 
                 $lineTotal = $finalPrice * $item['quantity'];
