@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Session;
-
-use App\Models\User;
 use App\Models\HeaderLogo;
+use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class UserController extends Controller
 {
     // Render admin/users/users.blade.php page in the Admin Panel
-    public function users() {
-        if (!Auth::guard('admin')->user()->can('view_users')) {
+    public function users()
+    {
+        if (! Auth::guard('admin')->user()->can('view_users')) {
             abort(403, 'Unauthorized action.');
         }
         $headerLogo = HeaderLogo::first();
@@ -22,14 +22,11 @@ class UserController extends Controller
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'users');
 
-        // Get all users (excluding admins) and load relationships
+        // Get all users with role_id 4 and load relationships
         $users = User::with(['country', 'state', 'district', 'block'])
-            ->where(function($query) {
-                $query->whereNull('role_id')
-                      ->orWhere('role_id', '!=', 1);
-            })
+            ->where('role_id', 4)
             ->get()
-            ->map(function($user) {
+            ->map(function ($user) {
                 // Transform data to match view expectations
                 return [
                     'id' => $user->id,
@@ -50,11 +47,10 @@ class UserController extends Controller
         return view('admin.users.users')->with(compact('users', 'logos', 'headerLogo', 'adminType'));
     }
 
-
-
     // Update User Status (active/inactive) via AJAX in admin/users/users.blade.php, check admin/js/custom.js
-    public function updateUserStatus(Request $request) {
-        if (!Auth::guard('admin')->user()->can('update_users_status')) {
+    public function updateUserStatus(Request $request)
+    {
+        if (! Auth::guard('admin')->user()->can('update_users_status')) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
         }
 
@@ -73,10 +69,11 @@ class UserController extends Controller
             User::where('id', $data['user_id'])->update(['status' => $status]); // $data['user_id'] comes from the 'data' object inside the $.ajax() method
 
             return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
-                'status'  => $status,
-                'user_id' => $data['user_id']
+                'status' => $status,
+                'user_id' => $data['user_id'],
             ]);
         }
+
         return view('admin.users.users', compact('users', 'logos', 'headerLogo'));
     }
 }
