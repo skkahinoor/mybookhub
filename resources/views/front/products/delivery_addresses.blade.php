@@ -15,39 +15,42 @@
     </style>
 
     <div class="delivery-card">
-    <h4 class="section-h4 deliveryText">Add New Delivery Address</h4>
+    @php 
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $firstAddress = collect($deliveryAddresses)->first();
+        $deliveryId = $firstAddress['id'] ?? '';
+    @endphp
+    <h4 class="section-h4 deliveryText">{{ empty($deliveryId) ? 'Add New Delivery Address' : 'Update Delivery Address' }}</h4>
     <div class="u-s-m-b-24 ship-diff">
-        <input type="checkbox" class="check-box" id="ship-to-different-address" data-toggle="collapse" data-target="#showdifferent">
-
-
+        <input type="checkbox" class="check-box" id="ship-to-different-address" data-bs-toggle="collapse" data-bs-target="#showdifferent" {{ !empty($deliveryId) ? 'checked' : '' }}>
 
         @if (collect($deliveryAddresses)->count() > 0)
-        <label class="label-text newAddress" for="ship-to-different-address">Ship to a different address?</label>
-    @else {{-- if there're no already existing delivery addresses --}}
-        <label class="label-text newAddress" for="ship-to-different-address">Check to add Delivery Address</label>
-    @endif
+            <label class="label-text newAddress" for="ship-to-different-address">Update existing address?</label>
+        @else
+            <label class="label-text newAddress" for="ship-to-different-address">Check to add Delivery Address</label>
+        @endif
 
     </div>
-    <div class="collapse" id="showdifferent">
+    <div class="collapse {{ !empty($deliveryId) ? 'show' : '' }}" id="showdifferent">
 
-        <form id="addressAddEditForm" action="javascript:;" method="post">
+        <form action="{{ url('/save-delivery-address') }}" method="post">
             @csrf
 
 
-            <input type="hidden" name="delivery_id">
+            <input type="hidden" name="delivery_id" value="{{ $deliveryId }}">
             <div class="group-inline u-s-m-b-13">
                 <div class="group-1 u-s-p-r-16">
                     <label for="delivery_name">Name
                         <span class="astk">*</span>
                     </label>
-                    <input class="text-field" type="text" id="delivery_name" name="delivery_name" placeholder="Full name">
+                    <input class="text-field" type="text" id="delivery_name" name="delivery_name" value="{{ $firstAddress['name'] ?? $user->name }}" placeholder="Full name">
                     <p id="delivery-delivery_name"></p>
                 </div>
                 <div class="group-2">
                     <label for="delivery_address">Address
                         <span class="astk">*</span>
                     </label>
-                    <input class="text-field" type="text" id="delivery_address" name="delivery_address" placeholder="Street, area, house no.">
+                    <input class="text-field" type="text" id="delivery_address" name="delivery_address" value="{{ $firstAddress['address'] ?? $user->address }}" placeholder="Street, area, house no.">
                     <p id="delivery-delivery_address"></p>
                 </div>
             </div>
@@ -56,14 +59,14 @@
                     <label for="delivery_city">City
                         <span class="astk">*</span>
                     </label>
-                    <input class="text-field" type="text" id="delivery_city" name="delivery_city" placeholder="City">
+                    <input class="text-field" type="text" id="delivery_city" name="delivery_city" value="{{ $firstAddress['city'] ?? $user->city }}" placeholder="City">
                     <p id="delivery-delivery_city"></p>
                 </div>
                 <div class="group-2">
                     <label for="delivery_state">State
                         <span class="astk">*</span>
                     </label>
-                    <input class="text-field" type="text" id="delivery_state" name="delivery_state" placeholder="State">
+                    <input class="text-field" type="text" id="delivery_state" name="delivery_state" value="{{ $firstAddress['state'] ?? $user->state }}" placeholder="State">
                     <p id="delivery-delivery_state"></p>
                 </div>
             </div>
@@ -74,9 +77,9 @@
                 <div class="select-box-wrapper">
                     <select class="select-box" id="delivery_country" name="delivery_country">
                         <option value="">Select Country</option>
-
-                        @foreach ($countries as $country) {{-- $countries was passed from UserController to view using compact() method --}}
-                            <option value="{{ $country['name'] }}"  @if ($country['name'] == \Illuminate\Support\Facades\Auth::user()->country) selected @endif>{{ $country['name'] }}</option>
+                        @php $currentCountry = $firstAddress['country'] ?? $user->country; @endphp
+                        @foreach ($countries as $country)
+                            <option value="{{ $country['name'] }}" @if ($country['name'] == $currentCountry) selected @endif>{{ $country['name'] }}</option>
                         @endforeach
 
                     </select>
@@ -87,18 +90,18 @@
                 <label for="delivery_pincode">Pincode
                     <span class="astk">*</span>
                 </label>
-                <input class="text-field" type="text" id="delivery_pincode" name="delivery_pincode" placeholder="e.g. 560001">
+                <input class="text-field" type="text" id="delivery_pincode" name="delivery_pincode" value="{{ $firstAddress['pincode'] ?? $user->pincode }}" placeholder="e.g. 560001">
                 <p id="delivery-delivery_pincode"></p>
             </div>
             <div class="u-s-m-b-13">
                 <label for="delivery_mobile">Mobile
                     <span class="astk">*</span>
                 </label>
-                <input class="text-field" type="text" id="delivery_mobile" name="delivery_mobile" placeholder="10-digit mobile number">
+                <input class="text-field" type="text" id="delivery_mobile" name="delivery_mobile" value="{{ $firstAddress['mobile'] ?? $user->mobile }}" placeholder="10-digit mobile number">
                 <p id="delivery-delivery_mobile"></p>
             </div>
             <div class="u-s-m-b-13">
-                <button style="width: 100%" type="submit" class="btn btn-primary btnhover">Save Address</button> {{-- Save whether it's Add or Edit --}}
+                <button style="width: 100%" type="submit" class="btn btn-primary btnhover">Save Address</button>
             </div>
 
         </form>

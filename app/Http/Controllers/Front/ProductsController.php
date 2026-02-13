@@ -37,11 +37,11 @@ class ProductsController extends Controller
         if ($request->ajax()) {
             $data = $request->all();
 
-            $url          = $data['url'];
+            $url = $data['url'];
             $_GET['sort'] = $data['sort'];
             // dd($url);
             $categoryCount = Category::where([
-                'url'    => $url,
+                'url' => $url,
                 'status' => 1,
             ])->count();
             // dd($categoryCount);
@@ -105,9 +105,9 @@ class ProductsController extends Controller
                 $categoryProducts = $categoryProducts->paginate(30); // Moved the pagination after checking for the sorting filter <form>
 
                 // Dynamic SEO (HTML meta tags): Check the HTML <meta> tags and <title> tag in front/layout/layout.blade.php
-                $meta_title       = $categoryDetails['categoryDetails']['meta_title'];
+                $meta_title = $categoryDetails['categoryDetails']['meta_title'];
                 $meta_description = $categoryDetails['categoryDetails']['meta_description'];
-                $meta_keywords    = $categoryDetails['categoryDetails']['meta_keywords'];
+                $meta_keywords = $categoryDetails['categoryDetails']['meta_keywords'];
 
                 return view('front.products.ajax_products_listing')->with(compact('categoryDetails', 'categoryProducts', 'url', 'meta_title', 'meta_description', 'meta_keywords', 'condition'));
             } else {
@@ -122,14 +122,14 @@ class ProductsController extends Controller
                     $search_product = $_REQUEST['search'];
 
                     // We fill in the $categoryDetails array MANUALLY with the same indexes/keys that come from the categoryDetails() method in Category.php model (because in either cases of the if-else statement, we pass in $categoryDetails variable to the view down below)
-                    $categoryDetails['breadcrumbs']                      = 'New Arrival Products';
+                    $categoryDetails['breadcrumbs'] = 'New Arrival Products';
                     $categoryDetails['categoryDetails']['category_name'] = 'New Arrival Products';
-                    $categoryDetails['categoryDetails']['description']   = 'New Arrival Products';
+                    $categoryDetails['categoryDetails']['description'] = 'New Arrival Products';
 
                     // We join `products` table (at the `category_id` column) with `categoreis` table (becausee we're going to search `category_name` column in `categories` table)
                     // Note: It's best practice to name table columns with more verbose descriptive names (e.g. if the table name is `products`, then you should have a column called `product_id`, NOT `id`), and also, don't have repeated column names THROUGHOUT/ACROSS the tables of a certain (one) database (i.e. make all your database tables column names (throughout your database) UNIQUE (even columns in different tables!)). That's because of that problem that emerges when you join (JOIN clause) two tables which have the same column names, when you join them, the column names of the second table overrides the column names of the first table (similar column names override each other), leading to many problems. There are TWO ways/workarounds to tackle this problem
 
-                    $condition        = session('condition', 'new');
+                    $condition = session('condition', 'new');
                     $categoryProducts = Product::select(
                         'products.id',
                         'products.section_id',
@@ -153,9 +153,9 @@ class ProductsController extends Controller
                 } elseif ($_REQUEST['search'] == 'best-sellers') {
                     $search_product = $_REQUEST['search'];
 
-                    $categoryDetails['breadcrumbs']                      = 'Best Sellers Products';
+                    $categoryDetails['breadcrumbs'] = 'Best Sellers Products';
                     $categoryDetails['categoryDetails']['category_name'] = 'Best Sellers Products';
-                    $categoryDetails['categoryDetails']['description']   = 'Best Sellers Products';
+                    $categoryDetails['categoryDetails']['description'] = 'Best Sellers Products';
 
                     $categoryProducts = Product::select(
                         'products.id',
@@ -178,10 +178,10 @@ class ProductsController extends Controller
 
                     // Featured    // Check front/layout/header.blade.php
                 } elseif ($_REQUEST['search'] == 'featured') {
-                    $search_product                                      = $_REQUEST['search'];
-                    $categoryDetails['breadcrumbs']                      = 'Featured Products';
+                    $search_product = $_REQUEST['search'];
+                    $categoryDetails['breadcrumbs'] = 'Featured Products';
                     $categoryDetails['categoryDetails']['category_name'] = 'Featured Products';
-                    $categoryDetails['categoryDetails']['description']   = 'Featured Products';
+                    $categoryDetails['categoryDetails']['description'] = 'Featured Products';
 
                     $categoryProducts = Product::select(
                         'products.id',
@@ -206,9 +206,9 @@ class ProductsController extends Controller
                 } elseif ($_REQUEST['search'] == 'discounted') {
                     $search_product = $_REQUEST['search'];
 
-                    $categoryDetails['breadcrumbs']                      = 'Discounted Products';
+                    $categoryDetails['breadcrumbs'] = 'Discounted Products';
                     $categoryDetails['categoryDetails']['category_name'] = 'Discounted Products';
-                    $categoryDetails['categoryDetails']['description']   = 'Discounted Products';
+                    $categoryDetails['categoryDetails']['description'] = 'Discounted Products';
 
                     $categoryProducts = Product::select(
                         'products.id',
@@ -230,9 +230,9 @@ class ProductsController extends Controller
                 } else { // The Search Bar
                     $search_product = $_REQUEST['search'];
 
-                    $categoryDetails['breadcrumbs']                      = $search_product;
+                    $categoryDetails['breadcrumbs'] = $search_product;
                     $categoryDetails['categoryDetails']['category_name'] = $search_product;
-                    $categoryDetails['categoryDetails']['description']   = 'Search Products for ' . $search_product;
+                    $categoryDetails['categoryDetails']['description'] = 'Search Products for '.$search_product;
 
                     $categoryProducts = Product::select(
                         'products.id',
@@ -252,9 +252,9 @@ class ProductsController extends Controller
                         'products.category_id'
                     )->where(function ($query) use ($search_product) {
 
-                        $query->where('products.product_name', 'like', '%' . $search_product . '%')
-                            ->orWhere('products.description', 'like', '%' . $search_product . '%')
-                            ->orWhere('categories.category_name', 'like', '%' . $search_product . '%');
+                        $query->where('products.product_name', 'like', '%'.$search_product.'%')
+                            ->orWhere('products.description', 'like', '%'.$search_product.'%')
+                            ->orWhere('categories.category_name', 'like', '%'.$search_product.'%');
                     })->where('products.status', 1);
                     // dd($categoryProducts);
                 }
@@ -267,6 +267,7 @@ class ProductsController extends Controller
                 // dd($categoryProducts);
 
                 $categories = \App\Models\Category::where('status', 1)->orderBy('category_name')->get();
+
                 return view('front.products.listing')->with(compact(
                     'categoryDetails',
                     'categoryProducts',
@@ -276,16 +277,16 @@ class ProductsController extends Controller
             } else {                                                                     // If the Search Form is NOT used, render the listing.blade.php page with the Sorting Filter WITHOUT AJAX (using the HTML <form> and jQuery)
                 $url = \Illuminate\Support\Facades\Route::getFacadeRoot()->current()->uri(); // Accessing The Current Route: https://laravel.com/docs/9.x/routing#accessing-the-current-route    // Accessing The Current URL: https://laravel.com/docs/9.x/urls#accessing-the-current-url
                 // dd($url);
-                $condition     = session('condition', 'new');
+                $condition = session('condition', 'new');
                 $categoryCount = Category::where([
-                    'url'    => $url,
+                    'url' => $url,
                     'status' => 1,
                 ])->count();
                 // dd($categoryCount);
 
                 if ($categoryCount > 0) { // if the category entered as a URL in the browser address bar exists
                     // Get the entered URL in the browser address bar category details
-                    $categoryDetails  = Category::categoryDetails($url);
+                    $categoryDetails = Category::categoryDetails($url);
                     $categoryProducts = Product::with('publisher')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1); // moving the paginate() method after checking for the sorting filter <form>    // Paginating Eloquent Results: https://laravel.com/docs/9.x/pagination#paginating-eloquent-results    // Displaying Pagination Results Using Bootstrap: https://laravel.com/docs/9.x/pagination#using-bootstrap        // https://laravel.com/docs/9.x/queries#additional-where-clauses    // using the publisher() relationship method in Product.php
 
                     // Sorting Filter WITHOUT AJAX (using HTML <form> and jQuery) in front/products/listing.blade.php
@@ -307,9 +308,9 @@ class ProductsController extends Controller
                     $categoryProducts = $categoryProducts->paginate(30); // Moved the pagination after checking for the sorting filter <form>
 
                     // Dynamic SEO (HTML meta tags): Check the HTML <meta> tags and <title> tag in front/layout/layout.blade.php
-                    $meta_title       = $categoryDetails['categoryDetails']['meta_title'];
+                    $meta_title = $categoryDetails['categoryDetails']['meta_title'];
                     $meta_description = $categoryDetails['categoryDetails']['meta_description'];
-                    $meta_keywords    = $categoryDetails['categoryDetails']['meta_keywords'];
+                    $meta_keywords = $categoryDetails['categoryDetails']['meta_keywords'];
 
                     return view('front.products.listing')->with(compact('categoryDetails', 'categoryProducts', 'url', 'meta_title', 'meta_description', 'meta_keywords', 'condition'));
                 } else {
@@ -321,8 +322,8 @@ class ProductsController extends Controller
 
     public function categoryProducts(Request $request, $category_id = null)
     {
-        $condition      = session('condition', 'new');
-        $sections       = Section::all();
+        $condition = session('condition', 'new');
+        $sections = Section::all();
         $footerProducts = Product::orderBy('id', 'Desc')
             ->where('condition', $condition)
             ->where('status', 1)
@@ -331,11 +332,11 @@ class ProductsController extends Controller
             ->toArray();
         $category = Category::limit(10)->get();
         $language = Language::get();
-        $logos    = HeaderLogo::first();
+        $logos = HeaderLogo::first();
 
         // Get category details
         $categoryDetails = null;
-        $products        = collect();
+        $products = collect();
 
         if ($category_id) {
             // Get category by ID
@@ -344,7 +345,7 @@ class ProductsController extends Controller
             if ($categoryDetails) {
                 // Get all subcategories if this is a parent category
                 $subCategories = Category::where('parent_id', $category_id)->pluck('id')->toArray();
-                $categoryIds   = array_merge([$category_id], $subCategories);
+                $categoryIds = array_merge([$category_id], $subCategories);
 
                 // Get products for this category and its subcategories
                 $products = Product::with(['publisher', 'authors'])
@@ -422,16 +423,16 @@ class ProductsController extends Controller
 
                 $products = $products->filter(function ($product) use ($minPrice, $maxPrice) {
                     $discountedPrice = Product::getDiscountPrice($product->id);
-                    $finalPrice      = $discountedPrice > 0 ? $discountedPrice : $product->product_price;
+                    $finalPrice = $discountedPrice > 0 ? $discountedPrice : $product->product_price;
 
                     return $finalPrice >= $minPrice && $finalPrice <= $maxPrice;
                 });
             }
 
             // Convert back to pagination
-            $perPage     = 12;
+            $perPage = 12;
             $currentPage = $request->get('page', 1);
-            $products    = new \Illuminate\Pagination\LengthAwarePaginator(
+            $products = new \Illuminate\Pagination\LengthAwarePaginator(
                 $products->forPage($currentPage, $perPage),
                 $products->count(),
                 $perPage,
@@ -441,11 +442,12 @@ class ProductsController extends Controller
         }
 
         // SEO meta tags
-        $meta_title       = $categoryDetails ? $categoryDetails->meta_title : 'All Books';
+        $meta_title = $categoryDetails ? $categoryDetails->meta_title : 'All Books';
         $meta_description = $categoryDetails ? $categoryDetails->meta_description : 'Browse all books in our collection';
-        $meta_keywords    = $categoryDetails ? $categoryDetails->meta_keywords : 'books, literature, reading';
+        $meta_keywords = $categoryDetails ? $categoryDetails->meta_keywords : 'books, literature, reading';
 
         $categories = \App\Models\Category::where('status', 1)->orderBy('category_name')->get();
+
         return view('front.products.category_products', compact(
             'products',
             'categoryDetails',
@@ -460,7 +462,7 @@ class ProductsController extends Controller
             'meta_keywords',
             'categories' // <-- include this
         ), [
-            'languages'        => Language::all(),
+            'languages' => Language::all(),
             'selectedLanguage' => Language::find(session('language')),
         ]);
     }
@@ -472,7 +474,7 @@ class ProductsController extends Controller
         $category = Category::limit(10)->get();
         $sections = Section::all();
         $language = Language::get();
-        $logos    = HeaderLogo::first();
+        $logos = HeaderLogo::first();
 
         $footerProducts = Product::where('status', 1)
             ->where('condition', $condition)
@@ -494,31 +496,31 @@ class ProductsController extends Controller
             ->where('status', 1)
             ->firstOrFail();
 
-        $product  = $productAttribute->product;
+        $product = $productAttribute->product;
         $productId = $product->id;
-        $vendorId  = $productAttribute->vendor_id;
+        $vendorId = $productAttribute->vendor_id;
 
         $productDetails = $product->toArray();
 
-        $productDetails['vendor_id']            = $vendorId;
-        $productDetails['attribute_id']         = $productAttribute->id;
-        $productDetails['stock']                = (int) $productAttribute->stock;
-        $productDetails['product_discount']     = (float) $productAttribute->product_discount;
+        $productDetails['vendor_id'] = $vendorId;
+        $productDetails['attribute_id'] = $productAttribute->id;
+        $productDetails['stock'] = (int) $productAttribute->stock;
+        $productDetails['product_discount'] = (float) $productAttribute->product_discount;
 
         $basePrice = (float) $product->product_price;
-        $discount  = (float) $productAttribute->product_discount;
+        $discount = (float) $productAttribute->product_discount;
 
         if ($discount > 0) {
-            $finalPrice      = round($basePrice - ($basePrice * $discount / 100));
+            $finalPrice = round($basePrice - ($basePrice * $discount / 100));
             $discountPercent = round($discount);
         } else {
-            $finalPrice      = round($basePrice);
+            $finalPrice = round($basePrice);
             $discountPercent = 0;
         }
 
         $totalStock = (int) $productAttribute->stock;
 
-        if (!$product->category) {
+        if (! $product->category) {
             abort(404, 'Product category not found');
         }
 
@@ -539,10 +541,9 @@ class ProductsController extends Controller
             ->inRandomOrder()
             ->get()
             ->groupBy('product_id')            // 🔥 remove duplicates
-            ->map(fn($items) => $items->first()) // take one vendor per product
+            ->map(fn ($items) => $items->first()) // take one vendor per product
             ->take(3)
             ->values();
-
 
         $attributeId = $productAttribute->id;
 
@@ -553,19 +554,19 @@ class ProductsController extends Controller
             ->get();
 
         $ratingCount = $ratings->count();
-        $ratingSum   = $ratings->sum('rating');
+        $ratingSum = $ratings->sum('rating');
 
-        $avgRating     = $ratingCount ? round($ratingSum / $ratingCount, 2) : 0;
+        $avgRating = $ratingCount ? round($ratingSum / $ratingCount, 2) : 0;
         $avgStarRating = $ratingCount ? round($ratingSum / $ratingCount) : 0;
 
-        $totalUsers    = User::count();
-        $totalVendors  = Vendor::count();
+        $totalUsers = User::count();
+        $totalVendors = Vendor::count();
         $totalProducts = Product::where('status', 1)->count();
-        $totalAuthors  = Author::where('status', 1)->count();
+        $totalAuthors = Author::where('status', 1)->count();
 
-        $meta_title       = $product->meta_title;
+        $meta_title = $product->meta_title;
         $meta_description = $product->meta_description;
-        $meta_keywords    = $product->meta_keywords;
+        $meta_keywords = $product->meta_keywords;
 
         return view('front.products.detail')->with(compact(
             'productDetails',
@@ -629,7 +630,6 @@ class ProductsController extends Controller
         return view('front.products.vendor_listing')->with(compact('getVendorShop', 'vendorProducts', 'condition'));
     }
 
-
     public function cartAdd(Request $request)
     {
         $condition = $request->query('condition', 'new');
@@ -677,18 +677,18 @@ class ProductsController extends Controller
         } else {
 
             Cart::create([
-                'session_id'           => $session_id,
-                'user_id'              => $user_id,
+                'session_id' => $session_id,
+                'user_id' => $user_id,
                 'product_attribute_id' => $attribute->id,
-                'product_id'           => $attribute->product_id,
-                'quantity'             => $qty,
+                'product_id' => $attribute->product_id,
+                'quantity' => $qty,
             ]);
         }
 
         if ($request->ajax()) {
             return response()->json([
-                'status'         => true,
-                'message'        => 'Product added to cart successfully',
+                'status' => true,
+                'message' => 'Product added to cart successfully',
                 'totalCartItems' => Cart::totalCartItems(),
             ]);
         }
@@ -703,7 +703,7 @@ class ProductsController extends Controller
     {
         $condition = $request->query('condition', 'new');
 
-        $logos    = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $sections = Section::all();
         $language = Language::get();
 
@@ -740,14 +740,14 @@ class ProductsController extends Controller
             Session::forget('couponCode');
 
             $cartDetails = Cart::find($data['cartid']);
-            if (!$cartDetails) {
+            if (! $cartDetails) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Cart item not found',
                 ]);
             }
 
-            if (!isset($data['qty']) || $data['qty'] < 1) {
+            if (! isset($data['qty']) || $data['qty'] < 1) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Invalid quantity',
@@ -777,7 +777,7 @@ class ProductsController extends Controller
             }
 
             return response()->json([
-                'status'         => true,
+                'status' => true,
                 'totalCartItems' => Cart::totalCartItems(),
 
                 'view' => (string) view('front.products.cart_items')
@@ -786,7 +786,7 @@ class ProductsController extends Controller
                 'headerview' => (string) view('front.layout.header_cart_items')
                     ->with(compact('getCartItems')),
 
-                'subtotal'   => number_format($subtotal, 2),
+                'subtotal' => number_format($subtotal, 2),
                 'grandTotal' => number_format($subtotal, 2), // coupon later adjusts this
             ]);
         }
@@ -805,13 +805,14 @@ class ProductsController extends Controller
 
             $data = $request->all();
             Cart::where('id', $data['cartid'])->delete();
-            $getCartItems   = Cart::getCartItems();
+            $getCartItems = Cart::getCartItems();
             $totalCartItems = Cart::totalCartItems();
+
             return response()->json([
-                'status'         => true,
+                'status' => true,
                 'totalCartItems' => $totalCartItems,
-                'view'           => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')),
-                'headerview'     => (string) \Illuminate\Support\Facades\View::make('front.layout.header_cart_items')->with(compact('getCartItems', 'condition')),
+                'view' => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')),
+                'headerview' => (string) \Illuminate\Support\Facades\View::make('front.layout.header_cart_items')->with(compact('getCartItems', 'condition')),
             ]);
         }
     }
@@ -819,18 +820,17 @@ class ProductsController extends Controller
     // Render Wishlist page using resources/views/front/products/wishlist.blade.php
     public function wishlist(Request $request)
     {
-        $logos     = HeaderLogo::first();
-        $sections  = Section::all();
-        $language  = Language::get();
+        $logos = HeaderLogo::first();
+        $sections = Section::all();
+        $language = Language::get();
 
         $condition = $request->query('condition');
-        if (!in_array($condition, ['new', 'old'])) {
+        if (! in_array($condition, ['new', 'old'])) {
             $condition = 'new';
         }
 
-
         $session_id = Session::get('session_id');
-        if (!$session_id) {
+        if (! $session_id) {
             $session_id = Session::getId();
             Session::put('session_id', $session_id);
         }
@@ -840,7 +840,7 @@ class ProductsController extends Controller
         $total_price = 0;
 
         foreach ($getWishlistItems as $item) {
-            if (!isset($item['product_attribute_id'])) {
+            if (! isset($item['product_attribute_id'])) {
                 continue;
             }
 
@@ -853,7 +853,7 @@ class ProductsController extends Controller
             $total_price += ($priceDetails['final_price'] ?? 0) * $qty;
         }
 
-        $meta_title    = 'Wishlist - Multi Vendor E-commerce';
+        $meta_title = 'Wishlist - Multi Vendor E-commerce';
         $meta_keywords = 'wishlist, favorites';
 
         $footerProducts = Product::orderBy('id', 'desc')
@@ -875,14 +875,13 @@ class ProductsController extends Controller
         ));
     }
 
-
     public function wishlistAdd(Request $request)
     {
         // Quantity safety
         $qty = max((int) ($request->quantity ?? 1), 1);
 
         // Validate attribute
-        if (!$request->product_attribute_id) {
+        if (! $request->product_attribute_id) {
             return back()->with('error_message', 'Invalid product.');
         }
 
@@ -891,13 +890,13 @@ class ProductsController extends Controller
             ->where('status', 1)
             ->first();
 
-        if (!$attribute) {
+        if (! $attribute) {
             return back()->with('error_message', 'Invalid product.');
         }
 
         // Session for guest
         $session_id = Session::get('session_id');
-        if (!$session_id) {
+        if (! $session_id) {
             $session_id = Session::getId();
             Session::put('session_id', $session_id);
         }
@@ -917,17 +916,17 @@ class ProductsController extends Controller
             $query->increment('quantity', $qty);
         } else {
             Wishlist::create([
-                'session_id'           => $session_id,
-                'user_id'              => $user_id,
-                'product_id'           => $attribute->product_id,
+                'session_id' => $session_id,
+                'user_id' => $user_id,
+                'product_id' => $attribute->product_id,
                 'product_attribute_id' => $attribute->id,
-                'quantity'             => $qty,
+                'quantity' => $qty,
             ]);
         }
 
         if ($request->ajax()) {
             return response()->json([
-                'status'             => true,
+                'status' => true,
                 'totalWishlistItems' => Wishlist::totalWishlistItems(),
             ]);
         }
@@ -944,14 +943,14 @@ class ProductsController extends Controller
 
             Wishlist::where('id', $data['wishlist_id'])->delete();
 
-            $getWishlistItems   = Wishlist::getWishlistItems();
+            $getWishlistItems = Wishlist::getWishlistItems();
             $totalWishlistItems = Wishlist::totalWishlistItems();
 
             return response()->json([
-                'status'             => true,
-                'message'            => 'Product removed from wishlist successfully!',
+                'status' => true,
+                'message' => 'Product removed from wishlist successfully!',
                 'totalWishlistItems' => $totalWishlistItems,
-                'view'               => (string) \Illuminate\Support\Facades\View::make('front.products.wishlist_items')->with(compact('getWishlistItems')),
+                'view' => (string) \Illuminate\Support\Facades\View::make('front.products.wishlist_items')->with(compact('getWishlistItems')),
             ]);
         }
     }
@@ -967,7 +966,7 @@ class ProductsController extends Controller
             Session::forget('couponAmount'); // Deleting Data: https://laravel.com/docs/9.x/session#deleting-data
             Session::forget('couponCode');   // Deleting Data: https://laravel.com/docs/9.x/session#deleting-data
 
-            $getCartItems   = Cart::getCartItems();
+            $getCartItems = Cart::getCartItems();
             $totalCartItems = Cart::totalCartItems(); // totalCartItems() function is in our custom Helpers/Helper.php file that we have registered in 'composer.json' file    // We created the CSS class 'totalCartItems' in front/layout/header.blade.php to use it in front/js/custom.js to update the total cart items via AJAX, because in pages that we originally use AJAX to update the cart items (such as when we delete a cart item in http://127.0.0.1:8000/cart using AJAX), the number doesn't change in the header automatically because AJAX is already used and no page reload/refresh has occurred
 
             // Check the validity of the Coupon Code
@@ -975,12 +974,12 @@ class ProductsController extends Controller
 
             if ($couponCount == 0) {  // if the submitted coupon is wrong, send error message
                 return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
-                    'status'         => false,
+                    'status' => false,
                     'totalCartItems' => $totalCartItems, // totalCartItems() function is in our custom Helpers/Helper.php file that we have registered in 'composer.json' file    // We created the CSS class 'totalCartItems' in front/layout/header.blade.php to use it in front/js/custom.js to update the total cart items via AJAX, because in pages that we originally use AJAX to update the cart items (such as when we delete a cart item in http://127.0.0.1:8000/cart using AJAX), the number doesn't change in the header automatically because AJAX is already used and no page reload/refresh has occurred
-                    'message'        => 'The coupon is invalid!',
+                    'message' => 'The coupon is invalid!',
                     // We'll use that array key 'view' as a JavaScript 'response' property to render the view (    $('#appendCartItems').html(resp.view);    ). Check front/js/custom.js
-                    'view'           => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')),      // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
-                    'headerview'     => (string) \Illuminate\Support\Facades\View::make('front.layout.header_cart_items')->with(compact('getCartItems')), // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
+                    'view' => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')),      // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
+                    'headerview' => (string) \Illuminate\Support\Facades\View::make('front.layout.header_cart_items')->with(compact('getCartItems')), // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
                 ]);
             } else { // if the submitted coupon is valid, check some conditions (do some validation)
                 // SUBMITTED COUPON CODE VALIDATION:
@@ -994,7 +993,7 @@ class ProductsController extends Controller
                 }
 
                 // Check if the submitted coupon code is expired
-                $expiry_date  = $couponDetails->expiry_date;
+                $expiry_date = $couponDetails->expiry_date;
                 $current_date = date('Y-m-d'); // this date format is understandable by MySQL
 
                 if ($expiry_date < $current_date) {
@@ -1006,7 +1005,7 @@ class ProductsController extends Controller
                     // Check in the `orders` table if the currently authenticated/logged-in user really used this Coupon Code with their order
                     $couponCount = Order::where([
                         'coupon_code' => $data['code'],
-                        'user_id'     => Auth::user()->id, // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
+                        'user_id' => Auth::user()->id, // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
                     ])->count();
 
                     if ($couponCount >= 1) { // if this 'Single Time' coupon code has been used/redeemed more than one single time by this user (this authenticated/logged-in user) (i.e. meaning that if that coupon code is already existing in the `orders` table and has been used/redeemed by this authenticated/logged-in user)
@@ -1025,7 +1024,7 @@ class ProductsController extends Controller
                         $message = 'This coupon code selected categories is not for one of the selected products category!';
                     }
 
-                    $attrPrice    = Product::getDiscountAttributePrice($item['product_id'], $item['size']);
+                    $attrPrice = Product::getDiscountAttributePrice($item['product_id'], $item['size']);
                     $total_amount = $total_amount + ($attrPrice['final_price'] * $item['quantity']);
                 }
 
@@ -1065,13 +1064,13 @@ class ProductsController extends Controller
                 // If there's an error message with the submitted coupon code, send this response to the AJAX call
                 if (isset($message)) {
                     return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
-                        'status'         => false,
+                        'status' => false,
                         'totalCartItems' => $totalCartItems, // totalCartItems() function is in our custom Helpers/Helper.php file that we have registered in 'composer.json' file    // We created the CSS class 'totalCartItems' in front/layout/header.blade.php to use it in front/js/custom.js to update the total cart items via AJAX, because in pages that we originally use AJAX to update the cart items (such as when we delete a cart item in http://127.0.0.1:8000/cart using AJAX), the number doesn't change in the header automatically because AJAX is already used and no page reload/refresh has occurred
-                        'message'        => $message,
+                        'message' => $message,
                         // We'll use that array key 'view' as a JavaScript 'response' property to render the view (    $('#appendCartItems').html(resp.view);    ). Check front/js/custom.js
-                        'view'           => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')), // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
+                        'view' => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')), // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
 
-                        'headerview'     => (string) \Illuminate\Support\Facades\View::make('front.layout.header_cart_items')->with(compact('getCartItems')), // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
+                        'headerview' => (string) \Illuminate\Support\Facades\View::make('front.layout.header_cart_items')->with(compact('getCartItems')), // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
                     ]);
                 } else { // if the submitted coupon code is correct and passes the previous coupon code validation and passes all the previous if conditions (free of errors)
 
@@ -1089,17 +1088,18 @@ class ProductsController extends Controller
                     Session::put('couponCode', $data['code']); // $data['code'] comes from the 'data' object sent from inside the $.ajax() method in front/js/custom.js file
 
                     $message = 'Coupon Code successfully applied. You are availing discount!';
-                    $condition      = session('condition', 'new');
-                    return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
-                        'status'         => true,
-                        'totalCartItems' => $totalCartItems, // totalCartItems() function is in our custom Helpers/Helper.php file that we have registered in 'composer.json' file    // We created the CSS class 'totalCartItems' in front/layout/header.blade.php to use it in front/js/custom.js to update the total cart items via AJAX, because in pages that we originally use AJAX to update the cart items (such as when we delete a cart item in http://127.0.0.1:8000/cart using AJAX), the number doesn't change in the header automatically because AJAX is already used and no page reload/refresh has occurred
-                        'couponAmount'   => $couponAmount,
-                        'grand_total'    => $grand_total,
-                        'message'        => $message,
-                        // We'll use that array key 'view' as a JavaScript 'response' property to render the view (    $('#appendCartItems').html(resp.view);    ). Check front/js/custom.js
-                        'view'           => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')),                   // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
+                    $condition = session('condition', 'new');
 
-                        'headerview'     => (string) \Illuminate\Support\Facades\View::make('front.layout.header_cart_items')->with(compact('getCartItems', 'condition')), // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
+                    return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
+                        'status' => true,
+                        'totalCartItems' => $totalCartItems, // totalCartItems() function is in our custom Helpers/Helper.php file that we have registered in 'composer.json' file    // We created the CSS class 'totalCartItems' in front/layout/header.blade.php to use it in front/js/custom.js to update the total cart items via AJAX, because in pages that we originally use AJAX to update the cart items (such as when we delete a cart item in http://127.0.0.1:8000/cart using AJAX), the number doesn't change in the header automatically because AJAX is already used and no page reload/refresh has occurred
+                        'couponAmount' => $couponAmount,
+                        'grand_total' => $grand_total,
+                        'message' => $message,
+                        // We'll use that array key 'view' as a JavaScript 'response' property to render the view (    $('#appendCartItems').html(resp.view);    ). Check front/js/custom.js
+                        'view' => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')),                   // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
+
+                        'headerview' => (string) \Illuminate\Support\Facades\View::make('front.layout.header_cart_items')->with(compact('getCartItems', 'condition')), // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
                     ]);
                 }
             }
@@ -1109,9 +1109,9 @@ class ProductsController extends Controller
     // Checkout page (using match() method for the 'GET' request for rendering the front/products/checkout.blade.php page or the 'POST' request for the HTML Form submission in the same page) (for submitting the user's Delivery Address and Payment Method))
     public function checkout(Request $request)
     {
-        $logos     = HeaderLogo::first();
-        $sections  = Section::all();
-        $language  = Language::get();
+        $logos = HeaderLogo::first();
+        $sections = Section::all();
+        $language = Language::get();
         $condition = $request->query('condition');
         if (! in_array($condition, ['new', 'old'])) {
             $condition = 'new';
@@ -1124,17 +1124,18 @@ class ProductsController extends Controller
 
         // If the Cart is empty (If there're no Cart Items), don't allow opening/accessing the Checkout page (checkout.blade.php)
         if (count($getCartItems) == 0) {
+            Log::info('Checkout redirect: Cart is empty');
             $message = 'Shopping Cart is empty! Please add products to your Cart to checkout';
 
             return redirect('cart')->with('error_message', $message); // redirect user to the cart.blade.php page, and show an error message in cart.blade.php
         }
 
         // Calculate the total price
-        $total_price  = 0;
+        $total_price = 0;
         $total_weight = 0;
 
         foreach ($getCartItems as $item) {
-            $attrPrice   = Product::getDiscountAttributePrice($item['product_id'], $item['size']);
+            $attrPrice = Product::getDiscountAttributePrice($item['product_id'], $item['size']);
             $total_price = $total_price + ($attrPrice['final_price'] * $item['quantity']);
 
             // $product_weight = $item['product']['product_weight'];
@@ -1146,9 +1147,9 @@ class ProductsController extends Controller
         // If user has no saved delivery addresses but has profile address info, seed a default address
         if (Auth::check() && (empty($deliveryAddresses) || count($deliveryAddresses) === 0)) {
             $profile = Auth::user();
-            if (!empty($profile->name) && !empty($profile->address) && !empty($profile->city) && !empty($profile->state) && !empty($profile->country) && !empty($profile->pincode) && !empty($profile->mobile)) {
+            if (! empty($profile->name) && ! empty($profile->address) && ! empty($profile->city) && ! empty($profile->state) && ! empty($profile->country) && ! empty($profile->pincode) && ! empty($profile->mobile)) {
                 try {
-                    $seed = new DeliveryAddress();
+                    $seed = new DeliveryAddress;
                     $seed->user_id = $profile->id;
                     $seed->name = $profile->name;
                     $seed->address = $profile->address;
@@ -1162,7 +1163,7 @@ class ProductsController extends Controller
                     // re-fetch after seeding
                     $deliveryAddresses = DeliveryAddress::deliveryAddresses();
                 } catch (\Throwable $e) {
-                    Log::warning('Failed to seed delivery address from profile: ' . $e->getMessage());
+                    Log::warning('Failed to seed delivery address from profile: '.$e->getMessage());
                 }
             }
         }
@@ -1190,35 +1191,40 @@ class ProductsController extends Controller
                     ->where('id', $item['product_attribute_id'])
                     ->first();
 
-                if (!$attribute || !$attribute->product) {
+                if (! $attribute || ! $attribute->product) {
                     $message = 'One of the products in your cart is no longer available. Please remove it and try again.';
+
                     return redirect('/cart')->with('error_message', $message);
                 }
 
                 // Prevent 'disabled' (`status` = 0) products from being ordered
                 $product_status = Product::getProductStatus($item['product_id']);
                 if ($product_status == 0) {
-                    $message = $attribute->product->product_name . ' is not available. Please remove it from the Cart and choose another product.';
+                    $message = $attribute->product->product_name.' is not available. Please remove it from the Cart and choose another product.';
+
                     return redirect('/cart')->with('error_message', $message);
                 }
 
                 // Check attribute status (must be enabled)
                 if ($attribute->status == 0) {
-                    $message = $attribute->product->product_name . ' with ' . ($item['size'] ?? '') . ' size is not available. Please remove it from the Cart and choose another product.';
+                    $message = $attribute->product->product_name.' with '.($item['size'] ?? '').' size is not available. Please remove it from the Cart and choose another product.';
+
                     return redirect('/cart')->with('error_message', $message);
                 }
 
                 // Check stock for this specific attribute
                 $availableStock = (int) $attribute->stock;
                 if ($availableStock == 0 || $item['quantity'] > $availableStock) {
-                    $message = $attribute->product->product_name . ' with ' . ($item['size'] ?? '') . ' size stock is not available/enough. Please reduce quantity or remove it from the Cart.';
+                    $message = $attribute->product->product_name.' with '.($item['size'] ?? '').' size stock is not available/enough. Please reduce quantity or remove it from the Cart.';
+
                     return redirect('/cart')->with('error_message', $message);
                 }
 
                 // Check category status
                 $getCategoryStatus = Category::getCategoryStatus($attribute->product->category_id);
                 if ($getCategoryStatus == 0) {
-                    $message = $attribute->product->product_name . ' category is disabled. Please remove it from the Cart and choose another product.';
+                    $message = $attribute->product->product_name.' category is disabled. Please remove it from the Cart and choose another product.';
+
                     return redirect('/cart')->with('error_message', $message);
                 }
             }
@@ -1247,10 +1253,10 @@ class ProductsController extends Controller
 
             if ($data['payment_gateway'] == 'COD') {
                 $payment_method = 'COD';
-                $order_status   = 'New';
+                $order_status = 'New';
             } else {
                 $payment_method = 'Prepaid';
-                $order_status   = 'Pending';
+                $order_status = 'Pending';
             }
 
             DB::beginTransaction();
@@ -1275,31 +1281,31 @@ class ProductsController extends Controller
             $grand_total = $total_price + $shipping_charges - Session::get('couponAmount');
 
             Session::put('grand_total', $grand_total);
-            $order                   = new Order;
-            $order->user_id          = Auth::user()->id; // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
-            $order->name             = $deliveryAddress['name'];
-            $order->address          = $deliveryAddress['address'];
-            $order->city             = $deliveryAddress['city'];
-            $order->state            = $deliveryAddress['state'];
-            $order->country          = $deliveryAddress['country'];
-            $order->pincode          = $deliveryAddress['pincode'];
-            $order->mobile           = $deliveryAddress['mobile'];
-            $order->email            = Auth::user()->email; // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
+            $order = new Order;
+            $order->user_id = Auth::user()->id; // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
+            $order->name = $deliveryAddress['name'];
+            $order->address = $deliveryAddress['address'];
+            $order->city = $deliveryAddress['city'];
+            $order->state = $deliveryAddress['state'];
+            $order->country = $deliveryAddress['country'];
+            $order->pincode = $deliveryAddress['pincode'];
+            $order->mobile = $deliveryAddress['mobile'];
+            $order->email = Auth::user()->email; // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
             $order->shipping_charges = $shipping_charges;
-            $order->coupon_code      = Session::get('couponCode');   // it was set inside applyCoupon() method
-            $order->coupon_amount    = Session::get('couponAmount'); // it was set inside applyCoupon() method
-            $order->order_status     = $order_status;
-            $order->payment_method   = $payment_method;
-            $order->payment_gateway  = $data['payment_gateway'];
-            $order->grand_total      = $grand_total;
+            $order->coupon_code = Session::get('couponCode');   // it was set inside applyCoupon() method
+            $order->coupon_amount = Session::get('couponAmount'); // it was set inside applyCoupon() method
+            $order->order_status = $order_status;
+            $order->payment_method = $payment_method;
+            $order->payment_gateway = $data['payment_gateway'];
+            $order->grand_total = $grand_total;
 
             $order->save();
             $order_id = DB::getPdo()->lastInsertId();
 
             foreach ($getCartItems as $item) {
-                $cartItem           = new OrdersProduct;
+                $cartItem = new OrdersProduct;
                 $cartItem->order_id = $order_id;
-                $cartItem->user_id  = Auth::user()->id;
+                $cartItem->user_id = Auth::user()->id;
 
                 // Get the specific attribute row for this cart item
                 $attribute = ProductsAttribute::with('product')
@@ -1309,20 +1315,21 @@ class ProductsController extends Controller
 
                 if (! $attribute || ! $attribute->product) {
                     DB::rollBack();
+
                     return redirect('/cart')->with('error_message', 'One of the products in your cart is no longer available.');
                 }
 
                 // Continue filling in data into the `orders_products` table
                 // Set default values if null (0 for admin products, actual vendor_id for vendor products)
-                $cartItem->admin_id  = $attribute->admin_id ?? 0;
+                $cartItem->admin_id = $attribute->admin_id ?? 0;
                 $cartItem->vendor_id = $attribute->vendor_id ?? 0;
 
                 if ($attribute->vendor_id && $attribute->vendor_id > 0) { // if the order product's seller is a 'vendor'
-                    $vendorCommission     = Vendor::getVendorCommission($attribute->vendor_id);
+                    $vendorCommission = Vendor::getVendorCommission($attribute->vendor_id);
                     $cartItem->commission = $vendorCommission;
                 }
 
-                $cartItem->product_id   = $attribute->product_id;
+                $cartItem->product_id = $attribute->product_id;
                 $cartItem->product_name = $attribute->product->product_name;
 
                 // Price based on this attribute (size) using discount rules
@@ -1337,7 +1344,7 @@ class ProductsController extends Controller
                 if ($item['quantity'] > $availableStock) {
                     DB::rollBack();
                     $message = $attribute->product->product_name
-                        . ' with ' . ($item['size'] ?? '') . ' size stock is not available/enough for your order. Please reduce its quantity and try again!';
+                        .' with '.($item['size'] ?? '').' size stock is not available/enough for your order. Please reduce its quantity and try again!';
 
                     return redirect('/cart')->with('error_message', $message);
                 }
@@ -1355,11 +1362,11 @@ class ProductsController extends Controller
 
             if ($data['payment_gateway'] == 'COD') {
 
-                $email       = Auth::user()->email;
+                $email = Auth::user()->email;
                 $messageData = [
-                    'email'        => $email,
-                    'name'         => Auth::user()->name,
-                    'order_id'     => $order_id,
+                    'email' => $email,
+                    'name' => Auth::user()->name,
+                    'order_id' => $order_id,
                     'orderDetails' => $orderDetails,
                 ];
 
@@ -1368,7 +1375,7 @@ class ProductsController extends Controller
                         $message->to($email)->subject('Order Placed - MultiVendorEcommerceApplication.com.eg');
                     });
                 } catch (\Throwable $e) {
-                    Log::warning('Order email failed to send: ' . $e->getMessage());
+                    Log::warning('Order email failed to send: '.$e->getMessage());
                 }
             } elseif ($data['payment_gateway'] == 'Paypal') {
                 // redirect the user to the PayPalController.php (after saving the order details in `orders` and `orders_products` tables)
@@ -1381,6 +1388,8 @@ class ProductsController extends Controller
             } else {
                 echo 'Other Prepaid payment methods coming soon';
             }
+
+            Log::info('Checkout success: Order ID '.$order_id.' saved. Redirecting to thanks.');
 
             return redirect('thanks'); // redirect to front/products/thanks.blade.php page
         }
@@ -1398,7 +1407,7 @@ class ProductsController extends Controller
     // Rendering Thanks page (after placing an order)
     public function thanks()
     {
-        $logos    = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $sections = Section::all();
         $language = Language::get();
         $condition = 'new';
@@ -1406,12 +1415,15 @@ class ProductsController extends Controller
         //     $condition = 'new';
         // }
         if (Session::has('order_id')) {                     // if there's an order has been placed, empty the Cart (remove the order (the cart items/products) from `carts`table)    // 'user_id' was stored in Session inside checkout() method in Front/ProductsController.php
+            Log::info('Entering thanks view with Order ID: '.Session::get('order_id'));
             // We empty the Cart after placing the order
             Cart::where('user_id', Auth::user()->id)->delete(); // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
 
             return view('front.products.thanks')->with(compact('logos', 'sections', 'language', 'condition'));
-        } else {                 // if there's no order has been placed
-            return redirect('cart'); // redirect user to cart.blade.php page
+        } else {
+            Log::info('Thanks redirect: order_id missing from session');
+
+            return redirect('cart')->with('error_message', 'Order session expired. Your cart is preserved.'); // added message for debug
         }
     }
 
@@ -1440,8 +1452,8 @@ class ProductsController extends Controller
     // Static method to get header cart data for AppServiceProvider
     public static function getHeaderCartData()
     {
-        $getCartItems   = Cart::getCartItems();
-        $totalPrice     = 0;
+        $getCartItems = Cart::getCartItems();
+        $totalPrice = 0;
         $cartItemsCount = 0;
 
         foreach ($getCartItems as $item) {
@@ -1451,8 +1463,8 @@ class ProductsController extends Controller
         }
 
         return [
-            'cartItems'      => $getCartItems,
-            'totalPrice'     => $totalPrice,
+            'cartItems' => $getCartItems,
+            'totalPrice' => $totalPrice,
             'cartItemsCount' => $cartItemsCount,
         ];
     }
@@ -1460,7 +1472,7 @@ class ProductsController extends Controller
     // Static method to get header wishlist data for AppServiceProvider
     public static function getHeaderWishlistData()
     {
-        $getWishlistItems   = Wishlist::getWishlistItems();
+        $getWishlistItems = Wishlist::getWishlistItems();
         $wishlistItemsCount = 0;
 
         foreach ($getWishlistItems as $item) {
@@ -1468,10 +1480,10 @@ class ProductsController extends Controller
         }
 
         // Log for debugging
-        Log::info('Header Wishlist Data - Items: ' . count($getWishlistItems) . ', Count: ' . $wishlistItemsCount . ', Session ID: ' . Session::get('session_id'));
+        Log::info('Header Wishlist Data - Items: '.count($getWishlistItems).', Count: '.$wishlistItemsCount.', Session ID: '.Session::get('session_id'));
 
         return [
-            'wishlistItems'      => $getWishlistItems,
+            'wishlistItems' => $getWishlistItems,
             'wishlistItemsCount' => $wishlistItemsCount,
         ];
     }
@@ -1483,6 +1495,7 @@ class ProductsController extends Controller
         foreach ($productIds as $productId) {
             $wishlistStatus[$productId] = Wishlist::isProductInWishlist($productId);
         }
+
         return $wishlistStatus;
     }
 }

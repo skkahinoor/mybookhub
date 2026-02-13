@@ -187,12 +187,23 @@
                                                         </label>
                                                     </div>
                                                     <div class="address-actions">
-                                                        <a href="javascript:;" data-addressid="{{ $address['id'] }}"
-                                                            class="editAddress action-btn edit-btn">
+                                                        <a href="javascript:void(0);" 
+                                                            class="action-btn edit-btn editAddressModalBtn"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#editAddressModal"
+                                                            data-id="{{ $address['id'] }}"
+                                                            data-name="{{ $address['name'] }}"
+                                                            data-address="{{ $address['address'] }}"
+                                                            data-city="{{ $address['city'] }}"
+                                                            data-state="{{ $address['state'] }}"
+                                                            data-country="{{ $address['country'] }}"
+                                                            data-pincode="{{ $address['pincode'] }}"
+                                                            data-mobile="{{ $address['mobile'] }}">
                                                             <i class="fas fa-edit"></i> Edit
                                                         </a>
-                                                        <a href="javascript:;" data-addressid="{{ $address['id'] }}"
-                                                            class="removeAddress action-btn remove-btn">
+                                                        <a href="{{ url('remove-delivery-address/'.$address['id']) }}" 
+                                                            class="action-btn remove-btn" 
+                                                            onclick="return confirm('Are you sure you want to remove this address?')">
                                                             <i class="fas fa-trash"></i> Remove
                                                         </a>
                                                     </div>
@@ -801,5 +812,108 @@
         }
     </style>
 
-    <!-- Checkout-Page /- -->
+
+    <!-- Edit Address Modal -->
+    <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form action="{{ url('/save-delivery-address') }}" method="post">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editAddressModalLabel">Edit Delivery Address</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="delivery_id" id="edit_delivery_id">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="delivery_name" id="edit_delivery_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Mobile <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="delivery_mobile" id="edit_delivery_mobile" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label>Address <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="delivery_address" id="edit_delivery_address" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>City <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="delivery_city" id="edit_delivery_city" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>State <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="delivery_state" id="edit_delivery_state" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label>Country <span class="text-danger">*</span></label>
+                                <select class="form-control" name="delivery_country" id="edit_delivery_country" required>
+                                    <option value="">Select Country</option>
+                                    @foreach($countries as $country)
+                                        <option value="{{ $country['name'] }}">{{ $country['name'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label>Pincode <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="delivery_pincode" id="edit_delivery_pincode" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            // Populate Modal with Address Data
+            $('.editAddressModalBtn').click(function() {
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                var address = $(this).data('address');
+                var city = $(this).data('city');
+                var state = $(this).data('state');
+                var country = $(this).data('country');
+                var pincode = $(this).data('pincode');
+                var mobile = $(this).data('mobile');
+
+                $('#edit_delivery_id').val(id);
+                $('#edit_delivery_name').val(name);
+                $('#edit_delivery_address').val(address);
+                $('#edit_delivery_city').val(city);
+                $('#edit_delivery_state').val(state);
+                $('#edit_delivery_country').val(country);
+                $('#edit_delivery_pincode').val(pincode);
+                $('#edit_delivery_mobile').val(mobile);
+            });
+
+            // Dynamic Shipping calculation (Keep this small JS for UX)
+            $('input[name="address_id"]').on('change', function() {
+                var shipping = $(this).attr('shipping_charges');
+                var total = $(this).attr('total_price');
+                var coupon = $(this).attr('coupon_amount') || 0;
+                $('.shipping_charges').html('₹' + shipping);
+                var grand = parseFloat(total) + parseFloat(shipping) - parseFloat(coupon);
+                $('.grand_total').html('₹' + grand.toFixed(2));
+                
+                var cod = $(this).attr('codpincodeCount');
+                var prepaid = $(this).attr('prepaidpincodeCount');
+                if (cod > 0) { $('.codMethod').show(); } else { $('.codMethod').hide(); }
+                if (prepaid > 0) { $('.razorpayMethod').show(); } else { $('.razorpayMethod').hide(); }
+            });
+            if($('input[name="address_id"]:checked').length > 0) {
+                $('input[name="address_id"]:checked').trigger('change');
+            }
+        });
+    </script>
 @endsection
