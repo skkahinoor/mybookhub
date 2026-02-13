@@ -83,7 +83,22 @@
                                                     </td>
                                                     {{-- Vendor: Display from ProductsAttribute --}}
                                                     <td> {{ $product->product->product_name ?? 'N/A' }}</td>
-                                                    <td>{{ $product->product_price ?? 'N/A' }}</td>
+                                                    <td>
+                                                        @php
+                                                            $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute(
+                                                                $product->id,
+                                                            );
+                                                        @endphp
+                                                        @if ($discountDetails['discount'] > 0)
+                                                            <span
+                                                                style="text-decoration: line-through;">₹{{ $discountDetails['product_price'] }}</span>
+                                                            <br>
+                                                            <span
+                                                                class="text-danger">₹{{ $discountDetails['final_price'] }}</span>
+                                                        @else
+                                                            ₹{{ $discountDetails['product_price'] }}
+                                                        @endif
+                                                    </td>
                                                     <td>{{ $product->product->section->name ?? 'N/A' }}</td>
                                                     <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
                                                     <td>{{ $product->product->edition->edition ?? 'N/A' }}</td>
@@ -106,7 +121,7 @@
                                                         @endif
                                                     </td>
                                                     <td> {{ $product->product_name ?? 'N/A' }}</td>
-                                                    <td>{{ $product->product_price ?? 'N/A' }}</td>
+                                                    <td>₹{{ $product->product_price ?? 'N/A' }}</td>
                                                     <td>{{ $product->section->name ?? 'N/A' }}</td>
                                                     <td>{{ $product->category->category_name ?? 'N/A' }}</td>
                                                     <td>{{ $product->edition->edition ?? 'N/A' }}</td>
@@ -114,9 +129,9 @@
                                                     <td>{{ $product->language->name ?? 'N/A' }}</td>
 
                                                     <!-- <td>
-                                                                <span
-                                                                    class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
-                                                            </td> -->
+                                                          <span
+                                                              class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
+                                                      </td> -->
                                                 @endif
                                                 {{-- <td>
                                                     @php
