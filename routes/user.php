@@ -7,6 +7,7 @@ use App\Http\Controllers\User\BookRequestController;
 use App\Http\Controllers\User\DashboardController;
 use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\SellBookController;
+use App\Http\Controllers\User\WalletController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -27,6 +28,9 @@ Route::prefix('/user')->namespace('App\Http\Controllers\User')->group(function (
         Route::match(['GET', 'POST'], '/account', [AccountController::class, 'index'])->name('user.account');
         Route::post('/avatar', [AccountController::class, 'updateAvatar'])->name('user.avatar.update');
 
+        // Wallet
+        Route::get('/wallet', [WalletController::class, 'index'])->name('user.wallet');
+
         // Book Request
         Route::post('/book-request', [BookRequestController::class, 'store'])->name('user.book.request.store');
         Route::get('/book-requests', [BookRequestController::class, 'indexbookrequest'])->name('user.book.indexrequest');
@@ -34,6 +38,8 @@ Route::prefix('/user')->namespace('App\Http\Controllers\User')->group(function (
         Route::get('/queries', [BookRequestController::class, 'indexqueries'])->name('user.query.index');
         Route::get('/orders', [OrderController::class, 'index'])->name('user.orders.index');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('user.orders.show');
+        Route::get('/orders/cancel/{id}', [OrderController::class, 'cancelOrder'])->name('user.orders.cancel');
+        Route::get('/orders/pay-now/{id}', [OrderController::class, 'payNow'])->name('user.orders.payNow');
 
         // Sell Old Book routes
         Route::get('/sell-book', [SellBookController::class, 'index'])->name('user.sell-book.index');

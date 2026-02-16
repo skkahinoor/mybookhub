@@ -44,7 +44,9 @@ class User extends Authenticatable
         'pincode',
         'profile_image',
         'role_id',
-        'confirm'
+        'confirm',
+        'wallet_balance',
+        'is_wallet_credited'
     ];
 
     /**
@@ -161,5 +163,10 @@ class User extends Authenticatable
     public function getVendorIdAttribute()
     {
         return $this->vendorPersonal ? $this->vendorPersonal->id : 0;
+    }
+
+    public function wallet_transactions()
+    {
+        return $this->hasMany(WalletTransaction::class, 'user_id');
     }
 }

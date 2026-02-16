@@ -13,6 +13,7 @@ use App\Models\Language;
 use App\Models\ProductsAttribute;
 use App\Models\Payment;
 use App\Models\Section;
+use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\Mail;
 
 class RazorpayController extends Controller
@@ -68,6 +69,9 @@ class RazorpayController extends Controller
 
             // Update Order Status
             Order::where('id', $order_id)->update(['order_status' => 'Paid']);
+
+            // Wallet Credit Logic
+            \App\Models\WalletTransaction::checkAndCreditWallet($order_id);
 
             // Reduce Stock
             $orderDetails = Order::with('orders_products')->where('id', $order_id)->first()->toArray();

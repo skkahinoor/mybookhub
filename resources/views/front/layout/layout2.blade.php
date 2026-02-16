@@ -169,10 +169,12 @@
 
 
         }
+
         .lgbtn {
             width: 100px;
             color: white;
         }
+
         .lgbtn:hover {
             color: white;
         }
@@ -349,20 +351,26 @@
 
                                     <div class="row">
                                         <div class="col">
-                                            <a href="#" class="btn lgbtn" data-bs-toggle="modal" data-bs-target="#loginModal"
-                                                class="btn text-white" style="background-color: #6c5dd4;   font-size: 12px;">
+                                            <a href="#" class="btn lgbtn" data-bs-toggle="modal"
+                                                data-bs-target="#loginModal" class="btn text-white"
+                                                style="background-color: #6c5dd4;   font-size: 12px;">
                                                 <i class="fas fa-user" style="margin-right:8px;"></i> Login
                                             </a>
                                         </div>
                                         <div class="col">
-                                            <a href="#" class="btn lgbtn" data-bs-toggle="modal" data-bs-target="#registerModal"
-                                                class="btn text-white" style="background-color: #6c5dd4;   font-size: 12px;">
+                                            <a href="#" class="btn lgbtn" data-bs-toggle="modal"
+                                                data-bs-target="#registerModal" class="btn text-white"
+                                                style="background-color: #6c5dd4;   font-size: 12px;">
                                                 <i class="fas fa-user-plus" style="margin-right:4px;"></i> Register
                                             </a>
                                         </div>
                                     </div>
                                 @else
                                     <div class="d-flex align-items-center">
+                                        <a href="{{ route('useraccount') }}"
+                                            style="margin-right: 15px; color: #6c5dd4; font-weight: 700; background: rgba(108, 93, 212, 0.1); padding: 5px 15px; border-radius: 20px; text-decoration: none; border: 1px solid rgba(108, 93, 212, 0.2);">
+                                            <i class="fas fa-wallet me-2"></i>₹{{ Auth::user()->wallet_balance }}
+                                        </a>
                                         <a href="{{ route('useraccount') }}"><img class="rounded-circle me-2"
                                                 src="{{ asset(Auth::user()->ImageUpload->filename ?? 'assets/images/avatar.png') }}"
                                                 width="35" height="35"></a>
@@ -387,10 +395,31 @@
                 </div>
             </div>
         </div>
-        <div class="mobile-menu">
+        <div class="mobile-menu d-flex justify-content-between align-items-center pr-3">
             <a class="mobile-logo" href="{!! url('') !!}">
-                <img alt="logo" src="{{ asset('front/images/main-logo/logo.png') }}" width="30%">
+                <img alt="logo" src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
+                    style="width: 120px; height: 40px;">
             </a>
+            <div class="mobile-header-icons d-flex align-items-center gap-3">
+                @if (Auth::check())
+                    <a href="{{ route('useraccount') }}"
+                        style="color: #6c5dd4; font-weight: 700; text-decoration: none; font-size: 14px;">
+                        <i class="fas fa-wallet"></i> ₹{{ Auth::user()->wallet_balance }}
+                    </a>
+                @endif
+                <a href="{{ url('wishlist') }}"
+                    style="color: #333; position: relative; display: flex; align-items: center;">
+                    <i class="far fa-heart" style="font-size: 18px;"></i>
+                    <span class="badge totalWishlistItems"
+                        style="position: absolute; top: -8px; right: -8px; background: #6c5dd4; color: #fff; border-radius: 50%; width: 15px; height: 15px; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; padding: 0;">{{ isset($headerWishlistItemsCount) ? $headerWishlistItemsCount : 0 }}</span>
+                </a>
+                <a href="{{ url('cart') }}"
+                    style="color: #333; position: relative; display: flex; align-items: center;">
+                    <i class="fas fa-shopping-basket" style="font-size: 18px;"></i>
+                    <span class="badge totalCartItems"
+                        style="position: absolute; top: -8px; right: -8px; background: #6c5dd4; color: #fff; border-radius: 50%; width: 15px; height: 15px; font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; padding: 0;">{{ isset($headerCartItems) ? count($headerCartItems) : 0 }}</span>
+                </a>
+            </div>
         </div>
     </header>
 

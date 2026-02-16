@@ -156,7 +156,6 @@ class CatalogueController extends Controller
             'category_name'     => 'required|string|max:255|unique:categories,category_name',
             'section_id'        => 'required|exists:sections,id',
             'category_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'category_discount' => 'nullable|numeric|min:0|max:100',
             'description'       => 'nullable|string',
             'url'               => 'nullable|unique:categories,url',
         ]);
@@ -189,7 +188,6 @@ class CatalogueController extends Controller
             'section_id'        => $request->section_id,
             'parent_id'         => 0,
             'category_image'    => $imageName,
-            'category_discount' => $request->category_discount ?? 0,
             'description'       => $request->description,
             'url'               => $slug,
             'status'            => 1,
@@ -218,7 +216,6 @@ class CatalogueController extends Controller
             'category_name'     => 'required|string|max:255|unique:categories,category_name,' . $category->id,
             'section_id'        => 'required|exists:sections,id',
             'category_image'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'category_discount' => 'nullable|numeric|min:0|max:100',
             'description'       => 'nullable|string',
             'url'               => 'nullable|string|max:255',
         ]);
@@ -259,7 +256,6 @@ class CatalogueController extends Controller
             'category_name'     => $request->category_name,
             'section_id'        => $request->section_id,
             'parent_id'         => 0,
-            'category_discount' => $request->category_discount ?? 0,
             'description'       => $request->description,
             'url'               => $slug,
         ]);
