@@ -12,37 +12,46 @@ use Carbon\Carbon;
 
 class SalesDashboardController extends Controller
 {
-    private function detectUserType($user)
+    private function checkAccess(Request $request, array $allowedRoles = ['sales'])
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // 🔐 Auth check
         if (!$user) {
-            return null;
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
         }
 
-        if ($user->hasRole('sales')) {
-            return 'sales';
+        // 🔎 Fetch role from roles table
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || !in_array($role->name, $allowedRoles)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Only Admin or Vendor can access this.'
+            ], 403);
         }
 
+        // 🔒 Status check
+        if ($user->status != 1) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Your account is inactive.'
+            ], 403);
+        }
         return null;
     }
 
     public function todayInstitutes(Request $request)
     {
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
+        }
+
         $user = $request->user();
-
-        if ($this->detectUserType($user) !== 'sales') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Access denied! Only Sales can access this.'
-            ], 403);
-        }
-
-        if ($user->status != 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
-        }
-
         $today = now()->toDateString();
 
         $query = InstitutionManagement::where('added_by', $user->id)
@@ -57,23 +66,14 @@ class SalesDashboardController extends Controller
         ]);
     }
 
+
     public function totalInstitutes(Request $request)
     {
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
+        }
+
         $user = $request->user();
-
-        if ($this->detectUserType($user) !== 'sales') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Access denied! Only Sales can access this.'
-            ], 403);
-        }
-
-        if ($user->status != 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
-        }
 
         $query = InstitutionManagement::where('added_by', $user->id)
             ->where('status', 1);
@@ -86,24 +86,14 @@ class SalesDashboardController extends Controller
         ]);
     }
 
+
     public function todayStudents(Request $request)
     {
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
+        }
+
         $user = $request->user();
-
-        if ($this->detectUserType($user) !== 'sales') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Access denied! Only Sales can access this.'
-            ], 403);
-        }
-
-        if ($user->status != 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
-        }
-
         $today = now()->toDateString();
 
         $query = User::where('added_by', $user->id)
@@ -118,23 +108,14 @@ class SalesDashboardController extends Controller
         ]);
     }
 
+
     public function totalStudents(Request $request)
     {
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
+        }
+
         $user = $request->user();
-
-        if ($this->detectUserType($user) !== 'sales') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Access denied! Only Sales can access this.'
-            ], 403);
-        }
-
-        if ($user->status != 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
-        }
 
         $query = User::where('added_by', $user->id)
             ->where('status', 1);
@@ -147,23 +128,14 @@ class SalesDashboardController extends Controller
         ]);
     }
 
+
     public function graphDashboard(Request $request)
     {
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
+        }
+
         $user = $request->user();
-
-        if ($this->detectUserType($user) !== 'sales') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Access denied! Only Sales can access this.'
-            ], 403);
-        }
-
-        if ($user->status != 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
-        }
 
         $days = 10;
         $startDate = now()->subDays($days - 1)->toDateString();

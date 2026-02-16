@@ -18,7 +18,7 @@ class SalesController extends Controller
             return null;
         }
 
-        if ($user->isSales()) {
+        if ($user->hasRole()) {
             return 'sales';
         }
 

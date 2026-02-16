@@ -12,37 +12,46 @@ use Illuminate\Validation\ValidationException;
 
 class SalesController extends Controller
 {
-    private function detectUserType($user)
+    private function checkAccess(Request $request, array $allowedRoles = ['sales'])
     {
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+
+        // 🔐 Auth check
         if (!$user) {
-            return null;
+            return response()->json([
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
         }
 
-        if ($user->isSales()) {
-            return 'sales';
+        // 🔎 Fetch role from roles table
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || !in_array($role->name, $allowedRoles)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Only Admin or Vendor can access this.'
+            ], 403);
         }
 
+        // 🔒 Status check
+        if ($user->status != 1) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Your account is inactive.'
+            ], 403);
+        }
         return null;
     }
 
     public function getProfile(Request $request)
     {
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
+        }
+
         $user = $request->user();
-        $type = $this->detectUserType($user);
-
-        if ($type !== 'sales') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can access this profile.'
-            ], 403);
-        }
-
-        if ($user->status != 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
-        }
 
         return response()->json([
             'status' => true,
@@ -65,22 +74,11 @@ class SalesController extends Controller
 
     public function updateProfile(Request $request)
     {
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
+        }
+
         $user = auth()->user();
-        $type = $this->detectUserType($user);
-
-        if ($type !== 'sales') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can update this profile.'
-            ], 403);
-        }
-
-        if ($user->status != 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
-        }
 
         $validated = $request->validate([
             'name'      => 'required|string|max:255',
@@ -120,21 +118,16 @@ class SalesController extends Controller
                 'pincode'   => $user->pincode,
                 'profile_image' => $user->profile_image ? url($user->profile_image) : null,
             ]
-        ], 200);
+        ]);
     }
 
     public function getBankDetails(Request $request)
     {
-        $user = $request->user();
-        $type = $this->detectUserType($user);
-
-        if ($type !== 'sales') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can access this.'
-            ], 403);
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
         }
 
+        $user = $request->user();
         $sales = $user->salesExecutive;
 
         if (!$sales) {
@@ -159,16 +152,11 @@ class SalesController extends Controller
 
     public function updateBankDetails(Request $request)
     {
-        $user = auth()->user();
-        $type = $this->detectUserType($user);
-
-        if ($type !== 'sales') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can update bank details.'
-            ], 403);
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
         }
 
+        $user = auth()->user();
         $sales = $user->salesExecutive;
 
         if (!$sales) {
@@ -198,6 +186,6 @@ class SalesController extends Controller
                 'bank_branch'    => $sales->bank_branch,
                 'upi_id'         => $sales->upi_id,
             ]
-        ], 200);
+        ]);
     }
 }
