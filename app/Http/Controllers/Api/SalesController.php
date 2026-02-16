@@ -12,137 +12,129 @@ use Illuminate\Validation\ValidationException;
 
 class SalesController extends Controller
 {
-    public function getProfile(Request $request)
+    private function checkAccess(Request $request, array $allowedRoles = ['sales'])
     {
-        $sales = $request->user();
+        /** @var \App\Models\User $user */
+        $user = $request->user();
 
-        if (!$sales instanceof SalesExecutive) {
+        // 🔐 Auth check
+        if (!$user) {
             return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can access this profile.'
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // 🔎 Fetch role from roles table
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || !in_array($role->name, $allowedRoles)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Only Admin or Vendor can access this.'
             ], 403);
         }
 
-        if ($sales->status != 1) {
+        // 🔒 Status check
+        if ($user->status != 1) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Your account is inactive.'
             ], 403);
         }
+        return null;
+    }
+
+    public function getProfile(Request $request)
+    {
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
+        }
+
+        $user = $request->user();
 
         return response()->json([
             'status' => true,
             'message' => 'Profile fetched successfully.',
             'data' => [
-                'id'        => $sales->id,
-                'name'      => $sales->name,
-                'email'     => $sales->email,
-                'phone'     => $sales->phone,
-                'address'   => $sales->address,
-                'country'   => $sales->country,
-                'state'     => $sales->state,
-                'district'  => $sales->district,
-                'city'      => $sales->city,
-                'pincode'   => $sales->pincode,
-                'profile_picture' => $sales->profile_picture ? url($sales->profile_picture) : null,
+                'id'        => $user->id,
+                'name'      => $user->name,
+                'email'     => $user->email,
+                'phone'     => $user->phone,
+                'address'   => $user->address,
+                'country_id' => $user->country_id,
+                'state_id'  => $user->state_id,
+                'district_id' => $user->district_id,
+                'block_id'  => $user->block_id,
+                'pincode'   => $user->pincode,
+                'profile_image' => $user->profile_image ? url($user->profile_image) : null,
             ]
         ]);
     }
 
     public function updateProfile(Request $request)
     {
-        $sales = auth()->user();
-
-        if (!$sales instanceof SalesExecutive) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can update this profile.'
-            ], 403);
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
         }
 
-        if ($sales->status != 1) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
-        }
+        $user = auth()->user();
 
-        try {
-            $validated = $request->validate([
-                'name'      => 'required|string|max:255',
-                'email'     => ['required', 'email', Rule::unique('sales_executives')->ignore($sales->id)],
-                'phone'     => ['required', 'string', 'min:10', 'max:15', Rule::unique('sales_executives')->ignore($sales->id)],
-                'address'   => 'nullable|string|max:255',
-                'city'      => 'nullable|string|max:255',
-                'district'  => 'nullable|string|max:255',
-                'state'     => 'nullable|string|max:255',
-                'pincode'   => 'nullable|string|max:20',
-                'country'   => 'nullable|string|max:255',
-                'password'  => 'nullable|min:6|confirmed',
-                'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors()
-            ], 422);
-        }
+        $validated = $request->validate([
+            'name'      => 'required|string|max:255',
+            'email'     => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'phone'     => ['required', Rule::unique('users')->ignore($user->id)],
+            'address'   => 'nullable|string|max:255',
+            'pincode'   => 'nullable|string|max:20',
+            'password'  => 'nullable|min:6|confirmed',
+            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
 
-
-        $sales->fill($validated);
+        $user->fill($validated);
 
         if (!empty($validated['password'])) {
-            $sales->password = Hash::make($validated['password']);
+            $user->password = Hash::make($validated['password']);
         }
 
-        if ($request->hasFile('profile_picture')) {
-            $image = $request->file('profile_picture');
+        if ($request->hasFile('profile_image')) {
+            $image = $request->file('profile_image');
             $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
-
             $path = 'assets/sales/profile_pictures/';
             $image->move(public_path($path), $filename);
-
-            $sales->profile_picture = $path . $filename;
+            $user->profile_image = $path . $filename;
         }
 
-        $sales->save();
+        $user->save();
 
         return response()->json([
             'status' => true,
             'message' => 'Profile updated successfully',
             'data' => [
-                'id'         => $sales->id,
-                'name'       => $sales->name,
-                'email'      => $sales->email,
-                'phone'      => $sales->phone,
-                'address'    => $sales->address,
-                'city'       => $sales->city,
-                'district'   => $sales->district,
-                'state'      => $sales->state,
-                'pincode'    => $sales->pincode,
-                'country'    => $sales->country,
-                'profile_picture' => $sales->profile_picture ? url($sales->profile_picture) : null,
+                'id'        => $user->id,
+                'name'      => $user->name,
+                'email'     => $user->email,
+                'phone'     => $user->phone,
+                'address'   => $user->address,
+                'pincode'   => $user->pincode,
+                'profile_image' => $user->profile_image ? url($user->profile_image) : null,
             ]
-        ], 200);
+        ]);
     }
 
     public function getBankDetails(Request $request)
     {
-        $sales = $request->user();
-
-        if (!$sales instanceof SalesExecutive) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can access this.'
-            ], 403);
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
         }
 
-        if ($sales->status != 1) {
+        $user = $request->user();
+        $sales = $user->salesExecutive;
+
+        if (!$sales) {
             return response()->json([
                 'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
+                'message' => 'Sales profile not found.'
+            ], 404);
         }
 
         return response()->json([
@@ -160,25 +152,19 @@ class SalesController extends Controller
 
     public function updateBankDetails(Request $request)
     {
-        $sales = auth()->user();
-
-        // Ensure logged-in user is Sales Executive
-        if (!$sales instanceof SalesExecutive) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can update bank details.'
-            ], 403);
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
         }
 
-        if ($sales->status != 1) {
+        $user = auth()->user();
+        $sales = $user->salesExecutive;
+
+        if (!$sales) {
             return response()->json([
                 'status' => false,
-                'message' => 'Your account is inactive.'
-            ], 403);
+                'message' => 'Sales profile not found.'
+            ], 404);
         }
-
-        // For PUT + form-data fix
-        $request->request->add($request->all());
 
         $validated = $request->validate([
             'bank_name'      => 'nullable|string|max:255',
@@ -188,13 +174,7 @@ class SalesController extends Controller
             'upi_id'         => 'nullable|string|max:255',
         ]);
 
-        $sales->bank_name      = $validated['bank_name'] ?? $sales->bank_name;
-        $sales->account_number = $validated['account_number'] ?? $sales->account_number;
-        $sales->ifsc_code      = $validated['ifsc_code'] ?? $sales->ifsc_code;
-        $sales->bank_branch    = $validated['bank_branch'] ?? $sales->bank_branch;
-        $sales->upi_id         = $validated['upi_id'] ?? $sales->upi_id;
-
-        $sales->save();
+        $sales->update($validated);
 
         return response()->json([
             'status' => true,
@@ -206,6 +186,6 @@ class SalesController extends Controller
                 'bank_branch'    => $sales->bank_branch,
                 'upi_id'         => $sales->upi_id,
             ]
-        ], 200);
+        ]);
     }
 }

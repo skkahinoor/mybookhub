@@ -12,122 +12,140 @@ use Carbon\Carbon;
 
 class SalesDashboardController extends Controller
 {
-
-    public function todayInstitutes(Request $request)
+    private function checkAccess(Request $request, array $allowedRoles = ['sales'])
     {
-        $sales = $request->user();
+        /** @var \App\Models\User $user */
+        $user = $request->user();
 
-        if (!$sales instanceof SalesExecutive) {
+        // 🔐 Auth check
+        if (!$user) {
             return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can access this.'
+                'status'  => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // 🔎 Fetch role from roles table
+        $role = \Spatie\Permission\Models\Role::find($user->role_id);
+
+        if (!$role || !in_array($role->name, $allowedRoles)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Only Admin or Vendor can access this.'
             ], 403);
         }
 
-        $today = Carbon::today();
+        // 🔒 Status check
+        if ($user->status != 1) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Your account is inactive.'
+            ], 403);
+        }
+        return null;
+    }
 
-        $institutes = InstitutionManagement::where('added_by', $sales->id)
+    public function todayInstitutes(Request $request)
+    {
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
+        }
+
+        $user = $request->user();
+        $today = now()->toDateString();
+
+        $query = InstitutionManagement::where('added_by', $user->id)
             ->where('status', 1)
-            ->whereDate('created_at', $today)
-            ->get();
+            ->whereDate('created_at', $today);
 
         return response()->json([
             'status' => true,
             'message' => 'Today added institutes fetched successfully.',
-            'total' => $institutes->count(),
-            'data' => $institutes
+            'total' => $query->count(),
+            'data' => $query->get()
         ]);
     }
 
+
     public function totalInstitutes(Request $request)
     {
-        $sales = $request->user();
-
-        if (!$sales instanceof SalesExecutive) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can access this.'
-            ], 403);
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
         }
 
-        $institutes = InstitutionManagement::where('added_by', $sales->id)->where('status', 1)->get();
+        $user = $request->user();
+
+        $query = InstitutionManagement::where('added_by', $user->id)
+            ->where('status', 1);
 
         return response()->json([
             'status' => true,
             'message' => 'Total institutes fetched successfully.',
-            'total' => $institutes->count(),
-            'data' => $institutes
+            'total' => $query->count(),
+            'data' => $query->get()
         ]);
     }
 
 
     public function todayStudents(Request $request)
     {
-        $sales = $request->user();
-
-        if (!$sales instanceof SalesExecutive) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can access this.'
-            ], 403);
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
         }
 
-        $today = Carbon::today();
+        $user = $request->user();
+        $today = now()->toDateString();
 
-        $students = User::where('added_by', $sales->id)
+        $query = User::where('added_by', $user->id)
             ->where('status', 1)
-            ->whereDate('created_at', $today)
-            ->get();
+            ->whereDate('created_at', $today);
 
         return response()->json([
             'status' => true,
             'message' => 'Today added students fetched successfully.',
-            'total' => $students->count(),
-            'data' => $students
+            'total' => $query->count(),
+            'data' => $query->get()
         ]);
     }
 
+
     public function totalStudents(Request $request)
     {
-        $sales = $request->user();
-
-        if (!$sales instanceof SalesExecutive) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives can access this.'
-            ], 403);
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
         }
 
-        $students = User::where('added_by', $sales->id)->where('status', 1)->get();
+        $user = $request->user();
+
+        $query = User::where('added_by', $user->id)
+            ->where('status', 1);
 
         return response()->json([
             'status' => true,
             'message' => 'Total students fetched successfully.',
-            'total' => $students->count(),
-            'data' => $students
+            'total' => $query->count(),
+            'data' => $query->get()
         ]);
     }
+
+
     public function graphDashboard(Request $request)
     {
-        $sales = auth()->user();
-
-        if (!$sales instanceof SalesExecutive) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only Sales Executives allowed'
-            ], 403);
+        if ($resp = $this->checkAccess($request, ['sales'])) {
+            return $resp;
         }
+
+        $user = $request->user();
 
         $days = 10;
         $startDate = now()->subDays($days - 1)->toDateString();
 
-        $dates = [];
-        for ($i = 0; $i < $days; $i++) {
-            $dates[] = now()->subDays($days - 1 - $i)->toDateString();
-        }
+        $dates = collect(range(0, $days - 1))
+            ->map(fn($i) => now()->subDays($days - 1 - $i)->toDateString())
+            ->toArray();
 
         $instituteData = InstitutionManagement::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->where('added_by', $sales->id)
+            ->where('added_by', $user->id)
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')
@@ -135,7 +153,7 @@ class SalesDashboardController extends Controller
             ->toArray();
 
         $studentData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->where('added_by', $sales->id)
+            ->where('added_by', $user->id)
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')
@@ -147,7 +165,7 @@ class SalesDashboardController extends Controller
 
         foreach ($dates as $date) {
             $institutes[] = $instituteData[$date] ?? 0;
-            $students[]   = $studentData[$date] ?? 0;
+            $students[] = $studentData[$date] ?? 0;
         }
 
         return response()->json([

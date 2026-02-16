@@ -132,7 +132,7 @@
                                     </div>
                                 @endif
 
-                                <button type="submit" class="btn btn-primary">Update Admin</button>
+                                <button type="submit" class="btn btn-primary">Update</button>
                             </form>
                         </div>
                     </div>
