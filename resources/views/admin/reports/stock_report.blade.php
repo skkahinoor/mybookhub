@@ -279,7 +279,7 @@
                             <div class="filter-container">
                                 <form action="{{ url('admin/reports/stock_report') }}" method="GET">
                                     <div class="row align-items-end">
-                                        <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="col-md-3 mb-3 mb-md-0">
                                             <label class="filter-label">Category</label>
                                             <select name="category_id" class="form-control select2">
                                                 <option value="">All Categories</option>
@@ -291,7 +291,7 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="col-md-4 mb-3 mb-md-0">
+                                        <div class="col-md-3 mb-3 mb-md-0">
                                             <label class="filter-label">Section</label>
                                             <select name="section_id" class="form-control select2">
                                                 <option value="">All Sections</option>
@@ -303,11 +303,24 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="col-md-4 text-right">
-                                            <button type="submit" class="btn-apply">
-                                                <i class="fas fa-filter mr-2"></i>Apply Filters
+                                        <div class="col-md-3 mb-3 mb-md-0">
+                                            <label class="filter-label">Stock Status</label>
+                                            <select name="stock_status" class="form-control select2">
+                                                <option value="">All Statuses</option>
+                                                <option value="in_stock"
+                                                    {{ request('stock_status') == 'in_stock' ? 'selected' : '' }}>In Stock
+                                                </option>
+                                                <option value="out_of_stock"
+                                                    {{ request('stock_status') == 'out_of_stock' ? 'selected' : '' }}>Out of
+                                                    Stock</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3 text-right">
+                                            <button type="submit" class="btn-apply w-100 mb-2">
+                                                <i class="fas fa-filter mr-2"></i>Apply
                                             </button>
-                                            <a href="{{ url('admin/reports/stock_report') }}" class="btn-reset">
+                                            <a href="{{ url('admin/reports/stock_report') }}"
+                                                class="btn-reset w-100 d-inline-block text-center m-0">
                                                 Reset
                                             </a>
                                         </div>
@@ -321,6 +334,7 @@
                                     <thead>
                                         <tr>
                                             <th style="width: 50px;"></th> <!-- Expand -->
+                                            <th style="width: 50px;">No.</th>
                                             <th style="width: 80px;">ID</th>
                                             <th>Book Details</th>
                                             <th>Category / Section</th>
@@ -331,14 +345,17 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($stockReport as $report)
+                                        @foreach ($stockReport as $key => $report)
                                             <tr data-id="{{ $report['id'] }}" class="product-row">
                                                 <!-- 1. Expand Icon -->
                                                 <td class="details-control text-center">
                                                     <i class="fas fa-plus-circle expand-icon"></i>
                                                 </td>
 
-                                                <!-- 2. ID -->
+                                                <!-- 2. No. -->
+                                                <td class="text-center">{{ $key + 1 }}</td>
+
+                                                <!-- 3. ID -->
                                                 <td class="font-weight-bold text-muted">#{{ $report['id'] }}</td>
 
                                                 <!-- 3. Book Details -->
@@ -484,19 +501,19 @@
                     var table = $(tableId).DataTable({
                         "pageLength": 10,
                         "order": [
-                            [1, "asc"]
+                            [2, "asc"]
                         ], // Order by Book ID
                         "columnDefs": [{
                                 "orderable": false,
-                                "targets": [0, 5, 6]
-                            }, // Expand(0), Actions(5), Hidden(6)
+                                "targets": [0, 1, 6, 7]
+                            }, // Expand(0), No(1), Actions(6), Hidden(7)
                             {
                                 "className": "text-center",
-                                "targets": [0, 4, 5]
+                                "targets": [0, 1, 5, 6]
                             },
                             {
                                 "visible": false,
-                                "targets": [6]
+                                "targets": [7]
                             } // CRITICAL: Hide DetailData column
                         ],
                         "language": {
@@ -510,6 +527,16 @@
                         },
                         "dom": '<"d-flex justify-content-between align-items-center mb-4"f>rt<"d-flex justify-content-between align-items-center mt-4"ip>'
                     });
+
+                    // Dynamic Serial Numbering
+                    table.on('order.dt search.dt', function() {
+                        table.column(1, {
+                            search: 'applied',
+                            order: 'applied'
+                        }).nodes().each(function(cell, i) {
+                            cell.innerHTML = i + 1;
+                        });
+                    }).draw();
 
                     // Row Expansion Logic
                     // We explicitly unbind click first to avoid duplicates if re-initialized
@@ -528,10 +555,10 @@
                             tr.removeClass('shown');
                         } else {
                             // Open
-                            // Get content from the hidden column index 6
-                            // DataTables internal storage [0, 1, 2, 3, 4, 5, 6]
+                            // Get content from the hidden column index 7
+                            // DataTables internal storage [0, 1, 2, 3, 4, 5, 6, 7]
                             var rowData = row.data();
-                            var details = rowData[6]; // Index 6 is our "HiddenDetails" column HTML
+                            var details = rowData[7]; // Index 7 is our "HiddenDetails" column HTML
 
                             if (details) {
                                 row.child(details).show();
