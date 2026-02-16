@@ -186,10 +186,9 @@
                                                         </label>
                                                     </div>
                                                     <div class="address-actions">
-                                                        <a href="javascript:void(0);" 
+                                                        <a href="javascript:void(0);"
                                                             class="action-btn edit-btn editAddressModalBtn"
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#editAddressModal"
+                                                            data-bs-toggle="modal" data-bs-target="#editAddressModal"
                                                             data-id="{{ $address['id'] }}"
                                                             data-name="{{ $address['name'] }}"
                                                             data-address="{{ $address['address'] }}"
@@ -200,8 +199,8 @@
                                                             data-mobile="{{ $address['mobile'] }}">
                                                             <i class="fas fa-edit"></i> Edit
                                                         </a>
-                                                        <a href="{{ url('remove-delivery-address/'.$address['id']) }}" 
-                                                            class="action-btn remove-btn" 
+                                                        <a href="{{ url('remove-delivery-address/' . $address['id']) }}"
+                                                            class="action-btn remove-btn"
                                                             onclick="return confirm('Are you sure you want to remove this address?')">
                                                             <i class="fas fa-trash"></i> Remove
                                                         </a>
@@ -249,15 +248,41 @@
                                             @endforeach
                                         </div>
 
+                                        <!-- Wallet Section -->
+                                        @if (Auth::check() && Auth::user()->wallet_balance > 0)
+                                            <div class="wallet-section-box mt-3 mb-3"
+                                                style="padding: 15px; background: #eef7ff; border-radius: 8px; border-left: 4px solid #007bff;">
+                                                <div class="d-flex align-items-center">
+                                                    <input type="checkbox" id="useWallet" name="use_wallet"
+                                                        value="1"
+                                                        style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;"
+                                                        data-balance="{{ Auth::user()->wallet_balance }}"
+                                                        data-max-use="20">
+                                                    <label for="useWallet" style="margin: 0; cursor: pointer;">
+                                                        <strong>Use Wallet Balance</strong> (Available:
+                                                        ₹{{ Auth::user()->wallet_balance }})
+                                                        <div style="font-size: 11px; color: #555;">Max ₹20 will be deducted
+                                                            from
+                                                            your wallet for this order</div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endif
+
                                         <!-- Price Breakdown -->
                                         <div class="price-breakdown">
                                             <div class="price-row">
                                                 <span>Subtotal</span>
-                                                <span>₹{{ $total_price }}</span>
+                                                <span id="subtotalValue"
+                                                    data-subtotal="{{ $total_price }}">₹{{ $total_price }}</span>
                                             </div>
                                             <div class="price-row">
                                                 <span>Shipping Charges</span>
                                                 <span class="shipping_charges">₹0</span>
+                                            </div>
+                                            <div class="price-row" id="walletRow" style="display: none; color: #28a745;">
+                                                <span>Wallet Discount</span>
+                                                <span id="walletAmountDisplay">-₹0</span>
                                             </div>
                                             <div class="price-row">
                                                 <span>Coupon Discount</span>
@@ -399,7 +424,8 @@
                                 <!-- Place Order Button -->
                                 <div class="checkout-section">
                                     <button type="submit" id="placeOrder" class="place-order-btn"> <i
-                                            class="fas fa-lock"></i> Place Order Securely
+                                            class="fas fa-lock"></i>
+                                        Place Order Securely
                                     </button>
                                 </div>
                             </form>
@@ -813,7 +839,8 @@
 
 
     <!-- Edit Address Modal -->
-    <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <form action="{{ url('/save-delivery-address') }}" method="post">
@@ -827,25 +854,30 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_name" id="edit_delivery_name" required>
+                                <input type="text" class="form-control" name="delivery_name" id="edit_delivery_name"
+                                    required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Mobile <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_mobile" id="edit_delivery_mobile" required>
+                                <input type="text" class="form-control" name="delivery_mobile"
+                                    id="edit_delivery_mobile" required>
                             </div>
                         </div>
                         <div class="mb-3">
                             <label>Address <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="delivery_address" id="edit_delivery_address" required>
+                            <input type="text" class="form-control" name="delivery_address"
+                                id="edit_delivery_address" required>
                         </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>City <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_city" id="edit_delivery_city" required>
+                                <input type="text" class="form-control" name="delivery_city" id="edit_delivery_city"
+                                    required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>State <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_state" id="edit_delivery_state" required>
+                                <input type="text" class="form-control" name="delivery_state"
+                                    id="edit_delivery_state" required>
                             </div>
                         </div>
                         <div class="row">
@@ -853,14 +885,15 @@
                                 <label>Country <span class="text-danger">*</span></label>
                                 <select class="form-control" name="delivery_country" id="edit_delivery_country" required>
                                     <option value="">Select Country</option>
-                                    @foreach($countries as $country)
+                                    @foreach ($countries as $country)
                                         <option value="{{ $country['name'] }}">{{ $country['name'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label>Pincode <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_pincode" id="edit_delivery_pincode" required>
+                                <input type="text" class="form-control" name="delivery_pincode"
+                                    id="edit_delivery_pincode" required>
                             </div>
                         </div>
                     </div>
@@ -897,20 +930,48 @@
             });
 
             // Dynamic Shipping calculation (Keep this small JS for UX)
-            $('input[name="address_id"]').on('change', function() {
-                var shipping = $(this).attr('shipping_charges');
-                var total = $(this).attr('total_price');
-                var coupon = $(this).attr('coupon_amount') || 0;
+            $('input[name="address_id"], #useWallet').on('change', function() {
+                var addressEl = $('input[name="address_id"]:checked');
+                var shipping = addressEl.attr('shipping_charges') || 0;
+                var baseTotal = parseFloat($('#subtotalValue').data('subtotal'));
+                var total = baseTotal;
+                if (addressEl.length > 0) {
+                    total = parseFloat(addressEl.attr('total_price')) || baseTotal;
+                }
+                var coupon = addressEl.attr('coupon_amount') ||
+                    {{ \Illuminate\Support\Facades\Session::get('couponAmount') ?? 0 }};
+
+                var walletDiscount = 0;
+                if ($('#useWallet').is(':checked')) {
+                    var balance = parseFloat($('#useWallet').data('balance'));
+                    var maxUse = parseFloat($('#useWallet').data('max-use'));
+                    walletDiscount = Math.min(balance, maxUse);
+                    $('#walletRow').show();
+                    $('#walletAmountDisplay').html('-₹' + walletDiscount.toFixed(2));
+                } else {
+                    $('#walletRow').hide();
+                }
+
                 $('.shipping_charges').html('₹' + shipping);
-                var grand = parseFloat(total) + parseFloat(shipping) - parseFloat(coupon);
+                var grand = parseFloat(total) + parseFloat(shipping) - parseFloat(coupon) - parseFloat(
+                    walletDiscount);
+                if (grand < 0) grand = 0;
                 $('.grand_total').html('₹' + grand.toFixed(2));
-                
-                var cod = $(this).attr('codpincodeCount');
-                var prepaid = $(this).attr('prepaidpincodeCount');
-                if (cod > 0) { $('.codMethod').show(); } else { $('.codMethod').hide(); }
-                if (prepaid > 0) { $('.razorpayMethod').show(); } else { $('.razorpayMethod').hide(); }
+
+                var cod = addressEl.attr('codpincodeCount');
+                var prepaid = addressEl.attr('prepaidpincodeCount');
+                if (cod > 0) {
+                    $('.codMethod').show();
+                } else {
+                    $('.codMethod').hide();
+                }
+                if (prepaid > 0) {
+                    $('.razorpayMethod').show();
+                } else {
+                    $('.razorpayMethod').hide();
+                }
             });
-            if($('input[name="address_id"]:checked').length > 0) {
+            if ($('input[name="address_id"]:checked').length > 0) {
                 $('input[name="address_id"]:checked').trigger('change');
             }
         });

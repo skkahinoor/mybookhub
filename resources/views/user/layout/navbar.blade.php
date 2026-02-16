@@ -1,7 +1,7 @@
 <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
     <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-        <a class="navbar-brand brand-logo mr-5" href="{{ url('/') }}"><img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" class="mr-2"
-                alt="logo" /></a>
+        <a class="navbar-brand brand-logo mr-5" href="{{ url('/') }}"><img
+                src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" class="mr-2" alt="logo" /></a>
     </div>
 
     <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
@@ -72,6 +72,13 @@
                     </a>
                 </div>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('user.wallet') }}"
+                    style="display: flex; align-items: center; gap: 8px; color: #ff9900; font-weight: 700; background: #fff5e6; padding: 8px 16px; border-radius: 20px; border: 1px solid #ffe3b3;">
+                    <i class="ti-wallet" style="font-size: 1.1rem;"></i>
+                    <span>₹{{ Auth::user()->wallet_balance }}</span>
+                </a>
+            </li>
             <li class="nav-item nav-profile dropdown">
                 <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" id="profileDropdown">
                     @php
@@ -79,10 +86,10 @@
                         // Check if avatar exists and is in the new location (asset/user) or old location (storage)
                         if ($avatar) {
                             // If it's already in asset/user format, use it directly
-                            if (strpos($avatar, 'asset/user/') !== false) {
-                                $avatarSrc = asset($avatar);
-                            } else {
-                                // If it's in old storage format, still support it for backward compatibility
+    if (strpos($avatar, 'asset/user/') !== false) {
+        $avatarSrc = asset($avatar);
+    } else {
+        // If it's in old storage format, still support it for backward compatibility
                                 $avatarSrc = asset($avatar);
                             }
                         } else {

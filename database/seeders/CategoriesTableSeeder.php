@@ -25,7 +25,6 @@ class CategoriesTableSeeder extends Seeder
                 'section_id'        => 1, // 1 is the parent 'Cloting' section
                 'category_name'     => 'Men',
                 'category_image'    => '',
-                'category_discount' => 0,
                 'description'       => '',
                 'url'               => 'men',
                 'meta_title'        => '',
@@ -39,7 +38,6 @@ class CategoriesTableSeeder extends Seeder
                 'section_id'        => 1, // 1 is the parent 'Cloting' section
                 'category_name'     => 'Women',
                 'category_image'    => '',
-                'category_discount' => 0,
                 'description'       => '',
                 'url'               => 'women',
                 'meta_title'        => '',
@@ -53,7 +51,6 @@ class CategoriesTableSeeder extends Seeder
                 'section_id'        => 1, // 1 is the parent 'Cloting' section
                 'category_name'     => 'Kids',
                 'category_image'    => '',
-                'category_discount' => 0,
                 'description'       => '',
                 'url'               => 'kids',
                 'meta_title'        => '',

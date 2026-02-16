@@ -7,6 +7,7 @@ use App\Models\HeaderLogo;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 use Yajra\DataTables\DataTables;
 
 class OrderController extends Controller
@@ -117,5 +118,34 @@ class OrderController extends Controller
 
 
         return view('user.orders.orderdetails', compact('orderDetails', 'totalOrders', 'totalSpent', 'pendingOrders', 'deliveredOrders', 'logos', 'headerLogo'));
+    }
+    public function cancelOrder($id)
+    {
+        $order = Order::where('id', $id)->where('user_id', Auth::user()->id)->firstOrFail();
+
+        // Check if order can be cancelled (e.g. only if Status is New or Pending)
+        $allowedStatus = ['New', 'Pending'];
+        if (!in_array($order->order_status, $allowedStatus)) {
+            return redirect()->back()->with('error_message', 'Order cannot be cancelled at this stage.');
+        }
+
+        // Update Status
+        $order->order_status = 'Cancelled';
+        $order->save();
+
+        // Revert Wallet
+        \App\Models\WalletTransaction::revertWallet($id);
+
+        return redirect()->back()->with('success_message', 'Order has been cancelled and wallet balance (if any) has been reverted.');
+    }
+    public function payNow($id)
+    {
+        $order = Order::where('id', $id)->where('user_id', Auth::user()->id)->firstOrFail();
+        if ($order->order_status != 'Pending') {
+            return redirect()->back()->with('error_message', 'Order is already paid or cannot be paid at this stage.');
+        }
+
+        Session::put('order_id', $id);
+        return redirect('/razorpay');
     }
 }

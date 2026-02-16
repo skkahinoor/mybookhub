@@ -26,10 +26,9 @@
     <meta name="app-url" content="{{ config('app.url') }}">
 
     <!-- FAVICONS ICON -->
-    @if(!empty($logos))
-    <link rel="icon" type="image/x-icon"
-          href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}">
-@endif
+    @if (!empty($logos))
+        <link rel="icon" type="image/x-icon" href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}">
+    @endif
 
 
     <!-- PAGE TITLE HERE -->
@@ -160,11 +159,11 @@
                 <div class="container clearfix">
                     <!-- Website Logo -->
                     <div class="logo-header logo-dark">
-                        @if(!empty($logos))
-    <a href="{{ url('/') }}">
-        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
-    </a>
-@endif
+                        @if (!empty($logos))
+                            <a href="{{ url('/') }}">
+                                <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
+                            </a>
+                        @endif
 
                     </div>
 
@@ -182,9 +181,9 @@
                                         </svg>
                                         <span
                                             class="badge totalWishlistItems">{{ isset($headerWishlistItemsCount) ? $headerWishlistItemsCount : 0 }}</span>
-                                        {{-- Debug: {{ var_dump($headerWishlistItemsCount ?? 'not set') }} --}}
                                     </a>
                                 </li>
+
                                 {{-- <li class="nav-item">
                                     <button type="button" class="nav-link box cart-btn">
                                         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
@@ -281,7 +280,14 @@
                                         </div>
                                     </li>
                                 @else
-                                    <li class="nav-item dropdown profile-dropdown  ms-4">
+                                    <li class="nav-item me-3" style="display: flex; align-items: center;">
+                                        <a href="{{ route('user.account') }}"
+                                            style="display: flex; align-items: center; gap: 8px; color: #ff9900; font-weight: 700; background: #fff5e6; padding: 8px 16px; border-radius: 30px; border: 1px solid #ffe3b3; transition: all 0.3s ease; text-decoration: none;">
+                                            <i class="fas fa-wallet" style="font-size: 1.1rem;"></i>
+                                            <span>₹{{ Auth::user()->wallet_balance }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item dropdown profile-dropdown  ms-2">
                                         <a class="nav-link" href="javascript:void(0);" role="button"
                                             data-bs-toggle="dropdown" aria-expanded="false">
                                             @php
@@ -433,40 +439,69 @@
             <div class="sticky-header main-bar-wraper navbar-expand-lg">
                 <div class="main-bar clearfix">
                     <div class="container clearfix">
-                        <!-- Website Logo -->
-                        <div class="logo-header logo-dark">
-                            @if(!empty($logos))
-    <a href="{{ url('/') }}">
-        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
-    </a>
-@endif
+                        <div class="d-flex align-items-center justify-content-between w-100">
+                            <!-- Website Logo -->
+                            <div class="logo-header logo-dark">
+                                @if (!empty($logos))
+                                    <a href="{{ url('/') }}">
+                                        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
+                                            alt="BookHub">
+                                    </a>
+                                @endif
+                            </div>
 
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- Mobile Header Icons (Visible on mobile/tablet only) -->
+                                <div class="mobile-nav-icons d-lg-none d-flex align-items-center gap-3">
+                                    @if (Auth::check())
+                                        <a href="{{ route('user.wallet') }}"
+                                            style="color: #ff9900; font-weight: 700; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">
+                                            <i class="fas fa-wallet"></i> ₹{{ Auth::user()->wallet_balance }}
+                                        </a>
+                                    @endif
+                                    <a href="{{ url('/wishlist') }}"
+                                        style="position: relative; color: #333; display: flex; align-items: center;">
+                                        <i class="far fa-heart" style="font-size: 20px;"></i>
+                                        <span class="badge"
+                                            style="position: absolute; top: -8px; right: -8px; background: #ff9900; color: #fff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; padding: 0;">{{ $headerWishlistItemsCount ?? 0 }}</span>
+                                    </a>
+                                    <a href="{{ url('/cart') }}"
+                                        style="position: relative; color: #333; display: flex; align-items: center;">
+                                        <i class="fas fa-shopping-basket" style="font-size: 20px;"></i>
+                                        <span class="badge"
+                                            style="position: absolute; top: -8px; right: -8px; background: #ff9900; color: #fff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; padding: 0;">{{ isset($headerCartItems) ? count($headerCartItems) : 0 }}</span>
+                                    </a>
+                                </div>
+
+                                <!-- Nav Toggle Button -->
+                                <button class="navbar-toggler collapsed navicon justify-content-end" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
+                                    aria-controls="navbarNavDropdown" aria-expanded="false"
+                                    aria-label="Toggle navigation">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </button>
+                            </div>
                         </div>
-
-                        <!-- Nav Toggle Button -->
-                        <button class="navbar-toggler collapsed navicon justify-content-end" type="button"
-                            data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
-                            aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </button>
 
                         <!-- EXTRA NAV -->
                         <div class="extra-nav">
-                            <div class="extra-cell">
-                                <a href="{{ url('/contact') }}" class="btn btn-primary btnhover">Get In Touch</a>
+                            <div class="extra-cell d-flex align-items-center gap-3">
+                                <a href="{{ url('/contact') }}"
+                                    class="btn btn-primary btnhover d-none d-sm-inline-block">Get In Touch</a>
                             </div>
                         </div>
 
                         <!-- Main Nav -->
                         <div class="header-nav navbar-collapse collapse justify-content-start" id="navbarNavDropdown">
                             <div class="logo-header logo-dark">
-                                @if(!empty($logos))
-    <a href="{{ url('/') }}">
-        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
-    </a>
-@endif
+                                @if (!empty($logos))
+                                    <a href="{{ url('/') }}">
+                                        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
+                                            alt="BookHub">
+                                    </a>
+                                @endif
 
                             </div>
                             <div class="search-input">
@@ -588,11 +623,12 @@
                         <div class="col-xl-3 col-lg-12 wow fadeInUp" data-wow-delay="0.1s">
                             <div class="widget widget_about">
                                 <div class="footer-logo logo-white">
-                                    @if(!empty($logos))
-    <a href="{{ url('/') }}">
-        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
-    </a>
-@endif
+                                    @if (!empty($logos))
+                                        <a href="{{ url('/') }}">
+                                            <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
+                                                alt="BookHub">
+                                        </a>
+                                    @endif
 
                                 </div>
                                 <p class="text">Bookhub - BookStore Script System is an online Discovering great
@@ -785,10 +821,10 @@
     <script src="{{ asset('front/newtheme/js/custom.js') }}"></script><!-- CUSTOM JS -->
 
     <!-- jQuery -->
-{{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
+    {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
 
-<!-- Bootstrap JS -->
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
 
 

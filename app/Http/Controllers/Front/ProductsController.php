@@ -22,6 +22,7 @@ use App\Models\ShippingCharge;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Wishlist;
+use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -232,7 +233,7 @@ class ProductsController extends Controller
 
                     $categoryDetails['breadcrumbs'] = $search_product;
                     $categoryDetails['categoryDetails']['category_name'] = $search_product;
-                    $categoryDetails['categoryDetails']['description'] = 'Search Products for '.$search_product;
+                    $categoryDetails['categoryDetails']['description'] = 'Search Products for ' . $search_product;
 
                     $categoryProducts = Product::select(
                         'products.id',
@@ -252,9 +253,9 @@ class ProductsController extends Controller
                         'products.category_id'
                     )->where(function ($query) use ($search_product) {
 
-                        $query->where('products.product_name', 'like', '%'.$search_product.'%')
-                            ->orWhere('products.description', 'like', '%'.$search_product.'%')
-                            ->orWhere('categories.category_name', 'like', '%'.$search_product.'%');
+                        $query->where('products.product_name', 'like', '%' . $search_product . '%')
+                            ->orWhere('products.description', 'like', '%' . $search_product . '%')
+                            ->orWhere('categories.category_name', 'like', '%' . $search_product . '%');
                     })->where('products.status', 1);
                     // dd($categoryProducts);
                 }
@@ -541,7 +542,7 @@ class ProductsController extends Controller
             ->inRandomOrder()
             ->get()
             ->groupBy('product_id')            // 🔥 remove duplicates
-            ->map(fn ($items) => $items->first()) // take one vendor per product
+            ->map(fn($items) => $items->first()) // take one vendor per product
             ->take(3)
             ->values();
 
@@ -1163,7 +1164,7 @@ class ProductsController extends Controller
                     // re-fetch after seeding
                     $deliveryAddresses = DeliveryAddress::deliveryAddresses();
                 } catch (\Throwable $e) {
-                    Log::warning('Failed to seed delivery address from profile: '.$e->getMessage());
+                    Log::warning('Failed to seed delivery address from profile: ' . $e->getMessage());
                 }
             }
         }
@@ -1200,14 +1201,14 @@ class ProductsController extends Controller
                 // Prevent 'disabled' (`status` = 0) products from being ordered
                 $product_status = Product::getProductStatus($item['product_id']);
                 if ($product_status == 0) {
-                    $message = $attribute->product->product_name.' is not available. Please remove it from the Cart and choose another product.';
+                    $message = $attribute->product->product_name . ' is not available. Please remove it from the Cart and choose another product.';
 
                     return redirect('/cart')->with('error_message', $message);
                 }
 
                 // Check attribute status (must be enabled)
                 if ($attribute->status == 0) {
-                    $message = $attribute->product->product_name.' with '.($item['size'] ?? '').' size is not available. Please remove it from the Cart and choose another product.';
+                    $message = $attribute->product->product_name . ' with ' . ($item['size'] ?? '') . ' size is not available. Please remove it from the Cart and choose another product.';
 
                     return redirect('/cart')->with('error_message', $message);
                 }
@@ -1215,7 +1216,7 @@ class ProductsController extends Controller
                 // Check stock for this specific attribute
                 $availableStock = (int) $attribute->stock;
                 if ($availableStock == 0 || $item['quantity'] > $availableStock) {
-                    $message = $attribute->product->product_name.' with '.($item['size'] ?? '').' size stock is not available/enough. Please reduce quantity or remove it from the Cart.';
+                    $message = $attribute->product->product_name . ' with ' . ($item['size'] ?? '') . ' size stock is not available/enough. Please reduce quantity or remove it from the Cart.';
 
                     return redirect('/cart')->with('error_message', $message);
                 }
@@ -1223,7 +1224,7 @@ class ProductsController extends Controller
                 // Check category status
                 $getCategoryStatus = Category::getCategoryStatus($attribute->product->category_id);
                 if ($getCategoryStatus == 0) {
-                    $message = $attribute->product->product_name.' category is disabled. Please remove it from the Cart and choose another product.';
+                    $message = $attribute->product->product_name . ' category is disabled. Please remove it from the Cart and choose another product.';
 
                     return redirect('/cart')->with('error_message', $message);
                 }
@@ -1280,6 +1281,13 @@ class ProductsController extends Controller
             // Grand Total (`grand_total`)
             $grand_total = $total_price + $shipping_charges - Session::get('couponAmount');
 
+            // Wallet Deduction Logic
+            $wallet_amount = 0;
+            if (isset($data['use_wallet']) && $data['use_wallet'] == 1 && Auth::user()->wallet_balance > 0) {
+                $wallet_amount = min(Auth::user()->wallet_balance, 20);
+                $grand_total = $grand_total - $wallet_amount;
+            }
+
             Session::put('grand_total', $grand_total);
             $order = new Order;
             $order->user_id = Auth::user()->id; // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
@@ -1298,8 +1306,25 @@ class ProductsController extends Controller
             $order->payment_method = $payment_method;
             $order->payment_gateway = $data['payment_gateway'];
             $order->grand_total = $grand_total;
+            $order->wallet_amount = $wallet_amount;
 
             $order->save();
+
+            if ($wallet_amount > 0) {
+                // Deduct from User Balance
+                $user = User::find(Auth::user()->id);
+                $user->wallet_balance -= $wallet_amount;
+                $user->save();
+
+                // Create Wallet Transaction Entry
+                WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'order_id' => $order->id,
+                    'amount' => $wallet_amount,
+                    'type' => 'debit',
+                    'description' => 'Used for order #' . $order->id,
+                ]);
+            }
             $order_id = DB::getPdo()->lastInsertId();
 
             foreach ($getCartItems as $item) {
@@ -1344,7 +1369,7 @@ class ProductsController extends Controller
                 if ($item['quantity'] > $availableStock) {
                     DB::rollBack();
                     $message = $attribute->product->product_name
-                        .' with '.($item['size'] ?? '').' size stock is not available/enough for your order. Please reduce its quantity and try again!';
+                        . ' with ' . ($item['size'] ?? '') . ' size stock is not available/enough for your order. Please reduce its quantity and try again!';
 
                     return redirect('/cart')->with('error_message', $message);
                 }
@@ -1375,7 +1400,7 @@ class ProductsController extends Controller
                         $message->to($email)->subject('Order Placed - MultiVendorEcommerceApplication.com.eg');
                     });
                 } catch (\Throwable $e) {
-                    Log::warning('Order email failed to send: '.$e->getMessage());
+                    Log::warning('Order email failed to send: ' . $e->getMessage());
                 }
             } elseif ($data['payment_gateway'] == 'Paypal') {
                 // redirect the user to the PayPalController.php (after saving the order details in `orders` and `orders_products` tables)
@@ -1389,7 +1414,7 @@ class ProductsController extends Controller
                 echo 'Other Prepaid payment methods coming soon';
             }
 
-            Log::info('Checkout success: Order ID '.$order_id.' saved. Redirecting to thanks.');
+            Log::info('Checkout success: Order ID ' . $order_id . ' saved. Redirecting to thanks.');
 
             return redirect('thanks'); // redirect to front/products/thanks.blade.php page
         }
@@ -1415,7 +1440,14 @@ class ProductsController extends Controller
         //     $condition = 'new';
         // }
         if (Session::has('order_id')) {                     // if there's an order has been placed, empty the Cart (remove the order (the cart items/products) from `carts`table)    // 'user_id' was stored in Session inside checkout() method in Front/ProductsController.php
-            Log::info('Entering thanks view with Order ID: '.Session::get('order_id'));
+            // Clear Session
+            Session::forget('couponAmount');
+            Session::forget('couponCode');
+            Session::forget('grand_total');
+
+            // Wallet Credit Logic
+            \App\Models\WalletTransaction::checkAndCreditWallet(Session::get('order_id'));
+
             // We empty the Cart after placing the order
             Cart::where('user_id', Auth::user()->id)->delete(); // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
 
@@ -1480,7 +1512,7 @@ class ProductsController extends Controller
         }
 
         // Log for debugging
-        Log::info('Header Wishlist Data - Items: '.count($getWishlistItems).', Count: '.$wishlistItemsCount.', Session ID: '.Session::get('session_id'));
+        Log::info('Header Wishlist Data - Items: ' . count($getWishlistItems) . ', Count: ' . $wishlistItemsCount . ', Session ID: ' . Session::get('session_id'));
 
         return [
             'wishlistItems' => $getWishlistItems,
