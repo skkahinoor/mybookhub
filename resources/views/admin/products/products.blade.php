@@ -13,7 +13,7 @@
                                     style="max-width: 150px; float: right; display: inline-block"
                                     class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Book</a>
                             @else
-                                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                                <div style="display: flex;    justify-content: flex-end; gap: 10px;">
                                     <a href="{{ url('admin/add-edit-product') }}" class="btn btn-primary">
                                         <i class="mdi mdi-plus"></i> Add Book
                                     </a>

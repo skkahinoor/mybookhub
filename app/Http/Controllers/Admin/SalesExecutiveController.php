@@ -27,7 +27,7 @@ class SalesExecutiveController extends Controller
         $title = 'Sales Executives';
         
         // Fetch Users with role 'sales' from the 'web' guard
-        $salesExecutives = User::role('sales', 'web')->with('salesExecutive')->get();
+        $salesExecutives = User::role('sales', 'web')->with('salesExecutive')->orderBy('id','desc')->get();
         // Map to structure expected by view if necessary (or update view to use user->salesExecutive relationship)
         // Assuming view uses $sales->name, $sales->email, $sales->status directly on the object iterated.
         // User has name, email, status. So it should be fine.
