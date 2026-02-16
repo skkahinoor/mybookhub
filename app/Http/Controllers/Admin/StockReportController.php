@@ -36,6 +36,16 @@ class StockReportController extends Controller
         foreach ($products as $product) {
             $totalStock = collect($product->attributes)->sum('stock');
 
+            // Apply stock status filter
+            if ($request->filled('stock_status')) {
+                if ($request->stock_status == 'in_stock' && $totalStock <= 0) {
+                    continue;
+                }
+                if ($request->stock_status == 'out_of_stock' && $totalStock > 0) {
+                    continue;
+                }
+            }
+
             $vendorStocks = [];
             foreach (collect($product->attributes) as $attribute) {
                 $name = 'Admin';
