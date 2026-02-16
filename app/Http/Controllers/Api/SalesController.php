@@ -52,7 +52,7 @@ class SalesController extends Controller
         }
 
         $user = $request->user();
-
+$user->load(['country', 'state', 'district', 'block']);
         return response()->json([
             'status' => true,
             'message' => 'Profile fetched successfully.',
@@ -63,9 +63,13 @@ class SalesController extends Controller
                 'phone'     => $user->phone,
                 'address'   => $user->address,
                 'country_id' => $user->country_id,
+                'country_name' => $user->country->name ?? null,
                 'state_id'  => $user->state_id,
+                'state_name' => $user->state->name ?? null,
                 'district_id' => $user->district_id,
+                'district_name' => $user->district->name ?? null,
                 'block_id'  => $user->block_id,
+                'block_name' => $user->block->name ?? null,
                 'pincode'   => $user->pincode,
                 'profile_image' => $user->profile_image ? url($user->profile_image) : null,
             ]
@@ -80,31 +84,49 @@ class SalesController extends Controller
 
         $user = auth()->user();
 
+
         $validated = $request->validate([
             'name'      => 'required|string|max:255',
             'email'     => ['required', 'email', Rule::unique('users')->ignore($user->id)],
             'phone'     => ['required', Rule::unique('users')->ignore($user->id)],
             'address'   => 'nullable|string|max:255',
+            'country_id'   => 'nullable|exists:countries,id',
+            'state_id'     => 'nullable|exists:states,id',
+            'district_id'  => 'nullable|exists:districts,id',
+            'block_id'     => 'nullable|exists:blocks,id',
             'pincode'   => 'nullable|string|max:20',
             'password'  => 'nullable|min:6|confirmed',
             'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
-        $user->fill($validated);
+        // Remove password & profile_image from fill
+        $user->fill(collect($validated)->except(['password', 'profile_image'])->toArray());
 
+        // Update password
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }
 
+        // Update profile image
         if ($request->hasFile('profile_image')) {
+
+            // Delete old image (optional but recommended)
+            if ($user->profile_image && file_exists(public_path($user->profile_image))) {
+                unlink(public_path($user->profile_image));
+            }
+
             $image = $request->file('profile_image');
             $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
             $path = 'assets/sales/profile_pictures/';
             $image->move(public_path($path), $filename);
+
             $user->profile_image = $path . $filename;
         }
 
         $user->save();
+
+        // Reload relationships
+        $user->load(['country', 'state', 'district', 'block']);
 
         return response()->json([
             'status' => true,
@@ -115,11 +137,20 @@ class SalesController extends Controller
                 'email'     => $user->email,
                 'phone'     => $user->phone,
                 'address'   => $user->address,
+                'country_id' => $user->country_id,
+                'country_name' => $user->country->name ?? null,
+                'state_id' => $user->state_id,
+                'state_name' => $user->state->name ?? null,
+                'district_id' => $user->district_id,
+                'district_name' => $user->district->name ?? null,
+                'block_id' => $user->block_id,
+                'block_name' => $user->block->name ?? null,
                 'pincode'   => $user->pincode,
                 'profile_image' => $user->profile_image ? url($user->profile_image) : null,
             ]
         ]);
     }
+
 
     public function getBankDetails(Request $request)
     {
