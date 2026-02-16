@@ -25,19 +25,19 @@ class SalesController extends Controller
         return null;
     }
 
+
     public function getProfile(Request $request)
     {
-        $user = $request->user();
-        $type = $this->detectUserType($user);
+        $sales = $request->user();
 
-        if ($type !== 'sales') {
+        if (!$sales instanceof SalesExecutive) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Sales Executives can access this profile.'
             ], 403);
         }
 
-        if ($user->status != 1) {
+        if ($sales->status != 1) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your account is inactive.'
@@ -48,100 +48,115 @@ class SalesController extends Controller
             'status' => true,
             'message' => 'Profile fetched successfully.',
             'data' => [
-                'id'        => $user->id,
-                'name'      => $user->name,
-                'email'     => $user->email,
-                'phone'     => $user->phone,
-                'address'   => $user->address,
-                'country_id' => $user->country_id,
-                'state_id'  => $user->state_id,
-                'district_id' => $user->district_id,
-                'block_id'  => $user->block_id,
-                'pincode'   => $user->pincode,
-                'profile_image' => $user->profile_image ? url($user->profile_image) : null,
+                'id'        => $sales->id,
+                'name'      => $sales->name,
+                'email'     => $sales->email,
+                'phone'     => $sales->phone,
+                'address'   => $sales->address,
+                'country'   => $sales->country,
+                'state'     => $sales->state,
+                'district'  => $sales->district,
+                'city'      => $sales->city,
+                'pincode'   => $sales->pincode,
+                'profile_picture' => $sales->profile_picture ? url($sales->profile_picture) : null,
             ]
         ]);
     }
 
     public function updateProfile(Request $request)
     {
-        $user = auth()->user();
-        $type = $this->detectUserType($user);
+        $sales = auth()->user();
 
-        if ($type !== 'sales') {
+        if (!$sales instanceof SalesExecutive) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Sales Executives can update this profile.'
             ], 403);
         }
 
-        if ($user->status != 1) {
+        if ($sales->status != 1) {
             return response()->json([
                 'status' => false,
                 'message' => 'Your account is inactive.'
             ], 403);
         }
 
-        $validated = $request->validate([
-            'name'      => 'required|string|max:255',
-            'email'     => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'phone'     => ['required', Rule::unique('users')->ignore($user->id)],
-            'address'   => 'nullable|string|max:255',
-            'pincode'   => 'nullable|string|max:20',
-            'password'  => 'nullable|min:6|confirmed',
-            'profile_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ]);
+        try {
+            $validated = $request->validate([
+                'name'      => 'required|string|max:255',
+                'email'     => ['required', 'email', Rule::unique('sales_executives')->ignore($sales->id)],
+                'phone'     => ['required', 'string', 'min:10', 'max:15', Rule::unique('sales_executives')->ignore($sales->id)],
+                'address'   => 'nullable|string|max:255',
+                'city'      => 'nullable|string|max:255',
+                'district'  => 'nullable|string|max:255',
+                'state'     => 'nullable|string|max:255',
+                'pincode'   => 'nullable|string|max:20',
+                'country'   => 'nullable|string|max:255',
+                'password'  => 'nullable|min:6|confirmed',
+                'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        }
 
-        $user->fill($validated);
+
+        $sales->fill($validated);
 
         if (!empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
+            $sales->password = Hash::make($validated['password']);
         }
 
-        if ($request->hasFile('profile_image')) {
-            $image = $request->file('profile_image');
+        if ($request->hasFile('profile_picture')) {
+            $image = $request->file('profile_picture');
             $filename = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+
             $path = 'assets/sales/profile_pictures/';
             $image->move(public_path($path), $filename);
-            $user->profile_image = $path . $filename;
+
+            $sales->profile_picture = $path . $filename;
         }
 
-        $user->save();
+        $sales->save();
 
         return response()->json([
             'status' => true,
             'message' => 'Profile updated successfully',
             'data' => [
-                'id'        => $user->id,
-                'name'      => $user->name,
-                'email'     => $user->email,
-                'phone'     => $user->phone,
-                'address'   => $user->address,
-                'pincode'   => $user->pincode,
-                'profile_image' => $user->profile_image ? url($user->profile_image) : null,
+                'id'         => $sales->id,
+                'name'       => $sales->name,
+                'email'      => $sales->email,
+                'phone'      => $sales->phone,
+                'address'    => $sales->address,
+                'city'       => $sales->city,
+                'district'   => $sales->district,
+                'state'      => $sales->state,
+                'pincode'    => $sales->pincode,
+                'country'    => $sales->country,
+                'profile_picture' => $sales->profile_picture ? url($sales->profile_picture) : null,
             ]
         ], 200);
     }
 
     public function getBankDetails(Request $request)
     {
-        $user = $request->user();
-        $type = $this->detectUserType($user);
+        $sales = $request->user();
 
-        if ($type !== 'sales') {
+        if (!$sales instanceof SalesExecutive) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Sales Executives can access this.'
             ], 403);
         }
 
-        $sales = $user->salesExecutive;
-
-        if (!$sales) {
+        if ($sales->status != 1) {
             return response()->json([
                 'status' => false,
-                'message' => 'Sales profile not found.'
-            ], 404);
+                'message' => 'Your account is inactive.'
+            ], 403);
         }
 
         return response()->json([
@@ -159,24 +174,25 @@ class SalesController extends Controller
 
     public function updateBankDetails(Request $request)
     {
-        $user = auth()->user();
-        $type = $this->detectUserType($user);
+        $sales = auth()->user();
 
-        if ($type !== 'sales') {
+        // Ensure logged-in user is Sales Executive
+        if (!$sales instanceof SalesExecutive) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Sales Executives can update bank details.'
             ], 403);
         }
 
-        $sales = $user->salesExecutive;
-
-        if (!$sales) {
+        if ($sales->status != 1) {
             return response()->json([
                 'status' => false,
-                'message' => 'Sales profile not found.'
-            ], 404);
+                'message' => 'Your account is inactive.'
+            ], 403);
         }
+
+        // For PUT + form-data fix
+        $request->request->add($request->all());
 
         $validated = $request->validate([
             'bank_name'      => 'nullable|string|max:255',
@@ -186,7 +202,13 @@ class SalesController extends Controller
             'upi_id'         => 'nullable|string|max:255',
         ]);
 
-        $sales->update($validated);
+        $sales->bank_name      = $validated['bank_name'] ?? $sales->bank_name;
+        $sales->account_number = $validated['account_number'] ?? $sales->account_number;
+        $sales->ifsc_code      = $validated['ifsc_code'] ?? $sales->ifsc_code;
+        $sales->bank_branch    = $validated['bank_branch'] ?? $sales->bank_branch;
+        $sales->upi_id         = $validated['upi_id'] ?? $sales->upi_id;
+
+        $sales->save();
 
         return response()->json([
             'status' => true,
