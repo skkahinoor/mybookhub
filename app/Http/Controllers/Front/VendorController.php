@@ -166,6 +166,7 @@ class VendorController extends Controller
     /**
      * AJAX: Send OTP for vendor registration (like sales.register)
      */
+    
     public function sendOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
