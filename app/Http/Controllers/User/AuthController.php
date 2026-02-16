@@ -9,14 +9,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
+
 class AuthController extends Controller
 {
-    public function Login(){
+    public function Login()
+    {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         return view('user.auth.login', compact('logos', 'headerLogo'));
     }
-    public function Register(){
+    public function Register()
+    {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         return view('user.auth.register', compact('logos', 'headerLogo'));
@@ -49,34 +52,35 @@ class AuthController extends Controller
         }
 
         if (Auth::attempt($credentials)) {
-            return redirect()->route('user.index');
+            return redirect('/');
         }
 
         return redirect()->route('user.login')->with('error', 'Invalid credentials');
     }
 
 
-    public function registerStore(Request $request){
-       //dd($request->all());
+    public function registerStore(Request $request)
+    {
+        //dd($request->all());
         $request->validate([
-            'name'=>'required|string|max:255',
-            'email'=>'required|email|unique:users',
-            'password'=>'required|min:8',
-            'phone'=>'required|numeric|digits:10',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|min:8',
+            'phone' => 'required|numeric|digits:10',
         ]);
         $role = \Spatie\Permission\Models\Role::where('name', 'user')->first();
-        $user=User::create([
-            'name'=>$request->name,
-            'email'=>$request->email,
-            'phone'=>$request->phone,
-            'password'=>Hash::make($request->password),
-            'role_id'=>$role ? $role->id : null,
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => Hash::make($request->password),
+            'role_id' => $role ? $role->id : null,
             'status' => 1,
         ]);
         if ($role) {
             $user->assignRole($role);
         }
-        return redirect()->route('user.login')->with('success','Account created successfully');
+        return redirect()->route('user.login')->with('success', 'Account created successfully');
     }
     public function logout(Request $request)
     {
@@ -89,5 +93,4 @@ class AuthController extends Controller
 
         return redirect()->route('user.login')->with('success', 'You are logged out');
     }
-
 }
