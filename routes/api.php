@@ -78,10 +78,10 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/sales/vendors', [VendorController::class, 'getVendor']);
-    Route::post('/sales/vendors', [VendorController::class, 'storeVendor']);
-    Route::get('/sales/vendors/{id}', [VendorController::class, 'showVendor']);
-    Route::delete('/sales/vendors/{id}', [VendorController::class, 'destroyVendor']);
+    Route::get('/sales/vendors', [SalesVendorController::class, 'getVendor']);
+    Route::post('/sales/vendors', [SalesVendorController::class, 'storeVendor']);
+    Route::get('/sales/vendors/{id}', [SalesVendorController::class, 'showVendor']);
+    Route::delete('/sales/vendors/{id}', [SalesVendorController::class, 'destroyVendor']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
