@@ -43,11 +43,9 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-
-
                                         @foreach ($users as $user)
                                             <tr>
-                                                <td>{{ $user['id'] }}</td>
+                                                <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $user['name'] }}</td>
                                                 <td>{{ $user['address'] }}</td>
                                                 <td>{{ $user['city'] }}</td>
