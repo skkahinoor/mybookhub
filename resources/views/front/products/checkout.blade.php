@@ -3,440 +3,67 @@
 
 @section('content')
 
-    <div class="dz-bnr-inr overlay-secondary-dark dz-bnr-inr-sm" style="background-image:url(images/background/bg3.jpg);">
-        <div class="container">
-            <div class="dz-bnr-inr-entry">
-                <h1>Checkout</h1>
-                <nav aria-label="breadcrumb" class="breadcrumb-row">
-                    <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ url('/') }}"> Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ url('/checkout') }}">Checkout</a></li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </div>
-    <!-- inner page banner End-->
+    {{-- css code   --}}
+    <style>
+        .checkout-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px
+        }
 
-    {{-- New UI static block removed in favor of functional checkout implementation below --}}
+        .checkout-steps .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px
+        }
 
-    <!-- Checkout Progress Steps -->
-    <section class="content-inner py-4">
-        <div class="container">
-            <div class="checkout-steps">
-                <div class="step active">
-                    <div class="circle">1</div>
-                    <div class="label">Address</div>
-                </div>
-                <div class="separator"></div>
-                <div class="step active">
-                    <div class="circle">2</div>
-                    <div class="label">Summary</div>
-                </div>
-                <div class="separator"></div>
-                <div class="step">
-                    <div class="circle">3</div>
-                    <div class="label">Payment</div>
-                </div>
-                <div class="separator"></div>
-                <div class="step">
-                    <div class="circle">4</div>
-                    <div class="label">Place Order</div>
-                </div>
-            </div>
-        </div>
-        <style>
+        .checkout-steps .circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            background: #e9ecef;
+            color: #6c757d;
+            border: 2px solid #dee2e6
+        }
+
+        .checkout-steps .label {
+            font-size: 12px;
+            color: #6c757d
+        }
+
+        .checkout-steps .step.active .circle {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: #fff;
+            border-color: #007bff
+        }
+
+        .checkout-steps .step.active .label {
+            color: #0056b3;
+            font-weight: 600
+        }
+
+        .checkout-steps .separator {
+            height: 2px;
+            width: 40px;
+            background: #e9ecef
+        }
+
+        @media(max-width:576px) {
             .checkout-steps {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 16px
-            }
-
-            .checkout-steps .step {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
                 gap: 8px
             }
 
-            .checkout-steps .circle {
-                width: 36px;
-                height: 36px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 600;
-                background: #e9ecef;
-                color: #6c757d;
-                border: 2px solid #dee2e6
-            }
-
-            .checkout-steps .label {
-                font-size: 12px;
-                color: #6c757d
-            }
-
-            .checkout-steps .step.active .circle {
-                background: linear-gradient(135deg, #007bff, #0056b3);
-                color: #fff;
-                border-color: #007bff
-            }
-
-            .checkout-steps .step.active .label {
-                color: #0056b3;
-                font-weight: 600
-            }
-
             .checkout-steps .separator {
-                height: 2px;
-                width: 40px;
-                background: #e9ecef
+                width: 24px
             }
+        }
 
-            @media(max-width:576px) {
-                .checkout-steps {
-                    gap: 8px
-                }
-
-                .checkout-steps .separator {
-                    width: 24px
-                }
-            }
-        </style>
-    </section>
-
-
-    {{-- old code  --}}
-    <!-- Page Introduction Wrapper -->
-    {{-- <div class="page-style-a">
-    <div class="container">
-        <div class="page-intro">
-            <h2>Checkout</h2>
-            <ul class="bread-crumb">
-                <li class="has-separator">
-                    <i class="ion ion-md-home"></i>
-                    <a href="{{ url('/') }}">Home</a>
-                </li>
-                <li class="is-marked">
-                    <a href="{{ url('/checkout') }}">Checkout</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</div> --}}
-    <!-- Page Introduction Wrapper /- -->
-
-    <!-- Checkout-Page -->
-    <div class="page-checkout u-s-p-t-80">
-        <div class="container">
-            {{-- Error Messages --}}
-            @if (Session::has('error_message'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Error:</strong> {{ Session::get('error_message') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
-
-            <div class="row">
-                <div class="col-lg-12 col-md-12">
-                    <div class="row">
-                        <!-- Delivery Addresses Section -->
-                        <div class="col-lg-6" id="deliveryAddresses">
-                            <div class="delivery-section">
-                                <div class="section-header">
-                                    <h4><i class="fas fa-map-marker-alt"></i> Delivery Information</h4>
-                                </div>
-                                @include('front.products.delivery_addresses')
-                            </div>
-                        </div>
-
-                        <!-- Order Summary & Payment -->
-                        <div class="col-lg-6">
-                            <form name="checkoutForm" id="checkoutForm" action="{{ url('/checkout') }}" method="post">
-                                @csrf
-                                <!-- Delivery Addresses Selection -->
-                                @if (collect($deliveryAddresses)->count() > 0)
-                                    <div class="checkout-section">
-                                        <div class="section-header">
-                                            <h4><i class="fas fa-home"></i> Select Delivery Address</h4>
-                                        </div>
-                                        <div class="address-options">
-                                            @foreach ($deliveryAddresses as $address)
-                                                <div class="address-item">
-                                                    <div class="address-radio">
-                                                        <input type="radio" id="address{{ $address['id'] }}"
-                                                            name="address_id" value="{{ $address['id'] }}"
-                                                            shipping_charges="{{ $address['shipping_charges'] }}"
-                                                            total_price="{{ $total_price }}"
-                                                            coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
-                                                            codpincodeCount="{{ $address['codpincodeCount'] }}"
-                                                            prepaidpincodeCount="{{ $address['prepaidpincodeCount'] }}">
-                                                        <label for="address{{ $address['id'] }}" class="address-label">
-                                                            <div class="address-info">
-                                                                <h6>{{ $address['name'] }}</h6>
-                                                                <p>{{ $address['address'] }}, {{ $address['city'] }},
-                                                                    {{ $address['state'] }}, {{ $address['country'] }}</p>
-                                                                <span class="phone">📞 {{ $address['mobile'] }}</span>
-                                                            </div>
-                                                        </label>
-                                                    </div>
-                                                    <div class="address-actions">
-                                                        <a href="javascript:void(0);"
-                                                            class="action-btn edit-btn editAddressModalBtn"
-                                                            data-bs-toggle="modal" data-bs-target="#editAddressModal"
-                                                            data-id="{{ $address['id'] }}"
-                                                            data-name="{{ $address['name'] }}"
-                                                            data-address="{{ $address['address'] }}"
-                                                            data-city="{{ $address['city'] }}"
-                                                            data-state="{{ $address['state'] }}"
-                                                            data-country="{{ $address['country'] }}"
-                                                            data-pincode="{{ $address['pincode'] }}"
-                                                            data-mobile="{{ $address['mobile'] }}">
-                                                            <i class="fas fa-edit"></i> Edit
-                                                        </a>
-                                                        <a href="{{ url('remove-delivery-address/' . $address['id']) }}"
-                                                            class="action-btn remove-btn"
-                                                            onclick="return confirm('Are you sure you want to remove this address?')">
-                                                            <i class="fas fa-trash"></i> Remove
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                @endif
-
-                                <!-- Order Summary -->
-                                <div class="checkout-section">
-                                    <div class="section-header">
-                                        <h4><i class="fas fa-shopping-cart"></i> Order Summary</h4>
-                                    </div>
-
-                                    <div class="order-summary sticky-summary">
-                                        <!-- Products List -->
-                                        <div class="products-list">
-                                            @php $total_price = 0 @endphp
-                                            @foreach ($getCartItems as $item)
-                                                @php
-                                                    $getDiscountAttributePrice = \App\Models\Product::getDiscountAttributePrice(
-                                                        $item['product_id'],
-                                                        $item['size'],
-                                                    );
-                                                @endphp
-                                                <div class="product-item">
-                                                    <div class="product-info">
-                                                        <img src="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
-                                                            alt="{{ $item['product']['product_name'] ?? 'Product' }}"
-                                                            class="img-fluid rounded shadow-sm"
-                                                            style="width: 100px; height: 100px; object-fit: cover;">
-                                                        <div class="product-details">
-                                                            <h6>{{ $item['product']['product_name'] }}</h6>
-                                                            <small>Size: {{ $item['size'] }} | Qty:
-                                                                {{ $item['quantity'] }}</small>
-                                                        </div>
-                                                    </div>
-                                                    <div class="product-price">
-                                                        ₹{{ $getDiscountAttributePrice['final_price'] * $item['quantity'] }}
-                                                    </div>
-                                                </div>
-                                                @php $total_price = $total_price + ($getDiscountAttributePrice['final_price'] * $item['quantity']) @endphp
-                                            @endforeach
-                                        </div>
-
-                                        <!-- Wallet Section -->
-                                        @if (Auth::check() && Auth::user()->wallet_balance > 0)
-                                            <div class="wallet-section-box mt-3 mb-3"
-                                                style="padding: 15px; background: #eef7ff; border-radius: 8px; border-left: 4px solid #007bff;">
-                                                <div class="d-flex align-items-center">
-                                                    <input type="checkbox" id="useWallet" name="use_wallet"
-                                                        value="1"
-                                                        style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;"
-                                                        data-balance="{{ Auth::user()->wallet_balance }}"
-                                                        data-max-use="20">
-                                                    <label for="useWallet" style="margin: 0; cursor: pointer;">
-                                                        <strong>Use Wallet Balance</strong> (Available:
-                                                        ₹{{ Auth::user()->wallet_balance }})
-                                                        <div style="font-size: 11px; color: #555;">Max ₹20 will be deducted
-                                                            from
-                                                            your wallet for this order</div>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        @endif
-
-                                        <!-- Price Breakdown -->
-                                        <div class="price-breakdown">
-                                            <div class="price-row">
-                                                <span>Subtotal</span>
-                                                <span id="subtotalValue"
-                                                    data-subtotal="{{ $total_price }}">₹{{ $total_price }}</span>
-                                            </div>
-                                            <div class="price-row">
-                                                <span>Shipping Charges</span>
-                                                <span class="shipping_charges">₹0</span>
-                                            </div>
-                                            <div class="price-row" id="walletRow" style="display: none; color: #28a745;">
-                                                <span>Wallet Discount</span>
-                                                <span id="walletAmountDisplay">-₹0</span>
-                                            </div>
-                                            <div class="price-row">
-                                                <span>Coupon Discount</span>
-                                                <span>
-                                                    @if (\Illuminate\Support\Facades\Session::has('couponAmount'))
-                                                        <span
-                                                            id="couponDiscount">{{ number_format((float) \Illuminate\Support\Facades\Session::get('couponAmount', 0), 2) }}</span>
-                                                    @else
-                                                        ₹0
-                                                    @endif
-                                                </span>
-                                                <script>
-                                                    (function() {
-                                                        const fmt2 = n => (Number(n) || 0).toFixed(2);
-                                                        const el = document.getElementById('couponDiscount');
-                                                        if (el && el.textContent) {
-                                                            el.textContent = fmt2(el.textContent);
-                                                        }
-                                                    })();
-                                                </script>
-                                            </div>
-                                            <div class="price-row total-row">
-                                                <span><strong>Grand Total</strong></span>
-                                                <span><strong
-                                                        class="grand_total">₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}</strong></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Payment Methods -->
-                                <div class="checkout-section">
-                                    <div class="section-header">
-                                        <h4><i class="fas fa-credit-card"></i> Payment Method</h4>
-                                    </div>
-
-                                    <div class="payment-methods">
-                                        <div class="payment-option codMethod">
-                                            <input type="radio" class="radio-box" name="payment_gateway"
-                                                id="cash-on-delivery" value="COD">
-                                            <label class="payment-label" for="cash-on-delivery">
-                                                <div class="payment-info">
-                                                    <div class="payment-title">
-                                                        <i class="fas fa-money-bill-wave"></i>
-                                                        <span>Cash on Delivery</span>
-                                                    </div>
-                                                    <small class="payment-note">Pay with cash upon delivery</small>
-                                                </div>
-                                                <div class="payment-badge">No extra fee</div>
-                                            </label>
-                                        </div>
-
-                                        <div class="payment-option razorpayMethod">
-                                            <input type="radio" class="radio-box" name="payment_gateway"
-                                                id="razorpay" value="Razorpay">
-                                            <label class="payment-label" for="razorpay">
-                                                <div class="payment-info">
-                                                    <div class="payment-title">
-                                                        <i class="fas fa-credit-card"></i>
-                                                        <span>Razorpay</span>
-                                                    </div>
-                                                    <small class="payment-note">Pay securely with Razorpay</small>
-                                                </div>
-                                                <div class="payment-badge">Online Payment</div>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Terms & Conditions -->
-                                <div class="checkout-section">
-                                    <div class="terms-section">
-                                        <input type="checkbox" class="check-box" id="accept" name="accept"
-                                            value="Yes" title="Please agree to T&C">
-                                        <label class="terms-label" for="accept">
-                                            I've read and accept the
-                                            <a href="javascript:void(0)" class="terms-link" data-toggle="modal"
-                                                data-target="#termsModal">
-                                                terms & conditions
-                                            </a>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <!-- Terms & Conditions Modal -->
-                                <div class="modal fade" id="termsModal" tabindex="-1" role="dialog"
-                                    aria-labelledby="termsModalLabel" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg" role="document">
-                                        <div class="modal-content">
-
-                                            <div class="modal-header">
-                                                <a href="javascript:void(0)" class="terms-link" data-toggle="modal"
-                                                    data-target="#termsModal">
-                                                    terms & conditions
-                                                </a>
-
-                                                {{-- <button type="button" class="close" data-dismiss="modal"
-                                                    aria-label="Close">
-                                                    <span aria-hidden="true">&times;</span>
-                                                </button> --}}
-                                            </div>
-
-                                            <div class="modal-body">
-                                                <!-- Customize your T&C content here -->
-                                                <p>
-                                                    By completing a purchase on BookHub, you agree to abide by our Terms &
-                                                    Conditions, which are designed to provide
-                                                    clarity, fairness, and a trusted experience for every customer. These
-                                                    terms outline important policies related to
-                                                    product availability, pricing, order confirmation, payment processing,
-                                                    shipping timelines, returns and refunds,
-                                                    cancellations, and the use of your customer information.
-                                                    <br><br>
-                                                    We recommend reviewing these guidelines before placing an order to
-                                                    ensure complete understanding of your rights
-                                                    and responsibilities as a BookHub user. Our team works continuously to
-                                                    maintain accurate product listings, timely
-                                                    deliveries, and secure transactions; however, occasional delays or
-                                                    changes may occur due to unforeseen circumstances.
-                                                    <br><br>
-                                                    By continuing, you acknowledge these conditions and consent to follow
-                                                    the policies set forth. For any clarification
-                                                    or assistance, our customer support team is always ready to help.
-                                                </p>
-
-                                            </div>
-
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-primary"
-                                                    data-dismiss="modal">Close</button>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-
-
-
-                                <!-- Place Order Button -->
-                                <div class="checkout-section">
-                                    <button type="submit" id="placeOrder" class="place-order-btn"> <i
-                                            class="fas fa-lock"></i>
-                                        Place Order Securely
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <style>
         /* Checkout Page Styles */
         .checkout-section {
             background: #fff;
@@ -837,6 +464,385 @@
         }
     </style>
 
+    {{-- css code ends here  --}}
+    <div class="dz-bnr-inr overlay-secondary-dark dz-bnr-inr-sm" style="background-image:url(images/background/bg3.jpg);">
+        <div class="container">
+            <div class="dz-bnr-inr-entry">
+                <h1>Checkout</h1>
+                <nav aria-label="breadcrumb" class="breadcrumb-row">
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url('/') }}"> Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url('/checkout') }}">Checkout</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+    <!-- inner page banner End-->
+
+    {{-- New UI static block removed in favor of functional checkout implementation below --}}
+
+    <!-- Checkout Progress Steps -->
+    <section class="content-inner py-4">
+        <div class="container">
+            <div class="checkout-steps">
+                <div class="step active">
+                    <div class="circle">1</div>
+                    <div class="label">Address</div>
+                </div>
+                <div class="separator"></div>
+                <div class="step active">
+                    <div class="circle">2</div>
+                    <div class="label">Summary</div>
+                </div>
+                <div class="separator"></div>
+                <div class="step">
+                    <div class="circle">3</div>
+                    <div class="label">Payment</div>
+                </div>
+                <div class="separator"></div>
+                <div class="step">
+                    <div class="circle">4</div>
+                    <div class="label">Place Order</div>
+                </div>
+            </div>
+        </div>
+
+
+    </section>
+
+
+    {{-- old code  --}}
+    <!-- Page Introduction Wrapper -->
+    {{-- <div class="page-style-a">
+    <div class="container">
+        <div class="page-intro">
+            <h2>Checkout</h2>
+            <ul class="bread-crumb">
+                <li class="has-separator">
+                    <i class="ion ion-md-home"></i>
+                    <a href="{{ url('/') }}">Home</a>
+                </li>
+                <li class="is-marked">
+                    <a href="{{ url('/checkout') }}">Checkout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div> --}}
+    <!-- Page Introduction Wrapper /- -->
+
+    <!-- Checkout-Page -->
+    <div class="page-checkout u-s-p-t-80">
+        <div class="container">
+            {{-- Error Messages --}}
+            @if (Session::has('error_message'))
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Error:</strong> {{ Session::get('error_message') }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            @endif
+
+            <div class="row">
+                <div class="col-lg-12 col-md-12">
+                    <div class="row">
+                        <!-- Delivery Addresses Section -->
+                        <div class="col-lg-6" id="deliveryAddresses">
+                            <div class="delivery-section">
+                                <div class="section-header">
+                                    <h4><i class="fas fa-map-marker-alt"></i> Delivery Information</h4>
+                                </div>
+                                @include('front.products.delivery_addresses')
+                            </div>
+                        </div>
+
+                        <!-- Order Summary & Payment -->
+                        <div class="col-lg-6">
+                            <form name="checkoutForm" id="checkoutForm" action="{{ url('/checkout') }}" method="post">
+                                @csrf
+                                <!-- Delivery Addresses Selection -->
+                                @if (collect($deliveryAddresses)->count() > 0)
+                                    <div class="checkout-section">
+                                        <div class="section-header">
+                                            <h4><i class="fas fa-home"></i> Select Delivery Address</h4>
+                                        </div>
+                                        <div class="address-options">
+                                            @foreach ($deliveryAddresses as $address)
+                                                <div class="address-item">
+                                                    <div class="address-radio">
+                                                        <input type="radio" id="address{{ $address['id'] }}"
+                                                            name="address_id" value="{{ $address['id'] }}"
+                                                            shipping_charges="{{ $address['shipping_charges'] }}"
+                                                            total_price="{{ $total_price }}"
+                                                            coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
+                                                            codpincodeCount="{{ $address['codpincodeCount'] }}"
+                                                            prepaidpincodeCount="{{ $address['prepaidpincodeCount'] }}">
+                                                        <label for="address{{ $address['id'] }}" class="address-label">
+                                                            <div class="address-info">
+                                                                <h6>{{ $address['name'] }}</h6>
+                                                                <p>{{ $address['address'] }}, {{ $address['city'] }},
+                                                                    {{ $address['state'] }}, {{ $address['country'] }}</p>
+                                                                <span class="phone">📞 {{ $address['mobile'] }}</span>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                    <div class="address-actions">
+                                                        <a href="javascript:void(0);"
+                                                            class="action-btn edit-btn editAddressModalBtn"
+                                                            data-bs-toggle="modal" data-bs-target="#editAddressModal"
+                                                            data-id="{{ $address['id'] }}"
+                                                            data-name="{{ $address['name'] }}"
+                                                            data-address="{{ $address['address'] }}"
+                                                            data-city="{{ $address['city'] }}"
+                                                            data-state="{{ $address['state'] }}"
+                                                            data-country="{{ $address['country'] }}"
+                                                            data-pincode="{{ $address['pincode'] }}"
+                                                            data-mobile="{{ $address['mobile'] }}">
+                                                            <i class="fas fa-edit"></i> Edit
+                                                        </a>
+                                                        <a href="{{ url('remove-delivery-address/' . $address['id']) }}"
+                                                            class="action-btn remove-btn"
+                                                            onclick="return confirm('Are you sure you want to remove this address?')">
+                                                            <i class="fas fa-trash"></i> Remove
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Order Summary -->
+                                <div class="checkout-section">
+                                    <div class="section-header">
+                                        <h4><i class="fas fa-shopping-cart"></i> Order Summary</h4>
+                                    </div>
+
+                                    <div class="order-summary sticky-summary">
+                                        <!-- Products List -->
+                                        <div class="products-list">
+                                            @php $total_price = 0 @endphp
+                                            @foreach ($getCartItems as $item)
+                                                @php
+                                                    $getDiscountAttributePrice = \App\Models\Product::getDiscountAttributePrice(
+                                                        $item['product_id'],
+                                                        $item['size'],
+                                                    );
+                                                @endphp
+                                                <div class="product-item">
+                                                    <div class="product-info">
+                                                        <img src="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
+                                                            alt="{{ $item['product']['product_name'] ?? 'Product' }}"
+                                                            class="img-fluid rounded shadow-sm"
+                                                            style="width: 100px; height: 100px; object-fit: cover;">
+                                                        <div class="product-details">
+                                                            <h6>{{ $item['product']['product_name'] }}</h6>
+                                                            <small>Size: {{ $item['size'] }} | Qty:
+                                                                {{ $item['quantity'] }}</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="product-price">
+                                                        ₹{{ $getDiscountAttributePrice['final_price'] * $item['quantity'] }}
+                                                    </div>
+                                                </div>
+                                                @php $total_price = $total_price + ($getDiscountAttributePrice['final_price'] * $item['quantity']) @endphp
+                                            @endforeach
+                                        </div>
+
+                                        <!-- Wallet Section -->
+                                        @if (Auth::check() && Auth::user()->wallet_balance > 0)
+                                            <div class="wallet-section-box mt-3 mb-3"
+                                                style="padding: 15px; background: #eef7ff; border-radius: 8px; border-left: 4px solid #007bff;">
+                                                <div class="d-flex align-items-center">
+                                                    <input type="checkbox" id="useWallet" name="use_wallet"
+                                                        value="1"
+                                                        style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;"
+                                                        data-balance="{{ Auth::user()->wallet_balance }}"
+                                                        data-max-use="20">
+                                                    <label for="useWallet" style="margin: 0; cursor: pointer;">
+                                                        <strong>Use Wallet Balance</strong> (Available:
+                                                        ₹{{ Auth::user()->wallet_balance }})
+                                                        <div style="font-size: 11px; color: #555;">Max ₹20 will be deducted
+                                                            from
+                                                            your wallet for this order</div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endif
+
+                                        <!-- Price Breakdown -->
+                                        <div class="price-breakdown">
+                                            <div class="price-row">
+                                                <span>Subtotal</span>
+                                                <span id="subtotalValue"
+                                                    data-subtotal="{{ $total_price }}">₹{{ $total_price }}</span>
+                                            </div>
+                                            <div class="price-row">
+                                                <span>Shipping Charges</span>
+                                                <span class="shipping_charges">₹0</span>
+                                            </div>
+                                            <div class="price-row" id="walletRow" style="display: none; color: #28a745;">
+                                                <span>Wallet Discount</span>
+                                                <span id="walletAmountDisplay">-₹0</span>
+                                            </div>
+                                            <div class="price-row">
+                                                <span>Coupon Discount</span>
+                                                <span>
+                                                    @if (\Illuminate\Support\Facades\Session::has('couponAmount'))
+                                                        <span
+                                                            id="couponDiscount">{{ number_format((float) \Illuminate\Support\Facades\Session::get('couponAmount', 0), 2) }}</span>
+                                                    @else
+                                                        ₹0
+                                                    @endif
+                                                </span>
+                                                <script>
+                                                    (function() {
+                                                        const fmt2 = n => (Number(n) || 0).toFixed(2);
+                                                        const el = document.getElementById('couponDiscount');
+                                                        if (el && el.textContent) {
+                                                            el.textContent = fmt2(el.textContent);
+                                                        }
+                                                    })();
+                                                </script>
+                                            </div>
+                                            <div class="price-row total-row">
+                                                <span><strong>Grand Total</strong></span>
+                                                <span><strong
+                                                        class="grand_total">₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}</strong></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Methods -->
+                                <div class="checkout-section">
+                                    <div class="section-header">
+                                        <h4><i class="fas fa-credit-card"></i> Payment Method</h4>
+                                    </div>
+
+                                    <div class="payment-methods">
+                                        <div class="payment-option codMethod">
+                                            <input type="radio" class="radio-box" name="payment_gateway"
+                                                id="cash-on-delivery" value="COD">
+                                            <label class="payment-label" for="cash-on-delivery">
+                                                <div class="payment-info">
+                                                    <div class="payment-title">
+                                                        <i class="fas fa-money-bill-wave"></i>
+                                                        <span>Cash on Delivery</span>
+                                                    </div>
+                                                    <small class="payment-note">Pay with cash upon delivery</small>
+                                                </div>
+                                                <div class="payment-badge">No extra fee</div>
+                                            </label>
+                                        </div>
+
+                                        <div class="payment-option razorpayMethod">
+                                            <input type="radio" class="radio-box" name="payment_gateway"
+                                                id="razorpay" value="Razorpay">
+                                            <label class="payment-label" for="razorpay">
+                                                <div class="payment-info">
+                                                    <div class="payment-title">
+                                                        <i class="fas fa-credit-card"></i>
+                                                        <span>Razorpay</span>
+                                                    </div>
+                                                    <small class="payment-note">Pay securely with Razorpay</small>
+                                                </div>
+                                                <div class="payment-badge">Online Payment</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Terms & Conditions -->
+                                <div class="checkout-section">
+                                    <div class="terms-section">
+                                        <input type="checkbox" class="check-box" id="accept" name="accept"
+                                            value="Yes" title="Please agree to T&C">
+                                        <label class="terms-label" for="accept">
+                                            I've read and accept the
+                                            <a href="javascript:void(0)" class="terms-link" data-toggle="modal"
+                                                data-target="#termsModal">
+                                                terms & conditions
+                                            </a>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Terms & Conditions Modal -->
+                                <div class="modal fade" id="termsModal" tabindex="-1" role="dialog"
+                                    aria-labelledby="termsModalLabel" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                        <div class="modal-content">
+
+                                            <div class="modal-header">
+                                                <a href="javascript:void(0)" class="terms-link" data-toggle="modal"
+                                                    data-target="#termsModal">
+                                                    terms & conditions
+                                                </a>
+
+                                                {{-- <button type="button" class="close" data-dismiss="modal"
+                                                    aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button> --}}
+                                            </div>
+
+                                            <div class="modal-body">
+                                                <!-- Customize your T&C content here -->
+                                                <p>
+                                                    By completing a purchase on BookHub, you agree to abide by our Terms &
+                                                    Conditions, which are designed to provide
+                                                    clarity, fairness, and a trusted experience for every customer. These
+                                                    terms outline important policies related to
+                                                    product availability, pricing, order confirmation, payment processing,
+                                                    shipping timelines, returns and refunds,
+                                                    cancellations, and the use of your customer information.
+                                                    <br><br>
+                                                    We recommend reviewing these guidelines before placing an order to
+                                                    ensure complete understanding of your rights
+                                                    and responsibilities as a BookHub user. Our team works continuously to
+                                                    maintain accurate product listings, timely
+                                                    deliveries, and secure transactions; however, occasional delays or
+                                                    changes may occur due to unforeseen circumstances.
+                                                    <br><br>
+                                                    By continuing, you acknowledge these conditions and consent to follow
+                                                    the policies set forth. For any clarification
+                                                    or assistance, our customer support team is always ready to help.
+                                                </p>
+
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-primary"
+                                                    data-dismiss="modal">Close</button>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <!-- Place Order Button -->
+                                <div class="checkout-section">
+                                    <button type="submit" id="placeOrderBtn" class="btn btn-primary btn-lg w-100"
+                                        style="padding: 15px; font-weight: 600;">
+                                        Place Order Securely -
+                                        ₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
 
     <!-- Edit Address Modal -->
     <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel"
@@ -930,7 +936,7 @@
             });
 
             // Dynamic Shipping calculation (Keep this small JS for UX)
-            $('input[name="address_id"], #useWallet').on('change', function() {
+            $('input[name="address_id"], #useWallet, input[name="payment_gateway"]').on('change', function() {
                 var addressEl = $('input[name="address_id"]:checked');
                 var shipping = addressEl.attr('shipping_charges') || 0;
                 var baseTotal = parseFloat($('#subtotalValue').data('subtotal'));
@@ -956,7 +962,21 @@
                 var grand = parseFloat(total) + parseFloat(shipping) - parseFloat(coupon) - parseFloat(
                     walletDiscount);
                 if (grand < 0) grand = 0;
-                $('.grand_total').html('₹' + grand.toFixed(2));
+                var finalTotal = grand.toFixed(2);
+                $('.grand_total').html('₹' + finalTotal);
+                $('#placeOrderBtn').html('Place Order Securely - ₹' + finalTotal);
+
+                // Update Place Order button if it exists or any payment method specific display
+                var paymentMethod = $('input[name="payment_gateway"]:checked').val();
+                if (paymentMethod) {
+                    console.log("Selected payment method: " + paymentMethod + " with total: ₹" +
+                        finalTotal);
+                    if (paymentMethod == 'Razorpay') {
+                        $('#placeOrderBtn').html('Proceed to Pay - ₹' + finalTotal);
+                    } else if (paymentMethod == 'COD') {
+                        $('#placeOrderBtn').html('Confirm COD Order - ₹' + finalTotal);
+                    }
+                }
 
                 var cod = addressEl.attr('codpincodeCount');
                 var prepaid = addressEl.attr('prepaidpincodeCount');

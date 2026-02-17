@@ -142,6 +142,7 @@ class ProductsController extends Controller
                 if (!isset($categories[strtolower($categoryName)])) {
                     $category = Category::create([
                         'category_name' => ucwords($categoryName),
+                        'url' => ucwords($categoryName),
                         'section_id'    => $sectionId,
                         'parent_id'     => $ROOT_CATEGORY_ID,
                         'status'        => 1

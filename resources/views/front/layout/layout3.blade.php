@@ -281,7 +281,7 @@
                                     </li>
                                 @else
                                     <li class="nav-item me-3" style="display: flex; align-items: center;">
-                                        <a href="{{ route('user.account') }}"
+                                        <a href="{{ route('user.wallet') }}"
                                             style="display: flex; align-items: center; gap: 8px; color: #ff9900; font-weight: 700; background: #fff5e6; padding: 8px 16px; border-radius: 30px; border: 1px solid #ffe3b3; transition: all 0.3s ease; text-decoration: none;">
                                             <i class="fas fa-wallet" style="font-size: 1.1rem;"></i>
                                             <span>₹{{ Auth::user()->wallet_balance }}</span>

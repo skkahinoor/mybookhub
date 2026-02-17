@@ -32,7 +32,7 @@ class UserController extends Controller
                     'id' => $user->id,
                     'name' => $user->name ?? '',
                     'address' => $user->address ?? '',
-                    'city' => $user->district ? $user->district->name : '', // Using district as city
+                    'city' => $user->district ? $user->district->name : '',
                     'state' => $user->state ? $user->state->name : '',
                     'country' => $user->country ? $user->country->name : '',
                     'pincode' => $user->pincode ?? '',
