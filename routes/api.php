@@ -77,7 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/sales/update-bank', [SalesController::class, 'updateBankDetails']);
 });
 
-Route::middleware('auth:sanctum')->prefix('sales')->group(function () {
+Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sales/vendors', [VendorController::class, 'getVendor']);
     Route::post('/sales/vendors', [VendorController::class, 'storeVendor']);
     Route::get('/sales/vendors/{id}', [VendorController::class, 'showVendor']);
