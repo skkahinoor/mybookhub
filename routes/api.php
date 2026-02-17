@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\VendorController;
 use App\Http\Controllers\Api\CatalogueController;
 use App\Http\Controllers\Api\VendorPlanController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\SalesVendorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -74,6 +75,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/sales/update-profile', [SalesController::class, 'updateProfile']);
     Route::get('/sales/bank-details', [SalesController::class, 'getBankDetails']);
     Route::put('/sales/update-bank', [SalesController::class, 'updateBankDetails']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/sales/vendors', [VendorController::class, 'getVendor']);
+    Route::post('/sales/vendors', [VendorController::class, 'storeVendor']);
+    Route::get('/sales/vendors/{id}', [VendorController::class, 'showVendor']);
+    Route::delete('/sales/vendors/{id}', [VendorController::class, 'destroyVendor']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
