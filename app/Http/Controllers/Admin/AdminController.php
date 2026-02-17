@@ -43,9 +43,9 @@ class AdminController extends Controller
         $vendorId  = $admin->vendor_id;
 
         // Default (Admin counts)
-        $vendorsCount         = Vendor::count();
-        $usersCount           = User::count();
-        $salesExecutivesCount = SalesExecutive::count();
+        $vendorsCount         = User::where('role_id',2)->count();
+        $usersCount           = User::where('role_id',4)->count();
+        $salesExecutivesCount = User::where('role_id',3)->count();
         $productsCount        = Product::where('status', 1)->count();
         $ordersCount          = Order::count();
         $couponsCount         = Coupon::where('status', 1)->count();
