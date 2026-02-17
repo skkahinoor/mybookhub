@@ -22,10 +22,8 @@ class OrderController extends Controller
 
     private function checkAccess(Request $request, array $allowedRoles = ['vendor'])
     {
-        /** @var \App\Models\User $user */
         $user = $request->user();
 
-        // 🔐 Auth check
         if (!$user) {
             return response()->json([
                 'status'  => false,
@@ -33,7 +31,6 @@ class OrderController extends Controller
             ], 401);
         }
 
-        // 🔎 Fetch role from roles table
         $role = \Spatie\Permission\Models\Role::find($user->role_id);
 
         if (!$role || !in_array($role->name, $allowedRoles)) {
@@ -43,7 +40,6 @@ class OrderController extends Controller
             ], 403);
         }
 
-        // 🔒 Status check
         if ($user->status != 1) {
             return response()->json([
                 'status'  => false,
@@ -51,19 +47,21 @@ class OrderController extends Controller
             ], 403);
         }
 
-        // ✅ Access granted
         return null;
     }
 
+
     public function index(Request $request)
     {
-        if ($resp = $this->checkAccess($request)) {
+        if ($resp = $this->checkAccess($request, ['vendor'])) {
             return $resp;
         }
 
         $admin = $request->user();
+        $role = \Spatie\Permission\Models\Role::find($admin->role_id);
 
-        if ($admin->type === 'vendor') {
+        if ($role->name === 'vendor') {
+
             if (empty($admin->vendor_id)) {
                 return response()->json([
                     'status' => false,
@@ -71,17 +69,18 @@ class OrderController extends Controller
                 ], 403);
             }
 
-            $orders = Order::whereHas('orders_products', function ($q) use ($admin) {
-                $q->where('vendor_id', $admin->vendor_id);
-            })
-                ->with([
-                    'orders_products' => function ($q) use ($admin) {
-                        $q->where('vendor_id', $admin->vendor_id);
-                    }
-                ])
+            $orders = Order::with([
+                'orders_products' => function ($query) use ($admin) {
+                    $query->where('vendor_id', $admin->vendor_id);
+                }
+            ])
+                ->whereHas('orders_products', function ($query) use ($admin) {
+                    $query->where('vendor_id', $admin->vendor_id);
+                })
                 ->latest()
                 ->get();
         } else {
+
             $orders = Order::with('orders_products')
                 ->latest()
                 ->get();
@@ -93,36 +92,35 @@ class OrderController extends Controller
         ], 200);
     }
 
+
     public function show(Request $request, $id)
     {
-        if ($resp = $this->checkAccess($request)) {
+        if ($resp = $this->checkAccess($request, ['vendor'])) {
             return $resp;
         }
 
         $admin = $request->user();
+        $role = \Spatie\Permission\Models\Role::find($admin->role_id);
 
-        $orderQuery = Order::where('id', $id);
+        if ($role->name === 'vendor') {
 
-        if ($admin->type === 'vendor') {
-            if (empty($admin->vendor_id)) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Vendor account not linked properly.'
-                ], 403);
-            }
-
-            $orderQuery->whereHas('orders_products', function ($q) use ($admin) {
-                $q->where('vendor_id', $admin->vendor_id);
-            })->with([
-                'orders_products' => function ($q) use ($admin) {
-                    $q->where('vendor_id', $admin->vendor_id);
+            $order = Order::with([
+                'orders_products' => function ($query) use ($admin) {
+                    $query->with(['product.attributes'])
+                        ->where('vendor_id', $admin->vendor_id);
                 }
-            ]);
+            ])
+                ->where('id', $id)
+                ->whereHas('orders_products', function ($query) use ($admin) {
+                    $query->where('vendor_id', $admin->vendor_id);
+                })
+                ->first();
         } else {
-            $orderQuery->with('orders_products');
-        }
 
-        $order = $orderQuery->first();
+            $order = Order::with(['orders_products.product.attributes'])
+                ->where('id', $id)
+                ->first();
+        }
 
         if (!$order) {
             return response()->json([
@@ -131,29 +129,48 @@ class OrderController extends Controller
             ], 404);
         }
 
+        $orderArray = $order->toArray();
+
+        // Guest or Registered
+        if (!empty($orderArray['user_id'])) {
+            $userDetails = User::find($orderArray['user_id']);
+        } else {
+            $userDetails = [
+                'name'    => $orderArray['name'],
+                'email'   => $orderArray['email'],
+                'mobile'  => $orderArray['mobile'],
+                'address' => $orderArray['address'],
+                'city'    => $orderArray['city'],
+                'state'   => $orderArray['state'],
+                'country' => $orderArray['country'],
+                'pincode' => $orderArray['pincode'],
+            ];
+        }
+
+        $total_items = collect($orderArray['orders_products'])->sum('product_qty');
+        $totalDiscount = ($orderArray['coupon_amount'] ?? 0) + ($orderArray['extra_discount'] ?? 0);
+        $item_discount = ($total_items > 0) ? round($totalDiscount / $total_items, 2) : 0;
+
         return response()->json([
             'status' => true,
             'order' => $order,
-            'user' => User::find($order->user_id),
+            'user' => $userDetails,
             'order_statuses' => OrderStatus::where('status', 1)->get(),
             'item_statuses' => OrderItemStatus::where('status', 1)->get(),
-            'logs' => OrdersLog::where('order_id', $order->id)->latest()->get()
+            'logs' => OrdersLog::with('orders_products')
+                ->where('order_id', $id)
+                ->latest()
+                ->get(),
+            'total_items' => $total_items,
+            'item_discount' => $item_discount
         ], 200);
     }
 
+
     public function updateOrderStatus(Request $request, $id)
     {
-        if ($resp = $this->checkAccess($request)) {
+        if ($resp = $this->checkAccess($request, ['admin', 'superadmin', 'vendor'])) {
             return $resp;
-        }
-
-        $admin = $request->user();
-
-        if ($admin->type !== 'superadmin') {
-            return response()->json([
-                'status' => false,
-                'message' => 'Only admin can update order status.'
-            ], 403);
         }
 
         $request->validate([
@@ -188,28 +205,18 @@ class OrderController extends Controller
 
     public function updateOrderItemStatus(Request $request, $id)
     {
-        if ($resp = $this->checkAccess($request)) {
+        if ($resp = $this->checkAccess($request, ['vendor'])) {
             return $resp;
         }
-
-        $admin = $request->user();
 
         $request->validate([
             'item_status' => 'required|string'
         ]);
 
-        $itemQuery = OrdersProduct::where('id', $id);
+        $admin = $request->user();
 
-        if ($admin->type === 'vendor') {
-            if (empty($admin->vendor_id)) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Vendor account not linked properly.'
-                ], 403);
-            }
-
-            $itemQuery->where('vendor_id', $admin->vendor_id);
-        }
+        $itemQuery = OrdersProduct::where('id', $id)
+            ->where('vendor_id', $admin->vendor_id);
 
         $item = $itemQuery->first();
 
@@ -220,16 +227,9 @@ class OrderController extends Controller
             ], 403);
         }
 
+        // ✅ ONLY update status
         $item->update([
-            'item_status' => $request->item_status,
-            'courier_name' => $request->courier_name,
-            'tracking_number' => $request->tracking_number
-        ]);
-
-        OrdersLog::create([
-            'order_id' => $item->order_id,
-            'order_item_id' => $item->id,
-            'order_status' => $request->item_status
+            'item_status' => $request->item_status
         ]);
 
         return response()->json([
@@ -237,6 +237,8 @@ class OrderController extends Controller
             'message' => 'Order item status updated successfully'
         ], 200);
     }
+
+
 
     public function searchByIsbn(Request $request)
     {
