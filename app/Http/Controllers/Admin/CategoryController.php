@@ -121,10 +121,6 @@ class CategoryController extends Controller
             $this->validate($request, $rules, $customMessages);
 
 
-            if ($data['category_discount'] == '') {
-                $data['category_discount'] = 0;
-            }
-
 
             // Uploading Category Image    // Using the Intervention package for uploading images
             if ($request->hasFile('category_image')) { // the HTML name attribute    name="admin_name"    in update_admin_details.blade.php
@@ -153,7 +149,6 @@ class CategoryController extends Controller
             $category->section_id        = $data['section_id'];
             $category->parent_id         = $data['parent_id'];
             $category->category_name     = $data['category_name'];
-            $category->category_discount = $data['category_discount'];
             $category->description       = $data['description'];
             $category->url               = $data['url'];
             $category->meta_title        = $data['meta_title'];

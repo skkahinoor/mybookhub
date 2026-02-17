@@ -217,7 +217,7 @@
                             <div class="position-relative">
                                 <a href="{{ url('product/' . $attributeId) }}">
                                     <img src="{{ asset('front/images/product_images/small/' . ($product->product_image ?? 'no-image.png')) }}"
-                                        class="card-img-top" style="height:220px;object-fit:cover;"
+                                        class="card-img-top" alt="No Image" style="height:220px;object-fit:cover;"
                                         onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
                                 </a>
 

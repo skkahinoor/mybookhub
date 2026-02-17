@@ -104,7 +104,6 @@
                                 <label style="font-weight: 550">Shipping Charges: </label>
                                 <label>₹{{ $orderDetails['shipping_charges'] }}</label>
                             </div>
-
                             @if (!empty($orderDetails['coupon_code']))
                                 <div class="form-group" style="height: 15px">
                                     <label style="font-weight: 550">Coupon Code: </label>

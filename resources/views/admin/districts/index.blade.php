@@ -117,7 +117,10 @@
                 .toggle-slider {
                     position: absolute;
                     cursor: pointer;
-                    top: 0; left: 0; right: 0; bottom: 0;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
                     background: #cbd5e1;
                     transition: var(--transition);
                     border-radius: 20px;
@@ -126,18 +129,20 @@
                 .toggle-slider:before {
                     position: absolute;
                     content: "";
-                    height: 14px; width: 14px;
-                    left: 3px; bottom: 3px;
+                    height: 14px;
+                    width: 14px;
+                    left: 3px;
+                    bottom: 3px;
                     background-color: white;
                     transition: var(--transition);
                     border-radius: 50%;
                 }
 
-                .toggle-switch input:checked + .toggle-slider {
+                .toggle-switch input:checked+.toggle-slider {
                     background: var(--success-color);
                 }
 
-                .toggle-switch input:checked + .toggle-slider:before {
+                .toggle-switch input:checked+.toggle-slider:before {
                     transform: translateX(22px);
                 }
 
@@ -159,12 +164,17 @@
                     color: white !important;
                 }
 
-                .action-btn.edit { background: var(--info-color); }
-                .action-btn.delete { background: var(--danger-color); }
+                .action-btn.edit {
+                    background: var(--info-color);
+                }
+
+                .action-btn.delete {
+                    background: var(--danger-color);
+                }
 
                 .action-btn:hover {
                     transform: translateY(-2px);
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
                 }
 
                 .add-new-btn-custom {
@@ -194,7 +204,8 @@
                         <div class="page-header-content">
                             <div class="page-header-text">
                                 <h1 class="page-title-custom">District Management</h1>
-                                <p class="page-subtitle-custom">Configure districts for the system across different states</p>
+                                <p class="page-subtitle-custom">Configure districts for the system across different states
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -218,7 +229,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($districts as $district)
+                                    @foreach ($districts as $district)
                                         <tr>
                                             <td class="text-center">{{ $district->id }}</td>
                                             <td><strong class="text-dark">{{ $district->name }}</strong></td>
@@ -226,20 +237,26 @@
                                             <td class="text-center">
                                                 <div class="status-toggle-container">
                                                     <label class="toggle-switch">
-                                                        <input type="checkbox" class="updateDistrictStatus" id="district-{{ $district->id }}" district_id="{{ $district->id }}" @if($district->status==1) checked @endif>
+                                                        <input type="checkbox" class="updateDistrictStatus"
+                                                            id="district-{{ $district->id }}"
+                                                            district_id="{{ $district->id }}"
+                                                            @if ($district->status == 1) checked @endif>
                                                         <span class="toggle-slider"></span>
                                                     </label>
-                                                    <small class="district-status-text-{{ $district->id }} text-muted font-weight-bold">
+                                                    <small
+                                                        class="district-status-text-{{ $district->id }} text-muted font-weight-bold">
                                                         {{ $district->status == 1 ? 'ACTIVE' : 'INACTIVE' }}
                                                     </small>
                                                 </div>
                                             </td>
                                             <td class="text-center">
                                                 <div class="action-buttons">
-                                                    <button class="action-btn edit" onclick="openDistrictModal({{ $district->id }})" title="Edit">
+                                                    <button class="action-btn edit"
+                                                        onclick="openDistrictModal({{ $district->id }})" title="Edit">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <a href="{{ url('admin/delete-district/'.$district->id) }}" class="action-btn delete confirmDelete" title="Delete">
+                                                    <a href="{{ url('admin/delete-district/' . $district->id) }}"
+                                                        class="action-btn delete confirmDelete" title="Delete">
                                                         <i class="fas fa-trash"></i>
                                                     </a>
                                                 </div>
@@ -255,7 +272,8 @@
         </div>
 
         <!-- District Modal -->
-        <div class="modal fade" id="districtModal" tabindex="-1" role="dialog" aria-labelledby="districtModalLabel" aria-hidden="true">
+        <div class="modal fade" id="districtModal" tabindex="-1" role="dialog" aria-labelledby="districtModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -271,14 +289,15 @@
                                 <label for="state_id" class="font-weight-bold">State</label>
                                 <select class="form-control" id="district_state_id" name="state_id" required>
                                     <option value="">Select State</option>
-                                    @foreach($states as $state)
+                                    @foreach ($states as $state)
                                         <option value="{{ $state->id }}">{{ $state->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="district_name" class="font-weight-bold">District Name</label>
-                                <input type="text" class="form-control" id="district_name" name="district_name" required placeholder="Enter district name">
+                                <input type="text" class="form-control" id="district_name" name="district_name" required
+                                    placeholder="Enter district name">
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -298,7 +317,9 @@
     <script>
         $(document).ready(function() {
             $('#districtsTable').DataTable({
-                "order": [[0, "desc"]],
+                "order": [
+                    [0, "desc"]
+                ],
                 "pageLength": 10
             });
 
@@ -307,10 +328,15 @@
                 var status = $(this).prop('checked') ? "Active" : "Inactive";
                 var district_id = $(this).attr("district_id");
                 $.ajax({
-                    headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
                     type: 'post',
-                    url: '/admin/update-district-status',
-                    data: { status: status, district_id: district_id },
+                    url: "{{ url('admin/update-district-status') }}",
+                    data: {
+                        status: status,
+                        district_id: district_id
+                    },
                     success: function(resp) {
                         if (resp['status'] == 0) {
                             $("#district-" + district_id).prop('checked', false);
@@ -345,18 +371,18 @@
 
         function openDistrictModal(id = null) {
             if (id) {
-                $.get('/admin/add-edit-district/' + id, function(data) {
+                $.get("{{ url('admin/add-edit-district') }}/" + id, function(data) {
                     $('#districtModalLabel').text(data.title);
                     $('#district_state_id').val(data.district.state_id);
                     $('#district_name').val(data.district.name);
-                    $('#districtForm').attr('action', '/admin/add-edit-district/' + id);
+                    $('#districtForm').attr('action', "{{ url('admin/add-edit-district') }}/" + id);
                     $('#districtModal').modal('show');
                 });
             } else {
                 $('#districtModalLabel').text('Add District');
                 $('#district_state_id').val('');
                 $('#district_name').val('');
-                $('#districtForm').attr('action', '/admin/add-edit-district');
+                $('#districtForm').attr('action', "{{ url('admin/add-edit-district') }}");
                 $('#districtModal').modal('show');
             }
         }

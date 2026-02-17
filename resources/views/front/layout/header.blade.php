@@ -28,6 +28,14 @@ $sections = \App\Models\Section::sections();
             </nav>
             <nav>
                 <ul class="secondary-nav g-nav">
+                    @if (\Illuminate\Support\Facades\Auth::check())
+                        <li>
+                            <a href="{{ url('user/account') }}" style="color: #ff9900; font-weight: 600;">
+                                <i class="fas fa-wallet u-s-m-r-9"></i>
+                                ₹{{ \Illuminate\Support\Facades\Auth::user()->wallet_balance }}
+                            </a>
+                        </li>
+                    @endif
                     <li>
 
 
@@ -178,15 +186,27 @@ $sections = \App\Models\Section::sections();
                                     <i class="ion ion-md-home u-c-brand"></i>
                                 </a>
                             </li>
+                            {{-- @if (Auth::check())
+                                <li>
+                                    <a href="{{ url('user/account') }}" style="color: #ff9900; font-weight: 600;">
+                                        <i class="fas fa-wallet"></i> ₹{{ Auth::user()->wallet_balance }}
+                                    </a>
+                                </li>
+                            @endif
                             <li>
-                                <a id="mini-cart-trigger">
-                                    <i class="ion ion-md-basket"></i>
-                                    {{-- <span class="item-counter totalCartItems">{{ totalCartItems() }}</span> --}}
-
-                                    {{-- totalCartItems() function is in our custom Helpers/Helper.php file that we have registered in 'composer.json' file --}} {{-- We created the CSS class 'totalCartItems' to use it in front/js/custom.js to update the total cart items via AJAX, because in pages that we originally use AJAX to update the cart items (such as when we delete a cart item in http://127.0.0.1:8000/cart using AJAX), the number doesn't change in the header automatically because AJAX is already used and no page reload/refresh has occurred --}}
-
+                                <a href="{{ url('wishlist') }}" style="position: relative;">
+                                    <i class="far fa-heart"></i>
+                                    <span class="item-counter totalWishlistItems"
+                                        style="position: absolute; top: -10px; right: -10px; background: #6c5dd4; color: #fff; border-radius: 50%; padding: 2px 5px; font-size: 9px;">{{ isset($headerWishlistItemsCount) ? $headerWishlistItemsCount : 0 }}</span>
                                 </a>
                             </li>
+                            <li>
+                                <a id="mini-cart-trigger" style="position: relative;">
+                                    <i class="fas fa-shopping-basket"></i>
+                                    <span class="item-counter totalCartItems"
+                                        style="position: absolute; top: -10px; right: -10px; background: #6c5dd4; color: #fff; border-radius: 50%; padding: 2px 5px; font-size: 9px;">{{ isset($headerCartItems) ? count($headerCartItems) : 0 }}</span>
+                                </a>
+                            </li> --}}
                         </ul>
                     </nav>
                 </div>
@@ -198,6 +218,14 @@ $sections = \App\Models\Section::sections();
     <div class="fixed-responsive-container">
         <div class="fixed-responsive-wrapper">
             <button type="button" class="button fas fa-search" id="responsive-search"></button>
+            @if (Auth::check())
+                <a href="{{ url('user/wallet') }}" class="button"
+                    style="display: flex; align-items: center; justify-content: center; color: #ff9900; font-weight: 700; font-size: 14px; text-decoration: none;">
+                    <i class="fas fa-wallet"></i>
+                </a>
+            @endif
+            <a href="{{ url('wishlist') }}" class="button fas fa-heart" style="text-decoration: none;"></a>
+            <a href="{{ url('cart') }}" class="button fas fa-shopping-basket" style="text-decoration: none;"></a>
         </div>
     </div>
     <!-- Responsive-Buttons /- -->

@@ -28,9 +28,9 @@ class AuthController extends Controller
         $loginInput = $request->login;
         $numericLogin = preg_replace('/\D/', '', $loginInput);
 
-        $user = User::where(function($q) use ($loginInput, $numericLogin) {
+        $user = User::where(function ($q) use ($loginInput, $numericLogin) {
             $q->where('email', $loginInput)
-              ->orWhere('phone', $numericLogin);
+                ->orWhere('phone', $numericLogin);
         })->first();
 
         if ($user && Hash::check($request->password, $user->password)) {
@@ -209,16 +209,24 @@ class AuthController extends Controller
             ], 400);
         }
 
-        $role = \Spatie\Permission\Models\Role::where('name', 'sales')->first();
+        $role = \Spatie\Permission\Models\Role::where([
+            'name'       => 'sales'
+        ])->first();
+
+        if (!$role) {
+            throw new \Exception('Sales role not found');
+        }
+
         $user = User::create([
             'name'     => $name,
             'email'    => $email,
             'phone'    => $phone,
             'password' => $password, // Already hashed in register()
-            'role_id'  => $role ? $role->id : null,
+            'role_id'  => $role->id,
             'status'   => 0,
         ]);
-        if ($role) $user->assignRole($role);
+
+        $user->assignRole($role);
 
         $sales = \App\Models\SalesExecutive::create([
             'user_id' => $user->id,
@@ -285,5 +293,4 @@ class AuthController extends Controller
             return false;
         }
     }
-
 }

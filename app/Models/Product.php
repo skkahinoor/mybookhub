@@ -122,13 +122,8 @@ class Product extends Model
 
         $productDiscount = $attribute ? (float) $attribute->product_discount : 0;
 
-        $categoryDiscount = Category::where('id', $product->category_id)
-            ->value('category_discount') ?? 0;
-
         if ($productDiscount > 0) {
             $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
-        } elseif ($categoryDiscount > 0) {
-            $finalPrice = $originalPrice - ($originalPrice * $categoryDiscount / 100);
         } else {
             $finalPrice = $originalPrice;
         }
@@ -159,13 +154,8 @@ class Product extends Model
 
         $productDiscount = $attribute ? (float) $attribute->product_discount : 0;
 
-        $categoryDiscount = Category::where('id', $product->category_id)
-            ->value('category_discount') ?? 0;
-
         if ($productDiscount > 0) {
             $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
-        } elseif ($categoryDiscount > 0) {
-            $finalPrice = $originalPrice - ($originalPrice * $categoryDiscount / 100);
         } else {
             $finalPrice = $originalPrice;
         }
@@ -208,16 +198,8 @@ class Product extends Model
 
             $productDiscount = $productDetails ? (float) ($productDetails->product_discount ?? 0) : 0;
 
-            $categoryDiscount = 0;
-            if ($productDetails) {
-                $categoryDiscount = (float) (Category::where('id', $productDetails->category_id)
-                    ->value('category_discount') ?? 0);
-            }
-
             if ($productDiscount > 0) {
                 $finalPrice = $attributePrice - ($attributePrice * $productDiscount / 100);
-            } elseif ($categoryDiscount > 0) {
-                $finalPrice = $attributePrice - ($attributePrice * $categoryDiscount / 100);
             } else {
                 $finalPrice = $attributePrice;
             }
