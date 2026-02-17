@@ -1162,6 +1162,11 @@ class ProductsController extends Controller
             'block_id' => $user->block_id,
         ];
 
+        // Check if user has complete profile address before proceeding
+        if (empty($userAddress['address']) || empty($userAddress['country']) || empty($userAddress['state']) || empty($userAddress['city']) || empty($userAddress['pincode']) || empty($userAddress['mobile'])) {
+            return redirect('user/account')->with('error_message', 'Please update your delivery details in your profile before proceeding to checkout.');
+        }
+
         // Calculating the Shipping Charges (depending on the 'country' of the user's Profile Address)
         $shippingCharges = ShippingCharge::getShippingCharges($total_weight, $userAddress['country']);
         $userAddress['shipping_charges'] = $shippingCharges;

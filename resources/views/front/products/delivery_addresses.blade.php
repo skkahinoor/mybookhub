@@ -107,7 +107,7 @@
     </div>
     <div class="collapse {{ !empty($deliveryId) ? 'show' : '' }}" id="showdifferent">
 
-        <form id="addressAddEditForm" action="{{ url('/save-delivery-address') }}" method="post">
+        <form id="addressAddEditForm" action="{{ url('save-delivery-address') }}" method="post">
             @csrf
 
 
