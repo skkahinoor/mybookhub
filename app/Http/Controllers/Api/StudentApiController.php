@@ -86,7 +86,7 @@ class StudentApiController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'father_name' => 'required|string|max:255',
+            'father_names' => 'required|string|max:255',
             'email' => 'nullable|email|max:255|unique:users,email',
             'phone' => 'required|string|min:10|max:15|unique:users,phone',
             'institution_id' => 'required|exists:institution_managements,id',
@@ -174,7 +174,7 @@ class StudentApiController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'father_name' => 'required|string|max:255',
+            'father_names' => 'required|string|max:255',
             'email' => [
                 'nullable',
                 'email',
