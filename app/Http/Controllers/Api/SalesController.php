@@ -31,7 +31,7 @@ class SalesController extends Controller
         if (!$role || !in_array($role->name, $allowedRoles)) {
             return response()->json([
                 'status'  => false,
-                'message' => 'Only Admin or Vendor can access this.'
+                'message' => 'Only Admin or Sales can access this.'
             ], 403);
         }
 
@@ -52,7 +52,7 @@ class SalesController extends Controller
         }
 
         $user = $request->user();
-$user->load(['country', 'state', 'district', 'block']);
+        $user->load(['country', 'state', 'district', 'block']);
         return response()->json([
             'status' => true,
             'message' => 'Profile fetched successfully.',
