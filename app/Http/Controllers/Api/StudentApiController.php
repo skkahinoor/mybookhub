@@ -14,6 +14,7 @@ use App\Models\Notification;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 
 class StudentApiController extends Controller
@@ -194,6 +195,7 @@ class StudentApiController extends Controller
             'roll_number' => Rule::unique('users')
                 ->where('institution_id', $request->institution_id)
                 ->ignore($student->id),
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
         $institution = InstitutionManagement::find($validated['institution_id']);
@@ -212,6 +214,30 @@ class StudentApiController extends Controller
             $request->validate(['branch' => 'required|string|max:255']);
             $validated['class'] = $request->branch;
         }
+
+        // HANDLE IMAGE UPLOAD
+        if ($request->hasFile('profile_image')) {
+
+            // delete old image
+            $oldPath = public_path('assets/sales/profile_pictures/' . $student->profile_image);
+
+            if ($student->profile_image && file_exists($oldPath)) {
+                unlink($oldPath);
+            }
+
+            // upload new image
+            $file = $request->file('profile_image');
+
+            // generate unique name
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+
+            // move to your custom folder
+            $file->move(public_path('assets/sales/profile_pictures'), $filename);
+
+            // store only filename in DB
+            $validated['profile_image'] = $filename;
+        }
+
 
         if ($type !== 'superadmin') {
             unset($validated['status']);
