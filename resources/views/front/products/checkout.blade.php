@@ -2,7 +2,6 @@
 @extends('front.layout.layout3')
 
 @section('content')
-
     {{-- css code   --}}
     <style>
         .checkout-steps {
@@ -564,56 +563,38 @@
                             <form name="checkoutForm" id="checkoutForm" action="{{ url('/checkout') }}" method="post">
                                 @csrf
                                 <!-- Delivery Addresses Selection -->
-                                @if (collect($deliveryAddresses)->count() > 0)
-                                    <div class="checkout-section">
-                                        <div class="section-header">
-                                            <h4><i class="fas fa-home"></i> Select Delivery Address</h4>
-                                        </div>
-                                        <div class="address-options">
-                                            @foreach ($deliveryAddresses as $address)
-                                                <div class="address-item">
-                                                    <div class="address-radio">
-                                                        <input type="radio" id="address{{ $address['id'] }}"
-                                                            name="address_id" value="{{ $address['id'] }}"
-                                                            shipping_charges="{{ $address['shipping_charges'] }}"
-                                                            total_price="{{ $total_price }}"
-                                                            coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
-                                                            codpincodeCount="{{ $address['codpincodeCount'] }}"
-                                                            prepaidpincodeCount="{{ $address['prepaidpincodeCount'] }}">
-                                                        <label for="address{{ $address['id'] }}" class="address-label">
-                                                            <div class="address-info">
-                                                                <h6>{{ $address['name'] }}</h6>
-                                                                <p>{{ $address['address'] }}, {{ $address['city'] }},
-                                                                    {{ $address['state'] }}, {{ $address['country'] }}</p>
-                                                                <span class="phone">📞 {{ $address['mobile'] }}</span>
-                                                            </div>
-                                                        </label>
+                                <div class="checkout-section">
+                                    <div class="section-header">
+                                        <h5><i class="fas fa-map-marker-alt"></i> Delivery Address</h5>
+                                        <a href="{{ url('user/account') }}" class="add-btn">
+                                            <i class="fas fa-edit"></i> Edit Profile Address
+                                        </a>
+                                    </div>
+                                    <div class="address-list">
+                                        @php $address = $deliveryAddresses[0]; @endphp
+                                        <div class="address-card selected">
+                                            <div class="address-selection">
+                                                <input type="radio" name="address_id" id="address{{ $address['id'] }}"
+                                                    value="{{ $address['id'] }}" checked
+                                                    shipping_charges="{{ $address['shipping_charges'] }}"
+                                                    total_price="{{ $total_price }}"
+                                                    coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
+                                                    codpincodeCount="{{ $address['codpincodeCount'] }}"
+                                                    prepaidpincodeCount="{{ $address['prepaidpincodeCount'] }}">
+                                                <label for="address{{ $address['id'] }}" class="address-label">
+                                                    <div class="address-info">
+                                                        <h6>{{ $address['name'] }} <span class="badge bg-primary ms-2"
+                                                                style="font-size: 10px;">Primary Profile Address</span></h6>
+                                                        <p>{{ $address['address'] }}, {{ $address['city'] }},
+                                                            {{ $address['state'] }}, {{ $address['country'] }} -
+                                                            {{ $address['pincode'] }}</p>
+                                                        <span class="phone">📞 {{ $address['mobile'] }}</span>
                                                     </div>
-                                                    <div class="address-actions">
-                                                        <a href="javascript:void(0);"
-                                                            class="action-btn edit-btn editAddressModalBtn"
-                                                            data-bs-toggle="modal" data-bs-target="#editAddressModal"
-                                                            data-id="{{ $address['id'] }}"
-                                                            data-name="{{ $address['name'] }}"
-                                                            data-address="{{ $address['address'] }}"
-                                                            data-city="{{ $address['city'] }}"
-                                                            data-state="{{ $address['state'] }}"
-                                                            data-country="{{ $address['country'] }}"
-                                                            data-pincode="{{ $address['pincode'] }}"
-                                                            data-mobile="{{ $address['mobile'] }}">
-                                                            <i class="fas fa-edit"></i> Edit
-                                                        </a>
-                                                        <a href="{{ url('remove-delivery-address/' . $address['id']) }}"
-                                                            class="action-btn remove-btn"
-                                                            onclick="return confirm('Are you sure you want to remove this address?')">
-                                                            <i class="fas fa-trash"></i> Remove
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            @endforeach
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
-                                @endif
+                                </div>
 
                                 <!-- Order Summary -->
                                 <div class="checkout-section">
@@ -657,8 +638,7 @@
                                             <div class="wallet-section-box mt-3 mb-3"
                                                 style="padding: 15px; background: #eef7ff; border-radius: 8px; border-left: 4px solid #007bff;">
                                                 <div class="d-flex align-items-center">
-                                                    <input type="checkbox" id="useWallet" name="use_wallet"
-                                                        value="1"
+                                                    <input type="checkbox" id="useWallet" name="use_wallet" value="1"
                                                         style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;"
                                                         data-balance="{{ Auth::user()->wallet_balance }}"
                                                         data-max-use="20">
@@ -688,6 +668,7 @@
                                                 <span>Wallet Discount</span>
                                                 <span id="walletAmountDisplay">-₹0</span>
                                             </div>
+
                                             <div class="price-row">
                                                 <span>Coupon Discount</span>
                                                 <span>
@@ -710,7 +691,7 @@
                                             </div>
                                             <div class="price-row total-row">
                                                 <span><strong>Grand Total</strong></span>
-                                                <span><strong
+                                                <span><strong id="grandTotalDisplay"
                                                         class="grand_total">₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}</strong></span>
                                             </div>
                                         </div>
@@ -844,113 +825,41 @@
 
 
 
-    <!-- Edit Address Modal -->
-    <div class="modal fade" id="editAddressModal" tabindex="-1" aria-labelledby="editAddressModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <form action="{{ url('/save-delivery-address') }}" method="post">
-                    @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editAddressModalLabel">Edit Delivery Address</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <input type="hidden" name="delivery_id" id="edit_delivery_id">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_name" id="edit_delivery_name"
-                                    required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Mobile <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_mobile"
-                                    id="edit_delivery_mobile" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label>Address <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="delivery_address"
-                                id="edit_delivery_address" required>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>City <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_city" id="edit_delivery_city"
-                                    required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>State <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_state"
-                                    id="edit_delivery_state" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label>Country <span class="text-danger">*</span></label>
-                                <select class="form-control" name="delivery_country" id="edit_delivery_country" required>
-                                    <option value="">Select Country</option>
-                                    @foreach ($countries as $country)
-                                        <option value="{{ $country['name'] }}">{{ $country['name'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label>Pincode <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="delivery_pincode"
-                                    id="edit_delivery_pincode" required>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <script>
         $(document).ready(function() {
-            // Populate Modal with Address Data
-            $('.editAddressModalBtn').click(function() {
-                var id = $(this).data('id');
-                var name = $(this).data('name');
-                var address = $(this).data('address');
-                var city = $(this).data('city');
-                var state = $(this).data('state');
-                var country = $(this).data('country');
-                var pincode = $(this).data('pincode');
-                var mobile = $(this).data('mobile');
-
-                $('#edit_delivery_id').val(id);
-                $('#edit_delivery_name').val(name);
-                $('#edit_delivery_address').val(address);
-                $('#edit_delivery_city').val(city);
-                $('#edit_delivery_state').val(state);
-                $('#edit_delivery_country').val(country);
-                $('#edit_delivery_pincode').val(pincode);
-                $('#edit_delivery_mobile').val(mobile);
-            });
-
             // Dynamic Shipping calculation (Keep this small JS for UX)
-            $('input[name="address_id"], #useWallet, input[name="payment_gateway"]').on('change', function() {
-                var addressEl = $('input[name="address_id"]:checked');
-                var shipping = addressEl.attr('shipping_charges') || 0;
-                var baseTotal = parseFloat($('#subtotalValue').data('subtotal'));
-                var total = baseTotal;
-                if (addressEl.length > 0) {
-                    total = parseFloat(addressEl.attr('total_price')) || baseTotal;
-                }
-                var coupon = addressEl.attr('coupon_amount') ||
-                    {{ \Illuminate\Support\Facades\Session::get('couponAmount') ?? 0 }};
+            function calculateTotals() {
+                console.log('Calculating totals...');
 
+                var addressEl = $('input[name="address_id"]:checked');
+                var useWalletEl = $('#useWallet');
+                var subtotalValueEl = $('#subtotalValue');
+
+                var shipping = parseFloat(addressEl.attr('shipping_charges')) || 0;
+                var baseTotal = parseFloat(subtotalValueEl.data('subtotal')) || 0;
+                var total = baseTotal;
+
+                if (addressEl.length > 0) {
+                    var addressTotal = parseFloat(addressEl.attr('total_price'));
+                    if (!isNaN(addressTotal)) {
+                        total = addressTotal;
+                    }
+                }
+
+                var coupon = parseFloat("{{ \Illuminate\Support\Facades\Session::get('couponAmount') ?? 0 }}") ||
+                    0;
+                if (addressEl.length > 0) {
+                    var addressCoupon = parseFloat(addressEl.attr('coupon_amount'));
+                    if (!isNaN(addressCoupon)) {
+                        coupon = addressCoupon;
+                    }
+                }
+
+                // Wallet Calculation
                 var walletDiscount = 0;
-                if ($('#useWallet').is(':checked')) {
-                    var balance = parseFloat($('#useWallet').data('balance'));
-                    var maxUse = parseFloat($('#useWallet').data('max-use'));
+                if (useWalletEl.length > 0 && useWalletEl.is(':checked')) {
+                    var balance = parseFloat(useWalletEl.data('balance')) || 0;
+                    var maxUse = parseFloat(useWalletEl.data('max-use')) || 20;
                     walletDiscount = Math.min(balance, maxUse);
                     $('#walletRow').show();
                     $('#walletAmountDisplay').html('-₹' + walletDiscount.toFixed(2));
@@ -958,39 +867,48 @@
                     $('#walletRow').hide();
                 }
 
-                $('.shipping_charges').html('₹' + shipping);
-                var grand = parseFloat(total) + parseFloat(shipping) - parseFloat(coupon) - parseFloat(
-                    walletDiscount);
+                $('.shipping_charges').html('₹' + shipping.toFixed(2));
+
+                var grand = total + shipping - coupon - walletDiscount;
                 if (grand < 0) grand = 0;
+
                 var finalTotal = grand.toFixed(2);
-                $('.grand_total').html('₹' + finalTotal);
-                $('#placeOrderBtn').html('Place Order Securely - ₹' + finalTotal);
+                console.log('Grand Total recalculated:', finalTotal);
 
-                // Update Place Order button if it exists or any payment method specific display
+                $('#grandTotalDisplay').html('₹' + finalTotal);
+                $('.grand_total').html('₹' + finalTotal); // Keep class update for other elements
+
                 var paymentMethod = $('input[name="payment_gateway"]:checked').val();
-                if (paymentMethod) {
-                    console.log("Selected payment method: " + paymentMethod + " with total: ₹" +
-                        finalTotal);
-                    if (paymentMethod == 'Razorpay') {
-                        $('#placeOrderBtn').html('Proceed to Pay - ₹' + finalTotal);
-                    } else if (paymentMethod == 'COD') {
-                        $('#placeOrderBtn').html('Confirm COD Order - ₹' + finalTotal);
-                    }
-                }
 
-                var cod = addressEl.attr('codpincodeCount');
-                var prepaid = addressEl.attr('prepaidpincodeCount');
-                if (cod > 0) {
-                    $('.codMethod').show();
-                } else {
-                    $('.codMethod').hide();
+                // Update Place Order button
+                var btnText = 'Place Order Securely - ₹' + finalTotal;
+                if (paymentMethod == 'Razorpay') {
+                    btnText = 'Proceed to Pay - ₹' + finalTotal;
+                } else if (paymentMethod == 'COD') {
+                    btnText = 'Confirm COD Order - ₹' + finalTotal;
                 }
-                if (prepaid > 0) {
-                    $('.razorpayMethod').show();
-                } else {
-                    $('.razorpayMethod').hide();
+                $('#placeOrderBtn').html(btnText);
+
+                // Pincode availability toggle
+                if (addressEl.length > 0) {
+                    var cod = parseInt(addressEl.attr('codpincodeCount')) || 0;
+                    var prepaid = parseInt(addressEl.attr('prepaidpincodeCount')) || 0;
+                    if (cod > 0) $('.codMethod').show();
+                    else $('.codMethod').hide();
+                    if (prepaid > 0) $('.razorpayMethod').show();
+                    else $('.razorpayMethod').hide();
                 }
-            });
+            }
+
+            $(document).on('change', 'input[name="address_id"], #useWallet, input[name="payment_gateway"]',
+                function() {
+                    calculateTotals();
+                });
+
+            // Initial calculation
+            calculateTotals();
+
+            // Re-trigger on address radio checked (for fallback)
             if ($('input[name="address_id"]:checked').length > 0) {
                 $('input[name="address_id"]:checked').trigger('change');
             }

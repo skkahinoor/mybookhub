@@ -8,7 +8,7 @@ use App\Models\Cart;
 use App\Models\Category;
 use App\Models\Country;
 use App\Models\Coupon;
-use App\Models\DeliveryAddress;
+
 use App\Models\HeaderLogo;
 use App\Models\Language;
 use App\Models\Order;
@@ -1143,46 +1143,35 @@ class ProductsController extends Controller
             // $total_weight   = $total_weight + $product_weight;
         }
 
-        $deliveryAddresses = DeliveryAddress::deliveryAddresses(); // the delivery addresses of the currently authenticated/logged in user
+        // Fetch the user with location relations and prepare address data for checkout
+        $user = User::with(['country', 'state', 'district', 'block'])->find(Auth::id());
 
-        // If user has no saved delivery addresses but has profile address info, seed a default address
-        if (Auth::check() && (empty($deliveryAddresses) || count($deliveryAddresses) === 0)) {
-            $profile = Auth::user();
-            if (! empty($profile->name) && ! empty($profile->address) && ! empty($profile->city) && ! empty($profile->state) && ! empty($profile->country) && ! empty($profile->pincode) && ! empty($profile->mobile)) {
-                try {
-                    $seed = new DeliveryAddress;
-                    $seed->user_id = $profile->id;
-                    $seed->name = $profile->name;
-                    $seed->address = $profile->address;
-                    $seed->city = $profile->city;
-                    $seed->state = $profile->state;
-                    $seed->country = $profile->country;
-                    $seed->pincode = $profile->pincode;
-                    $seed->mobile = $profile->mobile;
-                    $seed->save();
+        // Prepare a single "address" object for the view based on User Profile
+        $userAddress = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'address' => $user->address,
+            'city' => $user->district->name ?? '',
+            'state' => $user->state->name ?? '',
+            'country' => $user->country->name ?? '',
+            'pincode' => $user->pincode,
+            'mobile' => $user->phone,
+            'country_id' => $user->country_id,
+            'state_id' => $user->state_id,
+            'district_id' => $user->district_id,
+            'block_id' => $user->block_id,
+        ];
 
-                    // re-fetch after seeding
-                    $deliveryAddresses = DeliveryAddress::deliveryAddresses();
-                } catch (\Throwable $e) {
-                    Log::warning('Failed to seed delivery address from profile: ' . $e->getMessage());
-                }
-            }
-        }
+        // Calculating the Shipping Charges (depending on the 'country' of the user's Profile Address)
+        $shippingCharges = ShippingCharge::getShippingCharges($total_weight, $userAddress['country']);
+        $userAddress['shipping_charges'] = $shippingCharges;
 
-        // Calculating the Shipping Charges of every one of the user's Delivery Addresses (depending on the 'country' of the Delivery Address)
-        foreach ($deliveryAddresses as $key => $value) {
-            $shippingCharges = ShippingCharge::getShippingCharges($total_weight, $value['country']);
+        // Checking PIN code availability
+        $userAddress['codpincodeCount'] = DB::table('cod_pincodes')->where('pincode', $user->pincode)->count();
+        $userAddress['prepaidpincodeCount'] = DB::table('prepaid_pincodes')->where('pincode', $user->pincode)->count();
 
-            // Append/Add the Shipping Charge of every Delivery Address (depending on the 'country' of the Delivery Addresss) to the $deliveryAddresses array
-            $deliveryAddresses[$key]['shipping_charges'] = $shippingCharges;
-
-            // Checking PIN code availability of BOTH COD and Prepaid PIN codes in BOTH `cod_pincodes` and `prepaid_pincodes` tables
-            // Check if the COD PIN code of that Delivery Address of the user exists in `cod_pincodes` table
-            $deliveryAddresses[$key]['codpincodeCount'] = DB::table('cod_pincodes')->where('pincode', $value['pincode'])->count(); // Note that    $value['pincode']    denotes the `pincode` of the `delivery_addresses` table
-
-            // Check if the Prepaid PIN code of that Delivery Address of the user exists in `prepaid_pincodes` table
-            $deliveryAddresses[$key]['prepaidpincodeCount'] = DB::table('prepaid_pincodes')->where('pincode', $value['pincode'])->count(); // Note that    $value['pincode']    denotes the `pincode` of the `delivery_addresses` table
-        }
+        // For backward compatibility with the view, wrap it in a collection or same structure
+        $deliveryAddresses = [$userAddress];
 
         if ($request->isMethod('post')) { // if the <form> in front/products/checkout.blade.php is submitted (the HTML Form that the user submits to submit their Delivery Address and Payment Method)
             $data = $request->all();
@@ -1250,7 +1239,16 @@ class ProductsController extends Controller
                 return redirect()->back()->with('error_message', $message);
             }
 
-            $deliveryAddress = DeliveryAddress::where('id', $data['address_id'])->first()->toArray();
+            $user = User::with(['country', 'state', 'district'])->find(Auth::id());
+            $deliveryAddress = [
+                'name' => $user->name,
+                'address' => $user->address,
+                'pincode' => $user->pincode,
+                'mobile' => $user->phone,
+                'country' => $user->country->name ?? '',
+                'state' => $user->state->name ?? '',
+                'city' => $user->district->name ?? '',
+            ];
 
             if ($data['payment_gateway'] == 'COD') {
                 $payment_method = 'COD';
@@ -1307,6 +1305,7 @@ class ProductsController extends Controller
             $order->payment_gateway = $data['payment_gateway'];
             $order->grand_total = $grand_total;
             $order->wallet_amount = $wallet_amount;
+            $order->extra_discount = 0;
 
             $order->save();
 
@@ -1439,19 +1438,17 @@ class ProductsController extends Controller
         // if (! in_array($condition, ['new', 'old'])) {
         //     $condition = 'new';
         // }
-        if (Session::has('order_id')) {                     // if there's an order has been placed, empty the Cart (remove the order (the cart items/products) from `carts`table)    // 'user_id' was stored in Session inside checkout() method in Front/ProductsController.php
-            // Clear Session
-            Session::forget('couponAmount');
-            Session::forget('couponCode');
-            Session::forget('grand_total');
-
+        if (Session::has('order_id')) {
+            $order_id = Session::get('order_id');
             // Wallet Credit Logic
-            \App\Models\WalletTransaction::checkAndCreditWallet(Session::get('order_id'));
+            \App\Models\WalletTransaction::checkAndCreditWallet($order_id);
 
             // We empty the Cart after placing the order
-            Cart::where('user_id', Auth::user()->id)->delete(); // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
+            Cart::where('user_id', Auth::user()->id)->delete();
 
-            return view('front.products.thanks')->with(compact('logos', 'sections', 'language', 'condition'));
+            $orderDetails = Order::find($order_id);
+
+            return view('front.products.thanks')->with(compact('logos', 'sections', 'language', 'condition', 'orderDetails'));
         } else {
             Log::info('Thanks redirect: order_id missing from session');
 

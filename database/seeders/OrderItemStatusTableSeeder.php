@@ -14,32 +14,34 @@ class OrderItemStatusTableSeeder extends Seeder
      */
     public function run()
     {
-        
+
         // Note: Check DatabaseSeeder.php!
         $orderItemStatusRecords = [
             [
                 'id'     => 1,
-                'name'   => 'Pending',
+                'name'   => 'Out of Stock',
                 'status' => 1
             ],
             [
                 'id'     => 2,
-                'name'   => 'In Progress',
+                'name'   => 'Available',
                 'status' => 1
             ],
-            [
-                'id'     => 3,
-                'name'   => 'Shipped',
-                'status' => 1
-            ],
-            [
-                'id'     => 4,
-                'name'   => 'Delivered',
-                'status' => 1
-            ]
         ];
 
-        // Note: Check DatabaseSeeder.php!
-        \App\Models\OrderItemStatus::insert($orderItemStatusRecords);
+       
+    // Delete records not in this list
+    \App\Models\OrderItemStatus::whereNotIn(
+        'id',
+        collect($orderItemStatusRecords)->pluck('id')
+    )->delete();
+
+    // Update or insert the ones we want
+    foreach ($orderItemStatusRecords as $record) {
+        \App\Models\OrderItemStatus::updateOrInsert(
+            ['id' => $record['id']],
+            $record
+        );
+    }
     }
 }
