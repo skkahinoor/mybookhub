@@ -827,9 +827,10 @@
 
                                 <!-- Place Order Button -->
                                 <div class="checkout-section">
-                                    <button type="submit" id="placeOrder" class="place-order-btn"> <i
-                                            class="fas fa-lock"></i>
-                                        Place Order Securely
+                                    <button type="submit" id="placeOrderBtn" class="btn btn-primary btn-lg w-100"
+                                        style="padding: 15px; font-weight: 600;">
+                                        Place Order Securely -
+                                        ₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}
                                     </button>
                                 </div>
                             </form>
@@ -935,7 +936,7 @@
             });
 
             // Dynamic Shipping calculation (Keep this small JS for UX)
-            $('input[name="address_id"], #useWallet').on('change', function() {
+            $('input[name="address_id"], #useWallet, input[name="payment_gateway"]').on('change', function() {
                 var addressEl = $('input[name="address_id"]:checked');
                 var shipping = addressEl.attr('shipping_charges') || 0;
                 var baseTotal = parseFloat($('#subtotalValue').data('subtotal'));
@@ -961,7 +962,21 @@
                 var grand = parseFloat(total) + parseFloat(shipping) - parseFloat(coupon) - parseFloat(
                     walletDiscount);
                 if (grand < 0) grand = 0;
-                $('.grand_total').html('₹' + grand.toFixed(2));
+                var finalTotal = grand.toFixed(2);
+                $('.grand_total').html('₹' + finalTotal);
+                $('#placeOrderBtn').html('Place Order Securely - ₹' + finalTotal);
+
+                // Update Place Order button if it exists or any payment method specific display
+                var paymentMethod = $('input[name="payment_gateway"]:checked').val();
+                if (paymentMethod) {
+                    console.log("Selected payment method: " + paymentMethod + " with total: ₹" +
+                        finalTotal);
+                    if (paymentMethod == 'Razorpay') {
+                        $('#placeOrderBtn').html('Proceed to Pay - ₹' + finalTotal);
+                    } else if (paymentMethod == 'COD') {
+                        $('#placeOrderBtn').html('Confirm COD Order - ₹' + finalTotal);
+                    }
+                }
 
                 var cod = addressEl.attr('codpincodeCount');
                 var prepaid = addressEl.attr('prepaidpincodeCount');
