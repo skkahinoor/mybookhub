@@ -510,25 +510,6 @@
 
     </section>
 
-
-    {{-- old code  --}}
-    <!-- Page Introduction Wrapper -->
-    {{-- <div class="page-style-a">
-    <div class="container">
-        <div class="page-intro">
-            <h2>Checkout</h2>
-            <ul class="bread-crumb">
-                <li class="has-separator">
-                    <i class="ion ion-md-home"></i>
-                    <a href="{{ url('/') }}">Home</a>
-                </li>
-                <li class="is-marked">
-                    <a href="{{ url('/checkout') }}">Checkout</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</div> --}}
     <!-- Page Introduction Wrapper /- -->
 
     <!-- Checkout-Page -->
@@ -548,278 +529,287 @@
             <div class="row">
                 <div class="col-lg-12 col-md-12">
                     <div class="row">
-                        <!-- Delivery Addresses Section -->
-                        <div class="col-lg-6" id="deliveryAddresses">
-                            <div class="delivery-section">
-                                <div class="section-header">
-                                    <h4><i class="fas fa-map-marker-alt"></i> Delivery Information</h4>
-                                </div>
-                                @include('front.products.delivery_addresses')
-                            </div>
-                        </div>
-
                         <!-- Order Summary & Payment -->
-                        <div class="col-lg-6">
-                            <form name="checkoutForm" id="checkoutForm" action="{{ url('/checkout') }}" method="post">
-                                @csrf
-                                <!-- Delivery Addresses Selection -->
-                                <div class="checkout-section">
-                                    <div class="section-header">
-                                        <h5><i class="fas fa-map-marker-alt"></i> Delivery Address</h5>
-                                        <a href="{{ url('user/account') }}" class="add-btn">
-                                            <i class="fas fa-edit"></i> Edit Profile Address
-                                        </a>
-                                    </div>
-                                    <div class="address-list">
-                                        @php $address = $deliveryAddresses[0]; @endphp
-                                        <div class="address-card selected">
-                                            <div class="address-selection">
-                                                <input type="radio" name="address_id" id="address{{ $address['id'] }}"
-                                                    value="{{ $address['id'] }}" checked
-                                                    shipping_charges="{{ $address['shipping_charges'] }}"
-                                                    total_price="{{ $total_price }}"
-                                                    coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
-                                                    codpincodeCount="{{ $address['codpincodeCount'] }}"
-                                                    prepaidpincodeCount="{{ $address['prepaidpincodeCount'] }}">
-                                                <label for="address{{ $address['id'] }}" class="address-label">
-                                                    <div class="address-info">
-                                                        <h6>{{ $address['name'] }} <span class="badge bg-primary ms-2"
-                                                                style="font-size: 10px;">Primary Profile Address</span></h6>
-                                                        <p>{{ $address['address'] }}, {{ $address['city'] }},
-                                                            {{ $address['state'] }}, {{ $address['country'] }} -
-                                                            {{ $address['pincode'] }}</p>
-                                                        <span class="phone">📞 {{ $address['mobile'] }}</span>
-                                                    </div>
-                                                </label>
-                                            </div>
+                        <form name="checkoutForm" id="checkoutForm" action="{{ url('/checkout') }}" method="post">
+                            @csrf
+                            <div class="row">
+                                <div class="col-lg-7">
+                                    <!-- Delivery Addresses Selection -->
+                                    <div class="checkout-section">
+                                        <div class="section-header">
+                                            <h4><i class="fas fa-map-marker-alt"></i> Delivery Address</h4>
+                                            <a href="{{ url('user/account') }}" class="add-btn">
+                                                <i class="fas fa-edit"></i> Edit Profile Address
+                                            </a>
                                         </div>
-                                    </div>
-                                </div>
-
-                                <!-- Order Summary -->
-                                <div class="checkout-section">
-                                    <div class="section-header">
-                                        <h4><i class="fas fa-shopping-cart"></i> Order Summary</h4>
-                                    </div>
-
-                                    <div class="order-summary sticky-summary">
-                                        <!-- Products List -->
-                                        <div class="products-list">
-                                            @php $total_price = 0 @endphp
-                                            @foreach ($getCartItems as $item)
-                                                @php
-                                                    $getDiscountAttributePrice = \App\Models\Product::getDiscountAttributePrice(
-                                                        $item['product_id'],
-                                                        $item['size'],
-                                                    );
-                                                @endphp
-                                                <div class="product-item">
-                                                    <div class="product-info">
-                                                        <img src="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
-                                                            alt="{{ $item['product']['product_name'] ?? 'Product' }}"
-                                                            class="img-fluid rounded shadow-sm"
-                                                            style="width: 100px; height: 100px; object-fit: cover;">
-                                                        <div class="product-details">
-                                                            <h6>{{ $item['product']['product_name'] }}</h6>
-                                                            <small>Size: {{ $item['size'] }} | Qty:
-                                                                {{ $item['quantity'] }}</small>
+                                        <div class="address-list">
+                                            @php $address = $deliveryAddresses[0]; @endphp
+                                            <div class="address-card selected">
+                                                <div class="address-selection">
+                                                    <input type="radio" name="address_id" id="address{{ $address['id'] }}"
+                                                        value="{{ $address['id'] }}" checked
+                                                        shipping_charges="{{ $address['shipping_charges'] }}"
+                                                        total_price="{{ $total_price }}"
+                                                        coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
+                                                        codpincodeCount="{{ $address['codpincodeCount'] }}"
+                                                        prepaidpincodeCount="{{ $address['prepaidpincodeCount'] }}">
+                                                    <label for="address{{ $address['id'] }}" class="address-label">
+                                                        <div class="address-info">
+                                                            <h6>{{ $address['name'] }} <span class="badge bg-primary ms-2"
+                                                                    style="font-size: 10px;">Primary Profile Address</span>
+                                                            </h6>
+                                                            <p>{{ $address['address'] }}, {{ $address['city'] }},
+                                                                {{ $address['state'] }}, {{ $address['country'] }} -
+                                                                {{ $address['pincode'] }}</p>
+                                                            <span class="phone">📞 {{ $address['mobile'] }}</span>
                                                         </div>
-                                                    </div>
-                                                    <div class="product-price">
-                                                        ₹{{ $getDiscountAttributePrice['final_price'] * $item['quantity'] }}
-                                                    </div>
-                                                </div>
-                                                @php $total_price = $total_price + ($getDiscountAttributePrice['final_price'] * $item['quantity']) @endphp
-                                            @endforeach
-                                        </div>
-
-                                        <!-- Wallet Section -->
-                                        @if (Auth::check() && Auth::user()->wallet_balance > 0)
-                                            <div class="wallet-section-box mt-3 mb-3"
-                                                style="padding: 15px; background: #eef7ff; border-radius: 8px; border-left: 4px solid #007bff;">
-                                                <div class="d-flex align-items-center">
-                                                    <input type="checkbox" id="useWallet" name="use_wallet" value="1"
-                                                        style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;"
-                                                        data-balance="{{ Auth::user()->wallet_balance }}"
-                                                        data-max-use="20">
-                                                    <label for="useWallet" style="margin: 0; cursor: pointer;">
-                                                        <strong>Use Wallet Balance</strong> (Available:
-                                                        ₹{{ Auth::user()->wallet_balance }})
-                                                        <div style="font-size: 11px; color: #555;">Max ₹20 will be deducted
-                                                            from
-                                                            your wallet for this order</div>
                                                     </label>
                                                 </div>
                                             </div>
-                                        @endif
-
-                                        <!-- Price Breakdown -->
-                                        <div class="price-breakdown">
-                                            <div class="price-row">
-                                                <span>Subtotal</span>
-                                                <span id="subtotalValue"
-                                                    data-subtotal="{{ $total_price }}">₹{{ $total_price }}</span>
-                                            </div>
-                                            <div class="price-row">
-                                                <span>Shipping Charges</span>
-                                                <span class="shipping_charges">₹0</span>
-                                            </div>
-                                            <div class="price-row" id="walletRow" style="display: none; color: #28a745;">
-                                                <span>Wallet Discount</span>
-                                                <span id="walletAmountDisplay">-₹0</span>
-                                            </div>
-
-                                            <div class="price-row">
-                                                <span>Coupon Discount</span>
-                                                <span>
-                                                    @if (\Illuminate\Support\Facades\Session::has('couponAmount'))
-                                                        <span
-                                                            id="couponDiscount">{{ number_format((float) \Illuminate\Support\Facades\Session::get('couponAmount', 0), 2) }}</span>
-                                                    @else
-                                                        ₹0
-                                                    @endif
-                                                </span>
-                                                <script>
-                                                    (function() {
-                                                        const fmt2 = n => (Number(n) || 0).toFixed(2);
-                                                        const el = document.getElementById('couponDiscount');
-                                                        if (el && el.textContent) {
-                                                            el.textContent = fmt2(el.textContent);
-                                                        }
-                                                    })();
-                                                </script>
-                                            </div>
-                                            <div class="price-row total-row">
-                                                <span><strong>Grand Total</strong></span>
-                                                <span><strong id="grandTotalDisplay"
-                                                        class="grand_total">₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}</strong></span>
-                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <!-- Payment Methods -->
-                                <div class="checkout-section">
-                                    <div class="section-header">
-                                        <h4><i class="fas fa-credit-card"></i> Payment Method</h4>
-                                    </div>
+                                    <div class="col-lg-5">
+                                        <!-- Order Summary -->
+                                        <div class="checkout-section">
+                                            <div class="section-header">
+                                                <h4><i class="fas fa-shopping-cart"></i> Order Summary</h4>
+                                            </div>
 
-                                    <div class="payment-methods">
-                                        <div class="payment-option codMethod">
-                                            <input type="radio" class="radio-box" name="payment_gateway"
-                                                id="cash-on-delivery" value="COD">
-                                            <label class="payment-label" for="cash-on-delivery">
-                                                <div class="payment-info">
-                                                    <div class="payment-title">
-                                                        <i class="fas fa-money-bill-wave"></i>
-                                                        <span>Cash on Delivery</span>
-                                                    </div>
-                                                    <small class="payment-note">Pay with cash upon delivery</small>
+                                            <div class="order-summary sticky-summary">
+                                                <!-- Products List -->
+                                                <div class="products-list">
+                                                    @php $total_price = 0 @endphp
+                                                    @foreach ($getCartItems as $item)
+                                                        @php
+                                                            $getDiscountAttributePrice = \App\Models\Product::getDiscountAttributePrice(
+                                                                $item['product_id'],
+                                                                $item['size'],
+                                                            );
+                                                        @endphp
+                                                        <div class="product-item">
+                                                            <div class="product-info">
+                                                                <img src="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
+                                                                    alt="{{ $item['product']['product_name'] ?? 'Product' }}"
+                                                                    class="img-fluid rounded shadow-sm"
+                                                                    style="width: 100px; height: 100px; object-fit: cover;">
+                                                                <div class="product-details">
+                                                                    <h6>{{ $item['product']['product_name'] }}</h6>
+                                                                    <small>Size: {{ $item['size'] }} | Qty:
+                                                                        {{ $item['quantity'] }}</small>
+                                                                </div>
+                                                            </div>
+                                                            <div class="product-price">
+                                                                ₹{{ $getDiscountAttributePrice['final_price'] * $item['quantity'] }}
+                                                            </div>
+                                                        </div>
+                                                        @php $total_price = $total_price + ($getDiscountAttributePrice['final_price'] * $item['quantity']) @endphp
+                                                    @endforeach
                                                 </div>
-                                                <div class="payment-badge">No extra fee</div>
-                                            </label>
-                                        </div>
 
-                                        <div class="payment-option razorpayMethod">
-                                            <input type="radio" class="radio-box" name="payment_gateway"
-                                                id="razorpay" value="Razorpay">
-                                            <label class="payment-label" for="razorpay">
-                                                <div class="payment-info">
-                                                    <div class="payment-title">
-                                                        <i class="fas fa-credit-card"></i>
-                                                        <span>Razorpay</span>
+                                                <!-- Wallet Section -->
+                                                @if (Auth::check() && Auth::user()->wallet_balance > 0)
+                                                    <div class="wallet-section-box mt-3 mb-3"
+                                                        style="padding: 15px; background: #eef7ff; border-radius: 8px; border-left: 4px solid #007bff;">
+                                                        <div class="d-flex align-items-center">
+                                                            <input type="checkbox" id="useWallet" name="use_wallet"
+                                                                value="1"
+                                                                style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;"
+                                                                data-balance="{{ Auth::user()->wallet_balance }}"
+                                                                data-max-use="20">
+                                                            <label for="useWallet" style="margin: 0; cursor: pointer;">
+                                                                <strong>Use Wallet Balance</strong> (Available:
+                                                                ₹{{ Auth::user()->wallet_balance }})
+                                                                <div style="font-size: 11px; color: #555;">Max ₹20 will be
+                                                                    deducted
+                                                                    from
+                                                                    your wallet for this order</div>
+                                                            </label>
+                                                        </div>
                                                     </div>
-                                                    <small class="payment-note">Pay securely with Razorpay</small>
+                                                @endif
+
+                                                <!-- Price Breakdown -->
+                                                <div class="price-breakdown">
+                                                    <div class="price-row">
+                                                        <span>Subtotal</span>
+                                                        <span id="subtotalValue"
+                                                            data-subtotal="{{ $total_price }}">₹{{ $total_price }}</span>
+                                                    </div>
+                                                    <div class="price-row">
+                                                        <span>Shipping Charges</span>
+                                                        <span class="shipping_charges">₹0</span>
+                                                    </div>
+                                                    <div class="price-row" id="walletRow"
+                                                        style="display: none; color: #28a745;">
+                                                        <span>Wallet Discount</span>
+                                                        <span id="walletAmountDisplay">-₹0</span>
+                                                    </div>
+
+                                                    <div class="price-row">
+                                                        <span>Coupon Discount</span>
+                                                        <span>
+                                                            @if (\Illuminate\Support\Facades\Session::has('couponAmount'))
+                                                                <span
+                                                                    id="couponDiscount">{{ number_format((float) \Illuminate\Support\Facades\Session::get('couponAmount', 0), 2) }}</span>
+                                                            @else
+                                                                ₹0
+                                                            @endif
+                                                        </span>
+                                                        <script>
+                                                            (function() {
+                                                                const fmt2 = n => (Number(n) || 0).toFixed(2);
+                                                                const el = document.getElementById('couponDiscount');
+                                                                if (el && el.textContent) {
+                                                                    el.textContent = fmt2(el.textContent);
+                                                                }
+                                                            })();
+                                                        </script>
+                                                    </div>
+                                                    <div class="price-row total-row">
+                                                        <span><strong>Grand Total</strong></span>
+                                                        <span><strong id="grandTotalDisplay"
+                                                                class="grand_total">₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}</strong></span>
+                                                    </div>
                                                 </div>
-                                                <div class="payment-badge">Online Payment</div>
-                                            </label>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <!-- Terms & Conditions -->
-                                <div class="checkout-section">
-                                    <div class="terms-section">
-                                        <input type="checkbox" class="check-box" id="accept" name="accept"
-                                            value="Yes" title="Please agree to T&C">
-                                        <label class="terms-label" for="accept">
-                                            I've read and accept the
-                                            <a href="javascript:void(0)" class="terms-link" data-toggle="modal"
-                                                data-target="#termsModal">
-                                                terms & conditions
-                                            </a>
-                                        </label>
-                                    </div>
-                                </div>
+                                        <!-- Payment Methods -->
+                                        <div class="checkout-section">
+                                            <div class="section-header">
+                                                <h4><i class="fas fa-credit-card"></i> Payment Method</h4>
+                                            </div>
 
-                                <!-- Terms & Conditions Modal -->
-                                <div class="modal fade" id="termsModal" tabindex="-1" role="dialog"
-                                    aria-labelledby="termsModalLabel" aria-hidden="true">
-                                    <div class="modal-dialog modal-lg" role="document">
-                                        <div class="modal-content">
+                                            <div class="payment-methods">
+                                                <div class="payment-option codMethod">
+                                                    <input type="radio" class="radio-box" name="payment_gateway"
+                                                        id="cash-on-delivery" value="COD">
+                                                    <label class="payment-label" for="cash-on-delivery">
+                                                        <div class="payment-info">
+                                                            <div class="payment-title">
+                                                                <i class="fas fa-money-bill-wave"></i>
+                                                                <span>Cash on Delivery</span>
+                                                            </div>
+                                                            <small class="payment-note">Pay with cash upon delivery</small>
+                                                        </div>
+                                                        <div class="payment-badge">No extra fee</div>
+                                                    </label>
+                                                </div>
 
-                                            <div class="modal-header">
-                                                <a href="javascript:void(0)" class="terms-link" data-toggle="modal"
-                                                    data-target="#termsModal">
-                                                    terms & conditions
-                                                </a>
+                                                <div class="payment-option razorpayMethod">
+                                                    <input type="radio" class="radio-box" name="payment_gateway"
+                                                        id="razorpay" value="Razorpay">
+                                                    <label class="payment-label" for="razorpay">
+                                                        <div class="payment-info">
+                                                            <div class="payment-title">
+                                                                <i class="fas fa-credit-card"></i>
+                                                                <span>Razorpay</span>
+                                                            </div>
+                                                            <small class="payment-note">Pay securely with Razorpay</small>
+                                                        </div>
+                                                        <div class="payment-badge">Online Payment</div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                                {{-- <button type="button" class="close" data-dismiss="modal"
+                                        <!-- Terms & Conditions -->
+                                        <div class="checkout-section">
+                                            <div class="terms-section">
+                                                <input type="checkbox" class="check-box" id="accept" name="accept"
+                                                    value="Yes" title="Please agree to T&C">
+                                                <label class="terms-label" for="accept">
+                                                    I've read and accept the
+                                                    <a href="javascript:void(0)" class="terms-link" data-toggle="modal"
+                                                        data-target="#termsModal">
+                                                        terms & conditions
+                                                    </a>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Terms & Conditions Modal -->
+                                        <div class="modal fade" id="termsModal" tabindex="-1" role="dialog"
+                                            aria-labelledby="termsModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg" role="document">
+                                                <div class="modal-content">
+
+                                                    <div class="modal-header">
+                                                        <a href="javascript:void(0)" class="terms-link"
+                                                            data-toggle="modal" data-target="#termsModal">
+                                                            terms & conditions
+                                                        </a>
+
+                                                        {{-- <button type="button" class="close" data-dismiss="modal"
                                                     aria-label="Close">
                                                     <span aria-hidden="true">&times;</span>
                                                 </button> --}}
+                                                    </div>
+
+                                                    <div class="modal-body">
+                                                        <!-- Customize your T&C content here -->
+                                                        <p>
+                                                            By completing a purchase on BookHub, you agree to abide by our
+                                                            Terms
+                                                            &
+                                                            Conditions, which are designed to provide
+                                                            clarity, fairness, and a trusted experience for every customer.
+                                                            These
+                                                            terms outline important policies related to
+                                                            product availability, pricing, order confirmation, payment
+                                                            processing,
+                                                            shipping timelines, returns and refunds,
+                                                            cancellations, and the use of your customer information.
+                                                            <br><br>
+                                                            We recommend reviewing these guidelines before placing an order
+                                                            to
+                                                            ensure complete understanding of your rights
+                                                            and responsibilities as a BookHub user. Our team works
+                                                            continuously
+                                                            to
+                                                            maintain accurate product listings, timely
+                                                            deliveries, and secure transactions; however, occasional delays
+                                                            or
+                                                            changes may occur due to unforeseen circumstances.
+                                                            <br><br>
+                                                            By continuing, you acknowledge these conditions and consent to
+                                                            follow
+                                                            the policies set forth. For any clarification
+                                                            or assistance, our customer support team is always ready to
+                                                            help.
+                                                        </p>
+
+                                                    </div>
+
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-primary"
+                                                            data-dismiss="modal">Close</button>
+                                                    </div>
+
+                                                </div>
                                             </div>
+                                        </div>
 
-                                            <div class="modal-body">
-                                                <!-- Customize your T&C content here -->
-                                                <p>
-                                                    By completing a purchase on BookHub, you agree to abide by our Terms &
-                                                    Conditions, which are designed to provide
-                                                    clarity, fairness, and a trusted experience for every customer. These
-                                                    terms outline important policies related to
-                                                    product availability, pricing, order confirmation, payment processing,
-                                                    shipping timelines, returns and refunds,
-                                                    cancellations, and the use of your customer information.
-                                                    <br><br>
-                                                    We recommend reviewing these guidelines before placing an order to
-                                                    ensure complete understanding of your rights
-                                                    and responsibilities as a BookHub user. Our team works continuously to
-                                                    maintain accurate product listings, timely
-                                                    deliveries, and secure transactions; however, occasional delays or
-                                                    changes may occur due to unforeseen circumstances.
-                                                    <br><br>
-                                                    By continuing, you acknowledge these conditions and consent to follow
-                                                    the policies set forth. For any clarification
-                                                    or assistance, our customer support team is always ready to help.
-                                                </p>
 
-                                            </div>
 
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-primary"
-                                                    data-dismiss="modal">Close</button>
-                                            </div>
-
+                                        <!-- Place Order Button -->
+                                        <div class="checkout-section">
+                                            <button type="submit" id="placeOrderBtn"
+                                                class="btn btn-primary btn-lg w-100"
+                                                style="padding: 15px; font-weight: 600;">
+                                                Place Order Securely -
+                                                ₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
-
-
-
-                                <!-- Place Order Button -->
-                                <div class="checkout-section">
-                                    <button type="submit" id="placeOrderBtn" class="btn btn-primary btn-lg w-100"
-                                        style="padding: 15px; font-weight: 600;">
-                                        Place Order Securely -
-                                        ₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
 

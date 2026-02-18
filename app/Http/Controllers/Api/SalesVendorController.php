@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Sales;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
-class VendorController extends Controller
+class SalesVendorController extends Controller
 {
 
     private function checkAccess(Request $request, array $allowedRoles = ['sales'])
