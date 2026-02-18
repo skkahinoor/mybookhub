@@ -23,9 +23,7 @@ class VendorController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'vendors');
-
         $vendors = Vendor::orderByDesc('id')->get();
-
         return view('sales.vendors.index', compact('vendors', 'logos', 'headerLogo'));
     }
 
@@ -91,8 +89,6 @@ class VendorController extends Controller
              ->route('sales.vendors.index')
              ->with('success_message', 'Vendor added successfully.');
      }
-
-
      /**
       * Remove the specified vendor (only if inactive).
       */

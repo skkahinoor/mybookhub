@@ -106,7 +106,10 @@
                                     </div>
                                     
                                     <!-- Option to Change Status -->
-                                    <form action="{{ route('requestbook.reply', $bookRequest->id) }}" method="post">
+                                    @php
+                                        $submitRoute = ($adminType === 'vendor') ? 'vendor.requestbook.reply' : 'requestbook.reply';
+                                    @endphp
+                                    <form action="{{ route($submitRoute, $bookRequest->id) }}" method="post">
                                         @csrf
                                         <div class="row">
                                             <div class="col-md-12">
@@ -123,14 +126,20 @@
                                         </div>
                                     </form>
                                     
+                                    @php
+                                        $indexRoute = ($adminType === 'vendor') ? 'vendor.requestbook.index' : 'requestbook.index';
+                                    @endphp
                                     <div style="margin-top: 20px;">
-                                        <a href="{{ route('requestbook.index') }}" class="btn btn-secondary">Back to Book Requests</a>
+                                        <a href="{{ route($indexRoute) }}" class="btn btn-secondary">Back to Book Requests</a>
                                     </div>
                                 </div>
                             </div>
                         @else
                             <!-- Not Resolved - Show Reply Form -->
-                            <form action="{{ route('requestbook.reply', $bookRequest->id) }}" method="post">
+                            @php
+                                $submitRoute = ($adminType === 'vendor') ? 'vendor.requestbook.reply' : 'requestbook.reply';
+                            @endphp
+                            <form action="{{ route($submitRoute, $bookRequest->id) }}" method="post">
                                 @csrf
                                 <div class="row">
                                     <div class="col-md-12">
@@ -151,8 +160,11 @@
                                         </div>
                                     </div>
                                     <div class="col-md-12">
+                                        @php
+                                            $indexRoute = ($adminType === 'vendor') ? 'vendor.requestbook.index' : 'requestbook.index';
+                                        @endphp
                                         <button type="submit" class="btn btn-primary">Submit Reply</button>
-                                        <a href="{{ route('requestbook.index') }}" class="btn btn-secondary">Back</a>
+                                        <a href="{{ route($indexRoute) }}" class="btn btn-secondary">Back</a>
                                     </div>
                                 </div>
                             </form>

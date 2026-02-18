@@ -28,8 +28,7 @@ class OrderController extends Controller
     public function orders() {
         if (!Auth::guard('admin')->user()->can('view_orders')) {
             abort(403, 'Unauthorized action.');
-        }
-        
+        }        
         $user = Auth::guard('admin')->user();
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -70,8 +69,6 @@ class OrderController extends Controller
 
         return view('admin.orders.orders')->with(compact('orders', 'logos', 'headerLogo', 'adminType'));
     }
-
-
 
     // demo code
     public function orderDetails($id)
@@ -176,7 +173,6 @@ class OrderController extends Controller
         ));
     }
 
-    
     public function updateOrderStatus(Request $request) {
         if (!Auth::guard('admin')->user()->can('update_order_status')) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
@@ -198,7 +194,6 @@ class OrderController extends Controller
                 }
             }
 
-
             // Update Order Status in `orders` table
             Order::where('id', $data['order_id'])->update(['order_status' => $data['order_status']]);
 
@@ -213,11 +208,8 @@ class OrderController extends Controller
             $log->order_status = $data['order_status'];
             $log->save();
 
-
-  
             $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $data['order_id'])->first()->toArray();
             $orderDetails    = Order::with('orders_products')->where('id', $data['order_id'])->first()->toArray(); 
-
 
             if (!empty($data['courier_name']) && !empty($data['tracking_number'])) { 
                 $email = $deliveryDetails['email'];

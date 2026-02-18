@@ -39,33 +39,22 @@
                                                 <td>{{ $book['message'] }}</td>
                                                 <td>{{ $book->user->name ?? 'User not found' }}</td>
                                                 <td>
-                                                    @if ($adminType === 'vendor')
-                                                        <a class="updateBookStatus" id="book-{{ $book['id'] }}"
-                                                            book_id="{{ $book['id'] }}"
-                                                            data-url="{{ route('vendor.bookrequests.updateStatus') }}"
-                                                            href="javascript:void(0)">
+                                                    @php
+                                                        $isAvailable = ($book['status'] == 'in_progress' || $book['status'] == 1);
+                                                        $statusUrl = ($adminType === 'vendor') ? route('vendor.bookrequests.updateStatus') : route('admin.bookrequests.updateStatus');
+                                                    @endphp
+                                                    <a class="updateBookStatus" id="book-{{ $book['id'] }}"
+                                                        book_id="{{ $book['id'] }}"
+                                                        data-url="{{ $statusUrl }}"
+                                                        href="javascript:void(0)">
+                                                        @if ($isAvailable)
                                                             <i style="font-size:25px;" title="Book Available"
                                                                 class="mdi mdi-bookmark-check" status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        @if ($book['status'] == 1)
-                                                            <a class="updateBookStatus" id="book-{{ $book['id'] }}"
-                                                                book_id="{{ $book['id'] }}"
-                                                                data-url="{{ route('admin.bookrequests.updateStatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size:25px;" title="Book Available"
-                                                                    class="mdi mdi-bookmark-check" status="Active"></i>
-                                                            </a>
                                                         @else
-                                                            <a class="updateBookStatus" id="book-{{ $book['id'] }}"
-                                                                book_id="{{ $book['id'] }}"
-                                                                data-url="{{ route('admin.bookrequests.updateStatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size:25px;" title="Book Requested"
-                                                                    class="mdi mdi-bookmark-outline" status="Inactive"></i>
-                                                            </a>
+                                                            <i style="font-size:25px;" title="Book Requested"
+                                                                class="mdi mdi-bookmark-outline" status="Inactive"></i>
                                                         @endif
-                                                    @endif
+                                                    </a>
                                                 </td>
                                                 <td>
                                                     {{-- @if ($adminType !== 'vendor')
@@ -74,7 +63,10 @@
                                                             <i style="font-size:25px;" class="mdi mdi-reply"></i>
                                                         </a>
                                                     @endif --}}
-                                                    <a href="{{ url('admin/requestedbooks/reply/' . $book['id']) }}"
+                                                    @php
+                                                        $replyRoute = ($adminType === 'vendor') ? 'vendor.requestbook.reply' : 'requestbook.reply';
+                                                    @endphp
+                                                    <a href="{{ route($replyRoute, $book['id']) }}"
                                                         title="Reply">
                                                         <i style="font-size:25px;" class="mdi mdi-reply"></i>
                                                     </a>
