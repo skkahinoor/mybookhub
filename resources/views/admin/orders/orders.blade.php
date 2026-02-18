@@ -18,7 +18,7 @@
                                 <table id="orders" class="table table-bordered"> {{-- using the id here for the DataTable --}}
                                     <thead>
                                         <tr>
-                                            <th>S.No</th>
+                                            <th>Sl.No</th>
                                             <th>Order ID</th>
                                             <th>Order Date</th>
                                             <th>Customer Name</th>

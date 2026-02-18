@@ -126,8 +126,8 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
             Route::get('author_delete/{id}', [AuthorController::class, 'delete'])->name('vendor.delete.author');
 
             //RequestedBooks
-            Route::get('requestedbooks', [BookRequestsController::class, 'index'])->name('requestbook.index');
-            Route::match(['get', 'post'], 'requestedbooks/reply/{id}', [BookRequestsController::class, 'reply'])->name('requestbook.reply');
+            Route::get('requestedbooks', [BookRequestsController::class, 'index'])->name('vendor.requestbook.index');
+            Route::match(['get', 'post'], 'requestedbooks/reply/{id}', [BookRequestsController::class, 'reply'])->name('vendor.requestbook.reply');
             Route::delete('book-requests/{id}', [BookRequestsController::class, 'delete'])->name('vendor.bookrequests.delete');
             Route::post('admin/bookrequests/update-status', [BookRequestsController::class, 'updateStatus'])->name('vendor.bookrequests.updateStatus');
 
