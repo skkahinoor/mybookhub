@@ -4,811 +4,636 @@
 @section('content')
     {{-- css code   --}}
     <style>
-        .checkout-steps {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #64748b;
+            --success-color: #22c55e;
+            --bg-light: #f8fafc;
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --card-border: #e2e8f0;
         }
 
-        .checkout-steps .step {
+        .checkout-page-wrapper {
+            background-color: var(--bg-light);
+            padding: 40px 0;
+            min-height: 100vh;
+        }
+
+        /* Progress Steps */
+        .checkout-progress {
+            display: flex;
+            justify-content: space-between;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            position: relative;
+        }
+
+        .progress-step {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px
+            z-index: 2;
+            flex: 1;
         }
 
-        .checkout-steps .circle {
-            width: 36px;
-            height: 36px;
+        .step-icon {
+            width: 32px;
+            height: 32px;
+            background: #fff;
+            border: 2px solid var(--card-border);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            background: #e9ecef;
-            color: #6c757d;
-            border: 2px solid #dee2e6
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
         }
 
-        .checkout-steps .label {
-            font-size: 12px;
-            color: #6c757d
-        }
-
-        .checkout-steps .step.active .circle {
-            background: linear-gradient(135deg, #007bff, #0056b3);
+        .progress-step.active .step-icon {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
             color: #fff;
-            border-color: #007bff
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
         }
 
-        .checkout-steps .step.active .label {
-            color: #0056b3;
-            font-weight: 600
+        .step-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--secondary-color);
         }
 
-        .checkout-steps .separator {
+        .progress-line {
+            position: absolute;
+            top: 16px;
+            left: 10%;
+            right: 10%;
             height: 2px;
-            width: 40px;
-            background: #e9ecef
+            background: var(--card-border);
+            z-index: 1;
         }
 
-        @media(max-width:576px) {
-            .checkout-steps {
-                gap: 8px
-            }
-
-            .checkout-steps .separator {
-                width: 24px
-            }
-        }
-
-        /* Checkout Page Styles */
-        .checkout-section {
+        /* Cards */
+        .modern-card {
             background: #fff;
-            border-radius: 8px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border: 1px solid #f0f0f0;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 24px;
+            overflow: hidden;
         }
 
-        .section-header {
-            border-bottom: 2px solid #f8f9fa;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+        .card-header-modern {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fcfdfe;
         }
 
-        .section-header h4 {
-            color: #333;
+        .card-header-modern h4 {
+            margin: 0;
             font-size: 18px;
             font-weight: 600;
-            margin: 0;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .section-header i {
-            color: #007bff;
-            margin-right: 8px;
+        .card-content {
+            padding: 24px;
         }
 
-        /* Address Selection */
-        .address-options {
-            space-y: 15px;
-        }
-
-        .address-item {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
+        /* Address Section */
+        .address-card-modern {
             position: relative;
+            background: #fbfcfe;
+            border: 2px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            gap: 16px;
         }
 
-        .address-item:hover {
-            border-color: #007bff;
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+        .address-check {
+            padding-top: 4px;
         }
 
-        .address-radio input[type="radio"] {
-            position: absolute;
-            top: 15px;
-            left: 15px;
+        .address-check input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
         }
 
-        .address-label {
-            cursor: pointer;
-            padding-left: 35px;
-            display: block;
-            margin: 0;
+        .address-details h6 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e293b;
         }
 
-        .address-info h6 {
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .address-info p {
-            color: #666;
-            margin-bottom: 5px;
-            line-height: 1.4;
-        }
-
-        .address-info .phone {
-            color: #007bff;
+        .address-details p {
+            color: var(--secondary-color);
+            line-height: 1.6;
+            margin-bottom: 12px;
             font-size: 14px;
         }
 
-        .address-actions {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .action-btn {
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .edit-btn {
-            background: #28a745;
-            color: white;
-        }
-
-        .edit-btn:hover {
-            background: #218838;
-            color: white;
-        }
-
-        .remove-btn {
-            background: #dc3545;
-            color: white;
-        }
-
-        .remove-btn:hover {
-            background: #c82333;
-            color: white;
+        .address-badge {
+            background: #dbeafe;
+            color: var(--primary-dark);
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
         }
 
         /* Order Summary */
-        .order-summary {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-        }
-
-        .sticky-summary {
-            position: sticky;
-            top: 90px;
-        }
-
-        .products-list {
+        .summary-product-list {
+            max-height: 350px;
+            overflow-y: auto;
             margin-bottom: 20px;
+            padding-right: 8px;
         }
 
-        .product-item {
+        .summary-product-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .summary-product-list::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .product-modern {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 0;
-            border-bottom: 1px solid #dee2e6;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
         }
 
-        .product-item:last-child {
+        .product-modern:last-child {
             border-bottom: none;
         }
 
-        .product-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+        .product-img {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid #f1f5f9;
         }
 
-        .product-info img {
-            border-radius: 4px;
-            border: 1px solid #dee2e6;
+        .product-info-modern {
+            flex: 1;
         }
 
-        .product-details h6 {
-            margin: 0 0 5px 0;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .product-details small {
-            color: #666;
-        }
-
-        .product-price {
+        .product-info-modern h6 {
+            font-size: 14px;
             font-weight: 600;
-            color: #007bff;
+            margin: 0 0 4px;
+            color: #334155;
         }
 
-        /* Price Breakdown */
-        .price-breakdown {
-            border-top: 1px solid #dee2e6;
-            padding-top: 15px;
+        .product-meta {
+            font-size: 12px;
+            color: var(--secondary-color);
         }
 
-        .price-row {
+        .product-price-modern {
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 15px;
+        }
+
+        /* Totals */
+        .totals-box {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .total-row-modern {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: var(--secondary-color);
         }
 
-        .total-row {
-            border-top: 1px solid #dee2e6;
-            padding-top: 10px;
-            margin-top: 10px;
+        .total-row-modern.grand-total {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px dashed #e2e8f0;
+            color: #1e293b;
             font-size: 18px;
+            font-weight: 800;
         }
 
-        /* Payment Methods */
-        .payment-methods {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        /* Payment */
+        .payment-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
         }
 
-        .payment-option {
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            padding: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .payment-option:hover {
-            border-color: #007bff;
-        }
-
-        .payment-option input[type="radio"] {
-            margin-right: 20px;
-        }
-
-        .payment-label {
+        .payment-item-modern {
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            margin: 0;
         }
 
-        .payment-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .payment-item-modern input {
+            display: none;
         }
 
-        .payment-info i {
+        .payment-box-modern {
+            border: 2px solid var(--card-border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .payment-item-modern input:checked+.payment-box-modern {
+            border-color: var(--primary-color);
+            background: #eff6ff;
+        }
+
+        .payment-label-modern {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .payment-label-modern i {
             font-size: 20px;
-            color: #007bff;
+            color: var(--primary-color);
         }
 
-        /* Terms & Conditions */
-        .terms-section {
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            border-left: 4px solid #007bff;
-        }
-
-        .terms-label {
-            cursor: pointer;
-            margin-left: 10px;
-            color: #333;
-        }
-
-        .terms-link {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .terms-link:hover {
-            text-decoration: underline;
+        .payment-status-badge {
+            font-size: 11px;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: var(--secondary-color);
         }
 
         /* Place Order Button */
-        .place-order-btn {
+        .place-order-wrapper {
+            margin-top: 30px;
+        }
+
+        .btn-premium {
             width: 100%;
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
+            padding: 18px;
+            background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+            color: #fff;
             border: none;
-            padding: 15px 30px;
+            border-radius: 10px;
             font-size: 16px;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
             transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
         }
 
-        .place-order-btn:hover {
-            background: linear-gradient(135deg, #0056b3, #004085);
+        .btn-premium:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.4);
+            color: #fff;
         }
 
-        .place-order-btn i {
-            margin-right: 8px;
-        }
-
-        /* Delivery Section */
-        .delivery-section {
-            background: #fff;
-            border-radius: 8px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border: 1px solid #f0f0f0;
-            height: fit-content;
-        }
-
-        /* Fancy radio inputs */
-        .payment-option {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .payment-option .radio-box {
-            position: absolute;
-            left: 16px;
-            top: 18px;
-        }
-
-        .payment-option .payment-label {
-            padding-left: 32px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .payment-option .payment-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .btn-edit-modern {
+            font-size: 13px;
+            color: var(--primary-color);
             font-weight: 600;
-            color: #2f3d4a;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .payment-option .payment-note {
-            display: block;
-            color: #6c757d;
-            margin-top: 2px;
-        }
-
-        .payment-option .brand-logos img {
-            height: 18px;
-            margin-left: 8px;
-            opacity: 0.9;
-            filter: grayscale(20%);
-        }
-
-        .payment-option .payment-badge {
-            background: #eaf7ea;
-            color: #1e7e34;
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 999px;
-            margin-left: 12px;
-            white-space: nowrap;
-        }
-
-        .payment-option:hover {
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-            border-color: #bcd0ff;
-        }
-
-        .payment-option input[type="radio"]:checked+label {
-            border: 2px solid #007bff;
-            border-radius: 8px;
-            background: #f8fbff;
-        }
-
-        .payment-option:hover {
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-        }
-
-        /* Address cards hover */
-        .address-item:hover {
-            transform: translateY(-2px);
-            transition: transform 0.2s ease;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .checkout-section {
-                padding: 20px 15px;
+        /* Responsive Improvements */
+        @media (max-width: 991px) {
+            .checkout-page-wrapper {
+                padding: 20px 0;
             }
 
-            .address-actions {
-                position: static;
-                margin-top: 10px;
-                justify-content: flex-end;
-            }
-
-            .product-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
-            }
-
-            .product-info {
-                width: 100%;
-            }
-
-            .payment-methods {
-                gap: 10px;
-            }
-
-            .place-order-btn {
-                padding: 12px 20px;
-                font-size: 14px;
+            .sticky-summary {
+                position: static !important;
             }
         }
 
-        /* Alert Improvements */
-        .alert {
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
+        @media (max-width: 576px) {
+            .progress-line {
+                display: none;
+            }
 
-        .alert i {
-            margin-right: 8px;
+            .step-label {
+                font-size: 11px;
+            }
+
+            .card-header-modern {
+                padding: 15px 18px;
+            }
+
+            .card-content {
+                padding: 18px;
+            }
         }
     </style>
 
     {{-- css code ends here  --}}
-    <div class="dz-bnr-inr overlay-secondary-dark dz-bnr-inr-sm" style="background-image:url(images/background/bg3.jpg);">
+    <div class="checkout-page-wrapper">
         <div class="container">
-            <div class="dz-bnr-inr-entry">
-                <h1>Checkout</h1>
-                <nav aria-label="breadcrumb" class="breadcrumb-row">
-                    <ul class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ url('/') }}"> Home</a></li>
-                        <li class="breadcrumb-item"><a href="{{ url('/checkout') }}">Checkout</a></li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </div>
-    <!-- inner page banner End-->
-
-    {{-- New UI static block removed in favor of functional checkout implementation below --}}
-
-    <!-- Checkout Progress Steps -->
-    <section class="content-inner py-4">
-        <div class="container">
-            <div class="checkout-steps">
-                <div class="step active">
-                    <div class="circle">1</div>
-                    <div class="label">Address</div>
+            <!-- Progress Tracker -->
+            <div class="checkout-progress">
+                <div class="progress-line"></div>
+                <div class="progress-step active">
+                    <div class="step-icon">1</div>
+                    <span class="step-label">Account</span>
                 </div>
-                <div class="separator"></div>
-                <div class="step active">
-                    <div class="circle">2</div>
-                    <div class="label">Summary</div>
+                <div class="progress-step active">
+                    <div class="step-icon">2</div>
+                    <span class="step-label">Shipping</span>
                 </div>
-                <div class="separator"></div>
-                <div class="step">
-                    <div class="circle">3</div>
-                    <div class="label">Payment</div>
+                <div class="progress-step active">
+                    <div class="step-icon">3</div>
+                    <span class="step-label">Review</span>
                 </div>
-                <div class="separator"></div>
-                <div class="step">
-                    <div class="circle">4</div>
-                    <div class="label">Place Order</div>
+                <div class="progress-step">
+                    <div class="step-icon">4</div>
+                    <span class="step-label">Payment</span>
                 </div>
             </div>
-        </div>
 
+            <!-- Page Introduction Wrapper /- -->
 
-    </section>
+            <!-- Checkout-Page -->
+            <div class="page-checkout u-s-p-t-80">
+                <div class="container">
+                    @if (Session::has('error_message'))
+                        <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-circle me-3" style="font-size: 20px;"></i>
+                                <div>{{ Session::get('error_message') }}</div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
 
-    <!-- Page Introduction Wrapper /- -->
-
-    <!-- Checkout-Page -->
-    <div class="page-checkout u-s-p-t-80">
-        <div class="container">
-            {{-- Error Messages --}}
-            @if (Session::has('error_message'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Error:</strong> {{ Session::get('error_message') }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            @endif
-
-            <div class="row">
-                <div class="col-lg-12 col-md-12">
-                    <div class="row">
-                        <!-- Order Summary & Payment -->
-                        <form name="checkoutForm" id="checkoutForm" action="{{ url('/checkout') }}" method="post">
-                            @csrf
-                            <div class="row">
-                                <div class="col-lg-7">
-                                    <!-- Delivery Addresses Selection -->
-                                    <div class="checkout-section">
-                                        <div class="section-header">
-                                            <h4><i class="fas fa-map-marker-alt"></i> Delivery Address</h4>
-                                            <a href="{{ url('user/account') }}" class="add-btn">
-                                                <i class="fas fa-edit"></i> Edit Profile Address
-                                            </a>
-                                        </div>
-                                        <div class="address-list">
-                                            @php $address = $deliveryAddresses[0]; @endphp
-                                            <div class="address-card selected">
-                                                <div class="address-selection">
-                                                    <input type="radio" name="address_id" id="address{{ $address['id'] }}"
-                                                        value="{{ $address['id'] }}" checked
-                                                        shipping_charges="{{ $address['shipping_charges'] }}"
-                                                        total_price="{{ $total_price }}"
-                                                        coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
-                                                        codpincodeCount="{{ $address['codpincodeCount'] }}"
-                                                        prepaidpincodeCount="{{ $address['prepaidpincodeCount'] }}">
-                                                    <label for="address{{ $address['id'] }}" class="address-label">
-                                                        <div class="address-info">
-                                                            <h6>{{ $address['name'] }} <span class="badge bg-primary ms-2"
-                                                                    style="font-size: 10px;">Primary Profile Address</span>
-                                                            </h6>
-                                                            <p>{{ $address['address'] }}, {{ $address['city'] }},
-                                                                {{ $address['state'] }}, {{ $address['country'] }} -
-                                                                {{ $address['pincode'] }}</p>
-                                                            <span class="phone">📞 {{ $address['mobile'] }}</span>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
+                    <form name="checkoutForm" id="checkoutForm" action="{{ url('/checkout') }}" method="post">
+                        @csrf
+                        <div class="row g-4">
+                            <!-- Left Column: Address & Payment -->
+                            <div class="col-lg-7">
+                                <!-- Shipping Address Card -->
+                                <div class="modern-card">
+                                    <div class="card-header-modern">
+                                        <h4><i class="fas fa-map-marker-alt"></i> Shipping Address</h4>
+                                        <a href="{{ url('user/account') }}" class="btn-edit-modern">
+                                            <i class="fas fa-pen"></i> Edit Profile
+                                        </a>
                                     </div>
-
-                                    <div class="col-lg-5">
-                                        <!-- Order Summary -->
-                                        <div class="checkout-section">
-                                            <div class="section-header">
-                                                <h4><i class="fas fa-shopping-cart"></i> Order Summary</h4>
+                                    <div class="card-content">
+                                        <div class="address-card-modern">
+                                            @php $address = $deliveryAddresses[0]; @endphp
+                                            <div class="address-check">
+                                                <input type="radio" name="address_id" id="address{{ $address['id'] }}"
+                                                    value="{{ $address['id'] }}" checked
+                                                    shipping_charges="{{ $address['shipping_charges'] }}"
+                                                    total_price="{{ $total_price }}"
+                                                    coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
+                                                    codpincodeCount="{{ $address['codpincodeCount'] }}"
+                                                    prepaidpincodeCount="{{ $address['prepaidpincodeCount'] }}">
                                             </div>
-
-                                            <div class="order-summary sticky-summary">
-                                                <!-- Products List -->
-                                                <div class="products-list">
-                                                    @php $total_price = 0 @endphp
-                                                    @foreach ($getCartItems as $item)
-                                                        @php
-                                                            $getDiscountAttributePrice = \App\Models\Product::getDiscountAttributePrice(
-                                                                $item['product_id'],
-                                                                $item['size'],
-                                                            );
-                                                        @endphp
-                                                        <div class="product-item">
-                                                            <div class="product-info">
-                                                                <img src="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
-                                                                    alt="{{ $item['product']['product_name'] ?? 'Product' }}"
-                                                                    class="img-fluid rounded shadow-sm"
-                                                                    style="width: 100px; height: 100px; object-fit: cover;">
-                                                                <div class="product-details">
-                                                                    <h6>{{ $item['product']['product_name'] }}</h6>
-                                                                    <small>Size: {{ $item['size'] }} | Qty:
-                                                                        {{ $item['quantity'] }}</small>
-                                                                </div>
-                                                            </div>
-                                                            <div class="product-price">
-                                                                ₹{{ $getDiscountAttributePrice['final_price'] * $item['quantity'] }}
-                                                            </div>
-                                                        </div>
-                                                        @php $total_price = $total_price + ($getDiscountAttributePrice['final_price'] * $item['quantity']) @endphp
-                                                    @endforeach
+                                            <div class="address-details">
+                                                <div class="d-flex align-items-center gap-3 mb-2">
+                                                    <h6 class="mb-0">{{ $address['name'] }}</h6>
+                                                    <span class="address-badge">Primary Delivery</span>
                                                 </div>
-
-                                                <!-- Wallet Section -->
-                                                @if (Auth::check() && Auth::user()->wallet_balance > 0)
-                                                    <div class="wallet-section-box mt-3 mb-3"
-                                                        style="padding: 15px; background: #eef7ff; border-radius: 8px; border-left: 4px solid #007bff;">
-                                                        <div class="d-flex align-items-center">
-                                                            <input type="checkbox" id="useWallet" name="use_wallet"
-                                                                value="1"
-                                                                style="width: 20px; height: 20px; margin-right: 12px; cursor: pointer;"
-                                                                data-balance="{{ Auth::user()->wallet_balance }}"
-                                                                data-max-use="20">
-                                                            <label for="useWallet" style="margin: 0; cursor: pointer;">
-                                                                <strong>Use Wallet Balance</strong> (Available:
-                                                                ₹{{ Auth::user()->wallet_balance }})
-                                                                <div style="font-size: 11px; color: #555;">Max ₹20 will be
-                                                                    deducted
-                                                                    from
-                                                                    your wallet for this order</div>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                @endif
-
-                                                <!-- Price Breakdown -->
-                                                <div class="price-breakdown">
-                                                    <div class="price-row">
-                                                        <span>Subtotal</span>
-                                                        <span id="subtotalValue"
-                                                            data-subtotal="{{ $total_price }}">₹{{ $total_price }}</span>
-                                                    </div>
-                                                    <div class="price-row">
-                                                        <span>Shipping Charges</span>
-                                                        <span class="shipping_charges">₹0</span>
-                                                    </div>
-                                                    <div class="price-row" id="walletRow"
-                                                        style="display: none; color: #28a745;">
-                                                        <span>Wallet Discount</span>
-                                                        <span id="walletAmountDisplay">-₹0</span>
-                                                    </div>
-
-                                                    <div class="price-row">
-                                                        <span>Coupon Discount</span>
-                                                        <span>
-                                                            @if (\Illuminate\Support\Facades\Session::has('couponAmount'))
-                                                                <span
-                                                                    id="couponDiscount">{{ number_format((float) \Illuminate\Support\Facades\Session::get('couponAmount', 0), 2) }}</span>
-                                                            @else
-                                                                ₹0
-                                                            @endif
-                                                        </span>
-                                                        <script>
-                                                            (function() {
-                                                                const fmt2 = n => (Number(n) || 0).toFixed(2);
-                                                                const el = document.getElementById('couponDiscount');
-                                                                if (el && el.textContent) {
-                                                                    el.textContent = fmt2(el.textContent);
-                                                                }
-                                                            })();
-                                                        </script>
-                                                    </div>
-                                                    <div class="price-row total-row">
-                                                        <span><strong>Grand Total</strong></span>
-                                                        <span><strong id="grandTotalDisplay"
-                                                                class="grand_total">₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}</strong></span>
-                                                    </div>
+                                                <p>
+                                                    {{ $address['address'] }}<br>
+                                                    {{ $address['city'] }}, {{ $address['state'] }},
+                                                    {{ $address['country'] }}<br>
+                                                    <strong>PIN:</strong> {{ $address['pincode'] }}
+                                                </p>
+                                                <div class="phone-box">
+                                                    <i class="fas fa-phone-alt me-2 text-primary"></i>
+                                                    <span>{{ $address['mobile'] }}</span>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        <!-- Payment Methods -->
-                                        <div class="checkout-section">
-                                            <div class="section-header">
-                                                <h4><i class="fas fa-credit-card"></i> Payment Method</h4>
-                                            </div>
-
-                                            <div class="payment-methods">
-                                                <div class="payment-option codMethod">
-                                                    <input type="radio" class="radio-box" name="payment_gateway"
-                                                        id="cash-on-delivery" value="COD">
-                                                    <label class="payment-label" for="cash-on-delivery">
-                                                        <div class="payment-info">
-                                                            <div class="payment-title">
-                                                                <i class="fas fa-money-bill-wave"></i>
-                                                                <span>Cash on Delivery</span>
-                                                            </div>
-                                                            <small class="payment-note">Pay with cash upon delivery</small>
-                                                        </div>
-                                                        <div class="payment-badge">No extra fee</div>
-                                                    </label>
-                                                </div>
-
-                                                <div class="payment-option razorpayMethod">
-                                                    <input type="radio" class="radio-box" name="payment_gateway"
-                                                        id="razorpay" value="Razorpay">
-                                                    <label class="payment-label" for="razorpay">
-                                                        <div class="payment-info">
-                                                            <div class="payment-title">
-                                                                <i class="fas fa-credit-card"></i>
-                                                                <span>Razorpay</span>
-                                                            </div>
-                                                            <small class="payment-note">Pay securely with Razorpay</small>
-                                                        </div>
-                                                        <div class="payment-badge">Online Payment</div>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Terms & Conditions -->
-                                        <div class="checkout-section">
-                                            <div class="terms-section">
-                                                <input type="checkbox" class="check-box" id="accept" name="accept"
-                                                    value="Yes" title="Please agree to T&C">
-                                                <label class="terms-label" for="accept">
-                                                    I've read and accept the
-                                                    <a href="javascript:void(0)" class="terms-link" data-toggle="modal"
-                                                        data-target="#termsModal">
-                                                        terms & conditions
-                                                    </a>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Terms & Conditions Modal -->
-                                        <div class="modal fade" id="termsModal" tabindex="-1" role="dialog"
-                                            aria-labelledby="termsModalLabel" aria-hidden="true">
-                                            <div class="modal-dialog modal-lg" role="document">
-                                                <div class="modal-content">
-
-                                                    <div class="modal-header">
-                                                        <a href="javascript:void(0)" class="terms-link"
-                                                            data-toggle="modal" data-target="#termsModal">
-                                                            terms & conditions
-                                                        </a>
-
-                                                        {{-- <button type="button" class="close" data-dismiss="modal"
-                                                    aria-label="Close">
-                                                    <span aria-hidden="true">&times;</span>
-                                                </button> --}}
-                                                    </div>
-
-                                                    <div class="modal-body">
-                                                        <!-- Customize your T&C content here -->
-                                                        <p>
-                                                            By completing a purchase on BookHub, you agree to abide by our
-                                                            Terms
-                                                            &
-                                                            Conditions, which are designed to provide
-                                                            clarity, fairness, and a trusted experience for every customer.
-                                                            These
-                                                            terms outline important policies related to
-                                                            product availability, pricing, order confirmation, payment
-                                                            processing,
-                                                            shipping timelines, returns and refunds,
-                                                            cancellations, and the use of your customer information.
-                                                            <br><br>
-                                                            We recommend reviewing these guidelines before placing an order
-                                                            to
-                                                            ensure complete understanding of your rights
-                                                            and responsibilities as a BookHub user. Our team works
-                                                            continuously
-                                                            to
-                                                            maintain accurate product listings, timely
-                                                            deliveries, and secure transactions; however, occasional delays
-                                                            or
-                                                            changes may occur due to unforeseen circumstances.
-                                                            <br><br>
-                                                            By continuing, you acknowledge these conditions and consent to
-                                                            follow
-                                                            the policies set forth. For any clarification
-                                                            or assistance, our customer support team is always ready to
-                                                            help.
-                                                        </p>
-
-                                                    </div>
-
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-primary"
-                                                            data-dismiss="modal">Close</button>
-                                                    </div>
-
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-
-                                        <!-- Place Order Button -->
-                                        <div class="checkout-section">
-                                            <button type="submit" id="placeOrderBtn"
-                                                class="btn btn-primary btn-lg w-100"
-                                                style="padding: 15px; font-weight: 600;">
-                                                Place Order Securely -
-                                                ₹{{ $total_price - \Illuminate\Support\Facades\Session::get('couponAmount') }}
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
-                        </form>
+
+                                <!-- Payment Method Card -->
+                                <div class="modern-card mt-4">
+                                    <div class="card-header-modern">
+                                        <h4><i class="fas fa-credit-card"></i> Payment Method</h4>
+                                    </div>
+                                    <div class="card-content">
+                                        <div class="payment-grid">
+                                            <div class="payment-item-modern codMethod">
+                                                <input type="radio" name="payment_gateway" id="cash-on-delivery"
+                                                    value="COD">
+                                                <label for="cash-on-delivery" class="payment-box-modern">
+                                                    <div class="payment-label-modern">
+                                                        <i class="fas fa-hand-holding-usd"></i>
+                                                        <div>
+                                                            <div>Cash on Delivery</div>
+                                                            <small class="text-muted d-block"
+                                                                style="font-weight: 400; font-size: 12px;">Pay when you
+                                                                receive</small>
+                                                        </div>
+                                                    </div>
+                                                    <span class="payment-status-badge">Available</span>
+                                                </label>
+                                            </div>
+
+                                            <div class="payment-item-modern razorpayMethod">
+                                                <input type="radio" name="payment_gateway" id="razorpay"
+                                                    value="Razorpay">
+                                                <label for="razorpay" class="payment-box-modern">
+                                                    <div class="payment-label-modern">
+                                                        <i class="fas fa-shield-check"></i>
+                                                        <div>
+                                                            <div>Online Payment</div>
+                                                            <small class="text-muted d-block"
+                                                                style="font-weight: 400; font-size: 12px;">Cards, UPI,
+                                                                Netbanking</small>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <img src="https://razorpay.com/favicon.png" width="16"
+                                                            alt="RZP">
+                                                        <span class="payment-status-badge">Secure</span>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4 p-1">
+                                    <div class="form-check custom-checkbox mb-3">
+                                        <input type="checkbox" class="form-check-input" id="accept" name="accept"
+                                            value="Yes">
+                                        <label class="form-check-label ms-2" for="accept"
+                                            style="font-size: 13px; color: #64748b;">
+                                            I agree to the <a href="javascript:void(0)" data-toggle="modal"
+                                                data-target="#termsModal" class="text-primary fw-bold">Terms &
+                                                Conditions</a>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Column: Order Summary -->
+                            <div class="col-lg-5">
+                                <div class="sticky-summary">
+                                    <div class="modern-card">
+                                        <div class="card-header-modern" style="background: #1e293b; border-bottom: none;">
+                                            <h4 style="color: #fff;"><i class="fas fa-shopping-basket text-primary"></i>
+                                                Order Summary</h4>
+                                            <span class="badge bg-primary rounded-pill">{{ count($getCartItems) }}
+                                                Items</span>
+                                        </div>
+                                        <div class="card-content">
+                                            <div class="summary-product-list">
+                                                @php $total_price = 0 @endphp
+                                                @foreach ($getCartItems as $item)
+                                                    @php
+                                                        $getDiscountAttributePrice = \App\Models\Product::getDiscountAttributePrice(
+                                                            $item['product_id'],
+                                                            $item['size'],
+                                                        );
+                                                        $total_price +=
+                                                            $getDiscountAttributePrice['final_price'] *
+                                                            $item['quantity'];
+                                                    @endphp
+                                                    <div class="product-modern">
+                                                        <img src="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
+                                                            class="product-img" alt="item">
+                                                        <div class="product-info-modern">
+                                                            <h6>{{ $item['product']['product_name'] }}</h6>
+                                                            <div class="product-meta">Qty: {{ $item['quantity'] }} | Size:
+                                                                {{ $item['size'] }}</div>
+                                                            <div class="product-price-modern mt-1">
+                                                                ₹{{ number_format($getDiscountAttributePrice['final_price'] * $item['quantity'], 2) }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+
+                                            @if (Auth::check() && Auth::user()->wallet_balance > 0)
+                                                <div class="wallet-promo mb-4 p-3 rounded-3"
+                                                    style="background: #f0f7ff; border: 1px solid #dbeafe;">
+                                                    <div class="form-check d-flex align-items-center mb-0">
+                                                        <input class="form-check-input me-3" type="checkbox"
+                                                            id="useWallet" name="use_wallet" value="1"
+                                                            data-balance="{{ Auth::user()->wallet_balance }}"
+                                                            data-max-use="20">
+                                                        <label class="form-check-label" for="useWallet">
+                                                            <span class="d-block fw-bold"
+                                                                style="font-size: 14px; color: #1e3a8a;">Use Wallet
+                                                                Credit</span>
+                                                            <small class="text-muted">Balance:
+                                                                ₹{{ number_format(Auth::user()->wallet_balance, 2) }}</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            @endif
+
+                                            <div class="totals-box">
+                                                <div class="total-row-modern">
+                                                    <span>Subtotal</span>
+                                                    <span id="subtotalValue"
+                                                        data-subtotal="{{ $total_price }}">₹{{ number_format($total_price, 2) }}</span>
+                                                </div>
+                                                <div class="total-row-modern">
+                                                    <span>Shipping</span>
+                                                    <span class="shipping_charges">₹0.00</span>
+                                                </div>
+                                                <div class="total-row-modern" id="walletRow" style="display: none;">
+                                                    <span class="text-success">Wallet Credit</span>
+                                                    <span class="text-success" id="walletAmountDisplay">-₹0.00</span>
+                                                </div>
+                                                @if (\Illuminate\Support\Facades\Session::has('couponAmount'))
+                                                    <div class="total-row-modern">
+                                                        <span class="text-success">Coupon Discount</span>
+                                                        <span
+                                                            class="text-success">-₹{{ number_format((float) Session::get('couponAmount'), 2) }}</span>
+                                                    </div>
+                                                @endif
+                                                <div class="total-row-modern grand-total">
+                                                    <span>Payable Amount</span>
+                                                    <span id="grandTotalDisplay"
+                                                        class="grand_total">₹{{ number_format($total_price - Session::get('couponAmount', 0), 2) }}</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="place-order-wrapper">
+                                                <button type="submit" id="placeOrderBtn" class="btn-premium">
+                                                    <span>Complete Order</span>
+                                                    <i class="fas fa-arrow-right"></i>
+                                                </button>
+                                                <p class="text-center mt-3 text-muted" style="font-size: 12px;">
+                                                    <i class="fas fa-lock me-1"></i> SSL Encrypted & Secure Checkout
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Terms Modal -->
+                    <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-lg">
+                            <div class="modal-content border-0 shadow-lg">
+                                <div class="modal-header bg-light">
+                                    <h5 class="modal-title fw-bold"><i class="fas fa-file-contract text-primary me-2"></i>
+                                        Terms & Conditions</h5>
+                                    <button type="button" class="btn-close" data-dismiss="modal"
+                                        aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    <p style="line-height: 1.8; color: #475569;">
+                                        By completing a purchase on BookHub, you agree to abide by our terms designed to
+                                        provide a trusted experience.
+                                        This includes policies on product availability, pricing accuracy, shipping
+                                        timelines, and our returns/refund process.
+                                        <br><br>
+                                        We strive for excellence in every delivery. However, in cases of unforeseen
+                                        circumstances, we will keep you informed of any updates to your order status.
+                                    </p>
+                                </div>
+                                <div class="modal-footer border-0">
+                                    <button type="button" class="btn btn-secondary px-4"
+                                        data-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
     </div>
     </div>
 
@@ -817,10 +642,7 @@
 
     <script>
         $(document).ready(function() {
-            // Dynamic Shipping calculation (Keep this small JS for UX)
             function calculateTotals() {
-                console.log('Calculating totals...');
-
                 var addressEl = $('input[name="address_id"]:checked');
                 var useWalletEl = $('#useWallet');
                 var subtotalValueEl = $('#subtotalValue');
@@ -837,7 +659,7 @@
                 }
 
                 var coupon = parseFloat("{{ \Illuminate\Support\Facades\Session::get('couponAmount') ?? 0 }}") ||
-                    0;
+                0;
                 if (addressEl.length > 0) {
                     var addressCoupon = parseFloat(addressEl.attr('coupon_amount'));
                     if (!isNaN(addressCoupon)) {
@@ -863,21 +685,25 @@
                 if (grand < 0) grand = 0;
 
                 var finalTotal = grand.toFixed(2);
-                console.log('Grand Total recalculated:', finalTotal);
-
                 $('#grandTotalDisplay').html('₹' + finalTotal);
-                $('.grand_total').html('₹' + finalTotal); // Keep class update for other elements
+                $('.grand_total').html('₹' + finalTotal);
 
                 var paymentMethod = $('input[name="payment_gateway"]:checked').val();
 
-                // Update Place Order button
-                var btnText = 'Place Order Securely - ₹' + finalTotal;
+                // Update Place Order button with premium style
+                var btnText = 'Complete Order';
+                var icon = 'fa-arrow-right';
+
                 if (paymentMethod == 'Razorpay') {
-                    btnText = 'Proceed to Pay - ₹' + finalTotal;
+                    btnText = 'Pay Securely';
+                    icon = 'fa-shield-check';
                 } else if (paymentMethod == 'COD') {
-                    btnText = 'Confirm COD Order - ₹' + finalTotal;
+                    btnText = 'Confirm Order';
+                    icon = 'fa-check-circle';
                 }
-                $('#placeOrderBtn').html(btnText);
+
+                $('#placeOrderBtn').html('<span>' + btnText + ' - ₹' + finalTotal + '</span><i class="fas ' + icon +
+                    ' ms-2"></i>');
 
                 // Pincode availability toggle
                 if (addressEl.length > 0) {
@@ -895,13 +721,7 @@
                     calculateTotals();
                 });
 
-            // Initial calculation
             calculateTotals();
-
-            // Re-trigger on address radio checked (for fallback)
-            if ($('input[name="address_id"]:checked').length > 0) {
-                $('input[name="address_id"]:checked').trigger('change');
-            }
         });
     </script>
 @endsection
