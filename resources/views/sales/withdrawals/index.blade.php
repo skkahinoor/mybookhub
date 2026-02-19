@@ -40,6 +40,20 @@
 
     <!-- Balance Cards -->
     <div class="row g-4 mb-4">
+         <div class="col-md-4">
+            <div class="card shadow-sm border-0 bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1">Available Balance</p>
+                            <h3 class="mb-0">₹{{ number_format($availableBalance, 2) }}</h3>
+                        </div>
+                        <i class="bi bi-wallet2 fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <div class="col-md-4">
             <div class="card shadow-sm border-0 bg-primary text-white">
                 <div class="card-body">
@@ -53,19 +67,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm border-0 bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="mb-1">Available Balance</p>
-                            <h3 class="mb-0">₹{{ number_format($availableBalance, 2) }}</h3>
-                        </div>
-                        <i class="bi bi-wallet2 fs-1 opacity-50"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+       
         <div class="col-md-4">
             <div class="card shadow-sm border-0 bg-info text-white">
                 <div class="card-body">

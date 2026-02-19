@@ -4,6 +4,16 @@
         {{-- <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" style="height:45px; width:260px;" alt="BookHub Logo" class="brand-logo mb-3"> --}}
         <!-- FAVICONS ICON -->
         {{-- <link rel="icon" type="image/x-icon" href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}" /> --}}
+        @php $navLogo = App\Models\HeaderLogo::first(); @endphp
+
+        {{-- Brand Logo --}}
+        @if ($navLogo && $navLogo->logo)
+            <a class="navbar-brand me-3" href="{{ auth('sales')->check() ? route('sales.dashboard') : '/' }}">
+                <img src="{{ asset('uploads/logos/' . $navLogo->logo) }}" alt="Logo"
+                    style="height:38px; max-width:160px; object-fit:contain;">
+            </a>
+        @endif
+
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
             aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -23,68 +33,69 @@
                     @endif
                 </li>
                 @if (auth('sales')->check())
-                    @if(auth('sales')->user()->can('view_institutions'))
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="salesInstitutionsDropdown" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-building me-1"></i> Institutions
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="salesInstitutionsDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{{ route('sales.institution_managements.index') }}">All
-                                    Institutions</a>
-                            </li>
-                        </ul>
-                    </li>
+                    @if (auth('sales')->user()->can('view_institutions'))
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="salesInstitutionsDropdown"
+                                role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-building me-1"></i> Institutions
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="salesInstitutionsDropdown">
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="{{ route('sales.institution_managements.index') }}">All
+                                        Institutions</a>
+                                </li>
+                            </ul>
+                        </li>
                     @endif
 
-                    @if(auth('sales')->user()->can('view_students'))
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="salesStudentsDropdown" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-lines-fill me-1"></i> Students
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="salesStudentsDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{{ route('sales.students.index') }}">All Students</a>
-                            </li>
-                        </ul>
-                    </li>
+                    @if (auth('sales')->user()->can('view_students'))
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="salesStudentsDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-lines-fill me-1"></i> Students
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="salesStudentsDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('sales.students.index') }}">All Students</a>
+                                </li>
+                            </ul>
+                        </li>
                     @endif
 
-                    @if(auth('sales')->user()->can('view_reports'))
-                    <li class="nav-item" style="padding-top: 4px;">
-                        <x-nav-link :href="route('sales.reports.index')" :active="request()->routeIs('sales.reports.*')" class="nav-link">
-                            <i class="bi bi-file-earmark-text me-1"></i>{{ __('Reports') }}
-                        </x-nav-link>
-                    </li>
+                    @if (auth('sales')->user()->can('view_reports'))
+                        <li class="nav-item" style="padding-top: 4px;">
+                            <x-nav-link :href="route('sales.transactions.index')" :active="request()->routeIs('sales.transactions.*')" class="nav-link">
+                                <i class="bi bi-graph-up me-1"></i>{{ __('Earnings') }}
+                            </x-nav-link>
+                        </li>
                     @endif
 
-                    @if(auth('sales')->user()->can('view_withdrawals'))
-                    <li class="nav-item" style="padding-top: 4px;">
-                        <x-nav-link :href="route('sales.withdrawals.index')" :active="request()->routeIs('sales.withdrawals.*')" class="nav-link">
-                            <i class="bi bi-wallet2 me-1"></i>{{ __('Withdrawals') }}
-                        </x-nav-link>
-                    </li>
+                    @if (auth('sales')->user()->can('view_withdrawals'))
+                        <li class="nav-item" style="padding-top: 4px;">
+                            <x-nav-link :href="route('sales.withdrawals.index')" :active="request()->routeIs('sales.withdrawals.*')" class="nav-link">
+                                <i class="bi bi-wallet2 me-1"></i>{{ __('Withdrawals') }}
+                            </x-nav-link>
+                        </li>
                     @endif
 
-                    @if(auth('sales')->user()->can('view_vendors'))
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="salesVendorsDropdown" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-person-lines-fill me-1"></i> Vendors
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="salesVendorsDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{{ route('sales.vendors.index') }}">All Vendors</a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('sales.vendors.create') }}">Add Vendor</a>
-                            </li>
-                        </ul>
-                    </li>
+                    @if (auth('sales')->user()->can('view_vendors'))
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="salesVendorsDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-person-lines-fill me-1"></i> Vendors
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="salesVendorsDropdown">
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('sales.vendors.index') }}">All Vendors</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('sales.vendors.create') }}">Add Vendor</a>
+                                </li>
+                            </ul>
+                        </li>
                     @endif
-                    
+
                     {{-- <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="salesBlocksDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="bi bi-person-lines-fill me-1"></i> Blocks
@@ -98,8 +109,19 @@
                 @endif
                 <!-- Add more nav-items here -->
             </ul>
-            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-2">
                 @if (auth('sales')->check())
+                    {{-- Wallet Balance pill --}}
+                    <li class="nav-item">
+                        <a href="{{ route('sales.transactions.index') }}"
+                            class="d-flex align-items-center gap-1 text-decoration-none px-3 py-1 rounded-pill fw-semibold"
+                            style="background: linear-gradient(135deg,#667eea,#764ba2); color:#fff; font-size:.85rem; white-space:nowrap;">
+                            <i class="bi bi-wallet2"></i>
+                            ₹{{ number_format(auth('sales')->user()->wallet_balance, 2) }}
+                        </a>
+                    </li>
+
+                    {{-- Profile dropdown --}}
                     <li class="nav-item dropdown">
                         @php
                             $salesUser = auth('sales')->user();

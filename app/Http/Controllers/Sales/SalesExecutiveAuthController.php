@@ -229,7 +229,7 @@ class SalesExecutiveAuthController extends Controller
         $sales = SalesExecutive::create([
             'user_id'  => $user->id,
             'status'   => 0,
-            'income_per_target' => 10,
+
         ]);
 
         // Create notification for admin
@@ -287,9 +287,20 @@ class SalesExecutiveAuthController extends Controller
             ->distinct('block_id')
             ->count('block_id');
 
-        // Calculate earnings
-        $totalEarning = $incomePerTarget * $totalStudents;
-        $todayEarning = $incomePerTarget * $todayStudents;
+        $incomePerTarget = \App\Models\Setting::getValue('default_income_per_target', 10);
+
+        // Calculate earnings from student enrollments (Count * Rate)
+        $totalEarning = $totalStudents * $incomePerTarget;
+        $todayEarning = $todayStudents * $incomePerTarget;
+
+        // Add other wallet credits (excluding student commissions to avoid double counting)
+        $otherCreditsQuery = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
+            ->where('type', 'credit')
+            ->where('description', 'NOT LIKE', 'Commission for Student%')
+            ->where('description', 'NOT LIKE', 'Refund%');
+
+        $totalEarning += (clone $otherCreditsQuery)->sum('amount');
+        $todayEarning += (clone $otherCreditsQuery)->whereDate('created_at', Carbon::today())->sum('amount');
 
         // Prepare graph data for last 30 days
         $days = 30;
@@ -324,10 +335,18 @@ class SalesExecutiveAuthController extends Controller
             $institutionsCount[] = $institutionData[$dateKey] ?? 0;
         }
 
-        // Calculate earnings for graph (students * income_per_target)
         $earningsData = [];
-        foreach ($studentsCount as $count) {
-            $earningsData[] = $count * $incomePerTarget;
+        foreach ($dateKeys as $dateKey) {
+            $dailyStudentCount = $studentData[$dateKey] ?? 0;
+
+            $dailyOtherCredits = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
+                ->where('type', 'credit')
+                ->where('description', 'NOT LIKE', 'Commission for Student%')
+                ->where('description', 'NOT LIKE', 'Refund%')
+                ->whereDate('created_at', $dateKey)
+                ->sum('amount');
+
+            $earningsData[] = ($dailyStudentCount * $incomePerTarget) + $dailyOtherCredits;
         }
 
         return view('sales.dashboard', compact(

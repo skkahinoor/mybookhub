@@ -71,7 +71,7 @@
                                     <select class="form-control" id="country_id" name="country_id">
                                         <option value="">Select Country</option>
                                         @foreach ($countries as $country)
-                                            <option value="{{ $country['id'] }}" 
+                                            <option value="{{ $country['id'] }}"
                                                 @if (old('country_id', $user->country_id ?? '') == $country['id']) selected @endif>
                                                 {{ $country['name'] }}
                                             </option>
@@ -152,11 +152,7 @@
                                         value="{{ old('completed_target', $salesExecutive->completed_target ?? '') }}">
                                 </div>
 
-                                <div class="form-group">
-                                    <label>Income Per Target</label>
-                                    <input type="number" name="income_per_target" class="form-control"
-                                        value="{{ old('income_per_target', $salesExecutive->income_per_target ?? 10) }}">
-                                </div>
+
 
                                 <button type="submit"
                                     class="btn btn-primary">{{ isset($salesExecutive) ? 'Update' : 'Create' }}</button>
@@ -171,111 +167,114 @@
 @endsection
 
 @section('scripts')
-<script>
-    $(document).ready(function() {
-        // Current location values
-        var currentCountryId = @json($user->country_id ?? null);
-        var currentStateId = @json($user->state_id ?? null);
-        var currentDistrictId = @json($user->district_id ?? null);
-        var currentBlockId = @json($user->block_id ?? null);
+    <script>
+        $(document).ready(function() {
+            // Current location values
+            var currentCountryId = @json($user->country_id ?? null);
+            var currentStateId = @json($user->state_id ?? null);
+            var currentDistrictId = @json($user->district_id ?? null);
+            var currentBlockId = @json($user->block_id ?? null);
 
-        // Load states based on country
-        function loadStates(countryId) {
-            if (!countryId) {
-                $('#state_id').html('<option value="">Select State</option>');
-                $('#district_id').html('<option value="">Select District</option>');
-                $('#block_id').html('<option value="">Select Block</option>');
-                return;
-            }
+            // Load states based on country
+            function loadStates(countryId) {
+                if (!countryId) {
+                    $('#state_id').html('<option value="">Select State</option>');
+                    $('#district_id').html('<option value="">Select District</option>');
+                    $('#block_id').html('<option value="">Select Block</option>');
+                    return;
+                }
 
-            $.ajax({
-                url: '/admin/get-states/' + countryId,
-                type: 'GET',
-                success: function(data) {
-                    var options = '<option value="">Select State</option>';
-                    $.each(data, function(key, state) {
-                        var selected = (currentStateId == state.id) ? 'selected' : '';
-                        options += '<option value="' + state.id + '" ' + selected + '>' + state.name + '</option>';
-                    });
-                    $('#state_id').html(options);
-                    
-                    if (currentStateId) {
-                        loadDistricts(currentStateId);
+                $.ajax({
+                    url: '/admin/get-states/' + countryId,
+                    type: 'GET',
+                    success: function(data) {
+                        var options = '<option value="">Select State</option>';
+                        $.each(data, function(key, state) {
+                            var selected = (currentStateId == state.id) ? 'selected' : '';
+                            options += '<option value="' + state.id + '" ' + selected + '>' +
+                                state.name + '</option>';
+                        });
+                        $('#state_id').html(options);
+
+                        if (currentStateId) {
+                            loadDistricts(currentStateId);
+                        }
                     }
-                }
-            });
-        }
-
-        // Load districts based on state
-        function loadDistricts(stateId) {
-            if (!stateId) {
-                $('#district_id').html('<option value="">Select District</option>');
-                $('#block_id').html('<option value="">Select Block</option>');
-                return;
+                });
             }
 
-            $.ajax({
-                url: '/admin/get-districts/' + stateId,
-                type: 'GET',
-                success: function(data) {
-                    var options = '<option value="">Select District</option>';
-                    $.each(data, function(key, district) {
-                        var selected = (currentDistrictId == district.id) ? 'selected' : '';
-                        options += '<option value="' + district.id + '" ' + selected + '>' + district.name + '</option>';
-                    });
-                    $('#district_id').html(options);
-                    
-                    if (currentDistrictId) {
-                        loadBlocks(currentDistrictId);
+            // Load districts based on state
+            function loadDistricts(stateId) {
+                if (!stateId) {
+                    $('#district_id').html('<option value="">Select District</option>');
+                    $('#block_id').html('<option value="">Select Block</option>');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/admin/get-districts/' + stateId,
+                    type: 'GET',
+                    success: function(data) {
+                        var options = '<option value="">Select District</option>';
+                        $.each(data, function(key, district) {
+                            var selected = (currentDistrictId == district.id) ? 'selected' : '';
+                            options += '<option value="' + district.id + '" ' + selected + '>' +
+                                district.name + '</option>';
+                        });
+                        $('#district_id').html(options);
+
+                        if (currentDistrictId) {
+                            loadBlocks(currentDistrictId);
+                        }
                     }
-                }
-            });
-        }
-
-        // Load blocks based on district
-        function loadBlocks(districtId) {
-            if (!districtId) {
-                $('#block_id').html('<option value="">Select Block</option>');
-                return;
+                });
             }
 
-            $.ajax({
-                url: '/admin/get-blocks/' + districtId,
-                type: 'GET',
-                success: function(data) {
-                    var options = '<option value="">Select Block</option>';
-                    $.each(data, function(key, block) {
-                        var selected = (currentBlockId == block.id) ? 'selected' : '';
-                        options += '<option value="' + block.id + '" ' + selected + '>' + block.name + '</option>';
-                    });
-                    $('#block_id').html(options);
+            // Load blocks based on district
+            function loadBlocks(districtId) {
+                if (!districtId) {
+                    $('#block_id').html('<option value="">Select Block</option>');
+                    return;
                 }
+
+                $.ajax({
+                    url: '/admin/get-blocks/' + districtId,
+                    type: 'GET',
+                    success: function(data) {
+                        var options = '<option value="">Select Block</option>';
+                        $.each(data, function(key, block) {
+                            var selected = (currentBlockId == block.id) ? 'selected' : '';
+                            options += '<option value="' + block.id + '" ' + selected + '>' +
+                                block.name + '</option>';
+                        });
+                        $('#block_id').html(options);
+                    }
+                });
+            }
+
+            // Event handlers
+            $('#country_id').change(function() {
+                currentStateId = null;
+                currentDistrictId = null;
+                currentBlockId = null;
+                loadStates($(this).val());
             });
-        }
 
-        // Event handlers
-        $('#country_id').change(function() {
-            currentStateId = null;
-            currentDistrictId = null;
-            currentBlockId = null;
-            loadStates($(this).val());
+            $('#state_id').change(function() {
+                currentDistrictId = null;
+                currentBlockId = null;
+                loadDistricts($(this).val());
+            });
+
+            $('#district_id').change(function() {
+                currentBlockId = null;
+                loadBlocks($(this).val());
+            });
+
+            // Load initial data if editing
+            if (currentCountryId) {
+                loadStates(currentCountryId);
+            }
         });
-
-        $('#state_id').change(function() {
-            currentDistrictId = null;
-            currentBlockId = null;
-            loadDistricts($(this).val());
-        });
-
-        $('#district_id').change(function() {
-            currentBlockId = null;
-            loadBlocks($(this).val());
-        });
-
-        // Load initial data if editing
-        if (currentCountryId) {
-            loadStates(currentCountryId);
-        }
-    });
-</script>
+    </script>
 @endsection

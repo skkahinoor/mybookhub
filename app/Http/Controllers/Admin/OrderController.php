@@ -25,14 +25,15 @@ class OrderController extends Controller
 
 
     // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel
-    public function orders() {
+    public function orders()
+    {
         if (!Auth::guard('admin')->user()->can('view_orders')) {
             abort(403, 'Unauthorized action.');
-        }        
+        }
         $user = Auth::guard('admin')->user();
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        
+
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'orders');
 
@@ -58,7 +59,6 @@ class OrderController extends Controller
                     $query->where('vendor_id', $vendor_id);
                 }
             ])->orderBy('id', 'Desc')->get()->toArray();
-
         } else {
             // Admin or other roles - show ALL orders
             $orders = Order::with('orders_products')->orderBy('id', 'Desc')->get()->toArray();
@@ -173,7 +173,8 @@ class OrderController extends Controller
         ));
     }
 
-    public function updateOrderStatus(Request $request) {
+    public function updateOrderStatus(Request $request)
+    {
         if (!Auth::guard('admin')->user()->can('update_order_status')) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
         }
@@ -183,21 +184,21 @@ class OrderController extends Controller
             $data = $request->all();
             // dd($data);
 
-            if (empty($data['courier_name']) && empty($data['tracking_number']) && $data['order_status'] == 'Shipped') { 
+            if (empty($data['courier_name']) && empty($data['tracking_number']) && $data['order_status'] == 'Shipped') {
 
                 $getResults = Order::pushOrder($data['order_id']);
                 // dd($getResults);
                 if (!isset($getResults['status']) || (isset($getResults['status']) && $getResults['status'] == false)) { // If Status is not coming at all, or it's coming but it's false
                     Session::put('error_message', $getResults['message']); // The message is coming from the Shiprocket API    // Storing Data: https://laravel.com/docs/9.x/session#storing-data
 
-                    return redirect()->back(); 
+                    return redirect()->back();
                 }
             }
 
             // Update Order Status in `orders` table
             Order::where('id', $data['order_id'])->update(['order_status' => $data['order_status']]);
 
-            if (!empty($data['courier_name']) && !empty($data['tracking_number'])) { 
+            if (!empty($data['courier_name']) && !empty($data['tracking_number'])) {
                 Order::where('id', $data['order_id'])->update([
                     'courier_name'    => $data['courier_name'],
                     'tracking_number' => $data['tracking_number']
@@ -209,9 +210,9 @@ class OrderController extends Controller
             $log->save();
 
             $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $data['order_id'])->first()->toArray();
-            $orderDetails    = Order::with('orders_products')->where('id', $data['order_id'])->first()->toArray(); 
+            $orderDetails    = Order::with('orders_products')->where('id', $data['order_id'])->first()->toArray();
 
-            if (!empty($data['courier_name']) && !empty($data['tracking_number'])) { 
+            if (!empty($data['courier_name']) && !empty($data['tracking_number'])) {
                 $email = $deliveryDetails['email'];
 
                 // The email message data/variables that will be passed in to the email view
@@ -225,7 +226,7 @@ class OrderController extends Controller
                     'tracking_number' => $data['tracking_number']
                 ];
 
-                \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) { 
+                \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) {
                     $message->to($email)->subject('Order Status Updated - MultiVendorEcommerceApplication.com.eg');
                 });
             } else { // if there are no Courier Name and Tracking Number data, don't include them in the email
@@ -240,7 +241,7 @@ class OrderController extends Controller
                     'order_status' => $data['order_status']
                 ];
 
-                \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) { 
+                \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) {
                     $message->to($email)->subject('Order Status Updated - MultiVendorEcommerceApplication.com.eg');
                 });
             }
@@ -253,7 +254,8 @@ class OrderController extends Controller
         }
     }
 
-    public function updateOrderItemStatus(Request $request) {
+    public function updateOrderItemStatus(Request $request)
+    {
         if (!Auth::guard('admin')->user()->can('update_order_item_status')) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
         }
@@ -286,13 +288,13 @@ class OrderController extends Controller
             $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $getOrderId['order_id'])->first()->toArray();
 
             $order_item_id = $data['order_item_id'];
-            $orderDetails  = Order::with([ 
-                'orders_products' => function ($query) use ($order_item_id) { 
+            $orderDetails  = Order::with([
+                'orders_products' => function ($query) use ($order_item_id) {
                     $query->where('id', $order_item_id); // `id` column in `orders_products` table
                 }
-            ])->where('id', $getOrderId['order_id'])->first()->toArray(); 
+            ])->where('id', $getOrderId['order_id'])->first()->toArray();
 
-            if (!empty($data['item_courier_name']) && !empty($data['item_tracking_number'])) { 
+            if (!empty($data['item_courier_name']) && !empty($data['item_tracking_number'])) {
                 $email = $deliveryDetails['email'];
 
                 // The email message data/variables that will be passed in to the email view
@@ -634,7 +636,7 @@ class OrderController extends Controller
                 'product_name'    => $product->product_name,
                 'product_isbn'    => $product->product_isbn,
                 'original_price'  => $originalPrice,
-                'discount_percent'=> $discountPercent,
+                'discount_percent' => $discountPercent,
                 'price'           => $discountedPrice, // Use discounted price
                 'quantity'        => $request->quantity,
                 'total'           => $discountedPrice * $request->quantity
@@ -667,11 +669,11 @@ class OrderController extends Controller
 
         // Extra discount as fixed amount
         $amount = round($request->extra_discount, 2);
-        
+
         // Ensure discount doesn't exceed subtotal
         if ($amount > $subTotal) {
             return response()->json([
-                'status' => false, 
+                'status' => false,
                 'message' => 'Discount amount cannot exceed subtotal (₹' . $subTotal . ')'
             ], 400);
         }

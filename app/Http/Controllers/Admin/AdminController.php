@@ -43,9 +43,9 @@ class AdminController extends Controller
         $vendorId  = $admin->vendor_id;
 
         // Default (Admin counts)
-        $vendorsCount         = User::where('role_id',2)->count();
-        $usersCount           = User::where('role_id',4)->count();
-        $salesExecutivesCount = User::where('role_id',3)->count();
+        $vendorsCount         = User::where('role_id', 2)->count();
+        $usersCount           = User::where('role_id', 4)->count();
+        $salesExecutivesCount = User::where('role_id', 3)->count();
         $productsCount        = Product::where('status', 1)->count();
         $ordersCount          = Order::count();
         $couponsCount         = Coupon::where('status', 1)->count();
@@ -712,6 +712,37 @@ class AdminController extends Controller
 
             if ($adminUser->type == 'vendor' && $status == 1) {                        // if the `type` column value (in `admins` table) is 'vendor', and their `status` became 1 (got approved), send them a THIRD confirmation mail
                 Vendor::where('id', $adminUser->vendor_id)->update(['status' => $status]); //
+
+                // Credit commission to Sales Executive if vendor was added by one
+                $salesExecutiveId = $adminUser->added_by;
+                if ($salesExecutiveId) {
+                    $salesExecutive = User::find($salesExecutiveId);
+                    if ($salesExecutive && $salesExecutive->hasRole('sales', 'web')) {
+                        $vendor = Vendor::find($adminUser->vendor_id);
+                        $plan = $vendor->plan ?? 'Free';
+
+                        $description = "Commission for Vendor: " . $adminUser->name . " (#" . $adminUser->id . ") [" . $plan . " Plan]";
+
+                        $exists = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
+                            ->where('description', $description)
+                            ->exists();
+
+                        if (!$exists) {
+                            $settKey = (strtolower($plan) == 'pro') ? 'default_income_per_pro_vendor' : 'default_income_per_vendor';
+                            $amount = \App\Models\Setting::getValue($settKey, (strtolower($plan) == 'pro' ? 100 : 50));
+
+                            $salesExecutive->wallet_balance += $amount;
+                            $salesExecutive->save();
+
+                            \App\Models\WalletTransaction::create([
+                                'user_id' => $salesExecutiveId,
+                                'amount' => $amount,
+                                'type' => 'credit',
+                                'description' => $description,
+                            ]);
+                        }
+                    }
+                }
             }
 
             $adminType = Auth::guard('admin')->user()->type; // `type` is the column in `admins` table    // Retrieving The Authenticated User and getting their `type`      column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances

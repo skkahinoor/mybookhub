@@ -58,8 +58,13 @@ Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function
         // Route::post('students/store-institution-location', 'StudentController@storeInstitutionLocation')->name('sales.students.store_institution_location');
         // Route::get('students/institution/{institution}/address', 'StudentController@getInstitutionAddress')->name('sales.students.institution_address');
 
-        // Sales Reports
-        Route::get('reports', 'ReportController@index')->name('sales.reports.index');
+        // Sales Reports — redirected to merged Earnings page
+        Route::get('reports', function () {
+            return redirect()->route('sales.transactions.index');
+        })->name('sales.reports.index');
+
+        // Sales Transactions History
+        Route::get('transactions', 'TransactionController@index')->name('sales.transactions.index');
 
         // Sales Withdrawals
         Route::resource('withdrawals', 'WithdrawalController')->names([
@@ -92,5 +97,3 @@ Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function
         Route::get('sales-profile-blocks', [\App\Http\Controllers\Sales\ProfileController::class, 'getBlocks'])->name('sales.profile.blocks');
     });
 });
-
-

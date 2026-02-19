@@ -33,24 +33,36 @@ class WithdrawalController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Calculate available balance
-        // Only count approved students (status = 1, role_id = 5)
-        $totalStudents = User::where('added_by', $userId)
-            ->where('role_id', 5)
-            ->where('status', 1)
-            ->count();
-        
-        $incomePerTarget = $salesExecutive->income_per_target ?? 0;
-        $totalEarning = $incomePerTarget * $totalStudents;
+        // Calculate total earning from student enrollments + other wallet credits
+        $incomePerTarget = \App\Models\Setting::getValue('default_income_per_target', 10);
+        $totalStudents = User::where('added_by', $userId)->where('status', 1)->count();
+        $totalEarning = $totalStudents * $incomePerTarget;
+
+        // Add other wallet credits (excluding the ones for students to avoid double counting)
+        $totalEarning += \App\Models\WalletTransaction::where('user_id', $userId)
+            ->where('type', 'credit')
+            ->where('description', 'NOT LIKE', 'Commission for Student%')
+            ->where('description', 'NOT LIKE', 'Refund%')
+            ->sum('amount');
 
         $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
 
-        // Calculate total withdrawn amount
+        // Calculate total withdrawn and pending
         $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
-        $availableBalance = $totalEarning - $totalWithdrawn;
+        $totalPending = Withdrawal::where('sales_executive_id', $salesExecId)
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        $availableBalance = $totalEarning - $totalWithdrawn - $totalPending;
+
+        // Sync wallet_balance for consistency (optional but helps dashboard)
+        if ($user->wallet_balance != $availableBalance) {
+            $user->wallet_balance = $availableBalance;
+            $user->save();
+        }
 
         // Check if available balance meets the minimum withdrawal threshold
         $canWithdraw = $availableBalance >= $minimumWithdrawal;
@@ -82,15 +94,16 @@ class WithdrawalController extends Controller
         $salesExecId = $salesExecutive->id ?? 0;
         $userId = $user->id;
 
-        // Calculate available balance
-        // Only count approved students (status = 1, role_id = 5)
-        $totalStudents = User::where('added_by', $userId)
-            ->where('role_id', 5)
-            ->where('status', 1)
-            ->count();
+        // Calculate total earning from student enrollments + other wallet credits
+        $incomePerTarget = \App\Models\Setting::getValue('default_income_per_target', 10);
+        $totalStudents = User::where('added_by', $userId)->where('status', 1)->count();
+        $totalEarning = $totalStudents * $incomePerTarget;
 
-        $incomePerTarget = $salesExecutive->income_per_target ?? 0;
-        $totalEarning = $incomePerTarget * $totalStudents;
+        $totalEarning += \App\Models\WalletTransaction::where('user_id', $userId)
+            ->where('type', 'credit')
+            ->where('description', 'NOT LIKE', 'Commission for Student%')
+            ->where('description', 'NOT LIKE', 'Refund%')
+            ->sum('amount');
 
         $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
 
@@ -98,7 +111,17 @@ class WithdrawalController extends Controller
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
-        $availableBalance = $totalEarning - $totalWithdrawn;
+        $totalPending = Withdrawal::where('sales_executive_id', $salesExecId)
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        $availableBalance = $totalEarning - $totalWithdrawn - $totalPending;
+
+        // Sync wallet_balance for consistency
+        if ($user->wallet_balance != $availableBalance) {
+            $user->wallet_balance = $availableBalance;
+            $user->save();
+        }
 
         // Check if available balance meets the minimum withdrawal threshold
         if ($availableBalance < $minimumWithdrawal) {
@@ -135,15 +158,16 @@ class WithdrawalController extends Controller
         $salesExecId = $salesExecutive->id ?? 0;
         $userId = $user->id;
 
-        // Calculate available balance
-        // Only count approved students (status = 1, role_id = 5)
-        $totalStudents = User::where('added_by', $userId)
-            ->where('role_id', 5)
-            ->where('status', 1)
-            ->count();
+        // Calculate total earning from student enrollments + other wallet credits
+        $incomePerTarget = \App\Models\Setting::getValue('default_income_per_target', 10);
+        $totalStudents = User::where('added_by', $userId)->where('status', 1)->count();
+        $totalEarning = $totalStudents * $incomePerTarget;
 
-        $incomePerTarget = $salesExecutive->income_per_target ?? 0;
-        $totalEarning = $incomePerTarget * $totalStudents;
+        $totalEarning += \App\Models\WalletTransaction::where('user_id', $userId)
+            ->where('type', 'credit')
+            ->where('description', 'NOT LIKE', 'Commission for Student%')
+            ->where('description', 'NOT LIKE', 'Refund%')
+            ->sum('amount');
 
         $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
 
@@ -151,7 +175,17 @@ class WithdrawalController extends Controller
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
-        $availableBalance = $totalEarning - $totalWithdrawn;
+        $totalPending = Withdrawal::where('sales_executive_id', $salesExecId)
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        $availableBalance = $totalEarning - $totalWithdrawn - $totalPending;
+
+        // Sync wallet_balance for consistency
+        if ($user->wallet_balance != $availableBalance) {
+            $user->wallet_balance = $availableBalance;
+            $user->save();
+        }
 
         // Check if available balance meets the minimum withdrawal threshold
         if ($availableBalance < $minimumWithdrawal) {
@@ -184,6 +218,19 @@ class WithdrawalController extends Controller
             'status' => 'pending',
             'payment_method' => $request->payment_method,
             'remarks' => $request->remarks,
+        ]);
+
+        // Sync User wallet_balance (the new pending withdrawal will be subtracted on next load)
+        // Since we just added a pending one, we should update current available balance
+        $user->wallet_balance -= $request->amount;
+        $user->save();
+
+        // Create wallet transaction record
+        \App\Models\WalletTransaction::create([
+            'user_id' => $user->id,
+            'amount' => $request->amount,
+            'type' => 'debit',
+            'description' => 'Withdrawal Request (#' . $withdrawal->id . ')',
         ]);
 
         // Create notification for admin

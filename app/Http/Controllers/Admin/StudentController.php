@@ -148,8 +148,39 @@ class StudentController extends Controller
         ]);
 
         $student = User::where('role_id', 5)->findOrFail($id);
+        $oldStatus = $student->status;
         $student->status = (int) $data['status'];
         $student->save();
+
+        // Credit commission if approved and was not approved before
+        if ($student->status == 1 && $oldStatus != 1) {
+            $salesExecutiveId = $student->added_by;
+            if ($salesExecutiveId) {
+                $salesExecutive = User::find($salesExecutiveId);
+                // Check if they are actually a sales executive (role 3)
+                if ($salesExecutive && $salesExecutive->hasRole('sales', 'web')) {
+                    // Check if commission already credited for this student
+                    $description = "Commission for Student: " . $student->name . " (#" . $student->id . ")";
+                    $exists = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
+                        ->where('description', $description)
+                        ->exists();
+
+                    if (!$exists) {
+                        $amount = \App\Models\Setting::getValue('default_income_per_target', 10);
+
+                        $salesExecutive->wallet_balance += $amount;
+                        $salesExecutive->save();
+
+                        \App\Models\WalletTransaction::create([
+                            'user_id' => $salesExecutiveId,
+                            'amount' => $amount,
+                            'type' => 'credit',
+                            'description' => $description,
+                        ]);
+                    }
+                }
+            }
+        }
 
         return response()->json([
             'success' => true,

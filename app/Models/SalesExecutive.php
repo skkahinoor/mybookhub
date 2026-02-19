@@ -23,6 +23,8 @@ class SalesExecutive extends Authenticatable
         'total_target',
         'completed_target',
         'income_per_target',
+        'income_per_vendor',
+        'income_per_pro_vendor',
         'status',
     ];
 
@@ -35,5 +37,3 @@ class SalesExecutive extends Authenticatable
         return $this->belongsTo(User::class, 'user_id');
     }
 }
-
-

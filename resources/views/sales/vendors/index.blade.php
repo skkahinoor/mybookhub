@@ -5,114 +5,164 @@
 @endsection
 
 @section('content')
-<div class="container-fluid py-4">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <div class="container-fluid py-4">
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="page-title mb-0">Vendor Management</h2>
-            <p class="text-muted mb-0">Review vendors added by sales team</p>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="page-title mb-0">Vendor Management</h2>
+                <p class="text-muted mb-0">Review vendors added by sales team</p>
+            </div>
+            @if (Auth::guard('sales')->user()->can('add_vendors'))
+                <a href="{{ route('sales.vendors.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add New Vendor
+                </a>
+            @endif
         </div>
-        @if(Auth::guard('sales')->user()->can('add_vendors'))
-        <a href="{{ route('sales.vendors.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Vendor
-        </a>
+
+        {{-- Vendor Registration Links --}}
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="fas fa-link text-primary me-2"></i> Free Plan Referral</h5>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="freePlanLink" readonly
+                                value="{{ route('vendor.register', ['ref' => Auth::guard('sales')->id(), 'plan' => 'free']) }}">
+                            <button class="btn btn-outline-primary" type="button" onclick="copyLink('freePlanLink')">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <a href="{{ route('vendor.register', ['ref' => Auth::guard('sales')->id(), 'plan' => 'free']) }}"
+                                target="_blank" class="btn btn-primary">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="fas fa-gem text-warning me-2"></i> Pro Plan Referral</h5>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="proPlanLink" readonly
+                                value="{{ route('vendor.register', ['ref' => Auth::guard('sales')->id(), 'plan' => 'pro']) }}">
+                            <button class="btn btn-outline-warning" type="button" onclick="copyLink('proPlanLink')">
+                                <i class="fas fa-copy"></i> Copy
+                            </button>
+                            <a href="{{ route('vendor.register', ['ref' => Auth::guard('sales')->id(), 'plan' => 'pro']) }}"
+                                target="_blank" class="btn btn-warning text-white">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Session::has('success_message'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <strong>Success!</strong> {{ Session::get('success_message') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         @endif
-    </div>
 
-    @if(Session::has('success_message'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <strong>Success!</strong> {{ Session::get('success_message') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table id="vendorsTable" class="table table-striped table-bordered align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Mobile</th>
-                            <th>Status</th>
-                            {{-- <th>Confirmed</th> --}}
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($vendors as $index => $vendor)
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="vendorsTable" class="table table-striped table-bordered align-middle">
+                        <thead class="table-dark">
                             <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $vendor->user->name ?? 'N/A' }}</td>
-                                <td>{{ $vendor->user->email ?? 'N/A' }}</td>
-                                <td>{{ $vendor->user->phone ?? 'N/A' }}</td>
-                                <td>
-                                    @if($vendor->status)
-                                        <span class="badge bg-success">Active</span>
-                                    @else
-                                        <span class="badge bg-warning text-dark">Pending</span>
-                                    @endif
-                                </td>
-                                {{-- <td>
-                                    @if($vendor->confirm === 'Yes')
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Mobile</th>
+                                <th>Status</th>
+                                {{-- <th>Confirmed</th> --}}
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($vendors as $index => $vendor)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $vendor->user->name ?? 'N/A' }}</td>
+                                    <td>{{ $vendor->user->email ?? 'N/A' }}</td>
+                                    <td>{{ $vendor->user->phone ?? 'N/A' }}</td>
+                                    <td>
+                                        @if ($vendor->status)
+                                            <span class="badge bg-success">Active</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                        @endif
+                                    </td>
+                                    {{-- <td>
+                                    @if ($vendor->confirm === 'Yes')
                                         <span class="badge bg-info text-dark">Yes</span>
                                     @else
                                         <span class="badge bg-secondary">No</span>
                                     @endif
                                 </td> --}}
-                                <td>
-                                    @if(Auth::guard('sales')->user()->can('view_vendors'))
-                                    <a href="{{ route('sales.vendors.show', $vendor) }}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    @endif
-                                    
-                                    @if($vendor->status == 0 && Auth::guard('sales')->user()->can('delete_vendors'))
-                                        <form action="{{ route('sales.vendors.destroy', $vendor) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this vendor? This will remove the linked admin account too.');">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="6" class="text-center py-4">No vendors found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                    <td>
+                                        @if (Auth::guard('sales')->user()->can('view_vendors'))
+                                            <a href="{{ route('sales.vendors.show', $vendor) }}"
+                                                class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        @endif
+
+                                        @if ($vendor->status == 0 && Auth::guard('sales')->user()->can('delete_vendors'))
+                                            <form action="{{ route('sales.vendors.destroy', $vendor) }}" method="POST"
+                                                class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                    onclick="return confirm('Delete this vendor? This will remove the linked admin account too.');">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">No vendors found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-<script>
-    (function() {
-        $(function() {
-            $('#vendorsTable').DataTable({
-                pageLength: 10,
-                ordering: true,
-                searching: true,
-                lengthChange: true,
-                responsive: true,
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Search vendors..."
-                }
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        (function() {
+            $(function() {
+                $('#vendorsTable').DataTable({
+                    pageLength: 10,
+                    ordering: true,
+                    searching: true,
+                    lengthChange: true,
+                    responsive: true,
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Search vendors..."
+                    }
+                });
             });
-        });
-    })();
-</script>
-@endsection
+        })();
 
+        function copyLink(inputId) {
+            var copyText = document.getElementById(inputId);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile devices
+            navigator.clipboard.writeText(copyText.value);
+            alert("Referral link copied: " + copyText.value);
+        }
+    </script>
+@endsection

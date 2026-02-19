@@ -126,6 +126,10 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Coming Soon Settings
         Route::match(['get', 'post'], 'coming-soon-settings', [AdminController::class, 'comingSoonSettings'])->name('admin.coming.soon.settings');
 
+        // Commission Settings
+        Route::get('commission-settings', [App\Http\Controllers\Admin\CommissionSettingsController::class, 'index'])->name('admin.commission.settings');
+        Route::post('commission-settings/update', [App\Http\Controllers\Admin\CommissionSettingsController::class, 'update'])->name('admin.commission.settings.update');
+
         // Publishers
         Route::get('publisher', 'PublisherController@publisher');
         Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('admin.updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php

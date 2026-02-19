@@ -61,9 +61,11 @@
 
                             {{-- Vendor Registration with OTP (similar to Sales) --}}
                             <form method="POST" action="{{ route('vendor.register.submit') }}" id="vendorRegisterForm">
-                                @csrf
                                 @if (!empty($inviteToken))
                                     <input type="hidden" name="invite_token" value="{{ $inviteToken }}">
+                                @endif
+                                @if (!empty($ref))
+                                    <input type="hidden" name="ref" value="{{ $ref }}">
                                 @endif
 
                                 <!-- Location Search -->
@@ -82,8 +84,8 @@
                                 <div class="row">
                                     <div class="col-6">
                                         <div class="form-group mb-3">
-                                            <input type="text" name="name" class="form-control" placeholder="Vendor Name"
-                                                required>
+                                            <input type="text" name="name" class="form-control"
+                                                placeholder="Vendor Name" required>
                                         </div>
                                     </div>
                                     <div class="col-6">
@@ -93,7 +95,7 @@
                                         </div>
                                     </div>
                                 </div>
-                               
+
                                 <div class="form-group mb-3">
                                     <input type="number" name="mobile" class="form-control"
                                         placeholder="Mobile Number" required>
@@ -125,7 +127,7 @@
                                                 onclick="selectPlan('free')">
                                                 <div class="card-body text-center p-3">
                                                     <input type="radio" name="plan" value="free" id="plan_free"
-                                                        {{ !empty($isInvitePro) || !empty($giveNewUsersProPlan) ? '' : 'checked' }}
+                                                        {{ (isset($plan) && $plan === 'free') || (!empty($isInvitePro) || !empty($giveNewUsersProPlan) ? '' : 'checked') ? 'checked' : '' }}
                                                         style="display: none;">
                                                     <h6 class="mb-1 fw-bold">Free Plan</h6>
                                                     <p class="mb-1"><span class="fs-4 fw-bold">₹0</span><small
@@ -143,7 +145,7 @@
                                                 <div class="card-body text-center p-3">
                                                     <input type="radio" name="plan" value="pro"
                                                         id="plan_pro"
-                                                        {{ !empty($isInvitePro) || !empty($giveNewUsersProPlan) ? 'checked' : '' }}
+                                                        {{ (isset($plan) && $plan === 'pro') || (!empty($isInvitePro) || !empty($giveNewUsersProPlan) ? 'checked' : '') ? 'checked' : '' }}
                                                         style="display: none;">
                                                     <span class="badge text-white bg-primary mb-1">Recommended</span>
                                                     <h6 class="mb-1 fw-bold">Pro Plan</h6>
@@ -310,7 +312,8 @@
 
         // Initialize default selection
         $(document).ready(function() {
-            const defaultPlan = "{{ !empty($giveNewUsersProPlan) || !empty($isInvitePro) ? 'pro' : 'free' }}";
+            const defaultPlan =
+                "{{ isset($plan) && in_array($plan, ['free', 'pro']) ? $plan : (!empty($giveNewUsersProPlan) || !empty($isInvitePro) ? 'pro' : 'free') }}";
             selectPlan(defaultPlan);
         });
 

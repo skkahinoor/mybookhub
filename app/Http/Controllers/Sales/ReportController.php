@@ -25,8 +25,8 @@ class ReportController extends Controller
         $salesExecutive = Auth::guard('sales')->user();
         $salesExecutiveId = $salesExecutive->id;
 
-        // Get income_per_target from sales executive relation
-        $incomePerTarget = $salesExecutive->salesExecutive->income_per_target ?? 0;
+        // Get income_per_target from global settings
+        $incomePerTarget = \App\Models\Setting::getValue('default_income_per_target', 10);
 
         // Only count approved students (status = 1, role_id = 5) for stats/earnings
         $approvedStudents = User::where('added_by', $salesExecutiveId)
@@ -52,11 +52,23 @@ class ReportController extends Controller
         // Calculate total students
         $totalStudentsCount = (clone $approvedStudents)->count();
 
-        // Calculate earnings
-        $todayEarning = $incomePerTarget * $todayStudentsCount;
-        $weeklyEarning = $incomePerTarget * $weeklyStudentsCount;
-        $monthlyEarning = $incomePerTarget * $monthlyStudentsCount;
-        $totalEarning = $incomePerTarget * $totalStudentsCount;
+        // Calculate earnings from student enrollments (Count * Rate)
+        $todayEarning = $todayStudentsCount * $incomePerTarget;
+        $weeklyEarning = $weeklyStudentsCount * $incomePerTarget;
+        $monthlyEarning = $monthlyStudentsCount * $incomePerTarget;
+        $totalEarning = $totalStudentsCount * $incomePerTarget;
+
+        // Add other wallet credits (e.g., Vendor Commissions)
+        // We exclude 'Commission for Student' to avoid double counting if new logic is active
+        $otherCreditsQuery = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
+            ->where('type', 'credit')
+            ->where('description', 'NOT LIKE', 'Commission for Student%')
+            ->where('description', 'NOT LIKE', 'Refund%');
+
+        $todayEarning += (clone $otherCreditsQuery)->whereDate('created_at', Carbon::today())->sum('amount');
+        $weeklyEarning += (clone $otherCreditsQuery)->whereDate('created_at', '>=', Carbon::now()->startOfWeek())->sum('amount');
+        $monthlyEarning += (clone $otherCreditsQuery)->whereYear('created_at', Carbon::now()->year)->whereMonth('created_at', Carbon::now()->month)->sum('amount');
+        $totalEarning += (clone $otherCreditsQuery)->sum('amount');
 
         // Prepare graph data for last 30 days
         $days = 30;
@@ -84,10 +96,23 @@ class ReportController extends Controller
             $studentsCount[] = $studentData[$dateKey] ?? 0;
         }
 
-        // Calculate earnings for graph (students * income_per_target)
+        // Calculate earnings for graph from both sources
         $earningsData = [];
-        foreach ($studentsCount as $count) {
-            $earningsData[] = $count * $incomePerTarget;
+        foreach ($dateKeys as $dateKey) {
+            $dailyStudentCount = User::where('added_by', $salesExecutiveId)
+                ->where('role_id', 5)
+                ->where('status', 1)
+                ->whereDate('created_at', $dateKey)
+                ->count();
+
+            $dailyOtherCredits = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
+                ->where('type', 'credit')
+                ->where('description', 'NOT LIKE', 'Commission for Student%')
+                ->where('description', 'NOT LIKE', 'Refund%')
+                ->whereDate('created_at', $dateKey)
+                ->sum('amount');
+
+            $earningsData[] = ($dailyStudentCount * $incomePerTarget) + $dailyOtherCredits;
         }
 
         return view('sales.reports.index')->with(compact(
@@ -108,4 +133,3 @@ class ReportController extends Controller
         ));
     }
 }
-

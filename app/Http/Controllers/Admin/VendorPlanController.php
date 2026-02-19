@@ -19,18 +19,18 @@ class VendorPlanController extends Controller
     public function createOrder($vendor_id)
     {
         $vendor = Vendor::findOrFail($vendor_id);
-        
+
         if ($vendor->plan === 'pro' && $vendor->plan_expires_at && $vendor->plan_expires_at->isFuture()) {
             return redirect()->route('admin.login')
                 ->with('error_message', 'You already have an active Pro plan.');
         }
 
         // Get dynamic plan price from settings
-        $amount = (int) Setting::getValue('pro_plan_price'); 
+        $amount = (int) Setting::getValue('pro_plan_price');
 
         try {
             $client = new Client();
-            
+
             // Create Razorpay Order
             $response = $client->post('https://api.razorpay.com/v1/orders', [
                 'auth' => [
@@ -38,7 +38,7 @@ class VendorPlanController extends Controller
                     env('RAZORPAY_KEY_SECRET')
                 ],
                 'json' => [
-                    'amount' => $amount*100,
+                    'amount' => $amount * 100,
                     'currency' => 'INR',
                     'receipt' => 'vendor_plan_' . $vendor->id . '_' . time(),
                     'notes' => [
@@ -64,7 +64,6 @@ class VendorPlanController extends Controller
                 'currency' => $orderData['currency'],
                 'key_id' => env('RAZORPAY_KEY_ID'),
             ]);
-
         } catch (\Exception $e) {
             Log::error('Razorpay Order Creation Failed: ' . $e->getMessage());
             return redirect()->route('vendor.register')
@@ -87,7 +86,8 @@ class VendorPlanController extends Controller
         $vendor = Vendor::findOrFail($request->vendor_id);
 
         // Verify signature
-        $generatedSignature = hash_hmac('sha256', 
+        $generatedSignature = hash_hmac(
+            'sha256',
             $request->razorpay_order_id . '|' . $request->razorpay_payment_id,
             env('RAZORPAY_KEY_SECRET')
         );
@@ -102,7 +102,7 @@ class VendorPlanController extends Controller
         // Verify payment with Razorpay API
         try {
             $client = new Client();
-            
+
             $response = $client->get('https://api.razorpay.com/v1/payments/' . $request->razorpay_payment_id, [
                 'auth' => [
                     env('RAZORPAY_KEY_ID'),
@@ -115,13 +115,42 @@ class VendorPlanController extends Controller
             if ($paymentData['status'] === 'captured' || $paymentData['status'] === 'authorized') {
                 // Update vendor with Pro plan
                 $vendor->update([
-                    'plan' => 'pro',
-                    'plan_started_at' => now(),
-                    'plan_expires_at' => now()->addMonth(),
-                    'razorpay_order_id' => $request->razorpay_order_id,
+                    'plan'                => 'pro',
+                    'plan_started_at'     => now(),
+                    'plan_expires_at'     => now()->addMonth(),
+                    'razorpay_order_id'   => $request->razorpay_order_id,
                     'razorpay_payment_id' => $request->razorpay_payment_id,
-                    'razorpay_signature' => $request->razorpay_signature,
+                    'razorpay_signature'  => $request->razorpay_signature,
                 ]);
+
+                // === Credit Pro plan commission to referring Sales Executive ===
+                $vendorUser = \App\Models\User::find($vendor->user_id);
+                if ($vendorUser && $vendorUser->added_by) {
+                    $salesExecutive = \App\Models\User::find($vendorUser->added_by);
+                    if ($salesExecutive && $salesExecutive->hasRole('sales', 'web')) {
+                        $description = "Commission for Vendor: {$vendorUser->name} (#{$vendorUser->id}) [pro Plan]";
+
+                        // Avoid double crediting on duplicate payment attempts
+                        $alreadyPaid = \App\Models\WalletTransaction::where('user_id', $salesExecutive->id)
+                            ->where('description', $description)
+                            ->exists();
+
+                        if (!$alreadyPaid) {
+                            $amount = (float) \App\Models\Setting::getValue('default_income_per_pro_vendor', 100);
+
+                            $salesExecutive->wallet_balance += $amount;
+                            $salesExecutive->save();
+
+                            \App\Models\WalletTransaction::create([
+                                'user_id'     => $salesExecutive->id,
+                                'amount'      => $amount,
+                                'type'        => 'credit',
+                                'description' => $description,
+                            ]);
+                        }
+                    }
+                }
+                // === End Pro plan commission ===
 
                 return redirect()->route('vendor.payment.success')
                     ->with('success_message', 'Payment successful! Pro plan activated.');
@@ -129,7 +158,6 @@ class VendorPlanController extends Controller
                 return redirect()->route('vendor.payment.failure')
                     ->with('error_message', 'Payment not completed. Please try again.');
             }
-
         } catch (\Exception $e) {
             Log::error('Razorpay Payment Verification Failed: ' . $e->getMessage());
             return redirect()->route('vendor.payment.failure')
@@ -159,7 +187,7 @@ class VendorPlanController extends Controller
     public function upgrade(Request $request)
     {
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        
+
         if (!$admin || $admin->type !== 'vendor' || !$admin->vendor_id) {
             return redirect('admin/login')
                 ->with('error_message', 'Unauthorized access.');
@@ -181,7 +209,7 @@ class VendorPlanController extends Controller
     public function downgrade(Request $request)
     {
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        
+
         if (!$admin || $admin->type !== 'vendor' || !$admin->vendor_id) {
             return redirect('admin/login')
                 ->with('error_message', 'Unauthorized access.');
@@ -209,7 +237,7 @@ class VendorPlanController extends Controller
     public function renew(Request $request)
     {
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        
+
         if (!$admin || $admin->type !== 'vendor' || !$admin->vendor_id) {
             return redirect('admin/login')
                 ->with('error_message', 'Unauthorized access.');
@@ -238,25 +266,25 @@ class VendorPlanController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        
+
         if (!$admin || $admin->type !== 'vendor' || !$admin->vendor_id) {
             return redirect('admin/login')
                 ->with('error_message', 'Unauthorized access.');
         }
 
         $vendor = Vendor::findOrFail($admin->vendor_id);
-        
+
         // Count products this month for Free plan
         $productsThisMonth = 0;
         $freePlanBookLimit = (int) Setting::getValue('free_plan_book_limit', 100);
         if ($vendor->plan === 'free') {
             $currentMonthStart = now()->startOfMonth();
-            $productsThisMonth = \App\Models\Product::whereHas('firstAttribute', function($q) use ($vendor) {
+            $productsThisMonth = \App\Models\Product::whereHas('firstAttribute', function ($q) use ($vendor) {
                 $q->where('vendor_id', $vendor->id)
-                  ->where('admin_type', 'vendor');
+                    ->where('admin_type', 'vendor');
             })
-            ->where('created_at', '>=', $currentMonthStart)
-            ->count();
+                ->where('created_at', '>=', $currentMonthStart)
+                ->count();
         }
 
         // Get dynamic plan price

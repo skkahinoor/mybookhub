@@ -25,9 +25,9 @@ class SalesExecutiveController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'view_sales');
         $title = 'Sales Executives';
-        
+
         // Fetch Users with role 'sales' from the 'web' guard
-        $salesExecutives = User::role('sales', 'web')->with('salesExecutive')->orderBy('id','desc')->get();
+        $salesExecutives = User::role('sales', 'web')->with('salesExecutive')->orderBy('id', 'desc')->get();
         // Map to structure expected by view if necessary (or update view to use user->salesExecutive relationship)
         // Assuming view uses $sales->name, $sales->email, $sales->status directly on the object iterated.
         // User has name, email, status. So it should be fine.
@@ -45,7 +45,7 @@ class SalesExecutiveController extends Controller
         $salesExecutive = null;
         $user = null;
         $isEdit = false;
-        
+
         if (! empty($id)) {
             if (!Auth::guard('admin')->user()->can('edit_sales')) {
                 abort(403, 'Unauthorized action.');
@@ -64,7 +64,7 @@ class SalesExecutiveController extends Controller
 
         if ($request->isMethod('post')) {
             $data = $request->all();
-            
+
             // Validate User Email
             $userId = $isEdit ? $user->id : null;
             $emailRule = 'required|email|unique:users,email';
@@ -97,12 +97,12 @@ class SalesExecutiveController extends Controller
                 'pincode' => $data['pincode'] ?? null,
                 'status' => 1, // Default active? Or $data['status']
             ];
-            
+
 
 
             if (!$isEdit) {
                 $userData['password'] = Hash::make($data['password']);
-                
+
                 // Dynamic Role Fetching
                 $role = Role::where('name', 'sales')->where('guard_name', 'web')->first();
                 $userData['role_id'] = $role ? $role->id : 3;
@@ -127,7 +127,7 @@ class SalesExecutiveController extends Controller
                 'upi_id' => $data['upi_id'] ?? null,
                 'total_target' => $data['total_target'] ?? null,
                 'completed_target' => $data['completed_target'] ?? null,
-                'income_per_target' => $data['income_per_target'] ?? 10,
+
                 'status' => 1,
                 'user_id' => $user->id,
             ];
@@ -155,13 +155,13 @@ class SalesExecutiveController extends Controller
 
         // ID is User ID
         $user = User::findOrFail($id);
-        
+
         // Delete profile
         SalesExecutive::where('user_id', $id)->delete();
-        
+
         // Delete user
         $user->delete();
-        
+
         return redirect()->back()->with('success_message', 'Sales Executive deleted successfully!');
     }
 
@@ -185,7 +185,7 @@ class SalesExecutiveController extends Controller
 
         // Update User
         User::where('id', $userId)->update(['status' => $newStatus]);
-        
+
         // Update Profile
         SalesExecutive::where('user_id', $userId)->update(['status' => $newStatus]);
 
@@ -223,5 +223,3 @@ class SalesExecutiveController extends Controller
         ]);
     }
 }
-
-

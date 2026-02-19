@@ -166,7 +166,7 @@ class VendorController extends Controller
     /**
      * AJAX: Send OTP for vendor registration (like sales.register)
      */
-    
+
     public function sendOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -270,13 +270,19 @@ class VendorController extends Controller
         $storedInviteToken = Setting::getValue('invite_pro_token');
         $isInvitePro = $inviteToken && $storedInviteToken && hash_equals($storedInviteToken, $inviteToken);
 
+        // Sales referral and plan pre-selection
+        $ref = $request->query('ref');
+        $plan = $request->query('plan', 'free');
+
         return view('admin.register-vendor', compact(
             'proPlanPrice',
             'freePlanBookLimit',
             'giveNewUsersProPlan',
             'proPlanTrialDurationDays',
             'inviteToken',
-            'isInvitePro'
+            'isInvitePro',
+            'ref',
+            'plan'
         ));
     }
 
@@ -378,8 +384,7 @@ class VendorController extends Controller
                     'password' => Hash::make($data['password']),
                     'role_id'  => $role ? $role->id : null,
                     'status'   => isset($data['status']) ? 1 : 0,
-                    // If we still need to support legacy Admin table/field:
-                    // 'type'     => 'vendor', 
+                    'added_by' => $data['ref'] ?? null,
                 ]);
 
                 if ($role) {

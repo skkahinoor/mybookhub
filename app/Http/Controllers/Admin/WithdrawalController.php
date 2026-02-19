@@ -81,13 +81,29 @@ class WithdrawalController extends Controller
         $withdrawal->remarks = $request->remarks;
 
         if ($request->status == 'completed' || $request->status == 'approved') {
-            $withdrawal->processed_at = Carbon::now();
+            $withdrawal->processed_at = \Carbon\Carbon::now();
             if ($request->filled('transaction_id')) {
                 $withdrawal->transaction_id = $request->transaction_id;
             }
         }
 
         $withdrawal->save();
+
+        // If rejected, refund the wallet
+        if ($request->status == 'rejected' && $oldStatus != 'rejected') {
+            $user = $withdrawal->salesExecutive->user;
+            if ($user) {
+                $user->wallet_balance += $withdrawal->amount;
+                $user->save();
+
+                \App\Models\WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'amount' => $withdrawal->amount,
+                    'type' => 'credit',
+                    'description' => 'Refund for Rejected Withdrawal (#' . $withdrawal->id . ')',
+                ]);
+            }
+        }
 
         $statusMessages = [
             'approved' => 'Withdrawal request approved successfully.',
