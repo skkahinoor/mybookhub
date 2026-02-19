@@ -128,7 +128,7 @@ class VendorPlanController extends Controller
                 if ($vendorUser && $vendorUser->added_by) {
                     $salesExecutive = \App\Models\User::find($vendorUser->added_by);
                     if ($salesExecutive && $salesExecutive->hasRole('sales', 'web')) {
-                        $description = "Commission for Vendor: {$vendorUser->name} (#{$vendorUser->id}) [pro Plan]";
+                        $description = "Commission for Vendor: {$vendorUser->name} (#{$vendorUser->id}) [Pro Plan]";
 
                         // Avoid double crediting on duplicate payment attempts
                         $alreadyPaid = \App\Models\WalletTransaction::where('user_id', $salesExecutive->id)
