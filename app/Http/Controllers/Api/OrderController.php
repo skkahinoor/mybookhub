@@ -380,10 +380,10 @@ class OrderController extends Controller
         if ($resp = $this->checkAccess($request)) return $resp;
 
         $request->validate([
-            'customer_name'    => 'required|string|max:255',
+            // 'customer_name'    => 'required|string|max:255',
             'customer_mobile'  => 'required|string|max:20',
-            'customer_email'   => 'nullable|email',
-            'customer_address' => 'nullable|string',
+            // 'customer_email'   => 'nullable|email',
+            // 'customer_address' => 'nullable|string',
 
             'extra_discount'   => 'nullable|numeric|min:0',
             'coupon_code'      => 'nullable|string',
@@ -494,10 +494,10 @@ class OrderController extends Controller
             /* ================= CREATE ORDER ================= */
             $order = Order::create([
                 'user_id'          => 0,
-                'name'             => $request->customer_name,
-                'mobile'           => $request->customer_mobile,
-                'email'            => $request->customer_email ?? 'N/A',
-                'address'          => $request->customer_address ?? 'N/A',
+                'name'             => $request->input('customer_name', 'N/A'),
+                'mobile'           => $request->input('customer_mobile'),
+                'email'            => $request->input('customer_email', 'N/A'),
+                'address'          => $request->input('customer_address', 'N/A'),
                 'city'             => 'N/A',
                 'state'            => 'N/A',
                 'country'          => 'N/A',
