@@ -560,8 +560,8 @@ class ProductsController extends Controller
         $avgRating = $ratingCount ? round($ratingSum / $ratingCount, 2) : 0;
         $avgStarRating = $ratingCount ? round($ratingSum / $ratingCount) : 0;
 
-        $totalUsers = User::count();
-        $totalVendors = Vendor::count();
+        $totalUsers = User::role('user', 'web')->count();
+        $totalVendors = Vendor::role('vendor', 'web')->count();
         $totalProducts = Product::where('status', 1)->count();
         $totalAuthors = Author::where('status', 1)->count();
 

@@ -19,7 +19,7 @@ class StudentController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'students');
 
-        $students = User::where('role_id', 5)->with('institution')->orderBy('id', 'desc')->get();
+        $students = User::role('student', 'web')->with('institution')->orderBy('id', 'desc')->get();
 
         return view('admin.students.index')->with(compact('students', 'logos', 'headerLogo'));
     }
@@ -147,7 +147,7 @@ class StudentController extends Controller
             'status' => 'required|in:0,1',
         ]);
 
-        $student = User::where('role_id', 5)->findOrFail($id);
+        $student = User::role('student', 'web')->findOrFail($id);
         $oldStatus = $student->status;
         $student->status = (int) $data['status'];
         $student->save();
