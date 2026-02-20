@@ -716,33 +716,52 @@ class AdminController extends Controller
             if ($adminUser->type == 'vendor' && $status == 1) {                        // if the `type` column value (in `admins` table) is 'vendor', and their `status` became 1 (got approved), send them a THIRD confirmation mail
                 Vendor::where('id', $adminUser->vendor_id)->update(['status' => $status]); //
 
-                // Credit commission to Sales Executive if vendor was added by one
+                // Commission payout to Sales Executive
                 $salesExecutiveId = $adminUser->added_by;
                 if ($salesExecutiveId) {
                     $salesExecutive = User::find($salesExecutiveId);
                     if ($salesExecutive && $salesExecutive->hasRole('sales', 'web')) {
                         $vendor = Vendor::find($adminUser->vendor_id);
-                        $plan = $vendor->plan ?? 'Free';
+                        $currentPlan = $vendor->plan ?? 'free';
 
-                        $description = "Commission for Vendor: " . $adminUser->name . " (#" . $adminUser->id . ") [" . $plan . " Plan]";
-
-                        $exists = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
-                            ->where('description', $description)
+                        // 1. Enrollment Commission (Free) - Always paid once for any vendor becoming active
+                        $freeDesc = "Commission for Vendor: " . $adminUser->name . " (#" . $adminUser->id . ") [Free Plan]";
+                        $freeExists = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
+                            ->where('description', $freeDesc)
                             ->exists();
 
-                        if (!$exists) {
-                            $settKey = (strtolower($plan) == 'pro') ? 'default_income_per_pro_vendor' : 'default_income_per_vendor';
-                            $amount = \App\Models\Setting::getValue($settKey, (strtolower($plan) == 'pro' ? 100 : 50));
-
-                            $salesExecutive->wallet_balance += $amount;
+                        if (!$freeExists) {
+                            $freeAmount = (float) \App\Models\Setting::getValue('default_income_per_vendor', 50);
+                            $salesExecutive->wallet_balance += $freeAmount;
                             $salesExecutive->save();
 
                             \App\Models\WalletTransaction::create([
-                                'user_id' => $salesExecutiveId,
-                                'amount' => $amount,
-                                'type' => 'credit',
-                                'description' => $description,
+                                'user_id'     => $salesExecutiveId,
+                                'amount'      => $freeAmount,
+                                'type'        => 'credit',
+                                'description' => $freeDesc,
                             ]);
+                        }
+
+                        // 2. Pro Plan Commission - Paid if vendor is Pro (covers direct Pro enrollment or manual Pro set)
+                        if (strtolower($currentPlan) == 'pro') {
+                            $proDesc = "Commission for Vendor: " . $adminUser->name . " (#" . $adminUser->id . ") [Pro Plan]";
+                            $proExists = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
+                                ->where('description', $proDesc)
+                                ->exists();
+
+                            if (!$proExists) {
+                                $proAmount = (float) \App\Models\Setting::getValue('default_income_per_pro_vendor', 100);
+                                $salesExecutive->wallet_balance += $proAmount;
+                                $salesExecutive->save();
+
+                                \App\Models\WalletTransaction::create([
+                                    'user_id'     => $salesExecutiveId,
+                                    'amount'      => $proAmount,
+                                    'type'        => 'credit',
+                                    'description' => $proDesc,
+                                ]);
+                            }
                         }
                     }
                 }
