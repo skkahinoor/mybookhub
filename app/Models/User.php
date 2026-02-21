@@ -70,19 +70,20 @@ class User extends Authenticatable
 
     public function getTypeAttribute()
     {
-        // Check Spatie Roles first (force 'web' guard checks)
-        if ($this->hasRole('admin', 'web')) {
-            return 'superadmin';
+        // Check Spatie Roles first 
+        if ($this->hasRole('admin') || $this->hasRole('superadmin')) {
+            return 'admin';
         }
-        if ($this->hasRole('vendor', 'web')) {
+        if ($this->hasRole('vendor')) {
             return 'vendor';
         }
-        if ($this->hasRole('sales', 'web')) {
+        if ($this->hasRole('sales')) {
             return 'sales'; // Not in original Admin types, but useful
         }
         // Fallback to legacy behavior if needed (e.g. checks role_id directly)
-        if ($this->role_id === 1) return 'superadmin';
-        if ($this->role_id === 2) return 'vendor';
+        if ($this->role_id == 1 || $this->role_id === 'admin' || $this->role_id === 'superadmin') return 'admin';
+        if ($this->role_id == 2 || $this->role_id === 'vendor') return 'vendor';
+        if ($this->role_id == 3 || $this->role_id === 'sales') return 'sales';
 
         return 'user'; // Default
     }

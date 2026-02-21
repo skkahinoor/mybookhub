@@ -72,6 +72,39 @@
                     </div>
                 </div>
             @endif
+
+            @if (auth('sales')->user()->can('view_vendors'))
+                <div class="col-md-6 col-lg-6">
+                    <div class="card shadow-sm border-0 h-100 bg-secondary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <p class="mb-1 opacity-75 small">Free Vendors Added</p>
+                                    <h3 class="fw-bold mb-0">{{ number_format($freeVendorCount ?? 0) }}</h3>
+                                </div>
+                                <div class="bg-dark bg-opacity-20 rounded-circle p-3">
+                                    <i class="bi bi-shop fs-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-6">
+                    <div class="card shadow-sm border-0 h-100 bg-warning text-dark">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <p class="mb-1 opacity-75 small fw-bold">Pro Vendors Added</p>
+                                    <h3 class="fw-bold mb-0">{{ number_format($proVendorCount ?? 0) }}</h3>
+                                </div>
+                                <div class="bg-dark bg-opacity-10 rounded-circle p-3">
+                                    <i class="bi bi-gem fs-4"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
 
         <!-- Earnings Cards -->
@@ -194,6 +227,7 @@
             const labels = @json($dates ?? []);
             const studentsData = @json($studentsCount ?? []);
             const institutionsData = @json($institutionsCount ?? []);
+            const vendorsData = @json($vendorsCount ?? []);
             const earningsData = @json($earningsData ?? []);
 
             new Chart(ctx1, {
@@ -213,6 +247,14 @@
                             data: institutionsData,
                             backgroundColor: 'rgba(255, 193, 7, 0.8)',
                             borderColor: 'rgb(255, 193, 7)',
+                            borderWidth: 1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Vendors Added',
+                            data: vendorsData,
+                            backgroundColor: 'rgba(108, 117, 125, 0.8)',
+                            borderColor: 'rgb(108, 117, 125)',
                             borderWidth: 1,
                             yAxisID: 'y'
                         },
@@ -245,7 +287,7 @@
                                     if (label) {
                                         label += ': ';
                                     }
-                                    if (context.datasetIndex === 2) {
+                                    if (context.datasetIndex === 3) {
                                         label += '₹' + context.parsed.y.toLocaleString('en-IN', {
                                             minimumFractionDigits: 2,
                                             maximumFractionDigits: 2
@@ -307,10 +349,11 @@
             // Summary Statistics Bar Chart
             const ctx2 = document.getElementById('summaryBarChart').getContext('2d');
 
-            const summaryLabels = ['Institutions', 'Students', 'Total Earnings'];
+            const summaryLabels = ['Institutions', 'Students', 'Vendors', 'Total Earnings'];
             const summaryData = [
                 {{ $totalInstitutions ?? 0 }},
                 {{ $totalStudents ?? 0 }},
+                {{ round(($freeVendorCount ?? 0) + ($proVendorCount ?? 0)) }},
                 {{ round($totalEarning ?? 0) }}
             ];
 
@@ -324,14 +367,14 @@
                         backgroundColor: [
                             'rgba(13, 110, 253, 0.8)',
                             'rgba(25, 135, 84, 0.8)',
-                            'rgba(255, 193, 7, 0.8)',
-                            'rgba(220, 53, 69, 0.8)'
+                            'rgba(108, 117, 125, 0.8)',
+                            'rgba(255, 193, 7, 0.8)'
                         ],
                         borderColor: [
                             'rgb(13, 110, 253)',
                             'rgb(25, 135, 84)',
-                            'rgb(255, 193, 7)',
-                            'rgb(220, 53, 69)'
+                            'rgb(108, 117, 125)',
+                            'rgb(255, 193, 7)'
                         ],
                         borderWidth: 2
                     }]

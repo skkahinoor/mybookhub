@@ -84,7 +84,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($vendors as $index => $vendor)
+                            @foreach ($vendors as $index => $vendor)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $vendor->user->name ?? 'N/A' }}</td>
@@ -125,11 +125,7 @@
                                         @endif
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="text-center py-4">No vendors found.</td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>

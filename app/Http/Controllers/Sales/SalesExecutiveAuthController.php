@@ -263,10 +263,14 @@ class SalesExecutiveAuthController extends Controller
 
         $salesExecutive = auth('sales')->user();
         $salesExecutiveId = $salesExecutive->id;
+        $salesExecutiveProfile = $salesExecutive->salesExecutive;
 
         $studntrole = Role::where('name', 'student')->first();
-        // Get income_per_target from sales executive
-        $incomePerTarget = $salesExecutive->income_per_target ?? 0;
+        // Get income_per_target from sales executive profile
+        $incomePerTarget = $salesExecutiveProfile ? $salesExecutiveProfile->income_per_target : 0;
+        if (!$incomePerTarget) {
+            $incomePerTarget = \App\Models\Setting::getValue('default_income_per_target', 10);
+        }
 
         // Calculate total institutions
         $totalInstitutions = InstitutionManagement::where('added_by', $salesExecutiveId)->count();
@@ -279,6 +283,15 @@ class SalesExecutiveAuthController extends Controller
             ->whereDate('created_at', Carbon::today())
             ->count();
 
+        // Calculate Vendors (Approved: Free and Pro)
+        $vendorQuery = User::where('users.added_by', $salesExecutiveId)
+            ->where('users.role_id', 2)
+            ->where('users.status', 1)
+            ->join('vendors', 'vendors.user_id', '=', 'users.id');
+
+        $freeVendorCount = (clone $vendorQuery)->where('vendors.plan', 'free')->count();
+        $proVendorCount  = (clone $vendorQuery)->where('vendors.plan', 'pro')->count();
+
         // Calculate total classes (sum of classes from all institutions added by this sales executive)
         $institutionIds = InstitutionManagement::where('added_by', $salesExecutiveId)->pluck('id');
 
@@ -288,8 +301,6 @@ class SalesExecutiveAuthController extends Controller
             ->whereNotNull('block_id')
             ->distinct('block_id')
             ->count('block_id');
-
-        $incomePerTarget = \App\Models\Setting::getValue('default_income_per_target', 10);
 
         // Calculate earnings from student enrollments (Count * Rate)
         $totalEarning = $totalStudents * $incomePerTarget;
@@ -318,6 +329,8 @@ class SalesExecutiveAuthController extends Controller
 
         $studentData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesExecutiveId)
+            ->where('role_id', $studntrole->id)
+            ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')
             ->pluck('count', 'date')
@@ -330,11 +343,22 @@ class SalesExecutiveAuthController extends Controller
             ->pluck('count', 'date')
             ->toArray();
 
+        $vendorGraphData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->where('added_by', $salesExecutiveId)
+            ->where('role_id', 2)
+            ->where('status', 1)
+            ->whereDate('created_at', '>=', $startDate)
+            ->groupBy('date')
+            ->pluck('count', 'date')
+            ->toArray();
+
         $studentsCount = [];
         $institutionsCount = [];
+        $vendorsCount = [];
         foreach ($dateKeys as $dateKey) {
             $studentsCount[] = $studentData[$dateKey] ?? 0;
             $institutionsCount[] = $institutionData[$dateKey] ?? 0;
+            $vendorsCount[] = $vendorGraphData[$dateKey] ?? 0;
         }
 
         $earningsData = [];
@@ -357,12 +381,15 @@ class SalesExecutiveAuthController extends Controller
             'totalInstitutions',
             'totalStudents',
             'todayStudents',
+            'freeVendorCount',
+            'proVendorCount',
             'totalEarning',
             'todayEarning',
             'incomePerTarget',
             'dates',
             'studentsCount',
             'institutionsCount',
+            'vendorsCount',
             'earningsData'
         ), [
             'user' => $salesExecutive

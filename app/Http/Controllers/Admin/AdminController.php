@@ -42,9 +42,9 @@ class AdminController extends Controller
         $adminType = $admin->type;
         $vendorId  = $admin->vendor_id;
 
-        $vendorrole = Role::where('name','vendor')->first();
-        $userrole = Role::where('name','user')->first();
-        $salesrole = Role::where('name','sales')->first();
+        $vendorrole = Role::where('name', 'vendor')->first();
+        $userrole = Role::where('name', 'user')->first();
+        $salesrole = Role::where('name', 'sales')->first();
         // Default (Admin counts)
         $vendorsCount         = User::where('role_id', $vendorrole->id)->count();
         $usersCount           = User::where('role_id', $userrole->id)->count();
@@ -137,15 +137,30 @@ class AdminController extends Controller
 
                 // Check if vendor account is inactive
                 if ($user->type == 'vendor' && $user->status == '0') {
+                    Auth::guard('admin')->logout();
                     return redirect()->back()->with('error_message', 'Your vendor account is not active');
                 }
 
+                $routePrefix = request()->segment(1); // 'admin', 'vendor', 'sales'
+
+                // Prevent vendors logging into admin login URL and vice versa
+                if ($routePrefix == 'admin' && !$user->hasRole('admin') && !$user->hasRole('superadmin') && $user->role_id != 1) {
+                    Auth::guard('admin')->logout();
+                    return redirect()->back()->with('error_message', 'You do not have admin access.');
+                } elseif ($routePrefix == 'vendor' && !$user->hasRole('vendor') && $user->role_id != 2) {
+                    Auth::guard('admin')->logout();
+                    return redirect()->back()->with('error_message', 'You do not have vendor access.');
+                } elseif ($routePrefix == 'sales' && !$user->hasRole('sales') && $user->role_id != 3) {
+                    Auth::guard('admin')->logout();
+                    return redirect()->back()->with('error_message', 'You do not have sales access.');
+                }
+
                 // Dynamic role-based redirection
-                if ($user->hasRole('admin')) {
+                if ($user->hasRole('admin') || $user->hasRole('superadmin') || $user->role_id == 1) {
                     return redirect('/admin/dashboard');
-                } elseif ($user->hasRole('vendor')) {
+                } elseif ($user->hasRole('vendor') || $user->role_id == 2) {
                     return redirect('/vendor/dashboard');
-                } elseif ($user->hasRole('sales')) {
+                } elseif ($user->hasRole('sales') || $user->role_id == 3) {
                     return redirect('/sales/dashboard');
                 } elseif ($user->hasRole('student')) {
                     return redirect('/student/dashboard');

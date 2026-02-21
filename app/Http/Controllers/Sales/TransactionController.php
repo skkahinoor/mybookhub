@@ -26,9 +26,13 @@ class TransactionController extends Controller
 
         $salesExecutive   = Auth::guard('sales')->user();
         $salesExecutiveId = $salesExecutive->id;
+        $salesExecutiveProfile = $salesExecutive->salesExecutive;
 
         // ── Settings ──────────────────────────────────────────────────────
-        $incomePerTarget = (float) Setting::getValue('default_income_per_target', 10);
+        $incomePerTarget = $salesExecutiveProfile ? $salesExecutiveProfile->income_per_target : 0;
+        if (!$incomePerTarget) {
+            $incomePerTarget = (float) Setting::getValue('default_income_per_target', 10);
+        }
 
         // ── Approved students (role 5, status 1) added by this exec ───────
         $approvedStudentsBase = User::where('added_by', $salesExecutiveId)
