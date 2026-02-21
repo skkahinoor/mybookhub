@@ -42,10 +42,13 @@ class AdminController extends Controller
         $adminType = $admin->type;
         $vendorId  = $admin->vendor_id;
 
+        $vendorrole = Role::where('name','vendor')->first();
+        $userrole = Role::where('name','user')->first();
+        $salesrole = Role::where('name','sales')->first();
         // Default (Admin counts)
-        $vendorsCount         = User::where('role_id', 2)->count();
-        $usersCount           = User::where('role_id', 4)->count();
-        $salesExecutivesCount = User::where('role_id', 3)->count();
+        $vendorsCount         = User::where('role_id', $vendorrole->id)->count();
+        $usersCount           = User::where('role_id', $userrole->id)->count();
+        $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
         $productsCount        = Product::where('status', 1)->count();
         $ordersCount          = Order::count();
         $couponsCount         = Coupon::where('status', 1)->count();
@@ -75,8 +78,8 @@ class AdminController extends Controller
                 ->count();
 
             // Users & sales executives usually remain global
-            $usersCount           = User::count();
-            $salesExecutivesCount = SalesExecutive::count();
+            $usersCount           = User::where('role_id', $userrole->id)->count();
+            $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
         }
 
         // Vendor plan info

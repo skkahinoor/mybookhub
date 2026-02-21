@@ -24,7 +24,7 @@ class UserController extends Controller
 
         // Get all users with role_id 4 and load relationships
         $users = User::with(['country', 'state', 'district', 'block'])
-            ->where('role_id', 4)
+            ->role('user', 'web')
             ->get()
             ->map(function ($user) {
                 // Transform data to match view expectations

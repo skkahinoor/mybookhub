@@ -160,15 +160,15 @@ class UserController extends Controller
                                                 // dd($email);
 
         // For Security Reasons, check if that decoded user's $email exists in the `users` database table
-        $userCount = User::where('email', $email)->count();
+        $userCount = User::role('user', 'web')->count();
         if ($userCount > 0) { // if the user's email exists in `users` table
                                   // Check if the user is alreay active
-            $userDetails = User::where('email', $email)->first();
+            $userDetails = User::role('user', 'web')->where('email', $email)->first();
             if ($userDetails->status == 1) { // if the user's account is already activated
                                                  // Redirect the user to the User Login/Register page with an 'error' message
                 return redirect('user/login-register')->with('error_message', 'Your account is already activated. You can login now.');
             } else { // if the user's account is not yet activated, activate it (update `status` to 1) and send a 'Welcome' Email
-                User::where('email', $email)->update([
+                User::role('user', 'web')->where('email', $email)->update([
                     'status' => 1,
                 ]);
 

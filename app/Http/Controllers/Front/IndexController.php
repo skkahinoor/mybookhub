@@ -158,10 +158,10 @@ class IndexController extends Controller
         $meta_keywords    = 'eshop website, online shopping, multi vendor e-commerce';
 
         // Get total user count for dynamic statistics
-        $totalUsers = User::count();
+        $totalUsers = User::role('user', 'web')->count();
 
         // Get total vendor count for dynamic statistics
-        $totalVendors = Vendor::count();
+        $totalVendors = Vendor::role('vendor', 'web')->count();
 
         // Get total product count for dynamic statistics
         $totalProducts = Product::where('status', 1)->count();
