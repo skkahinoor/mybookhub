@@ -19,46 +19,48 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'login'    => 'required',   // email OR mobile/phone
+            'login'    => 'required',
             'password' => 'required',
         ]);
 
-        $loginInput = $request->login;   // can be email or mobile/phone
-
         $loginInput = $request->login;
-        $numericLogin = preg_replace('/\D/', '', $loginInput);
 
-        $user = User::where(function ($q) use ($loginInput, $numericLogin) {
-            $q->where('email', $loginInput)
-                ->orWhere('phone', $numericLogin);
-        })->first();
-
-        if ($user && Hash::check($request->password, $user->password)) {
-            // Check active/inactive
-            if ($user->status == 0) {
-                return response()->json([
-                    'status'  => false,
-                    'message' => 'Your account is inactive. Please contact admin.',
-                ], 403);
-            }
-
-            $type = $user->type; // Uses getTypeAttribute accessor
-
-            $token = $user->createToken("{$type}-token")->plainTextToken;
-
-            return response()->json([
-                'status'  => true,
-                'message' => ucfirst($type) . 'login successful',
-                'type'    => $type,
-                'token'   => $token,
-                'data'    => $user,
-            ]);
+        // Detect if email or phone
+        if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
+            // Login using email
+            $user = User::where('email', $loginInput)->first();
+        } else {
+            // Login using phone (remove non-numeric characters)
+            $numericLogin = preg_replace('/\D/', '', $loginInput);
+            $user = User::where('phone', $numericLogin)->first();
         }
 
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Invalid email/phone or password.',
+            ], 401);
+        }
+
+        // Check active/inactive
+        if ($user->status == 0) {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Your account is inactive. Please contact admin.',
+            ], 403);
+        }
+
+        $type = $user->type;
+
+        $token = $user->createToken("{$type}-token")->plainTextToken;
+
         return response()->json([
-            'status'  => false,
-            'message' => 'Invalid email/phone or password.',
-        ], 401);
+            'status'  => true,
+            'message' => ucfirst($type) . ' login successful',
+            'type'    => $type,
+            'token'   => $token,
+            'data'    => $user,
+        ]);
     }
 
     public function logout(Request $request)
