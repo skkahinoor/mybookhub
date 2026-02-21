@@ -161,7 +161,7 @@ class IndexController extends Controller
         $totalUsers = User::role('user', 'web')->count();
 
         // Get total vendor count for dynamic statistics
-        $totalVendors = Vendor::role('vendor', 'web')->count();
+        $totalVendors = User::role('vendor', 'web')->count();
 
         // Get total product count for dynamic statistics
         $totalProducts = Product::where('status', 1)->count();
