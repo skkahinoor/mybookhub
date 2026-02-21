@@ -66,6 +66,7 @@ class StudentController extends Controller
         $data['password'] = Hash::make('12345678');
         $data['role_id'] = 5;
         $user = User::create($data);
+        $user->assignRole('student'); // So admin list (User::role('student','web')) shows this user
 
         // User::create([
         //     'name'     => $data['name'],
@@ -122,7 +123,7 @@ class StudentController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'father_names' => 'required|string|max:255',
-           
+
             'phone' => 'required|string|min:10|max:15',
             'institution_id' => 'nullable|exists:institution_managements,id',
             'class' => 'required|string|max:255',
