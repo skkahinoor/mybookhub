@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Mail; // ✅ IMPORTANT
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Models\Role;
 
 class SalesExecutiveAuthController extends Controller
 {
@@ -263,6 +264,7 @@ class SalesExecutiveAuthController extends Controller
         $salesExecutive = auth('sales')->user();
         $salesExecutiveId = $salesExecutive->id;
 
+        $studntrole = Role::where('name', 'student')->first();
         // Get income_per_target from sales executive
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
 
@@ -270,10 +272,10 @@ class SalesExecutiveAuthController extends Controller
         $totalInstitutions = InstitutionManagement::where('added_by', $salesExecutiveId)->count();
 
         // Calculate total students
-        $totalStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)->count();
+        $totalStudents = User::where('role_id', $studntrole->id)->where('added_by', $salesExecutiveId)->where('status', 1)->count();
 
         // Calculate today's students
-        $todayStudents = User::where('added_by', $salesExecutiveId)->where('status', 1)
+        $todayStudents = User::where('role_id', $studntrole->id)->where('added_by', $salesExecutiveId)->where('status', 1)
             ->whereDate('created_at', Carbon::today())
             ->count();
 

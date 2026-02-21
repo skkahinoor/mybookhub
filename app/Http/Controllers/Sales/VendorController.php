@@ -23,7 +23,9 @@ class VendorController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'vendors');
-        $vendors = Vendor::orderByDesc('id')->get();
+        $vendors = Vendor::with('user')->whereHas('user', function ($query) {
+            $query->where('added_by', auth()->guard('sales')->id());
+        })->orderByDesc('id')->get();
         return view('sales.vendors.index', compact('vendors', 'logos', 'headerLogo'));
     }
 
