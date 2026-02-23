@@ -28,7 +28,6 @@ class User extends Authenticatable
         'email',
         'father_names',
         'institution_id',
-        'class',
         'roll_number',
         'gender',
         'dob',
@@ -87,7 +86,7 @@ class User extends Authenticatable
 
         return 'user'; // Default
     }
-
+ 
     public function institution()
     {
         return $this->belongsTo(InstitutionManagement::class, 'institution_id');

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Author;
 use App\Models\Category;
 use App\Models\Language;
+use App\Models\Subcategory;
 use App\Models\Subject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +26,7 @@ class Product extends Model
         // Relations
         'section_id',
         'category_id',
+        'subcategory_id',
         'publisher_id',
         'subject_id',
         'edition_id',
@@ -49,6 +51,11 @@ class Product extends Model
     public function category()
     {
         return $this->belongsTo('App\Models\Category', 'category_id'); // 'category_id' is the foreign key
+    }
+
+    public function subcategory()
+    {
+        return $this->belongsTo(Subcategory::class, 'subcategory_id');
     }
 
     public function publisher()

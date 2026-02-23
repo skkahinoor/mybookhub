@@ -70,7 +70,7 @@ class WalletTransaction extends Model
 
         $user = User::find($order->user_id);
         if (!$user) return;
-
+ 
         // 1. Revert Bonus (Credit Reversal)
         $creditTransaction = self::where('order_id', $orderId)
             ->where('type', 'credit')

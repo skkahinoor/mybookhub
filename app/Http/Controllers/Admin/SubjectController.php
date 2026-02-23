@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\HeaderLogo;
+use App\Models\Subcategory;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +22,7 @@ class SubjectController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
-        $subjects = Subject::orderBy('id', 'desc')->get();
+        $subjects = Subject::with('subcategory')->orderBy('id', 'desc')->get();
         Session::put('page', 'subjects');
         $adminType = Auth::guard('admin')->user()->type;
         return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo', 'adminType'));
@@ -34,7 +36,8 @@ class SubjectController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
-        return view('admin.subject.add_subject', compact('logos', 'headerLogo', 'adminType'));
+        $categories = Category::where('status', 1)->get()->toArray();
+        return view('admin.subject.add_subject', compact('logos', 'headerLogo', 'adminType', 'categories'));
     }
 
     public function store(Request $request)
@@ -46,9 +49,11 @@ class SubjectController extends Controller
         $logos = HeaderLogo::first();
         $request->validate([
             'name' => 'required|string|max:255',
+            'subcategory_id' => 'required',
         ]);
         $store = Subject::create([
             'name' => $request->name,
+            'subcategory_id' => $request->subcategory_id,
         ]);
 
         return redirect()->back()->with('success', 'Subject inserted successfully');
@@ -63,7 +68,14 @@ class SubjectController extends Controller
         $logos = HeaderLogo::first();
         $subjects = Subject::find($id);
         $adminType = Auth::guard('admin')->user()->type;
-        return view('admin.subject.edit_subject', compact('subjects', 'logos', 'headerLogo', 'adminType'));
+        $categories = Category::where('status', 1)->get()->toArray();
+        $subcategories = [];
+        if ($subjects->subcategory_id) {
+            $subcat = Subcategory::find($subjects->subcategory_id);
+            $subjects->category_id = $subcat->category_id;
+            $subcategories = Subcategory::where('category_id', $subcat->category_id)->get()->toArray();
+        }
+        return view('admin.subject.edit_subject', compact('subjects', 'logos', 'headerLogo', 'adminType', 'categories', 'subcategories'));
     }
 
     public function update(Request $request)
@@ -75,10 +87,12 @@ class SubjectController extends Controller
         $logos = HeaderLogo::first();
         $request->validate([
             'name' => 'required|string|max:255',
+            'subcategory_id' => 'required',
         ]);
         $update = Subject::find($request->id);
         $update->update([
             'name' => $request->name,
+            'subcategory_id' => $request->subcategory_id,
         ]);
         return redirect()->route('admin.subject')->with('success', 'Subject updated successfully');
         return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));

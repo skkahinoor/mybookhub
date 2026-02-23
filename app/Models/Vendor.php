@@ -38,7 +38,7 @@ class Vendor extends Model
             'id'
         );
     }
-
+ 
     // Vendor belongs to User
     public function user()
     {

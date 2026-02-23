@@ -14,8 +14,10 @@
                         <div class="col-12 col-xl-4">
                             <div class="justify-content-end d-flex">
                                 <div class="dropdown flex-md-grow-1 flex-xl-grow-0">
-                                    <button class="btn btn-sm btn-light bg-white dropdown-toggle" type="button" id="dropdownMenuDate2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
-                                    <i class="mdi mdi-calendar"></i> Today (10 Jan 2021)
+                                    <button class="btn btn-sm btn-light bg-white dropdown-toggle" type="button"
+                                        id="dropdownMenuDate2" data-toggle="dropdown" aria-haspopup="true"
+                                        aria-expanded="true">
+                                        <i class="mdi mdi-calendar"></i> Today (10 Jan 2021)
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuDate2">
                                         <a class="dropdown-item" href="#">January - March</a>
@@ -38,30 +40,31 @@
 
                             {{-- Our Bootstrap error code in case of wrong current password or the new password and confirm password are not matching: --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            @if (Session::has('error_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <strong>Error:</strong> {{ Session::get('error_message') }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
+                            @if (Session::has('error_message'))
+                                <!-- Check AdminController.php, updateAdminPassword() method -->
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    <strong>Error:</strong> {{ Session::get('error_message') }}
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
                             @endif
 
 
 
                             {{-- Displaying Laravel Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors --}}
                             @if ($errors->any())
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                {{-- <strong>Error:</strong> {{ Session::get('error_message') }} --}}
+                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    {{-- <strong>Error:</strong> {{ Session::get('error_message') }} --}}
 
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
 
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
                             @endif
 
 
@@ -69,11 +72,12 @@
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
                             {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
-                            @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
+                            @if (Session::has('success_message'))
+                                <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <strong>Success:</strong> {{ Session::get('success_message') }}
                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
+                                        <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
                             @endif
@@ -84,22 +88,54 @@
 
 
                             @if ($adminType === 'vendor')
-                            <form class="forms-sample" action="{{ route('vendor.update.subject', $subjects->id)}}"   method="post" enctype="multipart/form-data">
-                            @else
-                            <form class="forms-sample" action="{{ route('admin.update.subject', $subjects->id)}}"   method="post" enctype="multipart/form-data">
-                            @endif
-                                @csrf 
-
-                                <div class="form-group">
-                                    <label for="subject_name">Subject Name</label>
-                                    <input type="text" class="form-control" id="subject_name" value="{{$subjects->name}}" placeholder="Enter Subject Name" name="name" @if (!empty($subject['name'])) value="{{ $subject['name'] }}" @else value="{{ old('subject_name') }}" @endif>
-                                </div>
-                                <button type="submit" class="btn btn-primary mr-2">Update</button>
-                                @if ($adminType === 'vendor')
-                                <a href="{{ url('vendor/subjects') }}" class="btn btn-light">Cancel</a>
+                                <form class="forms-sample" action="{{ route('vendor.update.subject', $subjects->id) }}"
+                                    method="post" enctype="multipart/form-data">
                                 @else
+                                    <form class="forms-sample" action="{{ route('admin.update.subject', $subjects->id) }}"
+                                        method="post" enctype="multipart/form-data">
+                            @endif
+                            @csrf
+
+                            <div class="form-group">
+                                <label for="subject_name">Subject Name</label>
+                                <input type="text" class="form-control" id="subject_name" value="{{ $subjects->name }}"
+                                    placeholder="Enter Subject Name" name="name"
+                                    @if (!empty($subjects['name'])) value="{{ $subjects['name'] }}" @else value="{{ old('name') }}" @endif>
+                            </div>
+                            <div class="form-group">
+                                <label for="category_id_subject">Select Category</label>
+                                <select name="category_id_filter" id="category_id_subject" class="form-control"
+                                    style="color:#000">
+                                    <option value="">Select Category</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category['id'] }}"
+                                            @if (!empty($subjects['category_id']) && $subjects['category_id'] == $category['id']) selected @endif>
+                                            {{ $category['category_name'] }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div id="appendSubcategoriesLevel">
+                                <div class="form-group">
+                                    <label for="subcategory_id">Select Subcategory</label>
+                                    <select name="subcategory_id" id="subcategory_id" class="form-control"
+                                        style="color: #000">
+                                        <option value="">Select Subcategory</option>
+                                        @if (!empty($subcategories))
+                                            @foreach ($subcategories as $subcategory)
+                                                <option value="{{ $subcategory['id'] }}"
+                                                    @if (!empty($subjects['subcategory_id']) && $subjects['subcategory_id'] == $subcategory['id']) selected @endif>
+                                                    {{ $subcategory['subcategory_name'] }}</option>
+                                            @endforeach
+                                        @endif
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary mr-2">Update</button>
+                            @if ($adminType === 'vendor')
+                                <a href="{{ url('vendor/subjects') }}" class="btn btn-light">Cancel</a>
+                            @else
                                 <a href="{{ url('admin/subjects') }}" class="btn btn-light">Cancel</a>
-                                @endif
+                            @endif
                             </form>
                         </div>
                     </div>

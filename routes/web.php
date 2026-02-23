@@ -117,6 +117,13 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-category/{id}', 'CategoryController@deleteCategory');                        // Delete a category in categories.blade.php
         Route::get('delete-category-image/{id}', 'CategoryController@deleteCategoryImage');             // Delete a category image in add_edit_category.blade.php from BOTH SERVER (FILESYSTEM) & DATABASE
 
+        // Subcategories
+        Route::get('subcategories', 'SubcategoryController@subcategories');
+        Route::post('update-subcategory-status', 'SubcategoryController@updateSubcategoryStatus')->name('admin.updatesubcategorystatus');
+        Route::match(['get', 'post'], 'add-edit-subcategory/{id?}', 'SubcategoryController@addEditSubcategory');
+        Route::get('delete-subcategory/{id}', 'SubcategoryController@deleteSubcategory');
+        Route::get('append-subcategories-level', 'SubcategoryController@appendSubcategoryLevel');
+
         // Logo
         Route::match(['get', 'post'], 'header-logo', [AdminController::class, 'headerLogo'])->name('admin.logo');
         // Favicon

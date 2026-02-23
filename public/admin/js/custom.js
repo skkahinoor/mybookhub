@@ -13,6 +13,7 @@ $(document).ready(function () {
     $("#users").DataTable(); // in admin/users/users.blade.php
     $("#orders").DataTable(); // in admin/orders/orders.blade.php
     $("#shipping").DataTable(); // in admin/shipping/shipping_charges.blade.php
+    $("#subcategories").DataTable(); // in admin/subcategories/subcategories.blade.php
     $("#subscribers").DataTable(); // in admin/subscribers/subscribers.blade.php
     $("#ratings").DataTable(); // in admin/ratings/ratings.blade.php
 
@@ -36,11 +37,11 @@ $(document).ready(function () {
                 // alert(resp);
                 if (resp == "false") {
                     $("#check_password").html(
-                        '<b style="color: red">Current Password is Incorrect!</b>'
+                        '<b style="color: red">Current Password is Incorrect!</b>',
                     ); // the <span> element in update_admin_password.blade.php
                 } else if (resp == "true") {
                     $("#check_password").html(
-                        '<b style="color: green">Current Password is Correct!</b>'
+                        '<b style="color: green">Current Password is Correct!</b>',
                     ); // the <span> element in update_admin_password.blade.php
                 }
             },
@@ -68,11 +69,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#admin-" + admin_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#admin-" + admin_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -100,11 +101,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#section-" + section_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#section-" + section_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -132,11 +133,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#category-" + category_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#category-" + category_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -163,11 +164,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#brand-" + brand_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#brand-" + brand_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -200,11 +201,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#publisher-" + publisher_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#publisher-" + publisher_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -212,7 +213,7 @@ $(document).ready(function () {
                 console.error("AJAX Error:", error);
                 console.error("Response:", xhr.responseText);
                 alert(
-                    "Error updating publisher status. Please check console for details."
+                    "Error updating publisher status. Please check console for details.",
                 );
             },
         });
@@ -239,11 +240,11 @@ $(document).ready(function () {
             success: function (resp) {
                 if (resp.status == 0) {
                     $("#author-" + authorId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#author-" + authorId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -251,7 +252,7 @@ $(document).ready(function () {
                 console.error("AJAX Error:", error);
                 console.error("Response:", xhr.responseText);
                 alert(
-                    "Error updating author status. Please check console for details."
+                    "Error updating author status. Please check console for details.",
                 );
             },
         });
@@ -278,11 +279,11 @@ $(document).ready(function () {
             success: function (resp) {
                 if (resp.status == 0) {
                     $("#subject-" + subjectId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#subject-" + subjectId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -290,7 +291,7 @@ $(document).ready(function () {
                 console.error("AJAX Error:", error);
                 console.error("Response:", xhr.responseText);
                 alert(
-                    "Error updating subject status. Please check console for details."
+                    "Error updating subject status. Please check console for details.",
                 );
             },
         });
@@ -317,11 +318,11 @@ $(document).ready(function () {
             success: function (resp) {
                 if (resp.status == 0) {
                     $("#language-" + languageId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#language-" + languageId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -329,7 +330,7 @@ $(document).ready(function () {
                 console.error("AJAX Error:", error);
                 console.error("Response:", xhr.responseText);
                 alert(
-                    "Error updating language status. Please check console for details."
+                    "Error updating language status. Please check console for details.",
                 );
             },
         });
@@ -353,11 +354,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#product-" + product_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#product-" + product_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -384,11 +385,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#attribute-" + attribute_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#attribute-" + attribute_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -416,11 +417,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#image-" + image_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#image-" + image_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -447,11 +448,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#banner-" + banner_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#banner-" + banner_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -478,11 +479,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#filter-" + filter_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#filter-" + filter_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -509,11 +510,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#filter-" + filter_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#filter-" + filter_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -541,11 +542,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#coupon-" + coupon_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#coupon-" + coupon_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -573,11 +574,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#user-" + user_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#user-" + user_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -603,11 +604,11 @@ $(document).ready(function () {
             success: function (resp) {
                 if (resp.status === 0) {
                     $("#student-" + studentId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status === 1) {
                     $("#student-" + studentId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -632,11 +633,11 @@ $(document).ready(function () {
             success: function (resp) {
                 if (resp.status == 0) {
                     $("#sales-executive-" + salesExecutiveId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#sales-executive-" + salesExecutiveId).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
 
@@ -688,11 +689,11 @@ $(document).ready(function () {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
                     $("#shipping-" + shipping_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
                     $("#shipping-" + shipping_id).html(
-                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>'
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
@@ -847,6 +848,27 @@ $(document).ready(function () {
             data: { section_id: section_id }, // name/value pairs sent to server
             success: function (resp) {
                 $("#appendCategoriesLevel").html(resp); // $('#appendCategoriesLeve') is the <div> in add_edit_category.blade.php
+            },
+            error: function () {
+                alert("Error");
+            },
+        });
+    });
+
+    // Show Subcategories <select> <option> depending on the selected Category in add_edit_subject.blade.php
+    $(document).on("change", "#category_id_subject", function () {
+        var category_id = $(this).val();
+
+        $.ajax({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            type: "get",
+            url: "/admin/append-subcategories-level",
+            data: { category_id: category_id },
+            success: function (resp) {
+                $("#appendSubcategoriesLevel").html(resp);
+                $("#appendSubcategoriesLevelVendor").html(resp);
             },
             error: function () {
                 alert("Error");

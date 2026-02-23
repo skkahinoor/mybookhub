@@ -147,7 +147,7 @@ class CategoryController extends Controller
 
 
             $category->section_id        = $data['section_id'];
-            $category->parent_id         = $data['parent_id'];
+            $category->parent_id         = 0;
             $category->category_name     = $data['category_name'];
             $category->description       = $data['description'];
             $category->url               = $data['url'];

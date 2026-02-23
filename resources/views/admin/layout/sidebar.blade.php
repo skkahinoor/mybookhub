@@ -254,6 +254,9 @@
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'categories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/categories') }}">Categories</a></li>
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'subcategories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/subcategories') }}">Subcategories</a></li>
                         @endcan
                         @can('view_publishers')
                             <li class="nav-item"> <a

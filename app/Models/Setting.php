@@ -16,7 +16,7 @@ class Setting extends Model
         $value = static::where('key', $key)->value('value');
         return $value !== null ? $value : $default;
     }
-
+ 
     /**
      * Create or update a setting.
      */

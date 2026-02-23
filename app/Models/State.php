@@ -15,7 +15,7 @@ class State extends Model
         'code',
         'status'
     ];
-
+ 
     protected $casts = [
         'status' => 'boolean',
         'created_at' => 'datetime',
