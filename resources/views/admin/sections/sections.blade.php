@@ -34,6 +34,7 @@
                                     <thead>
                                         <tr>
                                             <th>ID</th>
+                                            <th>Icon</th>
                                             <th>Name</th>
                                             <th>Status</th>
                                             <th>Actions</th>
@@ -42,8 +43,23 @@
                                     <tbody>
                                         @foreach ($sections as $key => $section)
                                             <tr>
-                                                <td>{{ __($key + 1) }}</td>
+                                                <td>{{ $key + 1 }}</td>
+
+                                                <!-- IMAGE COLUMN -->
+                                                <td>
+                                                    @if (!empty($section['image']) && file_exists(public_path('admin/images/section/' . $section['image'])))
+                                                        <img src="{{ asset('admin/images/section/' . $section['image']) }}"
+                                                            width="60" height="60"
+                                                            style="object-fit: cover; border-radius: 6px; border:1px solid #ddd;">
+                                                    @else
+                                                        <img src="{{ asset('admin/images/no-image.png') }}" width="60"
+                                                            height="60"
+                                                            style="object-fit: cover; border-radius: 6px; border:1px solid #ddd;">
+                                                    @endif
+                                                </td>
+
                                                 <td>{{ $section['name'] }}</td>
+
                                                 <td>
                                                     @if ($adminType === 'vendor')
                                                         <a class="updateSectionStatus" id="section-{{ $section['id'] }}"
@@ -78,19 +94,11 @@
                                                 <td>
                                                     <a href="{{ url('admin/add-edit-section/' . $section['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
-
-                                                    {{-- Confirm Deletion JS alert and Sweet Alert --}}
-                                                    {{-- <a title="Section" class="confirmDelete" href="{{ url('admin/delete-section/' . $section['id']) }}"> --}}
-                                                    {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}} {{-- Icons from Skydash Admin Panel Template --}}
-                                                    {{-- </a> --}}
-
 
                                                     <a href="{{ url('admin/delete-section/' . $section['id']) }}"
                                                         onclick="return confirm('Are you sure you want to delete this section?')">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
                                                 </td>
                                             </tr>

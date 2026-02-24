@@ -33,8 +33,8 @@ class StudentApiController extends Controller
         }
 
         // Preserve old behavior
-        if ($role->name === 'superadmin') {
-            return 'superadmin';
+        if ($role->name === 'admin') {
+            return 'admin';
         }
 
         if ($role->name === 'sales') {
@@ -50,14 +50,14 @@ class StudentApiController extends Controller
         $user = $request->user();
         $type = $this->detectUserType($user);
 
-        if (!in_array($type, ['superadmin', 'sales'])) {
+        if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! Only Superadmin or Sales can view students.'
+                'message' => 'Access denied! Only admin or Sales can view students.'
             ], 403);
         }
 
-        if ($type === 'superadmin') {
+        if ($type === 'admin') {
             $students = User::with('institution')->orderBy('id', 'desc')->get();
         } else {
             $students = User::with('institution')
@@ -78,10 +78,10 @@ class StudentApiController extends Controller
         $user = $request->user();
         $type = strtolower(trim($this->detectUserType($user)));
 
-        if (!in_array($type, ['superadmin', 'sales'])) {
+        if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! Only Superadmin or Sales can add students.'
+                'message' => 'Access denied! Only admin or Sales can add students.'
             ], 403);
         }
 
@@ -124,7 +124,7 @@ class StudentApiController extends Controller
         }
 
         $validated['role_id'] = 5; // student role
-        $validated['status']   = ($type === 'superadmin') ? 1 : 0;
+        $validated['status']   = ($type === 'admin') ? 1 : 0;
         $validated['added_by'] = $user->id;
         $validated['password'] = Hash::make('12345678');
 
@@ -151,7 +151,7 @@ class StudentApiController extends Controller
         $user = $request->user();
         $type = strtolower($this->detectUserType($user));
 
-        if (!in_array($type, ['superadmin', 'sales'])) {
+        if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
                 'status' => false,
                 'message' => 'Access denied!'
@@ -239,7 +239,7 @@ class StudentApiController extends Controller
         }
 
 
-        if ($type !== 'superadmin') {
+        if ($type !== 'admin') {
             unset($validated['status']);
         }
 
@@ -258,10 +258,10 @@ class StudentApiController extends Controller
         $type = $this->detectUserType($user);
 
 
-        if (!in_array($type, ['superadmin', 'sales'])) {
+        if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! Only Superadmin or Sales can delete students.'
+                'message' => 'Access denied! Only admin or Sales can delete students.'
             ], 403);
         }
 
@@ -295,16 +295,16 @@ class StudentApiController extends Controller
         $user = $request->user();
         $type = $this->detectUserType($user);
 
-        if (!in_array($type, ['superadmin', 'sales'])) {
+        if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! Only Superadmin or Sales can view students.'
+                'message' => 'Access denied! Only admin or Sales can view students.'
             ], 403);
         }
 
         $query = User::query();
 
-        if ($type === 'superadmin') {
+        if ($type === 'admin') {
         } elseif ($type === 'sales') {
             $query->where('added_by', $user->id);
         }
