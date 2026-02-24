@@ -79,57 +79,89 @@ class SectionController extends Controller
     }
 
     public function addEditSection(Request $request, $id = null)
-    { // If the $id is not passed, this means Add a Section, if not, this means Edit the Section
-        // Correcting issues in the Skydash Admin Panel Sidebar using Session
+    {
         Session::put('page', 'sections');
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 
-        if ($id == '') { // if there's no $id is passed in the route/URL parameters, this means Add a new section
+        if ($id == "") {
+
             if (!Auth::guard('admin')->user()->can('add_categories')) {
                 abort(403, 'Unauthorized action.');
             }
-            $title = 'Add Section';
+
+            $title = "Add Section";
             $section = new Section();
-            // dd($section);
-            $message = 'Section added successfully!';
-        } else { // if the $id is passed in the route/URL parameters, this means Edit the Section
+            $message = "Section added successfully!";
+        }
+
+        else {
+
             if (!Auth::guard('admin')->user()->can('edit_categories')) {
                 abort(403, 'Unauthorized action.');
             }
-            $title = 'Edit Section';
-            $section = Section::find($id);
-            // dd($section);
-            $message = 'Section updated successfully!';
+
+            $title = "Edit Section";
+            $section = Section::findOrFail($id);
+            $message = "Section updated successfully!";
         }
 
-        if ($request->isMethod('post')) { // WHETHER Add or Update <form> submission!!
-            $data = $request->all();
-            // dd($data);
+        if ($request->isMethod('post')) {
 
-            // Laravel's Validation    // Customizing Laravel's Validation Error Messages: https://laravel.com/docs/9.x/validation#customizing-the-error-messages    // Customizing Validation Rules: https://laravel.com/docs/9.x/validation#custom-validation-rules
             $rules = [
-                'section_name' => 'required', // only alphabetical characters and spaces
+                'section_name'  => 'required|string|max:255',
+                'section_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             ];
 
-            $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
+            $customMessages = [
                 'section_name.required' => 'Section Name is required',
-
+                'section_image.image'   => 'File must be an image',
+                'section_image.mimes'   => 'Only jpg, jpeg and png allowed',
+                'section_image.max'     => 'Image size must be less than 2MB',
             ];
 
             $this->validate($request, $rules, $customMessages);
 
+            $section->name   = $request->section_name;
+            $section->status = 1;
 
-            // Saving inserted/updated data    // Inserting & Updating Models: https://laravel.com/docs/9.x/eloquent#inserts AND https://laravel.com/docs/9.x/eloquent#updates
-            $section->name   = $data['section_name']; // WHETHER ADDING or UPDATING
-            $section->status = 1;  // WHETHER ADDING or UPDATING
-            $section->save(); // Save all data in the database
+            if ($request->hasFile('section_image')) {
 
+                $image_tmp = $request->file('section_image');
+
+                if ($image_tmp->isValid()) {
+
+                    if (!empty($section->image)) {
+
+                        $oldImagePath = public_path('admin/images/section/' . $section->image);
+
+                        if (file_exists($oldImagePath)) {
+                            unlink($oldImagePath);
+                        }
+                    }
+
+                    $extension = $image_tmp->getClientOriginalExtension();
+                    $imageName = time() . '_' . rand(111, 99999) . '.' . $extension;
+
+                    $uploadPath = public_path('admin/images/section/');
+
+                    if (!file_exists($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+
+                    $image_tmp->move($uploadPath, $imageName);
+
+                    $section->image = $imageName;
+                }
+            }
+
+            $section->save();
 
             return redirect('admin/sections')->with('success_message', $message);
         }
 
-
-        return view('admin.sections.add_edit_section')->with(compact('title', 'section', 'logos', 'headerLogo'));
+        return view('admin.sections.add_edit_section')
+            ->with(compact('title', 'section', 'logos', 'headerLogo'));
     }
 }
