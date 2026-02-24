@@ -11,12 +11,14 @@ class Section extends Model
 
     protected $fillable = [
         'name',
+        'image',
         'status',
     ];
 
 
     // A one section has many categories (One To Many): https://laravel.com/docs/9.x/eloquent-relationships#one-to-many
-    public function categories() {
+    public function categories()
+    {
         return $this->hasMany('App\Models\Category', 'section_id')->where([ // 'section_id' is the foreign key in the `categories` table
             'parent_id' => 0, // 'Root' categories only (Parent categories only) (No subcategories)
             'status'    => 1
@@ -25,9 +27,18 @@ class Section extends Model
 
 
 
-    public static function sections() { // A STATIC function to use it in header.blade.php inside 'layout' folder inside 'front' folder
+    public static function sections()
+    { // A STATIC function to use it in header.blade.php inside 'layout' folder inside 'front' folder
         $getSections = Section::with('categories')->where('status', 1)->get()->toArray(); // Getting the 'enabled' sections ONLY and their child categories (using the 'categories' relationship method) which, in turn, include their 'subcategories`
         return $getSections;
     }
 
+    public function getImageAttribute($value)
+    {
+        if ($value) {
+            return asset('admin/images/section/' . $value);
+        }
+
+        return null;
+    }
 }
