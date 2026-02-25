@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Helpers\RoleHelper;
 use App\Http\Controllers\Controller;
-
 use App\Models\Block;
 use App\Models\ContactReply;
 use App\Models\ContactUs;
@@ -14,20 +14,18 @@ use App\Models\HeaderLogo;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductsAttribute;
-use App\Models\SalesExecutive;
+use App\Models\Setting;
 use App\Models\State;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorsBankDetail;
 use App\Models\VendorsBusinessDetail;
-use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\Rule;
-use Intervention\Image\Facades\Image;
-use Spatie\Permission\Models\Role; // Import Role model
+use Intervention\Image\Facades\Image; // Import Role model
+use Spatie\Permission\Models\Role;
 
 class AdminController extends Controller
 {
@@ -35,23 +33,23 @@ class AdminController extends Controller
     {
         Session::put('page', 'dashboard');
 
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
-        $admin     = Auth::guard('admin')->user();
+        $admin = Auth::guard('admin')->user();
         $adminType = $admin->type;
-        $vendorId  = $admin->vendor_id;
+        $vendorId = $admin->vendor_id;
 
         $vendorrole = Role::where('name', 'vendor')->first();
         $userrole = Role::where('name', 'user')->first();
         $salesrole = Role::where('name', 'sales')->first();
         // Default (Admin counts)
-        $vendorsCount         = User::where('role_id', $vendorrole->id)->count();
-        $usersCount           = User::where('role_id', $userrole->id)->count();
+        $vendorsCount = User::where('role_id', $vendorrole->id)->count();
+        $usersCount = User::where('role_id', $userrole->id)->count();
         $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
-        $productsCount        = Product::where('status', 1)->count();
-        $ordersCount          = Order::count();
-        $couponsCount         = Coupon::where('status', 1)->count();
+        $productsCount = Product::where('status', 1)->count();
+        $ordersCount = Order::count();
+        $couponsCount = Coupon::where('status', 1)->count();
 
         // Vendor-specific counts
         if ($adminType === 'vendor' && $vendorId) {
@@ -78,7 +76,7 @@ class AdminController extends Controller
                 ->count();
 
             // Users & sales executives usually remain global
-            $usersCount           = User::where('role_id', $userrole->id)->count();
+            $usersCount = User::where('role_id', $userrole->id)->count();
             $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
         }
 
@@ -104,25 +102,25 @@ class AdminController extends Controller
     public function login(Request $request)
     {
         $headerLogo = HeaderLogo::first();
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         if ($request->isMethod('post')) {
             $data = $request->all();
 
             $rules = [
-                'login'    => 'required|string|max:150',
+                'login' => 'required|string|max:150',
                 'password' => 'required',
             ];
 
             $customMessages = [
-                'login.required'    => 'Email or mobile number is required!',
+                'login.required' => 'Email or mobile number is required!',
                 'password.required' => 'Password is required!',
             ];
 
             $this->validate($request, $rules, $customMessages);
 
-            $loginInput   = trim($data['login']);
+            $loginInput = trim($data['login']);
             $numericLogin = preg_replace('/\D/', '', $loginInput);
-            $credentials  = ['password' => $data['password']];
+            $credentials = ['password' => $data['password']];
 
             if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
                 $credentials['email'] = $loginInput;
@@ -138,29 +136,33 @@ class AdminController extends Controller
                 // Check if vendor account is inactive
                 if ($user->type == 'vendor' && $user->status == '0') {
                     Auth::guard('admin')->logout();
+
                     return redirect()->back()->with('error_message', 'Your vendor account is not active');
                 }
 
                 $routePrefix = request()->segment(1); // 'admin', 'vendor', 'sales'
 
                 // Prevent vendors logging into admin login URL and vice versa
-                if ($routePrefix == 'admin' && !$user->hasRole('admin') && !$user->hasRole('superadmin') && $user->role_id != 1) {
+                if ($routePrefix == 'admin' && ! $user->hasRole('admin') && ! $user->hasRole('superadmin') && $user->role_id != RoleHelper::adminId()) {
                     Auth::guard('admin')->logout();
+
                     return redirect()->back()->with('error_message', 'You do not have admin access.');
-                } elseif ($routePrefix == 'vendor' && !$user->hasRole('vendor') && $user->role_id != 2) {
+                } elseif ($routePrefix == 'vendor' && ! $user->hasRole('vendor') && $user->role_id != RoleHelper::vendorId()) {
                     Auth::guard('admin')->logout();
+
                     return redirect()->back()->with('error_message', 'You do not have vendor access.');
-                } elseif ($routePrefix == 'sales' && !$user->hasRole('sales') && $user->role_id != 3) {
+                } elseif ($routePrefix == 'sales' && ! $user->hasRole('sales') && $user->role_id != RoleHelper::salesId()) {
                     Auth::guard('admin')->logout();
+
                     return redirect()->back()->with('error_message', 'You do not have sales access.');
                 }
 
                 // Dynamic role-based redirection
-                if ($user->hasRole('admin') || $user->hasRole('superadmin') || $user->role_id == 1) {
+                if ($user->hasRole('admin') || $user->hasRole('superadmin') || $user->role_id == RoleHelper::adminId()) {
                     return redirect('/admin/dashboard');
-                } elseif ($user->hasRole('vendor') || $user->role_id == 2) {
+                } elseif ($user->hasRole('vendor') || $user->role_id == RoleHelper::vendorId()) {
                     return redirect('/vendor/dashboard');
-                } elseif ($user->hasRole('sales') || $user->role_id == 3) {
+                } elseif ($user->hasRole('sales') || $user->role_id == RoleHelper::salesId()) {
                     return redirect('/sales/dashboard');
                 } elseif ($user->hasRole('student')) {
                     return redirect('/student/dashboard');
@@ -175,7 +177,6 @@ class AdminController extends Controller
 
         return view('admin/login', compact('logos', 'headerLogo'));
     }
-
 
     public function adminlogout(Request $request)
     {
@@ -209,7 +210,7 @@ class AdminController extends Controller
     {
 
         Session::put('page', 'update_admin_password');
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
         if ($request->isMethod('post')) {
@@ -232,7 +233,7 @@ class AdminController extends Controller
         }
 
         $adminDetails = Auth::guard('admin')->user()->toArray();
-        // Ensure image maps to profile_image if view expects it, or update view. 
+        // Ensure image maps to profile_image if view expects it, or update view.
         // User model accessor 'image' -> 'profile_image' handles this.
 
         return view('admin/settings/update_admin_password', compact('adminDetails', 'logos', 'headerLogo'));
@@ -252,20 +253,20 @@ class AdminController extends Controller
     public function updateAdminDetails(Request $request)
     {
         Session::put('page', 'update_admin_details');
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         if ($request->isMethod('post')) {
-            $data  = $request->all();
+            $data = $request->all();
             $rules = [
-                'admin_name'   => 'required|regex:/^[\pL\s\-]+$/u',
+                'admin_name' => 'required|regex:/^[\pL\s\-]+$/u',
                 'admin_mobile' => 'required|numeric',
             ];
 
             $customMessages = [
-                'admin_name.required'   => 'Name is required',
-                'admin_name.regex'      => 'Valid Name is required',
+                'admin_name.required' => 'Name is required',
+                'admin_name.regex' => 'Valid Name is required',
                 'admin_mobile.required' => 'Mobile is required',
-                'admin_mobile.numeric'  => 'Valid Mobile is required',
+                'admin_mobile.numeric' => 'Valid Mobile is required',
             ];
 
             $this->validate($request, $rules, $customMessages);
@@ -274,11 +275,11 @@ class AdminController extends Controller
                 $image_tmp = $request->file('admin_image');
                 if ($image_tmp->isValid()) {
                     $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = rand(111, 99999) . '.' . $extension;
-                    $imagePath = 'admin/images/photos/' . $imageName;
+                    $imageName = rand(111, 99999).'.'.$extension;
+                    $imagePath = 'admin/images/photos/'.$imageName;
                     Image::make($image_tmp)->save($imagePath);
                 }
-            } else if (! empty($data['current_admin_image'])) {
+            } elseif (! empty($data['current_admin_image'])) {
                 $imageName = $data['current_admin_image'];
             } else {
                 $imageName = '';
@@ -287,8 +288,8 @@ class AdminController extends Controller
             // Update User Details
             $user = Auth::guard('admin')->user();
             $user->update([
-                'name'    => $data['admin_name'],
-                'phone'   => $data['admin_mobile'], // Map to phone
+                'name' => $data['admin_name'],
+                'phone' => $data['admin_mobile'], // Map to phone
                 'profile_image' => $imageName,      // Map to profile_image
             ]);
 
@@ -300,7 +301,7 @@ class AdminController extends Controller
 
     public function updateVendorDetails($slug, Request $request)
     { // $slug can only be: 'personal', 'business' or 'bank'
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         if ($slug == 'personal') {
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
@@ -312,19 +313,19 @@ class AdminController extends Controller
                 // dd($data);
 
                 $rules = [
-                    'vendor_name'   => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
+                    'vendor_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                     'vendor_mobile' => 'required|numeric',
-                    'country_id'    => 'nullable|exists:countries,id',
-                    'state_id'      => 'nullable|exists:states,id',
-                    'district_id'   => 'nullable|exists:districts,id',
-                    'block_id'      => 'nullable|exists:blocks,id',
+                    'country_id' => 'nullable|exists:countries,id',
+                    'state_id' => 'nullable|exists:states,id',
+                    'district_id' => 'nullable|exists:districts,id',
+                    'block_id' => 'nullable|exists:blocks,id',
                 ];
 
                 $customMessages = [
-                    'vendor_name.required'   => 'Name is required',
-                    'vendor_name.regex'      => 'Valid Name is required',
+                    'vendor_name.required' => 'Name is required',
+                    'vendor_name.regex' => 'Valid Name is required',
                     'vendor_mobile.required' => 'Mobile is required',
-                    'vendor_mobile.numeric'  => 'Valid Mobile is required',
+                    'vendor_mobile.numeric' => 'Valid Mobile is required',
                 ];
 
                 $this->validate($request, $rules, $customMessages);
@@ -337,15 +338,15 @@ class AdminController extends Controller
                         $extension = $image_tmp->getClientOriginalExtension();
 
                         // Generate a random name for the uploaded image (to avoid that the image might get overwritten if its name is repeated)
-                        $imageName = rand(111, 99999) . '.' . $extension;
+                        $imageName = rand(111, 99999).'.'.$extension;
 
                         // Assigning the uploaded images path inside the 'public' folder
-                        $imagePath = 'admin/images/photos/' . $imageName;
+                        $imagePath = 'admin/images/photos/'.$imageName;
 
                         // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                         Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
                     }
-                } else if (! empty($data['current_vendor_image'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
+                } elseif (! empty($data['current_vendor_image'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
                     $imageName = $data['current_vendor_image'];
                 } else { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), and originally there wasn't any image uploaded in the first place
                     $imageName = '';
@@ -354,15 +355,15 @@ class AdminController extends Controller
                 // Vendor details need to be updated in BOTH `users` and `vendors` tables:
                 // Update Vendor Details in 'users' table
                 User::where('id', Auth::guard('admin')->user()->id)->update([
-                    'name'          => $data['vendor_name'],
-                    'phone'         => $data['vendor_mobile'],
+                    'name' => $data['vendor_name'],
+                    'phone' => $data['vendor_mobile'],
                     'profile_image' => $imageName,
-                    'address'       => $data['vendor_address'] ?? null,
-                    'country_id'    => $data['country_id'] ?? null,
-                    'state_id'      => $data['state_id'] ?? null,
-                    'district_id'   => $data['district_id'] ?? null,
-                    'block_id'      => $data['block_id'] ?? null,
-                    'pincode'       => $data['vendor_pincode'] ?? null,
+                    'address' => $data['vendor_address'] ?? null,
+                    'country_id' => $data['country_id'] ?? null,
+                    'state_id' => $data['state_id'] ?? null,
+                    'district_id' => $data['district_id'] ?? null,
+                    'block_id' => $data['block_id'] ?? null,
+                    'pincode' => $data['vendor_pincode'] ?? null,
                 ]);
 
                 // Update location in vendors table if needed
@@ -377,7 +378,7 @@ class AdminController extends Controller
 
             $vendorDetails = Vendor::where('id', Auth::guard('admin')->user()->vendor_id)->first()->toArray(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
 
-        } else if ($slug == 'business') {
+        } elseif ($slug == 'business') {
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
             Session::put('page', 'update_business_details');
 
@@ -386,19 +387,19 @@ class AdminController extends Controller
                 // dd($data);
 
                 $rules = [
-                    'shop_name'     => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
-                    'shop_city'     => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
-                    'shop_mobile'   => 'required|numeric',
+                    'shop_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
+                    'shop_city' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
+                    'shop_mobile' => 'required|numeric',
                     'address_proof' => 'required',
                 ];
 
                 $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
-                    'shop_name.required'   => 'Name is required',
-                    'shop_city.required'   => 'City is required',
-                    'shop_city.regex'      => 'Valid City alphabetical is required',
-                    'shop_name.regex'      => 'Valid Shop Name is required',
+                    'shop_name.required' => 'Name is required',
+                    'shop_city.required' => 'City is required',
+                    'shop_city.regex' => 'Valid City alphabetical is required',
+                    'shop_name.regex' => 'Valid Shop Name is required',
                     'shop_mobile.required' => 'Mobile is required',
-                    'shop_mobile.numeric'  => 'Valid Mobile is required',
+                    'shop_mobile.numeric' => 'Valid Mobile is required',
                 ];
 
                 $this->validate($request, $rules, $customMessages);
@@ -412,15 +413,15 @@ class AdminController extends Controller
                         $extension = $image_tmp->getClientOriginalExtension();
 
                         // Generate a random name for the uploaded image (to avoid that the image might get overwritten if its name is repeated)
-                        $imageName = rand(111, 99999) . '.' . $extension;
+                        $imageName = rand(111, 99999).'.'.$extension;
 
                         // Assigning the uploaded images path inside the 'public' folder
-                        $imagePath = 'admin/images/proofs/' . $imageName;
+                        $imagePath = 'admin/images/proofs/'.$imageName;
 
                         // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                         Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
                     }
-                } else if (! empty($data['current_address_proof'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
+                } elseif (! empty($data['current_address_proof'])) { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), but there's an already existing old image
                     $imageName = $data['current_address_proof'];
                 } else { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), and originally there wasn't any image uploaded in the first place
                     $imageName = '';
@@ -429,37 +430,37 @@ class AdminController extends Controller
                 $vendorCount = VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->count(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                 if ($vendorCount > 0) {                                                                                     // if there's a
                     VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->update([                // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-                        'shop_name'               => $data['shop_name'],
-                        'shop_mobile'             => $data['shop_mobile'],
-                        'shop_website'            => $data['shop_website'],
-                        'shop_address'            => $data['shop_address'],
-                        'shop_city'               => $data['shop_city'],
-                        'shop_state'              => $data['shop_state'],
-                        'shop_country'            => $data['shop_country'],
-                        'shop_pincode'            => $data['shop_pincode'],
+                        'shop_name' => $data['shop_name'],
+                        'shop_mobile' => $data['shop_mobile'],
+                        'shop_website' => $data['shop_website'],
+                        'shop_address' => $data['shop_address'],
+                        'shop_city' => $data['shop_city'],
+                        'shop_state' => $data['shop_state'],
+                        'shop_country' => $data['shop_country'],
+                        'shop_pincode' => $data['shop_pincode'],
                         'business_license_number' => $data['business_license_number'],
-                        'gst_number'              => $data['gst_number'],
-                        'pan_number'              => $data['pan_number'],
-                        'address_proof'           => $data['address_proof'],
-                        'address_proof_image'     => $imageName,
+                        'gst_number' => $data['gst_number'],
+                        'pan_number' => $data['pan_number'],
+                        'address_proof' => $data['address_proof'],
+                        'address_proof_image' => $imageName,
                     ]);
                 } else { // if there's no vendor already existing, then INSERT
                     // INSERT INTO `vendors_business_details` table
                     VendorsBusinessDetail::insert([
-                        'vendor_id'               => Auth::guard('admin')->user()->vendor_id, // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-                        'shop_name'               => $data['shop_name'],
-                        'shop_mobile'             => $data['shop_mobile'],
-                        'shop_website'            => $data['shop_website'],
-                        'shop_address'            => $data['shop_address'],
-                        'shop_city'               => $data['shop_city'],
-                        'shop_state'              => $data['shop_state'],
-                        'shop_country'            => $data['shop_country'],
-                        'shop_pincode'            => $data['shop_pincode'],
+                        'vendor_id' => Auth::guard('admin')->user()->vendor_id, // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
+                        'shop_name' => $data['shop_name'],
+                        'shop_mobile' => $data['shop_mobile'],
+                        'shop_website' => $data['shop_website'],
+                        'shop_address' => $data['shop_address'],
+                        'shop_city' => $data['shop_city'],
+                        'shop_state' => $data['shop_state'],
+                        'shop_country' => $data['shop_country'],
+                        'shop_pincode' => $data['shop_pincode'],
                         'business_license_number' => $data['business_license_number'],
-                        'gst_number'              => $data['gst_number'],
-                        'pan_number'              => $data['pan_number'],
-                        'address_proof'           => $data['address_proof'],
-                        'address_proof_image'     => $imageName,
+                        'gst_number' => $data['gst_number'],
+                        'pan_number' => $data['pan_number'],
+                        'address_proof' => $data['address_proof'],
+                        'address_proof_image' => $imageName,
                     ]);
                 }
 
@@ -473,7 +474,7 @@ class AdminController extends Controller
             } else {
                 $vendorDetails = [];
             }
-        } else if ($slug == 'bank') {
+        } elseif ($slug == 'bank') {
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
             Session::put('page', 'update_bank_details');
 
@@ -482,18 +483,18 @@ class AdminController extends Controller
                 // dd($data);
                 $rules = [
                     'account_holder_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
-                    'bank_name'           => 'required',                       // only alphabetical characters and spaces
-                    'account_number'      => 'required|numeric',
-                    'bank_ifsc_code'      => 'required',
+                    'bank_name' => 'required',                       // only alphabetical characters and spaces
+                    'account_number' => 'required|numeric',
+                    'bank_ifsc_code' => 'required',
                 ];
 
                 $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
                     'account_holder_name.required' => 'Account Holder Name is required',
-                    'bank_name.required'           => 'Bank Name is required',
-                    'account_holder_name.regex'    => 'Valid Account Holder Name is required',
-                    'account_number.required'      => 'Account Number is required',
-                    'account_number.numeric'       => 'Valid Account Number is required',
-                    'bank_ifsc_code.required'      => 'Bank IFSC Code is required',
+                    'bank_name.required' => 'Bank Name is required',
+                    'account_holder_name.regex' => 'Valid Account Holder Name is required',
+                    'account_number.required' => 'Account Number is required',
+                    'account_number.numeric' => 'Valid Account Number is required',
+                    'bank_ifsc_code.required' => 'Bank IFSC Code is required',
                 ];
 
                 $this->validate($request, $rules, $customMessages);
@@ -503,18 +504,18 @@ class AdminController extends Controller
                     // UPDATE `vendors_bank_details` table
                     VendorsBankDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->update([                // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'account_holder_name' => $data['account_holder_name'],
-                        'bank_name'           => $data['bank_name'],
-                        'account_number'      => $data['account_number'],
-                        'bank_ifsc_code'      => $data['bank_ifsc_code'],
+                        'bank_name' => $data['bank_name'],
+                        'account_number' => $data['account_number'],
+                        'bank_ifsc_code' => $data['bank_ifsc_code'],
                     ]);
                 } else { // if there's no vendor already existing, then INSERT
                     // INSERT INTO `vendors_bank_details` table
                     VendorsBankDetail::insert([
-                        'vendor_id'           => Auth::guard('admin')->user()->vendor_id, // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
+                        'vendor_id' => Auth::guard('admin')->user()->vendor_id, // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
                         'account_holder_name' => $data['account_holder_name'],
-                        'bank_name'           => $data['bank_name'],
-                        'account_number'      => $data['account_number'],
-                        'bank_ifsc_code'      => $data['bank_ifsc_code'],
+                        'bank_name' => $data['bank_name'],
+                        'account_number' => $data['account_number'],
+                        'bank_ifsc_code' => $data['bank_ifsc_code'],
                     ]);
                 }
 
@@ -578,7 +579,7 @@ class AdminController extends Controller
     // Update the vendor's commission percentage (by the Admin) in `vendors` table (for every vendor on their own) in the Admin Panel in admin/admins/view_vendor_details.blade.php (Commissions module: Every vendor must pay a certain commission (that may vary from a vendor to another) for the website owner (admin) on every item sold, and it's defined by the website owner (admin))
     public function updateVendorCommission(Request $request)
     {
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         if ($request->isMethod('post')) { // if the HTML Form is submitted (in admin/admins/view_vendor_details.blade.php)
             $data = $request->all();
@@ -594,23 +595,23 @@ class AdminController extends Controller
     public function admins($type = null)
     { // $type can be: admin, subadmin, vendor
         $headerLogo = HeaderLogo::first();
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
 
         // Permission Check
-        if (!empty($type)) {
+        if (! empty($type)) {
             $role = strtolower($type);
             if ($role === 'vendor') {
-                if (!Auth::guard('admin')->user()->can('view_vendors')) {
+                if (! Auth::guard('admin')->user()->can('view_vendors')) {
                     abort(403, 'Unauthorized action.');
                 }
             } elseif (in_array($role, ['admin', 'subadmin', 'superadmin'])) {
-                if (!Auth::guard('admin')->user()->can('view_admins')) {
+                if (! Auth::guard('admin')->user()->can('view_admins')) {
                     abort(403, 'Unauthorized action.');
                 }
             }
         } else {
             // General view - requires either or both
-            if (!Auth::guard('admin')->user()->can('view_admins') && !Auth::guard('admin')->user()->can('view_vendors')) {
+            if (! Auth::guard('admin')->user()->can('view_admins') && ! Auth::guard('admin')->user()->can('view_vendors')) {
                 abort(403, 'Unauthorized action.');
             }
         }
@@ -620,16 +621,18 @@ class AdminController extends Controller
         if (! empty($type)) {
             $role = strtolower($type);
             // Map legacy types to roles if needed
-            if ($role === 'superadmin') $role = 'admin';
+            if ($role === 'superadmin') {
+                $role = 'admin';
+            }
 
             if ($role === 'admin') {
-                $query->where('role_id', 1);
+                $query->where('role_id', RoleHelper::adminId());
             } else {
                 $query->role($role, 'web');
             }
 
             $title = ucfirst($type);
-            Session::put('page', 'view_' . strtolower($title));
+            Session::put('page', 'view_'.strtolower($title));
         } else {
             // Show all staff: admins, vendors, etc. (excluding basic users/students if desired?)
             // Assuming "Admins/Vendors" page usually implies staff.
@@ -665,12 +668,12 @@ class AdminController extends Controller
 
     public function viewVendorDetails($id)
     {
-        if (!Auth::guard('admin')->user()->can('view_vendors')) {
+        if (! Auth::guard('admin')->user()->can('view_vendors')) {
             abort(403, 'Unauthorized action.');
         }
 
-        $logos         = HeaderLogo::first();
-        $headerLogo    = HeaderLogo::first();
+        $logos = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
         $vendorDetails = User::with('vendorPersonal', 'vendorBusiness', 'vendorBank')->where('id', $id)->first();
         $vendorDetails = $vendorDetails ? $vendorDetails->toArray() : null;
         // dd($vendorDetails);
@@ -679,7 +682,7 @@ class AdminController extends Controller
         $countries = Country::where('status', true)->get()->toArray();
 
         // Get current location IDs from vendor personal details
-        $currentCountryId  = $vendorDetails['vendor_personal']['country_id'] ?? $vendorDetails['vendor_personal']['country_id'] ?? null;
+        $currentCountryId = $vendorDetails['vendor_personal']['country_id'] ?? $vendorDetails['vendor_personal']['country_id'] ?? null;
         // The array key might be camelCase or snake_case depending on toArray behavior or manual mapping.
         // Let's try to be safe.
         if (isset($vendorDetails['vendorPersonal'])) {
@@ -688,10 +691,10 @@ class AdminController extends Controller
             $currentDistrictId = $vendorDetails['vendorPersonal']['district_id'] ?? null;
             $currentBlockId = $vendorDetails['vendorPersonal']['block_id'] ?? null;
         } else {
-            $currentCountryId  = $vendorDetails['vendor_personal']['country_id'] ?? null;
-            $currentStateId    = $vendorDetails['vendor_personal']['state_id'] ?? null;
+            $currentCountryId = $vendorDetails['vendor_personal']['country_id'] ?? null;
+            $currentStateId = $vendorDetails['vendor_personal']['state_id'] ?? null;
             $currentDistrictId = $vendorDetails['vendor_personal']['district_id'] ?? null;
-            $currentBlockId    = $vendorDetails['vendor_personal']['block_id'] ?? null;
+            $currentBlockId = $vendorDetails['vendor_personal']['block_id'] ?? null;
         }
 
         return view('admin/admins/view_vendor_details', compact('vendorDetails', 'logos', 'headerLogo', 'countries', 'currentCountryId', 'currentStateId', 'currentDistrictId', 'currentBlockId'));
@@ -699,20 +702,20 @@ class AdminController extends Controller
 
     public function updateAdminStatus(Request $request)
     {
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         // Update Admin Status using AJAX in admins.blade.php
         if ($request->ajax()) {  // if the request is coming via an AJAX call
             $data = $request->all(); // Getting the name/value pairs array that are sent from the AJAX request (AJAX call)
 
             $adminUser = User::where('id', $data['admin_id'])->first();
-            if (!$adminUser) {
+            if (! $adminUser) {
                 return response()->json(['status' => 'error', 'message' => 'User not found.'], 404);
             }
 
             // Check permissions based on user type
             $permission = $adminUser->type === 'vendor' ? 'update_vendors_status' : 'update_admins_status';
-            if (!Auth::guard('admin')->user()->can($permission)) {
+            if (! Auth::guard('admin')->user()->can($permission)) {
                 return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
             }
 
@@ -740,40 +743,40 @@ class AdminController extends Controller
                         $currentPlan = $vendor->plan ?? 'free';
 
                         // 1. Enrollment Commission (Free) - Always paid once for any vendor becoming active
-                        $freeDesc = "Commission for Vendor: " . $adminUser->name . " (#" . $adminUser->id . ") [Free Plan]";
+                        $freeDesc = 'Commission for Vendor: '.$adminUser->name.' (#'.$adminUser->id.') [Free Plan]';
                         $freeExists = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
                             ->where('description', $freeDesc)
                             ->exists();
 
-                        if (!$freeExists) {
+                        if (! $freeExists) {
                             $freeAmount = (float) \App\Models\Setting::getValue('default_income_per_vendor', 50);
                             $salesExecutive->wallet_balance += $freeAmount;
                             $salesExecutive->save();
 
                             \App\Models\WalletTransaction::create([
-                                'user_id'     => $salesExecutiveId,
-                                'amount'      => $freeAmount,
-                                'type'        => 'credit',
+                                'user_id' => $salesExecutiveId,
+                                'amount' => $freeAmount,
+                                'type' => 'credit',
                                 'description' => $freeDesc,
                             ]);
                         }
 
                         // 2. Pro Plan Commission - Paid if vendor is Pro (covers direct Pro enrollment or manual Pro set)
                         if (strtolower($currentPlan) == 'pro') {
-                            $proDesc = "Commission for Vendor: " . $adminUser->name . " (#" . $adminUser->id . ") [Pro Plan]";
+                            $proDesc = 'Commission for Vendor: '.$adminUser->name.' (#'.$adminUser->id.') [Pro Plan]';
                             $proExists = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
                                 ->where('description', $proDesc)
                                 ->exists();
 
-                            if (!$proExists) {
+                            if (! $proExists) {
                                 $proAmount = (float) \App\Models\Setting::getValue('default_income_per_pro_vendor', 100);
                                 $salesExecutive->wallet_balance += $proAmount;
                                 $salesExecutive->save();
 
                                 \App\Models\WalletTransaction::create([
-                                    'user_id'     => $salesExecutiveId,
-                                    'amount'      => $proAmount,
-                                    'type'        => 'credit',
+                                    'user_id' => $salesExecutiveId,
+                                    'amount' => $proAmount,
+                                    'type' => 'credit',
                                     'description' => $proDesc,
                                 ]);
                             }
@@ -785,7 +788,7 @@ class AdminController extends Controller
             $adminType = Auth::guard('admin')->user()->type; // `type` is the column in `admins` table    // Retrieving The Authenticated User and getting their `type`      column in `admins` table    // https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user    // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
 
             return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
-                'status'   => $status,
+                'status' => $status,
                 'admin_id' => $data['admin_id'],
             ]);
         }
@@ -796,14 +799,14 @@ class AdminController extends Controller
 
         Session::put('page', 'logo');
         $headerLogo = HeaderLogo::first();
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
 
         if ($request->isMethod('post')) {
             $data = $request->all();
 
             if ($request->hasFile('logo')) {
-                $file     = $request->file('logo');
-                $filename = time() . '.' . $file->getClientOriginalExtension();
+                $file = $request->file('logo');
+                $filename = time().'.'.$file->getClientOriginalExtension();
                 $file->move(public_path('uploads/logos/'), $filename);
 
                 if ($logos) {
@@ -823,12 +826,12 @@ class AdminController extends Controller
     {
         Session::put('page', 'favicon');
 
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         if ($request->isMethod('post')) {
             if ($request->hasFile('favicon')) {
-                $file            = $request->file('favicon');
-                $filename        = time() . '.' . $file->getClientOriginalExtension();
+                $file = $request->file('favicon');
+                $filename = time().'.'.$file->getClientOriginalExtension();
                 $destinationPath = public_path('uploads/favicons/');
 
                 if (! file_exists($destinationPath)) {
@@ -857,7 +860,7 @@ class AdminController extends Controller
 
     public function addEditAdmin(Request $request, $id = null)
     {
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         Session::put('page', 'admins');
 
@@ -866,31 +869,31 @@ class AdminController extends Controller
 
             $userId = $data['admin_id'] ?? $id ?? null;
             $emailRule = 'required|email|unique:users,email';
-            if (!empty($userId)) {
-                $emailRule .= ',' . $userId;
+            if (! empty($userId)) {
+                $emailRule .= ','.$userId;
             }
 
             // Laravel's Validation
             $rules = [
-                'name'   => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
-                'email'  => $emailRule,
+                'name' => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
+                'email' => $emailRule,
                 'mobile' => 'required|numeric',
             ];
 
             $customMessages = [
-                'name.required'   => 'Name is required',
-                'name.regex'      => 'Valid Name is required',
-                'email.required'  => 'Email is required',
-                'email.email'     => 'Valid Email is required',
-                'email.unique'    => 'Email already exists',
+                'name.required' => 'Name is required',
+                'name.regex' => 'Valid Name is required',
+                'email.required' => 'Email is required',
+                'email.email' => 'Valid Email is required',
+                'email.unique' => 'Email already exists',
                 'mobile.required' => 'Mobile is required',
-                'mobile.numeric'  => 'Valid Mobile is required',
+                'mobile.numeric' => 'Valid Mobile is required',
             ];
 
             if (empty($userId)) {
                 // Add mode: require password
-                $rules['password']                    = 'required|min:6|confirmed';
-                $rules['password_confirmation']       = 'required';
+                $rules['password'] = 'required|min:6|confirmed';
+                $rules['password_confirmation'] = 'required';
             }
 
             $this->validate($request, $rules, $customMessages);
@@ -900,11 +903,11 @@ class AdminController extends Controller
                 $image_tmp = $request->file('admin_image');
                 if ($image_tmp->isValid()) {
                     $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = rand(111, 99999) . '.' . $extension;
-                    $imagePath = 'admin/images/photos/' . $imageName;
+                    $imageName = rand(111, 99999).'.'.$extension;
+                    $imagePath = 'admin/images/photos/'.$imageName;
                     Image::make($image_tmp)->save($imagePath);
                 }
-            } else if (! empty($data['current_admin_image'])) {
+            } elseif (! empty($data['current_admin_image'])) {
                 $imageName = $data['current_admin_image'];
             } else {
                 $imageName = '';
@@ -912,14 +915,14 @@ class AdminController extends Controller
 
             // Prepare User Data
             $userData = [
-                'name'    => $data['name'],
-                'email'   => $data['email'],
-                'phone'   => $data['mobile'], // User model uses 'phone'
-                'status'  => isset($data['status']) ? 1 : 0,
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'phone' => $data['mobile'], // User model uses 'phone'
+                'status' => isset($data['status']) ? 1 : 0,
                 'profile_image' => $imageName, // User model uses 'profile_image'
             ];
 
-            if (!empty($data['password'])) {
+            if (! empty($data['password'])) {
                 $userData['password'] = Hash::make($data['password']);
             }
 
@@ -934,13 +937,13 @@ class AdminController extends Controller
             // But here it seems general. Let's look at `type` input or default.
             // Original code: $adminData['type'] = 'vendor'; (Wait, it forced 'vendor'??)
             // Line 800 in original: 'type' => 'vendor'.
-            // Actually, the original code looked like it defaulted to 'vendor' in `addEditAdmin` for some reason? 
+            // Actually, the original code looked like it defaulted to 'vendor' in `addEditAdmin` for some reason?
             // Ah, looking closer at line 564 `public function admins($type = null)`...
             // It seems this controller handles both.
             // Let's assume if it creates a Vendor profile, account is Vendor.
 
             // BUT wait, line 800 in viewed file said `'type' => 'vendor'`.
-            // Let's assume this form is used for Vendors mostly? 
+            // Let's assume this form is used for Vendors mostly?
             // Or maybe I missed where type is set.
             // Let's look at existing `admins()` method logic.
 
@@ -957,7 +960,7 @@ class AdminController extends Controller
 
                 // Dynamic Role Fetching as per user request
                 $role = Role::where('name', $roleName)->where('guard_name', 'web')->first();
-                if (!$role) {
+                if (! $role) {
                     return redirect()->back()->with('error_message', "Role '$roleName' not found for web guard.");
                 }
 
@@ -968,12 +971,12 @@ class AdminController extends Controller
 
                 // Create Vendor Profile
                 $vendorData = [
-                    'name'       => $data['name'],
-                    'email'      => $data['email'],
-                    'mobile'     => $data['mobile'],
-                    'confirm'    => 'Yes',
-                    'status'     => isset($data['status']) ? 1 : 0,
-                    'user_id'    => $user->id, // LINK HERE
+                    'name' => $data['name'],
+                    'email' => $data['email'],
+                    'mobile' => $data['mobile'],
+                    'confirm' => 'Yes',
+                    'status' => isset($data['status']) ? 1 : 0,
+                    'user_id' => $user->id, // LINK HERE
                 ];
                 Vendor::create($vendorData);
 
@@ -993,17 +996,29 @@ class AdminController extends Controller
                 $vendor = Vendor::where('user_id', $user->id)->first();
                 if ($vendor) {
                     $vendorUpdateData = [
-                        'name'   => $data['name'],
-                        'email'  => $data['email'],
+                        'name' => $data['name'],
+                        'email' => $data['email'],
                         'mobile' => $data['mobile'],
                     ];
                     // Update location fields if provided
-                    if (isset($data['vendor_address'])) $vendorUpdateData['address'] = $data['vendor_address'];
-                    if (isset($data['vendor_pincode'])) $vendorUpdateData['pincode'] = $data['vendor_pincode'];
-                    if (isset($data['vendor_country_id'])) $vendorUpdateData['country_id'] = $data['vendor_country_id'];
-                    if (isset($data['vendor_state_id'])) $vendorUpdateData['state_id'] = $data['vendor_state_id'];
-                    if (isset($data['vendor_district_id'])) $vendorUpdateData['district_id'] = $data['vendor_district_id'];
-                    if (isset($data['vendor_block_id'])) $vendorUpdateData['block_id'] = $data['vendor_block_id'];
+                    if (isset($data['vendor_address'])) {
+                        $vendorUpdateData['address'] = $data['vendor_address'];
+                    }
+                    if (isset($data['vendor_pincode'])) {
+                        $vendorUpdateData['pincode'] = $data['vendor_pincode'];
+                    }
+                    if (isset($data['vendor_country_id'])) {
+                        $vendorUpdateData['country_id'] = $data['vendor_country_id'];
+                    }
+                    if (isset($data['vendor_state_id'])) {
+                        $vendorUpdateData['state_id'] = $data['vendor_state_id'];
+                    }
+                    if (isset($data['vendor_district_id'])) {
+                        $vendorUpdateData['district_id'] = $data['vendor_district_id'];
+                    }
+                    if (isset($data['vendor_block_id'])) {
+                        $vendorUpdateData['block_id'] = $data['vendor_block_id'];
+                    }
 
                     $vendor->update($vendorUpdateData);
                 }
@@ -1024,7 +1039,7 @@ class AdminController extends Controller
 
             $vendorPersonal = [];
             $vendorBusiness = [];
-            $vendorBank     = [];
+            $vendorBank = [];
 
             // Find linked vendor
             $vendorProfile = Vendor::where('user_id', $id)->first(); // Use user_id link
@@ -1032,10 +1047,10 @@ class AdminController extends Controller
             if ($vendorProfile) {
                 $vendorPersonal = $vendorProfile->toArray();
                 $vendorBusiness = VendorsBusinessDetail::where('vendor_id', $vendorProfile->id)->first();
-                $vendorBank     = VendorsBankDetail::where('vendor_id', $vendorProfile->id)->first();
+                $vendorBank = VendorsBankDetail::where('vendor_id', $vendorProfile->id)->first();
 
                 $vendorBusiness = $vendorBusiness ? $vendorBusiness->toArray() : [];
-                $vendorBank     = $vendorBank ? $vendorBank->toArray() : [];
+                $vendorBank = $vendorBank ? $vendorBank->toArray() : [];
                 // Add type 'vendor' for view logic compatibility
                 $admin['type'] = 'vendor';
                 $admin['vendor_id'] = $vendorProfile->id;
@@ -1061,13 +1076,13 @@ class AdminController extends Controller
 
         // Check permissions
         $permission = $user->type === 'vendor' ? 'delete_vendors' : 'delete_admins';
-        if (!Auth::guard('admin')->user()->can($permission)) {
+        if (! Auth::guard('admin')->user()->can($permission)) {
             return redirect()->back()->with('error_message', 'You do not have permission to delete this user.');
         }
 
         // Delete admin profile image if exists
-        if (! empty($user->profile_image) && file_exists(public_path('admin/images/photos/' . $user->profile_image))) {
-            unlink(public_path('admin/images/photos/' . $user->profile_image));
+        if (! empty($user->profile_image) && file_exists(public_path('admin/images/photos/'.$user->profile_image))) {
+            unlink(public_path('admin/images/photos/'.$user->profile_image));
         }
 
         // Delete vendor from vendors table too if accessible via relation or user_id
@@ -1086,7 +1101,7 @@ class AdminController extends Controller
     {
         Session::put('page', 'contact_queries');
         $headerLogo = HeaderLogo::first();
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
 
         $queries = ContactUs::with('replies')->orderBy('created_at', 'desc')->get()->toArray();
 
@@ -1095,7 +1110,7 @@ class AdminController extends Controller
 
     public function updateContactStatus(Request $request)
     {
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         if ($request->ajax()) {
             $data = $request->all();
@@ -1103,7 +1118,7 @@ class AdminController extends Controller
             ContactUs::where('id', $data['query_id'])->update(['status' => $data['status']]);
 
             return response()->json([
-                'status'   => $data['status'],
+                'status' => $data['status'],
                 'query_id' => $data['query_id'],
             ]);
         }
@@ -1111,14 +1126,14 @@ class AdminController extends Controller
 
     public function updateContactReply(Request $request, $id)
     {
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         if ($request->isMethod('post')) {
             $data = $request->all();
 
             // Get current query status
             $currentQuery = ContactUs::where('id', $id)->first();
-            $wasResolved  = $currentQuery && $currentQuery->status == 'resolved';
+            $wasResolved = $currentQuery && $currentQuery->status == 'resolved';
 
             // If query is already resolved and admin is just changing status, admin_reply is optional
             $rules = [
@@ -1131,7 +1146,7 @@ class AdminController extends Controller
 
             // Only require admin_reply if query is not already resolved or if status is being changed to resolved
             if (! $wasResolved || ($data['status'] == 'resolved' && ! $wasResolved)) {
-                $rules['admin_reply']                   = 'required';
+                $rules['admin_reply'] = 'required';
                 $customMessages['admin_reply.required'] = 'Reply is required';
             }
 
@@ -1150,8 +1165,8 @@ class AdminController extends Controller
                 // Also save to replies table for conversation thread
                 ContactReply::create([
                     'contact_us_id' => $id,
-                    'reply_by'      => 'admin',
-                    'message'       => $data['admin_reply'],
+                    'reply_by' => 'admin',
+                    'message' => $data['admin_reply'],
                 ]);
             }
 
@@ -1170,7 +1185,7 @@ class AdminController extends Controller
 
     public function deleteContactQuery($id)
     {
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         ContactUs::where('id', $id)->delete();
 
@@ -1181,7 +1196,7 @@ class AdminController extends Controller
     {
         Session::put('page', 'coming_soon_settings');
 
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
         if ($request->isMethod('post')) {

@@ -80,9 +80,9 @@ class User extends Authenticatable
             return 'sales'; // Not in original Admin types, but useful
         }
         // Fallback to legacy behavior if needed (e.g. checks role_id directly)
-        if ($this->role_id == 1 || $this->role_id === 'admin' || $this->role_id === 'superadmin') return 'admin';
-        if ($this->role_id == 2 || $this->role_id === 'vendor') return 'vendor';
-        if ($this->role_id == 3 || $this->role_id === 'sales') return 'sales';
+        if ($this->role_id == \App\Helpers\RoleHelper::adminId()) return 'admin';
+        if ($this->role_id == \App\Helpers\RoleHelper::vendorId()) return 'vendor';
+        if ($this->role_id == \App\Helpers\RoleHelper::salesId()) return 'sales';
 
         return 'user'; // Default
     }

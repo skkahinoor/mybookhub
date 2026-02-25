@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\RoleHelper;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\SalesExecutive;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class SalesReportController extends Controller
 {
@@ -14,29 +14,28 @@ class SalesReportController extends Controller
     {
         $sales = auth()->user();
 
-        if (!$sales) {
+        if (! $sales) {
             return response()->json([
                 'status' => false,
-                'message' => 'Unauthenticated'
+                'message' => 'Unauthenticated',
             ], 401);
         }
 
         $role = \Spatie\Permission\Models\Role::find($sales->role_id);
 
-        if (!$role || $role->name !== 'sales') {
+        if (! $role || $role->name !== 'sales') {
             return response()->json([
                 'status' => false,
-                'message' => 'Only Sales Executives allowed'
+                'message' => 'Only Sales Executives allowed',
             ], 403);
         }
 
         if ($sales->status != 1) {
             return response()->json([
                 'status' => false,
-                'message' => 'Your account is inactive.'
+                'message' => 'Your account is inactive.',
             ], 403);
         }
-
 
         $salesId = $sales->id;
         $incomePerTarget = $sales->salesExecutive->income_per_target ?? 0;
@@ -46,15 +45,15 @@ class SalesReportController extends Controller
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        $todayStudents     = User::where('added_by', $salesId)->where('role_id', 5)->where('status', 1)->whereDate('created_at', $today)->count();
-        $weeklyStudents    = User::where('added_by', $salesId)->where('role_id', 5)->where('status', 1)->whereDate('created_at', '>=', $startOfWeek)->count();
-        $monthlyStudents   = User::where('added_by', $salesId)->where('role_id', 5)->where('status', 1)->whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->count();
-        $totalStudents     = User::where('added_by', $salesId)->where('role_id', 5)->where('status', 1)->count();
+        $todayStudents = User::where('added_by', $salesId)->where('role_id', RoleHelper::studentId())->where('status', 1)->whereDate('created_at', $today)->count();
+        $weeklyStudents = User::where('added_by', $salesId)->where('role_id', RoleHelper::studentId())->where('status', 1)->whereDate('created_at', '>=', $startOfWeek)->count();
+        $monthlyStudents = User::where('added_by', $salesId)->where('role_id', RoleHelper::studentId())->where('status', 1)->whereYear('created_at', $currentYear)->whereMonth('created_at', $currentMonth)->count();
+        $totalStudents = User::where('added_by', $salesId)->where('role_id', RoleHelper::studentId())->where('status', 1)->count();
 
-        $todayEarning   = $incomePerTarget * $todayStudents;
-        $weeklyEarning  = $incomePerTarget * $weeklyStudents;
+        $todayEarning = $incomePerTarget * $todayStudents;
+        $weeklyEarning = $incomePerTarget * $weeklyStudents;
         $monthlyEarning = $incomePerTarget * $monthlyStudents;
-        $totalEarning   = $incomePerTarget * $totalStudents;
+        $totalEarning = $incomePerTarget * $totalStudents;
 
         $days = 30;
         $startDate = now()->subDays($days - 1)->startOfDay();
@@ -71,7 +70,7 @@ class SalesReportController extends Controller
         // Students per Day
         $studentGraph = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesId)
-            ->where('role_id', 5)
+            ->where('role_id', RoleHelper::studentId())
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')
@@ -88,26 +87,26 @@ class SalesReportController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Report fetched successfully",
+            'message' => 'Report fetched successfully',
             'data' => [
                 'summary' => [
-                    'students_today'       => $todayStudents,
-                    'students_week'        => $weeklyStudents,
-                    'students_month'       => $monthlyStudents,
-                    'students_total'       => $totalStudents,
+                    'students_today' => $todayStudents,
+                    'students_week' => $weeklyStudents,
+                    'students_month' => $monthlyStudents,
+                    'students_total' => $totalStudents,
 
-                    'earning_today'        => $todayEarning,
-                    'earning_week'         => $weeklyEarning,
-                    'earning_month'        => $monthlyEarning,
-                    'earning_total'        => $totalEarning,
+                    'earning_today' => $todayEarning,
+                    'earning_week' => $weeklyEarning,
+                    'earning_month' => $monthlyEarning,
+                    'earning_total' => $totalEarning,
                 ],
 
                 'graph' => [
-                    'dates'            => $dates,
-                    'students'         => $dailyStudents,
-                    'earnings'         => $dailyEarnings,
-                ]
-            ]
+                    'dates' => $dates,
+                    'students' => $dailyStudents,
+                    'earnings' => $dailyEarnings,
+                ],
+            ],
         ], 200);
     }
 }

@@ -17,14 +17,13 @@ class DashboardController extends Controller
         
         // Fix: Auto-assign 'user' role if the user has no role assigned
         if (empty($user->role_id)) {
-            $role = \Spatie\Permission\Models\Role::where('name', 'user')->where('guard_name', 'web')->first();
-            if ($role) {
-                $user->role_id = $role->id;
+            $roleId = \App\Helpers\RoleHelper::userId();
+            if ($roleId) {
+                $user->role_id = $roleId;
                 $user->save();
                 
-                // Also sync with Spatie permissions
                 if (!$user->hasRole('user')) {
-                    $user->assignRole($role);
+                    $user->assignRole('user');
                 }
             }
         }

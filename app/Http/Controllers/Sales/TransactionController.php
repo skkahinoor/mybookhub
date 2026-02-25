@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use App\Helpers\RoleHelper;
 
 class TransactionController extends Controller
 {
@@ -36,7 +37,7 @@ class TransactionController extends Controller
 
         // ── Approved students (role 5, status 1) added by this exec ───────
         $approvedStudentsBase = User::where('added_by', $salesExecutiveId)
-            ->where('role_id', 5)
+            ->where('role_id', RoleHelper::studentId())
             ->where('status', 1);
 
         $todayStudentsCount   = (clone $approvedStudentsBase)->whereDate('created_at', Carbon::today())->count();
@@ -47,7 +48,7 @@ class TransactionController extends Controller
         // ── Approved vendors added by this exec (Free vs Pro) ──────────
         //    Join with vendors table to get CURRENT plan
         $vendorQuery = User::where('users.added_by', $salesExecutiveId)
-            ->where('users.role_id', 2)
+            ->where('users.role_id', RoleHelper::vendorId())
             ->where('users.status', 1)
             ->join('vendors', 'vendors.user_id', '=', 'users.id');
 
@@ -87,7 +88,7 @@ class TransactionController extends Controller
 
         $studentByDate = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesExecutiveId)
-            ->where('role_id', 5)
+            ->where('role_id', RoleHelper::studentId())
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')

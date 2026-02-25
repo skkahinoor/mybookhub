@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\RoleHelper;
 
 class WithdrawalApiController extends Controller
 {
@@ -20,7 +21,7 @@ class WithdrawalApiController extends Controller
     {
         $sales = $request->user();
 
-        if (!$sales->hasRole('sales', 'web') && $sales->role_id != 3) {
+        if (!$sales->hasRole('sales', 'web') && $sales->role_id != RoleHelper::salesId()) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Sales Executives can access this.'
@@ -31,7 +32,7 @@ class WithdrawalApiController extends Controller
         $salesExecProfileId = $salesExecutiveProfile->id ?? 0;
         $userId = $sales->id;
 
-        $totalStudents = User::where('added_by', $userId)->where('role_id', 5)->where('status', 1)->count();
+        $totalStudents = User::where('added_by', $userId)->where('role_id', RoleHelper::studentId())->where('status', 1)->count();
         $incomePerTarget = $salesExecutiveProfile->income_per_target ?? 0;
         $totalEarning = $incomePerTarget * $totalStudents;
 
@@ -68,7 +69,7 @@ class WithdrawalApiController extends Controller
 
 
         $totalStudents = User::where('added_by', $userId)
-            ->where('role_id', 5)
+            ->where('role_id', RoleHelper::studentId())
             ->where('status', 1)
             ->count();
 

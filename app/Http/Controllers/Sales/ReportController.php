@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use App\Helpers\RoleHelper;
 
 class ReportController extends Controller
 {
@@ -30,7 +31,7 @@ class ReportController extends Controller
 
         // Only count approved students (status = 1, role_id = 5) for stats/earnings
         $approvedStudents = User::where('added_by', $salesExecutiveId)
-            ->where('role_id', 5)
+            ->where('role_id', RoleHelper::studentId())
             ->where('status', 1);
 
         // Calculate today's students
@@ -84,7 +85,7 @@ class ReportController extends Controller
 
         $studentData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesExecutiveId)
-            ->where('role_id', 5)
+            ->where('role_id', RoleHelper::studentId())
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')
@@ -100,7 +101,7 @@ class ReportController extends Controller
         $earningsData = [];
         foreach ($dateKeys as $dateKey) {
             $dailyStudentCount = User::where('added_by', $salesExecutiveId)
-                ->where('role_id', 5)
+                ->where('role_id', RoleHelper::studentId())
                 ->where('status', 1)
                 ->whereDate('created_at', $dateKey)
                 ->count();
