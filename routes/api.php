@@ -53,6 +53,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/states/{country_id}', [InstitutionController::class, 'getStates']);
     Route::get('/districts/{state_id}', [InstitutionController::class, 'getDistricts']);
     Route::get('/blocks/{district_id}', [InstitutionController::class, 'getBlocks']);
+    Route::get('/institutionType', [InstitutionController::class, 'getSection']);
+    Route::get('/Board/{type_id}', [InstitutionController::class, 'getCategoriesBySection']);
+    Route::get('/class/{board_id}', [InstitutionController::class, 'getSubcategoriesByCategory']);
 
     Route::get('/institutions', [InstitutionController::class, 'index']);
     Route::post('/institutions', [InstitutionController::class, 'store']);
