@@ -549,42 +549,26 @@
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <i class="fas fa-check-circle me-2"></i>
                         <strong>Success!</strong> {{ Session::get('success_message') }}
-                        <button type="button" class="alert-close" data-bs-dismiss="alert" aria-label="Close">&times;</button>
+                        <button type="button" class="alert-close" data-bs-dismiss="alert"
+                            aria-label="Close">&times;</button>
                     </div>
                 @endif
 
                 <!-- Statistics Cards -->
                 @if ($institutions->count() > 0)
                     <div class="stats-grid">
-                        <div class="stats-card school">
-                            <div class="meta">
-                                <span class="stats-label">Schools</span>
-                                <span class="stats-count">{{ $institutions->where('type', 'school')->count() }}</span>
+                        @foreach ($sections as $section)
+                            <div class="stats-card">
+                                <div class="meta">
+                                    <span class="stats-label">{{ $section->name }}</span>
+                                    <span
+                                        class="stats-count">{{ $institutions->where('type', $section->id)->count() }}</span>
+                                </div>
+                                <div class="stats-icon" style="background: rgba(59, 130, 246, 0.1); color: #1d4ed8;">
+                                    <i class="fas fa-building"></i>
+                                </div>
                             </div>
-                            <div class="stats-icon">
-                                <i class="fas fa-school"></i>
-                            </div>
-                        </div>
-
-                        <div class="stats-card college">
-                            <div class="meta">
-                                <span class="stats-label">Colleges</span>
-                                <span class="stats-count">{{ $institutions->where('type', 'college')->count() }}</span>
-                            </div>
-                            <div class="stats-icon">
-                                <i class="fas fa-graduation-cap"></i>
-                            </div>
-                        </div>
-
-                        <div class="stats-card university">
-                            <div class="meta">
-                                <span class="stats-label">Universities</span>
-                                <span class="stats-count">{{ $institutions->where('type', 'university')->count() }}</span>
-                            </div>
-                            <div class="stats-icon">
-                                <i class="fas fa-university"></i>
-                            </div>
-                        </div>
+                        @endforeach
 
                         <div class="stats-card total">
                             <div class="meta">
@@ -625,12 +609,12 @@
                                         </td>
                                         <td>
                                             <span class="type-badge {{ $institution->type }}">
-                                                <i
-                                                    class="fas fa-{{ $institution->type == 'school' ? 'school' : ($institution->type == 'college' ? 'graduation-cap' : 'university') }}"></i>
-                                                {{ ucfirst($institution->type) }}
+                                                <i class="fas fa-building"></i>
+                                                {{ \App\Models\Section::find($institution->type)->name ?? ucfirst($institution->type) }}
                                             </span>
                                         </td>
-                                        <td>{{ $institution->board ?? 'N/A' }}</td>
+                                        <td>{{ \App\Models\Category::find($institution->board)->category_name ?? $institution->board }}
+                                        </td>
                                         <td>{{ $institution->principal_name ?? 'N/A' }}</td>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
@@ -856,7 +840,7 @@
         function confirmDelete(id) {
             if (confirm(
                     "Are you sure you want to delete this institution? This action cannot be undone and will permanently remove all associated data."
-                    )) {
+                )) {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = '{{ url('admin/institution-managements') }}/' + id;

@@ -223,11 +223,11 @@
                                 </label>
                                 <select name="type" class="form-control" required>
                                     <option value="">Select Type</option>
-                                    <option value="school" {{ old('type') == 'school' ? 'selected' : '' }}>School</option>
-                                    <option value="college" {{ old('type') == 'college' ? 'selected' : '' }}>College
-                                    </option>
-                                    <option value="university" {{ old('type') == 'university' ? 'selected' : '' }}>
-                                        University</option>
+                                    @foreach ($sections as $section)
+                                        <option value="{{ $section->id }}"
+                                            {{ old('type') == $section->id ? 'selected' : '' }}>{{ $section->name }}
+                                        </option>
+                                    @endforeach
                                 </select>
                                 @error('type')
                                     <div class="error-message">{{ $message }}</div>
@@ -237,31 +237,15 @@
 
 
                         <div class="form-row">
-                            <div class="form-group">
+                            <div class="form-group" id="board-field" style="display: none;">
                                 <label class="form-label">
                                     <i class="fas fa-certificate form-icon"></i>
                                     Board <span class="required">*</span>
                                 </label>
                                 <select name="board" class="form-control" required>
                                     <option value="">Select Board</option>
-                                    <option value="CBSE" {{ old('board') == 'CBSE' ? 'selected' : '' }}>CBSE</option>
-                                    <option value="ICSE" {{ old('board') == 'ICSE' ? 'selected' : '' }}>ICSE</option>
-                                    <option value="State Board" {{ old('board') == 'State Board' ? 'selected' : '' }}>State
-                                        Board</option>
-                                    <option value="Other" {{ old('board') == 'Other' ? 'selected' : '' }}>Other</option>
                                 </select>
                                 @error('board')
-                                    <div class="error-message">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">
-                                    <i class="fas fa-user form-icon"></i>
-                                    Principal Name<span class="required">*</span>
-                                </label>
-                                <input type="text" name="principal_name" class="form-control"
-                                    value="{{ old('principal_name') }}" placeholder="Enter principal name" required>
-                                @error('principal_name')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -278,6 +262,20 @@
                                     <i class="fas fa-plus"></i> Add Class
                                 </button>
                                 @error('class')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-user form-icon"></i>
+                                    Principal Name<span class="required">*</span>
+                                </label>
+                                <input type="text" name="principal_name" class="form-control"
+                                    value="{{ old('principal_name') }}" placeholder="Enter principal name" required>
+                                @error('principal_name')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -382,272 +380,228 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Handle institution type change
+            var currentSubcategories = [];
+
+            // Fetch sections on load
+            function loadSections() {
+                $.ajax({
+                    url: '{{ route('admin.institution.sections') }}',
+                    type: 'GET',
+                    success: function(response) {
+                        var typeSelect = $('select[name="type"]');
+                        var selectedType = '{{ old('type') }}';
+                        typeSelect.empty().append('<option value="">Select Type</option>');
+                        $.each(response, function(index, section) {
+                            typeSelect.append(
+                                `<option value="${section.id}" ${selectedType == section.id ? 'selected' : ''}>${section.name}</option>`
+                            );
+                        });
+                        if (selectedType) typeSelect.trigger('change');
+                    }
+                });
+            }
+
+            // Handle institution type change -> Load Boards (Categories)
             $('select[name="type"]').change(function() {
-                var type = $(this).val();
-                var classField = $('#class-field');
-                var classSelect = $('#class-select');
+                var section_id = $(this).val();
+                var boardSelect = $('select[name="board"]');
+                var boardField = $('#board-field');
 
-                if (type === 'school') {
-                    // Show class field
-                    classField.show();
+                if (section_id) {
+                    boardField.show();
+                    $('#class-field').hide();
+                    $('#class-list-container').empty();
+                    boardSelect.empty().append('<option value="">Loading...</option>');
+                    $.ajax({
+                        url: '{{ route('admin.institution.categories') }}',
+                        type: 'GET',
+                        data: {
+                            section_id: section_id
+                        },
+                        success: function(response) {
+                            boardSelect.empty().append(
+                                '<option value="">Select Board</option>');
+                            var selectedBoard = '{{ old('board') }}';
+                            $.each(response, function(index, category) {
+                                boardSelect.append(
+                                    `<option value="${category.id}" ${selectedBoard == category.id ? 'selected' : ''}>${category.category_name}</option>`
+                                );
+                            });
+                            if (selectedBoard) boardSelect.trigger('change');
+                        }
+                    });
+                } else {
+                    boardField.hide();
+                    boardSelect.empty().append('<option value="">Select Board</option>');
+                    $('#class-field').hide();
+                }
+            });
 
-                    // Load classes via AJAX
+            // Handle board change -> Load Subcategories (Classes)
+            $('select[name="board"]').change(function() {
+                var category_id = $(this).val();
+                if (category_id) {
+                    $('#class-field').show();
+                    $('#class-list-container').empty(); // Clear existing rows when board changes
+
                     $.ajax({
                         url: '{{ route('admin.institution.classes') }}',
                         type: 'GET',
                         data: {
-                            type: type
+                            category_id: category_id
                         },
-                        dataType: 'json',
                         success: function(response) {
-                            console.log('AJAX Success:', response);
-                            classSelect.empty();
-                            classSelect.append('<option value="">Select Class</option>');
-
-                            if (Array.isArray(response)) {
-                                $.each(response, function(index, className) {
-                                    classSelect.append('<option value="' + className +
-                                        '">' + className + '</option>');
-                                });
+                            currentSubcategories = response;
+                            // Optionally add a default row
+                            if ($('#class-list-container').children().length === 0) {
+                                $('#add-class-btn').click();
                             }
-
-                            // Set old value if exists
-                            @if (old('class'))
-                                classSelect.val('{{ old('class') }}');
-                            @endif
-                        },
-                        error: function(xhr, status, error) {
-                            console.log('AJAX Error Details:');
-                            console.log('Status:', status);
-                            console.log('Error:', error);
-                            console.log('Response Text:', xhr.responseText);
-                            console.log('Status Code:', xhr.status);
-                            console.log('URL:', '{{ route('admin.institution.classes') }}');
-                            console.log('Type:', type);
-
-                            // Try to show a more helpful error message
-                            var errorMessage = 'Error loading classes. ';
-                            if (xhr.status === 404) {
-                                errorMessage +=
-                                    'Route not found. Please check if you are logged in as admin.';
-                            } else if (xhr.status === 403) {
-                                errorMessage += 'Access denied. Please check your permissions.';
-                            } else if (xhr.status === 500) {
-                                errorMessage += 'Server error. Please try again later.';
-                            } else {
-                                errorMessage += 'Please check console for details.';
-                            }
-                            alert(errorMessage);
                         }
                     });
                 } else {
-                    // Hide class field and clear value
-                    classField.hide();
-                    classSelect.empty();
-                    classSelect.append('<option value="">Select Class</option>');
+                    $('#class-field').hide();
+                    $('#class-list-container').empty();
+                    currentSubcategories = [];
                 }
             });
 
-            // Trigger change event on page load if type is already selected
-            if ($('select[name="type"]').val() === 'school') {
-                $('select[name="type"]').trigger('change');
-            }
-
             // Add new class row
             var classIndex = 0;
-            var availableClasses = ['Nursery', 'LKG', 'UKG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-                'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'
-            ];
-
             $('#add-class-btn').on('click', function() {
-                var classOptions = availableClasses.map(cls =>
-                    `<option value="${cls}">${cls}</option>`
-                ).join('');
+                if (currentSubcategories.length === 0) {
+                    alert('No classes available for the selected board.');
+                    return;
+                }
+
+                var optionsHtml = '<option value="">Select Subcategory</option>';
+                $.each(currentSubcategories, function(index, sub) {
+                    optionsHtml += `<option value="${sub.id}">${sub.subcategory_name}</option>`;
+                });
 
                 var classHtml = `
-            <div class="class-item mb-3 p-3 border rounded" data-index="${classIndex}">
-                <div class="row">
-                    <div class="col-md-5">
-                        <label>Class Name</label>
-                        <select name="classes[${classIndex}][class_name]" class="form-control class-select" required>
-                            <option value="">Select Class</option>
-                            ${classOptions}
-                        </select>
+                    <div class="class-item mb-3 p-3 border rounded" data-index="${classIndex}">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <label>Subcategory (Class)</label>
+                                <select name="classes[${classIndex}][sub_category_id]" class="form-control class-select" required>
+                                    ${optionsHtml}
+                                </select>
+                            </div>
+                            <div class="col-md-5">
+                                <label>Total Strength</label>
+                                <input type="number" name="classes[${classIndex}][strength]" class="form-control" placeholder="e.g., 50" min="1" required>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="button" class="btn btn-danger btn-sm remove-class-btn">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-5">
-                        <label>Total Strength</label>
-                        <input type="number" name="classes[${classIndex}][strength]" class="form-control" placeholder="e.g., 50" min="1" required>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="button" class="btn btn-danger btn-sm remove-class-btn">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
+                `;
                 $('#class-list-container').append(classHtml);
                 classIndex++;
             });
 
-            // Remove class row
             $(document).on('click', '.remove-class-btn', function() {
                 $(this).closest('.class-item').remove();
             });
 
-            // Load countries on page load
+            // Location cascading logic (unchanged but integrated)
             function loadCountries() {
                 $.ajax({
                     url: '{{ route('admin.institution.countries') }}',
                     type: 'GET',
-                    dataType: 'json',
                     success: function(response) {
                         var countrySelect = $('#country-select');
-                        countrySelect.empty();
-                        countrySelect.append('<option value="">Select Country</option>');
-
+                        countrySelect.empty().append('<option value="">Select Country</option>');
                         $.each(response, function(key, value) {
                             countrySelect.append('<option value="' + key + '">' + value +
                                 '</option>');
                         });
-
-                        // Set old value if exists and trigger change to load states
                         @if (old('country_id'))
-                            countrySelect.val('{{ old('country_id') }}');
-                            loadStates('{{ old('country_id') }}');
-                        @endif
-                    },
-                    error: function(xhr, status, error) {
-                        console.log('Error loading countries:', error);
-                    }
-                });
-            }
-
-            // Load states based on country
-            function loadStates(country) {
-                if (!country) {
-                    $('#state-select').empty().append('<option value="">Select State</option>');
-                    $('#district-select').empty().append('<option value="">Select District</option>');
-                    $('#block-select').empty().append('<option value="">Select Block</option>');
-                    return;
-                }
-
-                $.ajax({
-                    url: '{{ route('admin.institution.states') }}',
-                    type: 'GET',
-                    data: {
-                        country: country
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        let stateSelect = $('#state-select');
-                        stateSelect.empty().append('<option value="">Select State</option>');
-
-                        $.each(response, function(key, value) {
-                            stateSelect.append(`<option value="${key}">${value}</option>`);
-                        });
-
-                        $('#district-select').empty().append(
-                            '<option value="">Select District</option>');
-                        $('#block-select').empty().append('<option value="">Select Block</option>');
-
-                        @if (old('state_id'))
-                            stateSelect.val('{{ old('state_id') }}');
-                            loadDistricts('{{ old('state_id') }}');
+                            countrySelect.val('{{ old('country_id') }}').trigger('change');
                         @endif
                     }
                 });
             }
 
-            // Load districts based on state
-            function loadDistricts(state) {
-                if (!state) {
-                    $('#district-select').empty().append('<option value="">Select District</option>');
-                    $('#block-select').empty().append('<option value="">Select Block</option>');
-                    return;
-                }
-
-                $.ajax({
-                    url: '{{ route('admin.institution.districts') }}',
-                    type: 'GET',
-                    data: {
-                        state: state
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        let districtSelect = $('#district-select');
-                        districtSelect.empty().append('<option value="">Select District</option>');
-
-                        $.each(response, function(key, value) {
-                            districtSelect.append(`<option value="${key}">${value}</option>`);
-                        });
-
-                        $('#block-select').empty().append('<option value="">Select Block</option>');
-
-                        @if (old('district_id'))
-                            districtSelect.val('{{ old('district_id') }}');
-                            loadBlocks('{{ old('district_id') }}');
-                        @endif
-                    }
-                });
-            }
-
-
-            function loadBlocks(district) {
-                if (!district) {
-                    $('#block-select').empty().append('<option value="">Select Block</option>');
-                    return;
-                }
-
-                $.ajax({
-                    url: '{{ route('admin.institution.blocks') }}',
-                    type: 'GET',
-                    data: {
-                        district: district
-                    },
-                    dataType: 'json',
-                    success: function(response) {
-                        let blockSelect = $('#block-select');
-                        blockSelect.empty().append('<option value="">Select Block</option>');
-
-                        $.each(response, function(key, value) {
-                            blockSelect.append(`<option value="${key}">${value}</option>`);
-                        });
-
-                        @if (old('block_id'))
-                            blockSelect.val('{{ old('block_id') }}');
-                        @endif
-                    }
-                });
-            }
-
-
-
-
-            // Event handlers for cascading dropdowns
-            $('#country-select').on('change', function() {
+            $('#country-select').change(function() {
                 var country = $(this).val();
-                loadStates(country);
+                if (country) {
+                    $.ajax({
+                        url: '{{ route('admin.institution.states') }}',
+                        type: 'GET',
+                        data: {
+                            country: country
+                        },
+                        success: function(response) {
+                            $('#state-select').empty().append(
+                                '<option value="">Select State</option>');
+                            $.each(response, function(key, value) {
+                                $('#state-select').append(
+                                    `<option value="${key}">${value}</option>`);
+                            });
+                            @if (old('state_id'))
+                                $('#state-select').val('{{ old('state_id') }}').trigger(
+                                    'change');
+                            @endif
+                        }
+                    });
+                }
             });
 
-            $('#state-select').on('change', function() {
+            $('#state-select').change(function() {
                 var state = $(this).val();
-                loadDistricts(state);
+                if (state) {
+                    $.ajax({
+                        url: '{{ route('admin.institution.districts') }}',
+                        type: 'GET',
+                        data: {
+                            state: state
+                        },
+                        success: function(response) {
+                            $('#district-select').empty().append(
+                                '<option value="">Select District</option>');
+                            $.each(response, function(key, value) {
+                                $('#district-select').append(
+                                    `<option value="${key}">${value}</option>`);
+                            });
+                            @if (old('district_id'))
+                                $('#district-select').val('{{ old('district_id') }}').trigger(
+                                    'change');
+                            @endif
+                        }
+                    });
+                }
             });
 
-            $('#district-select').on('change', function() {
-                let district = $(this).val();
-                loadBlocks(district);
+            $('#district-select').change(function() {
+                var district = $(this).val();
+                if (district) {
+                    $.ajax({
+                        url: '{{ route('admin.institution.blocks') }}',
+                        type: 'GET',
+                        data: {
+                            district: district
+                        },
+                        success: function(response) {
+                            $('#block-select').empty().append(
+                                '<option value="">Select Block</option>');
+                            $.each(response, function(key, value) {
+                                $('#block-select').append(
+                                    `<option value="${key}">${value}</option>`);
+                            });
+                            @if (old('block_id'))
+                                $('#block-select').val('{{ old('block_id') }}');
+                            @endif
+                        }
+                    });
+                }
             });
 
-
-            // Load countries on page load
+            loadSections();
             loadCountries();
-
-            @if (old('block_id'))
-                $('#block-input').val('{{ old('block_id') }}');
-            @endif
         });
     </script>
 

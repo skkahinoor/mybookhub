@@ -244,6 +244,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         ]);
         Route::get('students/{id}/details', 'StudentController@details')->name('admin.students.details');
         Route::post('students/{id}/update-status', 'StudentController@updateStatus')->name('admin.students.updateStatus');
+        Route::get('get-institution-classes', 'StudentController@getInstitutionClasses')->name('admin.get_institution_classes');
+        Route::get('get-institution-boards', 'StudentController@getInstitutionBoards')->name('admin.get_institution_boards');
 
         // Withdrawals Management
         Route::get('withdrawals', 'WithdrawalController@index')->name('admin.withdrawals.index');
@@ -252,6 +254,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('withdrawals/minimum/update', 'WithdrawalController@updateMinimum')->name('admin.withdrawals.minimum.update');
 
         // AJAX route for getting classes based on institution type (outside admin middleware for AJAX access)
+        Route::get('institution-sections', [InstitutionManagementController::class, 'getSections'])->name('admin.institution.sections');
+        Route::get('institution-categories', [InstitutionManagementController::class, 'getCategories'])->name('admin.institution.categories');
         Route::get('institution-classes', [InstitutionManagementController::class, 'getClasses'])->name('admin.institution.classes');
 
         // AJAX route for getting location data based on pincode (outside admin middleware for AJAX access)

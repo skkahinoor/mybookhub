@@ -45,7 +45,8 @@ class User extends Authenticatable
         'role_id',
         'confirm',
         'wallet_balance',
-        'is_wallet_credited'
+        'is_wallet_credited',
+        'institution_classes_id'
     ];
 
     /**

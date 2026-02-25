@@ -864,7 +864,7 @@ $(document).ready(function () {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
             type: "get",
-            url: "/admin/append-subcategories-level",
+            url: "append-subcategories-level",
             data: { category_id: category_id },
             success: function (resp) {
                 $("#appendSubcategoriesLevel").html(resp);

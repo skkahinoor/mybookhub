@@ -16,7 +16,7 @@
                                     <button class="btn btn-sm btn-light bg-white dropdown-toggle" type="button"
                                         id="dropdownMenuDate2" data-toggle="dropdown" aria-haspopup="true"
                                         aria-expanded="true">
-                                        <i class="mdi mdi-calendar"></i> Today (10 Jan 2021)
+                                        <i class="mdi mdi-calendar"></i> Today (10 Jan 2021) 
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuDate2">
                                         <a class="dropdown-item" href="#">January - March</a>
@@ -29,7 +29,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> 
             <div class="row">
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">

@@ -160,7 +160,7 @@ class CategoryController extends Controller
 
             return redirect('admin/categories')->with('success_message', $message);
         }
-
+ 
 
         // Get all sections
         $getSections = Section::get()->toArray();

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Hash;
+use App\Models\InstitutionClass;
 
 class StudentController extends Controller
 {
@@ -43,8 +44,8 @@ class StudentController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'required|string|min:10|max:15',
-            'institution_id' => 'nullable|exists:institution_managements,id',
-            'class' => 'required|string|max:255',
+            'institution_id' => 'required|exists:institution_managements,id',
+            'institution_classes_id' => 'required|exists:institution_classes,id',
             'gender' => 'required|string|in:male,female,other',
             'dob' => 'required|date|before:today',
             'roll_number' => 'nullable|string|max:255',
@@ -83,8 +84,8 @@ class StudentController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'required|string|min:10|max:15',
-            'institution_id' => 'nullable|exists:institution_managements,id',
-            'class' => 'required|string|max:255',
+            'institution_id' => 'required|exists:institution_managements,id',
+            'institution_classes_id' => 'required|exists:institution_classes,id',
             'gender' => 'required|string|in:male,female,other',
             'dob' => 'required|date|before:today',
             'roll_number' => 'nullable|string|max:255',
@@ -186,5 +187,46 @@ class StudentController extends Controller
             'success' => true,
             'status' => $student->status,
         ]);
+    }
+
+    public function getInstitutionBoards(Request $request)
+    {
+        $institution_id = $request->input('institution_id');
+        if (!$institution_id) {
+            return response()->json([]);
+        }
+
+        $classes = InstitutionClass::with(['subcategory.category'])->where('institution_id', $institution_id)->get();
+
+        $boards = collect();
+        foreach ($classes as $class) {
+            if ($class->subcategory && $class->subcategory->category) {
+                // Check if we already added this board
+                if (!$boards->contains('id', $class->subcategory->category->id)) {
+                    $boards->push($class->subcategory->category);
+                }
+            }
+        }
+
+        return response()->json($boards->values()->all());
+    }
+
+    public function getInstitutionClasses(Request $request)
+    {
+        $institution_id = $request->input('institution_id');
+        $board_id = $request->input('board_id');
+
+        if (!$institution_id || !$board_id) {
+            return response()->json([]);
+        }
+
+        $classes = InstitutionClass::with(['subcategory.category'])
+            ->where('institution_id', $institution_id)
+            ->whereHas('subcategory', function ($q) use ($board_id) {
+                $q->where('category_id', $board_id);
+            })
+            ->get();
+
+        return response()->json($classes);
     }
 }
