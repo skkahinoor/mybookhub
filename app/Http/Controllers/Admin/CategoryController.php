@@ -108,7 +108,6 @@ class CategoryController extends Controller
             $rules = [
                 'category_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                 'section_id'    => 'required',
-                'url'           => 'required',
             ];
 
             $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
@@ -150,7 +149,7 @@ class CategoryController extends Controller
             $category->parent_id         = 0;
             $category->category_name     = $data['category_name'];
             $category->description       = $data['description'];
-            $category->url               = $data['url'];
+            $category->url               = str_replace(' ', '-', strtolower($data['category_name']));
             $category->meta_title        = $data['meta_title'];
             $category->meta_description  = $data['meta_description'];
             $category->meta_keywords     = $data['meta_keywords'];
@@ -160,7 +159,7 @@ class CategoryController extends Controller
 
             return redirect('admin/categories')->with('success_message', $message);
         }
- 
+
 
         // Get all sections
         $getSections = Section::get()->toArray();

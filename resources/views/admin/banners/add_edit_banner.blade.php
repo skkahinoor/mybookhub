@@ -58,7 +58,7 @@
                                     <input type="file" name="image" class="form-control">
                                     @if (!empty($banner->image))
                                         <div class="mt-2">
-                                            <img src="{{ asset('front/images/banner_images/' . $banner->image) }}" alt="{{ $banner->alt }}" style="width: 220px">
+                                            <img src="{{ $banner['image'] }}" alt="{{ $banner->alt }}" style="width: 220px">
                                         </div>
                                     @endif
                                 </div>

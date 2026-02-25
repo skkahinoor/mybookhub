@@ -11,6 +11,9 @@ use App\Models\Block;
 use App\Models\Admin;
 use App\Models\SalesExecutive;
 use App\Models\InstitutionManagement;
+use App\Models\Section;
+use App\Models\Category;
+use App\Models\Subcategory;
 
 class InstitutionController extends Controller
 {
@@ -32,6 +35,45 @@ class InstitutionController extends Controller
     public function getBlocks($district_id)
     {
         return response()->json(Block::where('district_id', $district_id)->where('status', true)->get());
+    }
+
+    public function getSection()
+    {
+        $sections = Section::where('status', 1)->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Sections fetched successfully',
+            'data' => $sections
+        ]);
+    }
+
+    public function getCategoriesBySection($section_id)
+    {
+        $categories = Category::where('section_id', $section_id)
+            ->where('status', 1)
+            ->select('id', 'category_name')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Categories fetched successfully',
+            'data' => $categories
+        ]);
+    }
+
+    public function getSubcategoriesByCategory($category_id)
+    {
+        $subcategories = Subcategory::where('category_id', $category_id)
+                            ->where('status', 1)
+                            ->select('id', 'subcategory_name')
+                            ->get();
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Subcategories fetched successfully',
+            'data'    => $subcategories
+        ]);
     }
 
     private function detectUserType($user)
