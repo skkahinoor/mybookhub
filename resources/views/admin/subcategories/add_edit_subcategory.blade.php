@@ -48,6 +48,7 @@
                                             <option value="{{ $category['id'] }}"
                                                 @if (!empty($subcategory['category_id']) && $subcategory['category_id'] == $category['id']) selected @endif>
                                                 {{ $category['category_name'] }}
+                                                ({{ $category['section']['name'] ?? 'No Section' }})
                                             </option>
                                         @endforeach
                                     </select>

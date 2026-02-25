@@ -16,7 +16,7 @@
                                     <button class="btn btn-sm btn-light bg-white dropdown-toggle" type="button"
                                         id="dropdownMenuDate2" data-toggle="dropdown" aria-haspopup="true"
                                         aria-expanded="true">
-                                        <i class="mdi mdi-calendar"></i> Today (10 Jan 2021) 
+                                        <i class="mdi mdi-calendar"></i> Today (10 Jan 2021)
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuDate2">
                                         <a class="dropdown-item" href="#">January - March</a>
@@ -29,7 +29,7 @@
                         </div>
                     </div>
                 </div>
-            </div> 
+            </div>
             <div class="row">
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
@@ -137,12 +137,12 @@
                                     {{-- <input type="text" class="form-control" id="category_discount" placeholder="Enter Category Description" name="category_discount"   @if (!empty($category['category_discount'])) value="{{ $category['category_discount'] }}" @else value="{{ old('category_discount') }}" @endif >  --}}
                                     <textarea name="description" id="description" class="form-control" rows="3">{{ $category['description'] }}</textarea>
                                 </div>
-                                <div class="form-group">
+                                {{-- <div class="form-group">
                                     <label for="url">Category URL</label>
                                     <input type="text" class="form-control" id="url"
                                         placeholder="Enter Category URL" name="url"
                                         @if (!empty($category['url'])) value="{{ $category['url'] }}" @else value="{{ old('url') }}" @endif>
-                                </div>
+                                </div> --}}
                                 <div class="form-group">
                                     <label for="meta_title">Meta Title</label>
                                     <input type="text" class="form-control" id="meta_title"

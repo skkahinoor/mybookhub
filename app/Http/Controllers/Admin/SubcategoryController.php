@@ -92,7 +92,7 @@ class SubcategoryController extends Controller
             return redirect('admin/subcategories')->with('success_message', $message);
         }
 
-        $categories = Category::where('status', 1)->get()->toArray();
+        $categories = Category::with('section')->where('status', 1)->get()->toArray();
 
         return view('admin.subcategories.add_edit_subcategory')->with(compact('title', 'subcategory', 'categories', 'logos', 'headerLogo'));
     }
