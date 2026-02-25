@@ -13,6 +13,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
+use App\Helpers\RoleHelper;
 
 class StudentController extends Controller
 {
@@ -25,7 +26,7 @@ class StudentController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'students');
 
-        $students = User::where('added_by', Auth::guard('sales')->user()->id)->where('role_id', 5)->with('institution')->orderBy('id', 'desc')->get();
+        $students = User::where('added_by', Auth::guard('sales')->user()->id)->where('role_id', RoleHelper::studentId())->with('institution')->orderBy('id', 'desc')->get();
 
         return view('sales.students.index')->with(compact('students','logos', 'headerLogo'));
     }
@@ -64,7 +65,7 @@ class StudentController extends Controller
         $data['status'] = 0;
         $data['added_by'] = Auth::guard('sales')->user()->id;
         $data['password'] = Hash::make('12345678');
-        $data['role_id'] = 5;
+        $data['role_id'] = RoleHelper::studentId();
         $user = User::create($data);
         $user->assignRole('student'); // So admin list (User::role('student','web')) shows this user
 
@@ -96,7 +97,7 @@ class StudentController extends Controller
         Session::put('page', 'students');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        $student = User::where('role_id', 5)->findOrFail($id);
+        $student = User::where('role_id', RoleHelper::studentId())->findOrFail($id);
 
         return view('sales.students.show')->with(compact('student', 'logos', 'headerLogo'));
     }
@@ -109,7 +110,7 @@ class StudentController extends Controller
         Session::put('page', 'students');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        $student = User::where('role_id', 5)->findOrFail($id);
+        $student = User::where('role_id', RoleHelper::studentId())->findOrFail($id);
         $institutions = InstitutionManagement::where('status', 1)->orderBy('name')->get();
 
         return view('sales.students.edit')->with(compact('student', 'institutions', 'headerLogo', 'logos'));
@@ -132,7 +133,7 @@ class StudentController extends Controller
             'roll_number' => 'nullable|string|max:255',
         ]);
 
-        $student = User::where('role_id', 5)->findOrFail($id);
+        $student = User::where('role_id', RoleHelper::studentId())->findOrFail($id);
         $data = $request->all();
 
         $student->update($data);
@@ -145,7 +146,7 @@ class StudentController extends Controller
      */
     public function destroy(string $id)
     {
-        $student = User::where('role_id', 5)->findOrFail($id);
+        $student = User::where('role_id', RoleHelper::studentId())->findOrFail($id);
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $student->delete();

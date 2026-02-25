@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
+use App\Helpers\RoleHelper;
 use Yajra\DataTables\DataTables;
 
 class NotificationController extends Controller
@@ -23,10 +24,10 @@ class NotificationController extends Controller
         $query = Notification::orderBy('created_at', 'desc');
         
         // Filter notifications based on role
-        if ($admin->role_id == 2) {
+        if ($admin->role_id == RoleHelper::vendorId()) {
             // Vendor sees ONLY their own notifications (vendor_id matches their vendor profile ID)
             $query->where('vendor_id', $admin->vendor_id);
-        } elseif ($admin->role_id == 1) {
+        } elseif ($admin->role_id == RoleHelper::adminId()) {
             // Superadmin sees all
         } else {
             // Other admins see all (or you can add more specific filtering)
@@ -51,7 +52,7 @@ class NotificationController extends Controller
 
         // Count unread notifications with same filter
         $unreadQuery = Notification::where('is_read', false);
-        if ($admin->role_id == 2) {
+        if ($admin->role_id == RoleHelper::vendorId()) {
             // Vendor sees ONLY their own unread notifications
             $unreadQuery->where('vendor_id', $admin->vendor_id);
         }
@@ -72,7 +73,7 @@ class NotificationController extends Controller
         $notification = Notification::findOrFail($id);
         
         // Check if vendor can access this notification
-        if ($admin->role_id == 2) {
+        if ($admin->role_id == RoleHelper::vendorId()) {
             if ($notification->vendor_id !== null && $notification->vendor_id != $admin->vendor_id) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
@@ -93,7 +94,7 @@ class NotificationController extends Controller
         $query = Notification::where('is_read', false);
         
         // Filter based on admin type
-        if ($admin->role_id == 2) {
+        if ($admin->role_id == RoleHelper::vendorId()) {
             // Vendor can only mark their own notifications as read
             $query->where('vendor_id', $admin->vendor_id);
         }
@@ -121,7 +122,7 @@ class NotificationController extends Controller
             $query = Notification::latest();
             
             // Filter notifications based on role
-            if ($admin->role_id == 2) {
+            if ($admin->role_id == RoleHelper::vendorId()) {
                 // Vendor sees ONLY their own notifications
                 $query->where('vendor_id', $admin->vendor_id);
             }

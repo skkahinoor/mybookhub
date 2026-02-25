@@ -123,12 +123,21 @@ class StudentApiController extends Controller
             $validated['class'] = $request->branch;
         }
 
-        $validated['role_id'] = 5; // student role
+        $role = \Spatie\Permission\Models\Role::where([
+            'name'       => 'student'
+        ])->first();
+
+        if (!$role) {
+            throw new \Exception('Student role not found');
+        }
+
+        $validated['role_id'] = $role->id; // student role
         $validated['status']   = ($type === 'admin') ? 1 : 0;
         $validated['added_by'] = $user->id;
-        $validated['password'] = Hash::make('12345678');
+        $validated['password'] = Hash::make('123456');
 
         $student = User::create($validated);
+        $student->assignRole($role);
 
         Notification::create([
             'type' => 'student_added',

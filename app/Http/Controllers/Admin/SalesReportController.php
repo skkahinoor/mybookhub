@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use App\Helpers\RoleHelper;
 
 class SalesReportController extends Controller
 {
@@ -164,7 +165,7 @@ class SalesReportController extends Controller
 
         $studentData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesExecutive->user_id)
-            ->where('role_id', 5)
+            ->where('role_id', RoleHelper::studentId())
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')

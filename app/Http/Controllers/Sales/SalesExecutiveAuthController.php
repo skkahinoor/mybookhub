@@ -2,25 +2,23 @@
 
 namespace App\Http\Controllers\Sales;
 
+use App\Helpers\RoleHelper;
 use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
-use App\Models\SalesExecutive;
 use App\Models\InstitutionManagement;
-use App\Models\User;
-use App\Models\InstitutionClass;
 use App\Models\Language;
 use App\Models\Notification;
+use App\Models\SalesExecutive;
 use App\Models\Section;
+use App\Models\User;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
+// ✅ IMPORTANT
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail; // ✅ IMPORTANT
-use GuzzleHttp\Client;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Spatie\Permission\Models\Role;
 
@@ -29,10 +27,10 @@ class SalesExecutiveAuthController extends Controller
     // LOGIN ---------------------
     public function showLogin()
     {
-        $logos    = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $language = Language::get();
         $sections = Section::all();
-        $condition      = session('condition', 'new');
+        $condition = session('condition', 'new');
         $headerLogo = HeaderLogo::first();
 
         return view('sales.login', compact('logos', 'language', 'sections', 'condition', 'headerLogo'));
@@ -42,11 +40,11 @@ class SalesExecutiveAuthController extends Controller
     {
 
         $data = $request->validate([
-            'login'    => ['required', 'string', 'max:150'],
+            'login' => ['required', 'string', 'max:150'],
             'password' => ['required'],
         ]);
 
-        $loginInput   = trim($data['login']);
+        $loginInput = trim($data['login']);
         $numericLogin = preg_replace('/\D/', '', $loginInput);
 
         // Identify user by email or phone in the User table
@@ -63,7 +61,7 @@ class SalesExecutiveAuthController extends Controller
                 ->withInput();
         }
 
-        if (!$user) {
+        if (! $user) {
             return back()->withErrors([
                 'login' => 'The provided credentials do not match our records or you do not have permission.',
             ])->onlyInput('login');
@@ -79,11 +77,12 @@ class SalesExecutiveAuthController extends Controller
         if (Auth::guard('sales')->attempt(
             [
                 'email' => $user->email,
-                'password' => $data['password']
+                'password' => $data['password'],
             ],
             $request->boolean('remember')
         )) {
             $request->session()->regenerate();
+
             return redirect()->intended('/sales/dashboard');
         }
 
@@ -92,52 +91,52 @@ class SalesExecutiveAuthController extends Controller
         ])->onlyInput('login');
     }
 
-
     // REGISTER (SHOW FORM) ---------------------
     public function showRegister()
     {
         $headerLogo = HeaderLogo::first();
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
 
         return view('sales.register', compact('logos', 'headerLogo'));
     }
 
     public function sendSMS($phone, $otp)
     {
-        $to = '91' . preg_replace('/[^0-9]/', '', $phone);
+        $to = '91'.preg_replace('/[^0-9]/', '', $phone);
 
         try {
-            $client = new Client();
+            $client = new Client;
 
             $payload = [
-                "template_id" => config('services.msg91.template_id'),
-                "recipients"  => [
+                'template_id' => config('services.msg91.template_id'),
+                'recipients' => [
                     [
-                        "mobiles" => $to,
-                        "OTP"     => $otp
-                    ]
-                ]
+                        'mobiles' => $to,
+                        'OTP' => $otp,
+                    ],
+                ],
             ];
 
-            Log::info("MSG91 Payload:", $payload);
+            Log::info('MSG91 Payload:', $payload);
 
-            $response = $client->post("https://control.msg91.com/api/v5/flow/", [
+            $response = $client->post('https://control.msg91.com/api/v5/flow/', [
                 'json' => $payload,
                 'headers' => [
                     'accept' => 'application/json',
                     'authkey' => config('services.msg91.key'),
-                    'content-type' => 'application/json'
+                    'content-type' => 'application/json',
                 ],
             ]);
 
-            Log::info("MSG91 Response:", [
+            Log::info('MSG91 Response:', [
                 'status' => $response->getStatusCode(),
-                'body'   => $response->getBody()->getContents()
+                'body' => $response->getBody()->getContents(),
             ]);
 
             return true;
         } catch (\Exception $e) {
-            Log::error("MSG91 ERROR: " . $e->getMessage());
+            Log::error('MSG91 ERROR: '.$e->getMessage());
+
             return false;
         }
     }
@@ -145,7 +144,7 @@ class SalesExecutiveAuthController extends Controller
     public function sendOtp(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'  => 'required|string|max:150',
+            'name' => 'required|string|max:150',
             'email' => 'required|email|unique:users,email',
             'phone' => 'required|digits:10|unique:users,phone',
         ]);
@@ -153,7 +152,7 @@ class SalesExecutiveAuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -165,15 +164,14 @@ class SalesExecutiveAuthController extends Controller
         );
 
         session([
-            'reg_name'  => $request->name,
+            'reg_name' => $request->name,
             'reg_email' => $request->email,
             'reg_phone' => $request->phone,
         ]);
 
-
         $sent = $this->sendSMS($request->phone, $otp);
 
-        if (!$sent) {
+        if (! $sent) {
             return response()->json([
                 'status' => false,
                 'message' => 'OTP failed to send. Try again.',
@@ -181,7 +179,7 @@ class SalesExecutiveAuthController extends Controller
         }
 
         return response()->json([
-            'status'  => true,
+            'status' => true,
             'message' => 'OTP sent successfully!',
         ]);
     }
@@ -189,11 +187,11 @@ class SalesExecutiveAuthController extends Controller
     public function register(Request $request)
     {
         $headerLogo = HeaderLogo::first();
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
         $request->validate([
-            'otp'                   => 'required',
-            'phone'                 => 'required',
-            'password'              => 'required|min:6|confirmed',
+            'otp' => 'required',
+            'phone' => 'required',
+            'password' => 'required|min:6|confirmed',
         ]);
 
         $otpRecord = DB::table('otps')
@@ -201,26 +199,26 @@ class SalesExecutiveAuthController extends Controller
             ->where('otp', $request->otp)
             ->first();
 
-        if (!$otpRecord) {
+        if (! $otpRecord) {
             return back()->with('error', 'Invalid OTP');
         }
 
-        $name  = session('reg_name');
+        $name = session('reg_name');
         $email = session('reg_email');
         $phone = session('reg_phone');
 
-        if (!$phone) {
+        if (! $phone) {
             return back()->with('error', 'Session expired. Please register again.');
         }
 
         $role = \Spatie\Permission\Models\Role::where('name', 'sales')->first();
         $user = User::create([
-            'name'     => $name,
-            'email'    => $email,
-            'phone'    => $phone,
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
             'password' => Hash::make($request->password),
-            'role_id'  => $role ? $role->id : null,
-            'status'   => 0, // initially inactive
+            'role_id' => $role ? $role->id : null,
+            'status' => 0, // initially inactive
         ]);
 
         if ($role) {
@@ -228,8 +226,8 @@ class SalesExecutiveAuthController extends Controller
         }
 
         $sales = SalesExecutive::create([
-            'user_id'  => $user->id,
-            'status'   => 0,
+            'user_id' => $user->id,
+            'status' => 0,
 
         ]);
 
@@ -254,12 +252,11 @@ class SalesExecutiveAuthController extends Controller
         return redirect()->route('sales.login')->with('success', 'Registration successful plz wait for admin verification !');
     }
 
-
     // DASHBOARD ---------------------
     public function dashboard()
     {
         $headerLogo = HeaderLogo::first();
-        $logos      = HeaderLogo::first();
+        $logos = HeaderLogo::first();
 
         $salesExecutive = auth('sales')->user();
         $salesExecutiveId = $salesExecutive->id;
@@ -268,7 +265,7 @@ class SalesExecutiveAuthController extends Controller
         $studntrole = Role::where('name', 'student')->first();
         // Get income_per_target from sales executive profile
         $incomePerTarget = $salesExecutiveProfile ? $salesExecutiveProfile->income_per_target : 0;
-        if (!$incomePerTarget) {
+        if (! $incomePerTarget) {
             $incomePerTarget = \App\Models\Setting::getValue('default_income_per_target', 10);
         }
 
@@ -285,16 +282,15 @@ class SalesExecutiveAuthController extends Controller
 
         // Calculate Vendors (Approved: Free and Pro)
         $vendorQuery = User::where('users.added_by', $salesExecutiveId)
-            ->where('users.role_id', 2)
+            ->where('users.role_id', RoleHelper::vendorId())
             ->where('users.status', 1)
             ->join('vendors', 'vendors.user_id', '=', 'users.id');
 
         $freeVendorCount = (clone $vendorQuery)->where('vendors.plan', 'free')->count();
-        $proVendorCount  = (clone $vendorQuery)->where('vendors.plan', 'pro')->count();
+        $proVendorCount = (clone $vendorQuery)->where('vendors.plan', 'pro')->count();
 
         // Calculate total classes (sum of classes from all institutions added by this sales executive)
         $institutionIds = InstitutionManagement::where('added_by', $salesExecutiveId)->pluck('id');
-
 
         // Calculate total blocks (distinct blocks from institutions)
         $totalBlocks = InstitutionManagement::where('added_by', $salesExecutiveId)
@@ -345,7 +341,7 @@ class SalesExecutiveAuthController extends Controller
 
         $vendorGraphData = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->where('added_by', $salesExecutiveId)
-            ->where('role_id', 2)
+            ->where('role_id', RoleHelper::vendorId())
             ->where('status', 1)
             ->whereDate('created_at', '>=', $startDate)
             ->groupBy('date')
@@ -392,7 +388,7 @@ class SalesExecutiveAuthController extends Controller
             'vendorsCount',
             'earningsData'
         ), [
-            'user' => $salesExecutive
+            'user' => $salesExecutive,
         ]);
     }
 
