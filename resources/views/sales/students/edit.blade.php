@@ -167,7 +167,7 @@
                                     <i class="fas fa-school form-icon"></i>
                                     Institution
                                 </label>
-                                <select name="institution_id" id="institution-select" class="form-control">
+                                <select name="institution_id" id="institution_id" class="form-control" required>
                                     <option value="">Select Institution</option>
                                     @foreach ($institutions as $institution)
                                         <option value="{{ $institution->id }}"
@@ -180,6 +180,7 @@
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
                             </div>
+
                             <div class="form-group">
                                 <label class="form-label">
                                     <i class="fas fa-user form-icon"></i>
@@ -191,6 +192,7 @@
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
                             </div>
+
                         </div>
 
                         <div class="form-row">
@@ -206,15 +208,15 @@
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
                             </div>
+
                             <div class="form-group">
                                 <label class="form-label">
                                     <i class="fas fa-envelope form-icon"></i>
-                                    Father's name
+                                    Email Address
                                 </label>
-                                <input type="text" name="father_names" class="form-control"
-                                    value="{{ old('father_names', $student->father_names) }}"
-                                    placeholder="Enter father's name">
-                                @error('father_names')
+                                <input type="email" name="email" class="form-control"
+                                    value="{{ old('email', $student->email) }}" placeholder="Enter email address">
+                                @error('email')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
                             </div>
@@ -224,23 +226,35 @@
                             <div class="form-group">
                                 <label class="form-label">
                                     <i class="fas fa-layer-group form-icon"></i>
+                                    Board <span class="required">*</span>
+                                </label>
+                                <select name="board_id" id="board_id" class="form-control" required>
+                                    <option value="">Select Board</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-layer-group form-icon"></i>
                                     Class <span class="required">*</span>
                                 </label>
-                                <select name="class" id="class-select" class="form-control" required>
+                                <select name="institution_classes_id" id="institution_classes_id" class="form-control"
+                                    required>
                                     <option value="">Select Class</option>
                                 </select>
-                                @error('class')
+                                @error('institution_classes_id')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
                             </div>
+
                             <div class="form-group">
                                 <label class="form-label">
                                     <i class="fas fa-id-card form-icon"></i>
                                     Roll Number
                                 </label>
                                 <input type="text" name="roll_number" class="form-control"
-                                    value="{{ old('roll_number', $student->roll_number) }}" placeholder="Enter roll number"
-                                    required>
+                                    value="{{ old('roll_number', $student->roll_number) }}"
+                                    placeholder="Enter roll number">
                                 @error('roll_number')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
@@ -273,18 +287,12 @@
                                     <i class="fas fa-birthday-cake form-icon"></i>
                                     Date of Birth <span class="required">*</span>
                                 </label>
-
-                                <input type="date"
-                                       name="dob"
-                                       class="form-control"
-                                       value="{{ old('dob', $student->dob ? \Carbon\Carbon::parse($student->dob)->format('Y-m-d') : '') }}"
-                                       required>
-
+                                <input type="date" name="dob" class="form-control"
+                                    value="{{ old('dob', $student->dob) }}" required>
                                 @error('dob')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
                             </div>
-
                         </div>
 
                         <div class="form-group text-center mt-4">
@@ -305,61 +313,102 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        $(document).ready(function () {
-            var classSelect = $('#class-select');
-            var institutionSelect = $('#institution-select');
-            var initialClass = '{{ old('class', $student->class) }}';
+        $(document).ready(function() {
+            @php
+                $studentBoardId = '';
+                if (old('institution_classes_id', $student->institution_classes_id)) {
+                    $instClass = \App\Models\InstitutionClass::with('subcategory')->find(old('institution_classes_id', $student->institution_classes_id));
+                    if ($instClass && $instClass->subcategory) {
+                        $studentBoardId = $instClass->subcategory->category_id;
+                    }
+                }
+            @endphp
 
-            function resetClassSelect(placeholderText) {
-                placeholderText = placeholderText || 'Select Class';
-                classSelect.empty();
-                classSelect.append('<option value="">' + placeholderText + '</option>');
+            var oldClassId = "{{ old('institution_classes_id', $student->institution_classes_id) }}";
+            var oldBoardId = "{{ old('board_id', $studentBoardId) }}";
+
+            function fetchBoards(institutionId) {
+                var boardSelect = $('#board_id');
+                var classSelect = $('#institution_classes_id');
+
+                boardSelect.empty().append('<option value="">Select Board</option>');
+                classSelect.empty().append('<option value="">Select Class</option>');
+
+                if (institutionId) {
+                    $.ajax({
+                        url: '{{ route('sales.students.institution_boards') }}',
+                        type: 'GET',
+                        data: {
+                            institution_id: institutionId
+                        },
+                        success: function(response) {
+                            $.each(response, function(index, item) {
+                                var selected = (oldBoardId == item.id) ? 'selected' : '';
+                                boardSelect.append('<option value="' + item.id + '" ' +
+                                    selected + '>' +
+                                    item.category_name + '</option>');
+                            });
+
+                            // If we have an oldBoardId after fetching boards, let's fetch classes for it
+                            if (oldBoardId) {
+                                fetchClasses(institutionId, oldBoardId);
+                            }
+                        }
+                    });
+                }
             }
 
-            function loadClassesForInstitution(institutionId, selectValue) {
-                if (!institutionId) {
-                    resetClassSelect('Select Class');
-                    return;
-                }
+            function fetchClasses(institutionId, boardId) {
+                var classSelect = $('#institution_classes_id');
+                classSelect.empty().append('<option value="">Select Class</option>');
 
-                $.ajax({
-                    url: '{{ route('sales.students.institution_classes') }}',
-                    type: 'GET',
-                    data: {institution_id: institutionId},
-                    dataType: 'json',
-                    success: function (response) {
-                        resetClassSelect('Select Class / Stream');
+                if (institutionId && boardId) {
+                    $.ajax({
+                        url: '{{ route('sales.students.institution_classes') }}',
+                        type: 'GET',
+                        data: {
+                            institution_id: institutionId,
+                            board_id: boardId
+                        },
+                        success: function(response) {
+                            $.each(response, function(index, item) {
+                                var className = item.subcategory ? item.subcategory
+                                    .subcategory_name : 'Unknown Class';
+                                var strengthText = item.total_strength ? ' (Strength: ' + item
+                                    .total_strength + ')' : '';
 
-                        if (Array.isArray(response)) {
-                            $.each(response, function (index, className) {
-                                classSelect.append('<option value="' + className + '">' + className + '</option>');
+                                var displayText = className + strengthText;
+
+                                var selected = (oldClassId == item.id) ? 'selected' : '';
+                                classSelect.append('<option value="' + item.id + '" ' +
+                                    selected + '>' + displayText + '</option>');
                             });
                         }
-
-                        if (selectValue) {
-                            classSelect.val(selectValue);
-                        }
-                    },
-                    error: function (xhr, status, error) {
-                        console.error('Error loading classes for institution:', error);
-                        resetClassSelect('Select Class');
-                    }
-                });
+                    });
+                }
             }
 
-            institutionSelect.on('change', function () {
+            // On initial page load
+            var initialInstitutionId = $('#institution_id').val();
+            if (initialInstitutionId) {
+                fetchBoards(initialInstitutionId);
+            }
+
+            // On change institution
+            $('#institution_id').change(function() {
                 var institutionId = $(this).val();
-                initialClass = ''; // stop re-forcing original class after manual change
-                loadClassesForInstitution(institutionId, '');
+                oldClassId = null;
+                oldBoardId = null;
+                fetchBoards(institutionId);
             });
 
-            // Initial load for current institution (if any)
-            var initialInstitutionId = institutionSelect.val();
-            if (initialInstitutionId) {
-                loadClassesForInstitution(initialInstitutionId, initialClass);
-            } else {
-                resetClassSelect('Select Class');
-            }
+            // On change board
+            $('#board_id').change(function() {
+                var institutionId = $('#institution_id').val();
+                var boardId = $(this).val();
+                oldClassId = null;
+                fetchClasses(institutionId, boardId);
+            });
         });
     </script>
 

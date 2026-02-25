@@ -185,14 +185,17 @@
                 }
 
                 $.ajax({
-                    url: '/admin/get-states/' + countryId,
+                    url: '{{ route('vendor_states') }}',
                     type: 'GET',
+                    data: {
+                        country: countryId
+                    },
                     success: function(data) {
                         var options = '<option value="">Select State</option>';
-                        $.each(data, function(key, state) {
-                            var selected = (currentStateId == state.id) ? 'selected' : '';
-                            options += '<option value="' + state.id + '" ' + selected + '>' +
-                                state.name + '</option>';
+                        $.each(data, function(key, name) {
+                            var selected = (currentStateId == key) ? 'selected' : '';
+                            options += '<option value="' + key + '" ' + selected + '>' +
+                                name + '</option>';
                         });
                         $('#state_id').html(options);
 
@@ -212,14 +215,17 @@
                 }
 
                 $.ajax({
-                    url: '/admin/get-districts/' + stateId,
+                    url: '{{ route('vendor_districts') }}',
                     type: 'GET',
+                    data: {
+                        state: stateId
+                    },
                     success: function(data) {
                         var options = '<option value="">Select District</option>';
-                        $.each(data, function(key, district) {
-                            var selected = (currentDistrictId == district.id) ? 'selected' : '';
-                            options += '<option value="' + district.id + '" ' + selected + '>' +
-                                district.name + '</option>';
+                        $.each(data, function(key, name) {
+                            var selected = (currentDistrictId == key) ? 'selected' : '';
+                            options += '<option value="' + key + '" ' + selected + '>' +
+                                name + '</option>';
                         });
                         $('#district_id').html(options);
 
@@ -238,14 +244,17 @@
                 }
 
                 $.ajax({
-                    url: '/admin/get-blocks/' + districtId,
+                    url: '{{ route('vendor_blocks') }}',
                     type: 'GET',
+                    data: {
+                        district: districtId
+                    },
                     success: function(data) {
                         var options = '<option value="">Select Block</option>';
-                        $.each(data, function(key, block) {
-                            var selected = (currentBlockId == block.id) ? 'selected' : '';
-                            options += '<option value="' + block.id + '" ' + selected + '>' +
-                                block.name + '</option>';
+                        $.each(data, function(key, name) {
+                            var selected = (currentBlockId == key) ? 'selected' : '';
+                            options += '<option value="' + key + '" ' + selected + '>' +
+                                name + '</option>';
                         });
                         $('#block_id').html(options);
                     }

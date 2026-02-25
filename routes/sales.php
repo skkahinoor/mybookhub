@@ -33,6 +33,8 @@ Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function
         // AJAX: get classes/streams for a given institution (only those added by current sales)
         Route::get('students/institution-classes', 'StudentController@getInstitutionClasses')
             ->name('sales.students.institution_classes');
+        Route::get('students/institution-boards', 'StudentController@getInstitutionBoards')
+            ->name('sales.students.institution_boards');
 
         // Sales Students Management (similar to Admin)
         Route::resource('students', 'StudentController')->names([
@@ -89,6 +91,8 @@ Route::prefix('/sales')->namespace('App\Http\Controllers\Sales')->group(function
         Route::get('institution-states', [\App\Http\Controllers\Sales\InstitutionManagementController::class, 'getStates'])->name('institution_states');
         Route::get('institution-districts', [\App\Http\Controllers\Sales\InstitutionManagementController::class, 'getDistricts'])->name('institution_districts');
         Route::get('institution-blocks', [\App\Http\Controllers\Sales\InstitutionManagementController::class, 'getBlocks'])->name('institution_blocks');
+        Route::get('institution-sections', [\App\Http\Controllers\Sales\InstitutionManagementController::class, 'getSections'])->name('sales.institution.sections');
+        Route::get('institution-categories', [\App\Http\Controllers\Sales\InstitutionManagementController::class, 'getCategories'])->name('sales.institution.categories');
         Route::get('institution-classes', [\App\Http\Controllers\Sales\InstitutionManagementController::class, 'getClasses'])->name('sales.institution.classes');
 
         // AJAX routes for sales profile location dropdowns

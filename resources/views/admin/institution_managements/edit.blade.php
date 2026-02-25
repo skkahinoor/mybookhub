@@ -308,7 +308,7 @@
                                     Principal Name<span class="required">*</span>
                                 </label>
                                 <input type="text" name="principal_name" class="form-control"
-                                    value="{{ old('principal_name') }}" placeholder="Enter principal name" required>
+                                    value="{{ $institution->principal_name ?? old('principal_name') }}" placeholder="Enter principal name" required>
                                 @error('principal_name')
                                     <div class="error-message">{{ $message }}</div>
                                 @enderror
