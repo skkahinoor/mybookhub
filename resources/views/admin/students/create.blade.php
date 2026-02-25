@@ -251,6 +251,18 @@
 
                             <div class="form-group">
                                 <label class="form-label">
+                                    <i class="fas fa-user form-icon"></i>
+                                    Father Name <span class="required">*</span>
+                                </label>
+                                <input type="text" name="father_names" class="form-control" value="{{ old('father_names') }}"
+                                    placeholder="Enter father name" required>
+                                @error('father_names')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
                                     <i class="fas fa-id-card form-icon"></i>
                                     Roll Number
                                 </label>

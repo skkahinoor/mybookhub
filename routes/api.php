@@ -66,6 +66,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Student
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/institution-boards/{id}', [StudentApiController::class, 'getBoards']);
+    Route::post('/institution-classes', [StudentApiController::class, 'getClasses']);
     Route::get('/students', [StudentApiController::class, 'index']);
     Route::post('/students', [StudentApiController::class, 'store']);
     Route::put('/students/{id}', [StudentApiController::class, 'update']);

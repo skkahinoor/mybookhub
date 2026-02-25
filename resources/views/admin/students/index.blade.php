@@ -210,7 +210,7 @@
                         <i class="fas fa-table"></i> Student List
                     </h5>
                 </div>
-            
+
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="studentsTable" class="table table-bordered table-striped">
@@ -263,7 +263,7 @@
                                                class="btn btn-sm btn-success">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-            
+
                                             <button onclick="confirmDelete({{ $student->id }})"
                                                     class="btn btn-sm btn-danger">
                                                 <i class="fas fa-trash"></i>
@@ -276,7 +276,7 @@
                     </div>
                 </div>
             </div>
-            
+
             @else
             <div class="empty-state text-center py-5">
                 <i class="fas fa-user-graduate fa-4x mb-3"></i>
@@ -287,7 +287,7 @@
                 </a>
             </div>
             @endif
-            
+
         </div>
     </div>
 </div>

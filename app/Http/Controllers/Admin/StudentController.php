@@ -42,6 +42,7 @@ class StudentController extends Controller
         $logos = HeaderLogo::first();
         $request->validate([
             'name' => 'required|string|max:255',
+            'father_names' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'required|string|min:10|max:15',
             'institution_id' => 'required|exists:institution_managements,id',
@@ -92,6 +93,7 @@ class StudentController extends Controller
         $headerLogo = HeaderLogo::first();
         $request->validate([
             'name' => 'required|string|max:255',
+            'father_names' => 'required|string|max:255',
             'email' => 'nullable|email|max:255',
             'phone' => 'required|string|min:10|max:15',
             'institution_id' => 'required|exists:institution_managements,id',

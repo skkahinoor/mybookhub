@@ -95,6 +95,10 @@ class User extends Authenticatable
     {
         return $this->belongsTo(InstitutionManagement::class, 'institution_id');
     }
+    public function institutionClass()
+    {
+        return $this->belongsTo(InstitutionClass::class, 'institution_classes_id');
+    }
     public function country()
     {
         return $this->belongsTo(Country::class, 'country_id');
