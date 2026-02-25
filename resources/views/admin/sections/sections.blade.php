@@ -47,8 +47,8 @@
 
                                                 <!-- IMAGE COLUMN -->
                                                 <td>
-                                                    @if (!empty($section['image']) && file_exists(public_path('admin/images/section/' . $section['image'])))
-                                                        <img src="{{ asset('admin/images/section/' . $section['image']) }}"
+                                                    @if (!empty($section['image']))
+                                                        <img src="{{ $section['image'] }}"
                                                             width="60" height="60"
                                                             style="object-fit: cover; border-radius: 6px; border:1px solid #ddd;">
                                                     @else
