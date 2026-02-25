@@ -17,4 +17,13 @@ class Banner extends Model
         'alt',
         'status',
     ];
+
+    public function getImageAttribute($value)
+{
+    if ($value) {
+        return asset('front/images/banner_images/' . $value);
+    }
+
+    return null;
+}
 }

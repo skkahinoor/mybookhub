@@ -69,15 +69,18 @@ class User extends Authenticatable
 
     public function getTypeAttribute()
     {
-        // Check Spatie Roles first 
-        if ($this->hasRole('admin') || $this->hasRole('superadmin')) {
+        // Check Spatie Roles first
+        if ($this->hasRole('admin')) {
             return 'admin';
         }
         if ($this->hasRole('vendor')) {
             return 'vendor';
         }
         if ($this->hasRole('sales')) {
-            return 'sales'; // Not in original Admin types, but useful
+            return 'sales';
+        }
+        if ($this->hasRole('student')) {
+            return 'student';
         }
         // Fallback to legacy behavior if needed (e.g. checks role_id directly)
         if ($this->role_id == \App\Helpers\RoleHelper::adminId()) return 'admin';
@@ -86,7 +89,7 @@ class User extends Authenticatable
 
         return 'user'; // Default
     }
- 
+
     public function institution()
     {
         return $this->belongsTo(InstitutionManagement::class, 'institution_id');

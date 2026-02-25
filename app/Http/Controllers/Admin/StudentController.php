@@ -52,12 +52,22 @@ class StudentController extends Controller
 
         $data = $request->all();
 
+        $role = \Spatie\Permission\Models\Role::where([
+            'name'       => 'student'
+        ])->first();
+
+        if (!$role) {
+            throw new \Exception('Student role not found');
+        }
+
+
         $data['password']  = Hash::make('123456');
         $data['status'] = 1;
-        $data['role_id'] = 5;
+        $data['role_id'] = $role->id;
         $data['added_by'] = Auth::guard('admin')->user()->id;
 
-        User::create($data);
+        $studentuser = User::create($data);
+        $studentuser->assignRole($role);
 
         return redirect('admin/students')->with('success_message', 'Student has been added successfully', 'logos');
         return view('admin.students.index', compact('students', 'logos', 'headerLogo'));
