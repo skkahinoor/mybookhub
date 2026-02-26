@@ -189,18 +189,6 @@
                                 </a>
                             </div>
 
-                            {{-- Users Card --}}
-                            <div class="metric-card users">
-                                <a href="{{ url('admin/users') }}">
-                                    <div class="w-100">
-                                        <div class="metric-label">Users</div>
-                                        <div class="metric-value">{{ number_format($usersCount) }}</div>
-                                    </div>
-                                    <div class="metric-icon-wrapper">
-                                        <i class="fas fa-users"></i>
-                                    </div>
-                                </a>
-                            </div>
 
                             {{-- Sales Executives Card --}}
                             <div class="metric-card subscribers">
