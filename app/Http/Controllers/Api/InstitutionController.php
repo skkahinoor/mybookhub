@@ -64,9 +64,7 @@ class InstitutionController extends Controller
 
     public function getSubcategories()
     {
-        $subcategories = Subcategory::where('status', 1)
-            ->select('id', 'subcategory_name')
-            ->get();
+        $subcategories = Subcategory::where('status', 1)->select('id', 'subcategory_name')->get();
 
         return response()->json([
             'status'  => true,
