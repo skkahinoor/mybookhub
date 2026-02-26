@@ -173,6 +173,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Route::patch('vendor/book-requests/{id}/status', [CatalogueController::class, 'updateBookRequestStatus']);
     Route::put('vendor/book-requests/{id}/reply', [CatalogueController::class, 'replyBookRequest']);
 
+    Route::get('vendor/book-type', [CatalogueController::class, 'getType']);
+
     Route::get('/vendor/products', [BookController::class, 'getproduct']);
     Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);
     Route::patch('/vendor/products/{id}/bestSeller', [BookController::class, 'isBestSeller']);

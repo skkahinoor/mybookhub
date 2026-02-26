@@ -90,6 +90,7 @@ class ProductsController extends Controller
             $publishers = Publisher::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
             $subjects   = Subject::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
             $languages  = Language::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
+            $type       = BookType::pluck('id', 'book_type')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
             $editions   = Edition::pluck('id', 'edition')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
             $authorsMap = Author::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
 
@@ -156,6 +157,7 @@ class ProductsController extends Controller
                 $publisherId = $this->autoCreate($publishers, Publisher::class, $data['publisher'] ?? null);
                 $subjectId   = $this->autoCreate($subjects, Subject::class, $data['subject'] ?? null);
                 $languageId  = $this->autoCreate($languages, Language::class, $data['language'] ?? null);
+                $bookTypeId  = $this->autoCreate($types, BookType::class, $data['book type'] ?? null);
                 $editionId   = $this->autoCreate($editions, Edition::class, $data['edition'] ?? null, [
                     'edition' => trim($data['edition'] ?? '')
                 ]);
