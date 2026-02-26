@@ -427,6 +427,7 @@
                                     `<option value="${category.id}" ${selectedBoard == category.id ? 'selected' : ''}>${category.category_name}</option>`
                                 );
                             });
+                            $('#class-field').show();
                             if (selectedBoard) boardSelect.trigger('change');
                         }
                     });
@@ -437,32 +438,9 @@
                 }
             });
 
-            // Handle board change -> Load Subcategories (Classes)
+            // Handle board change (No longer loads classes but can still be used for other logic if needed)
             $('select[name="board"]').change(function() {
-                var category_id = $(this).val();
-                if (category_id) {
-                    $('#class-field').show();
-                    $('#class-list-container').empty(); // Clear existing rows when board changes
-
-                    $.ajax({
-                        url: '{{ route('admin.institution.classes') }}',
-                        type: 'GET',
-                        data: {
-                            category_id: category_id
-                        },
-                        success: function(response) {
-                            currentSubcategories = response;
-                            // Optionally add a default row
-                            if ($('#class-list-container').children().length === 0) {
-                                $('#add-class-btn').click();
-                            }
-                        }
-                    });
-                } else {
-                    $('#class-field').hide();
-                    $('#class-list-container').empty();
-                    currentSubcategories = [];
-                }
+                // If you need any logic when board changes, add it here
             });
 
             // Add new class row
@@ -600,7 +578,18 @@
                 }
             });
 
+            function loadClasses() {
+                $.ajax({
+                    url: '{{ route('admin.institution.classes') }}',
+                    type: 'GET',
+                    success: function(response) {
+                        currentSubcategories = response;
+                    }
+                });
+            }
+
             loadSections();
+            loadClasses();
             loadCountries();
         });
     </script>

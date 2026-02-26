@@ -8,7 +8,8 @@
                 <div class="col-md-12 grid-margin">
                     <div class="row">
                         <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                            <h4 class="card-title">Categories</h4>
+
+                            <h4 class="card-title">Book Type</h4>
                         </div>
                         <div class="col-12 col-xl-4">
                             <div class="justify-content-end d-flex">
@@ -54,6 +55,7 @@
                             {{-- Displaying Laravel Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors --}}
                             @if ($errors->any())
                                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    {{-- <strong>Error:</strong> {{ Session::get('error_message') }} --}}
 
                                     @foreach ($errors->all() as $error)
                                         <li>{{ $error }}</li>
@@ -83,72 +85,28 @@
 
 
                             <form class="forms-sample"
-                                @if (empty($category['id'])) action="{{ url('admin/add-edit-category') }}" @else action="{{ url('admin/add-edit-category/' . $category['id']) }}" @endif
+                                @if (empty($type['id'])) action="{{ url('admin/add-edit-type') }}" @else action="{{ url('admin/add-edit-type/' . $type['id']) }}" @endif
                                 method="post" enctype="multipart/form-data"> @csrf
-                                <!-- If the id is not passed in from the route, this measn 'Add a new Category', but if the id is passed in from the route, this means 'Edit the Category' -->
+                                <!-- If the id is not passed in from the route, this measn 'Add a new type', but if the id is passed in from the route, this means 'Edit the type' -->
                                 <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
                                 <div class="form-group">
-                                    <label for="category_name">Category Name</label>
-                                    <input type="text" class="form-control" id="category_name"
-                                        placeholder="Enter Category Name" name="category_name"
-                                        @if (!empty($category['category_name'])) value="{{ $category['category_name'] }}" @else value="{{ old('category_name') }}" @endif>
+                                    <label for="book_type">Book Type</label>
+                                    <input type="text" class="form-control" id="book_type" placeholder="Enter Book Type"
+                                        name="book_type"
+                                        @if (!empty($type['book_type'])) value="{{ $type['book_type'] }}" @else value="{{ old('book_type') }}" @endif>
                                 </div>
-
-
                                 <div class="form-group">
-                                    <label for="section_id">Select Section</label>
-                                    <select name="section_id" id="" class="form-control" style="color: #000">
-                                        <option value="">Select Section</option>
-                                        @foreach ($getSections as $section)
-                                            <option value="{{ $section['id'] }}"
-                                                @if (!empty($category['section_id']) && $category['section_id'] == $section['id']) selected @endif>{{ $section['name'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                               
-                                <div class="form-group">
-                                    <label for="category_icon">Category Icon</label>
-                                    <input type="file" class="form-control" id="category_icon" name="category_icon">
-                                    @if (!empty($category['category_icon']))
-                                        <div style="margin-top: 10px;">
-                                            <img src="{{ asset('admin/images/category_icons/' . $category['category_icon']) }}"
-                                                alt="Current Icon" style="width: 50px; height: 50px;">
-                                        </div>
+                                    <label for="book_type_icon">Book Type Icon</label>
+                                    <input type="file" class="form-control" id="book_type_icon" name="book_type_icon">
+                                    @if (!empty($type->book_type_icon))
+                                        <a target="_blank"
+                                            href="{{ asset('admin/images/bookType/' . $type->book_type_icon) }}">
+                                            View Current Image
+                                        </a>
                                     @endif
                                 </div>
-                                <div class="form-group">
-                                    <label for="description">Category Description</label>
-                                    {{-- <input type="text" class="form-control" id="category_discount" placeholder="Enter Category Description" name="category_discount"   @if (!empty($category['category_discount'])) value="{{ $category['category_discount'] }}" @else value="{{ old('category_discount') }}" @endif >  --}}
-                                    <textarea name="description" id="description" class="form-control" rows="3">{{ $category['description'] }}</textarea>
-                                </div>
-                                {{-- <div class="form-group">
-                                    <label for="url">Category URL</label>
-                                    <input type="text" class="form-control" id="url"
-                                        placeholder="Enter Category URL" name="url"
-                                        @if (!empty($category['url'])) value="{{ $category['url'] }}" @else value="{{ old('url') }}" @endif>
-                                </div> --}}
-                                <div class="form-group">
-                                    <label for="meta_title">Meta Title</label>
-                                    <input type="text" class="form-control" id="meta_title"
-                                        placeholder="Enter Meta Title" name="meta_title"
-                                        @if (!empty($category['meta_title'])) value="{{ $category['meta_title'] }}" @else value="{{ old('meta_title') }}" @endif>
-                                </div>
-                                <div class="form-group">
-                                    <label for="meta_description">Meta Description</label>
-                                    <input type="text" class="form-control" id="meta_description"
-                                        placeholder="Enter Meta Description" name="meta_description"
-                                        @if (!empty($category['meta_description'])) value="{{ $category['meta_description'] }}" @else value="{{ old('meta_description') }}" @endif>
-                                </div>
-                                <div class="form-group">
-                                    <label for="meta_keywords">Meta Keywords</label>
-                                    <input type="text" class="form-control" id="meta_keywords"
-                                        placeholder="Enter Meta Keywords" name="meta_keywords"
-                                        @if (!empty($category['meta_keywords'])) value="{{ $category['meta_keywords'] }}" @else value="{{ old('meta_keywords') }}" @endif>
-                                </div>
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                <a href="{{ url('admin/categories') }}" class="btn btn-light">Cancel</a>
+                                <a href="{{ url('admin/types') }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
                     </div>

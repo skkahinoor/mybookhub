@@ -27,8 +27,8 @@
                                     <thead>
                                         <tr>
                                             <th>ID</th>
+                                            <th>Icon</th>
                                             <th>Subcategory Name</th>
-                                            <th>Category</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -37,8 +37,15 @@
                                         @foreach ($subcategories as $key => $subcategory)
                                             <tr>
                                                 <td>{{ $key + 1 }}</td>
+                                                <td>
+                                                    @if (!empty($subcategory['subcategory_icon']))
+                                                        <img src="{{ asset('admin/images/subcategory_icons/' . $subcategory['subcategory_icon']) }}"
+                                                            style="width: 50px; height: 50px;">
+                                                    @else
+                                                        No Icon
+                                                    @endif
+                                                </td>
                                                 <td>{{ $subcategory['subcategory_name'] }}</td>
-                                                <td>{{ $subcategory['category']['category_name'] ?? 'N/A' }}</td>
                                                 <td>
                                                     @if ($subcategory['status'] == 1)
                                                         <a class="updateSubcategoryStatus"

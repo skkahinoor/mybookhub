@@ -180,12 +180,12 @@
                                 @enderror
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group" style="display: none;">
                                 <label class="form-label">
                                     <i class="fas fa-layer-group form-icon"></i>
                                     Board <span class="required">*</span>
                                 </label>
-                                <select name="board_id" id="board_id" class="form-control" required>
+                                <select name="board_id" id="board_id" class="form-control">
                                     <option value="">Select Board</option>
                                 </select>
                             </div>
@@ -335,35 +335,10 @@
 
                 if (institutionId) {
                     $.ajax({
-                        url: '{{ url('admin/get-institution-boards') }}',
-                        type: 'GET',
-                        data: {
-                            institution_id: institutionId
-                        },
-                        success: function(response) {
-                            $.each(response, function(index, item) {
-                                boardSelect.append('<option value="' + item.id + '">' +
-                                    item.category_name + '</option>');
-                            });
-                        }
-                    });
-                }
-            });
-
-            $('#board_id').change(function() {
-                var institutionId = $('#institution_id').val();
-                var boardId = $(this).val();
-                var classSelect = $('#institution_classes_id');
-
-                classSelect.empty().append('<option value="">Select Class</option>');
-
-                if (institutionId && boardId) {
-                    $.ajax({
                         url: '{{ url('admin/get-institution-classes') }}',
                         type: 'GET',
                         data: {
-                            institution_id: institutionId,
-                            board_id: boardId
+                            institution_id: institutionId
                         },
                         success: function(response) {
                             $.each(response, function(index, item) {
@@ -380,6 +355,11 @@
                         }
                     });
                 }
+            });
+
+            // Board change logic removed as it's no longer used for filtering classes
+            $('#board_id').change(function() {
+                // ...
             });
         });
     </script>

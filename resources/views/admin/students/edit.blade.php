@@ -205,12 +205,12 @@
                         </div>
 
                         <div class="form-row">
-                            <div class="form-group">
+                            <div class="form-group" style="display: none;">
                                 <label class="form-label">
                                     <i class="fas fa-layer-group form-icon"></i>
                                     Board <span class="required">*</span>
                                 </label>
-                                <select name="board_id" id="board_id" class="form-control" required>
+                                <select name="board_id" id="board_id" class="form-control">
                                     <option value="">Select Board</option>
                                 </select>
                             </div>
@@ -322,61 +322,18 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            @php
-                $studentBoardId = '';
-                if (old('institution_classes_id', $student->institution_classes_id)) {
-                    $instClass = \App\Models\InstitutionClass::with('subcategory')->find(old('institution_classes_id', $student->institution_classes_id));
-                    if ($instClass && $instClass->subcategory) {
-                        $studentBoardId = $instClass->subcategory->category_id;
-                    }
-                }
-            @endphp
-
             var oldClassId = "{{ old('institution_classes_id', $student->institution_classes_id) }}";
-            var oldBoardId = "{{ old('board_id', $studentBoardId) }}";
 
-            function fetchBoards(institutionId) {
-                var boardSelect = $('#board_id');
+            function fetchClasses(institutionId) {
                 var classSelect = $('#institution_classes_id');
-
-                boardSelect.empty().append('<option value="">Select Board</option>');
                 classSelect.empty().append('<option value="">Select Class</option>');
 
                 if (institutionId) {
                     $.ajax({
-                        url: '{{ url('admin/get-institution-boards') }}',
-                        type: 'GET',
-                        data: {
-                            institution_id: institutionId
-                        },
-                        success: function(response) {
-                            $.each(response, function(index, item) {
-                                var selected = (oldBoardId == item.id) ? 'selected' : '';
-                                boardSelect.append('<option value="' + item.id + '" ' +
-                                    selected + '>' +
-                                    item.category_name + '</option>');
-                            });
-
-                            // If we have an oldBoardId after fetching boards, let's fetch classes for it
-                            if (oldBoardId) {
-                                fetchClasses(institutionId, oldBoardId);
-                            }
-                        }
-                    });
-                }
-            }
-
-            function fetchClasses(institutionId, boardId) {
-                var classSelect = $('#institution_classes_id');
-                classSelect.empty().append('<option value="">Select Class</option>');
-
-                if (institutionId && boardId) {
-                    $.ajax({
                         url: '{{ url('admin/get-institution-classes') }}',
                         type: 'GET',
                         data: {
-                            institution_id: institutionId,
-                            board_id: boardId
+                            institution_id: institutionId
                         },
                         success: function(response) {
                             $.each(response, function(index, item) {
@@ -399,23 +356,14 @@
             // On initial page load
             var initialInstitutionId = $('#institution_id').val();
             if (initialInstitutionId) {
-                fetchBoards(initialInstitutionId);
+                fetchClasses(initialInstitutionId);
             }
 
             // On change institution
             $('#institution_id').change(function() {
                 var institutionId = $(this).val();
                 oldClassId = null;
-                oldBoardId = null;
-                fetchBoards(institutionId);
-            });
-
-            // On change board
-            $('#board_id').change(function() {
-                var institutionId = $('#institution_id').val();
-                var boardId = $(this).val();
-                oldClassId = null;
-                fetchClasses(institutionId, boardId);
+                fetchClasses(institutionId);
             });
         });
     </script>

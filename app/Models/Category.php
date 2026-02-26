@@ -14,6 +14,7 @@ class Category extends Model
         'section_id',
         'category_name',
         'category_image',
+        'category_icon',
         'description',
         'url',
         'meta_title',

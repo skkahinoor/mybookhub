@@ -55,7 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/blocks/{district_id}', [InstitutionController::class, 'getBlocks']);
     Route::get('/institutionType', [InstitutionController::class, 'getSection']);
     Route::get('/Board/{type_id}', [InstitutionController::class, 'getCategoriesBySection']);
-    Route::get('/class/{board_id}', [InstitutionController::class, 'getSubcategoriesByCategory']);
+    Route::get('/class', [InstitutionController::class, 'getSubcategories']);
 
     Route::get('/institutions', [InstitutionController::class, 'index']);
     Route::post('/institutions', [InstitutionController::class, 'store']);
@@ -172,6 +172,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('vendor/book-requests/{id}', [CatalogueController::class, 'deleteBookRequest']);
     // Route::patch('vendor/book-requests/{id}/status', [CatalogueController::class, 'updateBookRequestStatus']);
     Route::put('vendor/book-requests/{id}/reply', [CatalogueController::class, 'replyBookRequest']);
+
+    Route::get('vendor/book-type', [CatalogueController::class, 'getType']);
 
     Route::get('/vendor/products', [BookController::class, 'getproduct']);
     Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);
