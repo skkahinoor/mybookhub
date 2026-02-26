@@ -83,18 +83,26 @@ class AuthorController extends Controller
     }
 
     public function delete($id)
-    {
-        if (!Auth::guard('admin')->user()->can('delete_authors')) {
-            abort(403, 'Unauthorized action.');
-        }
-        $delete = Author::find($id);
-        $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        $delete->delete();
-        return redirect()->back()->with('success', 'Author name deleted successfully!!', 'logos');
-        return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
+{
+    if (!Auth::guard('admin')->user()->can('delete_authors')) {
+        abort(403, 'Unauthorized action.');
     }
 
+    $author = Author::find($id);
+
+    // If author not found, just redirect with an error instead of 404
+    if (!$author) {
+        return redirect()
+            ->route('admin.author')
+            ->with('error', 'Author not found or already deleted.');
+    }
+
+    $author->delete();
+
+    return redirect()
+        ->route('admin.author')
+        ->with('success', 'Author name deleted successfully!!');
+}
     /**
      * Toggle author status (active/inactive) via AJAX.
      */
