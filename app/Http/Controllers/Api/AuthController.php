@@ -25,12 +25,10 @@ class AuthController extends Controller
 
         $loginInput = $request->login;
 
-        // Detect if email or phone
+        // Detect email or phone
         if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
-            // Login using email
             $user = User::where('email', $loginInput)->first();
         } else {
-            // Login using phone (remove non-numeric characters)
             $numericLogin = preg_replace('/\D/', '', $loginInput);
             $user = User::where('phone', $numericLogin)->first();
         }
@@ -42,7 +40,6 @@ class AuthController extends Controller
             ], 401);
         }
 
-        // Check active/inactive
         if ($user->status == 0) {
             return response()->json([
                 'status'  => false,
@@ -50,16 +47,28 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $type = $user->type;
+        $role = $user->getRoleNames()->first();
 
-        $token = $user->createToken("{$type}-token")->plainTextToken;
+        // ✅ If student → load ALL related data
+        if ($role === 'student') {
+            $user->load([
+                'roles',
+                'institution',
+                'institution.section',
+                'institution.category',
+                'institutionClass',
+                'institutionClass.subCategory'
+            ]);
+        }
+
+        $token = $user->createToken("{$role}-token")->plainTextToken;
 
         return response()->json([
             'status'  => true,
-            'message' => ucfirst($type) . ' login successful',
-            'type'    => $type,
+            'message' => ucfirst($role) . ' login successful',
+            'type'    => $role,
             'token'   => $token,
-            'data'    => $user,
+            'data'    => $user,   // ✅ returning full data
         ]);
     }
 
