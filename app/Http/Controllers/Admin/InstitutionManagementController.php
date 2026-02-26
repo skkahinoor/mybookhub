@@ -27,7 +27,13 @@ class InstitutionManagementController extends Controller
         Session::put('page', 'institution_managements');
         $id           = Auth::guard('admin')->user()->name;
         $institutions = InstitutionManagement::with('institutionClasses')->orderBy('id', 'desc')->get();
-        $sections     = Section::where('status', 1)->get();
+        $sections     = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'Religious Book', 'Religious',
+                'Technical Book', 'Technical',
+                'Novel & Story Book', 'Novel & Story',
+                'Competitive Books', 'Competitive'
+            ])->get();
 
         return view('admin.institution_managements.index')->with(compact('institutions', 'id', 'logos', 'headerLogo', 'sections'));
     }
@@ -38,7 +44,13 @@ class InstitutionManagementController extends Controller
         $logos      = HeaderLogo::first();
         Session::put('page', 'institution_managements');
         $id = Auth::guard('admin')->user()->name;
-        $sections = Section::where('status', 1)->get();
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'Religious Book', 'Religious',
+                'Technical Book', 'Technical',
+                'Novel & Story Book', 'Novel & Story',
+                'Competitive Books', 'Competitive'
+            ])->get();
         $categories = Category::where('status', 1)->get();
         $subcategories = Subcategory::where('status', 1)->get();
         return view('admin.institution_managements.create')->with(compact('id', 'logos', 'headerLogo', 'sections', 'categories', 'subcategories'));
@@ -114,7 +126,13 @@ class InstitutionManagementController extends Controller
         Session::put('page', 'institution_managements');
 
         $institution = InstitutionManagement::with(['institutionClasses', 'country', 'state', 'district', 'block'])->findOrFail($id);
-        $sections = Section::where('status', 1)->get();
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'Religious Book', 'Religious',
+                'Technical Book', 'Technical',
+                'Novel & Story Book', 'Novel & Story',
+                'Competitive Books', 'Competitive'
+            ])->get();
         $categories = Category::where('status', 1)->get();
         $subcategories = Subcategory::where('status', 1)->get();
 
@@ -189,7 +207,13 @@ class InstitutionManagementController extends Controller
 
     public function getSections()
     {
-        $sections = Section::where('status', 1)->get(['id', 'name']);
+        $sections = Section::where('status', 1)
+        ->whereNotIn('name', [
+            'Religious Book', 'Religious',
+            'Technical Book', 'Technical',
+            'Novel & Story Book', 'Novel & Story',
+            'Competitive Books', 'Competitive'
+        ])->get(['id', 'name']);
         return response()->json($sections);
     }
 

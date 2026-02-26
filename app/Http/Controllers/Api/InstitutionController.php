@@ -39,7 +39,13 @@ class InstitutionController extends Controller
 
     public function getSection()
     {
-        $sections = Section::where('status', 1)->get();
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'Religious Book', 'Religious',
+                'Technical Book', 'Technical',
+                'Novel & Story Book', 'Novel & Story',
+                'Competitive Books', 'Competitive'
+            ])->get();
 
         return response()->json([
             'status' => true,
