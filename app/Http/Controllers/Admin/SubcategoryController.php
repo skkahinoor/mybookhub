@@ -23,7 +23,7 @@ class SubcategoryController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'subcategories');
 
-        $subcategories = Subcategory::with('category')->orderBy('id', 'desc')->get()->toArray();
+        $subcategories = Subcategory::orderBy('id', 'desc')->get()->toArray();
 
         $adminType = Auth::guard('admin')->user()->type;
         return view('admin.subcategories.subcategories')->with(compact('subcategories', 'logos', 'headerLogo', 'adminType'));
@@ -80,12 +80,34 @@ class SubcategoryController extends Controller
             $rules = [
                 'subcategory_name' => 'required',
                 'category_id' => 'required',
+                'subcategory_icon' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
             ];
 
             $this->validate($request, $rules);
 
+            // Uploading Subcategory Icon
+            if ($request->hasFile('subcategory_icon')) {
+                $icon_tmp = $request->file('subcategory_icon');
+                if ($icon_tmp->isValid()) {
+                    // Delete old icon if exists
+                    if (!empty($subcategory->subcategory_icon)) {
+                        $oldIconPath = public_path('admin/images/subcategory_icons/' . $subcategory->subcategory_icon);
+                        if (file_exists($oldIconPath)) {
+                            unlink($oldIconPath);
+                        }
+                    }
+                    $extension = $icon_tmp->getClientOriginalExtension();
+                    $iconName = time() . '_' . rand(111, 99999) . '.' . $extension;
+                    $uploadPath = public_path('admin/images/subcategory_icons/');
+                    if (!file_exists($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+                    $icon_tmp->move($uploadPath, $iconName);
+                    $subcategory->subcategory_icon = $iconName;
+                }
+            }
+
             $subcategory->subcategory_name = $data['subcategory_name'];
-            $subcategory->category_id = $data['category_id'];
             $subcategory->status = 1;
             $subcategory->save();
 
@@ -94,7 +116,7 @@ class SubcategoryController extends Controller
 
         $categories = Category::with('section')->where('status', 1)->get()->toArray();
 
-        return view('admin.subcategories.add_edit_subcategory')->with(compact('title', 'subcategory', 'categories', 'logos', 'headerLogo'));
+        return view('admin.subcategories.add_edit_subcategory')->with(compact('title', 'subcategory', 'logos', 'headerLogo'));
     }
 
     public function deleteSubcategory($id)

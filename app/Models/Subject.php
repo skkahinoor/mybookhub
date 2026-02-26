@@ -10,13 +10,10 @@ class Subject extends Model
     use HasFactory;
 
     protected $fillable = [
-        'subcategory_id',
         'name',
+        'subject_icon',
         'status',
     ];
 
-    public function subcategory()
-    {
-        return $this->belongsTo(Subcategory::class, 'subcategory_id');
-    }
+   
 }

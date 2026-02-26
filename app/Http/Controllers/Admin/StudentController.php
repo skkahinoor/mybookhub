@@ -203,40 +203,22 @@ class StudentController extends Controller
 
     public function getInstitutionBoards(Request $request)
     {
-        $institution_id = $request->input('institution_id');
-        if (!$institution_id) {
-            return response()->json([]);
-        }
-
-        $classes = InstitutionClass::with(['subcategory.category'])->where('institution_id', $institution_id)->get();
-
-        $boards = collect();
-        foreach ($classes as $class) {
-            if ($class->subcategory && $class->subcategory->category) {
-                // Check if we already added this board
-                if (!$boards->contains('id', $class->subcategory->category->id)) {
-                    $boards->push($class->subcategory->category);
-                }
-            }
-        }
-
-        return response()->json($boards->values()->all());
+        // Board is no longer linked to classes, so we can either return all categories
+        // or just return empty if not needed. Given the user's request, classes are global.
+        $categories = \App\Models\Category::where('status', 1)->get(['id', 'category_name']);
+        return response()->json($categories);
     }
 
     public function getInstitutionClasses(Request $request)
     {
         $institution_id = $request->input('institution_id');
-        $board_id = $request->input('board_id');
 
-        if (!$institution_id || !$board_id) {
+        if (!$institution_id) {
             return response()->json([]);
         }
 
-        $classes = InstitutionClass::with(['subcategory.category'])
+        $classes = InstitutionClass::with(['subcategory'])
             ->where('institution_id', $institution_id)
-            ->whereHas('subcategory', function ($q) use ($board_id) {
-                $q->where('category_id', $board_id);
-            })
             ->get();
 
         return response()->json($classes);

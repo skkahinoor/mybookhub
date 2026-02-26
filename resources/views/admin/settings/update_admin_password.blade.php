@@ -75,7 +75,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Admin Type</label>
-                                    <input class="form-control" value="{{ $adminDetails['type'] }}" readonly>
+                                    <input class="form-control" value="{{ $adminDetails['type'] ?? '' }}" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label for="current_password">Current Password</label>

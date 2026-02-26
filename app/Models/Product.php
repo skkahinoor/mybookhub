@@ -22,6 +22,7 @@ class Product extends Model
         'product_price',
         'product_image',
         'condition',
+        'book_type_id',
 
         // Relations
         'section_id',
@@ -76,6 +77,11 @@ class Product extends Model
     public function edition()
     {
         return $this->belongsTo(Edition::class, 'edition_id');
+    }
+
+    public function bookType()
+    {
+        return $this->belongsTo(BookType::class, 'book_type_id');
     }
 
     public function authors()

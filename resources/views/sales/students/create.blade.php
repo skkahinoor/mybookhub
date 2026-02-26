@@ -180,12 +180,12 @@
                                 @enderror
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group" style="display: none;">
                                 <label class="form-label">
                                     <i class="fas fa-layer-group form-icon"></i>
                                     Board <span class="required">*</span>
                                 </label>
-                                <select name="board_id" id="board_id" class="form-control" required>
+                                <select name="board_id" id="board_id" class="form-control">
                                     <option value="">Select Board</option>
                                 </select>
                             </div>
@@ -321,43 +321,16 @@
         $(document).ready(function() {
             $('#institution_id').change(function() {
                 var institutionId = $(this).val();
-                var boardSelect = $('#board_id');
                 var classSelect = $('#institution_classes_id');
 
-                boardSelect.empty().append('<option value="">Select Board</option>');
                 classSelect.empty().append('<option value="">Select Class</option>');
 
                 if (institutionId) {
                     $.ajax({
-                        url: '{{ route('sales.students.institution_boards') }}',
-                        type: 'GET',
-                        data: {
-                            institution_id: institutionId
-                        },
-                        success: function(response) {
-                            $.each(response, function(index, item) {
-                                boardSelect.append('<option value="' + item.id + '">' +
-                                    item.category_name + '</option>');
-                            });
-                        }
-                    });
-                }
-            });
-
-            $('#board_id').change(function() {
-                var institutionId = $('#institution_id').val();
-                var boardId = $(this).val();
-                var classSelect = $('#institution_classes_id');
-
-                classSelect.empty().append('<option value="">Select Class</option>');
-
-                if (institutionId && boardId) {
-                    $.ajax({
                         url: '{{ route('sales.students.institution_classes') }}',
                         type: 'GET',
                         data: {
-                            institution_id: institutionId,
-                            board_id: boardId
+                            institution_id: institutionId
                         },
                         success: function(response) {
                             $.each(response, function(index, item) {

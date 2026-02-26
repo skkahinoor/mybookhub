@@ -41,11 +41,11 @@ class AdminController extends Controller
         $vendorId = $admin->vendor_id;
 
         $vendorrole = Role::where('name', 'vendor')->first();
-        $userrole = Role::where('name', 'user')->first();
+        $studentrole = Role::where('name', 'student')->first();
         $salesrole = Role::where('name', 'sales')->first();
         // Default (Admin counts)
         $vendorsCount = User::where('role_id', $vendorrole->id)->count();
-        // $usersCount = User::where('role_id', $userrole->id)->count();
+        $studentsCount = User::where('role_id', $studentrole->id)->count();
         $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
         $productsCount = Product::where('status', 1)->count();
         $ordersCount = Order::count();
@@ -76,7 +76,7 @@ class AdminController extends Controller
                 ->count();
 
             // Users & sales executives usually remain global
-            $usersCount = User::where('role_id', $userrole->id)->count();
+            $usersCount = User::where('role_id', $studentrole->id)->count();
             $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
         }
 
@@ -89,6 +89,7 @@ class AdminController extends Controller
         return view('admin.dashboard', compact(
             'productsCount',
             'ordersCount',
+            'studentsCount',
             'couponsCount',
             'vendorsCount',
             'salesExecutivesCount',

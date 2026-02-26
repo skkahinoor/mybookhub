@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Author;
+use App\Models\BookType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
@@ -641,6 +642,7 @@ class ProductsController extends Controller
                 $product->meta_title       = $data['meta_title'];
                 $product->meta_keywords    = $data['meta_keywords'];
                 $product->meta_description = $data['meta_description'];
+                $product->book_type_id     = $data['book_type_id'] ?? null;
                 $product->status           = 1;
             }
 
@@ -733,6 +735,7 @@ class ProductsController extends Controller
         $subjects   = Subject::where('status', 1)->get()->toArray();
         $languages  = Language::get();
         $editions   = Edition::all();
+        $bookTypes  = BookType::where('status', 1)->get()->toArray();
 
         return view('admin.products.add_edit_product')->with(compact(
             'title',
@@ -743,6 +746,7 @@ class ProductsController extends Controller
             'subjects',
             'languages',
             'editions',
+            'bookTypes',
             'logos',
             'headerLogo'
         ));
@@ -1173,6 +1177,7 @@ class ProductsController extends Controller
                     "subject_id"   => $product->subject_id,
                     "edition_id"   => $product->edition_id,
                     "language_id"  => $product->language_id,
+                    "book_type_id" => $product->book_type_id,
                     "author_ids"   => $product->authors->pluck('id')->toArray(),
                 ]
             ]);

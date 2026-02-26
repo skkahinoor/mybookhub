@@ -220,10 +220,10 @@
                                     <th>Name</th>
                                     <th>Roll No</th>
                                     <th>Gender</th>
-                                    <th>Class</th>
+                                    {{-- <th>Class</th> --}}
                                     <th>DOB</th>
                                     <th>Institution</th>
-                                    <th>Type</th>
+                                    {{-- <th>Type</th> --}}
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -235,16 +235,16 @@
                                         <td>{{ $student->name }}</td>
                                         <td>{{ $student->roll_number }}</td>
                                         <td>{{ ucfirst($student->gender) }}</td>
-                                        <td>{{ $student->class }}</td>
+                                        {{-- <td>{{ $student->class }}</td> --}}
                                         <td>
                                             {{ $student->dob ? \Carbon\Carbon::parse($student->dob)->format('d M Y') : 'N/A' }}
                                         </td>
                                         <td>
                                             {{ $student->institution->name ?? 'No Institution' }}
                                         </td>
-                                        <td>
+                                        {{-- <td>
                                             {{ $student->institution->type ?? '-' }}
-                                        </td>
+                                        </td> --}}
                                         <td>
                                             <a class="updateStudentStatus"
                                                id="student-{{ $student->id }}"

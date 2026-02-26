@@ -103,33 +103,16 @@
                                     @if (!empty($subjects['name'])) value="{{ $subjects['name'] }}" @else value="{{ old('name') }}" @endif>
                             </div>
                             <div class="form-group">
-                                <label for="category_id_subject">Select Category</label>
-                                <select name="category_id_filter" id="category_id_subject" class="form-control"
-                                    style="color:#000">
-                                    <option value="">Select Category</option>
-                                    @foreach ($categories as $category)
-                                        <option value="{{ $category['id'] }}"
-                                            @if (!empty($subjects['category_id']) && $subjects['category_id'] == $category['id']) selected @endif>
-                                            {{ $category['category_name'] }}</option>
-                                    @endforeach
-                                </select>
+                                <label for="subject_icon">Subject Icon</label>
+                                <input type="file" class="form-control" id="subject_icon" name="subject_icon">
+                                @if (!empty($subjects->subject_icon))
+                                    <div style="margin-top: 10px;">
+                                        <img src="{{ asset('admin/images/subject_icons/' . $subjects->subject_icon) }}"
+                                            alt="Current Icon" style="width: 50px; height: 50px;">
+                                    </div>
+                                @endif
                             </div>
-                            <div id="appendSubcategoriesLevel">
-                                <div class="form-group">
-                                    <label for="subcategory_id">Select Subcategory</label>
-                                    <select name="subcategory_id" id="subcategory_id" class="form-control"
-                                        style="color: #000">
-                                        <option value="">Select Subcategory</option>
-                                        @if (!empty($subcategories))
-                                            @foreach ($subcategories as $subcategory)
-                                                <option value="{{ $subcategory['id'] }}"
-                                                    @if (!empty($subjects['subcategory_id']) && $subjects['subcategory_id'] == $subcategory['id']) selected @endif>
-                                                    {{ $subcategory['subcategory_name'] }}</option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                </div>
-                            </div>
+                           
                             <button type="submit" class="btn btn-primary mr-2">Update</button>
                             @if ($adminType === 'vendor')
                                 <a href="{{ url('vendor/subjects') }}" class="btn btn-light">Cancel</a>
