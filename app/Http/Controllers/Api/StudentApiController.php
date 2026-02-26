@@ -207,7 +207,7 @@ class StudentApiController extends Controller
         return response()->json([
             'status' => true,
             'message' => ucfirst($type) . ' added student successfully.',
-            'data' => $student->load('institution')
+            'data' => $student->load(['institution', 'institutionClass'])
         ], 201);
     }
 
@@ -298,7 +298,7 @@ class StudentApiController extends Controller
         return response()->json([
             'status' => true,
             'message' => ucfirst($type) . ' updated student successfully.',
-            'data' => $student->load('institution')
+            'data' => $student->load(['institution', 'institutionClass'])
         ]);
     }
 
