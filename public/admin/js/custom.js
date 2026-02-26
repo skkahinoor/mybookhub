@@ -22,34 +22,34 @@ $(document).ready(function () {
     $(".nav-link").removeClass("active");
 
     // Check if the Admin Password is correct using AJAX in update_admin_password.blade.php page
-    $("#current_password").keyup(function () {
-        // console.log(this);
-        var current_password = $(this).val();
+    // $("#current_password").keyup(function () {
+    //     // console.log(this);
+    //     var current_password = $(this).val();
 
-        $.ajax({
-            headers: {
-                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-            }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
-            type: "post",
-            url: "/admin/check-admin-password", // check the web.php for this route and check the AdminController for the checkAdminPassword() method
-            data: { current_password: current_password }, // A key/value pair that will checked inside the AdminController using Hash::check($data['current_password']) (e.g. current_password: 123456)    // send the the    var current_password    (Check the above variable)
-            success: function (resp) {
-                // alert(resp);
-                if (resp == "false") {
-                    $("#check_password").html(
-                        '<b style="color: red">Current Password is Incorrect!</b>',
-                    ); // the <span> element in update_admin_password.blade.php
-                } else if (resp == "true") {
-                    $("#check_password").html(
-                        '<b style="color: green">Current Password is Correct!</b>',
-                    ); // the <span> element in update_admin_password.blade.php
-                }
-            },
-            error: function () {
-                alert("Error");
-            },
-        });
-    });
+    //     $.ajax({
+    //         headers: {
+    //             "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+    //         }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
+    //         type: "post",
+    //         url: "/admin/check-admin-password", // check the web.php for this route and check the AdminController for the checkAdminPassword() method
+    //         data: { current_password: current_password }, // A key/value pair that will checked inside the AdminController using Hash::check($data['current_password']) (e.g. current_password: 123456)    // send the the    var current_password    (Check the above variable)
+    //         success: function (resp) {
+    //             // alert(resp);
+    //             if (resp == "false") {
+    //                 $("#check_password").html(
+    //                     '<b style="color: red">Current Password is Incorrect!</b>',
+    //                 ); // the <span> element in update_admin_password.blade.php
+    //             } else if (resp == "true") {
+    //                 $("#check_password").html(
+    //                     '<b style="color: green">Current Password is Correct!</b>',
+    //                 ); // the <span> element in update_admin_password.blade.php
+    //             }
+    //         },
+    //         error: function () {
+    //             alert("Error");
+    //         },
+    //     });
+    // });
 
     // Updating admin status (active/inactive) using AJAX in admin/admins/admins.blade.php
     $(document).on("click", ".updateAdminStatus", function () {

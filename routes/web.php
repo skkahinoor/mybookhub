@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\RatingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SalesExecutiveController;
 use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\Admin\BookTypeController;
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SubjectController;
@@ -108,6 +109,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-section-status', 'SectionController@updateSectionStatus')->name('admin.updatesectionstatus');               // Update Sections Status using AJAX in sections.blade.php
         Route::get('delete-section/{id}', 'SectionController@deleteSection');                        // Delete a section in sections.blade.php
         Route::match(['get', 'post'], 'add-edit-section/{id?}', 'SectionController@addEditSection'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the section, and if not passed, this means Add a Section
+
+        //Type
+        Route::get('types', [BookTypeController::class, 'types']);
+        Route::match(['get', 'post'], 'add-edit-type/{id?}', [BookTypeController::class, 'addEditType']);
+        Route::get('delete-type/{id}', [BookTypeController::class, 'deleteType']);
+        Route::post('update-type-status', [BookTypeController::class, 'updateTypeStatus'])->name('admin.updatetypestatus');
 
         // Categories
         Route::get('categories', 'CategoryController@categories');                                      // Categories in Catalogue Management in Admin Panel

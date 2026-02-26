@@ -278,6 +278,11 @@
                                     @if (Session::get('page') == 'languages') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/languages') }}">Book Languages</a></li>
                         @endcan
+                        @can('view_types')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'types') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/types') }}">Book Types</a></li>
+                        @endcan
                         @can('view_products')
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'products') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
