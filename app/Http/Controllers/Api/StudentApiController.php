@@ -23,21 +23,40 @@ class StudentApiController extends Controller
 
     public function getBoards($institution_id)
     {
-        // Category is no longer linked to classes
-        $boards = \App\Models\Category::where('status', true)->get(['id', 'category_name as name']);
+        $classes = InstitutionClass::with('subcategory.category')
+            ->where('institution_id', $institution_id)
+            ->get();
+
+        $boards = collect();
+
+        foreach ($classes as $class) {
+            if ($class->subcategory && $class->subcategory->category) {
+
+                if (!$boards->contains('id', $class->subcategory->category->id)) {
+                    $boards->push([
+                        'id' => $class->subcategory->category->id,
+                        'name' => $class->subcategory->category->category_name
+                    ]);
+                }
+            }
+        }
 
         return response()->json([
             'status' => true,
-            'data' => $boards
+            'data' => $boards->values()
         ]);
     }
 
     public function getClasses(Request $request)
     {
         $institution_id = $request->institution_id;
+        $board_id = $request->board_id;
 
         $classes = InstitutionClass::with('subcategory')
             ->where('institution_id', $institution_id)
+            ->whereHas('subcategory', function ($q) use ($board_id) {
+                $q->where('category_id', $board_id);
+            })
             ->get()
             ->map(function ($item) {
                 return [

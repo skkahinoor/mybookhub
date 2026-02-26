@@ -62,11 +62,8 @@ class InstitutionController extends Controller
         ]);
     }
 
-    public function getSubcategoriesByCategory($category_id = null)
     public function getSubcategories()
     {
-        // Category is no longer linked to subcategories
-        $subcategories = Subcategory::where('status', 1)
         $subcategories = Subcategory::where('status', 1)
             ->select('id', 'subcategory_name')
             ->get();
