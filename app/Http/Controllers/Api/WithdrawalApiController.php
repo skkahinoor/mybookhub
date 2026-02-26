@@ -7,45 +7,68 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Notification;
 use App\Models\Withdrawal;
-use App\Models\SalesExecutive;
 use App\Models\Setting;
-use Illuminate\Support\Facades\Auth;
+use App\Models\WalletTransaction;
+use App\Helpers\RoleHelper;
 use Illuminate\Support\Facades\Validator;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
-use App\Helpers\RoleHelper;
+use Carbon\Carbon;
 
 class WithdrawalApiController extends Controller
 {
+
     public function dashboard(Request $request)
     {
-        $sales = $request->user();
+        $user = $request->user();
 
-        if (!$sales->hasRole('sales', 'web') && $sales->role_id != RoleHelper::salesId()) {
+        if ($user->role_id != RoleHelper::salesId()) {
             return response()->json([
                 'status' => false,
                 'message' => 'Only Sales Executives can access this.'
             ], 403);
         }
 
-        $salesExecutiveProfile = $sales->salesExecutive;
-        $salesExecProfileId = $salesExecutiveProfile->id ?? 0;
-        $userId = $sales->id;
+        $salesExecutive = $user->salesExecutive;
+        $salesExecId = $salesExecutive->id ?? 0;
+        $userId = $user->id;
 
-        $totalStudents = User::where('added_by', $userId)->where('role_id', RoleHelper::studentId())->where('status', 1)->count();
-        $incomePerTarget = $salesExecutiveProfile->income_per_target ?? 0;
-        $totalEarning = $incomePerTarget * $totalStudents;
+        $incomePerTarget = (float) Setting::getValue('default_income_per_target', 10);
 
-        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecProfileId)
+        $totalStudents = User::where('added_by', $userId)
+            ->where('role_id', RoleHelper::studentId())
+            ->where('status', 1)
+            ->count();
+
+        $totalEarning = $totalStudents * $incomePerTarget;
+
+        $totalEarning += WalletTransaction::where('user_id', $userId)
+            ->where('type', 'credit')
+            ->where('description', 'NOT LIKE', 'Commission for Student%')
+            ->where('description', 'NOT LIKE', 'Refund%')
+            ->sum('amount');
+
+
+        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
-        $availableBalance = $totalEarning - $totalWithdrawn;
+        $totalPending = Withdrawal::where('sales_executive_id', $salesExecId)
+            ->where('status', 'pending')
+            ->sum('amount');
 
-        $withdrawals = Withdrawal::where('sales_executive_id', $salesExecProfileId)
-            ->orderBy('created_at', 'desc')
+        $availableBalance = $totalEarning - $totalWithdrawn - $totalPending;
+
+        if ($user->wallet_balance != $availableBalance) {
+            $user->wallet_balance = $availableBalance;
+            $user->save();
+        }
+
+        $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
+
+        $withdrawals = Withdrawal::where('sales_executive_id', $salesExecId)
+            ->orderByDesc('created_at')
             ->get();
-        $minWithdraw = Setting::where('key', 'min_withdrawal_amount')->value('value');
 
         return response()->json([
             'status' => true,
@@ -53,50 +76,66 @@ class WithdrawalApiController extends Controller
             'data' => [
                 'total_earning'     => $totalEarning,
                 'total_withdrawn'   => $totalWithdrawn,
+                'total_pending'     => $totalPending,
                 'available_balance' => $availableBalance,
-                'min_withdraw'      => $minWithdraw,
-                'can_withdraw'      => $totalEarning >= $minWithdraw,
+                'minimum_withdrawal' => $minimumWithdrawal,
+                'can_withdraw'      => $availableBalance >= $minimumWithdrawal,
                 'withdrawals'       => $withdrawals
             ]
         ]);
     }
+
     public function requestWithdraw(Request $request)
     {
         $user = $request->user();
-        $salesExecutiveProfile = $user->salesExecutive;
-        $salesExecProfileId = $salesExecutiveProfile->id ?? 0;
+        $salesExecutive = $user->salesExecutive;
+        $salesExecId = $salesExecutive->id ?? 0;
         $userId = $user->id;
 
+        $incomePerTarget = (float) Setting::getValue('default_income_per_target', 10);
 
         $totalStudents = User::where('added_by', $userId)
             ->where('role_id', RoleHelper::studentId())
             ->where('status', 1)
             ->count();
 
-        $incomePerTarget = (float) ($salesExecutiveProfile->income_per_target ?? 0);
-        $totalEarning = $incomePerTarget * $totalStudents;
+        $totalEarning = $totalStudents * $incomePerTarget;
 
-        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecProfileId)
+        $totalEarning += WalletTransaction::where('user_id', $userId)
+            ->where('type', 'credit')
+            ->where('description', 'NOT LIKE', 'Commission for Student%')
+            ->where('description', 'NOT LIKE', 'Refund%')
+            ->sum('amount');
+
+        $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
+
+        $totalWithdrawn = Withdrawal::where('sales_executive_id', $salesExecId)
             ->whereIn('status', ['approved', 'completed'])
             ->sum('amount');
 
-        $availableBalance = max(0, $totalEarning - $totalWithdrawn);
+        $totalPending = Withdrawal::where('sales_executive_id', $salesExecId)
+            ->where('status', 'pending')
+            ->sum('amount');
 
-        $minWithdraw = (float) Setting::where('key', 'min_withdrawal_amount')->value('value');
+        $availableBalance = $totalEarning - $totalWithdrawn - $totalPending;
 
+        if ($user->wallet_balance != $availableBalance) {
+            $user->wallet_balance = $availableBalance;
+            $user->save();
+        }
 
-        if ($availableBalance < $minWithdraw) {
+        if ($availableBalance < $minimumWithdrawal) {
             return response()->json([
                 'status' => false,
-                'message' => 'You must have at least ₹' . number_format($minWithdraw, 2) . ' available to request withdrawal.'
+                'message' => "You must have at least ₹{$minimumWithdrawal} available before requesting withdrawal."
             ], 403);
         }
 
-        $pending = Withdrawal::where('sales_executive_id', $salesExecProfileId)
+        $pendingWithdrawal = Withdrawal::where('sales_executive_id', $salesExecId)
             ->where('status', 'pending')
             ->first();
 
-        if ($pending) {
+        if ($pendingWithdrawal) {
             return response()->json([
                 'status' => false,
                 'message' => 'You already have a pending withdrawal request.'
@@ -104,7 +143,7 @@ class WithdrawalApiController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'amount' => 'required|numeric|min:' . $minWithdraw . '|max:' . $availableBalance,
+            'amount' => 'required|numeric|min:1|max:' . $availableBalance,
             'payment_method' => 'required|string|in:bank_transfer,upi',
             'remarks' => 'nullable|string|max:500',
         ]);
@@ -119,35 +158,22 @@ class WithdrawalApiController extends Controller
 
         $validated = $validator->validated();
 
-        if ($validated['payment_method'] === 'bank_transfer') {
-            if (
-                empty($salesExecutiveProfile->bank_name) ||
-                empty($salesExecutiveProfile->account_number) ||
-                empty($salesExecutiveProfile->ifsc_code) ||
-                empty($salesExecutiveProfile->bank_branch)
-            ) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Please add your bank details before requesting a bank transfer withdrawal.'
-                ], 403);
-            }
-        }
-
-        if ($validated['payment_method'] === 'upi') {
-            if (empty($salesExecutiveProfile->upi_id)) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Please add your UPI ID before requesting a UPI withdrawal.'
-                ], 403);
-            }
-        }
-
         $withdrawal = Withdrawal::create([
-            'sales_executive_id' => $salesExecProfileId,
+            'sales_executive_id' => $salesExecId,
             'amount' => $validated['amount'],
             'payment_method' => $validated['payment_method'],
             'remarks' => $validated['remarks'] ?? null,
             'status' => 'pending'
+        ]);
+
+        $user->wallet_balance -= $validated['amount'];
+        $user->save();
+
+        WalletTransaction::create([
+            'user_id' => $user->id,
+            'amount' => $validated['amount'],
+            'type' => 'debit',
+            'description' => 'Withdrawal Request (#' . $withdrawal->id . ')',
         ]);
 
         Notification::create([
@@ -159,15 +185,11 @@ class WithdrawalApiController extends Controller
             'is_read' => false,
         ]);
 
-
-        $this->sendWithdrawRequestSMS($user->phone, $validated['amount']);
-
         return response()->json([
             'status' => true,
             'message' => 'Withdrawal request submitted successfully.'
         ], 201);
     }
-
 
     public function sendWithdrawRequestSMS($phone, $amount)
     {
@@ -202,5 +224,132 @@ class WithdrawalApiController extends Controller
             Log::error("Withdrawal Request SMS ERROR: " . $e->getMessage());
             return false;
         }
+    }
+
+    public function transactions(Request $request)
+    {
+        $salesExecutive = $request->user(); // sanctum user
+        $salesExecutiveId = $salesExecutive->id;
+        $salesExecutiveProfile = $salesExecutive->salesExecutive;
+
+        // ── Settings ─────────────────────────────────────
+        $incomePerTarget = $salesExecutiveProfile
+            ? $salesExecutiveProfile->income_per_target
+            : 0;
+
+        if (!$incomePerTarget) {
+            $incomePerTarget = (float) Setting::getValue('default_income_per_target', 10);
+        }
+
+        // ── Approved Students ───────────────────────────
+        $approvedStudentsBase = User::where('added_by', $salesExecutiveId)
+            ->where('role_id', RoleHelper::studentId())
+            ->where('status', 1);
+
+        $todayStudentsCount   = (clone $approvedStudentsBase)->whereDate('created_at', Carbon::today())->count();
+        $weeklyStudentsCount  = (clone $approvedStudentsBase)->whereDate('created_at', '>=', Carbon::now()->startOfWeek())->count();
+        $monthlyStudentsCount = (clone $approvedStudentsBase)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->count();
+        $totalStudentsCount   = (clone $approvedStudentsBase)->count();
+
+        // ── Vendors (Free / Pro) ────────────────────────
+        $vendorQuery = User::where('users.added_by', $salesExecutiveId)
+            ->where('users.role_id', RoleHelper::vendorId())
+            ->where('users.status', 1)
+            ->join('vendors', 'vendors.user_id', '=', 'users.id');
+
+        $freeVendorCount = (clone $vendorQuery)->where('vendors.plan', 'free')->count();
+        $proVendorCount  = (clone $vendorQuery)->where('vendors.plan', 'pro')->count();
+
+        // ── Student Earnings ─────────────────────────────
+        $todayEarning   = $todayStudentsCount   * $incomePerTarget;
+        $weeklyEarning  = $weeklyStudentsCount  * $incomePerTarget;
+        $monthlyEarning = $monthlyStudentsCount * $incomePerTarget;
+        $totalEarning   = $totalStudentsCount   * $incomePerTarget;
+
+        // ── Other Wallet Credits ─────────────────────────
+        $otherCreditsBase = WalletTransaction::where('user_id', $salesExecutiveId)
+            ->where('type', 'credit')
+            ->where('description', 'NOT LIKE', 'Commission for Student%')
+            ->where('description', 'NOT LIKE', 'Refund%');
+
+        $todayEarning   += (clone $otherCreditsBase)->whereDate('created_at', Carbon::today())->sum('amount');
+        $weeklyEarning  += (clone $otherCreditsBase)->whereDate('created_at', '>=', Carbon::now()->startOfWeek())->sum('amount');
+        $monthlyEarning += (clone $otherCreditsBase)
+            ->whereYear('created_at', Carbon::now()->year)
+            ->whereMonth('created_at', Carbon::now()->month)
+            ->sum('amount');
+        $totalEarning   += (clone $otherCreditsBase)->sum('amount');
+
+        // ── 30 Days Chart ────────────────────────────────
+        $days = 30;
+        $startDate = now()->subDays($days - 1)->startOfDay();
+        $dates = [];
+        $earningsData = [];
+        $studentsCount = [];
+
+        $studentByDate = User::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+            ->where('added_by', $salesExecutiveId)
+            ->where('role_id', RoleHelper::studentId())
+            ->where('status', 1)
+            ->whereDate('created_at', '>=', $startDate)
+            ->groupBy('date')
+            ->pluck('count', 'date')
+            ->toArray();
+
+        for ($i = 0; $i < $days; $i++) {
+
+            $date = now()->subDays($days - 1 - $i);
+            $dateKey = $date->format('Y-m-d');
+
+            $dailyStudents = $studentByDate[$dateKey] ?? 0;
+
+            $otherDaily = (clone $otherCreditsBase)
+                ->whereDate('created_at', $dateKey)
+                ->sum('amount');
+
+            $studentsCount[] = $dailyStudents;
+            $earningsData[] = ($dailyStudents * $incomePerTarget) + $otherDaily;
+            $dates[] = $date->format('d M');
+        }
+
+        // ── Transactions (Paginated) ─────────────────────
+        $transactions = WalletTransaction::where('user_id', $salesExecutiveId)
+            ->where('type', 'credit')
+            ->where('description', 'NOT LIKE', 'Refund%')
+            ->orderByDesc('created_at')
+            ->paginate(15);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Transaction dashboard data fetched successfully',
+            'data' => [
+                'earnings' => [
+                    'today'   => $todayEarning,
+                    'weekly'  => $weeklyEarning,
+                    'monthly' => $monthlyEarning,
+                    'total'   => $totalEarning,
+                ],
+                'students' => [
+                    'today'   => $todayStudentsCount,
+                    'weekly'  => $weeklyStudentsCount,
+                    'monthly' => $monthlyStudentsCount,
+                    'total'   => $totalStudentsCount,
+                ],
+                'vendors' => [
+                    'free' => $freeVendorCount,
+                    'pro'  => $proVendorCount,
+                ],
+                'income_per_target' => $incomePerTarget,
+                'chart' => [
+                    'dates' => $dates,
+                    'students_count' => $studentsCount,
+                    'earnings' => $earningsData,
+                ],
+                'transactions' => $transactions
+            ]
+        ]);
     }
 }

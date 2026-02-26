@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\CatalogueController;
 use App\Http\Controllers\Api\VendorPlanController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SalesVendorController;
+use App\Http\Controllers\Api\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -100,6 +101,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sales/report', [SalesReportController::class, 'getSalesReport']);
     Route::get('/sales/withdrawal-dashboard', [WithdrawalApiController::class, 'dashboard']);
     Route::post('/sales/withdraw-request', [WithdrawalApiController::class, 'requestWithdraw']);
+    Route::get('/sales/transactions', [WithdrawalApiController::class, 'transactions']);
+   
 });
 
 // Vendor Profile Management
