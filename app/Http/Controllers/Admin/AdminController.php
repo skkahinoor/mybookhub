@@ -45,7 +45,7 @@ class AdminController extends Controller
         $salesrole = Role::where('name', 'sales')->first();
         // Default (Admin counts)
         $vendorsCount = User::where('role_id', $vendorrole->id)->count();
-        $usersCount = User::where('role_id', $userrole->id)->count();
+        // $usersCount = User::where('role_id', $userrole->id)->count();
         $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
         $productsCount = Product::where('status', 1)->count();
         $ordersCount = Order::count();
@@ -91,7 +91,6 @@ class AdminController extends Controller
             'ordersCount',
             'couponsCount',
             'vendorsCount',
-            'usersCount',
             'salesExecutivesCount',
             'logos',
             'headerLogo',
