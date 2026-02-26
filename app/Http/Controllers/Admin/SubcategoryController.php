@@ -79,7 +79,6 @@ class SubcategoryController extends Controller
 
             $rules = [
                 'subcategory_name' => 'required',
-                'category_id' => 'required',
                 'subcategory_icon' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
             ];
 

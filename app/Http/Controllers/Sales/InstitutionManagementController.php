@@ -37,7 +37,19 @@ class InstitutionManagementController extends Controller
     {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        $sections = Section::where('status', 1)->get();
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'College',
+                'College Book',
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
+            ])->get();
         return view('sales.institution_managements.create', compact('logos', 'headerLogo', 'sections'));
     }
 
@@ -119,7 +131,19 @@ class InstitutionManagementController extends Controller
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $institution = InstitutionManagement::with(['institutionClasses', 'country', 'state', 'district', 'block'])->findOrFail($id);
-        $sections = Section::where('status', 1)->get();
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'College',
+                'College Book',
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
+            ])->get();
         $categories = Category::where('status', 1)->get();
         $subcategories = Subcategory::where('status', 1)->get();
 
@@ -186,7 +210,19 @@ class InstitutionManagementController extends Controller
 
     public function getSections()
     {
-        $sections = Section::where('status', 1)->get(['id', 'name']);
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'College',
+                'College Book',
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
+            ])->get(['id', 'name']);
         return response()->json($sections);
     }
 
@@ -202,12 +238,8 @@ class InstitutionManagementController extends Controller
 
     public function getClasses(Request $request)
     {
-        $category_id = $request->input('category_id');
-        $subcategories = Subcategory::where('status', 1);
-        if ($category_id) {
-            $subcategories->where('category_id', $category_id);
-        }
-        return response()->json($subcategories->get(['id', 'subcategory_name']));
+        $subcategories = Subcategory::where('status', 1)->get(['id', 'subcategory_name']);
+        return response()->json($subcategories);
     }
 
     public function getLocationData(Request $request)

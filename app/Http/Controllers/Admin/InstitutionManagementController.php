@@ -29,6 +29,7 @@ class InstitutionManagementController extends Controller
         $institutions = InstitutionManagement::with('institutionClasses')->orderBy('id', 'desc')->get();
         $sections     = Section::where('status', 1)
             ->whereNotIn('name', [
+                'College', 'College Book',
                 'Religious Book', 'Religious',
                 'Technical Book', 'Technical',
                 'Novel & Story Book', 'Novel & Story',

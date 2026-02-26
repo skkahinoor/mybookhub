@@ -41,6 +41,7 @@ class InstitutionController extends Controller
     {
         $sections = Section::where('status', 1)
             ->whereNotIn('name', [
+                'College', 'College Book',
                 'Religious Book', 'Religious',
                 'Technical Book', 'Technical',
                 'Novel & Story Book', 'Novel & Story',

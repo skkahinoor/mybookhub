@@ -38,7 +38,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Icon</th>
-                                            <th>Category Name</th>
+                                            <th>Board Name</th>
                                             <th>Parent Section</th> {{-- Through the relationship --}}
                                             <th>URL</th>
                                             <th>Status</th>

@@ -28,7 +28,7 @@
                                         <tr>
                                             <th>ID</th>
                                             <th>Icon</th>
-                                            <th>Subcategory Name</th>
+                                            <th>Class Name</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>

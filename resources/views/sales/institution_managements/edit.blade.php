@@ -469,7 +469,7 @@
                             var sel = (cat.id == existingBoard) ? 'selected' : '';
                             boardSel.append(
                                 `<option value="${cat.id}" ${sel}>${cat.category_name}</option>`
-                                );
+                            );
                         });
                         $('#board-field').show();
                         if (callback) callback();
@@ -480,16 +480,9 @@
             /* ════════════════════════════════
                Board → load subcategories
             ════════════════════════════════ */
-            function loadSubcategories(catId, callback) {
-                if (!catId) {
-                    $('#class-field').hide();
-                    return;
-                }
+            function loadAllClasses(callback) {
                 $.ajax({
                     url: '{{ route('sales.institution.classes') }}',
-                    data: {
-                        category_id: catId
-                    },
                     success: function(subs) {
                         currentSubcategories = subs;
                         $('#class-field').show();
@@ -541,23 +534,21 @@
             ════════════════════════════════ */
             $('#type-select').on('change', function() {
                 var sectionId = $(this).val();
-                /* Clear boards + classes on type change */
-                $('#board-select').empty().append('<option value="">Select Board</option>');
-                $('#class-list-container').empty();
-                currentSubcategories = [];
                 loadCategories(sectionId);
             });
 
             $('#board-select').on('change', function() {
                 var catId = $(this).val();
-                $('#class-list-container').empty();
-                currentSubcategories = [];
-                loadSubcategories(catId);
+                if (catId) {
+                    $('#class-field').show();
+                } else {
+                    $('#class-field').hide();
+                }
             });
 
             $('#add-class-btn').on('click', function() {
                 if (currentSubcategories.length === 0) {
-                    alert('Please select a Board first.');
+                    alert('Please wait for classes to load.');
                     return;
                 }
                 addClassRow('', '');
@@ -571,15 +562,10 @@
                Init: pre-populate type → board → classes
             ════════════════════════════════ */
             if (existingType) {
-                loadCategories(existingType, function() {
-                    if (existingBoard) {
-                        loadSubcategories(existingBoard, function() {
-                            /* If we have preloaded rows, they are updated inside loadSubcategories.
-                               If there are none (e.g. classes were deleted), do nothing. */
-                        });
-                    }
-                });
+                loadCategories(existingType);
             }
+
+            loadAllClasses();
 
             /* ════════════════════════════════
                Location cascading
@@ -593,7 +579,7 @@
                         $.each(resp, function(key, val) {
                             sel.append(
                                 `<option value="${key}" ${key == existingCountry ? 'selected' : ''}>${val}</option>`
-                                );
+                            );
                         });
                         if (callback) callback();
                     }
@@ -613,7 +599,7 @@
                         $.each(resp, function(key, val) {
                             sel.append(
                                 `<option value="${key}" ${key == existingState ? 'selected' : ''}>${val}</option>`
-                                );
+                            );
                         });
                         if (callback) callback();
                     }
@@ -633,7 +619,7 @@
                         $.each(resp, function(key, val) {
                             sel.append(
                                 `<option value="${key}" ${key == existingDistrict ? 'selected' : ''}>${val}</option>`
-                                );
+                            );
                         });
                         if (callback) callback();
                     }
@@ -653,7 +639,7 @@
                         $.each(resp, function(key, val) {
                             sel.append(
                                 `<option value="${key}" ${key == existingBlock ? 'selected' : ''}>${val}</option>`
-                                );
+                            );
                         });
                         if (callback) callback();
                     }

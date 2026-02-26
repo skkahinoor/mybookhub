@@ -437,39 +437,31 @@
                 }
             });
 
-            // Handle board change -> Load Subcategories (Classes)
+            // Handle board change
             $('select[name="board"]').change(function() {
                 var category_id = $(this).val();
                 if (category_id) {
                     $('#class-field').show();
-                    $('#class-list-container').empty(); // Clear existing rows when board changes
-
-                    $.ajax({
-                        url: '{{ route('sales.institution.classes') }}',
-                        type: 'GET',
-                        data: {
-                            category_id: category_id
-                        },
-                        success: function(response) {
-                            currentSubcategories = response;
-                            // Optionally add a default row
-                            if ($('#class-list-container').children().length === 0) {
-                                $('#add-class-btn').click();
-                            }
-                        }
-                    });
                 } else {
                     $('#class-field').hide();
-                    $('#class-list-container').empty();
-                    currentSubcategories = [];
                 }
             });
+
+            function loadClasses() {
+                $.ajax({
+                    url: '{{ route('sales.institution.classes') }}',
+                    type: 'GET',
+                    success: function(response) {
+                        currentSubcategories = response;
+                    }
+                });
+            }
 
             // Add new class row
             var classIndex = 0;
             $('#add-class-btn').on('click', function() {
                 if (currentSubcategories.length === 0) {
-                    alert('No classes available for the selected board.');
+                    alert('Please select a Board first or wait for classes to load.');
                     return;
                 }
 
@@ -601,6 +593,7 @@
             });
 
             loadSections();
+            loadClasses();
             loadCountries();
         });
     </script>
