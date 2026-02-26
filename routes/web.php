@@ -455,7 +455,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     }
 
     // Vendor Login/Register
-    // Route::get('vendor/login-register', 'VendorController@loginRegister'); // render vendor login_register.blade.php page
+    Route::get('vendor/login-register', 'VendorController@loginRegister'); // render vendor login_register.blade.php page
 
     // Vendor Register
     // the register HTML form submission in vendor login_register.blade.php page

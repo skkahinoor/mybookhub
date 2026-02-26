@@ -275,8 +275,8 @@ class AdminController extends Controller
                 $image_tmp = $request->file('admin_image');
                 if ($image_tmp->isValid()) {
                     $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = rand(111, 99999).'.'.$extension;
-                    $imagePath = 'admin/images/photos/'.$imageName;
+                    $imageName = rand(111, 99999) . '.' . $extension;
+                    $imagePath = 'admin/images/photos/' . $imageName;
                     Image::make($image_tmp)->save($imagePath);
                 }
             } elseif (! empty($data['current_admin_image'])) {
@@ -338,10 +338,10 @@ class AdminController extends Controller
                         $extension = $image_tmp->getClientOriginalExtension();
 
                         // Generate a random name for the uploaded image (to avoid that the image might get overwritten if its name is repeated)
-                        $imageName = rand(111, 99999).'.'.$extension;
+                        $imageName = rand(111, 99999) . '.' . $extension;
 
                         // Assigning the uploaded images path inside the 'public' folder
-                        $imagePath = 'admin/images/photos/'.$imageName;
+                        $imagePath = 'admin/images/photos/' . $imageName;
 
                         // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                         Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
@@ -413,10 +413,10 @@ class AdminController extends Controller
                         $extension = $image_tmp->getClientOriginalExtension();
 
                         // Generate a random name for the uploaded image (to avoid that the image might get overwritten if its name is repeated)
-                        $imageName = rand(111, 99999).'.'.$extension;
+                        $imageName = rand(111, 99999) . '.' . $extension;
 
                         // Assigning the uploaded images path inside the 'public' folder
-                        $imagePath = 'admin/images/proofs/'.$imageName;
+                        $imagePath = 'admin/images/proofs/' . $imageName;
 
                         // Upload the image using the Intervention package and save it in our path inside the 'public' folder
                         Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
@@ -632,7 +632,7 @@ class AdminController extends Controller
             }
 
             $title = ucfirst($type);
-            Session::put('page', 'view_'.strtolower($title));
+            Session::put('page', 'view_' . strtolower($title));
         } else {
             // Show all staff: admins, vendors, etc. (excluding basic users/students if desired?)
             // Assuming "Admins/Vendors" page usually implies staff.
@@ -735,52 +735,11 @@ class AdminController extends Controller
                 Vendor::where('id', $adminUser->vendor_id)->update(['status' => $status]); //
 
                 // Commission payout to Sales Executive
-                $salesExecutiveId = $adminUser->added_by;
-                if ($salesExecutiveId) {
-                    $salesExecutive = User::find($salesExecutiveId);
-                    if ($salesExecutive && $salesExecutive->hasRole('sales', 'web')) {
-                        $vendor = Vendor::find($adminUser->vendor_id);
-                        $currentPlan = $vendor->plan ?? 'free';
-
-                        // 1. Enrollment Commission (Free) - Always paid once for any vendor becoming active
-                        $freeDesc = 'Commission for Vendor: '.$adminUser->name.' (#'.$adminUser->id.') [Free Plan]';
-                        $freeExists = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
-                            ->where('description', $freeDesc)
-                            ->exists();
-
-                        if (! $freeExists) {
-                            $freeAmount = (float) \App\Models\Setting::getValue('default_income_per_vendor', 50);
-                            $salesExecutive->wallet_balance += $freeAmount;
-                            $salesExecutive->save();
-
-                            \App\Models\WalletTransaction::create([
-                                'user_id' => $salesExecutiveId,
-                                'amount' => $freeAmount,
-                                'type' => 'credit',
-                                'description' => $freeDesc,
-                            ]);
-                        }
-
-                        // 2. Pro Plan Commission - Paid if vendor is Pro (covers direct Pro enrollment or manual Pro set)
-                        if (strtolower($currentPlan) == 'pro') {
-                            $proDesc = 'Commission for Vendor: '.$adminUser->name.' (#'.$adminUser->id.') [Pro Plan]';
-                            $proExists = \App\Models\WalletTransaction::where('user_id', $salesExecutiveId)
-                                ->where('description', $proDesc)
-                                ->exists();
-
-                            if (! $proExists) {
-                                $proAmount = (float) \App\Models\Setting::getValue('default_income_per_pro_vendor', 100);
-                                $salesExecutive->wallet_balance += $proAmount;
-                                $salesExecutive->save();
-
-                                \App\Models\WalletTransaction::create([
-                                    'user_id' => $salesExecutiveId,
-                                    'amount' => $proAmount,
-                                    'type' => 'credit',
-                                    'description' => $proDesc,
-                                ]);
-                            }
-                        }
+                $vendor = Vendor::find($adminUser->vendor_id);
+                if ($vendor) {
+                    $vendor->creditCommission('free');
+                    if (strtolower($vendor->plan) === 'pro') {
+                        $vendor->creditCommission('pro');
                     }
                 }
             }
@@ -806,7 +765,7 @@ class AdminController extends Controller
 
             if ($request->hasFile('logo')) {
                 $file = $request->file('logo');
-                $filename = time().'.'.$file->getClientOriginalExtension();
+                $filename = time() . '.' . $file->getClientOriginalExtension();
                 $file->move(public_path('uploads/logos/'), $filename);
 
                 if ($logos) {
@@ -831,7 +790,7 @@ class AdminController extends Controller
         if ($request->isMethod('post')) {
             if ($request->hasFile('favicon')) {
                 $file = $request->file('favicon');
-                $filename = time().'.'.$file->getClientOriginalExtension();
+                $filename = time() . '.' . $file->getClientOriginalExtension();
                 $destinationPath = public_path('uploads/favicons/');
 
                 if (! file_exists($destinationPath)) {
@@ -870,7 +829,7 @@ class AdminController extends Controller
             $userId = $data['admin_id'] ?? $id ?? null;
             $emailRule = 'required|email|unique:users,email';
             if (! empty($userId)) {
-                $emailRule .= ','.$userId;
+                $emailRule .= ',' . $userId;
             }
 
             // Laravel's Validation
@@ -903,8 +862,8 @@ class AdminController extends Controller
                 $image_tmp = $request->file('admin_image');
                 if ($image_tmp->isValid()) {
                     $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = rand(111, 99999).'.'.$extension;
-                    $imagePath = 'admin/images/photos/'.$imageName;
+                    $imageName = rand(111, 99999) . '.' . $extension;
+                    $imagePath = 'admin/images/photos/' . $imageName;
                     Image::make($image_tmp)->save($imagePath);
                 }
             } elseif (! empty($data['current_admin_image'])) {
@@ -1081,8 +1040,8 @@ class AdminController extends Controller
         }
 
         // Delete admin profile image if exists
-        if (! empty($user->profile_image) && file_exists(public_path('admin/images/photos/'.$user->profile_image))) {
-            unlink(public_path('admin/images/photos/'.$user->profile_image));
+        if (! empty($user->profile_image) && file_exists(public_path('admin/images/photos/' . $user->profile_image))) {
+            unlink(public_path('admin/images/photos/' . $user->profile_image));
         }
 
         // Delete vendor from vendors table too if accessible via relation or user_id
