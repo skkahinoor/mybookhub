@@ -22,7 +22,7 @@
                                 </div>
                             @endif
 
-                            <form class="forms-sample" action="{{ route('user.sell-book.store') }}" method="POST">
+                            <form class="forms-sample" action="{{ route('student.sell-book.store') }}" method="POST">
                                 @csrf
                                 
                                 <div class="form-group">
@@ -45,7 +45,7 @@
                                 </div>
 
                                 <button type="submit" class="btn btn-primary mr-2">Submit Request</button>
-                                <a href="{{ route('user.sell-book.index') }}" class="btn btn-light">Cancel</a>
+                                <a href="{{ route('student.sell-book.index') }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
                     </div>

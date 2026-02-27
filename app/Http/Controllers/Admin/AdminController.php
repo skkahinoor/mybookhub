@@ -41,12 +41,14 @@ class AdminController extends Controller
         $vendorId = $admin->vendor_id;
 
         $vendorrole = Role::where('name', 'vendor')->first();
-        $userrole = Role::where('name', 'user')->first();
+        // Prefer the 'student' role for front users; fallback to legacy 'user' role if it still exists
+        $userrole = Role::where('name', 'student')->first() ?: Role::where('name', 'user')->first();
         $salesrole = Role::where('name', 'sales')->first();
-        // Default (Admin counts)
-        $vendorsCount = User::where('role_id', $vendorrole->id)->count();
-        $usersCount = User::where('role_id', $userrole->id)->count();
-        $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
+
+        // Default (Admin counts) - guard against missing roles
+        $vendorsCount = $vendorrole ? User::where('role_id', $vendorrole->id)->count() : 0;
+        $usersCount = $userrole ? User::where('role_id', $userrole->id)->count() : 0;
+        $salesExecutivesCount = $salesrole ? User::where('role_id', $salesrole->id)->count() : 0;
         $productsCount = Product::where('status', 1)->count();
         $ordersCount = Order::count();
         $couponsCount = Coupon::where('status', 1)->count();
@@ -76,8 +78,8 @@ class AdminController extends Controller
                 ->count();
 
             // Users & sales executives usually remain global
-            $usersCount = User::where('role_id', $userrole->id)->count();
-            $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
+            $usersCount = $userrole ? User::where('role_id', $userrole->id)->count() : 0;
+            $salesExecutivesCount = $salesrole ? User::where('role_id', $salesrole->id)->count() : 0;
         }
 
         // Vendor plan info

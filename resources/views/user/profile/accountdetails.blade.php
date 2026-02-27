@@ -74,7 +74,7 @@
                                         class="d-none">
                                 </div>
                             </div>
-                            <h5 class="mb-1">{{ Auth::user()->name ?? 'User' }}</h5>
+                            <h5 class="mb-1">{{ Auth::user()->name ?? 'Student' }}</h5>
                             <p class="text-muted mb-3 small">{{ Auth::user()->email ?? 'No email' }}</p>
 
                             <div class="border-top pt-3 mt-3 text-left">
@@ -122,7 +122,7 @@
 
                         <div class="card-body">
                             {{-- Account details + password in a single tab-content --}}
-                            <form id="accountForm" action="{{ route('user.account') }}" method="POST">
+                            <form id="accountForm" action="{{ route('student.account') }}" method="POST">
                                 @csrf
                                 <div class="tab-content">
                                     {{-- Basic info tab --}}
@@ -808,7 +808,7 @@
             btn.prop('disabled', true).text('Uploading...');
 
             $.ajax({
-                url: '{{ route('user.avatar.update') }}',
+                url: '{{ route('student.avatar.update') }}',
                 type: 'POST',
                 data: formData,
                 contentType: false,

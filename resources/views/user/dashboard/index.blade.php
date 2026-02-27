@@ -640,8 +640,8 @@
     <script src="{{ asset('user/js/settings.js') }}"></script>
     <script src="{{ asset('user/js/todolist.js') }}"></script>
     <!-- endinject -->
-    <!-- Custom js for this page-->
-    <script src="{{ asset('user/js/dashboard.js') }}"></script>
+    <!-- Custom js for this page (cache-busted) -->
+    <script src="{{ asset('user/js/dashboard.js') }}?v=2"></script>
     <script src="{{ asset('user/js/Chart.roundedBarCharts.js') }}"></script>
     <!-- End custom js for this page-->
 

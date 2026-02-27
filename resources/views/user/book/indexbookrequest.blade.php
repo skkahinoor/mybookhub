@@ -14,7 +14,7 @@
                                     <h4 class="card-title mb-1">My Book Requests</h4>
                                     <p class="text-muted mb-0">View, track and message admin about each request.</p>
                                 </div>
-                                <a href="{{ route('user.query.index') }}" class="btn btn-primary" style="background-color:#cf8938;border:none;">
+                                <a href="{{ route('student.query.index') }}#newQueryForm" class="btn btn-primary" style="background-color:#cf8938;border:none;">
                                     <span class="mr-1">➕</span> New Book Request
                                 </a>
                             </div>
@@ -91,7 +91,7 @@
                                                                 <div class="text-muted mt-2" style="font-size:12px;">Requested on {{ $request->created_at->format('F d, Y h:i A') }}</div>
                                                             </div>
 
-                                                            <form action="{{ route('user.book.reply', $request->id) }}" method="POST">
+                                                            <form action="{{ route('student.book.reply', $request->id) }}" method="POST">
                                                                 @csrf
                                                                 <div class="form-group mb-2">
                                                                     <label class="font-weight-bold">Your Message <span class="text-danger">*</span></label>

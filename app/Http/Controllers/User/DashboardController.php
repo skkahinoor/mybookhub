@@ -8,22 +8,25 @@ use App\Models\Order;
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Role;
 
 class DashboardController extends Controller
 {
     public function index()
     {
         $user = Auth::user();
-        
-        // Fix: Auto-assign 'user' role if the user has no role assigned
+
+        // Fix: Auto-assign front-facing role if the user has no role assigned
         if (empty($user->role_id)) {
-            $roleId = \App\Helpers\RoleHelper::userId();
+            // Prefer 'student' role; fallback to legacy 'user' role
+            $roleId = \App\Helpers\RoleHelper::studentId() ?? \App\Helpers\RoleHelper::userId();
             if ($roleId) {
                 $user->role_id = $roleId;
                 $user->save();
-                
-                if (!$user->hasRole('user')) {
-                    $user->assignRole('user');
+
+                $spatieRole = Role::find($roleId);
+                if ($spatieRole && ! $user->hasRole($spatieRole->name)) {
+                    $user->assignRole($spatieRole);
                 }
             }
         }

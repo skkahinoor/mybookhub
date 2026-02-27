@@ -20,7 +20,7 @@
                 <p class="lead mb-4">Thank you for your payment. Your order has been confirmed.</p>
                 <div class="d-flex justify-content-center gap-3">
                     <a href="{{ url('/') }}" class="btn btn-primary">Continue Shopping</a>
-                    <a href="{{ url('/user/account') }}" class="btn btn-outline-secondary">My Orders</a>
+                    <a href="{{ url('/student/orders') }}" class="btn btn-outline-secondary">My Orders</a>
                 </div>
             </div>
         </div>

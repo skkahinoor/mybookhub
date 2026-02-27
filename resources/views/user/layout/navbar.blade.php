@@ -73,7 +73,7 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('user.wallet') }}"
+                <a class="nav-link" href="{{ route('student.wallet') }}"
                     style="display: flex; align-items: center; gap: 8px; color: #ff9900; font-weight: 700; background: #fff5e6; padding: 8px 16px; border-radius: 20px; border: 1px solid #ffe3b3;">
                     <i class="ti-wallet" style="font-size: 1.1rem;"></i>
                     <span>₹{{ Auth::user()->wallet_balance }}</span>
@@ -99,7 +99,7 @@
                     <img src="{{ $avatarSrc }}" alt="profile" id="nav-avatar" />
                 </a>
                 <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="profileDropdown">
-                    <a class="dropdown-item" href="{{ route('user.account') }}">
+                    <a class="dropdown-item" href="{{ route('student.account') }}">
                         <i class="ti-user text-primary"></i>
                         My Profile
                     </a>
@@ -109,7 +109,7 @@
                         Logout
                     </a>
 
-                    <form id="logout-form" action="{{ route('user.logout') }}" method="POST" class="d-none">
+                    <form id="logout-form" action="{{ route('student.logout') }}" method="POST" class="d-none">
                         @csrf
                     </form>
 

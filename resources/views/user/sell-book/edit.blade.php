@@ -22,7 +22,7 @@
                                 </div>
                             @endif
 
-                            <form class="forms-sample" action="{{ route('user.sell-book.update', $request->id) }}" 
+                            <form class="forms-sample" action="{{ route('student.sell-book.update', $request->id) }}" 
                                   method="POST" enctype="multipart/form-data">
                                 @csrf
                                 @method('PUT')
@@ -112,7 +112,7 @@
                                 </div>
 
                                 <button type="submit" class="btn btn-primary mr-2">Submit Book Details</button>
-                                <a href="{{ route('user.sell-book.show', $request->id) }}" class="btn btn-light">Cancel</a>
+                                <a href="{{ route('student.sell-book.show', $request->id) }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
                     </div>

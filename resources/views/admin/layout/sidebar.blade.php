@@ -359,11 +359,11 @@
                 <div class="collapse" id="ui-users">
                     <ul class="nav flex-column sub-menu"
                         style="background: #fff !important; color: #052CA3 !important">
-                        @can('view_users')
+                        {{-- @can('view_users')
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'users') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/users') }}">Users</a></li>
-                        @endcan
+                        @endcan --}}
                         @can('view_subscribers')
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'subscribers') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif

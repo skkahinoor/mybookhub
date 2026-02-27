@@ -22,9 +22,9 @@ class UserController extends Controller
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'users');
 
-        // Get all users with role_id 4 and load relationships
+        // Get all front users (students) and load relationships
         $users = User::with(['country', 'state', 'district', 'block'])
-            ->role('user', 'web')
+            ->role('student', 'web')
             ->get()
             ->map(function ($user) {
                 // Transform data to match view expectations

@@ -86,7 +86,7 @@ class OrderController extends Controller
                     return $order->created_at->format('M d, Y');
                 })
                 ->addColumn('action', function ($order) {
-                    return '<a href="' . route('user.orders.show', $order->id) . '" class="btn btn-sm btn-primary" style="color: white; padding: 1.1rem 1rem !important;">View Details</a>';
+                    return '<a href="' . route('student.orders.show', $order->id) . '" class="btn btn-sm btn-primary" style="color: white; padding: 1.1rem 1rem !important;">View Details</a>';
                 })
                 ->rawColumns(['order_id', 'products', 'order_status', 'grand_total', 'action'])
                 ->make(true);

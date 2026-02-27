@@ -42,7 +42,7 @@
                                 </div>
                             @endif
 
-                            <form class="pt-3" action="{{ route('user.loginstore') }}" method="post">
+                            <form class="pt-3" action="{{ route('student.loginstore') }}" method="post">
                                 @csrf
                                 <div class="form-group">
                                     <input type="text" class="form-control form-control-lg" id="exampleInputEmail1"
@@ -72,7 +72,7 @@
                                     </button>
                                 </div> --}}
                                 <div class="text-center mt-4 font-weight-light">
-                                    Don't have an account? <a href="{{ route('user.register') }}"
+                                    Don't have an account? <a href="{{ route('student.register') }}"
                                         class="text-primary">Create</a>
                                 </div>
                             </form>

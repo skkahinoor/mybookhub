@@ -11,42 +11,43 @@ use App\Http\Controllers\User\WalletController;
 use Illuminate\Support\Facades\Route;
 
 
-//User routes
-Route::prefix('/user')->namespace('App\Http\Controllers\User')->group(function () {
+// Student routes (previously /user)
+Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(function () {
 
-    Route::get('/login', [AuthController::class, 'Login'])->name('user.login');
-    Route::get('/register', [AuthController::class, 'Register'])->name('user.register');
-    Route::post('/loginStore', [AuthController::class, 'loginStore'])->name('user.loginstore');
-    Route::post('/registerStore', [AuthController::class, 'registerStore'])->name('user.registerstore');
+    // Public auth endpoints
+    Route::get('/login', [AuthController::class, 'Login'])->name('student.login');
+    Route::get('/register', [AuthController::class, 'Register'])->name('student.register');
+    Route::post('/loginStore', [AuthController::class, 'loginStore'])->name('student.loginstore');
+    Route::post('/registerStore', [AuthController::class, 'registerStore'])->name('student.registerstore');
 
-    // Protected routes (require authentication)
-    Route::group(['middleware' => ['auth', 'user']], function () {
-        Route::get('/index', [DashboardController::class, 'index'])->name('user.index');
-        Route::post('/user/profile/update', [AccountController::class, 'updateProfile'])
-            ->name('user.profile.update');
-        Route::post('user/logout', [AuthController::class, 'logout'])->name('user.logout');
-        Route::match(['GET', 'POST'], '/account', [AccountController::class, 'index'])->name('user.account');
-        Route::post('/avatar', [AccountController::class, 'updateAvatar'])->name('user.avatar.update');
+    // Protected routes (require authentication as student)
+    Route::group(['middleware' => ['auth', 'student']], function () {
+        Route::get('/index', [DashboardController::class, 'index'])->name('student.index');
+        Route::post('/profile/update', [AccountController::class, 'updateProfile'])
+            ->name('student.profile.update');
+        Route::post('/logout', [AuthController::class, 'logout'])->name('student.logout');
+        Route::match(['GET', 'POST'], '/account', [AccountController::class, 'index'])->name('student.account');
+        Route::post('/avatar', [AccountController::class, 'updateAvatar'])->name('student.avatar.update');
 
         // Wallet
-        Route::get('/wallet', [WalletController::class, 'index'])->name('user.wallet');
+        Route::get('/wallet', [WalletController::class, 'index'])->name('student.wallet');
 
         // Book Request
-        Route::post('/book-request', [BookRequestController::class, 'store'])->name('user.book.request.store');
-        Route::get('/book-requests', [BookRequestController::class, 'indexbookrequest'])->name('user.book.indexrequest');
-        Route::post('/book-request/{id}/reply', [BookRequestController::class, 'replyToQuery'])->name('user.book.reply');
-        Route::get('/queries', [BookRequestController::class, 'indexqueries'])->name('user.query.index');
-        Route::get('/orders', [OrderController::class, 'index'])->name('user.orders.index');
-        Route::get('/orders/{id}', [OrderController::class, 'show'])->name('user.orders.show');
-        Route::get('/orders/cancel/{id}', [OrderController::class, 'cancelOrder'])->name('user.orders.cancel');
-        Route::get('/orders/pay-now/{id}', [OrderController::class, 'payNow'])->name('user.orders.payNow');
+        Route::post('/book-request', [BookRequestController::class, 'store'])->name('student.book.request.store');
+        Route::get('/book-requests', [BookRequestController::class, 'indexbookrequest'])->name('student.book.indexrequest');
+        Route::post('/book-request/{id}/reply', [BookRequestController::class, 'replyToQuery'])->name('student.book.reply');
+        Route::get('/queries', [BookRequestController::class, 'indexqueries'])->name('student.query.index');
+        Route::get('/orders', [OrderController::class, 'index'])->name('student.orders.index');
+        Route::get('/orders/{id}', [OrderController::class, 'show'])->name('student.orders.show');
+        Route::get('/orders/cancel/{id}', [OrderController::class, 'cancelOrder'])->name('student.orders.cancel');
+        Route::get('/orders/pay-now/{id}', [OrderController::class, 'payNow'])->name('student.orders.payNow');
 
         // Sell Old Book routes
-        Route::get('/sell-book', [SellBookController::class, 'index'])->name('user.sell-book.index');
-        Route::get('/sell-book/create', [SellBookController::class, 'create'])->name('user.sell-book.create');
-        Route::post('/sell-book', [SellBookController::class, 'store'])->name('user.sell-book.store');
-        Route::get('/sell-book/{id}', [SellBookController::class, 'show'])->name('user.sell-book.show');
-        Route::get('/sell-book/{id}/edit', [SellBookController::class, 'edit'])->name('user.sell-book.edit');
-        Route::put('/sell-book/{id}', [SellBookController::class, 'update'])->name('user.sell-book.update');
+        Route::get('/sell-book', [SellBookController::class, 'index'])->name('student.sell-book.index');
+        Route::get('/sell-book/create', [SellBookController::class, 'create'])->name('student.sell-book.create');
+        Route::post('/sell-book', [SellBookController::class, 'store'])->name('student.sell-book.store');
+        Route::get('/sell-book/{id}', [SellBookController::class, 'show'])->name('student.sell-book.show');
+        Route::get('/sell-book/{id}/edit', [SellBookController::class, 'edit'])->name('student.sell-book.edit');
+        Route::put('/sell-book/{id}', [SellBookController::class, 'update'])->name('student.sell-book.update');
     });
 });

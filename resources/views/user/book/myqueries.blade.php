@@ -18,7 +18,7 @@
                                         request
                                         queries.</p>
                                 </div>
-                                <a href="{{ route('user.query.index') }}" class="woocommerce-Button"
+                                <a href="{{ route('student.query.index') }}" class="woocommerce-Button"
                                     style="background-color: #cf8938; color: #fff; padding: 12px 30px; border-radius: 4px; text-decoration: none; display: inline-block; font-weight: 600; transition: background-color 0.3s; white-space: nowrap;"
                                     onmouseover="this.style.backgroundColor='#b8752f'"
                                     onmouseout="this.style.backgroundColor='#cf8938'">
@@ -40,99 +40,98 @@
                                     {{ session('error') }}
                                 </div>
                             @endif
-                            {{-- Link --}}
+                            {{-- Empty state when there are no queries yet --}}
                             @if ($queries->isEmpty())
                                 <div class="empty-state" style="text-align: center; padding: 60px 20px;">
                                     <div class="empty-state-icon" style="font-size: 64px; margin-bottom: 20px;">💬</div>
                                     <h3 style="color: #333; margin-bottom: 10px;">No queries yet</h3>
-                                    <p style="color: #666; margin-bottom: 30px;">You haven't submitted any book request
+                                    <p style="color: #666; margin-bottom: 10px;">You haven't submitted any book request
                                         queries yet.</p>
-                                    <a href="{{ route('user.book.request') }}" class="woocommerce-Button"
-                                        style="background-color: #cf8938; color: #fff; padding: 12px 30px; border-radius: 4px; text-decoration: none; display: inline-block;">
-                                        Search & Request Books
-                                    </a>
+                                    <p style="color: #666; margin-bottom: 30px;">Use the form below to raise your first
+                                        book query.</p>
                                 </div>
-                            @else
-                                <!-- Quick New Query Form -->
-                                <style>
-                                    .query-form-hidden {
-                                        display: none;
-                                    }
-                                </style>
-                                <div class="card"
-                                    style="margin-bottom: 20px; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden;">
-                                    <div class="card-header"
-                                        style="background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #e5e5e5; cursor: pointer;"
-                                        onclick="var form = document.getElementById('newQueryForm'); var icon = this.querySelector('.toggle-icon'); if(form.style.display === 'none') { form.style.display = 'block'; icon.textContent = '➖'; } else { form.style.display = 'none'; icon.textContent = '➕'; }">
-                                        <div
-                                            style="display: flex; justify-content: space-between; align-items: center;">
-                                            <h5
-                                                style="margin: 0; color: #333; font-weight: 600; display: flex; align-items: center;">
-                                                <span style="margin-right: 10px; font-size: 20px;">💬</span>
-                                                Raise New Book Query
-                                            </h5>
-                                            <span class="toggle-icon" style="font-size: 18px; color: #666;">➕</span>
-                                        </div>
-                                    </div>
-                                    <div id="newQueryForm" style="display: none; padding: 20px; background: #fff;">
-                                        <form action="{{ route('user.book.request.store') }}" method="POST">
-                                            @csrf
-                                            <div class="mb-3">
-                                                <label
-                                                    style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                                                    Book Title <span class="required" style="color: #e74c3c;">*</span>
-                                                </label>
-                                                <input type="text" name="book_title" class="form-control"
-                                                    style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px;"
-                                                    placeholder="Enter book title" value="{{ old('book_title') }}"
-                                                    required>
-                                                @error('book_title')
-                                                    <small
-                                                        style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
-                                                @enderror
-                                            </div>
-                                            <div class="mb-3">
-                                                <label
-                                                    style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                                                    Author Name
-                                                </label>
-                                                <input type="text" name="author_name" class="form-control"
-                                                    style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px;"
-                                                    placeholder="Enter author name (optional)"
-                                                    value="{{ old('author_name') }}">
-                                                @error('author_name')
-                                                    <small
-                                                        style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
-                                                @enderror
-                                            </div>
-                                            <div class="mb-3">
-                                                <label
-                                                    style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                                                    Your Message <span class="required" style="color: #e74c3c;">*</span>
-                                                </label>
-                                                <textarea name="message" rows="5" class="form-control"
-                                                    style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px; resize: vertical;"
-                                                    required minlength="10" placeholder="Type your message here... Provide details about the book you're looking for.">{{ old('message') }}</textarea>
-                                                @error('message')
-                                                    <small
-                                                        style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
-                                                @enderror
-                                                <small style="color: #666; display: block; margin-top: 5px;">
-                                                    Minimum 10 characters required
-                                                </small>
-                                            </div>
-                                            <div style="margin-top: 15px;">
-                                                <button type="submit" class="woocommerce-Button"
-                                                    style="background-color: #cf8938; color: #fff; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: background-color 0.3s;">
-                                                    <span style="margin-right: 5px;">📤</span>
-                                                    Submit Query
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
+                            @endif
 
-                                <!-- Accordion Style Query Display -->
+                            <!-- Quick New Query Form (always available) -->
+                            <style>
+                                .query-form-hidden {
+                                    display: none;
+                                }
+                            </style>
+                            <div class="card"
+                                style="margin-bottom: 20px; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden;">
+                                <div class="card-header"
+                                    style="background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #e5e5e5; cursor: pointer;"
+                                    onclick="var form = document.getElementById('newQueryForm'); var icon = this.querySelector('.toggle-icon'); if(form.style.display === 'none') { form.style.display = 'block'; icon.textContent = '➖'; } else { form.style.display = 'none'; icon.textContent = '➕'; }">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <h5
+                                            style="margin: 0; color: #333; font-weight: 600; display: flex; align-items: center;">
+                                            <span style="margin-right: 10px; font-size: 20px;">💬</span>
+                                            Raise New Book Query
+                                        </h5>
+                                        <span class="toggle-icon" style="font-size: 18px; color: #666;">➕</span>
+                                    </div>
+                                </div>
+                                <div id="newQueryForm" style="display: none; padding: 20px; background: #fff;">
+                                    <form action="{{ route('student.book.request.store') }}" method="POST">
+                                        @csrf
+                                        <div class="mb-3">
+                                            <label
+                                                style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Book Title <span class="required" style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <input type="text" name="book_title" class="form-control"
+                                                style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px;"
+                                                placeholder="Enter book title" value="{{ old('book_title') }}"
+                                                required>
+                                            @error('book_title')
+                                                <small
+                                                    style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
+                                            @enderror
+                                        </div>
+                                        <div class="mb-3">
+                                            <label
+                                                style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Author Name
+                                            </label>
+                                            <input type="text" name="author_name" class="form-control"
+                                                style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px;"
+                                                placeholder="Enter author name (optional)"
+                                                value="{{ old('author_name') }}">
+                                            @error('author_name')
+                                                <small
+                                                    style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
+                                            @enderror
+                                        </div>
+                                        <div class="mb-3">
+                                            <label
+                                                style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Your Message <span class="required" style="color: #e74c3c;">*</span>
+                                            </label>
+                                            <textarea name="message" rows="5" class="form-control"
+                                                style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px; resize: vertical;"
+                                                required minlength="10" placeholder="Type your message here... Provide details about the book you're looking for.">{{ old('message') }}</textarea>
+                                            @error('message')
+                                                <small
+                                                    style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
+                                            @enderror
+                                            <small style="color: #666; display: block; margin-top: 5px;">
+                                                Minimum 10 characters required
+                                            </small>
+                                        </div>
+                                        <div style="margin-top: 15px;">
+                                            <button type="submit" class="woocommerce-Button"
+                                                style="background-color: #cf8938; color: #fff; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: background-color 0.3s;">
+                                                <span style="margin-right: 5px;">📤</span>
+                                                Submit Query
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            {{-- Existing queries accordion list (only when there are queries) --}}
+                            @if (!$queries->isEmpty())
                                 <div class="accordion" id="queriesAccordion" style="margin-top: 20px;">
                                     @foreach ($queries as $key => $query)
                                         @php
@@ -319,7 +318,7 @@
                                                                     Add a Message or Follow-up
                                                                 @endif
                                                             </h5>
-                                                            <form action="{{ route('user.book.reply', $query->id) }}"
+                                                            <form action="{{ route('student.book.reply', $query->id) }}"
                                                                 method="POST">
                                                                 @csrf
                                                                 <div

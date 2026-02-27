@@ -14,7 +14,7 @@
                             <p class="text-muted mb-0">Placed on {{ $orderDetails->created_at->format('F d, Y h:i A') }}
                             </p>
                         </div>
-                        <a href="{{ route('user.orders.index') }}" class="btn btn-secondary"
+                        <a href="{{ route('student.orders.index') }}" class="btn btn-secondary"
                             style="background-color: rgb(63, 61, 61); color: white;">
                             <i class="fas fa-arrow-circle-left me-2"></i> Back to Orders
                         </a>
@@ -211,7 +211,7 @@
 
                             <div class="mt-4">
                                 @if (in_array($orderDetails->order_status, ['New', 'Pending']))
-                                    <a href="{{ route('user.orders.cancel', $orderDetails->id) }}"
+                                    <a href="{{ route('student.orders.cancel', $orderDetails->id) }}"
                                         class="btn btn-danger w-100 mb-2"
                                         onclick="return confirm('Are you sure you want to cancel this order?')">
                                         Cancel Order
@@ -219,7 +219,7 @@
                                 @endif
 
                                 @if ($orderDetails->order_status == 'Pending' && $orderDetails->payment_gateway == 'Razorpay')
-                                    <a href="{{ route('user.orders.payNow', $orderDetails->id) }}"
+                                    <a href="{{ route('student.orders.payNow', $orderDetails->id) }}"
                                         class="btn btn-success w-100">
                                         Pay Now
                                     </a>

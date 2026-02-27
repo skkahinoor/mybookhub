@@ -55,32 +55,49 @@ class AuthController extends Controller
             return redirect('/');
         }
 
-        return redirect()->route('user.login')->with('error', 'Invalid credentials');
+        return redirect()->route('student.login')->with('error', 'Invalid credentials');
     }
 
 
     public function registerStore(Request $request)
     {
-        //dd($request->all());
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8',
             'phone' => 'required|numeric|digits:10',
         ]);
-        $role = \Spatie\Permission\Models\Role::where('name', 'user')->first();
+
+        // Determine intended role id (priority: request, then helpers, then role names)
+        $roleId = $request->input('role_id');
+        if (! $roleId) {
+            $roleId = \App\Helpers\RoleHelper::studentId() ?? \App\Helpers\RoleHelper::userId();
+        }
+
+        // Resolve Spatie role for permission sync
+        $role = null;
+        if ($roleId) {
+            $role = \Spatie\Permission\Models\Role::find($roleId);
+        }
+        if (! $role) {
+            $role = \Spatie\Permission\Models\Role::whereIn('name', ['student', 'user'])->first();
+            if ($role && ! $roleId) {
+                $roleId = $role->id;
+            }
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'role_id' => $role ? $role->id : null,
+            'role_id' => $roleId,
             'status' => 1,
         ]);
         if ($role) {
             $user->assignRole($role);
         }
-        return redirect()->route('user.login')->with('success', 'Account created successfully');
+        return redirect()->route('student.login')->with('success', 'Account created successfully');
     }
     public function logout(Request $request)
     {
@@ -91,6 +108,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('user.login')->with('success', 'You are logged out');
+        return redirect()->route('student.login')->with('success', 'You are logged out');
     }
 }

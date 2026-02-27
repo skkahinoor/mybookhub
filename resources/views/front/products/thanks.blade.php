@@ -54,7 +54,7 @@
                         <div class="actions mt-4 d-flex gap-2 justify-content-center">
                             <a href="{{ url('/') }}" class="btn btn-primary btnhover"><i
                                     class="fa fa-home me-2"></i>Continue Shopping</a>
-                            <a href="{{ url('user/orders') }}" class="btn btn-outline-primary"><i
+                            <a href="{{ url('student/orders') }}" class="btn btn-outline-primary"><i
                                     class="fa fa-file-invoice me-2"></i>View Orders</a>
                         </div>
 

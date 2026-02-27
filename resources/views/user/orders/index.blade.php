@@ -133,7 +133,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: "{{ route('user.orders.index') }}",
+                    url: "{{ route('student.orders.index') }}",
                     type: "GET"
                 },
                 columns: [
