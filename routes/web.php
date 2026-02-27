@@ -476,8 +476,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     });
     Route::post('vendor/send-otp', 'VendorController@sendOtp')->name('vendor.otp.send');
 
-    // Confirm Vendor Account (from 'vendor_confirmation.blade.php) from the mail by Mailtrap
-    Route::get('vendor/confirm/{code}', 'VendorController@confirmVendor');
+
 
     // Render Single Product Detail Page in front/products/detail.blade.php
     Route::get('/product/{id}', 'ProductsController@detail');

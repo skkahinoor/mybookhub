@@ -11,7 +11,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h4 class="card-title mb-0">Sell Old Book Requests</h4>
-                                <a href="{{ route('user.sell-book.create') }}" class="btn btn-primary">
+                                <a href="{{ route('student.sell-book.create') }}" class="btn btn-primary">
                                     <i class="mdi mdi-plus"></i> New Request
                                 </a>
                             </div>
@@ -95,12 +95,12 @@
                                                     </td>
                                                     <td>{{ $request->created_at->format('d M Y') }}</td>
                                                     <td>
-                                                        <a href="{{ route('user.sell-book.show', $request->id) }}" 
+                                                        <a href="{{ route('student.sell-book.show', $request->id) }}" 
                                                            class="btn btn-sm btn-info" title="View Details">
                                                             <i class="bi bi-eye"></i>
                                                         </a>
                                                         @if($request->request_status == 'approved' && !$request->hasBookDetails())
-                                                            <a href="{{ route('user.sell-book.edit', $request->id) }}" 
+                                                            <a href="{{ route('student.sell-book.edit', $request->id) }}" 
                                                                class="btn btn-sm btn-primary" title="Fill Book Details">
                                                                 <i class="bi bi-pen"></i>
                                                             </a>

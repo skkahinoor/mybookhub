@@ -16,8 +16,7 @@ class HomeController extends Controller
         $user = auth('sanctum')->user();
 
         if ($user) {
-
-            if (!in_array($user->type, ['student', 'user'])) {
+            if ($user->type !== 'student') {
                 return response()->json([
                     'status' => false,
                     'message' => 'Unauthorized access'

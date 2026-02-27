@@ -11,7 +11,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h4 class="card-title mb-0">Book Details</h4>
-                                <a href="{{ route('user.sell-book.index') }}" class="btn btn-secondary">
+                                <a href="{{ route('student.sell-book.index') }}" class="btn btn-secondary">
                                     <i class="mdi mdi-arrow-left"></i> Back to List
                                 </a>
                             </div>
@@ -95,7 +95,7 @@
                             @if($request->request_status == 'approved' && !$request->hasBookDetails())
                                 <div class="alert alert-info">
                                     <strong>Next Step:</strong> Your request has been approved. Please fill in the book details.
-                                    <a href="{{ route('user.sell-book.edit', $request->id) }}" class="btn btn-primary btn-sm ml-2">
+                                    <a href="{{ route('student.sell-book.edit', $request->id) }}" class="btn btn-primary btn-sm ml-2">
                                         Fill Book Details
                                     </a>
                                 </div>

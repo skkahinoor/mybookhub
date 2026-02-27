@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -68,12 +69,22 @@ class UserController extends Controller
 
         // Save the user
         $user           = new User;
-        $user->role_id  = 4; // 'user' role
+        // Prefer dynamic 'student' role; fallback to legacy 'user' role if needed
+        $roleId = \App\Helpers\RoleHelper::studentId() ?? \App\Helpers\RoleHelper::userId();
+        $user->role_id  = $roleId;
         $user->name     = $data['name'];
         $user->phone   = $data['mobile'];
         $user->password = bcrypt($data['password']);
         $user->status   = 0; // inactive until email confirmed
         $user->save();
+
+        // Sync Spatie role assignment with role_id
+        if ($roleId) {
+            $spatieRole = Role::find($roleId);
+            if ($spatieRole) {
+                $user->assignRole($spatieRole);
+            }
+        }
 
         // Send confirmation email
         $email       = $data['email'];
@@ -153,35 +164,30 @@ class UserController extends Controller
         return redirect('/');
     }
 
-                                            // User account Confirmation E-mail which contains the 'Activation Link' to activate the user account (in resources/views/emails/confirmation.blade.php, using Mailtrap)
+                                            
     public function confirmAccount($code)
-    { // {code} is the base64 encoded user's 'Activation Code' sent to the user in the Confirmation E-mail with which they have registered, which is received as a Route Parameters/URL Paramters in the 'Activation Link': https://laravel.com/docs/9.x/routing#required-parameters    // this route is requested (accessed/opened) from inside the mail sent to user (in resources/views/emails/confirmation.blade.php)
-        $email = base64_decode($code);          // $code is the encoded $email (check userRegister() method in UserController.php)    // we use the opposite (base64_decode()) of what we used in the userRegister() (base_64encode)
-                                                // dd($email);
-
-        // For Security Reasons, check if that decoded user's $email exists in the `users` database table
-        $userCount = User::role('user', 'web')->count();
+    {
+        $email = base64_decode($code);          
+        $userCount = User::role('student', 'web')->count();
         if ($userCount > 0) { // if the user's email exists in `users` table
                                   // Check if the user is alreay active
-            $userDetails = User::role('user', 'web')->where('email', $email)->first();
+            $userDetails = User::role('student', 'web')->where('email', $email)->first();
             if ($userDetails->status == 1) { // if the user's account is already activated
                                                  // Redirect the user to the User Login/Register page with an 'error' message
                 return redirect('user/login-register')->with('error_message', 'Your account is already activated. You can login now.');
             } else { // if the user's account is not yet activated, activate it (update `status` to 1) and send a 'Welcome' Email
-                User::role('user', 'web')->where('email', $email)->update([
+                User::role('student', 'web')->where('email', $email)->update([
                     'status' => 1,
                 ]);
 
-                // Send a Welcome Email to user after confirmation (clicking on the 'Activation Link' inside the Confirmation Email)    // HELO / Mailtrap / MailHog: https://laravel.com/docs/9.x/mail#mailtrap
-
-                // The email message data/variables that will be passed in to the email view
+                
                 $messageData = [
                     'name'   => $userDetails->name,   // the user's name that they entered while submitting the registration form
                     'mobile' => $userDetails->mobile, // the user's mobile that they entered while submitting the registration form
                     'email'  => $email,               // the user's email that they entered while submitting the registration form
-                                                      // 'code'   => base64_encode($data['email']) // We base64 code the user's $email and send it as a Route Parameter from user_confirmation.blade.php to the 'user/confirm/{code}' route in web.php, then it gets base64 decoded again in confirmUser() method in Front/UserController.php    // we will use the opposite: base64_decode() in the confirmAccount() method (encode X decode)
+                                                      
                 ];
-                \Illuminate\Support\Facades\Mail::send('emails.register', $messageData, function ($message) use ($email) { // Sending Mail: https://laravel.com/docs/9.x/mail#sending-mail    // 'emails.register' is the register.blade.php file inside the 'resources/views/emails' folder that will be sent as an email    // We pass in all the variables that register.blade.php will use    // https://www.php.net/manual/en/functions.anonymous.php
+                \Illuminate\Support\Facades\Mail::send('emails.register', $messageData, function ($message) use ($email) { 
                     $message->to($email)->subject('Welcome to Multi-vendor E-commerce Application');
                 });
 
@@ -195,7 +201,7 @@ class UserController extends Controller
         }
     }
 
-                                                       // User Forgot Password Functionality (this route is accessed from the <a> tag in front/users/login_register.blade.php through a 'GET' request, and through a 'POST' request when the HTML Form is submitted in front/users/forgot_password.blade.php))
+                                                      
     public function forgotPassword(Request $request)
     {
         if ($request->ajax()) {

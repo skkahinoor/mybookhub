@@ -43,7 +43,6 @@ class User extends Authenticatable
         'pincode',
         'profile_image',
         'role_id',
-        'confirm',
         'wallet_balance',
         'is_wallet_credited',
         'institution_classes_id'

@@ -41,7 +41,7 @@ class SellBookController extends Controller
             'request_status' => 'pending',
         ]);
 
-        return redirect()->route('user.sell-book.index')
+        return redirect()->route('student.sell-book.index')
             ->with('success_message', 'Your request to sell book has been submitted. Please wait for admin approval.');
     }
 
@@ -85,12 +85,12 @@ class SellBookController extends Controller
             ->firstOrFail();
 
         if ($request->request_status !== 'approved') {
-            return redirect()->route('user.sell-book.show', $id)
+            return redirect()->route('student.sell-book.show', $id)
                 ->with('error_message', 'Your request must be approved by admin before you can fill book details.');
         }
 
         if ($request->hasBookDetails()) {
-            return redirect()->route('user.sell-book.show', $id)
+            return redirect()->route('student.sell-book.show', $id)
                 ->with('info_message', 'Book details have already been submitted.');
         }
 
@@ -169,7 +169,7 @@ class SellBookController extends Controller
         $sellRequest->update($data);
     
         return redirect()
-            ->route('user.sell-book.show', $id)
+            ->route('student.sell-book.show', $id)
             ->with('success_message', 'Book details submitted successfully! Admin will review and update the status.');
     }
 }

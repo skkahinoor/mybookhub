@@ -560,7 +560,8 @@ class ProductsController extends Controller
         $avgRating = $ratingCount ? round($ratingSum / $ratingCount, 2) : 0;
         $avgStarRating = $ratingCount ? round($ratingSum / $ratingCount) : 0;
 
-        $totalUsers = User::role('user', 'web')->count();
+        // Front user statistics (front users are 'student')
+        $totalUsers = User::role('student', 'web')->count();
         $totalVendors = User::role('vendor', 'web')->count();
         $totalProducts = Product::where('status', 1)->count();
         $totalAuthors = Author::where('status', 1)->count();
@@ -1162,9 +1163,20 @@ class ProductsController extends Controller
             'block_id' => $user->block_id,
         ];
 
-        // Check if user has complete profile address before proceeding
-        if (empty($userAddress['address']) || empty($userAddress['country']) || empty($userAddress['state']) || empty($userAddress['city']) || empty($userAddress['pincode']) || empty($userAddress['mobile'])) {
-            return redirect('user/account')->with('error_message', 'Please update your delivery details in your profile before proceeding to checkout.');
+        // Check if user has complete profile address before proceeding.
+        // If not, stay on the shopping flow (cart) and just show an error popup,
+        // instead of redirecting them away to the account page.
+        if (
+            empty($userAddress['address']) ||
+            empty($userAddress['country']) ||
+            empty($userAddress['state']) ||
+            empty($userAddress['city']) ||
+            empty($userAddress['pincode']) ||
+            empty($userAddress['mobile'])
+        ) {
+            return redirect()
+                ->route('cart', ['condition' => $condition])
+                ->with('error_message', 'Please fill in your delivery address details in your profile before proceeding to checkout.');
         }
 
         // Calculating the Shipping Charges (depending on the 'country' of the user's Profile Address)

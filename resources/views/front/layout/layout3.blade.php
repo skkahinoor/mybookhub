@@ -265,7 +265,7 @@
                                                     style="font-size: 12px;">
                                                     <i class="fas fa-user" style="margin-right:8px;"></i> Login
                                                 </a> --}}
-                                                <a href="{{ route('user.login') }}"
+                                                <a href="{{ route('student.login') }}"
                                                     class="btn btn-primary btnhover">Login</a>
                                             </div>
                                             <div class="col" style="padding-left: 3px;">
@@ -274,14 +274,14 @@
                                                     style="font-size: 12px;">
                                                     <i class="fas fa-user-plus" style="margin-right:4px;"></i> Register
                                                 </a> --}}
-                                                <a href="{{ route('user.register') }}"
+                                                <a href="{{ route('student.register') }}"
                                                     class="btn btn-primary btnhover">Register</a>
                                             </div>
                                         </div>
                                     </li>
                                 @else
                                     <li class="nav-item me-3" style="display: flex; align-items: center;">
-                                        <a href="{{ route('user.wallet') }}"
+                                        <a href="{{ route('student.wallet') }}"
                                             style="display: flex; align-items: center; gap: 8px; color: #ff9900; font-weight: 700; background: #fff5e6; padding: 8px 16px; border-radius: 30px; border: 1px solid #ffe3b3; transition: all 0.3s ease; text-decoration: none;">
                                             <i class="fas fa-wallet" style="font-size: 1.1rem;"></i>
                                             <span>₹{{ Auth::user()->wallet_balance }}</span>
@@ -309,7 +309,7 @@
                                         </a>
                                         <div class="dropdown-menu py-0 dropdown-menu-end">
                                             <div class="dropdown-body">
-                                                <a href="{{ route('user.account') }}"
+                                                <a href="{{ route('student.account') }}"
                                                     class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
                                                     <div>
                                                         <svg xmlns="http://www.w3.org/2000/svg" height="20px"
@@ -321,7 +321,7 @@
                                                         <span class="ms-2">Profile</span>
                                                     </div>
                                                 </a>
-                                                <a href="{{ url('user/orders') }}"
+                                                <a href="{{ url('student/orders') }}"
                                                     class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
                                                     <div>
                                                         <svg xmlns="http://www.w3.org/2000/svg" height="20px"
@@ -454,7 +454,7 @@
                                 <!-- Mobile Header Icons (Visible on mobile/tablet only) -->
                                 <div class="mobile-nav-icons d-lg-none d-flex align-items-center gap-3">
                                     @if (Auth::check())
-                                        <a href="{{ route('user.wallet') }}"
+                                        <a href="{{ route('student.wallet') }}"
                                             style="color: #ff9900; font-weight: 700; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">
                                             <i class="fas fa-wallet"></i> ₹{{ Auth::user()->wallet_balance }}
                                         </a>
@@ -521,7 +521,7 @@
                                 {{-- When logged in: send to actual dashboard --}}
                                 @auth
                                     <li class="nav-item">
-                                        <a href="{{ route('user.index') }}" class="nav-link">
+                                        <a href="{{ route('student.index') }}" class="nav-link">
                                             <span>Dashboard</span>
                                         </a>
                                     </li>
@@ -740,7 +740,7 @@
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form id="loginForm" method="POST" action="{{ route('user.login') }}">
+                <form id="loginForm" method="POST" action="{{ route('student.login') }}">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="loginModalLabel">Login</h5>
@@ -774,7 +774,7 @@
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form id="registerForm" method="POST" action="{{ route('user.register') }}">
+                <form id="registerForm" method="POST" action="{{ route('student.register') }}">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="registerModalLabel">Register</h5>

@@ -22,7 +22,7 @@ class SubjectController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
-        $subjects = Subject::with('subcategory')->orderBy('id', 'desc')->get();
+        $subjects = Subject::orderBy('id', 'desc')->get();
         Session::put('page', 'subjects');
         $adminType = Auth::guard('admin')->user()->type;
         return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo', 'adminType'));

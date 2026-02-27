@@ -185,6 +185,8 @@ class WithdrawalApiController extends Controller
             'is_read' => false,
         ]);
 
+        $this->sendWithdrawRequestSMS($user->phone, $validated['amount']);
+
         return response()->json([
             'status' => true,
             'message' => 'Withdrawal request submitted successfully.'

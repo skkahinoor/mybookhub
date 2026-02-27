@@ -20,20 +20,20 @@ class User
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // If not logged in on the default/web guard, send to user login
-        if (!Auth::check()) {
-            return redirect()->route('user.login');
+        // If not logged in on the default/web guard, send to student login
+        if (! Auth::check()) {
+            return redirect()->route('student.login');
         }
 
-        // Optionally ensure this account is a normal 'user'
+        // Ensure this account is a front-facing student (legacy "user" is treated as student)
         $authUser = Auth::user();
-        if ($authUser->type !== 'user') {
+        if (! in_array($authUser->type, ['student', 'user'], true)) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('user.login')
-                ->with('error', 'You are not authorized to access the user area.');
+            return redirect()->route('student.login')
+                ->with('error', 'You are not authorized to access the student area.');
         }
 
         return $next($request);
