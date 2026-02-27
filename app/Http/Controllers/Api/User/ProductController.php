@@ -58,7 +58,7 @@ class ProductController extends Controller
 
     private function sqlSearch($request,$user,$limit,$page,$lat,$lng)
     {
-        $query = Product::with(['category', 'subcategory', 'vendor', 'section'])
+        $query = Product::with(['category', 'subcategory', 'vendor', 'section', 'subject'])
             ->select('products.*')
             ->join('products_attributes as pa', 'pa.product_id', '=', 'products.id')
             ->join('vendors as v', 'pa.vendor_id', '=', 'v.id')
@@ -226,7 +226,8 @@ class ProductController extends Controller
                     'category' => $product->category,
                     'subcategory' => $product->subcategory,
                     'vendor' => $product->vendor,
-                    'section' => $product->section
+                    'section' => $product->section,
+                    'subject' => $product->subject
                 ];
             })->items()
         ];
