@@ -61,6 +61,7 @@
 
                             {{-- Vendor Registration with OTP (similar to Sales) --}}
                             <form method="POST" action="{{ route('vendor.register.submit') }}" id="vendorRegisterForm">
+                                @csrf
                                 @if (!empty($inviteToken))
                                     <input type="hidden" name="invite_token" value="{{ $inviteToken }}">
                                 @endif

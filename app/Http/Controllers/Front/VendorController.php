@@ -36,7 +36,8 @@ class VendorController extends Controller
     public function vendorRegister(Request $request)
     {
         $condition = session('condition', 'new');
-
+        $checkrole = role('vendor', 'web')->id;
+        dd($checkrole);
         if (!in_array($condition, ['new', 'old'])) {
             $condition = 'new';
         }
@@ -66,50 +67,32 @@ class VendorController extends Controller
             DB::beginTransaction();
 
             // Create user first
-            $role = Role::where('name', 'vendor')->first();
+            // $role = Role::where('name', 'vendor')->first();
             $user = User::create([
                 'name'      => $data['name'],
                 'email'     => $data['email'],
                 'phone'     => $data['mobile'],
                 'password'  => bcrypt($data['password']),
-                'role_id'   => $role ? $role->id : null,
+                'role_id'   => role('vendor', 'web')->id,
                 'status'    => 0,
-                'confirm'   => 'No',
             ]);
 
-            if ($role) {
-                $user->assignRole($role);
-            }
+            // if ($role) {
+            //     $user->assignRole($role);
+            // }
 
             // Create vendor record with only vendor-specific fields
             $vendor = new Vendor;
             $vendor->user_id = $user->id;
             $vendor->location = $data['location'] ?? null;
-            $vendor->status = 0;
-            $vendor->confirm = 'No';
             date_default_timezone_set('Africa/Cairo');
             $vendor->created_at = date('Y-m-d H:i:s');
             $vendor->updated_at = date('Y-m-d H:i:s');
             $vendor->save();
 
 
-            // Send the Confirmation Email to the new vendor who has just registered
-            $email = $data['email']; // the vendor's email
-
-            // The email message data/variables that will be passed in to the email view
-            $messageData = [
-                'email' => $data['email'],
-                'name'  => $data['name'],
-                'code'  => base64_encode($data['email'])
-            ];
-
-            \Illuminate\Support\Facades\Mail::send('emails.vendor_confirmation', $messageData, function ($message) use ($email) {
-                $message->to($email)->subject('Confirm your Vendor Account');
-            });
-
-
             DB::commit();
-            $message = 'Thanks for registering as Vendor. Please confirm your email to activate your account.';
+            $message = 'Thanks for registering as Vendor. Please wait for admin approval to activate your account.';
             return redirect()->back()->with('success_message', $message);
         }
     }
@@ -218,47 +201,7 @@ class VendorController extends Controller
         ]);
     }
 
-    public function confirmVendor($email, Request $request)
-    {
-        $condition = session('condition', 'new');
 
-        $email = base64_decode($email);
-
-        // Find user by email
-        $user = User::where('email', $email)->first();
-
-        if (!$user) {
-            abort(404);
-        }
-
-        // Find vendor by user_id
-        $vendor = Vendor::where('user_id', $user->id)->first();
-
-        if (!$vendor) {
-            abort(404);
-        }
-
-        if ($vendor->confirm == 'Yes') { // if the vendor is already confirmed
-            // Redirect vendor to vendor Login/Register page with an 'error' message
-            $message = 'Your Vendor Account is already confirmed. You can login';
-            return redirect('vendor/login-register')->with('error_message', $message);
-        } else {
-            User::where('email', $email)->update(['confirm' => 'Yes']);
-            $vendor->update(['confirm' => 'Yes']);
-
-            $messageData = [
-                'email'  => $email,
-                'name'   => $user->name,
-                'mobile' => $user->phone
-            ];
-            \Illuminate\Support\Facades\Mail::send('emails.vendor_confirmed', $messageData, function ($message) use ($email) {
-                $message->to($email)->subject('You Vendor Account Confirmed');
-            });
-
-            $message = 'Your Vendor Email account is confirmed. You can login and add your personal, business and bank details to activate your Vendor Account to add products';
-            return redirect('vendor/login-register')->with('success_message', $message);
-        }
-    }
 
     public function showRegister(Request $request)
     {
@@ -365,8 +308,7 @@ class VendorController extends Controller
                     'email'   => $data['email'],
                     'mobile'  => $data['mobile'],
                     'location' => $data['location'],
-                    'confirm' => 'Yes',
-                    'status'  => isset($data['status']) ? 1 : 0,
+
                     'plan'    => $selectedPlan,
                     'plan_started_at' => now(),
                     'plan_expires_at' => ($selectedPlan === 'pro' && ($giveNewUsersProPlan || $isInvitePro)) ? now()->addDays($proPlanTrialDurationDays) : null,
@@ -382,7 +324,7 @@ class VendorController extends Controller
                     'email'    => $data['email'],
                     'phone'    => $data['mobile'],
                     'password' => Hash::make($data['password']),
-                    'role_id'  => $role ? $role->id : null,
+                    'role_id'  => $role->id,
                     'status'   => isset($data['status']) ? 1 : 0,
                     'added_by' => $data['ref'] ?? null,
                 ]);
@@ -410,8 +352,8 @@ class VendorController extends Controller
 
                 // Trial Pro plan (setting or invite) or Free plan - just redirect to login
                 $planMessage = $wasTrialProPlan
-                    ? "Vendor registered successfully! You have been given Pro plan access for {$proPlanTrialDurationDays} days."
-                    : 'Vendor registered successfully with Free plan!';
+                    ? "Vendor registered successfully! You have been given Pro plan access for {$proPlanTrialDurationDays} days. Please wait for admin approval before logging in."
+                    : 'Vendor registered successfully! Please wait for admin approval before logging in.';
 
                 return redirect('vendor/login')
                     ->with('success_message', $planMessage);

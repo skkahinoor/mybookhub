@@ -732,8 +732,6 @@ class AdminController extends Controller
             $adminUser = User::where('id', $data['admin_id'])->first();
 
             if ($adminUser->type == 'vendor' && $status == 1) {                        // if the `type` column value (in `admins` table) is 'vendor', and their `status` became 1 (got approved), send them a THIRD confirmation mail
-                Vendor::where('id', $adminUser->vendor_id)->update(['status' => $status]); //
-
                 // Commission payout to Sales Executive
                 $vendor = Vendor::find($adminUser->vendor_id);
                 if ($vendor) {
@@ -933,8 +931,6 @@ class AdminController extends Controller
                     'name' => $data['name'],
                     'email' => $data['email'],
                     'mobile' => $data['mobile'],
-                    'confirm' => 'Yes',
-                    'status' => isset($data['status']) ? 1 : 0,
                     'user_id' => $user->id, // LINK HERE
                 ];
                 Vendor::create($vendorData);

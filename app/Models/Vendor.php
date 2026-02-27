@@ -12,9 +12,7 @@ class Vendor extends Model
     protected $fillable = [
         'user_id',
         'location',
-        'confirm',
         'commission',
-        'status',
         'plan',
         'plan_started_at',
         'plan_expires_at',
