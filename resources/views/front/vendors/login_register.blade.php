@@ -1,4 +1,4 @@
-{{-- This page is accessed from Vendor Login tab in the drop-down menu in the header (in front/layout/header.blade.php) --}} 
+{{-- This page is accessed from Vendor Login tab in the drop-down menu in the header (in front/layout/header.blade.php) --}}
 @extends('front.layout.layout3')
 
 
@@ -27,33 +27,36 @@
 
 
 
-            {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}} 
+            {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
             {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
             {{-- Displaying Success Message --}}
-            @if (Session::has('success_message')) <!-- Check vendorRegister() method in Front/VendorController.php -->
+            @if (Session::has('success_message'))
+                <!-- Check vendorRegister() method in Front/VendorController.php -->
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <strong>Success:</strong> {{ Session::get('success_message') }}
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                        <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
             @endif
             {{-- Displaying Error Messages --}}
-            @if (Session::has('error_message')) <!-- Check vendorRegister() method in Front/VendorController.php -->
+            @if (Session::has('error_message'))
+                <!-- Check vendorRegister() method in Front/VendorController.php -->
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>Error:</strong> {{ Session::get('error_message') }}
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                        <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
             @endif
             {{-- Displaying Error Messages --}}
-            @if ($errors->any()) <!-- Check vendorRegister() method in Front/VendorController.php -->
+            @if ($errors->any())
+                <!-- Check vendorRegister() method in Front/VendorController.php -->
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>Error:</strong> @php echo implode('', $errors->all('<div>:message</div>')); @endphp
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                        <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
             @endif
@@ -68,8 +71,8 @@
                         <h6 class="account-h6 u-s-m-b-30">Welcome back! Sign in to your account.</h6>
 
 
-                        
-                        <form action="{{ url('admin/login') }}" method="post"> {{-- the same HTML Form as the one in the Admin Panel in admin/login.blade.php --}}
+
+                        <form action="{{ route('vendor.login') }}" method="post"> {{-- the same HTML Form as the one in the Admin Panel in admin/login.blade.php --}}
                             @csrf {{-- https://laravel.com/docs/9.x/csrf#preventing-csrf-requests --}}
 
 
@@ -77,13 +80,15 @@
                                 <label for="vendor-email">Email
                                     <span class="astk">*</span>
                                 </label>
-                                <input type="email" name="email" id="vendor-email" class="text-field" placeholder="Email">
+                                <input type="text" name="login" id="vendor-email" class="text-field"
+                                    placeholder="Email or Mobile">
                             </div>
                             <div class="u-s-m-b-30">
                                 <label for="vendor-password">Password
                                     <span class="astk">*</span>
                                 </label>
-                                <input type="password" name="password" id="vendor-password" class="text-field" placeholder="Password">
+                                <input type="password" name="password" id="vendor-password" class="text-field"
+                                    placeholder="Password">
                             </div>
                             <div class="m-b-45">
                                 <button class="button button-outline-secondary w-100">Login</button>
@@ -96,11 +101,12 @@
                 <div class="col-lg-6">
                     <div class="reg-wrapper">
                         <h2 class="account-h2 u-s-m-b-20">Register</h2>
-                        <h6 class="account-h6 u-s-m-b-30">Registering for this site allows you to access your order status and history.</h6>
+                        <h6 class="account-h6 u-s-m-b-30">Registering for this site allows you to access your order status
+                            and history.</h6>
 
 
 
-                        
+
                         <form id="vendorForm" action="{{ url('/vendor/register') }}" method="post">
                             @csrf
 
@@ -109,25 +115,29 @@
                                 <label for="vendorname">Name
                                     <span class="astk">*</span>
                                 </label>
-                                <input type="text" id="vendorname" class="text-field" placeholder="Vendor Name" name="name">
+                                <input type="text" id="vendorname" class="text-field" placeholder="Vendor Name"
+                                    name="name">
                             </div>
                             <div class="u-s-m-b-30">
                                 <label for="vendormobile">Mobile
                                     <span class="astk">*</span>
                                 </label>
-                                <input type="text" id="vendormobile" class="text-field" placeholder="Vendor Mobile" name="mobile">
+                                <input type="text" id="vendormobile" class="text-field" placeholder="Vendor Mobile"
+                                    name="mobile">
                             </div>
                             <div class="u-s-m-b-30">
                                 <label for="vendoremail">Email
                                     <span class="astk">*</span>
                                 </label>
-                                <input type="email" id="vendoremail" class="text-field" placeholder="Vendor Email" name="email">
+                                <input type="email" id="vendoremail" class="text-field" placeholder="Vendor Email"
+                                    name="email">
                             </div>
                             <div class="u-s-m-b-30">
                                 <label for="vendorpassword">Password
                                     <span class="astk">*</span>
                                 </label>
-                                <input type="password" id="vendorpassword" class="text-field" placeholder="Vendor Password" name="password">
+                                <input type="password" id="vendorpassword" class="text-field" placeholder="Vendor Password"
+                                    name="password">
                             </div>
 
                             <div class="u-s-m-b-30"> {{-- "I've read and accept the terms & conditions" Checkbox --}}

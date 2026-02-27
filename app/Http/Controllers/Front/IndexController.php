@@ -157,7 +157,7 @@ class IndexController extends Controller
         $meta_description = 'The cross platform where students meets their career through books.';
         $meta_keywords    = 'eshop website, online shopping, multi vendor e-commerce';
 
-        // Get total user count for dynamic statistics (front users are 'student')
+        // Get total user count for dynamic statistics
         $totalUsers = User::role('student', 'web')->count();
 
         // Get total vendor count for dynamic statistics

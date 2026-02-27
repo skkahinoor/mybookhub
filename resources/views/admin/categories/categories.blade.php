@@ -37,8 +37,8 @@
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Category Name</th>
-                                            <th>Parent Category</th> {{-- Through the relationship --}}
+                                            <th>Icon</th>
+                                            <th>Board Name</th>
                                             <th>Parent Section</th> {{-- Through the relationship --}}
                                             <th>URL</th>
                                             <th>Status</th>
@@ -55,40 +55,49 @@
                                             @endif
                                             <tr>
                                                 <td>{{ __($key + 1) }}</td>
+                                                <td>
+                                                    @if (!empty($category['category_icon']))
+                                                        <img src="{{ asset('admin/images/category_icons/' . $category['category_icon']) }}"
+                                                            style="width: 50px; height: 50px;">
+                                                    @else
+                                                        No Icon
+                                                    @endif
+                                                </td>
                                                 <td>{{ $category['category_name'] }}</td>
-                                                <td>{{ $parent_category }}</td> {{-- Through the relationship --}}
                                                 <td>{{ $category['section']['name'] ?? 'N/A' }}</td>
                                                 <td>{{ $category['url'] }}</td>
                                                 <td>
                                                     @if ($adminType === 'vendor')
-                                                        <a class="updateCategoryStatus"
-                                                           id="category-{{ $category['id'] }}"
-                                                           category_id="{{ $category['id'] }}"
-                                                           data-url="{{ route('vendor.updatecategorystatus') }}"
-                                                           href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                        <a class="updateCategoryStatus" id="category-{{ $category['id'] }}"
+                                                            category_id="{{ $category['id'] }}"
+                                                            data-url="{{ route('vendor.updatecategorystatus') }}"
+                                                            href="javascript:void(0)">
+                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                status="Active"></i>
                                                         </a>
                                                     @else
                                                         @if ($category['status'] == 1)
                                                             <a class="updateCategoryStatus"
-                                                               id="category-{{ $category['id'] }}"
-                                                               category_id="{{ $category['id'] }}"
-                                                               data-url="{{ route('admin.updatecategorystatus') }}"
-                                                               href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                                id="category-{{ $category['id'] }}"
+                                                                category_id="{{ $category['id'] }}"
+                                                                data-url="{{ route('admin.updatecategorystatus') }}"
+                                                                href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                    status="Active"></i>
                                                             </a>
                                                         @else
                                                             <a class="updateCategoryStatus"
-                                                               id="category-{{ $category['id'] }}"
-                                                               category_id="{{ $category['id'] }}"
-                                                               data-url="{{ route('admin.updatecategorystatus') }}"
-                                                               href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>
+                                                                id="category-{{ $category['id'] }}"
+                                                                category_id="{{ $category['id'] }}"
+                                                                data-url="{{ route('admin.updatecategorystatus') }}"
+                                                                href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
+                                                                    status="Inactive"></i>
                                                             </a>
                                                         @endif
                                                     @endif
                                                 </td>
-                                                
+
                                                 <td>
                                                     <a href="{{ url('admin/add-edit-category/' . $category['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>

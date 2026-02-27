@@ -11,6 +11,9 @@ use App\Models\InstitutionManagement;
 use App\Models\State;
 use App\Models\Notification;
 use App\Models\SalesExecutive;
+use App\Models\Section;
+use App\Models\Category;
+use App\Models\Subcategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -34,7 +37,20 @@ class InstitutionManagementController extends Controller
     {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        return view('sales.institution_managements.create', compact('logos', 'headerLogo'));
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'College',
+                'College Book',
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
+            ])->get();
+        return view('sales.institution_managements.create', compact('logos', 'headerLogo', 'sections'));
     }
 
     public function store(Request $request)
@@ -55,10 +71,10 @@ class InstitutionManagementController extends Controller
             'pincode'        => 'required|string|max:10',
         ];
 
-        // Require classes/streams array for all institution types that use it
-        if (in_array($request->input('type'), ['school', 'college', 'university'], true)) {
+        // Automatically require classes if present
+        if ($request->has('classes') && is_array($request->classes)) {
             $validationRules['classes']              = 'required|array|min:1';
-            $validationRules['classes.*.class_name'] = 'required|string|max:255';
+            $validationRules['classes.*.sub_category_id'] = 'required|integer';
             $validationRules['classes.*.strength']   = 'required|integer|min:1';
         }
 
@@ -71,13 +87,13 @@ class InstitutionManagementController extends Controller
 
         $institution = InstitutionManagement::create($data);
 
-        // Handle institution classes/streams (same structure for all types)
+        // Handle institution classes
         if ($request->has('classes') && is_array($request->classes)) {
             foreach ($request->classes as $classData) {
-                if (! empty($classData['class_name']) && ! empty($classData['strength'])) {
+                if (! empty($classData['sub_category_id']) && ! empty($classData['strength'])) {
                     $institution->institutionClasses()->create([
-                        'class_name'     => $classData['class_name'], // can be class or stream name
-                        'total_strength' => $classData['strength'],
+                        'sub_category_id' => $classData['sub_category_id'],
+                        'total_strength'  => $classData['strength'],
                     ]);
                 }
             }
@@ -95,7 +111,6 @@ class InstitutionManagementController extends Controller
 
         return redirect()->route('sales.institution_managements.index')
             ->with('success_message', 'Institution has been added successfully');
-        return view('sales.institution_managements.index', compact('logos', 'headerLogo'));
     }
 
     public function show($id)
@@ -116,11 +131,23 @@ class InstitutionManagementController extends Controller
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $institution = InstitutionManagement::with(['institutionClasses', 'country', 'state', 'district', 'block'])->findOrFail($id);
-        if (! $institution) {
-            return response()->json(['error' => 'Institution not found'], 404);
-        }
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'College',
+                'College Book',
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
+            ])->get();
+        $categories = Category::where('status', 1)->get();
+        $subcategories = Subcategory::where('status', 1)->get();
 
-        return view('sales.institution_managements.edit')->with(compact('institution', 'logos', 'headerLogo'));
+        return view('sales.institution_managements.edit')->with(compact('institution', 'logos', 'headerLogo', 'sections', 'categories', 'subcategories'));
     }
 
     public function update(Request $request, $id)
@@ -135,17 +162,15 @@ class InstitutionManagementController extends Controller
             'contact_number' => 'required|string|max:20',
             'district_id'    => 'required|string|max:255',
             'block_id'       => 'nullable|string|max:255',
-            // 'city_id' => 'required|string|max:255',
             'state_id'       => 'required|string|max:255',
             'pincode'        => 'required|string|max:10',
             'country_id'     => 'required|string|max:255',
-            // 'status' => 'boolean',
         ];
 
-        // Require classes/streams array for all institution types that use it
-        if (in_array($request->input('type'), ['school', 'college', 'university'], true)) {
+        // Automatically require classes if present
+        if ($request->has('classes') && is_array($request->classes)) {
             $validationRules['classes']              = 'required|array|min:1';
-            $validationRules['classes.*.class_name'] = 'required|string|max:255';
+            $validationRules['classes.*.sub_category_id'] = 'required|integer';
             $validationRules['classes.*.strength']   = 'required|integer|min:1';
         }
 
@@ -153,8 +178,6 @@ class InstitutionManagementController extends Controller
         $data['block_id'] = $this->prepareBlockId($data['block_id'] ?? null, $data['district_id'] ?? null);
 
         $institution = InstitutionManagement::findOrFail($id);
-
-        // $data['status'] = $request->status;
 
         $institution->update($data);
 
@@ -165,77 +188,71 @@ class InstitutionManagementController extends Controller
 
             // Add new classes
             foreach ($request->classes as $classData) {
-                if (! empty($classData['class_name']) && ! empty($classData['strength'])) {
+                if (! empty($classData['sub_category_id']) && ! empty($classData['strength'])) {
                     $institution->institutionClasses()->create([
-                        'class_name'     => $classData['class_name'],
-                        'total_strength' => $classData['strength'],
+                        'sub_category_id' => $classData['sub_category_id'],
+                        'total_strength'  => $classData['strength'],
                     ]);
                 }
             }
         }
 
         return redirect('sales/institution-managements')->with('success_message', 'Institution has been updated successfully');
-        return view('sales/institution-managements', compact('logos', 'headerLogo'));
     }
 
     public function destroy($id)
     {
-        $logos = HeaderLogo::first();
-        $headerLogo = HeaderLogo::first();
         $institution = InstitutionManagement::findOrFail($id);
         $institution->delete();
 
-        return redirect('sales/institution-managements')->with('success_message', 'Institution has been deleted successfully', compact('logos', 'headerLogo'));
+        return redirect('sales/institution-managements')->with('success_message', 'Institution has been deleted successfully');
+    }
+
+    public function getSections()
+    {
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'College',
+                'College Book',
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
+            ])->get(['id', 'name']);
+        return response()->json($sections);
+    }
+
+    public function getCategories(Request $request)
+    {
+        $section_id = $request->input('section_id');
+        $categories = Category::where('status', 1);
+        if ($section_id) {
+            $categories->where('section_id', $section_id);
+        }
+        return response()->json($categories->get(['id', 'category_name']));
     }
 
     public function getClasses(Request $request)
     {
-        $type = $request->input('type');
-
-        if ($type === 'school') {
-            $classes = [
-                'Nursery',
-                'LKG',
-                'UKG',
-                'Class 1',
-                'Class 2',
-                'Class 3',
-                'Class 4',
-                'Class 5',
-                'Class 6',
-                'Class 7',
-                'Class 8',
-                'Class 9',
-                'Class 10',
-                'Class 11',
-                'Class 12',
-            ];
-        } else {
-            $classes = [];
-        }
-
-        return response()->json($classes);
+        $subcategories = Subcategory::where('status', 1)->get(['id', 'subcategory_name']);
+        return response()->json($subcategories);
     }
 
     public function getLocationData(Request $request)
     {
         $pincode = $request->input('pincode');
-
-        // Sample location data based on pincode patterns - you can replace this with actual API calls or database queries
         $locationData = [
             'block'    => 'Central Block',
             'district' => 'Sample District',
-            // 'city' => 'Sample City',
             'state'    => 'Sample State',
             'country'  => 'India',
         ];
 
-        // You can implement actual location lookup here
-        // For example, using a postal code API like India Post API or database lookup
-        // For now, we'll provide sample data based on pincode patterns
-
         if ($pincode) {
-            // Simple pincode-based location mapping (you can expand this)
             $pincodeData = [
                 '110001' => ['block' => 'New Delhi Block', 'district' => 'New Delhi', 'state' => 'Delhi'],
                 '400001' => ['block' => 'Mumbai Block', 'district' => 'Mumbai', 'state' => 'Maharashtra'],
@@ -264,7 +281,6 @@ class InstitutionManagementController extends Controller
     public function getStates(Request $request)
     {
         $countryId = $request->input('country');
-
         $states = State::where('country_id', $countryId)
             ->where('status', true)
             ->pluck('name', 'id')
@@ -276,7 +292,6 @@ class InstitutionManagementController extends Controller
     public function getDistricts(Request $request)
     {
         $stateId = $request->input('state');
-
         $districts = District::where('state_id', $stateId)
             ->where('status', true)
             ->pluck('name', 'id')
@@ -288,7 +303,6 @@ class InstitutionManagementController extends Controller
     public function getBlocks(Request $request)
     {
         $districtId = $request->input('district');
-
         $blocks = Block::where('district_id', $districtId)
             ->where('status', true)
             ->pluck('name', 'id')

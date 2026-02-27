@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\CatalogueController;
 use App\Http\Controllers\Api\VendorPlanController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SalesVendorController;
+use App\Http\Controllers\Api\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +54,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/states/{country_id}', [InstitutionController::class, 'getStates']);
     Route::get('/districts/{state_id}', [InstitutionController::class, 'getDistricts']);
     Route::get('/blocks/{district_id}', [InstitutionController::class, 'getBlocks']);
+    Route::get('/institutionType', [InstitutionController::class, 'getSection']);
+    Route::get('/Board/{type_id}', [InstitutionController::class, 'getCategoriesBySection']);
+    Route::get('/class', [InstitutionController::class, 'getSubcategories']);
 
     Route::get('/institutions', [InstitutionController::class, 'index']);
     Route::post('/institutions', [InstitutionController::class, 'store']);
@@ -63,6 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 // Student
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/institution-boards/{id}', [StudentApiController::class, 'getBoards']);
+    Route::post('/institution-classes', [StudentApiController::class, 'getClasses']);
     Route::get('/students', [StudentApiController::class, 'index']);
     Route::post('/students', [StudentApiController::class, 'store']);
     Route::put('/students/{id}', [StudentApiController::class, 'update']);
@@ -95,6 +101,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sales/report', [SalesReportController::class, 'getSalesReport']);
     Route::get('/sales/withdrawal-dashboard', [WithdrawalApiController::class, 'dashboard']);
     Route::post('/sales/withdraw-request', [WithdrawalApiController::class, 'requestWithdraw']);
+    Route::get('/sales/transactions', [WithdrawalApiController::class, 'transactions']);
+   
 });
 
 // Vendor Profile Management
@@ -167,6 +175,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('vendor/book-requests/{id}', [CatalogueController::class, 'deleteBookRequest']);
     // Route::patch('vendor/book-requests/{id}/status', [CatalogueController::class, 'updateBookRequestStatus']);
     Route::put('vendor/book-requests/{id}/reply', [CatalogueController::class, 'replyBookRequest']);
+
+    Route::get('vendor/book-type', [CatalogueController::class, 'getType']);
 
     Route::get('/vendor/products', [BookController::class, 'getproduct']);
     Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);

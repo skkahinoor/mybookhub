@@ -36,8 +36,8 @@ class SubjectController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
-        $categories = Category::where('status', 1)->get()->toArray();
-        return view('admin.subject.add_subject', compact('logos', 'headerLogo', 'adminType', 'categories'));
+        $subcategories = Subcategory::where('status', 1)->get()->toArray();
+        return view('admin.subject.add_subject', compact('logos', 'headerLogo', 'adminType', 'subcategories'));
     }
 
     public function store(Request $request)
@@ -49,11 +49,27 @@ class SubjectController extends Controller
         $logos = HeaderLogo::first();
         $request->validate([
             'name' => 'required|string|max:255',
-            'subcategory_id' => 'required',
+            'subject_icon' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
         ]);
+
+        $subject_icon = null;
+        if ($request->hasFile('subject_icon')) {
+            $image_tmp = $request->file('subject_icon');
+            if ($image_tmp->isValid()) {
+                $extension = $image_tmp->getClientOriginalExtension();
+                $imageName = time() . '_' . rand(111, 99999) . '.' . $extension;
+                $uploadPath = public_path('admin/images/subject_icons/');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                $image_tmp->move($uploadPath, $imageName);
+                $subject_icon = $imageName;
+            }
+        }
+
         $store = Subject::create([
             'name' => $request->name,
-            'subcategory_id' => $request->subcategory_id,
+            'subject_icon' => $subject_icon,
         ]);
 
         return redirect()->back()->with('success', 'Subject inserted successfully');
@@ -68,14 +84,9 @@ class SubjectController extends Controller
         $logos = HeaderLogo::first();
         $subjects = Subject::find($id);
         $adminType = Auth::guard('admin')->user()->type;
-        $categories = Category::where('status', 1)->get()->toArray();
-        $subcategories = [];
-        if ($subjects->subcategory_id) {
-            $subcat = Subcategory::find($subjects->subcategory_id);
-            $subjects->category_id = $subcat->category_id;
-            $subcategories = Subcategory::where('category_id', $subcat->category_id)->get()->toArray();
-        }
-        return view('admin.subject.edit_subject', compact('subjects', 'logos', 'headerLogo', 'adminType', 'categories', 'subcategories'));
+        $subcategories = Subcategory::where('status', 1)->get()->toArray();
+        
+        return view('admin.subject.edit_subject', compact('subjects', 'logos', 'headerLogo', 'adminType', 'subcategories'));
     }
 
     public function update(Request $request)
@@ -87,15 +98,37 @@ class SubjectController extends Controller
         $logos = HeaderLogo::first();
         $request->validate([
             'name' => 'required|string|max:255',
-            'subcategory_id' => 'required',
+            'subject_icon' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
         ]);
         $update = Subject::find($request->id);
+
+        $subject_icon = $update->subject_icon;
+        if ($request->hasFile('subject_icon')) {
+            $image_tmp = $request->file('subject_icon');
+            if ($image_tmp->isValid()) {
+                // Delete old icon if exists
+                if (!empty($update->subject_icon)) {
+                    $oldPath = public_path('admin/images/subject_icons/' . $update->subject_icon);
+                    if (file_exists($oldPath)) {
+                        unlink($oldPath);
+                    }
+                }
+                $extension = $image_tmp->getClientOriginalExtension();
+                $imageName = time() . '_' . rand(111, 99999) . '.' . $extension;
+                $uploadPath = public_path('admin/images/subject_icons/');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                $image_tmp->move($uploadPath, $imageName);
+                $subject_icon = $imageName;
+            }
+        }
+
         $update->update([
             'name' => $request->name,
-            'subcategory_id' => $request->subcategory_id,
+            'subject_icon' => $subject_icon,
         ]);
         return redirect()->route('admin.subject')->with('success', 'Subject updated successfully');
-        return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));
     }
 
     public function delete($id)
@@ -103,12 +136,21 @@ class SubjectController extends Controller
         if (!Auth::guard('admin')->user()->can('delete_subjects')) {
             abort(403, 'Unauthorized action.');
         }
-        $headerLogo = HeaderLogo::first();
-        $logos = HeaderLogo::first();
-        $delete = Subject::find($id);
-        $delete->delete();
-        return redirect()->back()->with('success', 'Subject deleted successfully', 'logos');
-        return view('admin.subject.subject', compact('subjects', 'logos', 'headerLogo'));
+
+        $subject = Subject::find($id);
+
+        // If subject not found, just redirect with an error instead of 404
+        if (!$subject) {
+            return redirect()
+                ->route('admin.subject')
+                ->with('error', 'Subject not found or already deleted.');
+        }
+
+        $subject->delete();
+
+        return redirect()
+            ->route('admin.subject')
+            ->with('success', 'Subject deleted successfully');
     }
 
 

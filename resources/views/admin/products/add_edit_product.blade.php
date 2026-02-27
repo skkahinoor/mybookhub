@@ -396,6 +396,18 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
+                                    <label for="book_type_id">Select Book Type</label>
+                                    <select name="book_type_id" id="book_type_id" class="form-control text-dark">
+                                        <option value="">Select Book Type</option>
+                                        @foreach ($bookTypes as $bt)
+                                            <option value="{{ $bt['id'] }}"
+                                                @if (!empty($product['book_type_id']) && $product['book_type_id'] == $bt['id']) selected @endif>
+                                                {{ $bt['book_type'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group">
                                     <label for="authors">Select Authors</label>
                                     <small class="text-muted">(Search and select multiple authors.)</small>
 
@@ -631,7 +643,7 @@
             $("#product_name, #product_price, #description")
                 .prop("readonly", state);
 
-            $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id")
+            $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id")
                 .toggleClass("readonly-select", state);
 
             $("#authors-select")
@@ -674,6 +686,7 @@
                     $("#publisher_id").val(d.publisher_id || '');
                     $("#subject_id").val(d.subject_id || '');
                     $("#edition_id").val(d.edition_id || '');
+                    $("#book_type_id").val(d.book_type_id || '');
 
                     // authors (SAFE CHECK)
                     if (Array.isArray(d.author_ids) && typeof authors !== 'undefined') {
@@ -706,7 +719,7 @@
                     setReadonly(false);
 
                     $("#product_name, #product_price, #description").val('');
-                    $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id").val('');
+                    $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id").val('');
                     $("#isbnImagePreview").html('');
 
                     alert("No book found for this ISBN. Please enter all details manually.");

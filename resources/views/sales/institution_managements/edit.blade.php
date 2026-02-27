@@ -1,272 +1,283 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <div class="container-fluid">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Custom CSS for enhanced styling -->
-    <style>
-       .page-header {
-    background: #274472;
-    color: #fff;
-    padding: 32px 30px;
-    border-radius: 12px;
-    margin-bottom: 32px;
-    box-shadow: 0 6px 22px rgba(39,68,114,0.10);
-}
-.form-container {
-    background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 4px 18px rgba(60,72,100,0.11);
-    padding: 32px 30px;
-    margin-bottom: 28px;
-}
-.page-title {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0 0 8px 0;
-    letter-spacing: 0.02em;
-}
-.page-subtitle {
-    font-size: 1rem;
-    color: #dde3ec;
-    margin: 0;
-}
+        <style>
+            .page-header {
+                background: #274472;
+                color: #fff;
+                padding: 32px 30px;
+                border-radius: 12px;
+                margin-bottom: 32px;
+                box-shadow: 0 6px 22px rgba(39, 68, 114, 0.10);
+            }
 
-.form-label {
-    font-weight: 600;
-    color: #274472;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.form-control {
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    padding: 11px 16px;
-    font-size: 0.97rem;
-    transition: border-color 0.16s;
-    background: #fbfcfd;
-    color: #274472;
-}
-.form-control:focus {
-    border-color: #274472;
-    box-shadow: 0 0 6px rgba(39,68,114,0.11);
-    background: #fff;
-}
-.form-group {
-    margin-bottom: 26px;
-}
-.form-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-}
-.form-icon {
-    color: #25836e;
-    width: 16px;
-}
+            .form-container {
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 18px rgba(60, 72, 100, 0.11);
+                padding: 32px 30px;
+                margin-bottom: 28px;
+            }
 
-.required {
-    color: #d13e3e;
-}
+            .page-title {
+                font-size: 2rem;
+                font-weight: 700;
+                margin: 0 0 8px 0;
+                letter-spacing: 0.02em;
+            }
 
-.error-message {
-    color: #d13e3e;
-    font-size: 0.89rem;
-    margin-top: 5px;
-}
+            .page-subtitle {
+                font-size: 1rem;
+                color: #dde3ec;
+                margin: 0;
+            }
 
-.btn-submit, .btn-cancel {
-    font-weight: 600;
-    border-radius: 8px;
-    padding: 11px 28px;
-    border: none;
-    transition: all 0.23s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 1rem;
-    cursor: pointer;
-}
-.btn-submit {
-    background: #25836e;
-    color: #fff;
-    box-shadow: 0 3px 18px rgba(37, 131, 110, 0.09);
-}
-.btn-submit:hover {
-    background: #176276;
-    box-shadow: 0 7px 26px rgba(37, 131, 110, 0.15);
-}
-.btn-cancel {
-    background: #dde3ec;
-    color: #274472;
-    border: 1px solid #ced5de;
-    margin-right: 12px;
-}
-.btn-cancel:hover {
-    background: #b7c7e2;
-    color: #274472;
-    text-decoration: none;
-}
+            .form-label {
+                font-weight: 600;
+                color: #274472;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
 
+            .form-control {
+                border: 2px solid #e9ecef;
+                border-radius: 8px;
+                padding: 11px 16px;
+                font-size: 0.97rem;
+                transition: border-color 0.16s;
+                background: #fbfcfd;
+                color: #274472;
+            }
 
-.class-item {
-    background: #f8f9fa;
-    border: 2px solid #e9ecef !important;
-}
+            .form-control:focus {
+                border-color: #274472;
+                box-shadow: 0 0 6px rgba(39, 68, 114, 0.11);
+                background: #fff;
+            }
 
-.class-item label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #274472;
-    margin-bottom: 5px;
-}
+            .form-group {
+                margin-bottom: 26px;
+            }
 
-#add-class-btn {
-    background: #25836e;
-    color: #fff;
-    border: none;
-}
+            .form-row {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+            }
 
-#add-class-btn:hover {
-    background: #176276;
-}
+            .form-icon {
+                color: #25836e;
+                width: 16px;
+            }
 
-.remove-class-btn {
-    background: #dc3545;
-    color: #fff;
-    border: none;
-}
+            .required {
+                color: #d13e3e;
+            }
 
-.remove-class-btn:hover {
-    background: #c82333;
-}
+            .error-message {
+                color: #d13e3e;
+                font-size: 0.89rem;
+                margin-top: 5px;
+            }
 
-/* Responsive tweaks for mobile devices */
-@media (max-width: 576px) {
-    .form-row {
-        grid-template-columns: 1fr;
-        gap: 0;
-    }
-    .form-container, .page-header {
-        padding: 20px 10px;
-    }
-    .page-title { font-size: 1.3rem; }
-}
+            .btn-submit,
+            .btn-cancel {
+                font-weight: 600;
+                border-radius: 8px;
+                padding: 11px 28px;
+                border: none;
+                transition: all 0.23s;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 1rem;
+                cursor: pointer;
+            }
 
+            .btn-submit {
+                background: #25836e;
+                color: #fff;
+                box-shadow: 0 3px 18px rgba(37, 131, 110, 0.09);
+            }
 
-    </style>
+            .btn-submit:hover {
+                background: #176276;
+                box-shadow: 0 7px 26px rgba(37, 131, 110, 0.15);
+            }
 
-    <div class="row">
-        <div class="col-12">
-            <div class="page-header">
-                <h1 class="page-title">
-                    <i class="fas fa-edit"></i>
-                    Edit Institution
-                </h1>
-                <p class="page-subtitle">Update institution information</p>
-            </div>
+            .btn-cancel {
+                background: #dde3ec;
+                color: #274472;
+                border: 1px solid #ced5de;
+                margin-right: 12px;
+            }
 
-            @if($errors->any())
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <strong>Please fix the following errors:</strong>
-                    <ul class="mb-0 mt-2">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+            .btn-cancel:hover {
+                background: #b7c7e2;
+                color: #274472;
+                text-decoration: none;
+            }
+
+            .class-item {
+                background: #f8f9fa;
+                border: 2px solid #e9ecef !important;
+            }
+
+            .class-item label {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: #274472;
+                margin-bottom: 5px;
+            }
+
+            #add-class-btn {
+                background: #25836e;
+                color: #fff;
+                border: none;
+            }
+
+            #add-class-btn:hover {
+                background: #176276;
+            }
+
+            .remove-class-btn {
+                background: #dc3545;
+                color: #fff;
+                border: none;
+            }
+
+            .remove-class-btn:hover {
+                background: #c82333;
+            }
+
+            @media (max-width: 576px) {
+                .form-row {
+                    grid-template-columns: 1fr;
+                    gap: 0;
+                }
+
+                .form-container,
+                .page-header {
+                    padding: 20px 10px;
+                }
+
+                .page-title {
+                    font-size: 1.3rem;
+                }
+            }
+        </style>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        <i class="fas fa-edit"></i>
+                        Edit Institution
+                    </h1>
+                    <p class="page-subtitle">Update institution information</p>
                 </div>
-            @endif
 
-            <div class="form-container">
-                <form method="post" action="{{ url('sales/institution-managements/'.$institution->id) }}">
-                    @csrf
-                    @method('PUT')
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-school form-icon"></i>
-                                Institution Name <span class="required">*</span>
-                            </label>
-                            <input type="text" name="name" class="form-control" value="{{ old('name', $institution->name) }}" placeholder="Enter institution name" required>
-                            @error('name')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-building form-icon"></i>
-                                Institution Type <span class="required">*</span>
-                            </label>
-                            <select name="type" class="form-control" required>
-                                <option value="">Select Type</option>
-                                <option value="school" {{ (old('type', $institution->type) == 'school') ? 'selected' : '' }}>School</option>
-                                <option value="college" {{ (old('type', $institution->type) == 'college') ? 'selected' : '' }}>College</option>
-                                <option value="university" {{ (old('type', $institution->type) == 'university') ? 'selected' : '' }}>University</option>
-                            </select>
-                            @error('type')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
+                @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <strong>Please fix the following errors:</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </div>
+                @endif
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-certificate form-icon"></i>
-                                Board <span class="required">*</span>
-                            </label>
-                            <select name="board" class="form-control" required>
-                                <option value="">Select Board</option>
-                                <option value="CBSE" {{ (old('board', $institution->board) == 'CBSE') ? 'selected' : '' }}>CBSE</option>
-                                <option value="ICSE" {{ (old('board', $institution->board) == 'ICSE') ? 'selected' : '' }}>ICSE</option>
-                                <option value="State Board" {{ (old('board', $institution->board) == 'State Board') ? 'selected' : '' }}>State Board</option>
-                                <option value="Other" {{ (old('board', $institution->board) == 'Other') ? 'selected' : '' }}>Other</option>
-                            </select>
-                            @error('board')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-user form-icon"></i>
-                                Principal Name<span class="required">*</span>
-                            </label>
-                            <input type="text" name="principal_name" class="form-control" value="{{ old('principal_name', $institution->principal_name) }}" placeholder="Enter principal name" required>
-                            @error('principal_name')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
+                <div class="form-container">
+                    <form method="post" action="{{ url('sales/institution-managements/' . $institution->id) }}">
+                        @csrf
+                        @method('PUT')
+
+                        {{-- ── Row 1: Name + Type ── --}}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-school form-icon"></i>
+                                    Institution Name <span class="required">*</span>
+                                </label>
+                                <input type="text" name="name" class="form-control"
+                                    value="{{ old('name', $institution->name) }}" placeholder="Enter institution name"
+                                    required>
+                                @error('name')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-building form-icon"></i>
+                                    Institution Type <span class="required">*</span>
+                                </label>
+                                <select name="type" class="form-control" id="type-select" required>
+                                    <option value="">Select Type</option>
+                                    @foreach ($sections as $section)
+                                        <option value="{{ $section->id }}"
+                                            {{ old('type', $institution->type) == $section->id ? 'selected' : '' }}>
+                                            {{ $section->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('type')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
 
-                        <div class="form-group" id="class-field" style="display: none;">
-                            <label class="form-label">
-                                <i class="fas fa-layer-group form-icon"></i>
-                                Add <span id="class-stream-label">Class</span> with Strength
-                            </label>
-                            <div id="class-list-container">
-                                @if($institution->institutionClasses && $institution->institutionClasses->count() > 0)
-                                    @foreach($institution->institutionClasses as $index => $instClass)
-                                        <div class="class-item mb-3 p-3 border rounded" data-index="{{ $index }}">
+                        {{-- ── Row 2: Board + Classes ── --}}
+                        <div class="form-row">
+                            <div class="form-group" id="board-field" style="display: none;">
+                                <label class="form-label">
+                                    <i class="fas fa-certificate form-icon"></i>
+                                    Board <span class="required">*</span>
+                                </label>
+                                <select name="board" class="form-control" id="board-select" required>
+                                    <option value="">Select Board</option>
+                                </select>
+                                @error('board')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group" id="class-field" style="display: none;">
+                                <label class="form-label">
+                                    <i class="fas fa-layer-group form-icon"></i>
+                                    Add Class with Strength
+                                </label>
+                                <div id="class-list-container">
+                                    {{-- Existing classes pre-rendered; JS will replace selects with real options --}}
+                                    @foreach ($institution->institutionClasses as $idx => $instClass)
+                                        <div class="class-item mb-3 p-3 border rounded" data-index="{{ $idx }}">
                                             <div class="row">
                                                 <div class="col-md-5">
-                                                    <label class="class-stream-name-label">Class Name</label>
-                                                    <select name="classes[{{ $index }}][class_name]"
-                                                            class="form-control class-select"
-                                                            data-selected="{{ $instClass->class_name }}"
-                                                            required>
+                                                    <label>Subcategory (Class)</label>
+                                                    <select name="classes[{{ $idx }}][sub_category_id]"
+                                                        class="form-control class-select preloaded-class"
+                                                        data-selected="{{ $instClass->sub_category_id }}" required>
+                                                        {{-- Options filled by JS after board loads --}}
+                                                        <option value="{{ $instClass->sub_category_id }}">
+                                                            {{ optional($instClass->subcategory)->subcategory_name ?? 'Class #' . $instClass->sub_category_id }}
+                                                        </option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-5">
                                                     <label>Total Strength</label>
-                                                    <input type="number" name="classes[{{ $index }}][strength]" class="form-control" value="{{ $instClass->total_strength }}" min="1" required>
+                                                    <input type="number" name="classes[{{ $idx }}][strength]"
+                                                        class="form-control" value="{{ $instClass->total_strength }}"
+                                                        min="1" required>
                                                 </div>
                                                 <div class="col-md-2 d-flex align-items-end">
                                                     <button type="button" class="btn btn-danger btn-sm remove-class-btn">
@@ -276,214 +287,236 @@
                                             </div>
                                         </div>
                                     @endforeach
-                                @endif
+                                </div>
+                                <button type="button" class="btn btn-success btn-sm mt-2" id="add-class-btn">
+                                    <i class="fas fa-plus"></i> Add Class
+                                </button>
+                                @error('classes')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
                             </div>
-                            <button type="button" class="btn btn-success btn-sm mt-2" id="add-class-btn">
-                                <i class="fas fa-plus"></i> <span id="add-class-btn-text">Add Class</span>
+                        </div>
+
+                        {{-- ── Row 3: Principal Name ── --}}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-user form-icon"></i>
+                                    Principal Name <span class="required">*</span>
+                                </label>
+                                <input type="text" name="principal_name" class="form-control"
+                                    value="{{ old('principal_name', $institution->principal_name) }}"
+                                    placeholder="Enter principal name" required>
+                                @error('principal_name')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-phone form-icon"></i>
+                                    Contact Number <span class="required">*</span>
+                                </label>
+                                <input type="text" name="contact_number" class="form-control"
+                                    value="{{ old('contact_number', $institution->contact_number) }}"
+                                    placeholder="Enter contact number" required>
+                                @error('contact_number')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        {{-- ── Row 4: Country + State + District ── --}}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-flag form-icon"></i>
+                                    Country <span class="required">*</span>
+                                </label>
+                                <select name="country_id" class="form-control" id="country-select" required>
+                                    <option value="">Select Country</option>
+                                </select>
+                                @error('country_id')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-map form-icon"></i>
+                                    State <span class="required">*</span>
+                                </label>
+                                <select name="state_id" class="form-control" id="state-select" required>
+                                    <option value="">Select State</option>
+                                </select>
+                                @error('state_id')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-map-marker-alt form-icon"></i>
+                                    District <span class="required">*</span>
+                                </label>
+                                <select name="district_id" class="form-control" id="district-select" required>
+                                    <option value="">Select District</option>
+                                </select>
+                                @error('district_id')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        {{-- ── Row 5: Block + Pincode ── --}}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-cube form-icon"></i>
+                                    Block
+                                </label>
+                                <select name="block_id" class="form-control" id="block-select">
+                                    <option value="">Select Block</option>
+                                </select>
+                                @error('block_id')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    <i class="fas fa-mail-bulk form-icon"></i>
+                                    Pincode <span class="required">*</span>
+                                </label>
+                                <input type="text" name="pincode" class="form-control" id="pincode-input"
+                                    value="{{ old('pincode', $institution->pincode) }}" placeholder="Enter pincode"
+                                    required>
+                                @error('pincode')
+                                    <div class="error-message">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+
+                        {{-- ── Buttons ── --}}
+                        <div class="form-group text-center mt-4">
+                            <a href="{{ url('sales/institution-managements') }}" class="btn-cancel">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn-submit">
+                                <i class="fas fa-save"></i> Update Institution
                             </button>
-                            @error('class')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-phone form-icon"></i>
-                                Contact Number <span class="required">*</span>
-                            </label>
-                            <input type="text" name="contact_number" class="form-control" value="{{ old('contact_number', $institution->contact_number) }}" placeholder="Enter contact number" required>
-                            @error('contact_number')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-flag form-icon"></i>
-                                Country <span class="required">*</span>
-                            </label>
-                            <select name="country_id" class="form-control" id="country-select" required>
-                                <option value="">Select Country</option>
-                            </select>
-                            @error('country_id')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-map form-icon"></i>
-                                State <span class="required">*</span>
-                            </label>
-                            <select name="state_id" class="form-control" id="state-select" required>
-                                <option value="">Select State</option>
-                            </select>
-                            @error('state_id')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-map-marker-alt form-icon"></i>
-                                District <span class="required">*</span>
-                            </label>
-                            <select name="district_id" class="form-control" id="district-select" required>
-                                <option value="">Select District</option>
-                            </select>
-                            @error('district_id')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-cube form-icon"></i>
-                                Block <span class="required">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                name="block_id"
-                                class="form-control"
-                                id="block-input"
-                                placeholder="Enter block name"
-                                value="{{ old('block_id', optional($institution->block)->name ?? $institution->block_id) }}">
-                            @error('block_id')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-mail-bulk form-icon"></i>
-                                Pincode <span class="required">*</span>
-                            </label>
-                            <input type="text" name="pincode" class="form-control" id="pincode-input" value="{{ old('pincode', $institution->pincode) }}" placeholder="Enter pincode" required>
-                            @error('pincode')
-                                <div class="error-message">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                    </div>
-
-
-
-                        {{-- <div class="form-group">
-                            <label class="form-label">
-                                <i class="fas fa-check-circle form-icon"></i>
-                                Status <span class="required">*</span>
-                            </label>
-                            <select name="status" class="form-control" required>
-                                <option value="1" {{ (old('status', $institution->status) == 1) ? 'selected' : '' }}>Active</option>
-                                <option value="0" {{ (old('status', $institution->status) == 0) ? 'selected' : '' }}>Inactive</option>
-                            </select>
-                    </div> --}}
-
-                    <div class="form-group mt-4 d-flex justify-content-center align-items-center gap-3 flex-wrap">
-                        <a href="{{ url('sales/institution-managements') }}" class="btn btn-outline-secondary px-4 py-2">
-                            <i class="fas fa-arrow-left me-2"></i> Cancel
-                        </a>
-                        <button type="submit" class="btn btn-primary px-4 py-2">
-                            <i class="fas fa-save me-2"></i> Update Institution
-                        </button>
-                    </div>
-
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-$(document).ready(function() {
-    var classIndex = {{ $institution->institutionClasses ? $institution->institutionClasses->count() : 0 }};
-    var availableClasses = ['Nursery', 'LKG', 'UKG', 'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10', 'Class 11', 'Class 12'];
-    var availableStreams = ['Science', 'Commerce', 'Arts', 'Engineering', 'Management', 'Law', 'Medical'];
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
 
-    function updateClassStreamUI() {
-        var type = $('select[name="type"]').val();
-        var classField = $('#class-field');
-        var labelSpan = $('#class-stream-label');
-        var btnTextSpan = $('#add-class-btn-text');
+            /* ── PHP → JS existing values ── */
+            var existingType = '{{ old('type', $institution->type) }}';
+            var existingBoard = '{{ old('board', $institution->board) }}';
+            var existingCountry = '{{ old('country_id', $institution->country_id ?? '') }}';
+            var existingState = '{{ old('state_id', $institution->state_id ?? '') }}';
+            var existingDistrict = '{{ old('district_id', $institution->district_id ?? '') }}';
+            var existingBlock = '{{ old('block_id', $institution->block_id ?? '') }}';
 
-        // Show field only for these types
-        if (['school', 'college', 'university'].includes(type)) {
-            classField.show();
-        } else {
-            classField.hide();
-            return;
-        }
+            /* Existing classes as a JS array: [[sub_category_id, name], ...] */
+            var existingClasses = @json(
+                $institution->institutionClasses->map(fn($c) => [
+                        'sub_category_id' => $c->sub_category_id,
+                        'strength' => $c->total_strength,
+                        'name' => optional($c->subcategory)->subcategory_name ?? 'Class #' . $c->sub_category_id,
+                    ]));
 
-        var isSchool = (type === 'school');
-        var optionsSource = isSchool ? availableClasses : availableStreams;
-        var placeholder = isSchool ? 'Select Class' : 'Select Stream';
-        var nameLabel = isSchool ? 'Class Name' : 'Stream Name';
+            var currentSubcategories = [];
+            var classIndex = existingClasses.length;
 
-        labelSpan.text(isSchool ? 'Class' : 'Stream');
-        btnTextSpan.text(isSchool ? 'Add Class' : 'Add Stream');
-
-        // Update existing rows
-        $('.class-item').each(function() {
-            var select = $(this).find('.class-select');
-            var selectedValue = select.data('selected') || select.val() || '';
-
-            var optionsHtml = `<option value="">${placeholder}</option>`;
-            optionsSource.forEach(function(opt) {
-                optionsHtml += `<option value="${opt}">${opt}</option>`;
-            });
-
-            // If existing value is not in predefined list, keep it
-            if (selectedValue && !optionsSource.includes(selectedValue)) {
-                optionsHtml += `<option value="${selectedValue}">${selectedValue}</option>`;
+            /* ════════════════════════════════
+               Helper: build options html
+            ════════════════════════════════ */
+            function subcatOptions(selectedId) {
+                var html = '<option value="">Select Subcategory</option>';
+                $.each(currentSubcategories, function(i, sub) {
+                    var sel = (sub.id == selectedId) ? 'selected' : '';
+                    html += `<option value="${sub.id}" ${sel}>${sub.subcategory_name}</option>`;
+                });
+                return html;
             }
 
-            select.html(optionsHtml);
-            if (selectedValue) {
-                select.val(selectedValue);
+            /* ════════════════════════════════
+               Institution Type → load boards
+            ════════════════════════════════ */
+            function loadCategories(sectionId, callback) {
+                if (!sectionId) {
+                    $('#board-field').hide();
+                    $('#class-field').hide();
+                    return;
+                }
+                $.ajax({
+                    url: '{{ route('sales.institution.categories') }}',
+                    data: {
+                        section_id: sectionId
+                    },
+                    success: function(cats) {
+                        var boardSel = $('#board-select');
+                        boardSel.empty().append('<option value="">Select Board</option>');
+                        $.each(cats, function(i, cat) {
+                            var sel = (cat.id == existingBoard) ? 'selected' : '';
+                            boardSel.append(
+                                `<option value="${cat.id}" ${sel}>${cat.category_name}</option>`
+                            );
+                        });
+                        $('#board-field').show();
+                        if (callback) callback();
+                    }
+                });
             }
 
-            $(this).find('.class-stream-name-label').text(nameLabel);
-        });
-    }
+            /* ════════════════════════════════
+               Board → load subcategories
+            ════════════════════════════════ */
+            function loadAllClasses(callback) {
+                $.ajax({
+                    url: '{{ route('sales.institution.classes') }}',
+                    success: function(subs) {
+                        currentSubcategories = subs;
+                        $('#class-field').show();
+                        /* Update any already-rendered (preloaded) selects */
+                        $('.preloaded-class').each(function() {
+                            var selectedId = $(this).data('selected');
+                            $(this).html(subcatOptions(selectedId));
+                            $(this).removeClass('preloaded-class');
+                        });
+                        if (callback) callback();
+                    }
+                });
+            }
 
-    // Handle institution type change
-    $('select[name="type"]').on('change', function() {
-        updateClassStreamUI();
-    });
-
-    // Initial setup
-    updateClassStreamUI();
-
-    // Add new class/stream row
-    $('#add-class-btn').on('click', function() {
-        var type = $('select[name="type"]').val();
-        var isSchool = (type === 'school');
-        var optionsSource = isSchool ? availableClasses : availableStreams;
-        var placeholder = isSchool ? 'Select Class' : 'Select Stream';
-        var nameLabel = isSchool ? 'Class Name' : 'Stream Name';
-
-        var optionsHtml = `<option value="">${placeholder}</option>`;
-        optionsSource.forEach(function(opt) {
-            optionsHtml += `<option value="${opt}">${opt}</option>`;
-        });
-
-        var classHtml = `
+            /* ════════════════════════════════
+               Render a new class row
+            ════════════════════════════════ */
+            function addClassRow(selectedSubId, strength) {
+                var optHtml = subcatOptions(selectedSubId || '');
+                var html = `
             <div class="class-item mb-3 p-3 border rounded" data-index="${classIndex}">
                 <div class="row">
                     <div class="col-md-5">
-                        <label class="class-stream-name-label">${nameLabel}</label>
-                        <select name="classes[${classIndex}][class_name]" class="form-control class-select" required>
-                            ${optionsHtml}
+                        <label>Subcategory (Class)</label>
+                        <select name="classes[${classIndex}][sub_category_id]"
+                                class="form-control class-select" required>
+                            ${optHtml}
                         </select>
                     </div>
-
                     <div class="col-md-5">
                         <label>Total Strength</label>
-                        <input type="number" name="classes[${classIndex}][strength]" class="form-control" placeholder="e.g., 50" min="1" required>
+                        <input type="number" name="classes[${classIndex}][strength]"
+                               class="form-control" value="${strength || ''}"
+                               placeholder="e.g., 50" min="1" required>
                     </div>
                     <div class="col-md-2 d-flex align-items-end">
                         <button type="button" class="btn btn-danger btn-sm remove-class-btn">
@@ -491,181 +524,161 @@ $(document).ready(function() {
                         </button>
                     </div>
                 </div>
-            </div>
-        `;
-        $('#class-list-container').append(classHtml);
-        classIndex++;
-    });
+            </div>`;
+                $('#class-list-container').append(html);
+                classIndex++;
+            }
 
-    // Remove class row
-    $(document).on('click', '.remove-class-btn', function() {
-        $(this).closest('.class-item').remove();
-    });
+            /* ════════════════════════════════
+               Wire up change events
+            ════════════════════════════════ */
+            $('#type-select').on('change', function() {
+                var sectionId = $(this).val();
+                loadCategories(sectionId);
+            });
 
-    // Load countries on page load
-    function loadCountries() {
-        return new Promise(function(resolve, reject) {
-            $.ajax({
-                url: '{{ route("institution_countries") }}',
-                type: 'GET',
-                dataType: 'json',
-                success: function(response) {
-                    var countrySelect = $('#country-select');
-                    countrySelect.empty();
-                    countrySelect.append('<option value="">Select Country</option>');
-
-                    $.each(response, function(key, value) {
-                        countrySelect.append('<option value="' + key + '">' + value + '</option>');
-                    });
-
-                    resolve();
-                },
-                error: function(xhr, status, error) {
-                    console.log('Error loading countries:', error);
-                    reject(error);
+            $('#board-select').on('change', function() {
+                var catId = $(this).val();
+                if (catId) {
+                    $('#class-field').show();
+                } else {
+                    $('#class-field').hide();
                 }
             });
-        });
-    }
 
-    // Load states based on country
-    function loadStates(country) {
-        if (!country) {
-            $('#state-select').empty().append('<option value="">Select State</option>');
-            $('#district-select').empty().append('<option value="">Select District</option>');
-            // $('#city-select').empty().append('<option value="">Select City</option>');
-            $('#block-input').val('');
-            return Promise.resolve();
-        }
-
-        return new Promise(function(resolve, reject) {
-            $.ajax({
-                url: '{{ route("institution_states") }}',
-                type: 'GET',
-                data: { country: country },
-                dataType: 'json',
-                success: function(response) {
-                    var stateSelect = $('#state-select');
-                    stateSelect.empty();
-                    stateSelect.append('<option value="">Select State</option>');
-
-                    $.each(response, function(key, value) {
-                        stateSelect.append('<option value="' + key + '">' + value + '</option>');
-                    });
-
-                    // Clear dependent dropdowns
-                    $('#district-select').empty().append('<option value="">Select District</option>');
-                    // $('#city-select').empty().append('<option value="">Select City</option>');
-                    $('#block-input').val('');
-
-                    resolve();
-                },
-                error: function(xhr, status, error) {
-                    console.log('Error loading states:', error);
-                    reject(error);
+            $('#add-class-btn').on('click', function() {
+                if (currentSubcategories.length === 0) {
+                    alert('Please wait for classes to load.');
+                    return;
                 }
+                addClassRow('', '');
             });
-        });
-    }
 
-    // Load districts based on state
-    function loadDistricts(state) {
-        if (!state) {
-            $('#district-select').empty().append('<option value="">Select District</option>');
-            // $('#city-select').empty().append('<option value="">Select City</option>');
-            $('#block-input').val('');
-            return Promise.resolve();
-        }
-
-        return new Promise(function(resolve, reject) {
-            $.ajax({
-                url: '{{ route("institution_districts") }}',
-                type: 'GET',
-                data: { state: state },
-                dataType: 'json',
-                success: function(response) {
-                    var districtSelect = $('#district-select');
-                    districtSelect.empty();
-                    districtSelect.append('<option value="">Select District</option>');
-
-                    $.each(response, function(key, value) {
-                        districtSelect.append('<option value="' + key + '">' + value + '</option>');
-                    });
-
-                    // Clear dependent dropdowns
-                    // $('#city-select').empty().append('<option value="">Select City</option>');
-                    $('#block-input').val('');
-
-                    resolve();
-                },
-                error: function(xhr, status, error) {
-                    console.log('Error loading districts:', error);
-                    reject(error);
-                }
+            $(document).on('click', '.remove-class-btn', function() {
+                $(this).closest('.class-item').remove();
             });
-        });
-    }
 
-    // Event handlers for cascading dropdowns
-    $('#country-select').on('change', function() {
-        var country = $(this).val();
-        loadStates(country);
-    });
+            /* ════════════════════════════════
+               Init: pre-populate type → board → classes
+            ════════════════════════════════ */
+            if (existingType) {
+                loadCategories(existingType);
+            }
 
-    $('#state-select').on('change', function() {
-        var state = $(this).val();
-        loadDistricts(state);
-    });
+            loadAllClasses();
 
-    // $('#district-select').on('change', function() {
-    //     var district = $(this).val();
-    //     loadCities(district);
-    // });
-
-    $('#district-select').on('change', function() {
-        $('#block-input').val('');
-    });
-
-    // Load countries and populate form with current values
-    async function initializeForm() {
-        try {
-            // Load countries first
-            await loadCountries();
-
-            // Get current values
-            var currentCountry = '{{ old("country_id", $institution->country_id ?? "") }}';
-            var currentState = '{{ old("state_id", $institution->state_id ?? "") }}';
-            var currentDistrict = '{{ old("district_id", $institution->district_id ?? "") }}';
-            var currentBlock = '{{ old("block_id", optional($institution->block)->name ?? $institution->block_id) }}';
-
-            // Set country and load states
-            if (currentCountry) {
-                $('#country-select').val(currentCountry);
-                await loadStates(currentCountry);
-
-                // Set state and load districts
-                if (currentState) {
-                    $('#state-select').val(currentState);
-                    await loadDistricts(currentState);
-
-                    // Set district
-                    if (currentDistrict) {
-                        $('#district-select').val(currentDistrict);
+            /* ════════════════════════════════
+               Location cascading
+            ════════════════════════════════ */
+            function loadCountries(callback) {
+                $.ajax({
+                    url: '{{ route('institution_countries') }}',
+                    success: function(resp) {
+                        var sel = $('#country-select');
+                        sel.empty().append('<option value="">Select Country</option>');
+                        $.each(resp, function(key, val) {
+                            sel.append(
+                                `<option value="${key}" ${key == existingCountry ? 'selected' : ''}>${val}</option>`
+                            );
+                        });
+                        if (callback) callback();
                     }
+                });
+            }
+
+            function loadStates(country, callback) {
+                if (!country) return;
+                $.ajax({
+                    url: '{{ route('institution_states') }}',
+                    data: {
+                        country: country
+                    },
+                    success: function(resp) {
+                        var sel = $('#state-select');
+                        sel.empty().append('<option value="">Select State</option>');
+                        $.each(resp, function(key, val) {
+                            sel.append(
+                                `<option value="${key}" ${key == existingState ? 'selected' : ''}>${val}</option>`
+                            );
+                        });
+                        if (callback) callback();
+                    }
+                });
+            }
+
+            function loadDistricts(state, callback) {
+                if (!state) return;
+                $.ajax({
+                    url: '{{ route('institution_districts') }}',
+                    data: {
+                        state: state
+                    },
+                    success: function(resp) {
+                        var sel = $('#district-select');
+                        sel.empty().append('<option value="">Select District</option>');
+                        $.each(resp, function(key, val) {
+                            sel.append(
+                                `<option value="${key}" ${key == existingDistrict ? 'selected' : ''}>${val}</option>`
+                            );
+                        });
+                        if (callback) callback();
+                    }
+                });
+            }
+
+            function loadBlocks(district, callback) {
+                if (!district) return;
+                $.ajax({
+                    url: '{{ route('institution_blocks') }}',
+                    data: {
+                        district: district
+                    },
+                    success: function(resp) {
+                        var sel = $('#block-select');
+                        sel.empty().append('<option value="">Select Block</option>');
+                        $.each(resp, function(key, val) {
+                            sel.append(
+                                `<option value="${key}" ${key == existingBlock ? 'selected' : ''}>${val}</option>`
+                            );
+                        });
+                        if (callback) callback();
+                    }
+                });
+            }
+
+            /* Live change handlers */
+            $('#country-select').on('change', function() {
+                existingState = '';
+                existingDistrict = '';
+                existingBlock = '';
+                loadStates($(this).val());
+            });
+
+            $('#state-select').on('change', function() {
+                existingDistrict = '';
+                existingBlock = '';
+                loadDistricts($(this).val());
+            });
+
+            $('#district-select').on('change', function() {
+                existingBlock = '';
+                loadBlocks($(this).val());
+            });
+
+            /* Init location chain */
+            loadCountries(function() {
+                if (existingCountry) {
+                    loadStates(existingCountry, function() {
+                        if (existingState) {
+                            loadDistricts(existingState, function() {
+                                if (existingDistrict) {
+                                    loadBlocks(existingDistrict);
+                                }
+                            });
+                        }
+                    });
                 }
-            }
-
-            if (currentBlock) {
-                $('#block-input').val(currentBlock);
-            }
-        } catch (error) {
-            console.log('Error initializing form:', error);
-        }
-    }
-
-    // Initialize the form
-    initializeForm();
-});
-</script>
-
+            });
+        });
+    </script>
 @endsection

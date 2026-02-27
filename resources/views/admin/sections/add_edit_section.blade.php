@@ -99,7 +99,7 @@
                                     <label for="section_image">Section Icon</label>
                                     <input type="file" class="form-control" id="section_image" name="section_image">
                                     @if (!empty($section['image']))
-                                        <a target="_blank" href="{{ asset('admin/images/section/' . $section['image']) }}">
+                                        <a target="_blank" href="{{ $section['image'] }}">
                                             View Current Image
                                         </a>
                                     @endif

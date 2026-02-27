@@ -253,10 +253,10 @@
                         @can('view_categories')
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'categories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/categories') }}">Categories</a></li>
+                                    class="nav-link" href="{{ url('admin/categories') }}">Board</a></li>
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'subcategories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/subcategories') }}">Subcategories</a></li>
+                                    class="nav-link" href="{{ url('admin/subcategories') }}">Class</a></li>
                         @endcan
                         @can('view_publishers')
                             <li class="nav-item"> <a
@@ -277,6 +277,11 @@
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'languages') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/languages') }}">Book Languages</a></li>
+                        @endcan
+                        @can('view_types')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'types') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/types') }}">Book Types</a></li>
                         @endcan
                         @can('view_products')
                             <li class="nav-item"> <a

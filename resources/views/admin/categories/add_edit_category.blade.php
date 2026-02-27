@@ -107,29 +107,15 @@
                                     </select>
                                 </div>
 
+                               
                                 <div class="form-group">
-                                    <label for="category_image">Category Image</label>
-                                    <input type="file" class="form-control" id="category_image" name="category_image">
-                                    {{-- Show the admin image if exists --}}
-                                    <a target="_blank"
-                                        href="{{ url('admin/images/photos/' . Auth::guard('admin')->user()->image) }}">View
-                                        Image</a>
-                                    <!-- We used    target="_blank"    to open the image in another separate page -->
-                                    {{-- Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances --}}
-                                    <input type="hidden" name="current_category_image"
-                                        value="{{ Auth::guard('admin')->user()->image }}">
-                                    <!-- to send the current admin image url all the time with all the requests -->
-                                    {{-- Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances --}}
-
-
-                                    {{-- Show the category image, if any (if exits) --}}
-                                    @if (!empty($category['category_image']))
-                                        <a target="_blank"
-                                            href="{{ url('front/images/category_images/' . $category['category_image']) }}">View
-                                            Category Image</a>&nbsp;|&nbsp;
-                                        <a href="JavaScript:void(0)" class="confirmDelete" module="category-image"
-                                            moduleid="{{ $category['id'] }}">Delete Category Image</a>
-                                        {{-- Delete the category image from BOTH SERVER (FILESYSTEM) & DATABASE --}} {{-- Check admin/js/custom.js and web.php (routes) --}}
+                                    <label for="category_icon">Category Icon</label>
+                                    <input type="file" class="form-control" id="category_icon" name="category_icon">
+                                    @if (!empty($category['category_icon']))
+                                        <div style="margin-top: 10px;">
+                                            <img src="{{ asset('admin/images/category_icons/' . $category['category_icon']) }}"
+                                                alt="Current Icon" style="width: 50px; height: 50px;">
+                                        </div>
                                     @endif
                                 </div>
                                 <div class="form-group">
@@ -137,12 +123,12 @@
                                     {{-- <input type="text" class="form-control" id="category_discount" placeholder="Enter Category Description" name="category_discount"   @if (!empty($category['category_discount'])) value="{{ $category['category_discount'] }}" @else value="{{ old('category_discount') }}" @endif >  --}}
                                     <textarea name="description" id="description" class="form-control" rows="3">{{ $category['description'] }}</textarea>
                                 </div>
-                                <div class="form-group">
+                                {{-- <div class="form-group">
                                     <label for="url">Category URL</label>
                                     <input type="text" class="form-control" id="url"
                                         placeholder="Enter Category URL" name="url"
                                         @if (!empty($category['url'])) value="{{ $category['url'] }}" @else value="{{ old('url') }}" @endif>
-                                </div>
+                                </div> --}}
                                 <div class="form-group">
                                     <label for="meta_title">Meta Title</label>
                                     <input type="text" class="form-control" id="meta_title"

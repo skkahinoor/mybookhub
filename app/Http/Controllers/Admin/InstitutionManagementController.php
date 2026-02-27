@@ -1,14 +1,18 @@
 <?php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Block;
+use App\Models\Category;
 use App\Models\Country;
 use App\Models\District;
 use App\Models\HeaderLogo;
 // use App\Models\City;
 use App\Models\InstitutionManagement;
+use App\Models\Section;
 use App\Models\State;
+use App\Models\Subcategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -22,9 +26,17 @@ class InstitutionManagementController extends Controller
         $logos      = HeaderLogo::first();
         Session::put('page', 'institution_managements');
         $id           = Auth::guard('admin')->user()->name;
-        $institutions = InstitutionManagement::orderBy('id', 'desc')->get();
+        $institutions = InstitutionManagement::with('institutionClasses')->orderBy('id', 'desc')->get();
+        $sections     = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'College', 'College Book',
+                'Religious Book', 'Religious',
+                'Technical Book', 'Technical',
+                'Novel & Story Book', 'Novel & Story',
+                'Competitive Books', 'Competitive'
+            ])->get();
 
-        return view('admin.institution_managements.index')->with(compact('institutions', 'id', 'logos', 'headerLogo'));
+        return view('admin.institution_managements.index')->with(compact('institutions', 'id', 'logos', 'headerLogo', 'sections'));
     }
 
     public function create()
@@ -33,7 +45,16 @@ class InstitutionManagementController extends Controller
         $logos      = HeaderLogo::first();
         Session::put('page', 'institution_managements');
         $id = Auth::guard('admin')->user()->name;
-        return view('admin.institution_managements.create')->with(compact('id', 'logos', 'headerLogo'));
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'Religious Book', 'Religious',
+                'Technical Book', 'Technical',
+                'Novel & Story Book', 'Novel & Story',
+                'Competitive Books', 'Competitive'
+            ])->get();
+        $categories = Category::where('status', 1)->get();
+        $subcategories = Subcategory::where('status', 1)->get();
+        return view('admin.institution_managements.create')->with(compact('id', 'logos', 'headerLogo', 'sections', 'categories', 'subcategories'));
     }
 
     public function store(Request $request)
@@ -55,15 +76,15 @@ class InstitutionManagementController extends Controller
             'status'         => 'boolean',
         ];
 
-        // Only require classes array if type is school
-        if ($request->input('type') === 'school') {
+        // Automatically require classes if subcategories are selected or type is filled (assuming type is section_id now)
+        if ($request->has('classes') && is_array($request->classes)) {
             $validationRules['classes']              = 'required|array|min:1';
-            $validationRules['classes.*.class_name'] = 'required|string|max:255';
+            $validationRules['classes.*.sub_category_id'] = 'required|integer';
             $validationRules['classes.*.strength']   = 'required|integer|min:1';
         }
 
         $data             = $request->validate($validationRules);
-        $data['block_id'] = $this->prepareBlockId($data['block_id'] ?? null, isset($data['district_id']) ? (int) $data['district_id'] : null);
+        $data['block_id'] = $data['block_id'] ?? null;
 
         $data['status']   = 1;
         $data['added_by'] = Auth::guard('admin')->user()->id;
@@ -75,10 +96,10 @@ class InstitutionManagementController extends Controller
         // Handle institution classes
         if ($request->has('classes') && is_array($request->classes)) {
             foreach ($request->classes as $classData) {
-                if (! empty($classData['class_name']) && ! empty($classData['strength'])) {
+                if (! empty($classData['sub_category_id']) && ! empty($classData['strength'])) {
                     $institution->institutionClasses()->create([
-                        'class_name'     => $classData['class_name'],
-                        'total_strength' => $classData['strength'],
+                        'sub_category_id' => $classData['sub_category_id'],
+                        'total_strength'  => $classData['strength'],
                     ]);
                 }
             }
@@ -106,8 +127,17 @@ class InstitutionManagementController extends Controller
         Session::put('page', 'institution_managements');
 
         $institution = InstitutionManagement::with(['institutionClasses', 'country', 'state', 'district', 'block'])->findOrFail($id);
+        $sections = Section::where('status', 1)
+            ->whereNotIn('name', [
+                'Religious Book', 'Religious',
+                'Technical Book', 'Technical',
+                'Novel & Story Book', 'Novel & Story',
+                'Competitive Books', 'Competitive'
+            ])->get();
+        $categories = Category::where('status', 1)->get();
+        $subcategories = Subcategory::where('status', 1)->get();
 
-        return view('admin.institution_managements.edit')->with(compact('institution', 'logos', 'headerLogo'));
+        return view('admin.institution_managements.edit')->with(compact('institution', 'logos', 'headerLogo', 'sections', 'categories', 'subcategories'));
     }
 
     public function update(Request $request, $id)
@@ -129,15 +159,15 @@ class InstitutionManagementController extends Controller
             'status'         => 'boolean',
         ];
 
-        // Only require classes array if type is school
-        if ($request->input('type') === 'school') {
+        // Automatically require classes if present
+        if ($request->has('classes') && is_array($request->classes)) {
             $validationRules['classes']              = 'required|array|min:1';
-            $validationRules['classes.*.class_name'] = 'required|string|max:255';
+            $validationRules['classes.*.sub_category_id'] = 'required|integer';
             $validationRules['classes.*.strength']   = 'required|integer|min:1';
         }
 
         $data             = $request->validate($validationRules);
-        $data['block_id'] = $this->prepareBlockId($data['block_id'] ?? null, isset($data['district_id']) ? (int) $data['district_id'] : null);
+        $data['block_id'] = $data['block_id'] ?? null;
 
         $institution = InstitutionManagement::findOrFail($id);
 
@@ -152,10 +182,10 @@ class InstitutionManagementController extends Controller
 
             // Add new classes
             foreach ($request->classes as $classData) {
-                if (! empty($classData['class_name']) && ! empty($classData['strength'])) {
+                if (! empty($classData['sub_category_id']) && ! empty($classData['strength'])) {
                     $institution->institutionClasses()->create([
-                        'class_name'     => $classData['class_name'],
-                        'total_strength' => $classData['strength'],
+                        'sub_category_id' => $classData['sub_category_id'],
+                        'total_strength'  => $classData['strength'],
                     ]);
                 }
             }
@@ -176,25 +206,32 @@ class InstitutionManagementController extends Controller
         return view('admin.institution_managements.index', compact('institutions', 'logos', 'headerLogo'));
     }
 
+    public function getSections()
+    {
+        $sections = Section::where('status', 1)
+        ->whereNotIn('name', [
+            'Religious Book', 'Religious',
+            'Technical Book', 'Technical',
+            'Novel & Story Book', 'Novel & Story',
+            'Competitive Books', 'Competitive'
+        ])->get(['id', 'name']);
+        return response()->json($sections);
+    }
+
+    public function getCategories(Request $request)
+    {
+        $section_id = $request->input('section_id');
+        $categories = Category::where('status', 1);
+        if ($section_id) {
+            $categories->where('section_id', $section_id);
+        }
+        return response()->json($categories->get(['id', 'category_name']));
+    }
+
     public function getClasses(Request $request)
     {
-        $logos      = HeaderLogo::first();
-        $headerLogo = HeaderLogo::first();
-        $type       = $request->input('type');
-
-        if ($type === 'school') {
-            $classes = [
-                'Nursery', 'LKG', 'UKG',
-                'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-                'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-                'Class 11', 'Class 12',
-            ];
-        } else {
-            $classes = [];
-        }
-
-        return response()->json($classes);
-        return view('admin.institution_managements.index', compact('logos', 'headerLogo'));
+        $subcategories = Subcategory::where('status', 1)->get(['id', 'subcategory_name']);
+        return response()->json($subcategories);
     }
 
     public function getLocationData(Request $request)
@@ -268,7 +305,7 @@ class InstitutionManagementController extends Controller
             ->where('status', 1)
             ->pluck('name', 'id');
 
-            return response()->json($blocks);
+        return response()->json($blocks);
     }
 
 
@@ -340,7 +377,7 @@ class InstitutionManagementController extends Controller
 
         $classes = $institution->institutionClasses->map(function ($class) {
             return [
-                'class_name'     => $class->class_name,
+                'class_name'     => $class->subcategory ? $class->subcategory->subcategory_name : 'N/A',
                 'total_strength' => $class->total_strength,
             ];
         })->toArray();
@@ -350,8 +387,8 @@ class InstitutionManagementController extends Controller
             'data'    => [
                 'id'             => $institution->id,
                 'name'           => $institution->name,
-                'type'           => $institution->type,
-                'board'          => $institution->board,
+                'type'           => \App\Models\Section::find($institution->type)->name ?? ucfirst($institution->type),
+                'board'          => \App\Models\Category::find($institution->board)->category_name ?? $institution->board,
                 'contact_number' => $institution->contact_number,
                 'country'        => $institution->country ? $institution->country->name : 'N/A',
                 'state'          => $institution->state ? $institution->state->name : 'N/A',

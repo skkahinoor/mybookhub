@@ -31,7 +31,7 @@
 
                             <form class="forms-sample"
                                 @if (empty($subcategory['id'])) action="{{ url('admin/add-edit-subcategory') }}" @else action="{{ url('admin/add-edit-subcategory/' . $subcategory['id']) }}" @endif
-                                method="post"> @csrf
+                                method="post" enctype="multipart/form-data"> @csrf
 
                                 <div class="form-group">
                                     <label for="subcategory_name">Subcategory Name</label>
@@ -41,16 +41,15 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="category_id">Select Category</label>
-                                    <select name="category_id" id="category_id" class="form-control" style="color: #000">
-                                        <option value="">Select Category</option>
-                                        @foreach ($categories as $category)
-                                            <option value="{{ $category['id'] }}"
-                                                @if (!empty($subcategory['category_id']) && $subcategory['category_id'] == $category['id']) selected @endif>
-                                                {{ $category['category_name'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                    <label for="subcategory_icon">Subcategory Icon</label>
+                                    <input type="file" class="form-control" id="subcategory_icon"
+                                        name="subcategory_icon">
+                                    @if (!empty($subcategory['subcategory_icon']))
+                                        <div style="margin-top: 10px;">
+                                            <img src="{{ asset('admin/images/subcategory_icons/' . $subcategory['subcategory_icon']) }}"
+                                                alt="Current Icon" style="width: 50px; height: 50px;">
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>

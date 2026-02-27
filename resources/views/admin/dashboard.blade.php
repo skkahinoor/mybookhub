@@ -189,15 +189,15 @@
                                 </a>
                             </div>
 
-                            {{-- Users Card --}}
-                            <div class="metric-card users">
-                                <a href="{{ url('admin/users') }}">
+                             {{-- Students Card --}}
+                            <div class="metric-card subscribers">
+                                <a href="{{ url('admin/students') }}">
                                     <div class="w-100">
                                         <div class="metric-label">Students</div>
-                                        <div class="metric-value">{{ number_format($usersCount) }}</div>
+                                        <div class="metric-value">{{ number_format($studentsCount) }}</div>
                                     </div>
                                     <div class="metric-icon-wrapper">
-                                        <i class="fas fa-users"></i>
+                                        <i class="fas fa-user-tie"></i>
                                     </div>
                                 </a>
                             </div>

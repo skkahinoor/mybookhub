@@ -123,34 +123,8 @@ class VendorPlanController extends Controller
                     'razorpay_signature'  => $request->razorpay_signature,
                 ]);
 
-                // === Credit Pro plan commission to referring Sales Executive ===
-                $vendorUser = \App\Models\User::find($vendor->user_id);
-                if ($vendorUser && $vendorUser->added_by) {
-                    $salesExecutive = \App\Models\User::find($vendorUser->added_by);
-                    if ($salesExecutive && $salesExecutive->hasRole('sales', 'web')) {
-                        $description = "Commission for Vendor: {$vendorUser->name} (#{$vendorUser->id}) [Pro Plan]";
-
-                        // Avoid double crediting on duplicate payment attempts
-                        $alreadyPaid = \App\Models\WalletTransaction::where('user_id', $salesExecutive->id)
-                            ->where('description', $description)
-                            ->exists();
-
-                        if (!$alreadyPaid) {
-                            $amount = (float) \App\Models\Setting::getValue('default_income_per_pro_vendor', 100);
-
-                            $salesExecutive->wallet_balance += $amount;
-                            $salesExecutive->save();
-
-                            \App\Models\WalletTransaction::create([
-                                'user_id'     => $salesExecutive->id,
-                                'amount'      => $amount,
-                                'type'        => 'credit',
-                                'description' => $description,
-                            ]);
-                        }
-                    }
-                }
-                // === End Pro plan commission ===
+                // Credit Pro plan commission to referring Sales Executive
+                $vendor->creditCommission('pro');
 
                 return redirect()->route('vendor.payment.success')
                     ->with('success_message', 'Payment successful! Pro plan activated.');

@@ -104,7 +104,7 @@
                                         <p style="margin: 0; color: #155724; font-size: 16px;">This query has been marked as resolved. No further action is required.</p>
                                         <p style="margin-top: 10px; color: #155724; font-size: 14px;">If you need to reopen this query, you can change the status below.</p>
                                     </div>
-                                    
+
                                     <!-- Option to Change Status -->
                                     @php
                                         $submitRoute = ($adminType === 'vendor') ? 'vendor.requestbook.reply' : 'requestbook.reply';
@@ -125,7 +125,7 @@
                                             </div>
                                         </div>
                                     </form>
-                                    
+
                                     @php
                                         $indexRoute = ($adminType === 'vendor') ? 'vendor.requestbook.index' : 'requestbook.index';
                                     @endphp

@@ -28,7 +28,7 @@ class StudentController extends Controller
 
         $students = User::where('added_by', Auth::guard('sales')->user()->id)->where('role_id', RoleHelper::studentId())->with('institution')->orderBy('id', 'desc')->get();
 
-        return view('sales.students.index')->with(compact('students','logos', 'headerLogo'));
+        return view('sales.students.index')->with(compact('students', 'logos', 'headerLogo'));
     }
 
     /**
@@ -52,10 +52,10 @@ class StudentController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'father_names' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255',
             'phone' => 'required|string|min:10|max:15',
-            'institution_id' => 'nullable|exists:institution_managements,id',
-            'class' => 'required|string|max:255',
+            'institution_id' => 'required|exists:institution_managements,id',
+            'institution_classes_id' => 'required|exists:institution_classes,id',
             'gender' => 'required|string|in:male,female,other',
             'dob' => 'required|date|before:today',
             'roll_number' => 'nullable|string|max:255',
@@ -91,7 +91,8 @@ class StudentController extends Controller
 
     /**
      * Display the specified resource.
-     */
+    */
+
     public function show(string $id)
     {
         Session::put('page', 'students');
@@ -123,11 +124,10 @@ class StudentController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'father_names' => 'required|string|max:255',
-
+            'email' => 'nullable|email|max:255',
             'phone' => 'required|string|min:10|max:15',
-            'institution_id' => 'nullable|exists:institution_managements,id',
-            'class' => 'required|string|max:255',
+            'institution_id' => 'required|exists:institution_managements,id',
+            'institution_classes_id' => 'required|exists:institution_classes,id',
             'gender' => 'required|string|in:male,female,other',
             'dob' => 'required|date|before:today',
             'roll_number' => 'nullable|string|max:255',
@@ -211,23 +211,23 @@ class StudentController extends Controller
     /**
      * Return classes/streams for a given institution belonging to the current sales executive.
      */
+    public function getInstitutionBoards(Request $request)
+    {
+        $categories = \App\Models\Category::where('status', 1)->get(['id', 'category_name']);
+        return response()->json($categories);
+    }
+
     public function getInstitutionClasses(Request $request)
     {
-        $request->validate([
-            'institution_id' => 'required|integer|exists:institution_managements,id',
-        ]);
+        $institution_id = $request->input('institution_id');
 
-        $salesId = Auth::guard('sales')->id();
+        if (!$institution_id) {
+            return response()->json([]);
+        }
 
-        $institution = InstitutionManagement::where('id', $request->input('institution_id'))
-            ->where('added_by', $salesId)
-            ->firstOrFail();
-
-        $classes = $institution->institutionClasses()
-            ->orderBy('class_name')
-            ->pluck('class_name')
-            ->unique()
-            ->values();
+        $classes = InstitutionClass::with(['subcategory'])
+            ->where('institution_id', $institution_id)
+            ->get();
 
         return response()->json($classes);
     }

@@ -413,7 +413,7 @@ class VendorController extends Controller
                     ? "Vendor registered successfully! You have been given Pro plan access for {$proPlanTrialDurationDays} days."
                     : 'Vendor registered successfully with Free plan!';
 
-                return redirect('admin/login')
+                return redirect('vendor/login')
                     ->with('success_message', $planMessage);
             } else {
                 // ================= EDIT MODE =================

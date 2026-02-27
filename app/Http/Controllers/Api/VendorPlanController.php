@@ -222,6 +222,9 @@ class VendorPlanController extends Controller
                 'razorpay_signature' => $request->razorpay_signature,
             ]);
 
+            // Credit Pro plan commission to referring Sales Executive
+            $vendor->creditCommission('pro');
+
             return response()->json([
                 'status' => true,
                 'message' => 'Pro plan activated successfully',
@@ -309,6 +312,9 @@ class VendorPlanController extends Controller
                 'razorpay_payment_id' => $request->razorpay_payment_id,
                 'razorpay_signature' => $request->razorpay_signature,
             ]);
+
+            // Credit Pro plan commission to referring Sales Executive
+            $vendor->creditCommission('pro');
 
             return response()->json([
                 'status' => true,
@@ -466,6 +472,9 @@ class VendorPlanController extends Controller
             'plan_expires_at' => $expiry,
             'razorpay_payment_id' => $entity['id'] ?? null,
         ]);
+
+        // Credit Pro plan commission to referring Sales Executive
+        $vendor->creditCommission('pro');
 
         Log::info('Vendor upgraded successfully', [
             'vendor_id' => $vendor->id,

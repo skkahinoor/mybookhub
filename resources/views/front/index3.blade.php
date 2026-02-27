@@ -146,7 +146,7 @@
                         <div class="carousel-item {{ $loop->first ? 'active' : '' }}">
                             <div class="p-3">
                                 <a href="{{ !empty($link) ? url($link) : 'javascript:;' }}">
-                                    <img src="{{ asset('front/images/banner_images/' . $image) }}"
+                                    <img src="{{ $image }}"
                                         class="d-block w-100 bookhub-carousel-image rounded-4 shadow"
                                         alt="{{ $alt }}">
                                 </a>

@@ -74,7 +74,8 @@
                             <h4 class="card-title">Add Subject</h4>
 
                             @if ($adminType === 'vendor')
-                                <form class="forms-sample" action="{{ route('vendor.store.subject') }}" method="POST">
+                                <form class="forms-sample" action="{{ route('vendor.store.subject') }}" method="POST"
+                                    enctype="multipart/form-data">
                                     @csrf
 
                                     <div class="form-group">
@@ -84,32 +85,18 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="category_id_subject">Select Category</label>
-                                        <select name="category_id_filter" id="category_id_subject" class="form-control"
-                                            style="color:#000">
-                                            <option value="">Select Category</option>
-                                            @foreach ($categories as $category)
-                                                <option value="{{ $category['id'] }}">{{ $category['category_name'] }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <label for="subject_icon">Subject Icon</label>
+                                        <input type="file" class="form-control" id="subject_icon" name="subject_icon">
                                     </div>
 
-                                    <div id="appendSubcategoriesLevelVendor">
-                                        <div class="form-group">
-                                            <label for="subcategory_id">Select Subcategory</label>
-                                            <select name="subcategory_id" id="subcategory_id" class="form-control"
-                                                style="color:#000">
-                                                <option value="">-- Choose a Category first --</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                                
 
                                     <button type="submit" class="btn btn-primary mr-2">Submit</button>
                                     <a href="{{ url('vendor/subjects') }}" class="btn btn-light">Cancel</a>
                                 </form>
                             @else
-                                <form class="forms-sample" action="{{ route('admin.store.subject') }}" method="POST">
+                                <form class="forms-sample" action="{{ route('admin.store.subject') }}" method="POST"
+                                    enctype="multipart/form-data">
                                     @csrf
 
                                     <div class="form-group">
@@ -119,25 +106,8 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label for="category_id_subject">Select Category</label>
-                                        <select name="category_id_filter" id="category_id_subject" class="form-control"
-                                            style="color:#000">
-                                            <option value="">Select Category</option>
-                                            @foreach ($categories as $category)
-                                                <option value="{{ $category['id'] }}">{{ $category['category_name'] }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div id="appendSubcategoriesLevel">
-                                        <div class="form-group">
-                                            <label for="subcategory_id">Select Subcategory</label>
-                                            <select name="subcategory_id" id="subcategory_id" class="form-control"
-                                                style="color:#000">
-                                                <option value="">-- Choose a Category first --</option>
-                                            </select>
-                                        </div>
+                                        <label for="subject_icon">Subject Icon</label>
+                                        <input type="file" class="form-control" id="subject_icon" name="subject_icon">
                                     </div>
 
                                     <button type="submit" class="btn btn-primary mr-2">Submit</button>

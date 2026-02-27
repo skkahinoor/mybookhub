@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\RatingController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SalesExecutiveController;
 use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\Admin\BookTypeController;
 use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SubjectController;
@@ -108,6 +109,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-section-status', 'SectionController@updateSectionStatus')->name('admin.updatesectionstatus');               // Update Sections Status using AJAX in sections.blade.php
         Route::get('delete-section/{id}', 'SectionController@deleteSection');                        // Delete a section in sections.blade.php
         Route::match(['get', 'post'], 'add-edit-section/{id?}', 'SectionController@addEditSection'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the section, and if not passed, this means Add a Section
+
+        //Type
+        Route::get('types', [BookTypeController::class, 'types']);
+        Route::match(['get', 'post'], 'add-edit-type/{id?}', [BookTypeController::class, 'addEditType']);
+        Route::get('delete-type/{id}', [BookTypeController::class, 'deleteType']);
+        Route::post('update-type-status', [BookTypeController::class, 'updateTypeStatus'])->name('admin.updatetypestatus');
 
         // Categories
         Route::get('categories', 'CategoryController@categories');                                      // Categories in Catalogue Management in Admin Panel
@@ -244,6 +251,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         ]);
         Route::get('students/{id}/details', 'StudentController@details')->name('admin.students.details');
         Route::post('students/{id}/update-status', 'StudentController@updateStatus')->name('admin.students.updateStatus');
+        Route::get('get-institution-classes', 'StudentController@getInstitutionClasses')->name('admin.get_institution_classes');
+        Route::get('get-institution-boards', 'StudentController@getInstitutionBoards')->name('admin.get_institution_boards');
 
         // Withdrawals Management
         Route::get('withdrawals', 'WithdrawalController@index')->name('admin.withdrawals.index');
@@ -252,6 +261,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('withdrawals/minimum/update', 'WithdrawalController@updateMinimum')->name('admin.withdrawals.minimum.update');
 
         // AJAX route for getting classes based on institution type (outside admin middleware for AJAX access)
+        Route::get('institution-sections', [InstitutionManagementController::class, 'getSections'])->name('admin.institution.sections');
+        Route::get('institution-categories', [InstitutionManagementController::class, 'getCategories'])->name('admin.institution.categories');
         Route::get('institution-classes', [InstitutionManagementController::class, 'getClasses'])->name('admin.institution.classes');
 
         // AJAX route for getting location data based on pincode (outside admin middleware for AJAX access)
@@ -444,7 +455,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     }
 
     // Vendor Login/Register
-    // Route::get('vendor/login-register', 'VendorController@loginRegister'); // render vendor login_register.blade.php page
+    Route::get('vendor/login-register', 'VendorController@loginRegister'); // render vendor login_register.blade.php page
 
     // Vendor Register
     // the register HTML form submission in vendor login_register.blade.php page

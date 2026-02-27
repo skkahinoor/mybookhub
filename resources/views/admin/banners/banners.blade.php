@@ -40,7 +40,7 @@
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>
                                                     @if (!empty($banner->image))
-                                                        <img style="width: 100%; height:100px; border-radius: 0px !important;" src="{{ asset('front/images/banner_images/' . $banner->image) }}" alt="{{ $banner->alt }}">
+                                                        <img style="width: 100%; height:100px; border-radius: 0px !important;" src="{{ $banner->image }}" alt="{{ $banner->alt }}">
                                                     @endif
                                                 </td>
                                                 <td>{{ $banner->type }}</td>

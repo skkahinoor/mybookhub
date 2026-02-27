@@ -99,16 +99,12 @@ class CategoryController extends Controller
         }
 
 
-        if ($request->isMethod('post')) { // WHETHER Add or Update <form> submission!!
+        if ($request->isMethod('post')) { 
             $data = $request->all();
-            // dd($data);
-
-
-            // Laravel's Validation    // Customizing Laravel's Validation Error Messages: https://laravel.com/docs/9.x/validation#customizing-the-error-messages    // Customizing Validation Rules: https://laravel.com/docs/9.x/validation#custom-validation-rules
+           
             $rules = [
                 'category_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                 'section_id'    => 'required',
-                'url'           => 'required',
             ];
 
             $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
@@ -121,28 +117,26 @@ class CategoryController extends Controller
             $this->validate($request, $rules, $customMessages);
 
 
-
-            // Uploading Category Image    // Using the Intervention package for uploading images
-            if ($request->hasFile('category_image')) { // the HTML name attribute    name="admin_name"    in update_admin_details.blade.php
-                $image_tmp = $request->file('category_image'); // Retrieving Uploaded Files: https://laravel.com/docs/9.x/requests#retrieving-uploaded-files
-                if ($image_tmp->isValid()) {
-                    // Get the image extension
-                    $extension = $image_tmp->getClientOriginalExtension();
-
-                    // Generate a random name for the uploaded image (to avoid that the image might get overwritten if its name is repeated)
-                    $imageName = rand(111, 99999) . '.' . $extension;
-
-                    // Assigning the uploaded images path inside the 'public' folder
-                    $imagePath = 'front/images/category_images/' . $imageName;
-
-                    // Upload the image using the 'Intervention' package and save it in our path inside the 'public' folder
-                    Image::make($image_tmp)->save($imagePath); // '\Image' is the Intervention package
-
-                    // Insert the image name in the database table
-                    $category->category_image = $imageName;
+            // Uploading Category Icon
+            if ($request->hasFile('category_icon')) {
+                $icon_tmp = $request->file('category_icon');
+                if ($icon_tmp->isValid()) {
+                    // Delete old icon if exists
+                    if (!empty($category->category_icon)) {
+                        $oldIconPath = public_path('admin/images/category_icons/' . $category->category_icon);
+                        if (file_exists($oldIconPath)) {
+                            unlink($oldIconPath);
+                        }
+                    }
+                    $extension = $icon_tmp->getClientOriginalExtension();
+                    $iconName = time() . '_' . rand(111, 99999) . '.' . $extension;
+                    $uploadPath = public_path('admin/images/category_icons/');
+                    if (!file_exists($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+                    $icon_tmp->move($uploadPath, $iconName);
+                    $category->category_icon = $iconName;
                 }
-            } else { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), and originally there wasn't any image uploaded in the first place
-                $category->category_image = '';
             }
 
 
@@ -150,7 +144,7 @@ class CategoryController extends Controller
             $category->parent_id         = 0;
             $category->category_name     = $data['category_name'];
             $category->description       = $data['description'];
-            $category->url               = $data['url'];
+            $category->url               = str_replace(' ', '-', strtolower($data['category_name']));
             $category->meta_title        = $data['meta_title'];
             $category->meta_description  = $data['meta_description'];
             $category->meta_keywords     = $data['meta_keywords'];

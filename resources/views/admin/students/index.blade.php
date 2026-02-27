@@ -210,7 +210,7 @@
                         <i class="fas fa-table"></i> Student List
                     </h5>
                 </div>
-            
+
                 <div class="card-body">
                     <div class="table-responsive">
                         <table id="studentsTable" class="table table-bordered table-striped">
@@ -220,10 +220,10 @@
                                     <th>Name</th>
                                     <th>Roll No</th>
                                     <th>Gender</th>
-                                    <th>Class</th>
+                                    {{-- <th>Class</th> --}}
                                     <th>DOB</th>
                                     <th>Institution</th>
-                                    <th>Type</th>
+                                    {{-- <th>Type</th> --}}
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -235,16 +235,16 @@
                                         <td>{{ $student->name }}</td>
                                         <td>{{ $student->roll_number }}</td>
                                         <td>{{ ucfirst($student->gender) }}</td>
-                                        <td>{{ $student->class }}</td>
+                                        {{-- <td>{{ $student->class }}</td> --}}
                                         <td>
                                             {{ $student->dob ? \Carbon\Carbon::parse($student->dob)->format('d M Y') : 'N/A' }}
                                         </td>
                                         <td>
                                             {{ $student->institution->name ?? 'No Institution' }}
                                         </td>
-                                        <td>
+                                        {{-- <td>
                                             {{ $student->institution->type ?? '-' }}
-                                        </td>
+                                        </td> --}}
                                         <td>
                                             <a class="updateStudentStatus"
                                                id="student-{{ $student->id }}"
@@ -263,7 +263,7 @@
                                                class="btn btn-sm btn-success">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-            
+
                                             <button onclick="confirmDelete({{ $student->id }})"
                                                     class="btn btn-sm btn-danger">
                                                 <i class="fas fa-trash"></i>
@@ -276,7 +276,7 @@
                     </div>
                 </div>
             </div>
-            
+
             @else
             <div class="empty-state text-center py-5">
                 <i class="fas fa-user-graduate fa-4x mb-3"></i>
@@ -287,7 +287,7 @@
                 </a>
             </div>
             @endif
-            
+
         </div>
     </div>
 </div>

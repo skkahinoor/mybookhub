@@ -57,6 +57,16 @@ class InstitutionManagement extends Model
         return $this->belongsTo(Block::class, 'block_id');
     }
 
+    public function section()
+    {
+        return $this->belongsTo(Section::class, 'type');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'board');
+    }
+
     /**
      * Get the students for the institution.
      */

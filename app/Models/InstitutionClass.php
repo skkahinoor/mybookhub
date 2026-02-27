@@ -13,7 +13,7 @@ class InstitutionClass extends Model
 
     protected $fillable = [
         'institution_id',
-        'class_name',
+        'sub_category_id',
         'total_strength',
     ];
 
@@ -28,5 +28,10 @@ class InstitutionClass extends Model
     public function institution()
     {
         return $this->belongsTo(InstitutionManagement::class, 'institution_id');
+    }
+
+    public function subcategory()
+    {
+        return $this->belongsTo(Subcategory::class, 'sub_category_id');
     }
 }

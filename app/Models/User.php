@@ -45,7 +45,8 @@ class User extends Authenticatable
         'role_id',
         'confirm',
         'wallet_balance',
-        'is_wallet_credited'
+        'is_wallet_credited',
+        'institution_classes_id'
     ];
 
     /**
@@ -93,6 +94,10 @@ class User extends Authenticatable
     public function institution()
     {
         return $this->belongsTo(InstitutionManagement::class, 'institution_id');
+    }
+    public function institutionClass()
+    {
+        return $this->belongsTo(InstitutionClass::class, 'institution_classes_id');
     }
     public function country()
     {
