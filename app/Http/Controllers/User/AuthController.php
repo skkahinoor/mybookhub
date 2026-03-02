@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
+use App\Models\AcademicProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -96,6 +97,12 @@ class AuthController extends Controller
         ]);
         if ($role) {
             $user->assignRole($role);
+            // If this is a student registration, also create an empty academic profile row
+            if ($role->name === 'student') {
+                AcademicProfile::firstOrCreate([
+                    'user_id' => $user->id,
+                ]);
+            }
         }
         return redirect()->route('student.login')->with('success', 'Account created successfully');
     }

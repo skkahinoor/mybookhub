@@ -105,7 +105,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Sections (Sections, Categories, Subcategories, Products, Attributes)
         // Route::get('sections', 'SectionController@sections');
-        Route::get('sections', [SectionController::class, 'sections'])->name('sections');
+        Route::get('education-levels', [SectionController::class, 'sections'])->name('education-levels');
         Route::post('update-section-status', 'SectionController@updateSectionStatus')->name('admin.updatesectionstatus');               // Update Sections Status using AJAX in sections.blade.php
         Route::get('delete-section/{id}', 'SectionController@deleteSection');                        // Delete a section in sections.blade.php
         Route::match(['get', 'post'], 'add-edit-section/{id?}', 'SectionController@addEditSection'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the section, and if not passed, this means Add a Section

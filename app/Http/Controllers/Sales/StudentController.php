@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Sales;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicProfile;
 use App\Models\HeaderLogo;
 use App\Models\InstitutionManagement;
 use App\Models\InstitutionClass;
@@ -68,6 +69,15 @@ class StudentController extends Controller
         $data['role_id'] = RoleHelper::studentId();
         $user = User::create($data);
         $user->assignRole('student'); // So admin list (User::role('student','web')) shows this user
+
+        // Create academic profile entry for this student
+        $institution = InstitutionManagement::find($data['institution_id']);
+        AcademicProfile::create([
+            'user_id' => $user->id,
+            'education_level_id' => $institution?->type,
+            'board_id' => $institution?->board,
+            'class_id' => $data['institution_classes_id'] ?? null,
+        ]);
 
         // User::create([
         //     'name'     => $data['name'],
@@ -137,6 +147,20 @@ class StudentController extends Controller
         $data = $request->all();
 
         $student->update($data);
+
+        // Sync academic profile if institution or class changed
+        $institution = InstitutionManagement::find($data['institution_id']);
+        $profileData = [
+            'education_level_id' => $institution?->type,
+            'board_id' => $institution?->board,
+            'class_id' => $data['institution_classes_id'] ?? null,
+        ];
+
+        if ($student->academicProfile) {
+            $student->academicProfile->update($profileData);
+        } else {
+            $student->academicProfile()->create($profileData);
+        }
 
         return redirect('sales/students')->with('success_message', 'Student has been updated successfully');
     }

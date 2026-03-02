@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,19 +29,37 @@ class WalletTransaction extends Model
     public static function checkAndCreditWallet($orderId)
     {
         $order = Order::with('orders_products.product.category')->find($orderId);
-        if (!$order) return;
+        if (! $order) {
+            return;
+        }
 
         // Ensure we don't credit for Pending orders (Razorpay pending flow)
-        if ($order->order_status == 'Pending') return;
+        if ($order->order_status == 'Pending') {
+            return;
+        }
 
         $user = User::find($order->user_id);
-        if (!$user || $user->is_wallet_credited == 1) return;
+        if (! $user || $user->is_wallet_credited == 1) {
+            return;
+        }
 
+        // Check if any product in the order belongs to the 'testpaper' category (case-insensitive)
         // Check if any product in the order belongs to the 'testpaper' category (case-insensitive)
         $hasTestPaper = false;
         foreach ($order->orders_products as $orderProduct) {
-            $categoryName = $orderProduct->product->category->category_name ?? '';
-            if (strtolower($categoryName) == 'testpaper') {
+            $categoryName = $orderProduct->product->bookType->book_type ?? '';
+
+            // Normalize: remove spaces and lowercase
+            $normalized = strtolower(str_replace(' ', '', $categoryName));
+
+            if (in_array($normalized, [
+                'testpaper',
+                'testpapers',
+                'testpaperbook',
+                'testpaperbooks',
+                'testbook',
+                'testbooks',
+            ], true)) {
                 $hasTestPaper = true;
                 break;
             }
@@ -50,15 +67,15 @@ class WalletTransaction extends Model
 
         if ($hasTestPaper) {
             // Credit 100 Rs
-            $user->wallet_balance += 100;
-            $user->is_wallet_credited = 1;
+            $user->wallet_balance     += 100;
+            $user->is_wallet_credited  = 1;
             $user->save();
 
             self::create([
-                'user_id' => $user->id,
-                'order_id' => $order->id,
-                'amount' => 100,
-                'type' => 'credit',
+                'user_id'     => $user->id,
+                'order_id'    => $order->id,
+                'amount'      => 100,
+                'type'        => 'credit',
                 'description' => 'Testpaper purchase bonus',
             ]);
         }
@@ -66,26 +83,30 @@ class WalletTransaction extends Model
     public static function revertWallet($orderId)
     {
         $order = Order::find($orderId);
-        if (!$order) return;
+        if (! $order) {
+            return;
+        }
 
         $user = User::find($order->user_id);
-        if (!$user) return;
- 
+        if (! $user) {
+            return;
+        }
+
         // 1. Revert Bonus (Credit Reversal)
         $creditTransaction = self::where('order_id', $orderId)
             ->where('type', 'credit')
             ->where('description', 'LIKE', '%bonus%')
             ->first();
         if ($creditTransaction) {
-            $user->wallet_balance -= $creditTransaction->amount;
-            $user->is_wallet_credited = 0; // Allow them to get bonus again on next valid order
+            $user->wallet_balance     -= $creditTransaction->amount;
+            $user->is_wallet_credited  = 0; // Allow them to get bonus again on next valid order
             $user->save();
 
             self::create([
-                'user_id' => $user->id,
-                'order_id' => $order->id,
-                'amount' => $creditTransaction->amount,
-                'type' => 'debit',
+                'user_id'     => $user->id,
+                'order_id'    => $order->id,
+                'amount'      => $creditTransaction->amount,
+                'type'        => 'debit',
                 'description' => 'Reversal of bonus for cancelled order #' . $order->id,
             ]);
         }
@@ -97,10 +118,10 @@ class WalletTransaction extends Model
             $user->save();
 
             self::create([
-                'user_id' => $user->id,
-                'order_id' => $order->id,
-                'amount' => $debitTransaction->amount,
-                'type' => 'credit',
+                'user_id'     => $user->id,
+                'order_id'    => $order->id,
+                'amount'      => $debitTransaction->amount,
+                'type'        => 'credit',
                 'description' => 'Refund of wallet amount for cancelled order #' . $order->id,
             ]);
         }

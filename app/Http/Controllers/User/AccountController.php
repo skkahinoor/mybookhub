@@ -4,6 +4,9 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Country;
 use App\Models\HeaderLogo;
+use App\Models\InstitutionManagement;
+use App\Models\InstitutionClass;
+use App\Models\AcademicProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +17,16 @@ class AccountController extends Controller
     public function index(Request $request)
     {
         $countries = Country::where('status', true)->get();
-        $user      = User::with(['country', 'state', 'district', 'block'])->find(Auth::id());
+        $institutions = InstitutionManagement::where('status', 1)->orderBy('name')->get();
+        $user      = User::with([
+            'country',
+            'state',
+            'district',
+            'block',
+            'institution',
+            'institutionClass.subcategory',
+            'academicProfile',
+        ])->find(Auth::id());
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
@@ -54,6 +66,9 @@ class AccountController extends Controller
                     'block_id'    => 'nullable|exists:blocks,id',
                     'mobile'      => 'required|numeric|digits:10',
                     'pincode'     => 'required|digits:6',
+                    'institution_id' => 'nullable|exists:institution_managements,id',
+                    'board_id'       => 'nullable|exists:categories,id',
+                    'institution_classes_id' => 'nullable|exists:institution_classes,id',
                 ]);
 
                 $user = User::where('id', Auth::id())->first();
@@ -67,7 +82,31 @@ class AccountController extends Controller
                     'block_id'    => $validated['block_id'] ?? null,
                     'pincode'     => $validated['pincode'],
                     'address'     => $validated['address'] ?? null,
+                    'institution_id' => $validated['institution_id'] ?? $user->institution_id,
+                    'institution_classes_id' => $validated['institution_classes_id'] ?? $user->institution_classes_id,
                 ]);
+
+                // Sync academic profile if institution or class changed
+                if (!empty($validated['institution_id']) || !empty($validated['institution_classes_id'])) {
+                    $institution = null;
+                    if (!empty($validated['institution_id'])) {
+                        $institution = InstitutionManagement::find($validated['institution_id']);
+                    } elseif ($user->institution_id) {
+                        $institution = InstitutionManagement::find($user->institution_id);
+                    }
+
+                    $profileData = [
+                        'education_level_id' => $institution?->type,
+                        'board_id'           => $validated['board_id'] ?? $institution?->board,
+                        'class_id'           => $validated['institution_classes_id'] ?? $user->institution_classes_id,
+                    ];
+
+                    if ($user->academicProfile) {
+                        $user->academicProfile->update($profileData);
+                    } else {
+                        $user->academicProfile()->create($profileData);
+                    }
+                }
 
                 // Refresh user model to get updated values
                 $user->refresh();
@@ -117,7 +156,7 @@ class AccountController extends Controller
             }
         }
 
-        return view('user.profile.accountdetails', compact('user', 'countries', 'profileCompletion', 'logos', 'headerLogo'));
+        return view('user.profile.accountdetails', compact('user', 'countries', 'institutions', 'profileCompletion', 'logos', 'headerLogo'));
     }
 
     public function updateProfile(Request $request)
@@ -212,5 +251,62 @@ class AccountController extends Controller
             'message'    => 'Profile photo updated successfully.',
             'avatar_url' => asset($relativePath),
         ]);
+    }
+
+    /**
+     * AJAX: Get boards for a given institution (based on institution_managements table).
+     */
+    public function getAcademicBoards(Request $request)
+    {
+        $institutionId = $request->query('institution_id');
+
+        if (!$institutionId) {
+            return response()->json([], 200);
+        }
+
+        $institution = InstitutionManagement::with('category')->find($institutionId);
+
+        if (!$institution || !$institution->category) {
+            return response()->json([], 200);
+        }
+
+        return response()->json([
+            [
+                'id'   => $institution->category->id,
+                'name' => $institution->category->category_name,
+            ],
+        ]);
+    }
+
+    /**
+     * AJAX: Get classes for a given institution and optional board.
+     */
+    public function getAcademicClasses(Request $request)
+    {
+        $institutionId = $request->query('institution_id');
+        $boardId       = $request->query('board_id');
+
+        if (!$institutionId) {
+            return response()->json([], 200);
+        }
+
+        $query = InstitutionClass::with('subcategory')
+            ->where('institution_id', $institutionId);
+
+        if ($boardId) {
+            $query->whereHas('subcategory', function ($q) use ($boardId) {
+                $q->where('category_id', $boardId);
+            });
+        }
+
+        $classes = $query->get()->map(function ($item) {
+            return [
+                'id'        => $item->id,
+                'name'      => optional($item->subcategory)->subcategory_name,
+                'strength'  => $item->total_strength,
+            ];
+        });
+
+        return response()->json($classes);
     }
 }

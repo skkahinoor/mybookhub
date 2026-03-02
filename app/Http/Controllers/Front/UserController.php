@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicProfile;
 use App\Models\BookRequest;
 use App\Models\Cart;
 use App\Models\Category;
@@ -83,6 +84,12 @@ class UserController extends Controller
             $spatieRole = Role::find($roleId);
             if ($spatieRole) {
                 $user->assignRole($spatieRole);
+                // If this is a student registration, also create an empty academic profile row
+                if ($spatieRole->name === 'student') {
+                    AcademicProfile::firstOrCreate([
+                        'user_id' => $user->id,
+                    ]);
+                }
             }
         }
 
