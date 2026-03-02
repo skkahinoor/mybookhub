@@ -41,7 +41,7 @@ class WalletTransaction extends Model
         // Check if any product in the order belongs to the 'testpaper' category (case-insensitive)
         $hasTestPaper = false;
         foreach ($order->orders_products as $orderProduct) {
-            $categoryName = $orderProduct->product->category->category_name ?? '';
+            $categoryName = $orderProduct->product->bookType->book_type ?? '';
             if (strtolower($categoryName) == 'testpaper') {
                 $hasTestPaper = true;
                 break;

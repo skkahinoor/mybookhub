@@ -16,6 +16,7 @@ use App\Models\ProductsImage;
 use App\Models\ProductsFilter;
 use App\Models\ProductsAttribute;
 use App\Models\Subject;
+use App\Models\Subcategory;
 use App\Models\Language;
 use App\Models\Category;
 use App\Models\Section;
@@ -633,6 +634,7 @@ class ProductsController extends Controller
                 }
 
                 $product->subject_id  = $data['subject_id'];
+                $product->subcategory_id = $data['subcategory_id'] ?? null;
                 $product->language_id = $data['language_id'];
 
                 $product->condition        = $data['condition'];
@@ -734,10 +736,11 @@ class ProductsController extends Controller
         $categories = Section::with('categories')->get()->toArray();
         $publishers = Publisher::where('status', 1)->get()->toArray();
         $authors    = Author::where('status', 1)->get();
-        $subjects   = Subject::where('status', 1)->get()->toArray();
-        $languages  = Language::get();
-        $editions   = Edition::all();
-        $bookTypes  = BookType::where('status', 1)->get()->toArray();
+        $subjects      = Subject::where('status', 1)->get()->toArray();
+        $subcategories = Subcategory::where('status', 1)->get()->toArray();
+        $languages     = Language::get();
+        $editions      = Edition::all();
+        $bookTypes     = BookType::where('status', 1)->get()->toArray();
 
         return view('admin.products.add_edit_product')->with(compact(
             'title',
@@ -746,6 +749,7 @@ class ProductsController extends Controller
             'publishers',
             'authors',
             'subjects',
+            'subcategories',
             'languages',
             'editions',
             'bookTypes',
