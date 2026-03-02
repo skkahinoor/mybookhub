@@ -19,7 +19,7 @@ class BookType extends Model
     {
         return $this->hasMany(Product::class, 'book_type_id');
     }
-    
+
      public function getImageAttribute($value)
     {
         if ($value) {

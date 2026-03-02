@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 use App\Models\Banner;
 use App\Models\Subject;
 use App\Models\Cart;
+use App\Models\Section;
+use App\Models\Category;
+use App\Models\Subcategory;
+use App\Models\BookType;
+use App\Models\Language;
 
 class HomeController extends Controller
 {
@@ -50,6 +55,67 @@ class HomeController extends Controller
                 'banners' => $banners,
                 'subjects' => $subject,
             ]
+        ]);
+    }
+
+    public function getSections()
+    {
+        $sections = Section::where('status', 1)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name']);
+
+        return response()->json([
+            'status' => true,
+            'data'   => $sections
+        ]);
+    }
+
+    public function getcategories($section_id)
+    {
+        $categories = Category::where('status', 1)
+            ->where('section_id', $section_id)
+            ->orderBy('category_name', 'asc')
+            ->get(['id', 'category_name', 'section_id']);
+
+        return response()->json([
+            'status' => true,
+            'data'   => $categories
+        ]);
+    }
+
+    public function getSubcategories()
+    {
+        $subcategory = Subcategory::where('status', 1)
+            ->orderBy('subcategory_name', 'asc')
+            ->get(['id', 'subcategory_name']);
+
+        return response()->json([
+            'status' => true,
+            'data'   => $subcategory
+        ]);
+    }
+
+    public function getBookTypes()
+    {
+        $booktype = BookType::where('status', 1)
+            ->orderBy('book_type', 'asc')
+            ->get(['id', 'book_type', 'book_type_icon']);
+
+        return response()->json([
+            'status' => true,
+            'data'   => $booktype
+        ]);
+    }
+
+    public function getLanguages()
+    {
+        $language = Language::where('status', 1)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name']);
+
+        return response()->json([
+            'status' => true,
+            'data'   => $language
         ]);
     }
 }
