@@ -22,7 +22,8 @@ class Subcategory extends Model
 
     public function subjects()
     {
-        return $this->belongsToMany(Subject::class, 'class_subjects', 'subcategory_id', 'subject_id');
+        return $this->belongsToMany(Subject::class, 'filter_class_subject', 'sub_category_id', 'subject_id')
+            ->withPivot('section_id', 'category_id');
     }
 
     public function products()

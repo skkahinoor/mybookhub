@@ -17,6 +17,6 @@ class Subject extends Model
 
     public function subcategories()
     {
-        return $this->belongsToMany(Subcategory::class, 'class_subjects', 'subject_id', 'subcategory_id');
+        return $this->belongsToMany(Subcategory::class, 'filter_class_subject', 'subject_id', 'sub_category_id');
     }
 }

@@ -11,6 +11,9 @@
     {{-- X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <script>
+        window.BASE_URL = "{{ url('/') }}";
+    </script>
 
 
     <title>Admin Panel</title>
@@ -21,11 +24,8 @@
     <!-- endinject -->
 
     {{-- Font Awesome --}}
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-          integrity="sha512-LX1L+z..."
-          crossorigin="anonymous"
-          referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-LX1L+z..." crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- Plugin css for this page (The icons from Skydash Admin Panel template) -->
     <link rel="stylesheet" href="{{ url('admin/vendors/mdi/css/materialdesignicons.min.css') }}">
@@ -39,9 +39,8 @@
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ url('admin/css/vertical-layout-light/style.css') }}">
     <!-- endinject -->
-    @if(!empty($headerLogo))
-    <link rel="shortcut icon"
-          href="{{ asset('uploads/favicons/' . $headerLogo->favicon) }}" />
+    @if (!empty($headerLogo))
+        <link rel="shortcut icon" href="{{ asset('uploads/favicons/' . $headerLogo->favicon) }}" />
     @endif
 
 
@@ -65,10 +64,10 @@
 
         <div class="navbar-brand-wrapper">
             <a class="navbar-brand" href="{{ url('admin/dashboard') }}">
-                 @if (!empty($headerLogo))
-                <img src="{{ asset('uploads/logos/' . ($headerLogo->logo ?? 'default.png')) }}" alt="logo"
-                    height="50">
-                    @endif
+                @if (!empty($headerLogo))
+                    <img src="{{ asset('uploads/logos/' . ($headerLogo->logo ?? 'default.png')) }}" alt="logo"
+                        height="50">
+                @endif
             </a>
         </div>
 
@@ -155,11 +154,11 @@
     {{-- SweetAlert2 for Flash Messages --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        @if(Session::has('error_message'))
+        @if (Session::has('error_message'))
             Swal.fire({
                 icon: 'error',
                 title: 'Access Denied',
-                text: '{{ Session::get("error_message") }}',
+                text: '{{ Session::get('error_message') }}',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#dc3545',
                 timer: 5000,
@@ -167,11 +166,11 @@
             });
         @endif
 
-        @if(Session::has('success_message'))
+        @if (Session::has('success_message'))
             Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: '{{ Session::get("success_message") }}',
+                text: '{{ Session::get('success_message') }}',
                 confirmButtonText: 'OK',
                 confirmButtonColor: '#28a745',
                 timer: 3000,
@@ -184,82 +183,96 @@
     @stack('scripts')
     {{-- Notification Scripts --}}
     <script>
-    (function() {
-        // Wait for jQuery to be available
-        function initNotifications() {
-            if (typeof jQuery === 'undefined') {
-                setTimeout(initNotifications, 100);
-                return;
-            }
-            
-            var $ = jQuery;
-            
-            $(document).ready(function() {
-                // Load notifications on page load
-                loadNotifications();
+        (function() {
+            // Wait for jQuery to be available
+            function initNotifications() {
+                if (typeof jQuery === 'undefined') {
+                    setTimeout(initNotifications, 100);
+                    return;
+                }
 
-                // Refresh notifications every 30 seconds
-                setInterval(loadNotifications, 30000);
+                var $ = jQuery;
 
-                function loadNotifications() {
-                    $.ajax({
-                        url: '{{ url("admin/notifications/get") }}',
-                        type: 'GET',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        success: function(response) {
-                            // Check if response is valid
-                            if (!response || typeof response !== 'object') {
-                                console.error('Invalid response format:', response);
-                                $('#notificationsList').html('<div class="dropdown-item preview-item"><div class="preview-item-content"><h6 class="preview-subject font-weight-normal">Error loading notifications</h6></div></div>');
-                                return;
-                            }
-                            
-                            // Update notification count
-                            var unreadCount = response.unreadCount || 0;
-                            $('#notificationCount').text(unreadCount);
-                            
-                            // Update notification count badge visibility
-                            if (unreadCount > 0) {
-                                $('#notificationCount').show();
-                            } else {
-                                $('#notificationCount').hide();
-                            }
+                $(document).ready(function() {
+                    // Load notifications on page load
+                    loadNotifications();
 
-                            // Update notifications list
-                            var notificationsHtml = '';
-                            var notifications = response.notifications || [];
-                            
-                            if (notifications.length > 0) {
-                                notifications.forEach(function(notification) {
-                                    var timeAgo = getTimeAgo(notification.created_at);
-                                    var isReadClass = notification.is_read ? '' : 'font-weight-bold';
-                                    
-                                    // Determine icon and link based on notification type
-                                    var iconClass = 'ti-bell';
-                                    var iconBg = 'bg-warning';
-                                    var linkUrl = '#';
-                                    
-                                    if (notification.type === 'withdrawal_request' && notification.related_id) {
-                                        iconClass = 'ti-money';
-                                        iconBg = 'bg-info';
-                                        linkUrl = 'withdrawals/' + notification.related_id;
-                                    } else if (notification.type === 'sales_executive_registration' && notification.related_id) {
-                                        iconClass = 'ti-user';
-                                        iconBg = 'bg-success';
-                                        linkUrl = 'add-edit-sales-executive/' + notification.related_id;
-                                    } else if (notification.type === 'institution_added' && notification.related_id) {
-                                        iconClass = 'ti-bookmark-alt';
-                                        iconBg = 'bg-warning';
-                                        linkUrl = 'notifications?view-inst=' + notification.related_id + '&notif=' + notification.id;
-                                    } else if (notification.type === 'product_added' && notification.related_id) {
-                                        iconClass = 'ti-package';
-                                        iconBg = 'bg-primary';
-                                        linkUrl = 'add-edit-product/' + notification.related_id;
-                                    }
-                                    
-                                    notificationsHtml += `
+                    // Refresh notifications every 30 seconds
+                    setInterval(loadNotifications, 30000);
+
+                    function loadNotifications() {
+                        $.ajax({
+                            url: '{{ url('admin/notifications/get') }}',
+                            type: 'GET',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                // Check if response is valid
+                                if (!response || typeof response !== 'object') {
+                                    console.error('Invalid response format:', response);
+                                    $('#notificationsList').html(
+                                        '<div class="dropdown-item preview-item"><div class="preview-item-content"><h6 class="preview-subject font-weight-normal">Error loading notifications</h6></div></div>'
+                                        );
+                                    return;
+                                }
+
+                                // Update notification count
+                                var unreadCount = response.unreadCount || 0;
+                                $('#notificationCount').text(unreadCount);
+
+                                // Update notification count badge visibility
+                                if (unreadCount > 0) {
+                                    $('#notificationCount').show();
+                                } else {
+                                    $('#notificationCount').hide();
+                                }
+
+                                // Update notifications list
+                                var notificationsHtml = '';
+                                var notifications = response.notifications || [];
+
+                                if (notifications.length > 0) {
+                                    notifications.forEach(function(notification) {
+                                        var timeAgo = getTimeAgo(notification.created_at);
+                                        var isReadClass = notification.is_read ? '' :
+                                            'font-weight-bold';
+
+                                        // Determine icon and link based on notification type
+                                        var iconClass = 'ti-bell';
+                                        var iconBg = 'bg-warning';
+                                        var linkUrl = '#';
+
+                                        if (notification.type === 'withdrawal_request' &&
+                                            notification.related_id) {
+                                            iconClass = 'ti-money';
+                                            iconBg = 'bg-info';
+                                            linkUrl = 'withdrawals/' + notification
+                                                .related_id;
+                                        } else if (notification.type ===
+                                            'sales_executive_registration' && notification
+                                            .related_id) {
+                                            iconClass = 'ti-user';
+                                            iconBg = 'bg-success';
+                                            linkUrl = 'add-edit-sales-executive/' +
+                                                notification.related_id;
+                                        } else if (notification.type ===
+                                            'institution_added' && notification.related_id
+                                            ) {
+                                            iconClass = 'ti-bookmark-alt';
+                                            iconBg = 'bg-warning';
+                                            linkUrl = 'notifications?view-inst=' +
+                                                notification.related_id + '&notif=' +
+                                                notification.id;
+                                        } else if (notification.type === 'product_added' &&
+                                            notification.related_id) {
+                                            iconClass = 'ti-package';
+                                            iconBg = 'bg-primary';
+                                            linkUrl = 'add-edit-product/' + notification
+                                                .related_id;
+                                        }
+
+                                        notificationsHtml += `
                                         <a href="${linkUrl}" class="dropdown-item preview-item notification-item ${isReadClass}" data-id="${notification.id}" data-type="${notification.type}" data-related-id="${notification.related_id || ''}">
                                             <div class="preview-thumbnail">
                                                 <div class="preview-icon ${iconBg}">
@@ -273,9 +286,9 @@
                                             </div>
                                         </a>
                                     `;
-                                });
-                            } else {
-                                notificationsHtml = `
+                                    });
+                                } else {
+                                    notificationsHtml = `
                                     <div class="dropdown-item preview-item">
                                         <div class="preview-item-content">
                                             <h6 class="preview-subject font-weight-normal">No notifications</h6>
@@ -283,55 +296,60 @@
                                         </div>
                                     </div>
                                 `;
-                            }
-                            $('#notificationsList').html(notificationsHtml);
+                                }
+                                $('#notificationsList').html(notificationsHtml);
 
-                            // Add click handler for notifications
-                            $('.notification-item').on('click', function(e) {
-                                var notificationId = $(this).data('id');
-                                var linkUrl = $(this).attr('href');
-                                var notificationType = $(this).data('type');
-                                var relatedId = $(this).data('related-id');
-                                
-                                // Mark as read in background (don't wait for response)
-                                if (notificationId) {
-                                    markAsRead(notificationId, false); // false = don't reload notifications
-                                }
-                                
-                                // Handle sales executive registration - navigate to notifications page to open modal
-                                if (notificationType === 'sales_executive_registration' && relatedId) {
-                                    e.preventDefault();
-                                    // Navigate to notifications page which has the modal
-                                    window.location.href = 'notifications?view-se=' + relatedId + '&notif=' + notificationId;
-                                    return false;
-                                }
-                                
-                                // Handle institution added - navigate to notifications page to open modal
-                                if (notificationType === 'institution_added' && relatedId) {
-                                    e.preventDefault();
-                                    // Navigate to notifications page which has the modal
-                                    window.location.href = 'notifications?view-inst=' + relatedId + '&notif=' + notificationId;
-                                    return false;
-                                }
-                                
-                                // For withdrawal requests and other types, allow navigation
-                                // If it's just a hash link, prevent default navigation
-                                if (!linkUrl || linkUrl === '#') {
-                                    e.preventDefault();
-                                }
-                                // Otherwise allow navigation to proceed
-                            });
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('Error loading notifications:', {
-                                status: status,
-                                error: error,
-                                response: xhr.responseText,
-                                statusCode: xhr.status
-                            });
-                            
-                            // Show error message in dropdown
-                            $('#notificationsList').html(`
+                                // Add click handler for notifications
+                                $('.notification-item').on('click', function(e) {
+                                    var notificationId = $(this).data('id');
+                                    var linkUrl = $(this).attr('href');
+                                    var notificationType = $(this).data('type');
+                                    var relatedId = $(this).data('related-id');
+
+                                    // Mark as read in background (don't wait for response)
+                                    if (notificationId) {
+                                        markAsRead(notificationId,
+                                        false); // false = don't reload notifications
+                                    }
+
+                                    // Handle sales executive registration - navigate to notifications page to open modal
+                                    if (notificationType ===
+                                        'sales_executive_registration' && relatedId) {
+                                        e.preventDefault();
+                                        // Navigate to notifications page which has the modal
+                                        window.location.href = 'notifications?view-se=' +
+                                            relatedId + '&notif=' + notificationId;
+                                        return false;
+                                    }
+
+                                    // Handle institution added - navigate to notifications page to open modal
+                                    if (notificationType === 'institution_added' &&
+                                        relatedId) {
+                                        e.preventDefault();
+                                        // Navigate to notifications page which has the modal
+                                        window.location.href = 'notifications?view-inst=' +
+                                            relatedId + '&notif=' + notificationId;
+                                        return false;
+                                    }
+
+                                    // For withdrawal requests and other types, allow navigation
+                                    // If it's just a hash link, prevent default navigation
+                                    if (!linkUrl || linkUrl === '#') {
+                                        e.preventDefault();
+                                    }
+                                    // Otherwise allow navigation to proceed
+                                });
+                            },
+                            error: function(xhr, status, error) {
+                                console.error('Error loading notifications:', {
+                                    status: status,
+                                    error: error,
+                                    response: xhr.responseText,
+                                    statusCode: xhr.status
+                                });
+
+                                // Show error message in dropdown
+                                $('#notificationsList').html(`
                                 <div class="dropdown-item preview-item">
                                     <div class="preview-item-content">
                                         <h6 class="preview-subject font-weight-normal text-danger">Error loading notifications</h6>
@@ -339,94 +357,97 @@
                                     </div>
                                 </div>
                             `);
-                        }
-                    });
-                }
+                            }
+                        });
+                    }
 
-                function markAsRead(notificationId, reloadNotifications = true) {
-                    $.ajax({
-                        url: '{{ url("admin/notifications") }}/' + notificationId + '/read',
-                        type: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        success: function(response) {
-                            // Reload notifications after marking as read (only if requested)
-                            if (reloadNotifications) {
-                                loadNotifications();
-                            } else {
-                                // Just update the count without full reload
-                                var currentCount = parseInt($('#notificationCount').text()) || 0;
-                                if (currentCount > 0) {
-                                    $('#notificationCount').text(currentCount - 1);
-                                    if (currentCount - 1 === 0) {
-                                        $('#notificationCount').hide();
+                    function markAsRead(notificationId, reloadNotifications = true) {
+                        $.ajax({
+                            url: '{{ url('admin/notifications') }}/' + notificationId + '/read',
+                            type: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                // Reload notifications after marking as read (only if requested)
+                                if (reloadNotifications) {
+                                    loadNotifications();
+                                } else {
+                                    // Just update the count without full reload
+                                    var currentCount = parseInt($('#notificationCount').text()) ||
+                                    0;
+                                    if (currentCount > 0) {
+                                        $('#notificationCount').text(currentCount - 1);
+                                        if (currentCount - 1 === 0) {
+                                            $('#notificationCount').hide();
+                                        }
                                     }
                                 }
+                            },
+                            error: function(xhr) {
+                                console.error('Error marking notification as read:', xhr);
                             }
-                        },
-                        error: function(xhr) {
-                            console.error('Error marking notification as read:', xhr);
+                        });
+                    }
+
+                    function getTimeAgo(dateString) {
+                        var date = new Date(dateString);
+                        var now = new Date();
+                        var seconds = Math.floor((now - date) / 1000);
+
+                        if (seconds < 60) {
+                            return seconds + ' seconds ago';
+                        } else if (seconds < 3600) {
+                            var minutes = Math.floor(seconds / 60);
+                            return minutes + ' minute' + (minutes > 1 ? 's' : '') + ' ago';
+                        } else if (seconds < 86400) {
+                            var hours = Math.floor(seconds / 3600);
+                            return hours + ' hour' + (hours > 1 ? 's' : '') + ' ago';
+                        } else {
+                            var days = Math.floor(seconds / 86400);
+                            return days + ' day' + (days > 1 ? 's' : '') + ' ago';
                         }
-                    });
-                }
-
-                function getTimeAgo(dateString) {
-                    var date = new Date(dateString);
-                    var now = new Date();
-                    var seconds = Math.floor((now - date) / 1000);
-                    
-                    if (seconds < 60) {
-                        return seconds + ' seconds ago';
-                    } else if (seconds < 3600) {
-                        var minutes = Math.floor(seconds / 60);
-                        return minutes + ' minute' + (minutes > 1 ? 's' : '') + ' ago';
-                    } else if (seconds < 86400) {
-                        var hours = Math.floor(seconds / 3600);
-                        return hours + ' hour' + (hours > 1 ? 's' : '') + ' ago';
-                    } else {
-                        var days = Math.floor(seconds / 86400);
-                        return days + ' day' + (days > 1 ? 's' : '') + ' ago';
                     }
-                }
 
-                // Function to open sales executive modal (available globally)
-                window.openSalesExecutiveModal = function(salesExecutiveId, notificationId) {
-                    // Check if modal exists (it's only on notifications page)
-                    if ($('#salesExecutiveModal').length === 0) {
-                        // If modal doesn't exist, navigate to notifications page
-                        window.location.href = 'notifications';
-                        return;
-                    }
-                    
-                    // Reset modal state
-                    $('#approveSalesExecutiveBtn').hide();
-                    $('#rejectSalesExecutiveBtn').hide();
-                    
-                    // Show modal
-                    $('#salesExecutiveModal').modal('show');
-                    
-                    // Load sales executive details
-                    loadSalesExecutiveDetails(salesExecutiveId, notificationId);
-                };
+                    // Function to open sales executive modal (available globally)
+                    window.openSalesExecutiveModal = function(salesExecutiveId, notificationId) {
+                        // Check if modal exists (it's only on notifications page)
+                        if ($('#salesExecutiveModal').length === 0) {
+                            // If modal doesn't exist, navigate to notifications page
+                            window.location.href = 'notifications';
+                            return;
+                        }
 
-                function loadSalesExecutiveDetails(id, notificationId) {
-                    $('#salesExecutiveModalBody').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>');
-                    
-                    $.ajax({
-                        url: '/admin/sales-executive/' + id + '/details',
-                        type: 'GET',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                var data = response.data;
-                                var statusBadge = data.status == 1 
-                                    ? '<span class="badge badge-success">Active</span>' 
-                                    : '<span class="badge badge-warning">Inactive (Pending Approval)</span>';
-                                
-                                var html = `
+                        // Reset modal state
+                        $('#approveSalesExecutiveBtn').hide();
+                        $('#rejectSalesExecutiveBtn').hide();
+
+                        // Show modal
+                        $('#salesExecutiveModal').modal('show');
+
+                        // Load sales executive details
+                        loadSalesExecutiveDetails(salesExecutiveId, notificationId);
+                    };
+
+                    function loadSalesExecutiveDetails(id, notificationId) {
+                        $('#salesExecutiveModalBody').html(
+                            '<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>'
+                            );
+
+                        $.ajax({
+                            url: '/admin/sales-executive/' + id + '/details',
+                            type: 'GET',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    var data = response.data;
+                                    var statusBadge = data.status == 1 ?
+                                        '<span class="badge badge-success">Active</span>' :
+                                        '<span class="badge badge-warning">Inactive (Pending Approval)</span>';
+
+                                    var html = `
                                     <div class="row">
                                         <div class="col-md-12">
                                             <h6 class="font-weight-bold">Personal Information</h6>
@@ -455,72 +476,84 @@
                                         </div>
                                     </div>
                                 `;
-                                
-                                $('#salesExecutiveModalBody').html(html);
-                                
-                                // Show/hide status buttons based on current status
-                                if (data.status == 0) {
-                                    $('#approveSalesExecutiveBtn').show().off('click').on('click', function() {
-                                        if (!confirm('Are you sure you want to approve (activate) this sales executive?')) {
-                                            return;
-                                        }
-                                        updateSalesExecutiveStatus('Active', id, notificationId);
-                                    });
-                                    $('#rejectSalesExecutiveBtn').hide();
-                                } else {
-                                    $('#approveSalesExecutiveBtn').hide();
-                                    $('#rejectSalesExecutiveBtn').show().off('click').on('click', function() {
-                                        if (!confirm('Are you sure you want to reject (deactivate) this sales executive?')) {
-                                            return;
-                                        }
-                                        updateSalesExecutiveStatus('Inactive', id, notificationId);
-                                    });
-                                }
-                            }
-                        },
-                        error: function(xhr) {
-                            $('#salesExecutiveModalBody').html('<div class="alert alert-danger">Error loading sales executive details.</div>');
-                            console.error('Error loading sales executive details:', xhr);
-                        }
-                    });
-                }
 
-                function updateSalesExecutiveStatus(statusText, salesExecutiveId, notificationId) {
-                    $.ajax({
-                        url: '/admin/update-sales-executive-status',
-                        type: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
-                        data: {
-                            sales_executive_id: salesExecutiveId,
-                            status: statusText
-                        },
-                        success: function(response) {
-                            // Mark notification as read
-                            if (notificationId) {
-                                markAsRead(notificationId, false);
+                                    $('#salesExecutiveModalBody').html(html);
+
+                                    // Show/hide status buttons based on current status
+                                    if (data.status == 0) {
+                                        $('#approveSalesExecutiveBtn').show().off('click').on(
+                                            'click',
+                                            function() {
+                                                if (!confirm(
+                                                        'Are you sure you want to approve (activate) this sales executive?'
+                                                        )) {
+                                                    return;
+                                                }
+                                                updateSalesExecutiveStatus('Active', id,
+                                                    notificationId);
+                                            });
+                                        $('#rejectSalesExecutiveBtn').hide();
+                                    } else {
+                                        $('#approveSalesExecutiveBtn').hide();
+                                        $('#rejectSalesExecutiveBtn').show().off('click').on(
+                                            'click',
+                                            function() {
+                                                if (!confirm(
+                                                        'Are you sure you want to reject (deactivate) this sales executive?'
+                                                        )) {
+                                                    return;
+                                                }
+                                                updateSalesExecutiveStatus('Inactive', id,
+                                                    notificationId);
+                                            });
+                                    }
+                                }
+                            },
+                            error: function(xhr) {
+                                $('#salesExecutiveModalBody').html(
+                                    '<div class="alert alert-danger">Error loading sales executive details.</div>'
+                                    );
+                                console.error('Error loading sales executive details:', xhr);
                             }
-                            
-                            // Reload notifications and close modal
-                            loadNotifications();
-                            $('#salesExecutiveModal').modal('hide');
-                            
-                            // Show success message
-                            alert('Sales executive status updated successfully!');
-                        },
-                        error: function(xhr) {
-                            console.error('Error updating sales executive status:', xhr);
-                            alert('Error updating sales executive status');
-                        }
-                    });
-                }
-            });
-        }
-        
-        // Start initialization
-        initNotifications();
-    })();
+                        });
+                    }
+
+                    function updateSalesExecutiveStatus(statusText, salesExecutiveId, notificationId) {
+                        $.ajax({
+                            url: '/admin/update-sales-executive-status',
+                            type: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                sales_executive_id: salesExecutiveId,
+                                status: statusText
+                            },
+                            success: function(response) {
+                                // Mark notification as read
+                                if (notificationId) {
+                                    markAsRead(notificationId, false);
+                                }
+
+                                // Reload notifications and close modal
+                                loadNotifications();
+                                $('#salesExecutiveModal').modal('hide');
+
+                                // Show success message
+                                alert('Sales executive status updated successfully!');
+                            },
+                            error: function(xhr) {
+                                console.error('Error updating sales executive status:', xhr);
+                                alert('Error updating sales executive status');
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Start initialization
+            initNotifications();
+        })();
     </script>
 
 </body>
