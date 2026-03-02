@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
 use App\Models\Subcategory; // This represents Classes
 use App\Models\Subject;
+use App\Models\Section;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
 
 class ClassSubjectController extends Controller
 {
@@ -16,22 +19,31 @@ class ClassSubjectController extends Controller
     {
         if (!Auth::guard('admin')->user()->can('view_class_subjects')) {
             // abort(403, 'Unauthorized action.');
-            // If permissions are not yet defined, we might need to skip this or handle it.
-            // But let's assume they exist or will be added.
         }
 
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
 
-        // Fetch all classes (subcategories) that have at least one subject assigned
-        $classes = Subcategory::with('subjects')->has('subjects')->get();
-        // and also those that don't have any, for adding
-        $allClasses = Subcategory::where('status', 1)->get();
+        // Fetch all assignments from the filter_class_subject table
+        // We'll join with other tables to show names
+        $assignments = DB::table('filter_class_subject')
+            ->join('sections', 'filter_class_subject.section_id', '=', 'sections.id')
+            ->join('categories', 'filter_class_subject.category_id', '=', 'categories.id')
+            ->join('subcategories', 'filter_class_subject.sub_category_id', '=', 'subcategories.id')
+            ->join('subjects', 'filter_class_subject.subject_id', '=', 'subjects.id')
+            ->select(
+                'filter_class_subject.id',
+                'sections.name as section_name',
+                'categories.category_name',
+                'subcategories.subcategory_name',
+                'subjects.name as subject_name'
+            )
+            ->get();
 
         Session::put('page', 'class_subjects');
 
-        return view('admin.class_subjects.index', compact('classes', 'allClasses', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.class_subjects.index', compact('assignments', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function create()
@@ -40,64 +52,97 @@ class ClassSubjectController extends Controller
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
 
-        $classes = Subcategory::where('status', 1)->get();
+        $sections = Section::where('status', 1)->get();
+        // Categories will be loaded via AJAX based on Section
+        $subcategories = Subcategory::where('status', 1)->get();
         $subjects = Subject::where('status', 1)->get();
 
-        return view('admin.class_subjects.add_class_subject', compact('classes', 'subjects', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.class_subjects.add_class_subject', compact('sections', 'subcategories', 'subjects', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
+            'section_id' => 'required|exists:sections,id',
+            'category_id' => 'required|exists:categories,id',
             'subcategory_id' => 'required|exists:subcategories,id',
             'subject_ids' => 'required|array',
             'subject_ids.*' => 'exists:subjects,id',
         ]);
 
-        $class = Subcategory::findOrFail($request->subcategory_id);
+        $subCategory = Subcategory::findOrFail($request->subcategory_id);
 
-        // Sync will handle deleting old and inserting new, ensuring no duplicates
-        $class->subjects()->sync($request->subject_ids);
+        $syncData = [];
+        foreach ($request->subject_ids as $subject_id) {
+            $syncData[$subject_id] = [
+                'section_id' => $request->section_id,
+                'category_id' => $request->category_id
+            ];
+        }
 
-        return redirect()->route('admin.class_subjects.index')->with('success_message', 'Subjects assigned to Class successfully!');
+        // We use attach or sync. Sync is better but we need to handle the fact that
+        // a subcategory might be assigned to multiple categories.
+        // If we want it to be unique per (Subcat, Subject), sync is fine.
+        $subCategory->subjects()->sync($syncData);
+
+        return redirect()->route('admin.class_subjects.index')->with('success_message', 'Subjects assigned successfully!');
     }
 
-    public function edit($subcategory_id)
+    public function edit($id)
     {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
 
-        $class = Subcategory::with('subjects')->findOrFail($subcategory_id);
-        $classes = Subcategory::where('status', 1)->get();
+        // Since it's a pivot entry, we might want to edit a specific one or all for a subcat
+        // For simplicity, let's assume we edit based on sub_category_id as before but show the others
+        $subCategory = Subcategory::with('subjects')->findOrFail($id);
+
+        $sections = Section::where('status', 1)->get();
+
+        // Get current values from one of the assignments
+        $firstAssignment = DB::table('filter_class_subject')->where('sub_category_id', $id)->first();
+        $currentSectionId = $firstAssignment ? $firstAssignment->section_id : null;
+        $currentCategoryId = $firstAssignment ? $firstAssignment->category_id : null;
+
+        $categories = $currentSectionId ? Category::where('section_id', $currentSectionId)->get() : [];
+        $subcategories = Subcategory::where('status', 1)->get();
         $subjects = Subject::where('status', 1)->get();
 
-        $assignedSubjectIds = $class->subjects->pluck('id')->toArray();
+        $assignedSubjectIds = $subCategory->subjects->pluck('id')->toArray();
 
-        return view('admin.class_subjects.edit_class_subject', compact('class', 'classes', 'subjects', 'assignedSubjectIds', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.class_subjects.edit_class_subject', compact('subCategory', 'sections', 'categories', 'subcategories', 'subjects', 'assignedSubjectIds', 'currentSectionId', 'currentCategoryId', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function update(Request $request, $id)
     {
         $request->validate([
+            'section_id' => 'required|exists:sections,id',
+            'category_id' => 'required|exists:categories,id',
             'subcategory_id' => 'required|exists:subcategories,id',
             'subject_ids' => 'required|array',
             'subject_ids.*' => 'exists:subjects,id',
         ]);
 
-        $class = Subcategory::findOrFail($id);
+        $subCategory = Subcategory::findOrFail($id);
 
-        // Sync replaces all current assignments with the ones in the array
-        $class->subjects()->sync($request->subject_ids);
+        $syncData = [];
+        foreach ($request->subject_ids as $subject_id) {
+            $syncData[$subject_id] = [
+                'section_id' => $request->section_id,
+                'category_id' => $request->category_id
+            ];
+        }
+
+        $subCategory->subjects()->sync($syncData);
 
         return redirect()->route('admin.class_subjects.index')->with('success_message', 'Class Subjects updated successfully!');
     }
 
-    public function delete($subcategory_id)
+    public function delete($id)
     {
-        $class = Subcategory::findOrFail($subcategory_id);
-        $class->subjects()->detach(); // Removes all assignments for this class
+        DB::table('filter_class_subject')->where('id', $id)->delete();
 
-        return redirect()->route('admin.class_subjects.index')->with('success_message', 'All subject assignments cleared for this class.');
+        return redirect()->route('admin.class_subjects.index')->with('success_message', 'Subject assignment removed successfully.');
     }
 }

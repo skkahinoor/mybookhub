@@ -27,28 +27,29 @@
                                     <thead>
                                         <tr>
                                             <th>ID</th>
+                                            <th>Section</th>
+                                            <th>Category</th>
                                             <th>Class Name</th>
-                                            <th>Assigned Subjects</th>
+                                            <th>Subject</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($classes as $key => $class)
+                                        @foreach ($assignments as $key => $assignment)
                                             <tr>
                                                 <td>{{ $key + 1 }}</td>
-                                                <td>{{ $class->subcategory_name }}</td>
+                                                <td>{{ $assignment->section_name }}</td>
+                                                <td>{{ $assignment->category_name }}</td>
+                                                <td>{{ $assignment->subcategory_name }}</td>
+                                                <td>{{ $assignment->subject_name }}</td>
                                                 <td>
-                                                    @foreach ($class->subjects as $subject)
-                                                        <span class="badge badge-info">{{ $subject->name }}</span>
-                                                    @endforeach
-                                                </td>
-                                                <td>
-                                                    <a href="{{ route('admin.class_subjects.edit', $class->id) }}">
+                                                    {{-- Note: Editing/Deleting might need careful ID handling if it's per assignment ID now --}}
+                                                    <a href="{{ route('admin.class_subjects.edit', $assignment->id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
-                                                    {{-- Using standard confirmation for delete --}}
-                                                    <a title="Class Subjects" class="confirmDelete"
-                                                        href="{{ route('admin.class_subjects.delete', $class->id) }}">
+                                                    <a title="Class Subject Assignment" class="confirmDelete"
+                                                        data-module="Assignment"
+                                                        data-url="{{ route('admin.class_subjects.delete', $assignment->id) }}">
                                                         <i style="font-size: 25px"
                                                             class="mdi mdi-delete-forever text-danger"></i>
                                                     </a>
@@ -65,7 +66,7 @@
         </div>
         <footer class="footer">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2024. All rights
+                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2026 All rights
                     reserved.</span>
             </div>
         </footer>
