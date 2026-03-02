@@ -29,13 +29,19 @@
                             <form class="forms-sample" action="{{ route('admin.class_subjects.store') }}" method="POST">
                                 @csrf
                                 <div class="form-group">
-                                    <label for="subcategory_id">Select Class</label>
-                                    <select name="subcategory_id" id="subcategory_id" class="form-control" required>
-                                        <option value="">Select Class</option>
-                                        @foreach ($classes as $class)
-                                            <option value="{{ $class->id }}">{{ $class->subcategory_name }}</option>
+                                    <label for="section_id">Select Section</label>
+                                    <select name="section_id" id="section_id" class="form-control" required>
+                                        <option value="">Select Section</option>
+                                        @foreach ($sections as $section)
+                                            <option value="{{ $section->id }}">{{ $section->name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                                <div id="appendCategoriesLevel">
+                                    {{-- Categories will be loaded here via AJAX --}}
+                                </div>
+                                <div id="appendSubcategoriesLevel">
+                                    {{-- Subcategories will be loaded here via AJAX --}}
                                 </div>
                                 <div class="form-group">
                                     <label>Select Subjects</label>
@@ -63,3 +69,35 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            // Handle Category change to load Classes (Subcategories)
+            // We use delegated event because #category_id is loaded via AJAX
+            $(document).on('change', '#category_id', function(e) {
+                // If this page is Class-Subject Assignment, we load subcategories
+                // instead of filters (which custom.js might try to do correctly if we check for target)
+                var category_id = $(this).val();
+                if ($("#appendSubcategoriesLevel").length > 0 && category_id != "") {
+                    $.ajax({
+                        headers: {
+                            "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                        },
+                        type: "get",
+                        url: "{{ url('admin/append-subcategories-level') }}",
+                        data: {
+                            category_id: category_id
+                        },
+                        success: function(resp) {
+                            $("#appendSubcategoriesLevel").html(resp);
+                        },
+                        error: function() {
+                            alert("Error loading classes");
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+@endpush

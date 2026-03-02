@@ -27,6 +27,8 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
             ->name('student.profile.update');
         Route::post('/logout', [AuthController::class, 'logout'])->name('student.logout');
         Route::match(['GET', 'POST'], '/account', [AccountController::class, 'index'])->name('student.account');
+        Route::get('/academic-boards', [AccountController::class, 'getAcademicBoards'])->name('student.academic.boards');
+        Route::get('/academic-classes', [AccountController::class, 'getAcademicClasses'])->name('student.academic.classes');
         Route::post('/avatar', [AccountController::class, 'updateAvatar'])->name('student.avatar.update');
 
         // Wallet

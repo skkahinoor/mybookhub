@@ -132,7 +132,8 @@ class SubcategoryController extends Controller
     {
         if ($request->ajax()) {
             $data = $request->all();
-            $getSubcategories = Subcategory::where('category_id', $data['category_id'])->get()->toArray();
+            // Subcategories are independent (no category_id), so we return all of them
+            $getSubcategories = Subcategory::where('status', 1)->get()->toArray();
             return view('admin.subcategories.append_subcategories_level')->with(compact('getSubcategories'));
         }
     }

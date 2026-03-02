@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AcademicProfile;
 use App\Models\HeaderLogo;
 use App\Models\User;
 use App\Models\InstitutionManagement;
@@ -71,6 +72,15 @@ class StudentController extends Controller
         $studentuser = User::create($data);
         $studentuser->assignRole($role);
 
+        // Create academic profile entry for this student
+        $institution = InstitutionManagement::find($data['institution_id']);
+        AcademicProfile::create([
+            'user_id' => $studentuser->id,
+            'education_level_id' => $institution?->type,
+            'board_id' => $institution?->board,
+            'class_id' => $data['institution_classes_id'] ?? null,
+        ]);
+
         return redirect('admin/students')->with('success_message', 'Student has been added successfully', 'logos');
         return view('admin.students.index', compact('students', 'logos', 'headerLogo'));
     }
@@ -111,6 +121,20 @@ class StudentController extends Controller
             : $student->status;
 
         $student->update($data);
+
+        // Sync academic profile if institution or class changed
+        $institution = InstitutionManagement::find($data['institution_id']);
+        $profileData = [
+            'education_level_id' => $institution?->type,
+            'board_id' => $institution?->board,
+            'class_id' => $data['institution_classes_id'] ?? null,
+        ];
+
+        if ($student->academicProfile) {
+            $student->academicProfile->update($profileData);
+        } else {
+            $student->academicProfile()->create($profileData);
+        }
 
         return redirect('admin/students')->with('success_message', 'Student has been updated successfully', 'logos');
         return view('admin.students.index', compact('students', 'logos', 'headerLogo'));

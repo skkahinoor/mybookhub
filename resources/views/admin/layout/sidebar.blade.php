@@ -249,7 +249,7 @@
                         @can('view_sections')
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'sections') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/sections') }}">Sections</a></li>
+                                    class="nav-link" href="{{ url('admin/education-levels') }}">Education Levels</a></li>
                         @endcan
                         @can('view_categories')
                             <li class="nav-item"> <a

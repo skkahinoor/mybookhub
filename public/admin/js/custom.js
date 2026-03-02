@@ -833,26 +833,33 @@ $(document).ready(function () {
     });
 
     // Show Categories <select> <option> depending on the selected (chosen) Section (show the relevant categories of the chosen section) in append_categories_level.blade.php page        // https://www.w3schools.com/jquery/event_change.asp
-    $("#section_id").change(function () {
+    $(document).on("change", "#section_id", function () {
         // When the sections <select> <option> HTML element in add_edit_category.blade.php is selected or changed
         // console.log(this);
         var section_id = $(this).val();
         // console.log(section_id);
 
-        $.ajax({
-            headers: {
-                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-            }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
-            type: "get",
-            url: "/admin/append-categories-level",
-            data: { section_id: section_id }, // name/value pairs sent to server
-            success: function (resp) {
-                $("#appendCategoriesLevel").html(resp); // $('#appendCategoriesLeve') is the <div> in add_edit_category.blade.php
-            },
-            error: function () {
-                alert("Error");
-            },
-        });
+        // Clear sub-levels when section changes
+        $("#appendCategoriesLevel").html("");
+        $("#appendSubcategoriesLevel").html("");
+        $("#appendSubcategoriesLevelVendor").html("");
+
+        if (section_id != "") {
+            $.ajax({
+                headers: {
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
+                type: "get",
+                url: window.BASE_URL + "/admin/append-categories-level",
+                data: { section_id: section_id }, // name/value pairs sent to server
+                success: function (resp) {
+                    $("#appendCategoriesLevel").html(resp); // $('#appendCategoriesLeve') is the <div> in add_edit_category.blade.php
+                },
+                error: function () {
+                    alert("Error loading categories");
+                },
+            });
+        }
     });
 
     // Show Subcategories <select> <option> depending on the selected Category in add_edit_subject.blade.php
@@ -864,14 +871,14 @@ $(document).ready(function () {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
             type: "get",
-            url: "append-subcategories-level",
+            url: window.BASE_URL + "/admin/append-subcategories-level",
             data: { category_id: category_id },
             success: function (resp) {
                 $("#appendSubcategoriesLevel").html(resp);
                 $("#appendSubcategoriesLevelVendor").html(resp);
             },
             error: function () {
-                alert("Error");
+                alert("Error loading subcategories");
             },
         });
     });
@@ -902,20 +909,23 @@ $(document).ready(function () {
     });
 
     // Show the related filters depending on the selected category in category_filters.blade.php (which in turn is included by add_edit_product.php) using AJAX
-    $("#category_id").on("change", function () {
-        var category_id = $(this).val(); // the category_id of the selected category
+    $(document).on("change", "#category_id", function () {
+        var category_id = $(this).val();
 
-        $.ajax({
-            headers: {
-                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
-            }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
-            type: "post",
-            url: "category-filters", // check this route in web.php
-            data: { category_id: category_id },
-            success: function (resp) {
-                $(".loadFilters").html(resp.view);
-            },
-        });
+        // Only load filters if we are on a page that needs them (like add_edit_product)
+        if ($(".loadFilters").length > 0 && category_id != "") {
+            $.ajax({
+                headers: {
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                },
+                type: "post",
+                url: window.BASE_URL + "/admin/category-filters",
+                data: { category_id: category_id },
+                success: function (resp) {
+                    $(".loadFilters").html(resp.view);
+                },
+            });
+        }
     });
 
     // Show/Hide Coupon fields for Coupon Options (Manual/Automatic) in admin/coupons/add_edit_coupon.blade.php

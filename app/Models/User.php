@@ -98,6 +98,10 @@ class User extends Authenticatable
     {
         return $this->belongsTo(InstitutionClass::class, 'institution_classes_id');
     }
+    public function academicProfile()
+    {
+        return $this->hasOne(AcademicProfile::class, 'user_id');
+    }
     public function country()
     {
         return $this->belongsTo(Country::class, 'country_id');
