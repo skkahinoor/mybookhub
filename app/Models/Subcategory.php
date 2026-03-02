@@ -22,7 +22,7 @@ class Subcategory extends Model
 
     public function subjects()
     {
-        return $this->hasMany(Subject::class, 'subcategory_id');
+        return $this->belongsToMany(Subject::class, 'class_subjects', 'subcategory_id', 'subject_id');
     }
 
     public function products()

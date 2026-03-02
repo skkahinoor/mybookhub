@@ -15,5 +15,8 @@ class Subject extends Model
         'status',
     ];
 
-   
+    public function subcategories()
+    {
+        return $this->belongsToMany(Subcategory::class, 'class_subjects', 'subject_id', 'subcategory_id');
+    }
 }
