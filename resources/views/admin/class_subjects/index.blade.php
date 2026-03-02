@@ -41,15 +41,16 @@
                                                 <td>{{ $assignment->section_name }}</td>
                                                 <td>{{ $assignment->category_name }}</td>
                                                 <td>{{ $assignment->subcategory_name }}</td>
-                                                <td>{{ $assignment->subject_name }}</td>
+                                                <td>{{ $assignment->subject_names }}</td>
                                                 <td>
-                                                    {{-- Note: Editing/Deleting might need careful ID handling if it's per assignment ID now --}}
-                                                    <a href="{{ route('admin.class_subjects.edit', $assignment->id) }}">
+                                                    <a
+                                                        href="{{ route('admin.class_subjects.edit', $assignment->sub_category_id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
-                                                    <a title="Class Subject Assignment" class="confirmDelete"
+                                                    {{-- Note: This will delete ALL subjects assigned to this Class --}}
+                                                    <a title="Delete All Assigned Subjects" class="confirmDelete"
                                                         data-module="Assignment"
-                                                        data-url="{{ route('admin.class_subjects.delete', $assignment->id) }}">
+                                                        data-url="{{ route('admin.class_subjects.delete', $assignment->sub_category_id) }}">
                                                         <i style="font-size: 25px"
                                                             class="mdi mdi-delete-forever text-danger"></i>
                                                     </a>
