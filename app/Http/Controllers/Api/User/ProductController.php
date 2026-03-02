@@ -27,106 +27,110 @@ class ProductController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status'=>false,'errors'=>$validator->errors()],422);
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        $user = auth('sanctum')->user();
+        $user  = auth('sanctum')->user();
         $limit = $request->limit ?? 20;
-        $page = $request->page ?? 1;
-        $lat = $request->lat;
-        $lng = $request->lng;
+        $page  = $request->page ?? 1;
+        $lat   = $request->lat;
+        $lng   = $request->lng;
 
-        $cacheKey = $this->cacheKey($request, $user);
+        $cacheKey = 'products_' .
+            ($user ? 'user_' . $user->id : 'guest') .
+            '_' . md5(json_encode($request->all()));
 
-        $data = Cache::remember($cacheKey, 600, function () use ($request,$user,$limit,$page,$lat,$lng) {
-            return $this->sqlSearch($request,$user,$limit,$page,$lat,$lng);
+        $data = Cache::remember($cacheKey, 3600, function () use ($request, $user, $limit, $page, $lat, $lng) {
+            return $this->sqlSearch($request, $limit, $page, $lat, $lng);
         });
 
         return response()->json([
-            'status'=>true,
-            'message'=>'Products fetched successfully',
-            'data'=>$data
+            'status'  => true,
+            'message' => 'Products fetched successfully',
+            'data'    => $data
         ]);
     }
 
-    private function cacheKey($request,$user)
+    private function sqlSearch($request, $limit, $page, $lat, $lng)
     {
-        return 'products_'
-            .($user ? 'user_'.$user->id : 'guest')
-            .'_'.md5(json_encode($request->all()));
-    }
-
-    private function sqlSearch($request,$user,$limit,$page,$lat,$lng)
-    {
-        $query = Product::with(['category', 'subcategory', 'vendor', 'section', 'subject'])
+        $query = Product::with(['category', 'subcategory', 'section', 'subject'])
             ->select('products.*')
             ->join('products_attributes as pa', 'pa.product_id', '=', 'products.id')
             ->join('vendors as v', 'pa.vendor_id', '=', 'v.id')
-            ->leftJoin('ratings as r', 'pa.id', '=', 'r.product_attribute_id')
+            ->join('users as u', 'v.user_id', '=', 'u.id') // 🔥 Correct vendor name source
             ->addSelect(
                 'pa.id as attribute_id',
                 'pa.stock',
                 'pa.product_discount',
-                'v.plan',
-                'v.location',
-                DB::raw('COALESCE(AVG(r.rating),0) as avg_rating'),
-                DB::raw('COUNT(r.id) as total_rating')
+                'v.id as vendor_id',
+                'u.name as vendor_name',   // ✅ Correct
+                'v.plan as vendor_plan',
+                'v.location'
             )
             ->where('pa.status', 1)
             ->where('products.status', 1)
-            ->where('pa.stock', '>', 0)
-            ->groupBy(
-                'products.id', 'products.product_name', 'products.product_price', 'products.product_image',
-                'products.category_id', 'products.subcategory_id', 'products.description', 'products.condition',
-                'products.book_type_id', 'products.section_id', 'products.publisher_id', 'products.subject_id',
-                'products.edition_id', 'products.language_id', 'products.meta_title', 'products.meta_keywords',
-                'products.meta_description', 'products.status', 'products.created_at', 'products.updated_at', 'products.product_isbn',
-                'pa.id', 'pa.stock', 'pa.product_discount', 'v.id', 'v.plan', 'v.location'
+            ->where('pa.stock', '>', 0);
+
+        /*
+        ===============================
+        FULLTEXT SEARCH
+        ===============================
+        */
+        if ($request->search) {
+
+            $searchTerm = trim($request->search);
+            $words = explode(' ', $searchTerm);
+            $booleanSearch = '';
+
+            foreach ($words as $word) {
+                if (trim($word) !== '') {
+                    $booleanSearch .= '+' . trim($word) . '* ';
+                }
+            }
+
+            $query->whereRaw(
+                "MATCH(products.product_name, products.meta_title, products.meta_keywords)
+                 AGAINST(? IN BOOLEAN MODE)",
+                [trim($booleanSearch)]
             );
-
-        // Search
-        if($request->search){
-            $query->where('products.product_name','LIKE','%'.$request->search.'%');
         }
 
-        if($request->section_id){
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('section_id', $request->section_id);
-            });
+        /*
+        ===============================
+        FILTERS
+        ===============================
+        */
+        if ($request->section_id) {
+            $query->where('products.section_id', $request->section_id);
         }
 
-        if($request->category_id){
-            $query->where('products.category_id',$request->category_id);
+        if ($request->category_id) {
+            $query->where('products.category_id', $request->category_id);
         }
 
-        if($request->subcategory_id){
-            $query->where('products.subcategory_id',$request->subcategory_id);
+        if ($request->subcategory_id) {
+            $query->where('products.subcategory_id', $request->subcategory_id);
         }
 
-        if($request->min_price){
-            $query->where('products.product_price','>=',$request->min_price);
+        if ($request->min_price) {
+            $query->where('products.product_price', '>=', $request->min_price);
         }
 
-        if($request->max_price){
-            $query->where('products.product_price','<=',$request->max_price);
+        if ($request->max_price) {
+            $query->where('products.product_price', '<=', $request->max_price);
         }
 
-        // Default filter for logged in user: show only their board and class books
-        // when no specific search or category or subcategory or section is requested ("1st display ... not all book")
-        if ($user && empty($request->search) && empty($request->section_id) && empty($request->category_id) && empty($request->subcategory_id)) {
-            $classId = optional($user->institution_class)->sub_category_id ?? null;
-            $boardId = optional($user->institution)->board ?? optional(optional($user->institution)->category)->id ?? null;
+        /*
+        ===============================
+        DISTANCE CALCULATION
+        Format: "20.27107,85.7938"
+        ===============================
+        */
+        if ($lat && $lng) {
 
-            if ($boardId) {
-                $query->where('products.category_id', $boardId);
-            }
-            if ($classId) {
-                $query->where('products.subcategory_id', $classId);
-            }
-        }
-
-        // Distance calculation
-        if($lat && $lng){
             $query->addSelect(DB::raw("
                 (6371 * acos(
                     cos(radians($lat)) *
@@ -138,96 +142,77 @@ class ProductController extends Controller
             "));
         }
 
-        // ==========================
-        // SORTING LOGIC
-        // ==========================
+        /*
+        ===============================
+        SORTING
+        ===============================
+        */
 
-        if($user){
-            $classId = optional($user->institution_class)->sub_category_id ?? null;
-            $boardId = optional($user->institution)->board ?? optional(optional($user->institution)->category)->id ?? null;
-
-            $order = "";
-
-            // Priority 0: Always prioritize their own Class and Board books if they searched globally
-            if($boardId){
-                $order .= "CASE WHEN products.category_id=$boardId THEN 1 ELSE 2 END ASC, ";
-            }
-
-            if($classId){
-                $order .= "CASE WHEN products.subcategory_id=$classId THEN 1 ELSE 2 END ASC, ";
-            }
-
-            // Priority 1: Distance
-            if($lat && $lng){
-                $order .= "distance ASC, ";
-            }
-
-            // Priority 2: Pro Vendor
-            $order .= "CASE WHEN v.plan='pro' THEN 1 ELSE 2 END ASC, ";
-
-            // Priority 3: Extra Discount
-            $order .= "pa.product_discount DESC, ";
-
-            // Priority 4: More Stock
-            $order .= "pa.stock DESC, ";
-
-            // Fallbacks: Price & Ratings
-            $order .= "products.product_price ASC, avg_rating DESC";
-
-            $query->orderByRaw($order);
-
-        }else{
-            $order = "";
-
-            // Priority 1: Distance
-            if($lat && $lng){
-                $order .= "distance ASC, ";
-            }
-
-            // Priority 2: Pro Vendor
-            $order .= "CASE WHEN v.plan='pro' THEN 1 ELSE 2 END ASC, ";
-
-            // Priority 3: Extra Discount
-            $order .= "pa.product_discount DESC, ";
-
-            // Priority 4: More Stock
-            $order .= "pa.stock DESC, ";
-
-            // Fallbacks: Price & Ratings
-            $order .= "products.product_price ASC, avg_rating DESC";
-
-            $query->orderByRaw($order);
+        if ($lat && $lng) {
+            $query->orderBy('distance', 'asc'); // 🔥 nearest first
         }
 
-        $results = $query->paginate($limit,['*'],'page',$page);
+        // Pro vendors first
+        $query->orderByRaw("CASE WHEN v.plan='pro' THEN 1 ELSE 2 END ASC");
+
+        // Higher discount
+        $query->orderBy('pa.product_discount', 'desc');
+
+        // Higher stock
+        $query->orderBy('pa.stock', 'desc');
+
+        // Lower price
+        $query->orderBy('products.product_price', 'asc');
+
+        /*
+        ===============================
+        PAGINATION
+        ===============================
+        */
+
+        $results = $query->paginate($limit, ['*'], 'page', $page);
 
         return [
-            'total'=>$results->total(),
-            'current_page'=>$results->currentPage(),
-            'last_page'=>$results->lastPage(),
-            // Mapping through the results to return actual relationship objects alongside the selected items
-            'products'=>$results->through(function($product) {
+            'total'        => $results->total(),
+            'current_page' => $results->currentPage(),
+            'last_page'    => $results->lastPage(),
+            'products'     => $results->through(function ($product) {
+
+                $basePath = url('front/images/product_images');
+
                 return [
-                    'id' => $product->id,
-                    'product_name' => $product->product_name,
-                    'product_isbn' => $product->product_isbn,
-                    'product_price' => $product->product_price,
-                    'product_image' => $product->product_image,
-                    'description' => $product->description,
-                    'condition' => $product->condition,
-                    'stock' => $product->stock,
-                    'attribute_id' => $product->attribute_id,
+                    'id'              => $product->id,
+                    'product_name'    => $product->product_name,
+                    'product_isbn'    => $product->product_isbn,
+                    'product_price'   => $product->product_price,
+                    'image_urls'       => [
+                    'large'  => $product->product_image
+                        ? $basePath . '/large/' . $product->product_image
+                        : null,
+                    'medium' => $product->product_image
+                        ? $basePath . '/medium/' . $product->product_image
+                        : null,
+                    'small'  => $product->product_image
+                        ? $basePath . '/small/' . $product->product_image
+                        : null,
+                ],
+                    'description'     => $product->description,
+                    'condition'       => $product->condition,
+                    'stock'           => $product->stock,
+                    'attribute_id'    => $product->attribute_id,
                     'product_discount' => $product->product_discount,
-                    'avg_rating' => $product->avg_rating,
-                    'total_rating' => $product->total_rating,
-                    'distance' => $product->distance ?? null,
-                    'vendor_plan' => $product->plan,
-                    // Foreign Relationships Data
-                    'category' => $product->category,
+                    'distance'        => isset($product->distance)
+                        ? round($product->distance, 2)
+                        : null,
+                    'vendor' => [
+                        'id'   => $product->vendor_id,
+                        'name' => $product->vendor_name,
+                        'plan' => $product->vendor_plan
+                    ],
+                    'category'    => $product->category,
                     'subcategory' => $product->subcategory,
-                    'vendor' => $product->vendor,
-                    'section' => $product->section,
-                    'subject' => $product->subject
+                    'section'     => $product->section,
+                    'subject'     => $product->subject
                 ];
             })->items()
         ];

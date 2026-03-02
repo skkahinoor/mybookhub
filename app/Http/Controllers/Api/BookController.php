@@ -440,6 +440,7 @@ class BookController extends Controller
             'description'   => 'nullable|string',
             'product_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'category_id'   => 'required|exists:categories,id',
+            'subcategory_id'   => 'required|exists:subcategories,id',
             'publisher_id'  => 'nullable|exists:publishers,id',
             'subject_id'    => 'nullable|exists:subjects,id',
             'edition_id'    => 'nullable|exists:editions,id',
@@ -480,6 +481,7 @@ class BookController extends Controller
             'product_price' => $request->product_price,
             'section_id'    => $categoryDetails->section_id,
             'category_id'   => $request->category_id,
+            'subcategory_id'   => $request->subcategory_id,
             'publisher_id'  => $request->publisher_id,
             'subject_id'    => $request->subject_id,
             'edition_id'    => $request->edition_id,
@@ -520,6 +522,7 @@ class BookController extends Controller
         $product->load([
             'section',
             'category',
+            'subcategory',
             'publisher',
             'subject',
             'edition',

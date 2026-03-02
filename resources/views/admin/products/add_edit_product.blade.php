@@ -373,6 +373,19 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label for="subcategory_id">Select Class</label>
+                                    <select name="subcategory_id" id="subcategory_id" class="form-control text-dark">
+                                        <option value="">Select Class</option>
+                                        @foreach ($subcategories as $subcategory)
+                                            <option value="{{ $subcategory['id'] }}"
+                                                @if (!empty($product['subcategory_id']) && $product['subcategory_id'] == $subcategory['id']) selected @endif>
+                                                {{ $subcategory['subcategory_name'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="subject_id">Select Subject</label>
                                     <select name="subject_id" id="subject_id" class="form-control text-dark">
                                         <option value="">Select Subject</option>
@@ -719,7 +732,8 @@
                     setReadonly(false);
 
                     $("#product_name, #product_price, #description").val('');
-                    $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id").val('');
+                    $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id").val(
+                        '');
                     $("#isbnImagePreview").html('');
 
                     alert("No book found for this ISBN. Please enter all details manually.");

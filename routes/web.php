@@ -189,6 +189,14 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update/{id}', [SubjectController::class, 'update'])->name('admin.update.subject');
         Route::get('delete/{id}', [SubjectController::class, 'delete'])->name('admin.delete.subject');
 
+        // Class Subjects Assignment
+        Route::get('class-subjects', [App\Http\Controllers\Admin\ClassSubjectController::class, 'index'])->name('admin.class_subjects.index');
+        Route::get('class-subjects/create', [App\Http\Controllers\Admin\ClassSubjectController::class, 'create'])->name('admin.class_subjects.create');
+        Route::post('class-subjects/store', [App\Http\Controllers\Admin\ClassSubjectController::class, 'store'])->name('admin.class_subjects.store');
+        Route::get('class-subjects/edit/{id}', [App\Http\Controllers\Admin\ClassSubjectController::class, 'edit'])->name('admin.class_subjects.edit');
+        Route::post('class-subjects/update/{id}', [App\Http\Controllers\Admin\ClassSubjectController::class, 'update'])->name('admin.class_subjects.update');
+        Route::get('class-subjects/delete/{id}', [App\Http\Controllers\Admin\ClassSubjectController::class, 'delete'])->name('admin.class_subjects.delete');
+
         // Schools
         Route::resource('schools', SchoolController::class)->names([
             'index' => 'admin.schools.index',

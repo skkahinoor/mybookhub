@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\user;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Banner;
-use App\Models\Section;
+use App\Models\Subject;
 use App\Models\Cart;
 
 class HomeController extends Controller
@@ -28,7 +28,7 @@ class HomeController extends Controller
             ->orderBy('id', 'asc')
             ->get();
 
-        $sections = Section::where('status', 1)
+        $subject = Subject::where('status', 1)
             ->orderBy('id', 'asc')
             ->get();
 
@@ -48,7 +48,7 @@ class HomeController extends Controller
 
             'data' => [
                 'banners' => $banners,
-                'sections' => $sections,
+                'subjects' => $subject,
             ]
         ]);
     }
