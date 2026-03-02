@@ -4,7 +4,9 @@
         <option value="">Select Subcategory</option>
         @if (!empty($getSubcategories))
             @foreach ($getSubcategories as $subcategory)
-                <option value="{{ $subcategory['id'] }}" @if (isset($subject) && !empty($subject['subcategory_id']) && $subject['subcategory_id'] == $subcategory['id']) selected @endif>
+                <option value="{{ $subcategory['id'] }}" @if (
+                    (isset($selected_id) && $selected_id == $subcategory['id']) ||
+                        (isset($subject) && !empty($subject['subcategory_id']) && $subject['subcategory_id'] == $subcategory['id'])) selected @endif>
                     {{ $subcategory['subcategory_name'] }}
                 </option>
             @endforeach

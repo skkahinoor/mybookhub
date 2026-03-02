@@ -9,7 +9,7 @@
                     <div class="row">
                         <div class="col-12 col-xl-8 mb-4 mb-xl-0">
 
-                            <h4 class="card-title">Sections</h4>
+                            <h4 class="card-title">Education Levels</h4>
                         </div>
                         <div class="col-12 col-xl-4">
                             <div class="justify-content-end d-flex">
@@ -35,7 +35,7 @@
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">{{ $title }}</h4>
+                            <h4 class="card-title">Add Education Levels</h4>
 
 
                             {{-- Our Bootstrap error code in case of wrong current password or the new password and confirm password are not matching: --}}
@@ -90,13 +90,13 @@
                                 <!-- If the id is not passed in from the route, this measn 'Add a new Section', but if the id is passed in from the route, this means 'Edit the Section' -->
                                 <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
                                 <div class="form-group">
-                                    <label for="section_name">Section Name</label>
+                                    <label for="section_name">Education Name</label>
                                     <input type="text" class="form-control" id="section_name"
                                         placeholder="Enter Section Name" name="section_name"
                                         @if (!empty($section['name'])) value="{{ $section['name'] }}" @else value="{{ old('section_name') }}" @endif>
                                 </div>
                                 <div class="form-group">
-                                    <label for="section_image">Section Icon</label>
+                                    <label for="section_image">Education Icon</label>
                                     <input type="file" class="form-control" id="section_image" name="section_image">
                                     @if (!empty($section['image']))
                                         <a target="_blank" href="{{ $section['image'] }}">

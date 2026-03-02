@@ -8,14 +8,14 @@
                 <div class="col-lg-12 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Sections</h4>
+                            <h4 class="card-title">Education Levels</h4>
 
 
 
 
                             <a href="{{ url('admin/add-edit-section') }}"
                                 style="max-width: 150px; float: right; display: inline-block"
-                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Section</a>
+                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Education Levels</a>
 
                             @if (Session::has('success_message'))
                                 <!-- Check AdminController.php, updateAdminPassword() method -->
