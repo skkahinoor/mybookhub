@@ -178,18 +178,24 @@ class ProductController extends Controller
             'last_page'    => $results->lastPage(),
             'products'     => $results->through(function ($product) {
 
-                $basePath = asset('uploads/products');
+                $basePath = url('front/images/product_images');
 
                 return [
                     'id'              => $product->id,
                     'product_name'    => $product->product_name,
                     'product_isbn'    => $product->product_isbn,
                     'product_price'   => $product->product_price,
-                    'image_urls' => $product->product_image ? [
-                        'large'  => $basePath . '/large/' . $product->product_image,
-                        'medium' => $basePath . '/medium/' . $product->product_image,
-                        'small'  => $basePath . '/small/' . $product->product_image,
-                    ] : null,
+                    'image_urls'       => [
+                    'large'  => $product->product_image
+                        ? $basePath . '/large/' . $product->product_image
+                        : null,
+                    'medium' => $product->product_image
+                        ? $basePath . '/medium/' . $product->product_image
+                        : null,
+                    'small'  => $product->product_image
+                        ? $basePath . '/small/' . $product->product_image
+                        : null,
+                ],
                     'description'     => $product->description,
                     'condition'       => $product->condition,
                     'stock'           => $product->stock,
