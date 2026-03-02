@@ -8,7 +8,7 @@
                 <div class="col-md-12 grid-margin">
                     <div class="row">
                         <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                            <h4 class="card-title">Categories</h4>
+                            <h4 class="card-title">Board</h4>
                         </div>
                         <div class="col-12 col-xl-4">
                             <div class="justify-content-end d-flex">
@@ -34,7 +34,7 @@
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">{{ $title }}</h4>
+                            <h4 class="card-title">Add Board</h4>
 
 
                             {{-- Our Bootstrap error code in case of wrong current password or the new password and confirm password are not matching: --}}
@@ -88,7 +88,7 @@
                                 <!-- If the id is not passed in from the route, this measn 'Add a new Category', but if the id is passed in from the route, this means 'Edit the Category' -->
                                 <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
                                 <div class="form-group">
-                                    <label for="category_name">Category Name</label>
+                                    <label for="category_name">Board Name</label>
                                     <input type="text" class="form-control" id="category_name"
                                         placeholder="Enter Category Name" name="category_name"
                                         @if (!empty($category['category_name'])) value="{{ $category['category_name'] }}" @else value="{{ old('category_name') }}" @endif>
@@ -96,9 +96,9 @@
 
 
                                 <div class="form-group">
-                                    <label for="section_id">Select Section</label>
+                                    <label for="section_id">Select Education</label>
                                     <select name="section_id" id="" class="form-control" style="color: #000">
-                                        <option value="">Select Section</option>
+                                        <option value="">Select Education</option>
                                         @foreach ($getSections as $section)
                                             <option value="{{ $section['id'] }}"
                                                 @if (!empty($category['section_id']) && $category['section_id'] == $section['id']) selected @endif>{{ $section['name'] }}
@@ -107,9 +107,9 @@
                                     </select>
                                 </div>
 
-                               
+
                                 <div class="form-group">
-                                    <label for="category_icon">Category Icon</label>
+                                    <label for="category_icon">Board Icon</label>
                                     <input type="file" class="form-control" id="category_icon" name="category_icon">
                                     @if (!empty($category['category_icon']))
                                         <div style="margin-top: 10px;">
@@ -119,7 +119,7 @@
                                     @endif
                                 </div>
                                 <div class="form-group">
-                                    <label for="description">Category Description</label>
+                                    <label for="description">Board Description</label>
                                     {{-- <input type="text" class="form-control" id="category_discount" placeholder="Enter Category Description" name="category_discount"   @if (!empty($category['category_discount'])) value="{{ $category['category_discount'] }}" @else value="{{ old('category_discount') }}" @endif >  --}}
                                     <textarea name="description" id="description" class="form-control" rows="3">{{ $category['description'] }}</textarea>
                                 </div>

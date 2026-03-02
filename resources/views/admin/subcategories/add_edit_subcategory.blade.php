@@ -7,7 +7,7 @@
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">{{ $title }}</h4>
+                            <h4 class="card-title">Add Class</h4>
 
                             @if (Session::has('error_message'))
                                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -34,14 +34,14 @@
                                 method="post" enctype="multipart/form-data"> @csrf
 
                                 <div class="form-group">
-                                    <label for="subcategory_name">Subcategory Name</label>
+                                    <label for="subcategory_name">Class Name</label>
                                     <input type="text" class="form-control" id="subcategory_name"
                                         placeholder="Enter Subcategory Name" name="subcategory_name"
                                         @if (!empty($subcategory['subcategory_name'])) value="{{ $subcategory['subcategory_name'] }}" @else value="{{ old('subcategory_name') }}" @endif>
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="subcategory_icon">Subcategory Icon</label>
+                                    <label for="subcategory_icon">Class Icon</label>
                                     <input type="file" class="form-control" id="subcategory_icon"
                                         name="subcategory_icon">
                                     @if (!empty($subcategory['subcategory_icon']))
