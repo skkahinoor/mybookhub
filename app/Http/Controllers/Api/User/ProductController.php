@@ -20,6 +20,8 @@ class ProductController extends Controller
             'page' => 'nullable|integer|min:1',
             'section_id' => 'nullable|integer',
             'category_id' => 'nullable|integer',
+            'book_type_id' => 'nullable|integer|exists:book_types,id',
+            'language_id'  => 'nullable|integer|exists:languages,id',
             'subcategory_id' => 'nullable|integer',
             'min_price' => 'nullable|numeric|min:0',
             'max_price' => 'nullable|numeric|min:0',
@@ -56,7 +58,7 @@ class ProductController extends Controller
 
     private function sqlSearch($request, $limit, $page, $lat, $lng)
     {
-        $query = Product::with(['category', 'subcategory', 'section', 'subject'])
+        $query = Product::with(['category', 'subcategory', 'section', 'subject', 'bookType', 'language'])
             ->select('products.*')
             ->join('products_attributes as pa', 'pa.product_id', '=', 'products.id')
             ->join('vendors as v', 'pa.vendor_id', '=', 'v.id')
@@ -123,6 +125,14 @@ class ProductController extends Controller
             $query->where('products.product_price', '<=', $request->max_price);
         }
 
+        if ($request->book_type_id) {
+            $query->where('products.book_type_id', $request->book_type_id);
+        }
+
+        if ($request->language_id) {
+            $query->where('products.language_id', $request->language_id);
+        }
+
         /*
         ===============================
         DISTANCE CALCULATION
@@ -186,16 +196,16 @@ class ProductController extends Controller
                     'product_isbn'    => $product->product_isbn,
                     'product_price'   => $product->product_price,
                     'image_urls'       => [
-                    'large'  => $product->product_image
-                        ? $basePath . '/large/' . $product->product_image
-                        : null,
-                    'medium' => $product->product_image
-                        ? $basePath . '/medium/' . $product->product_image
-                        : null,
-                    'small'  => $product->product_image
-                        ? $basePath . '/small/' . $product->product_image
-                        : null,
-                ],
+                        'large'  => $product->product_image
+                            ? $basePath . '/large/' . $product->product_image
+                            : null,
+                        'medium' => $product->product_image
+                            ? $basePath . '/medium/' . $product->product_image
+                            : null,
+                        'small'  => $product->product_image
+                            ? $basePath . '/small/' . $product->product_image
+                            : null,
+                    ],
                     'description'     => $product->description,
                     'condition'       => $product->condition,
                     'stock'           => $product->stock,
@@ -209,6 +219,16 @@ class ProductController extends Controller
                         'name' => $product->vendor_name,
                         'plan' => $product->vendor_plan
                     ],
+                    'book_type' => $product->bookType ? [
+                        'id'   => $product->bookType->id,
+                        'name' => $product->bookType->book_type,
+                        'icon' => $product->bookType->book_type_icon,
+                    ] : null,
+
+                    'language' => $product->language ? [
+                        'id'   => $product->language->id,
+                        'name' => $product->language->name,
+                    ] : null,
                     'category'    => $product->category,
                     'subcategory' => $product->subcategory,
                     'section'     => $product->section,
