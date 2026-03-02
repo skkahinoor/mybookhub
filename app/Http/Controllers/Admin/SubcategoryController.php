@@ -132,9 +132,15 @@ class SubcategoryController extends Controller
     {
         if ($request->ajax()) {
             $data = $request->all();
-            // Subcategories are independent (no category_id), so we return all of them
-            $getSubcategories = Subcategory::where('status', 1)->get()->toArray();
-            return view('admin.subcategories.append_subcategories_level')->with(compact('getSubcategories'));
+            $selected_id = $data['selected_id'] ?? null;
+            // Subcategories are independent (no category_id in DB), 
+            // but we fetch them all and pre-select the one requested
+            $getSubcategories = Subcategory::where('status', 1)
+                ->when($selected_id, function ($q) use ($selected_id) {
+                    return $q->orWhere('id', $selected_id);
+                })
+                ->get()->toArray();
+            return view('admin.subcategories.append_subcategories_level')->with(compact('getSubcategories', 'selected_id'));
         }
     }
 }

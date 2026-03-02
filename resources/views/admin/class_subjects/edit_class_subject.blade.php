@@ -29,7 +29,6 @@
                             <form class="forms-sample" action="{{ route('admin.class_subjects.update', $subCategory->id) }}"
                                 method="POST">
                                 @csrf
-                                <input type="hidden" name="subcategory_id" value="{{ $subCategory->id }}">
 
                                 <div class="form-group">
                                     <label for="section_id">Select Section</label>
@@ -55,8 +54,19 @@
                                         </select>
                                     </div>
                                 </div>
-                                {{-- Subcategory is fixed by ID but we can show it --}}
-
+                                <div id="appendSubcategoriesLevel">
+                                    <div class="form-group">
+                                        <label for="subcategory_id">Select Class (Subcategory)</label>
+                                        <select name="subcategory_id" id="subcategory_id" class="form-control" required>
+                                            <option value="">Select Class</option>
+                                            @foreach ($subcategories as $subcategory)
+                                                <option value="{{ $subcategory->id }}"
+                                                    {{ $subCategory->id == $subcategory->id ? 'selected' : '' }}>
+                                                    {{ $subcategory->subcategory_name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
                                 <div class="form-group">
                                     <label>Select Subjects</label>
                                     <div class="row">
@@ -88,28 +98,33 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            // When Section changes: load Categories via AJAX
-            $('#section_id').on('change', function() {
-                var section_id = $(this).val();
-                if (section_id != "") {
+            // Handle Category change to load Classes (Subcategories)
+            // We use delegated event because #category_id might be reloaded via AJAX
+            $(document).on('change', '#category_id', function(e) {
+                var category_id = $(this).val();
+                if ($("#appendSubcategoriesLevel").length > 0 && category_id != "") {
+                    // Get currently selected subcategory ID to preserve it if possible
+                    var selected_id = $("#subcategory_id").val();
                     $.ajax({
                         headers: {
                             "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
                         },
                         type: "get",
-                        url: "{{ url('admin/append-categories-level') }}",
+                        url: "{{ url('admin/append-subcategories-level') }}",
                         data: {
-                            section_id: section_id
+                            category_id: category_id,
+                            selected_id: selected_id
                         },
                         success: function(resp) {
-                            $("#appendCategoriesLevel").html(resp);
+                            $("#appendSubcategoriesLevel").html(resp);
                         },
                         error: function() {
-                            alert("Error loading categories. Please try again.");
+                            alert("Error loading classes");
                         }
                     });
                 }
             });
         });
     </script>
+    {{-- Generic section/category handlers are now in public/admin/js/custom.js --}}
 @endpush

@@ -27,18 +27,20 @@ class ClassSubjectController extends Controller
 
         // Fetch all assignments from the filter_class_subject table
         // We'll join with other tables to show names
+        // Group by class to show all subjects for a class in one row
         $assignments = DB::table('filter_class_subject')
             ->join('sections', 'filter_class_subject.section_id', '=', 'sections.id')
             ->join('categories', 'filter_class_subject.category_id', '=', 'categories.id')
             ->join('subcategories', 'filter_class_subject.sub_category_id', '=', 'subcategories.id')
             ->join('subjects', 'filter_class_subject.subject_id', '=', 'subjects.id')
             ->select(
-                'filter_class_subject.id',
+                'filter_class_subject.sub_category_id',
                 'sections.name as section_name',
                 'categories.category_name',
                 'subcategories.subcategory_name',
-                'subjects.name as subject_name'
+                DB::raw('GROUP_CONCAT(subjects.name SEPARATOR ", ") as subject_names')
             )
+            ->groupBy('filter_class_subject.sub_category_id', 'sections.name', 'categories.category_name', 'subcategories.subcategory_name')
             ->get();
 
         Session::put('page', 'class_subjects');
@@ -106,7 +108,7 @@ class ClassSubjectController extends Controller
         $currentCategoryId = $firstAssignment ? $firstAssignment->category_id : null;
 
         $categories = $currentSectionId ? Category::where('section_id', $currentSectionId)->get() : [];
-        $subcategories = Subcategory::where('status', 1)->get();
+        $subcategories = Subcategory::where('status', 1)->orWhere('id', $id)->get();
         $subjects = Subject::where('status', 1)->get();
 
         $assignedSubjectIds = $subCategory->subjects->pluck('id')->toArray();
@@ -141,8 +143,9 @@ class ClassSubjectController extends Controller
 
     public function delete($id)
     {
-        DB::table('filter_class_subject')->where('id', $id)->delete();
+        // $id is now sub_category_id from the grouped index
+        DB::table('filter_class_subject')->where('sub_category_id', $id)->delete();
 
-        return redirect()->route('admin.class_subjects.index')->with('success_message', 'Subject assignment removed successfully.');
+        return redirect()->route('admin.class_subjects.index')->with('success_message', 'Class Subject assignments removed successfully.');
     }
 }
