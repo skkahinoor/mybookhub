@@ -45,8 +45,6 @@ class ProductsController extends Controller
     }
 
 
-
-
     public function downloadTemplate()
     {
         if (!Auth::guard('admin')->user()->can('add_products')) {
@@ -90,6 +88,7 @@ class ProductsController extends Controller
             $categories = Category::pluck('id', 'category_name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
             $publishers = Publisher::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
             $subjects   = Subject::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
+            $class      = Subcategory::pluck('id', 'subcategory_name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
             $languages  = Language::pluck('id', 'name')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
             $type       = BookType::pluck('id', 'book_type')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
             $editions   = Edition::pluck('id', 'edition')->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->toArray();
@@ -157,8 +156,9 @@ class ProductsController extends Controller
                 // ---------- OTHER FOREIGN KEYS ----------
                 $publisherId = $this->autoCreate($publishers, Publisher::class, $data['publisher'] ?? null);
                 $subjectId   = $this->autoCreate($subjects, Subject::class, $data['subject'] ?? null);
+                $classId   = $this->autoCreate($class, Subcategory::class, $data['class'] ?? null);
                 $languageId  = $this->autoCreate($languages, Language::class, $data['language'] ?? null);
-                $bookTypeId  = $this->autoCreate($types, BookType::class, $data['book type'] ?? null);
+                $bookTypeId  = $this->autoCreate($type, BookType::class, $data['type'] ?? null);
                 $editionId   = $this->autoCreate($editions, Edition::class, $data['edition'] ?? null, [
                     'edition' => trim($data['edition'] ?? '')
                 ]);
@@ -188,7 +188,9 @@ class ProductsController extends Controller
                     'category_id'   => $categoryId,
                     'publisher_id'  => $publisherId,
                     'subject_id'    => $subjectId,
+                    'subcategory_id'    => $classId,
                     'edition_id'    => $editionId,
+                    'book_type_id'    => $bookTypeId,
                     'language_id'   => $languageId,
                     'product_name'  => $productName,
                     'condition'     => $condition,
