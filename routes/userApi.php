@@ -6,3 +6,4 @@ use App\Http\Controllers\Api\User\ProductController;
 
 Route::get('/user/home', [HomeController::class, 'home']);
 Route::get('/user/products', [ProductController::class, 'index']);
+Route::get('/user/search-suggestions', [ProductController::class, 'suggestions']);

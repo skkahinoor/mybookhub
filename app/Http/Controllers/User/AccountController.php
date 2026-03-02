@@ -284,22 +284,14 @@ class AccountController extends Controller
     public function getAcademicClasses(Request $request)
     {
         $institutionId = $request->query('institution_id');
-        $boardId       = $request->query('board_id');
-
         if (!$institutionId) {
             return response()->json([], 200);
         }
 
-        $query = InstitutionClass::with('subcategory')
-            ->where('institution_id', $institutionId);
-
-        if ($boardId) {
-            $query->whereHas('subcategory', function ($q) use ($boardId) {
-                $q->where('category_id', $boardId);
-            });
-        }
-
-        $classes = $query->get()->map(function ($item) {
+        $classes = InstitutionClass::with('subcategory')
+            ->where('institution_id', $institutionId)
+            ->get()
+            ->map(function ($item) {
             return [
                 'id'        => $item->id,
                 'name'      => optional($item->subcategory)->subcategory_name,
