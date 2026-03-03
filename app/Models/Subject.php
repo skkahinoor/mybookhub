@@ -19,4 +19,13 @@ class Subject extends Model
     {
         return $this->belongsToMany(Subcategory::class, 'filter_class_subject', 'subject_id', 'sub_category_id');
     }
+
+    public function getSubjectIconAttribute($value)
+    {
+        if ($value) {
+            return asset('admin/images/subject_icons/' . $value);
+        }
+
+        return null;
+    }
 }
