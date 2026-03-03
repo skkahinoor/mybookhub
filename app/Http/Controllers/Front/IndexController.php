@@ -14,6 +14,9 @@ use App\Models\Vendor;
 use App\Models\Author;
 use App\Models\Cart;
 use App\Models\ProductsAttribute;
+use App\Models\FilterClassSubject;
+use App\Models\Subcategory;
+use App\Models\Subject;
 use Illuminate\Http\Request;
 
 class IndexController extends Controller
@@ -23,15 +26,64 @@ class IndexController extends Controller
         $sliderBanners  = Banner::where('type', 'Slider')->where('status', 1)->get()->toArray();
         $fixBanners     = Banner::where('type', 'Fix')->where('status', 1)->get()->toArray();
         $condition      = session('condition', 'new');
-        $sliderProducts = ProductsAttribute::with([
-            'product:id,product_name,product_isbn,product_image,product_price,category_id,section_id',
+        $sliderProductsQuery = ProductsAttribute::with([
+            'product:id,product_name,product_isbn,product_image,product_price,category_id,section_id,condition',
+            'product.authors',
             'vendor.vendorbusinessdetails',
             'ratings:id,product_attribute_id,rating'
         ])
-            ->where('status', 1)
-            ->orderBy('id', 'desc')
+            ->where('status', 1);
+
+        if ($request->filled('section_id')) {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
+                $q->where('section_id', $request->section_id);
+            });
+        }
+
+        if ($request->filled('category_id')) {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
+                $q->where('category_id', $request->category_id);
+            });
+        }
+
+        if ($request->filled('subcategory_id')) {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
+                $q->where('subcategory_id', $request->subcategory_id);
+            });
+        }
+
+        if ($request->filled('condition')) {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
+                if ($request->condition !== 'all') {
+                    $q->where('condition', $request->condition);
+                }
+            });
+        } elseif ($condition !== 'all') {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($condition) {
+                $q->where('condition', $condition);
+            });
+        }
+
+        if ($request->filled('subject_id')) {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
+                $q->where('subject_id', $request->subject_id);
+            });
+        }
+
+        $sliderProducts = $sliderProductsQuery->orderBy('id', 'desc')
             ->limit(10)
             ->get();
+
+        /* SUBJECTS */
+        $homeSubjects = collect([]);
+        if ($request->filled('subcategory_id')) {
+            $subjectIds = FilterClassSubject::where('sub_category_id', $request->subcategory_id)
+                ->pluck('subject_id');
+            $homeSubjects = Subject::whereIn('id', $subjectIds)->where('status', 1)->get();
+        } else {
+            // Default subjects for the initial load
+            $homeSubjects = Subject::where('status', 1)->limit(10)->get();
+        }
 
 
         // // Get 'condition' from query string (default to 'new' if not set or invalid)
@@ -179,6 +231,13 @@ class IndexController extends Controller
         }
 
         if ($request->ajax()) {
+            if ($request->has('filter_update')) {
+                return response()->json([
+                    'html' => view('front.partials.home_product_grid', compact('sliderProducts'))->render(),
+                    'subjects_html' => view('front.partials.home_subjects', compact('homeSubjects'))->render(),
+                    'info' => (isset($request->info) ? $request->info : '')
+                ]);
+            }
             return view('front.partials.new_products', compact('newProducts'))->render();
         }
 
@@ -204,6 +263,7 @@ class IndexController extends Controller
             'logos',
             'sliderProducts',
             'slidingProducts',
+            'homeSubjects',
             'totalUsers',
             'totalVendors',
             'totalProducts',
@@ -223,6 +283,33 @@ class IndexController extends Controller
     {
         session(['condition' => $request->condition]);
         return response()->json(['success' => true]);
+    }
+
+    public function getFilterCategories(Request $request)
+    {
+        $categoryIds = FilterClassSubject::where('section_id', $request->section_id)
+            ->distinct()
+            ->pluck('category_id');
+
+        $categories = Category::whereIn('id', $categoryIds)
+            ->where('status', 1)
+            ->get(['id', 'category_name']);
+
+        return response()->json($categories);
+    }
+
+    public function getFilterSubcategories(Request $request)
+    {
+        $subcategoryIds = FilterClassSubject::where('section_id', $request->section_id)
+            ->where('category_id', $request->category_id)
+            ->distinct()
+            ->pluck('sub_category_id');
+
+        $subcategories = Subcategory::whereIn('id', $subcategoryIds)
+            ->where('status', 1)
+            ->get(['id', 'subcategory_name as category_name']); // using aliased name for frontend compatibility
+
+        return response()->json($subcategories);
     }
 
     public function searchProducts(Request $request)
@@ -289,6 +376,33 @@ class IndexController extends Controller
                 'product',
                 fn($q) =>
                 $q->where('section_id', $request->section_id)
+            );
+        }
+
+        /* CATEGORY */
+        if ($request->filled('category_id')) {
+            $query->whereHas(
+                'product',
+                fn($q) =>
+                $q->where('category_id', $request->category_id)
+            );
+        }
+
+        /* SUBCATEGORY (CLASS) */
+        if ($request->filled('subcategory_id')) {
+            $query->whereHas(
+                'product',
+                fn($q) =>
+                $q->where('subcategory_id', $request->subcategory_id)
+            );
+        }
+
+        /* SUBJECT */
+        if ($request->filled('subject_id')) {
+            $query->whereHas(
+                'product',
+                fn($q) =>
+                $q->where('subject_id', $request->subject_id)
             );
         }
 

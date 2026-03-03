@@ -6,8 +6,8 @@
         @guest
             <div class="alert alert-info alert-dismissible fade show" role="alert" style="background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460;">
                 <strong><i class="fas fa-info-circle"></i> Notice:</strong> Please
-                <a href="{{ route('user.login') }}" class="alert-link fw-bold">login</a> or
-                <a href="{{ route('user.register') }}" class="alert-link fw-bold">register</a>
+                <a href="{{ route('student.login') }}" class="alert-link fw-bold">login</a> or
+                <a href="{{ route('student.register') }}" class="alert-link fw-bold">register</a>
                 your account to request books.
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
