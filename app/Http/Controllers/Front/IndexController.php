@@ -17,7 +17,9 @@ use App\Models\ProductsAttribute;
 use App\Models\FilterClassSubject;
 use App\Models\Subcategory;
 use App\Models\Subject;
+use App\Models\BookType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class IndexController extends Controller
 {
@@ -68,6 +70,36 @@ class IndexController extends Controller
             $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
                 $q->where('subject_id', $request->subject_id);
             });
+        }
+
+        // --- NEW FILTERS ---
+        // 1. Book Types (Multiple)
+        if ($request->filled('book_types')) {
+            $bookTypeIds = is_array($request->book_types) ? $request->book_types : explode(',', (string)$request->book_types);
+            $sliderProductsQuery->whereHas('product', function ($q) use ($bookTypeIds) {
+                $q->whereIn('book_type_id', $bookTypeIds);
+            });
+        }
+
+        // 2. Languages (Multiple)
+        if ($request->filled('languages')) {
+            $langIds = is_array($request->languages) ? $request->languages : explode(',', (string)$request->languages);
+            $sliderProductsQuery->whereHas('product', function ($q) use ($langIds) {
+                $q->whereIn('language_id', $langIds);
+            });
+        }
+
+        // 3. Distance Range
+        $userLat = session('user_latitude');
+        $userLng = session('user_longitude');
+        if ($request->filled('distance') && $userLat && $userLng) {
+            $distance = (int)$request->distance;
+            if ($distance < 100) { // 100+ means show all
+                $sliderProductsQuery->whereHas('vendor', function ($q) use ($userLat, $userLng, $distance) {
+                    $q->whereNotNull('location')
+                        ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);
+                });
+            }
         }
 
         $sliderProducts = $sliderProductsQuery->orderBy('id', 'desc')
@@ -242,7 +274,8 @@ class IndexController extends Controller
         }
 
         return view('front.index3', [
-            'languages'        => Language::all(),
+            'languages'        => Language::where('status', 1)->get(),
+            'bookTypes'        => BookType::where('status', 1)->get(),
             'selectedLanguage' => Language::find(session('language')),
 
         ])->with(compact(

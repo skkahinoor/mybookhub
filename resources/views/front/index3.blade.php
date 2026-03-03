@@ -618,15 +618,35 @@
 
         .filter-bottom-sheet {
             position: fixed;
-            bottom: -100%;
+            bottom: 0;
             left: 0;
             width: 100%;
             background: #fff;
             border-radius: 28px 28px 0 0;
             z-index: 2001;
-            transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
             padding: 24px;
             box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            visibility: hidden;
+        }
+
+        .filter-body {
+            overflow-y: auto;
+            padding-right: 5px;
+            flex: 1;
+        }
+
+        .filter-body::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .filter-body::-webkit-scrollbar-thumb {
+            background: #EEE;
+            border-radius: 10px;
         }
 
         .filter-header {
@@ -637,8 +657,8 @@
         }
 
         .filter-header h2 {
-            font-size: 18px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 800;
             margin: 0;
             color: var(--text-dark);
         }
@@ -646,13 +666,12 @@
         .filter-close {
             width: 32px;
             height: 32px;
-            border-radius: 50%;
-            background: #F2F2F7;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #666;
+            color: #999;
             cursor: pointer;
+            font-size: 18px;
         }
 
         .filter-group {
@@ -661,9 +680,9 @@
 
         .filter-group label {
             display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #999;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
             margin-bottom: 8px;
         }
 
@@ -682,22 +701,113 @@
             background-position: right 15px center;
         }
 
+        /* Range Slider */
+        .range-container {
+            padding: 10px 5px;
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #EEE;
+            outline: none;
+            border-radius: 10px;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: var(--primary-orange);
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(255, 107, 0, 0.3);
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 11px;
+            color: #999;
+            font-weight: 600;
+        }
+
+        /* Checkbox Group */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .checkbox-item input {
+            display: none;
+        }
+
+        .checkbox-custom {
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid #DDD;
+            border-radius: 6px;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item input:checked+.checkbox-custom {
+            background: var(--primary-orange);
+            border-color: var(--primary-orange);
+        }
+
+        .checkbox-item input:checked+.checkbox-custom::after {
+            content: "\f00c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: #fff;
+            font-size: 10px;
+        }
+
+        .checkbox-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #444;
+        }
+
         .filter-actions {
             display: grid;
             grid-template-columns: 1fr 1.5fr;
             gap: 12px;
-            margin-top: 30px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #F0F0F0;
         }
 
         .btn-cancel {
             background: #fff;
-            color: #666;
-            border: 1px solid #EDEDED;
+            color: #444;
+            border: 1px solid #DDD;
             padding: 14px;
             border-radius: 12px;
             font-weight: 700;
             text-align: center;
             text-decoration: none !important;
+            transition: all 0.2s;
+        }
+
+        .btn-cancel:hover {
+            background: #F8F9FA;
+            border-color: #CCC;
         }
 
         .btn-apply {
@@ -718,21 +828,22 @@
         }
 
         .filter-bottom-sheet.active {
-            bottom: 0;
+            transform: translateY(0);
+            visibility: visible;
         }
 
         @media (min-width: 992px) {
             .filter-bottom-sheet {
                 max-width: 450px;
                 left: 50%;
-                transform: translateX(-50%);
-                bottom: -100%;
+                transform: translateX(-50%) translateY(100%);
                 border-radius: 28px;
-                margin-bottom: 20px;
+                bottom: 20px;
             }
 
             .filter-bottom-sheet.active {
-                bottom: 20px;
+                transform: translateX(-50%) translateY(0);
+                visibility: visible;
             }
         }
     </style>
@@ -967,57 +1078,180 @@
     <!-- Filter Bottom Sheet -->
     <div class="filter-bottom-sheet" id="filterSheet">
         <div class="filter-header">
-            <h2>Select Filters</h2>
+            <h2>Filters</h2>
             <div class="filter-close" id="closeFilter">
                 <i class="fas fa-times"></i>
             </div>
         </div>
 
         <div class="filter-body">
-            <div class="filter-group">
-                <label>Education Level</label>
-                <select class="filter-select" id="filterSection">
-                    <option value="">Select Level</option>
-                    @foreach ($sections as $sec)
-                        <option value="{{ $sec->id }}">{{ $sec->name }}</option>
-                    @endforeach
-                </select>
+            <!-- Basic Filters (Triggered by Change) -->
+            <div id="basicFiltersContent">
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select class="filter-select" id="filterSection">
+                        <option value="">Select Category</option>
+                        @foreach ($sections as $sec)
+                            <option value="{{ $sec->id }}">{{ $sec->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Sub Category</label>
+                    <select class="filter-select" id="filterCategory">
+                        <option value="">Select Sub Category</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Class/Stream</label>
+                    <select class="filter-select" id="filterSubcategory">
+                        <option value="">Select Class</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="filter-group">
-                <label>Category</label>
-                <select class="filter-select" id="filterCategory">
-                    <option value="">Select Category</option>
-                </select>
-            </div>
+            <!-- Advanced Filters (Triggered by Filter Chip) -->
+            <div id="advancedFiltersContent">
+                <div class="filter-group">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <label class="mb-0" style="color: var(--text-dark); font-weight: 700;">Location
+                                Range</label>
+                            <i class="fas fa-location-crosshairs ms-2"
+                                style="color: var(--primary-orange); cursor: pointer;" onclick="detectLocation()"
+                                title="Detect my location"></i>
+                        </div>
+                        <span id="rangeValue"
+                            style="color: var(--primary-orange); font-weight: 700; font-size: 13px;">Within 100 km+</span>
+                    </div>
+                    <div class="range-container">
+                        <input type="range" class="range-slider" id="distanceRange" min="1" max="100"
+                            value="100">
+                        <div class="range-labels">
+                            <span>1 km</span>
+                            <span>25 km</span>
+                            <span>50 km</span>
+                            <span>100 km+</span>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="filter-group">
-                <label>Class/Stream</label>
-                <select class="filter-select" id="filterSubcategory">
-                    <option value="">Select Class</option>
-                </select>
-            </div>
+                <div class="filter-group">
+                    <label>Book Type</label>
+                    <div class="checkbox-group">
+                        @if (isset($bookTypes))
+                            @foreach ($bookTypes as $bt)
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="book_types[]" value="{{ $bt->id }}" checked>
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-label">{{ $bt->book_type }}</span>
+                                </label>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
 
-            <div class="filter-actions">
-                <a href="javascript:void(0)" class="btn-cancel" id="cancelBtn">Cancel</a>
-                <a href="javascript:void(0)" class="btn-apply" id="applyBtn">Apply</a>
+                <div class="filter-group">
+                    <label>Language</label>
+                    <div class="checkbox-group">
+                        @if (isset($languages))
+                            @foreach ($languages as $lang)
+                                <label class="checkbox-item">
+                                    <input type="checkbox" name="languages[]" value="{{ $lang->id }}" checked>
+                                    <span class="checkbox-custom"></span>
+                                    <span class="checkbox-label">{{ $lang->name }}</span>
+                                </label>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
             </div>
+        </div>
+
+        <div class="filter-actions">
+            <a href="javascript:void(0)" class="btn-cancel" id="resetBtn">Reset</a>
+            <a href="javascript:void(0)" class="btn-apply" id="applyBtn">Apply Filters</a>
         </div>
     </div>
 
     <script>
         const openBtn = document.getElementById('openFilter');
         const closeBtn = document.getElementById('closeFilter');
-        const cancelBtn = document.getElementById('cancelBtn');
+        const resetBtn = document.getElementById('resetBtn');
         const overlay = document.getElementById('modalOverlay');
         const sheet = document.getElementById('filterSheet');
+        const rangeSlider = document.getElementById('distanceRange');
+        const rangeValue = document.getElementById('rangeValue');
+
+        // Location Detection
+        function detectLocation() {
+            if (navigator.geolocation) {
+                const rangeLabel = document.querySelector('label[class="mb-0"]');
+                const originalText = rangeLabel ? rangeLabel.innerText : 'Location Range';
+                if (rangeLabel) rangeLabel.innerText = "Detecting...";
+
+                navigator.geolocation.getCurrentPosition(position => {
+                    const {
+                        latitude,
+                        longitude
+                    } = position.coords;
+                    fetch(`{{ url('set-location-session') }}?latitude=${latitude}&longitude=${longitude}`)
+                        .then(() => {
+                            if (rangeLabel) rangeLabel.innerText = originalText;
+                            console.log('Location updated');
+                        })
+                        .catch(err => {
+                            if (rangeLabel) rangeLabel.innerText = originalText;
+                            console.error('Location error:', err);
+                        });
+                }, error => {
+                    if (rangeLabel) rangeLabel.innerText = originalText;
+                    console.warn('Geolocation error:', error.message);
+                });
+            }
+        }
+
+        // Auto detect on load
+        window.addEventListener('load', detectLocation);
+
+        rangeSlider.addEventListener('input', function() {
+            const val = this.value;
+            if (val >= 100) {
+                rangeValue.innerText = 'Within 100 km+';
+            } else {
+                rangeValue.innerText = `Within ${val} km`;
+            }
+        });
 
         const sectionSelect = document.getElementById('filterSection');
         const categorySelect = document.getElementById('filterCategory');
         const subcategorySelect = document.getElementById('filterSubcategory');
 
-        function toggleModal(show) {
+        function toggleModal(show, mode = 'advanced') {
+            const h2 = sheet.querySelector('.filter-header h2');
+            const basic = document.getElementById('basicFiltersContent');
+            const advanced = document.getElementById('advancedFiltersContent');
+            const resetBtn = document.getElementById('resetBtn');
+            const applyBtn = document.getElementById('applyBtn');
+
             if (show) {
+                if (mode === 'basic') {
+                    h2.innerText = 'Select Filters';
+                    basic.style.display = 'block';
+                    advanced.style.display = 'none';
+                    resetBtn.innerText = 'Cancel';
+                    applyBtn.innerText = 'Apply';
+                    resetBtn.dataset.mode = 'basic';
+                } else {
+                    h2.innerText = 'Filters';
+                    basic.style.display = 'none';
+                    advanced.style.display = 'block';
+                    resetBtn.innerText = 'Reset';
+                    applyBtn.innerText = 'Apply Filters';
+                    resetBtn.dataset.mode = 'advanced';
+                }
                 overlay.classList.add('active');
                 sheet.classList.add('active');
                 document.body.style.overflow = 'hidden';
@@ -1028,10 +1262,31 @@
             }
         }
 
-        openBtn.addEventListener('click', () => toggleModal(true));
-        document.getElementById('openFilterChip').addEventListener('click', () => toggleModal(true));
+        openBtn.addEventListener('click', () => toggleModal(true, 'basic'));
+        document.getElementById('openFilterChip').addEventListener('click', () => toggleModal(true, 'advanced'));
         closeBtn.addEventListener('click', () => toggleModal(false));
-        cancelBtn.addEventListener('click', () => toggleModal(false));
+
+        resetBtn.addEventListener('click', () => {
+            if (resetBtn.dataset.mode === 'basic') {
+                toggleModal(false);
+                return;
+            }
+            // Reset selects (Actually for advanced we don't necessarily reset basic selects unless wanted)
+            // But we can reset all for true "Reset"
+            sectionSelect.value = '';
+            categorySelect.innerHTML = '<option value="">Select Sub Category</option>';
+            subcategorySelect.innerHTML = '<option value="">Select Class</option>';
+
+            // Reset slider
+            rangeSlider.value = 100;
+            rangeValue.innerText = 'Within 100 km+';
+
+            // Reset checkboxes
+            document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+
+            updateHomeGrid();
+        });
+
         overlay.addEventListener('click', () => toggleModal(false));
 
         function updateHomeGrid(subjectId = null, activeSubjectName = null) {
@@ -1049,11 +1304,24 @@
             const categoryId = categorySelect.value;
             const subcategoryId = subcategorySelect.value;
 
+            // Get selected book types
+            const bookTypes = Array.from(document.querySelectorAll('input[name="book_types[]"]:checked')).map(cb => cb
+                .value);
+            // Get selected languages
+            const languages = Array.from(document.querySelectorAll('input[name="languages[]"]:checked')).map(cb => cb
+                .value);
+            // Get distance
+            const distance = rangeSlider.value;
+
             gridContainer.style.opacity = '0.5';
             subjectsContainer.style.opacity = '0.5';
 
             let queryParams =
-                `?filter_update=1&condition=${condition}&section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}`;
+                `?filter_update=1&condition=${condition}&section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&distance=${distance}`;
+
+            if (bookTypes.length > 0) queryParams += `&book_types=${bookTypes.join(',')}`;
+            if (languages.length > 0) queryParams += `&languages=${languages.join(',')}`;
+
             if (subjectId) {
                 queryParams += `&subject_id=${subjectId}`;
             }
@@ -1145,7 +1413,7 @@
                 fetch(`{{ url('get-filter-categories') }}?section_id=${sectionId}`)
                     .then(res => res.json())
                     .then(data => {
-                        categorySelect.innerHTML = '<option value="">Select Category</option>';
+                        categorySelect.innerHTML = '<option value="">Select Sub Category</option>';
                         data.forEach(cat => {
                             categorySelect.innerHTML +=
                                 `<option value="${cat.id}">${cat.category_name}</option>`;
