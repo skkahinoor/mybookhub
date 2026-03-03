@@ -110,6 +110,7 @@ class ProductsController extends Controller
                 $productName = trim($data['product name'] ?? '');
                 $isbn        = trim($data['isbn number'] ?? '');
                 $condition   = strtolower(trim($data['book condition'] ?? 'new'));
+                $imageName   = trim($data['image'] ?? '');
 
                 if (!$productName || !$isbn) {
                     $skippedInvalid++;
@@ -266,17 +267,17 @@ class ProductsController extends Controller
                 }
 
                 // ---------- IMAGE (JUST VERIFY & SAVE NAME) ----------
-                $imageName = null;
+                // $imageName = null;
 
-                if (!empty($data['image'])) {
+                // if (!empty($data['image'])) {
 
-                    $tempImage = trim($data['image']);
+                //     $tempImage = trim($data['image']);
 
-                    // Check image exists in ANY size folder (large is enough)
-                    if (file_exists(public_path('front/images/product_images/large/' . $tempImage))) {
-                        $imageName = $tempImage;
-                    }
-                }
+                //     // Check image exists in ANY size folder (large is enough)
+                //     if (file_exists(public_path('front/images/product_images/large/' . $tempImage))) {
+                //         $imageName = $tempImage;
+                //     }
+                // }
 
                 // ---------- PRODUCT ----------
                 $product = Product::create([
