@@ -534,7 +534,10 @@ class ProductsController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'category_id'   => 'required',
+                'section_id'    => 'required|exists:sections,id',
+                'category_id'   => 'required|exists:categories,id',
+                'subcategory_id'=> 'required|exists:subcategories,id',
+                'subject_id'    => 'required|exists:subjects,id',
                 'condition'     => 'required|in:new,old',
                 'product_name'  => 'required',
                 'product_isbn'  => $isbnValidationRule,
@@ -621,8 +624,7 @@ class ProductsController extends Controller
                     }
                 }
 
-                $categoryDetails = Category::find($data['category_id']);
-                $product->section_id  = $categoryDetails->section_id;
+                $product->section_id  = $data['section_id'];
                 $product->category_id = $data['category_id'];
 
                 if (!empty($data['new_publisher'])) {
@@ -735,7 +737,7 @@ class ProductsController extends Controller
             return redirect('admin/products')->with('success_message', $message);
         }
 
-        $categories = Section::with('categories')->get()->toArray();
+        $sections   = Section::where('status', 1)->get();
         $publishers = Publisher::where('status', 1)->get()->toArray();
         $authors    = Author::where('status', 1)->get();
         $subjects      = Subject::where('status', 1)->get()->toArray();
@@ -747,7 +749,7 @@ class ProductsController extends Controller
         return view('admin.products.add_edit_product')->with(compact(
             'title',
             'product',
-            'categories',
+            'sections',
             'publishers',
             'authors',
             'subjects',
@@ -769,6 +771,76 @@ class ProductsController extends Controller
         return Author::where('name', 'like', "%{$q}%")
             ->select('id', 'name')
             ->get();
+    }
+
+    /**
+     * AJAX: Get boards (categories) for a given education level (section).
+     */
+    public function getBoardsBySection(Request $request)
+    {
+        $sectionId = $request->query('section_id');
+
+        if (!$sectionId) {
+            return response()->json([]);
+        }
+
+        $boards = Category::where('status', 1)
+            ->where('section_id', $sectionId)
+            ->select('id', 'category_name')
+            ->orderBy('category_name')
+            ->get();
+
+        return response()->json($boards);
+    }
+
+    /**
+     * AJAX: Get classes (subcategories) for given section + board from filter_class_subject.
+     */
+    public function getClassesByBoard(Request $request)
+    {
+        $sectionId  = $request->query('section_id');
+        $categoryId = $request->query('category_id');
+
+        if (!$sectionId || !$categoryId) {
+            return response()->json([]);
+        }
+
+        $classes = DB::table('filter_class_subject')
+            ->join('subcategories', 'filter_class_subject.sub_category_id', '=', 'subcategories.id')
+            ->where('filter_class_subject.section_id', $sectionId)
+            ->where('filter_class_subject.category_id', $categoryId)
+            ->select('subcategories.id', 'subcategories.subcategory_name')
+            ->distinct()
+            ->orderBy('subcategories.subcategory_name')
+            ->get();
+
+        return response()->json($classes);
+    }
+
+    /**
+     * AJAX: Get subjects for given section + board + class from filter_class_subject.
+     */
+    public function getSubjectsByClass(Request $request)
+    {
+        $sectionId     = $request->query('section_id');
+        $categoryId    = $request->query('category_id');
+        $subCategoryId = $request->query('sub_category_id');
+
+        if (!$sectionId || !$categoryId || !$subCategoryId) {
+            return response()->json([]);
+        }
+
+        $subjects = DB::table('filter_class_subject')
+            ->join('subjects', 'filter_class_subject.subject_id', '=', 'subjects.id')
+            ->where('filter_class_subject.section_id', $sectionId)
+            ->where('filter_class_subject.category_id', $categoryId)
+            ->where('filter_class_subject.sub_category_id', $subCategoryId)
+            ->select('subjects.id', 'subjects.name')
+            ->distinct()
+            ->orderBy('subjects.name')
+            ->get();
+
+        return response()->json($subjects);
     }
 
     public function saveProductAttributes(Request $request)
