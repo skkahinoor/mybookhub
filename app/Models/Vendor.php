@@ -4,10 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Vendor extends Model
 {
     use HasFactory;
+
+    protected static function booted()
+    {
+        static::saved(function ($vendor) {
+            Cache::put('products_cache_version', time());
+        });
+
+        static::deleted(function ($vendor) {
+            Cache::put('products_cache_version', time());
+        });
+    }
 
     protected $fillable = [
         'user_id',

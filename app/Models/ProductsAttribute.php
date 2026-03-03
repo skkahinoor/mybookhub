@@ -4,10 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class ProductsAttribute extends Model
 {
     use HasFactory;
+
+    protected static function booted()
+    {
+        static::saved(function ($attribute) {
+            Cache::put('products_cache_version', time());
+        });
+
+        static::deleted(function ($attribute) {
+            Cache::put('products_cache_version', time());
+        });
+    }
 
     protected $fillable = [
         'product_id',
