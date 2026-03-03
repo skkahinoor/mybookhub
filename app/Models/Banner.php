@@ -19,11 +19,11 @@ class Banner extends Model
     ];
 
     public function getImageAttribute($value)
-{
-    if ($value) {
-        return asset('front/images/banner_images/' . $value);
-    }
+    {
+        if ($value) {
+            return asset('front/images/banner_images/' . $value);
+        }
 
-    return null;
-}
+        return null;
+    }
 }

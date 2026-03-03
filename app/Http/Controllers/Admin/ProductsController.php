@@ -110,6 +110,7 @@ class ProductsController extends Controller
                 $productName = trim($data['product name'] ?? '');
                 $isbn        = trim($data['isbn number'] ?? '');
                 $condition   = strtolower(trim($data['book condition'] ?? 'new'));
+                $imageName   = trim($data['image'] ?? '');
 
                 if (!$productName || !$isbn) {
                     $skippedInvalid++;
@@ -154,14 +155,110 @@ class ProductsController extends Controller
                 $categoryId = $categories[strtolower($categoryName)];
 
                 // ---------- OTHER FOREIGN KEYS ----------
-                $publisherId = $this->autoCreate($publishers, Publisher::class, $data['publisher'] ?? null);
-                $subjectId   = $this->autoCreate($subjects, Subject::class, $data['subject'] ?? null);
-                $classId   = $this->autoCreate($class, Subcategory::class, $data['class'] ?? null);
-                $languageId  = $this->autoCreate($languages, Language::class, $data['language'] ?? null);
-                $bookTypeId  = $this->autoCreate($type, BookType::class, $data['type'] ?? null);
-                $editionId   = $this->autoCreate($editions, Edition::class, $data['edition'] ?? null, [
-                    'edition' => trim($data['edition'] ?? '')
-                ]);
+                // ---------- PUBLISHER (MANDATORY) ----------
+                $publisherName = trim($data['publisher'] ?? '');
+                if (!$publisherName) {
+                    $skippedInvalid++;
+                    continue;
+                }
+
+                $publisherKey = strtolower($publisherName);
+                if (!isset($publishers[$publisherKey])) {
+                    $publisher = Publisher::create([
+                        'name'   => ucwords($publisherName),
+                        'status' => 1
+                    ]);
+                    $publishers[$publisherKey] = $publisher->id;
+                }
+                $publisherId = $publishers[$publisherKey];
+
+
+                // ---------- SUBJECT ----------
+                $subjectId = null;
+                if (!empty($data['subject'])) {
+                    $subjectName = trim($data['subject']);
+                    $subjectKey = strtolower($subjectName);
+
+                    if (!isset($subjects[$subjectKey])) {
+                        $subject = Subject::create([
+                            'name'   => ucwords($subjectName),
+                            'status' => 1
+                        ]);
+                        $subjects[$subjectKey] = $subject->id;
+                    }
+                    $subjectId = $subjects[$subjectKey];
+                }
+
+
+                // ---------- CLASS (Subcategory) ----------
+                $classId = null;
+                if (!empty($data['class'])) {
+                    $className = trim($data['class']);
+                    $classKey = strtolower($className);
+
+                    if (!isset($class[$classKey])) {
+                        $subcategory = Subcategory::create([
+                            'subcategory_name' => ucwords($className),
+                            'status' => 1
+                        ]);
+                        $class[$classKey] = $subcategory->id;
+                    }
+                    $classId = $class[$classKey];
+                }
+
+
+                // ---------- LANGUAGE ----------
+                $languageId = null;
+                if (!empty($data['language'])) {
+                    $languageName = trim($data['language']);
+                    $languageKey = strtolower($languageName);
+
+                    if (!isset($languages[$languageKey])) {
+                        $language = Language::create([
+                            'name'   => ucwords($languageName),
+                            'status' => 1
+                        ]);
+                        $languages[$languageKey] = $language->id;
+                    }
+                    $languageId = $languages[$languageKey];
+                }
+
+
+                // ---------- TYPE (IMPORTANT FIX) ----------
+                $bookTypeId = null;
+                $typeName = trim($data['type'] ?? '');
+
+                if ($typeName) {
+                    $typeKey = strtolower($typeName);
+
+                    if (!isset($type[$typeKey])) {
+                        $bookType = BookType::create([
+                            'book_type' => ucwords($typeName),
+                            'status'    => 1
+                        ]);
+                        $type[$typeKey] = $bookType->id;
+                    }
+
+                    $bookTypeId = $type[$typeKey];
+                }
+
+
+                // ---------- EDITION ----------
+                $editionId = null;
+                if (!empty($data['edition'])) {
+                    $editionName = trim($data['edition']);
+                    $editionKey = strtolower($editionName);
+
+                    if (!isset($editions[$editionKey])) {
+                        $edition = Edition::create([
+                            'edition' => $editionName,
+                            'status'  => 1
+                        ]);
+                        $editions[$editionKey] = $edition->id;
+                    }
+
+                    $editionId = $editions[$editionKey];
+                }
 
                 // ---------- DUPLICATE CHECK ----------
                 if (Product::where('product_isbn', $isbn)->where('condition', $condition)->exists()) {
@@ -170,17 +267,17 @@ class ProductsController extends Controller
                 }
 
                 // ---------- IMAGE (JUST VERIFY & SAVE NAME) ----------
-                $imageName = null;
+                // $imageName = null;
 
-                if (!empty($data['image'])) {
+                // if (!empty($data['image'])) {
 
-                    $tempImage = trim($data['image']);
+                //     $tempImage = trim($data['image']);
 
-                    // Check image exists in ANY size folder (large is enough)
-                    if (file_exists(public_path('front/images/product_images/large/' . $tempImage))) {
-                        $imageName = $tempImage;
-                    }
-                }
+                //     // Check image exists in ANY size folder (large is enough)
+                //     if (file_exists(public_path('front/images/product_images/large/' . $tempImage))) {
+                //         $imageName = $tempImage;
+                //     }
+                // }
 
                 // ---------- PRODUCT ----------
                 $product = Product::create([
