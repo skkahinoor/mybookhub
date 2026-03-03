@@ -9,10 +9,22 @@ use App\Models\Subcategory;
 use App\Models\Subject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Product extends Model
 {
     use HasFactory;
+
+    protected static function booted()
+    {
+        static::saved(function ($product) {
+            Cache::put('products_cache_version', time());
+        });
+
+        static::deleted(function ($product) {
+            Cache::put('products_cache_version', time());
+        });
+    }
 
     protected $fillable = [
         // Basic info

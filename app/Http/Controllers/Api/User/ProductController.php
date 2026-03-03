@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Product;
+use App\Models\ProductsAttribute;
+use App\Models\Cart;
 
 class ProductController extends Controller
 {
@@ -41,7 +43,12 @@ class ProductController extends Controller
         $lat   = $request->lat;
         $lng   = $request->lng;
 
-        $cacheKey = 'products_' .
+        // Cache versioning to invalidate all product queries when data changes
+        $cacheVersion = Cache::rememberForever('products_cache_version', function () {
+            return time();
+        });
+
+        $cacheKey = 'products_v' . $cacheVersion . '_' .
             ($user ? 'user_' . $user->id : 'guest') .
             '_' . md5(json_encode($request->all()));
 
@@ -236,5 +243,129 @@ class ProductController extends Controller
                 ];
             })->items()
         ];
+    }
+
+    public function productDetails(Request $request, $attribute_id)
+    {
+        $user = auth('sanctum')->user();
+
+        // 1️⃣ Get Selected Attribute with Vendor + User
+        $attribute = ProductsAttribute::with(['vendor.user'])
+            ->where('id', $attribute_id)
+            ->where('status', 1)
+            ->where('stock', '>', 0)
+            ->first();
+
+        if (!$attribute) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        // 2️⃣ Get Product with all relations
+        $product = Product::with([
+            'section',
+            'category',
+            'subcategory',
+            'publisher',
+            'subject',
+            'bookType',
+            'language',
+            'edition',
+            'authors'
+        ])
+            ->where('id', $attribute->product_id)
+            ->where('status', 1)
+            ->first();
+
+        if (!$product) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Product not available'
+            ], 404);
+        }
+
+        // 3️⃣ Cart Check
+        $inCart = false;
+        $cartQty = 0;
+
+        if ($user) {
+            $cartItem = Cart::where('user_id', $user->id)
+                ->where('product_attribute_id', $attribute_id)
+                ->first();
+
+            if ($cartItem) {
+                $inCart = true;
+                $cartQty = $cartItem->quantity;
+            }
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Product details fetched successfully',
+
+            'data' => [
+
+                // 📚 PRODUCT DETAILS
+                'product' => [
+                    'id' => $product->id,
+                    'name' => $product->product_name,
+                    'isbn' => $product->product_isbn,
+                    'price' => $product->product_price,
+                    'image' => $product->product_image,
+                    'description' => $product->description,
+
+                    'section' => $product->section,
+                    'category' => $product->category,
+                    'subcategory' => $product->subcategory,
+                    'publisher' => $product->publisher,
+                    'subject' => $product->subject,
+                    'book_type' => $product->bookType,
+                    'language' => $product->language,
+                    'edition' => $product->edition,
+                    'authors' => $product->authors,
+                ],
+
+                // 🏪 FULL VENDOR DETAILS
+                'vendor_offer' => [
+                    'attribute_id' => $attribute->id,
+                    'stock' => $attribute->stock,
+                    'discount' => $attribute->product_discount,
+                    'sku' => $attribute->sku,
+
+                    'vendor' => [
+                        // 🔹 Vendor Table Fields
+                        'vendor_id' => $attribute->vendor->id ?? null,
+                        'admin_id' => $attribute->vendor->admin_id ?? null,
+                        'admin_type' => $attribute->vendor->admin_type ?? null,
+                        'shop_name' => $attribute->vendor->shop_name ?? null,
+                        'address' => $attribute->vendor->address ?? null,
+                        'city' => $attribute->vendor->city ?? null,
+                        'state' => $attribute->vendor->state ?? null,
+                        'pincode' => $attribute->vendor->pincode ?? null,
+                        'phone' => $attribute->vendor->phone ?? null,
+                        'gst_number' => $attribute->vendor->gst_number ?? null,
+                        'status' => $attribute->vendor->status ?? null,
+
+                        // 🔹 User Table Fields
+                        'user' => [
+                            'user_id' => $attribute->vendor->user->id ?? null,
+                            'name' => $attribute->vendor->user->name ?? null,
+                            'email' => $attribute->vendor->user->email ?? null,
+                            'mobile' => $attribute->vendor->user->mobile ?? null,
+                            'image' => $attribute->vendor->user->image ?? null,
+                            'created_at' => $attribute->vendor->user->created_at ?? null,
+                        ]
+                    ]
+                ],
+
+                // 🛒 CART STATUS
+                'cart_status' => [
+                    'in_cart' => $inCart,
+                    'quantity' => $cartQty
+                ]
+            ]
+        ]);
     }
 }

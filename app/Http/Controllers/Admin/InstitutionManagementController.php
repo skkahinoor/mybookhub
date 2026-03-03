@@ -29,11 +29,16 @@ class InstitutionManagementController extends Controller
         $institutions = InstitutionManagement::with('institutionClasses')->orderBy('id', 'desc')->get();
         $sections     = Section::where('status', 1)
             ->whereNotIn('name', [
-                'College', 'College Book',
-                'Religious Book', 'Religious',
-                'Technical Book', 'Technical',
-                'Novel & Story Book', 'Novel & Story',
-                'Competitive Books', 'Competitive'
+                'College',
+                'College Book',
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
             ])->get();
 
         return view('admin.institution_managements.index')->with(compact('institutions', 'id', 'logos', 'headerLogo', 'sections'));
@@ -47,10 +52,14 @@ class InstitutionManagementController extends Controller
         $id = Auth::guard('admin')->user()->name;
         $sections = Section::where('status', 1)
             ->whereNotIn('name', [
-                'Religious Book', 'Religious',
-                'Technical Book', 'Technical',
-                'Novel & Story Book', 'Novel & Story',
-                'Competitive Books', 'Competitive'
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
             ])->get();
         $categories = Category::where('status', 1)->get();
         $subcategories = Subcategory::where('status', 1)->get();
@@ -129,10 +138,14 @@ class InstitutionManagementController extends Controller
         $institution = InstitutionManagement::with(['institutionClasses', 'country', 'state', 'district', 'block'])->findOrFail($id);
         $sections = Section::where('status', 1)
             ->whereNotIn('name', [
-                'Religious Book', 'Religious',
-                'Technical Book', 'Technical',
-                'Novel & Story Book', 'Novel & Story',
-                'Competitive Books', 'Competitive'
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
             ])->get();
         $categories = Category::where('status', 1)->get();
         $subcategories = Subcategory::where('status', 1)->get();
@@ -177,18 +190,37 @@ class InstitutionManagementController extends Controller
 
         // Handle institution classes
         if ($request->has('classes') && is_array($request->classes)) {
-            // Delete existing classes
-            $institution->institutionClasses()->delete();
-
-            // Add new classes
+            $requestedSubcatIds = [];
             foreach ($request->classes as $classData) {
-                if (! empty($classData['sub_category_id']) && ! empty($classData['strength'])) {
-                    $institution->institutionClasses()->create([
-                        'sub_category_id' => $classData['sub_category_id'],
-                        'total_strength'  => $classData['strength'],
-                    ]);
+                if (! empty($classData['sub_category_id'])) {
+                    $requestedSubcatIds[] = $classData['sub_category_id'];
                 }
             }
+
+            // 1. Update existing classes or create new ones (preserves IDs)
+            foreach ($request->classes as $classData) {
+                if (! empty($classData['sub_category_id']) && ! empty($classData['strength'])) {
+                    $institution->institutionClasses()->updateOrCreate(
+                        ['sub_category_id' => $classData['sub_category_id']],
+                        ['total_strength'  => $classData['strength']]
+                    );
+                }
+            }
+
+            // 2. Safely remove classes that are no longer in the request
+            $institution->institutionClasses()
+                ->whereNotIn('sub_category_id', $requestedSubcatIds)
+                ->get()
+                ->each(function ($class) {
+                    // Check if any users are linked to this specific class record
+                    $hasUsers = \Illuminate\Support\Facades\DB::table('users')
+                        ->where('institution_classes_id', $class->id)
+                        ->exists();
+
+                    if (! $hasUsers) {
+                        $class->delete();
+                    }
+                });
         }
 
         return redirect('admin/institution-managements')->with('success_message', 'Institution has been updated successfully', 'logos');
@@ -209,12 +241,16 @@ class InstitutionManagementController extends Controller
     public function getSections()
     {
         $sections = Section::where('status', 1)
-        ->whereNotIn('name', [
-            'Religious Book', 'Religious',
-            'Technical Book', 'Technical',
-            'Novel & Story Book', 'Novel & Story',
-            'Competitive Books', 'Competitive'
-        ])->get(['id', 'name']);
+            ->whereNotIn('name', [
+                'Religious Book',
+                'Religious',
+                'Technical Book',
+                'Technical',
+                'Novel & Story Book',
+                'Novel & Story',
+                'Competitive Books',
+                'Competitive'
+            ])->get(['id', 'name']);
         return response()->json($sections);
     }
 
