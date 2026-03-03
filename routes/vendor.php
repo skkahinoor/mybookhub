@@ -222,6 +222,9 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
                 Route::get('delete-product/{id}', [ProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
                 Route::get('delete-product-attribute/{id}', [ProductsController::class, 'deleteProductAttribute']);     // Delete a product attribute (ProductsAttribute)
                 Route::match(['get', 'post'], 'add-edit-product/{id?}', [ProductsController::class, 'addEditProduct'])->name('vendor.products.add'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
+                Route::get('products/boards', [ProductsController::class, 'getBoardsBySection'])->name('vendor.products.boards');
+                Route::get('products/classes', [ProductsController::class, 'getClassesByBoard'])->name('vendor.products.classes');
+                Route::get('products/subjects', [ProductsController::class, 'getSubjectsByClass'])->name('vendor.products.subjects');
                 Route::post('save-product-attributes', [ProductsController::class, 'saveProductAttributes'])->name('vendor.products.saveAttributes'); // Save product attributes (stock and discount) via AJAX
                 Route::get('delete-product-image/{id}', [ProductsController::class, 'deleteProductImage']);             // Delete a product images (in the three folders: small, medium and large) in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
                 Route::get('delete-product-video/{id}', [ProductsController::class, 'deleteProductVideo']);             // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE

@@ -323,34 +323,39 @@
                                     </div>
 
 
-                                    <label for="category_id">Select Category</label>
-
-                                    <select name="category_id" id="category_id" class="form-control text-dark">
-                                        <option value="">Select Category</option>
-                                        @foreach ($categories as $section)
-                                            <optgroup label="{{ $section['name'] }}"> {{-- sections --}}
-                                                @foreach ($section['categories'] as $category)
-                                                    {{-- parent categories --}} {{-- Check ProductsController.php --}}
-                                                    <option value="{{ $category['id'] }}"
-                                                        @if (!empty($product['category_id'] == $category['id'])) selected @endif>
-                                                        {{ $category['category_name'] }}</option> {{-- parent categories --}}
-                                                    @foreach ($category['sub_categories'] as $subcategory)
-                                                        {{-- subcategories or child categories --}} {{-- Check ProductsController.php --}}
-                                                        <option value="{{ $subcategory['id'] }}"
-                                                            @if (!empty($product['category_id'] == $subcategory['id'])) selected @endif>
-                                                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;{{ $subcategory['category_name'] }}
-                                                        </option> {{-- subcategories or child categories --}}
-                                                    @endforeach
-                                                @endforeach
-                                            </optgroup>
+                                    <label for="section_id">Education Level</label>
+                                    <select name="section_id" id="section_id" class="form-control text-dark">
+                                        <option value="">Select Education Level</option>
+                                        @foreach ($sections as $section)
+                                            <option value="{{ $section->id }}"
+                                                {{ old('section_id', $product->section_id ?? '') == $section->id ? 'selected' : '' }}>
+                                                {{ $section->name }}
+                                            </option>
                                         @endforeach
-
                                     </select>
                                 </div>
 
-                                <div class="loadFilters">
-                                    @include('admin.filters.category_filters')
+                                <div class="form-group">
+                                    <label for="category_id">Board</label>
+                                    <select name="category_id" id="category_id" class="form-control text-dark">
+                                        <option value="">Select Board</option>
+                                    </select>
                                 </div>
+
+                                <div class="form-group">
+                                    <label for="subcategory_id">Class</label>
+                                    <select name="subcategory_id" id="subcategory_id" class="form-control text-dark">
+                                        <option value="">Select Class</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="subject_id">Subject</label>
+                                    <select name="subject_id" id="subject_id" class="form-control text-dark">
+                                        <option value="">Select Subject</option>
+                                    </select>
+                                </div>
+                                
                                 <div class="form-group">
                                     <label for="publisher_id">Publisher (Choose Existing)</label>
                                     <select class="form-control" name="publisher_id" id="publisher_id">
@@ -372,31 +377,9 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group">
-                                    <label for="subcategory_id">Select Class</label>
-                                    <select name="subcategory_id" id="subcategory_id" class="form-control text-dark">
-                                        <option value="">Select Class</option>
-                                        @foreach ($subcategories as $subcategory)
-                                            <option value="{{ $subcategory['id'] }}"
-                                                @if (!empty($product['subcategory_id']) && $product['subcategory_id'] == $subcategory['id']) selected @endif>
-                                                {{ $subcategory['subcategory_name'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
 
-                                <div class="form-group">
-                                    <label for="subject_id">Select Subject</label>
-                                    <select name="subject_id" id="subject_id" class="form-control text-dark">
-                                        <option value="">Select Subject</option>
-                                        @foreach ($subjects as $subject)
-                                            <option value="{{ $subject['id'] }}"
-                                                @if (!empty($product['subject_id']) && $product['subject_id'] == $subject['id']) selected @endif>
-                                                {{ $subject['name'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+
+
                                 <div class="form-group">
                                     <label for="edition_id">Select Edition</label>
                                     <select name="edition_id" id="edition_id" class="form-control text-dark">
@@ -571,6 +554,19 @@
             "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
                 ? url('vendor/book/name-suggestions')
                 : url('admin/book/name-suggestions') }}";
+
+        const boardsUrl =
+            "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
+                ? route('vendor.products.boards')
+                : route('admin.products.boards') }}";
+        const classesUrl =
+            "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
+                ? route('vendor.products.classes')
+                : route('admin.products.classes') }}";
+        const subjectsUrl =
+            "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
+                ? route('vendor.products.subjects')
+                : route('admin.products.subjects') }}";
     </script>
 
     {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
@@ -647,6 +643,111 @@
                 }
             });
 
+        });
+    </script>
+
+    <script>
+        // Cascading selects: Education Level -> Board -> Class -> Subject
+        $(document).ready(function() {
+            var $section    = $('#section_id');
+            var $board      = $('#category_id');
+            var $class      = $('#subcategory_id');
+            var $subject    = $('#subject_id');
+
+            var initialSectionId    = "{{ old('section_id', $product->section_id ?? '') }}";
+            var initialBoardId      = "{{ old('category_id', $product->category_id ?? '') }}";
+            var initialClassId      = "{{ old('subcategory_id', $product->subcategory_id ?? '') }}";
+            var initialSubjectId    = "{{ old('subject_id', $product->subject_id ?? '') }}";
+
+            function loadBoards(sectionId, selectedId) {
+                $board.empty().append('<option value=\"\">Select Board</option>');
+                $class.empty().append('<option value=\"\">Select Class</option>');
+                $subject.empty().append('<option value=\"\">Select Subject</option>');
+
+                if (!sectionId) {
+                    return;
+                }
+
+                $.get(boardsUrl, { section_id: sectionId }, function(data) {
+                    $.each(data, function(_, item) {
+                        var opt = $('<option></option>').val(item.id).text(item.category_name);
+                        if (selectedId && parseInt(selectedId) === parseInt(item.id)) {
+                            opt.attr('selected', 'selected');
+                        }
+                        $board.append(opt);
+                    });
+                });
+            }
+
+            function loadClasses(sectionId, boardId, selectedId) {
+                $class.empty().append('<option value=\"\">Select Class</option>');
+                $subject.empty().append('<option value=\"\">Select Subject</option>');
+
+                if (!sectionId || !boardId) {
+                    return;
+                }
+
+                $.get(classesUrl, { section_id: sectionId, category_id: boardId }, function(data) {
+                    $.each(data, function(_, item) {
+                        var opt = $('<option></option>').val(item.id).text(item.subcategory_name);
+                        if (selectedId && parseInt(selectedId) === parseInt(item.id)) {
+                            opt.attr('selected', 'selected');
+                        }
+                        $class.append(opt);
+                    });
+                });
+            }
+
+            function loadSubjects(sectionId, boardId, classId, selectedId) {
+                $subject.empty().append('<option value=\"\">Select Subject</option>');
+
+                if (!sectionId || !boardId || !classId) {
+                    return;
+                }
+
+                $.get(subjectsUrl, {
+                    section_id: sectionId,
+                    category_id: boardId,
+                    sub_category_id: classId
+                }, function(data) {
+                    $.each(data, function(_, item) {
+                        var opt = $('<option></option>').val(item.id).text(item.name);
+                        if (selectedId && parseInt(selectedId) === parseInt(item.id)) {
+                            opt.attr('selected', 'selected');
+                        }
+                        $subject.append(opt);
+                    });
+                });
+            }
+
+            $section.on('change', function() {
+                var sectionId = $(this).val();
+                loadBoards(sectionId, null);
+            });
+
+            $board.on('change', function() {
+                var sectionId = $section.val();
+                var boardId = $(this).val();
+                loadClasses(sectionId, boardId, null);
+            });
+
+            $class.on('change', function() {
+                var sectionId = $section.val();
+                var boardId = $board.val();
+                var classId = $(this).val();
+                loadSubjects(sectionId, boardId, classId, null);
+            });
+
+            // Initial population for edit / validation error
+            if (initialSectionId) {
+                loadBoards(initialSectionId, initialBoardId);
+                if (initialBoardId) {
+                    loadClasses(initialSectionId, initialBoardId, initialClassId);
+                    if (initialClassId) {
+                        loadSubjects(initialSectionId, initialBoardId, initialClassId, initialSubjectId);
+                    }
+                }
+            }
         });
     </script>
 
