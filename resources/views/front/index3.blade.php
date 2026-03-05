@@ -939,46 +939,90 @@
     <!-- Extra Spacing (Mobile Only) -->
     <div class="py-4 d-lg-none"></div>
 
+    <style>
+        .sales-cta-card {
+            background-color: #1e3a8a !important;
+            border-radius: 28px !important;
+            overflow: hidden !important;
+        }
+
+        .vendor-cta-card {
+            background-color: #ff9900 !important;
+            /* using fallback orange if var --primary fails */
+            border-radius: 28px !important;
+            overflow: hidden !important;
+        }
+    </style>
+
     <!-- CTA Block -->
     <div class="container py-5">
         <!-- Sales Card -->
-        <div class="card border-0 shadow-lg mb-5"
-            style="background-image: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%); border-radius: 28px; overflow: hidden;">
-            <div class="card-body p-0">
+        <div class="sales-cta-card shadow-lg mb-5 position-relative">
+
+            <!-- Decorative Background Elements -->
+            <div class="position-absolute rounded-circle"
+                style="width: 300px; height: 300px; background: radial-gradient(circle, rgba(29,78,216,0.5) 0%, rgba(0,0,0,0) 70%); top: -100px; right: -50px; pointer-events: none;">
+            </div>
+            <div class="position-absolute rounded-circle"
+                style="width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0) 70%); bottom: -50px; left: -50px; pointer-events: none;">
+            </div>
+
+            <div class="position-relative z-1">
                 <div class="py-5 px-4 px-md-5">
                     <div class="row align-items-center text-white g-4">
-                        <div class="col-xl-7 col-lg-7">
-                            <h2 class="display-6 text-white fw-semibold mb-3">Become a BookHub Sales Executive</h2>
-                            <p class="lead mb-4">Help schools and institutions discover the right books while earning
-                                attractive commissions, marketing support, and exclusive incentives.</p>
-                            <div class="d-flex flex-wrap gap-4">
-                                <div class="d-flex align-items-center">
-                                    <span class="bg-white bg-opacity-10 rounded-circle p-3 me-3"><i
-                                            class="fa-solid fa-chart-line fs-4"></i></span>
-                                    <div>
-                                        <h5 class="mb-1 text-white">Grow network</h5>
-                                        <small class="text-white-50">Local reach.</small>
+                        <div class="col-xl-7 col-lg-7 text-center text-lg-start">
+                            <span class="badge bg-white text-primary mb-3 px-3 py-2 rounded-pill shadow-sm"
+                                style="font-weight: 700; font-size: 0.85rem;">
+                                <i class="fas fa-rocket me-1"></i> Career Opportunity
+                            </span>
+                            <h2 class="text-white fw-bold mb-3"
+                                style="font-size: clamp(2rem, 4vw, 2.75rem); letter-spacing: -0.5px; line-height: 1.2;">
+                                Become a BookHub <span style="color: #60a5fa;">Sales Executive</span>
+                            </h2>
+                            <p class="mb-4"
+                                style="font-size: 1.1rem; opacity: 0.9; line-height: 1.6; max-width: 600px; margin: 0 auto; margin-lg-0;">
+                                Help schools and institutions discover the right books while earning
+                                attractive commissions, marketing support, and exclusive incentives.
+                            </p>
+                            <div
+                                class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3 gap-md-4 mt-4">
+                                <div class="d-flex align-items-center bg-white bg-opacity-10 px-4 py-2 rounded-pill"
+                                    style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);">
+                                    <span class="text-white me-2"><i class="fa-solid fa-chart-line fs-5"></i></span>
+                                    <div class="text-start">
+                                        <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Grow
+                                            network</h6>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center">
-                                    <span class="bg-white bg-opacity-10 rounded-circle p-3 me-3"><i
-                                            class="fa-solid fa-coins fs-4"></i></span>
-                                    <div>
-                                        <h5 class="mb-1 text-white">Earn more</h5>
-                                        <small class="text-white-50">Payouts.</small>
+                                <div class="d-flex align-items-center bg-white bg-opacity-10 px-4 py-2 rounded-pill"
+                                    style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);">
+                                    <span class="text-white me-2"><i class="fa-solid fa-coins fs-5"></i></span>
+                                    <div class="text-start">
+                                        <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Earn more
+                                        </h6>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="col-xl-5 col-lg-5">
-                            <div class="card border-0 shadow-sm" style="border-radius: 20px; background: #fff;">
-                                <div class="card-body p-4 text-center text-md-start">
-                                    <h4 class="fw-semibold mb-2 text-primary">Register today</h4>
-                                    <p class="mb-4 text-muted small">Fill out a short application and our team will connect
-                                        with you.</p>
-                                    <a href="{{ url('/sales') }}" class="btn btn-primary w-100 py-3"
-                                        style="background: var(--primary-orange); border: none; font-weight: bold; border-radius: 12px;">
-                                        Join As Sales Executive <i class="fa-solid fa-arrow-right ms-2"></i>
+                        <div class="col-xl-5 col-lg-5 mt-5 mt-lg-0">
+                            <div class="card border-0 shadow-lg"
+                                style="border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+                                <div class="card-body p-4 p-md-5 text-center">
+                                    <div class="mb-4">
+                                        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
+                                            style="width: 60px; height: 60px;">
+                                            <i class="fas fa-user-plus fs-4"></i>
+                                        </div>
+                                        <h4 class="fw-bold mb-2 text-dark" style="font-size: 1.5rem;">Register Today</h4>
+                                        <p class="text-secondary small" style="font-size: 0.95rem;">Fill out a short
+                                            application, and our team will get in touch with you shortly.</p>
+                                    </div>
+                                    <a href="{{ url('/sales') }}"
+                                        class="btn w-100 py-3 d-flex align-items-center justify-content-center gap-2"
+                                        style="background: var(--primary-orange); color: white; border: none; font-weight: 700; border-radius: 14px; font-size: 1.1rem; box-shadow: 0 8px 20px rgba(255, 153, 0, 0.3); transition: all 0.3s ease;"
+                                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(255, 153, 0, 0.4)';"
+                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(255, 153, 0, 0.3)';">
+                                        Join As Sales Executive <i class="fa-solid fa-arrow-right"></i>
                                     </a>
                                 </div>
                             </div>
@@ -989,65 +1033,97 @@
         </div>
 
         <!-- Vendor Card -->
-        <div class="card border-0 shadow-lg mb-5"
-            style="background: var(--primary); border-radius: 28px; overflow: hidden;">
-            <div class="card-body p-0">
+        <div class="vendor-cta-card shadow-lg mb-5 position-relative"
+            style="background: linear-gradient(135deg, #1e3a8a 0%, #db2777 100%) !important; border-radius: 28px; overflow: hidden; transform: translateY(0); transition: all 0.3s ease;">
+            <!-- Decorative Elements -->
+            <div class="position-absolute rounded-circle"
+                style="width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0) 70%); top: -50px; right: -50px; pointer-events: none;">
+            </div>
+            <div class="position-absolute rounded-circle"
+                style="width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0) 70%); bottom: -20px; left: -20px; pointer-events: none;">
+            </div>
+
+            <div class="position-relative z-1">
                 <div class="py-5 px-4 px-md-5">
-                    <div class="row align-items-center gy-4">
-                        <div class="col-lg-7 text-white">
-                            <span class="badge bg-light text-primary mb-3 px-3 py-2 rounded-pill shadow-sm">
-                                Vendor Opportunity • Limited Effort, High Reach
+                    <div class="row align-items-center gy-5">
+                        <div class="col-lg-7 text-center text-lg-start">
+                            <span class="badge bg-white text-dark mb-3 px-3 py-2 rounded-pill shadow-sm"
+                                style="font-weight: 700; font-size: 0.85rem;">
+                                <i class="fas fa-store me-1" style="color: #ff9900;"></i> Vendor Opportunity
                             </span>
-                            <h2 class="fw-semibold mb-3 text-dark" style="font-weight: 800; font-size: 2.5rem;">
-                                Turn Your Catalog into Revenue
+                            <h2 class="text-white fw-bold mb-3"
+                                style="font-size: clamp(2rem, 4vw, 2.75rem); letter-spacing: -0.5px; line-height: 1.2;">
+                                Turn Your Catalog into <span style="color: #ffe0b2;">Revenue</span>
                             </h2>
-                            <p class="mb-4 text-dark opacity-75">
-                                Upload your books once and let BookHub handle the marketing. Only 5% promotion fee.
+                            <p class="mb-4 text-white"
+                                style="font-size: 1.1rem; opacity: 0.9; line-height: 1.6; max-width: 600px; margin: 0 auto; margin-lg-0;">
+                                Upload your books once and let BookHub handle the marketing. Expand your reach with only a
+                                5% promotion fee.
                             </p>
-                            <div class="d-flex flex-wrap gap-4 mb-4">
-                                <div class="d-flex align-items-center text-dark fw-bold">
-                                    <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center me-3"
-                                        style="width:40px;height:40px;">
-                                        <i class="fa fa-book"></i>
+
+                            <div
+                                class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3 gap-md-4 mt-4 mb-4 mb-lg-0">
+                                <div class="d-flex align-items-center bg-white bg-opacity-10 px-4 py-2 rounded-pill"
+                                    style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+                                    <div class="rounded-circle bg-white d-flex align-items-center justify-content-center me-2"
+                                        style="width: 32px; height: 32px;">
+                                        <i class="fa fa-book" style="color: #ff9900; font-size: 0.85rem;"></i>
                                     </div>
-                                    <span>Easy Uploads</span>
+                                    <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Easy Uploads
+                                    </h6>
                                 </div>
-                                <div class="d-flex align-items-center text-dark fw-bold">
-                                    <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center me-3"
-                                        style="width:40px;height:40px;">
-                                        <i class="fa fa-bullhorn"></i>
+                                <div class="d-flex align-items-center bg-white bg-opacity-10 px-4 py-2 rounded-pill"
+                                    style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
+                                    <div class="rounded-circle bg-white d-flex align-items-center justify-content-center me-2"
+                                        style="width: 32px; height: 32px;">
+                                        <i class="fa fa-bullhorn" style="color: #ff9900; font-size: 0.85rem;"></i>
                                     </div>
-                                    <span>Marketing</span>
+                                    <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Automated
+                                        Marketing</h6>
                                 </div>
                             </div>
-                            <a href="{{ route('vendor.register') }}" class="btn btn-dark px-4 py-3"
-                                style="border-radius: 12px; font-weight: bold;">
-                                Register Bookstore
-                            </a>
                         </div>
+
                         <div class="col-lg-5">
-                            <div class="bg-white bg-opacity-10 border border-white border-opacity-25 p-4 shadow-sm"
-                                style="border: 1px solid rgba(255,255,255,0.4) !important; border-radius: 20px;">
-                                <h5 class="fw-bold mb-3 text-dark">Free Plan & Pro Plan</h5>
-                                <p class="mb-3 text-dark opacity-75 small">
-                                    Start free with 100 books, or switch to Pro.
-                                </p>
-                                <ul class="list-unstyled mb-4 text-dark fw-bold" style="font-size: 0.9rem;">
-                                    <li class="mb-2"><i class="fa fa-check text-success me-2"></i> No website required
-                                    </li>
-                                    <li class="mb-2"><i class="fa fa-check text-success me-2"></i> We handle traffic
-                                    </li>
-                                    <li><i class="fa fa-check text-success me-2"></i> Transparent dashboard</li>
-                                </ul>
-                                <a href="{{ url('/contact') }}" class="btn btn-outline-dark w-100 py-2"
-                                    style="border-radius: 8px; font-weight: bold;">Talk To Team</a>
+                            <div class="card border-0 shadow-lg h-100"
+                                style="border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
+                                <div
+                                    class="card-body p-4 p-md-5 d-flex flex-column justify-content-center text-center text-md-start">
+                                    <h4 class="fw-bold mb-3 text-dark" style="font-size: 1.5rem;">Free Plan & Pro Plan
+                                    </h4>
+                                    <p class="mb-4 text-secondary" style="font-size: 0.95rem;">
+                                        Start free with 100 books, or switch to Pro for unlimited potential.
+                                    </p>
+
+                                    <ul class="list-unstyled mb-4 text-dark text-start mx-auto mx-md-0"
+                                        style="font-size: 1rem; font-weight: 600; max-width: fit-content;">
+                                        <li class="mb-3 d-flex align-items-center"><i class="fa fa-check-circle fs-5 me-3"
+                                                style="color: #10b981;"></i> No technical setup needed</li>
+                                        <li class="mb-3 d-flex align-items-center"><i class="fa fa-check-circle fs-5 me-3"
+                                                style="color: #10b981;"></i> We drive the traffic</li>
+                                        <li class="mb-3 d-flex align-items-center"><i class="fa fa-check-circle fs-5 me-3"
+                                                style="color: #10b981;"></i> Transparent analytics</li>
+                                    </ul>
+
+                                    <div class="mt-auto d-flex flex-column gap-2">
+                                        <a href="{{ route('vendor.register') }}"
+                                            class="btn w-100 py-3 d-flex align-items-center justify-content-center gap-2"
+                                            style="background: #111827; color: white; border: none; font-weight: 700; border-radius: 12px; font-size: 1.05rem; transition: all 0.3s ease;"
+                                            onmouseover="this.style.background='#000'; this.style.transform='translateY(-2px)';"
+                                            onmouseout="this.style.background='#111827'; this.style.transform='translateY(0)';">
+                                            Register Bookstore <i class="fa-solid fa-arrow-right"></i>
+                                        </a>
+                                        <a href="{{ url('/contact') }}" class="btn btn-outline-dark w-100 py-3"
+                                            style="border-radius: 12px; font-weight: 700; font-size: 1.05rem;">
+                                            Talk To Team
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="position-absolute rounded-circle bg-white opacity-10"
-                style="width:200px;height:200px;top:-50px;right:-50px;"></div>
         </div>
     </div>
 
