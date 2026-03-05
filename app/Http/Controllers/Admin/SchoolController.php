@@ -61,7 +61,7 @@ class SchoolController extends Controller
         School::create($request->all());
 
         return redirect()->route('admin.schools.index', 'logos')
-            ->with('success', 'School created successfully!')
+            ->with('success_message', 'School created successfully!')
             ->with('page', 'schools');
         return view('admin.schools.index', compact('schools', 'logos', 'headerLogo'));
     }
@@ -93,7 +93,7 @@ class SchoolController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $headerLogo = HeaderLogo::first();  
+        $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -119,7 +119,7 @@ class SchoolController extends Controller
         $school->update($request->all());
 
         return redirect()->route('admin.schools.index', 'logos')
-            ->with('success', 'School updated successfully!')
+            ->with('success_message', 'School updated successfully!')
             ->with('page', 'schools');
         return view('admin.schools.index', compact('schools', 'logos', 'headerLogo'));
     }
@@ -135,7 +135,7 @@ class SchoolController extends Controller
         $school->delete();
 
         return redirect()->route('admin.schools.index', 'logos')
-            ->with('success', 'School deleted successfully!')
+            ->with('success_message', 'School deleted successfully!')
             ->with('page', 'schools');
         return view('admin.schools.index', compact('schools', 'logos', 'headerLogo'));
     }

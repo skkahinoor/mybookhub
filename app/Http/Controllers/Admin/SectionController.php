@@ -74,8 +74,9 @@ class SectionController extends Controller
 
         $message = 'Education Level has been deleted successfully!';
 
-        return redirect()->back()->with('success_message', $message, 'logos');
-        return view('admin.sections.sections', compact('sections', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.education_levels' : 'admin.education_levels';
+        return redirect()->route($route)->with('success_message', $message);
     }
 
     public function addEditSection(Request $request, $id = null)

@@ -48,7 +48,9 @@ class AuthorController extends Controller
         $store = Author::create([
             'name' => $request->name,
         ]);
-        return redirect()->route('admin.author')->with('success', 'Author name inserted successfully!!');
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.author' : 'admin.author';
+        return redirect()->route($route)->with('success_message', 'Author name inserted successfully!!');
         // return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
     }
 
@@ -78,31 +80,36 @@ class AuthorController extends Controller
         $update->update([
             'name' => $request->name,
         ]);
-        return redirect()->route('admin.author')->with('success', 'Author name updated successfully!!');
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.author' : 'admin.author';
+        return redirect()->route($route)->with('success_message', 'Author name updated successfully!!');
         return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function delete($id)
-{
-    if (!Auth::guard('admin')->user()->can('delete_authors')) {
-        abort(403, 'Unauthorized action.');
-    }
+    {
+        if (!Auth::guard('admin')->user()->can('delete_authors')) {
+            abort(403, 'Unauthorized action.');
+        }
 
-    $author = Author::find($id);
+        $author = Author::find($id);
 
-    // If author not found, just redirect with an error instead of 404
-    if (!$author) {
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.author' : 'admin.author';
+
+        // If author not found, just redirect with an error instead of 404
+        if (!$author) {
+            return redirect()
+                ->route($route)
+                ->with('error_message', 'Author not found or already deleted.');
+        }
+
+        $author->delete();
+
         return redirect()
-            ->route('admin.author')
-            ->with('error', 'Author not found or already deleted.');
+            ->route($route)
+            ->with('success_message', 'Author name deleted successfully!!');
     }
-
-    $author->delete();
-
-    return redirect()
-        ->route('admin.author')
-        ->with('success', 'Author name deleted successfully!!');
-}
     /**
      * Toggle author status (active/inactive) via AJAX.
      */

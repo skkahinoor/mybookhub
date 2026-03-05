@@ -110,8 +110,9 @@ class SubcategoryController extends Controller
             $subcategory->status = 1;
             $subcategory->save();
 
-            $redirectUrl = Auth::guard('admin')->user()->type == 'vendor' ? 'vendor/subcategories' : 'admin/subcategories';
-            return redirect($redirectUrl)->with('success_message', $message);
+            $adminType = Auth::guard('admin')->user()->type;
+            $route = $adminType == 'vendor' ? 'vendor.subcategories' : 'admin.subcategories';
+            return redirect()->route($route)->with('success_message', $message);
         }
 
         $categories = Category::with('section')->where('status', 1)->get()->toArray();
@@ -126,7 +127,11 @@ class SubcategoryController extends Controller
         }
 
         Subcategory::where('id', $id)->delete();
-        return redirect()->back()->with('success_message', 'Subcategory deleted successfully!');
+
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType == 'vendor' ? 'vendor.subcategories' : 'admin.subcategories';
+
+        return redirect()->route($route)->with('success_message', 'Subcategory deleted successfully!');
     }
 
     public function appendSubcategoryLevel(Request $request)

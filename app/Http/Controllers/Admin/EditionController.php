@@ -47,7 +47,7 @@ class EditionController extends Controller
             'edition' => 'required|string|max:255',
         ]);
         Edition::create($request->only('edition'));
-        return redirect()->route('admin.edition.index')->with('success', 'Edition created successfully.', 'logos');
+        return redirect()->route('admin.edition.index')->with('success_message', 'Edition created successfully.', 'logos');
         return view('admin.edition.edition', compact('editions', 'logos', 'headerLogo', 'adminType'));
     }
 
@@ -76,7 +76,7 @@ class EditionController extends Controller
         ]);
         $edition = Edition::findOrFail($id);
         $edition->update($request->only('edition'));
-        return redirect()->route('admin.edition.index')->with('success', 'Edition updated successfully.', 'logos');
+        return redirect()->route('admin.edition.index')->with('success_message', 'Edition updated successfully.', 'logos');
         return view('admin.edition.edition', compact('editions', 'logos', 'headerLogo', 'adminType'));
     }
 
@@ -90,7 +90,7 @@ class EditionController extends Controller
         $logos = HeaderLogo::first();
         $edition = Edition::findOrFail($id);
         $edition->delete();
-        return redirect()->route('admin.edition.index')->with('success', 'Edition deleted successfully.', 'logos');
+        return redirect()->route('admin.edition.index')->with('success_message', 'Edition deleted successfully.', 'logos');
         return view('admin.edition.edition', compact('editions', 'logos', 'headerLogo', 'adminType'));
     }
 }

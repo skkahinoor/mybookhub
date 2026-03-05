@@ -152,8 +152,9 @@ class CategoryController extends Controller
 
             $category->save(); // Save all data in the database
 
-            $redirectUrl = Auth::guard('admin')->user()->type == 'vendor' ? 'vendor/categories' : 'admin/categories';
-            return redirect($redirectUrl)->with('success_message', $message);
+            $adminType = Auth::guard('admin')->user()->type;
+            $route = $adminType == 'vendor' ? 'vendor.categories' : 'admin.categories';
+            return redirect()->route($route)->with('success_message', $message);
         }
 
 
@@ -198,7 +199,10 @@ class CategoryController extends Controller
 
         $message = 'Category has been deleted successfully!';
 
-        return redirect()->back()->with('success_message', $message);
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.categories' : 'admin.categories';
+
+        return redirect()->route($route)->with('success_message', $message);
         return view('admin.categories.categories', compact('categories', 'logos', 'headerLogo'));
     }
 

@@ -85,18 +85,25 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
 
 
         // Categories
-        Route::get('categories', 'CategoryController@categories');                                      // Categories in Catalogue Management in Admin Panel
+        Route::get('categories', 'CategoryController@categories')->name('vendor.categories');                                      // Categories in Catalogue Management in Admin Panel
         Route::post('update-category-status', 'CategoryController@updateCategoryStatus')->name('vendor.updatecategorystatus');               // Update Categories Status using AJAX in categories.blade.php
-        Route::match(['get', 'post'], 'add-edit-category/{id?}', 'CategoryController@addEditCategory'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Category, and if not passed, this means Add a Category
-        Route::get('append-categories-level', 'CategoryController@appendCategoryLevel');                // Show Categories <select> <option> depending on the chosen Section (show the relevant categories of the chosen section) using AJAX in admin/js/custom.js in append_categories_level.blade.php page
-        Route::get('delete-category/{id}', 'CategoryController@deleteCategory');                        // Delete a category in categories.blade.php
-        Route::get('delete-category-image/{id}', 'CategoryController@deleteCategoryImage');             // Delete a category image in add_edit_category.blade.php from BOTH SERVER (FILESYSTEM) & DATABASE
+        Route::match(['get', 'post'], 'add-edit-category/{id?}', 'CategoryController@addEditCategory')->name('vendor.add_edit_category'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Category, and if not passed, this means Add a Category
+        Route::get('append-categories-level', 'CategoryController@appendCategoryLevel')->name('vendor.append_categories_level');                // Show Categories <select> <option> depending on the chosen Section (show the relevant categories of the chosen section) using AJAX in admin/js/custom.js in append_categories_level.blade.php page
+        Route::get('delete-category/{id}', 'CategoryController@deleteCategory')->name('vendor.delete_category');                        // Delete a category in categories.blade.php
+        Route::get('delete-category-image/{id}', 'CategoryController@deleteCategoryImage')->name('vendor.delete_category_image');             // Delete a category image in add_edit_category.blade.php from BOTH SERVER (FILESYSTEM) & DATABASE
+
+        // Subcategories
+        Route::get('subcategories', 'SubcategoryController@subcategories')->name('vendor.subcategories');
+        Route::post('update-subcategory-status', 'SubcategoryController@updateSubcategoryStatus')->name('vendor.updatesubcategorystatus');
+        Route::match(['get', 'post'], 'add-edit-subcategory/{id?}', 'SubcategoryController@addEditSubcategory')->name('vendor.add_edit_subcategory');
+        Route::get('delete-subcategory/{id}', 'SubcategoryController@deleteSubcategory')->name('vendor.delete_subcategory');
+        Route::get('append-subcategories-level', 'SubcategoryController@appendSubcategoryLevel')->name('vendor.append_subcategories_level');
 
 
 
 
         //Publishers
-        Route::get('publisher', 'PublisherController@publisher');
+        Route::get('publisher', 'PublisherController@publisher')->name('vendor.publisher');
         Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('vendor.updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
 
 
@@ -112,8 +119,8 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
 
 
         // Update Brands Status using AJAX in brands.blade.php
-        Route::get('delete-publisher/{id}', 'PublisherController@deletePublisher');                        // Delete a brand in brands.blade.php
-        Route::match(['get', 'post'], 'add-edit-publisher/{id?}', 'PublisherController@addEditPublisher'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the brand, and if not passed, this means Add a Brand
+        Route::get('delete-publisher/{id}', 'PublisherController@deletePublisher')->name('vendor.delete_publisher');                        // Delete a brand in brands.blade.php
+        Route::match(['get', 'post'], 'add-edit-publisher/{id?}', 'PublisherController@addEditPublisher')->name('vendor.add_edit_publisher'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the brand, and if not passed, this means Add a Brand
 
 
         //Author

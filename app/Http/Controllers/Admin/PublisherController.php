@@ -70,8 +70,9 @@ class PublisherController extends Controller
 
         $message = 'Publisher has been deleted successfully!';
 
-        return redirect()->back()->with('success_message', $message);
-        return view('admin.publisher.publisher', compact('publishers', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.publisher' : 'admin.publisher';
+        return redirect()->route($route)->with('success_message', $message);
     }
 
 
@@ -167,8 +168,9 @@ class PublisherController extends Controller
             $publisher->save(); // Save all data in the database
 
 
-            return redirect('admin/publisher')->with('success_message', $message, 'logos');
-            return view('admin.publisher.publisher', compact('publishers', 'logos', 'headerLogo'));
+            $adminType = Auth::guard('admin')->user()->type;
+            $route = $adminType === 'vendor' ? 'vendor.publisher' : 'admin.publisher';
+            return redirect()->route($route)->with('success_message', $message);
         }
 
 
