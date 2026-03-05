@@ -21,7 +21,7 @@ class SectionController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
-        Session::put('page', 'sections');
+        Session::put('page', 'education-levels');
 
 
         // $sections = Section::get(); // Eloquent Collection
@@ -51,11 +51,11 @@ class SectionController extends Controller
             }
 
 
-            Section::where('id', $data['section_id'])->update(['status' => $status]);
+            Section::where('id', $data['education_level_id'])->update(['status' => $status]);
 
             return response()->json([
                 'status'     => $status,
-                'section_id' => $data['section_id']
+                'education_level_id' => $data['education_level_id']
             ]);
         }
 
@@ -72,15 +72,16 @@ class SectionController extends Controller
         $logos = HeaderLogo::first();
         Section::where('id', $id)->delete();
 
-        $message = 'Section has been deleted successfully!';
+        $message = 'Education Level has been deleted successfully!';
 
-        return redirect()->back()->with('success_message', $message, 'logos');
-        return view('admin.sections.sections', compact('sections', 'logos', 'headerLogo'));
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.education_levels' : 'admin.education_levels';
+        return redirect()->route($route)->with('success_message', $message);
     }
 
     public function addEditSection(Request $request, $id = null)
     {
-        Session::put('page', 'sections');
+        Session::put('page', 'education-levels');
 
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -91,31 +92,29 @@ class SectionController extends Controller
                 abort(403, 'Unauthorized action.');
             }
 
-            $title = "Add Section";
+            $title = "Add Education Level";
             $section = new Section();
-            $message = "Section added successfully!";
-        }
-
-        else {
+            $message = "Education Level added successfully!";
+        } else {
 
             if (!Auth::guard('admin')->user()->can('edit_categories')) {
                 abort(403, 'Unauthorized action.');
             }
 
-            $title = "Edit Section";
+            $title = "Edit Education Level";
             $section = Section::findOrFail($id);
-            $message = "Section updated successfully!";
+            $message = "Education Level updated successfully!";
         }
 
         if ($request->isMethod('post')) {
 
             $rules = [
-                'section_name'  => 'required|string|max:255',
+                'education_level_name'  => 'required|string|max:255',
                 'section_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             ];
 
             $customMessages = [
-                'section_name.required' => 'Section Name is required',
+                'education_level_name.required' => 'Education Level Name is required',
                 'section_image.image'   => 'File must be an image',
                 'section_image.mimes'   => 'Only jpg, jpeg and png allowed',
                 'section_image.max'     => 'Image size must be less than 2MB',
@@ -123,7 +122,7 @@ class SectionController extends Controller
 
             $this->validate($request, $rules, $customMessages);
 
-            $section->name   = $request->section_name;
+            $section->name   = $request->education_level_name;
             $section->status = 1;
 
             if ($request->hasFile('section_image')) {
@@ -158,7 +157,8 @@ class SectionController extends Controller
 
             $section->save();
 
-            return redirect('admin/sections')->with('success_message', $message);
+            $redirectRoute = Auth::guard('admin')->user()->type == 'vendor' ? 'vendor.education_levels' : 'admin.education_levels';
+            return redirect()->route($redirectRoute)->with('success_message', $message);
         }
 
         return view('admin.sections.add_edit_section')

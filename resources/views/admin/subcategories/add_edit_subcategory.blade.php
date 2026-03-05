@@ -7,6 +7,10 @@
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
+                            @php
+                                $adminType = Auth::guard('admin')->user()->type;
+                                $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                            @endphp
                             <h4 class="card-title">Add Class</h4>
 
                             @if (Session::has('error_message'))
@@ -30,7 +34,7 @@
                             @endif
 
                             <form class="forms-sample"
-                                @if (empty($subcategory['id'])) action="{{ url('admin/add-edit-subcategory') }}" @else action="{{ url('admin/add-edit-subcategory/' . $subcategory['id']) }}" @endif
+                                @if (empty($subcategory['id'])) action="{{ url($prefix . '/add-edit-subcategory') }}" @else action="{{ url($prefix . '/add-edit-subcategory/' . $subcategory['id']) }}" @endif
                                 method="post" enctype="multipart/form-data"> @csrf
 
                                 <div class="form-group">
@@ -53,7 +57,7 @@
                                 </div>
 
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                <a href="{{ url('admin/subcategories') }}" class="btn btn-light">Cancel</a>
+                                <a href="{{ url($prefix . '/subcategories') }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
                     </div>

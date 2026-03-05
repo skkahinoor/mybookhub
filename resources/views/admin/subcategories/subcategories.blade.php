@@ -9,7 +9,11 @@
                         <div class="card-body">
                             <h4 class="card-title">Classes</h4>
 
-                            <a href="{{ url('admin/add-edit-subcategory') }}"
+                            @php
+                                $adminType = Auth::guard('admin')->user()->type;
+                                $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                            @endphp
+                            <a href="{{ url($prefix . '/add-edit-subcategory') }}"
                                 style="max-width: 150px; float: right; display: inline-block"
                                 class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Class</a>
 
@@ -51,7 +55,7 @@
                                                         <a class="updateSubcategoryStatus"
                                                             id="subcategory-{{ $subcategory['id'] }}"
                                                             subcategory_id="{{ $subcategory['id'] }}"
-                                                            data-url="{{ route('admin.updatesubcategorystatus') }}"
+                                                            data-url="{{ route($prefix . '.updatesubcategorystatus') }}"
                                                             href="javascript:void(0)">
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                 status="Active"></i>
@@ -60,7 +64,7 @@
                                                         <a class="updateSubcategoryStatus"
                                                             id="subcategory-{{ $subcategory['id'] }}"
                                                             subcategory_id="{{ $subcategory['id'] }}"
-                                                            data-url="{{ route('admin.updatesubcategorystatus') }}"
+                                                            data-url="{{ route($prefix . '.updatesubcategorystatus') }}"
                                                             href="javascript:void(0)">
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
                                                                 status="Inactive"></i>
@@ -69,12 +73,11 @@
                                                 </td>
                                                 <td>
                                                     <a
-                                                        href="{{ url('admin/add-edit-subcategory/' . $subcategory['id']) }}">
+                                                        href="{{ url($prefix . '/add-edit-subcategory/' . $subcategory['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
-                                                    <a href="{{ url('admin/delete-subcategory/' . $subcategory['id']) }}"
-                                                        class="confirmDelete" data-module="subcategory"
-                                                        data-url="{{ url('admin/delete-subcategory/' . $subcategory['id']) }}">
+                                                    <a href="javascript:void(0)" class="confirmDelete" data-module="Class"
+                                                        data-url="{{ url($prefix . '/delete-subcategory/' . $subcategory['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>
                                                 </td>

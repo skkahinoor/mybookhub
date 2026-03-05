@@ -76,8 +76,8 @@ class StudentController extends Controller
         $institution = InstitutionManagement::find($data['institution_id']);
         AcademicProfile::create([
             'user_id' => $studentuser->id,
-            'education_level_id' => $institution?->type,
-            'board_id' => $institution?->board,
+            'education_level_id' => is_numeric($institution?->type) ? (int) $institution->type : null,
+            'board_id' => is_numeric($institution?->board) ? (int) $institution->board : null,
             'class_id' => $data['institution_classes_id'] ?? null,
         ]);
 
@@ -125,8 +125,8 @@ class StudentController extends Controller
         // Sync academic profile if institution or class changed
         $institution = InstitutionManagement::find($data['institution_id']);
         $profileData = [
-            'education_level_id' => $institution?->type,
-            'board_id' => $institution?->board,
+            'education_level_id' => is_numeric($institution?->type) ? (int) $institution->type : null,
+            'board_id' => is_numeric($institution?->board) ? (int) $institution->board : null,
             'class_id' => $data['institution_classes_id'] ?? null,
         ];
 

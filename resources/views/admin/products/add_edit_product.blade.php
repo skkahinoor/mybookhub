@@ -259,10 +259,14 @@
                                 </div>
                             @endif
 
+                            @php
+                                $adminType = Auth::guard('admin')->user()->type;
+                                $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                            @endphp
                             <form class="forms-sample"
-                                @if (empty($product['id'])) action="{{ url('admin/add-edit-product') }}"
+                                @if (empty($product['id'])) action="{{ url($prefix . '/add-edit-product') }}"
                                 @else
-                                    action="{{ url('admin/add-edit-product/' . $product['id']) }}" @endif
+                                    action="{{ url($prefix . '/add-edit-product/' . $product['id']) }}" @endif
                                 method="post" enctype="multipart/form-data">
 
                                 @csrf
@@ -355,7 +359,7 @@
                                         <option value="">Select Subject</option>
                                     </select>
                                 </div>
-                                
+
                                 <div class="form-group">
                                     <label for="publisher_id">Publisher (Choose Existing)</label>
                                     <select class="form-control" name="publisher_id" id="publisher_id">
@@ -492,7 +496,7 @@
 
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
 
-                                <a href="{{ url('admin/products') }}" class="btn btn-light">Cancel</a>
+                                <a href="{{ url($prefix . '/products') }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
                     </div>
@@ -649,15 +653,15 @@
     <script>
         // Cascading selects: Education Level -> Board -> Class -> Subject
         $(document).ready(function() {
-            var $section    = $('#section_id');
-            var $board      = $('#category_id');
-            var $class      = $('#subcategory_id');
-            var $subject    = $('#subject_id');
+            var $section = $('#section_id');
+            var $board = $('#category_id');
+            var $class = $('#subcategory_id');
+            var $subject = $('#subject_id');
 
-            var initialSectionId    = "{{ old('section_id', $product->section_id ?? '') }}";
-            var initialBoardId      = "{{ old('category_id', $product->category_id ?? '') }}";
-            var initialClassId      = "{{ old('subcategory_id', $product->subcategory_id ?? '') }}";
-            var initialSubjectId    = "{{ old('subject_id', $product->subject_id ?? '') }}";
+            var initialSectionId = "{{ old('section_id', $product->section_id ?? '') }}";
+            var initialBoardId = "{{ old('category_id', $product->category_id ?? '') }}";
+            var initialClassId = "{{ old('subcategory_id', $product->subcategory_id ?? '') }}";
+            var initialSubjectId = "{{ old('subject_id', $product->subject_id ?? '') }}";
 
             function loadBoards(sectionId, selectedId) {
                 $board.empty().append('<option value=\"\">Select Board</option>');
@@ -668,7 +672,9 @@
                     return;
                 }
 
-                $.get(boardsUrl, { section_id: sectionId }, function(data) {
+                $.get(boardsUrl, {
+                    section_id: sectionId
+                }, function(data) {
                     $.each(data, function(_, item) {
                         var opt = $('<option></option>').val(item.id).text(item.category_name);
                         if (selectedId && parseInt(selectedId) === parseInt(item.id)) {
@@ -687,7 +693,10 @@
                     return;
                 }
 
-                $.get(classesUrl, { section_id: sectionId, category_id: boardId }, function(data) {
+                $.get(classesUrl, {
+                    section_id: sectionId,
+                    category_id: boardId
+                }, function(data) {
                     $.each(data, function(_, item) {
                         var opt = $('<option></option>').val(item.id).text(item.subcategory_name);
                         if (selectedId && parseInt(selectedId) === parseInt(item.id)) {

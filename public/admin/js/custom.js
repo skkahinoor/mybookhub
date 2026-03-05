@@ -3,7 +3,7 @@
 $(document).ready(function () {
     // DataTables jQuery library
     // Calling the DataTable class for all pages
-    $("#sections").DataTable(); // in sections.blade.php
+    $("#education-levels").DataTable(); // in sections.blade.php
     $("#categories").DataTable(); // in categories.blade.php
     $("#brands").DataTable(); // in brands.blade.php
     $("#products").DataTable(); // in products.blade.php
@@ -83,11 +83,11 @@ $(document).ready(function () {
         });
     });
 
-    // Updating section status (active/inactive) using AJAX in sections.blade.php
+    // Updating education level status (active/inactive) using AJAX in sections.blade.php
     $(document).on("click", ".updateSectionStatus", function () {
         // '.updateSectionStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateSectionStatus').on('click', function() {
         var status = $(this).children("i").attr("status"); // Using HTML Custom Attributes
-        var section_id = $(this).attr("section_id"); // Using HTML Custom Attributes
+        var education_level_id = $(this).attr("education_level_id"); // Using HTML Custom Attributes
         var updateUrl = $(this).data("url");
 
         $.ajax({
@@ -96,21 +96,57 @@ $(document).ready(function () {
             }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
             type: "post",
             url: updateUrl, // check the web.php for this route and check the SectionController for the updateSectionStatus() method
-            data: { status: status, section_id: section_id }, // we pass the status and section_id
+            data: { status: status, education_level_id: education_level_id }, // we pass the status and education_level_id
             success: function (resp) {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
-                    $("#section-" + section_id).html(
+                    $("#education-level-" + education_level_id).html(
                         '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
-                    $("#section-" + section_id).html(
+                    $("#education-level-" + education_level_id).html(
                         '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
             },
             error: function () {
                 alert("Error");
+            },
+        });
+    });
+
+    // Updating Subcategory/Class status (active/inactive) using AJAX
+    $(document).on("click", ".updateSubcategoryStatus", function () {
+        var status = $(this).children("i").attr("status");
+        var subcategory_id = $(this).attr("subcategory_id");
+        var updateUrl = $(this).data("url");
+
+        if (!updateUrl) {
+            alert("Error: Update URL not found");
+            return;
+        }
+
+        $.ajax({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            type: "post",
+            url: updateUrl,
+            data: { status: status, subcategory_id: subcategory_id },
+            success: function (resp) {
+                if (resp.status == 0) {
+                    $("#subcategory-" + subcategory_id).html(
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
+                    );
+                } else if (resp.status == 1) {
+                    $("#subcategory-" + subcategory_id).html(
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
+                    );
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX Error:", error);
+                alert("Error updating class status. Please check console for details.");
             },
         });
     });
@@ -812,9 +848,20 @@ $(document).ready(function () {
     //     */
     // });
 
-    $(document).on("click", ".confirmDelete", function () {
-        let module = $(this).data("module");
-        let deleteUrl = $(this).data("url");
+    $(document).on("click", ".confirmDelete", function (e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        // console.log("confirmDelete clicked");
+        let module = $(this).data("module") || $(this).attr("title") || "item";
+        let deleteUrl = $(this).data("url") || $(this).attr("href");
+
+        // console.log("Module:", module, "URL:", deleteUrl);
+
+        if (!deleteUrl || deleteUrl === "javascript:void(0)") {
+            // console.error("No delete URL found!");
+            return false;
+        }
 
         Swal.fire({
             title: "Are you sure?",
@@ -827,9 +874,12 @@ $(document).ready(function () {
             cancelButtonText: "Cancel",
         }).then((result) => {
             if (result.isConfirmed) {
+                // console.log("Confirmed, redirecting to:", deleteUrl);
                 window.location.href = deleteUrl;
             }
         });
+
+        return false;
     });
 
     // Show Categories <select> <option> depending on the selected (chosen) Section (show the relevant categories of the chosen section) in append_categories_level.blade.php page        // https://www.w3schools.com/jquery/event_change.asp
@@ -847,7 +897,9 @@ $(document).ready(function () {
         if (section_id != "") {
             $.ajax({
                 headers: {
-                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                        "content",
+                    ),
                 }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
                 type: "get",
                 url: window.BASE_URL + "/admin/append-categories-level",
@@ -916,7 +968,9 @@ $(document).ready(function () {
         if ($(".loadFilters").length > 0 && category_id != "") {
             $.ajax({
                 headers: {
-                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                        "content",
+                    ),
                 },
                 type: "post",
                 url: window.BASE_URL + "/admin/category-filters",

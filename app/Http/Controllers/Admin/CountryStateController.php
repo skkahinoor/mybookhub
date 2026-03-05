@@ -8,6 +8,7 @@ use App\Models\State;
 use App\Models\HeaderLogo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 
 class CountryStateController extends Controller
 {
@@ -52,7 +53,9 @@ class CountryStateController extends Controller
             $country->status = 1;
             $country->save();
 
-            return redirect('admin/countries-states')->with('success_message', $message);
+            $adminType = Auth::guard('admin')->user()->type;
+            $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+            return redirect($prefix . '/countries-states')->with('success_message', $message);
         }
 
         return response()->json([
@@ -114,7 +117,9 @@ class CountryStateController extends Controller
             $state->status = 1;
             $state->save();
 
-            return redirect('admin/countries-states')->with('success_message', $message);
+            $adminType = Auth::guard('admin')->user()->type;
+            $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+            return redirect($prefix . '/countries-states')->with('success_message', $message);
         }
 
         return response()->json([

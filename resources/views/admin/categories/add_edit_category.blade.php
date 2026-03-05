@@ -8,7 +8,11 @@
                 <div class="col-md-12 grid-margin">
                     <div class="row">
                         <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                            <h4 class="card-title">Board</h4>
+                            @php
+                                $adminType = Auth::guard('admin')->user()->type;
+                                $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                            @endphp
+                            <h4 class="card-title">{{ $title }}</h4>
                         </div>
                         <div class="col-12 col-xl-4">
                             <div class="justify-content-end d-flex">
@@ -83,7 +87,7 @@
 
 
                             <form class="forms-sample"
-                                @if (empty($category['id'])) action="{{ url('admin/add-edit-category') }}" @else action="{{ url('admin/add-edit-category/' . $category['id']) }}" @endif
+                                @if (empty($category['id'])) action="{{ url($prefix . '/add-edit-category') }}" @else action="{{ url($prefix . '/add-edit-category/' . $category['id']) }}" @endif
                                 method="post" enctype="multipart/form-data"> @csrf
                                 <!-- If the id is not passed in from the route, this measn 'Add a new Category', but if the id is passed in from the route, this means 'Edit the Category' -->
                                 <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
@@ -96,9 +100,9 @@
 
 
                                 <div class="form-group">
-                                    <label for="section_id">Select Education</label>
+                                    <label for="section_id">Select Education Level</label>
                                     <select name="section_id" id="" class="form-control" style="color: #000">
-                                        <option value="">Select Education</option>
+                                        <option value="">Select Education Level</option>
                                         @foreach ($getSections as $section)
                                             <option value="{{ $section['id'] }}"
                                                 @if (!empty($category['section_id']) && $category['section_id'] == $section['id']) selected @endif>{{ $section['name'] }}
@@ -148,7 +152,7 @@
                                         @if (!empty($category['meta_keywords'])) value="{{ $category['meta_keywords'] }}" @else value="{{ old('meta_keywords') }}" @endif>
                                 </div>
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                <a href="{{ url('admin/categories') }}" class="btn btn-light">Cancel</a>
+                                <a href="{{ url($prefix . '/categories') }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
                     </div>

@@ -50,55 +50,55 @@
                                                     @if ($adminType === 'vendor')
                                                         @if ($publisher['status'] == 1)
                                                             <a class="updatePublisherStatus"
-                                                               id="publisher-{{ $publisher['id'] }}"
-                                                               publisher_id="{{ $publisher['id'] }}"
-                                                               data-url="{{ route('vendor.updatepublisherstatus') }}"
-                                                               href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                                id="publisher-{{ $publisher['id'] }}"
+                                                                publisher_id="{{ $publisher['id'] }}"
+                                                                data-url="{{ route('vendor.updatepublisherstatus') }}"
+                                                                href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                    status="Active"></i>
                                                             </a>
                                                         @else
                                                             <a class="updatePublisherStatus"
-                                                               id="publisher-{{ $publisher['id'] }}"
-                                                               publisher_id="{{ $publisher['id'] }}"
-                                                               data-url="{{ route('vendor.updatepublisherstatus') }}"
-                                                               href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>
+                                                                id="publisher-{{ $publisher['id'] }}"
+                                                                publisher_id="{{ $publisher['id'] }}"
+                                                                data-url="{{ route('vendor.updatepublisherstatus') }}"
+                                                                href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
+                                                                    status="Inactive"></i>
                                                             </a>
                                                         @endif
                                                     @else
                                                         @if ($publisher['status'] == 1)
                                                             <a class="updatePublisherStatus"
-                                                               id="publisher-{{ $publisher['id'] }}"
-                                                               publisher_id="{{ $publisher['id'] }}"
-                                                               data-url="{{ route('admin.updatepublisherstatus') }}"
-                                                               href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                                                id="publisher-{{ $publisher['id'] }}"
+                                                                publisher_id="{{ $publisher['id'] }}"
+                                                                data-url="{{ route('admin.updatepublisherstatus') }}"
+                                                                href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                                                    status="Active"></i>
                                                             </a>
                                                         @else
                                                             <a class="updatePublisherStatus"
-                                                               id="publisher-{{ $publisher['id'] }}"
-                                                               publisher_id="{{ $publisher['id'] }}"
-                                                               data-url="{{ route('admin.updatepublisherstatus') }}"
-                                                               href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>
+                                                                id="publisher-{{ $publisher['id'] }}"
+                                                                publisher_id="{{ $publisher['id'] }}"
+                                                                data-url="{{ route('admin.updatepublisherstatus') }}"
+                                                                href="javascript:void(0)">
+                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
+                                                                    status="Inactive"></i>
                                                             </a>
                                                         @endif
                                                     @endif
                                                 </td>
-                                                
+
                                                 <td>
-                                                    <a href="{{ url('admin/add-edit-publisher/' . $publisher['id']) }}">
+                                                    @php $prefix = $adminType === 'vendor' ? 'vendor' : 'admin'; @endphp
+                                                    <a
+                                                        href="{{ url($prefix . '/add-edit-publisher/' . $publisher['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
-
-                                                    {{-- <a href="JavaScript:void(0)" class="confirmDelete" module="publisher" moduleid="{{ $publisher['id'] }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                    </a> --}}
-
-
-                                                    <a href="{{ url('admin/delete-publisher/' . $publisher['id']) }}"
-                                                        onclick="return confirm('Are you sure you want to delete this publisher?')">
+                                                    <a href="javascript:void(0)" class="confirmDelete"
+                                                        data-module="publisher"
+                                                        data-url="{{ url($prefix . '/delete-publisher/' . $publisher['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>
                                                 </td>

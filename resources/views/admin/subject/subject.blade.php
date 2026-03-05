@@ -93,33 +93,24 @@
                                                     @if ($adminType === 'vendor')
                                                         <a href="{{ route('vendor.edit.subject', $subject->id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                            {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
-
-                                                        {{-- Confirm Deletion JS alert and Sweet Alert  --}}
-                                                        <a title="subject" class="confirmDelete"
-                                                            href="{{ route('delete.subject', $subject->id) }}">
+                                                        <a href="javascript:void(0)" class="confirmDelete"
+                                                            data-module="subject"
+                                                            data-url="{{ route('vendor.delete.subject', $subject->id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                            {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
-                                                        {{-- <a href="JavaScript:void(0)" class="confirmDelete" module="subject" moduleid="{{ $subject['id'] }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> Icons from Skydash Admin Panel Template
-                                                    </a> --}}
+                                                    @else
+                                                        <a href="{{ route('admin.edit.subject', $subject->id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                        </a>
+                                                        <a href="javascript:void(0)" class="confirmDelete"
+                                                            data-module="subject"
+                                                            data-url="{{ route('admin.delete.subject', $subject->id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                                        </a>
+                                                    @endif
                                                 </td>
-                                            @else
-                                                <a href="{{ route('admin.edit.subject', $subject->id) }}">
-                                                    <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                    {{-- Icons from Skydash Admin Panel Template --}}
-                                                </a>
-
-                                                {{-- Confirm Deletion JS alert and Sweet Alert  --}}
-                                                <a title="subject" class="confirmDelete"
-                                                    href="{{ route('admin.delete.subject', $subject->id) }}">
-                                                    <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                    {{-- Icons from Skydash Admin Panel Template --}}
-                                                </a>
-                                        @endif
-                                        </tr>
+                                            </tr>
                                         @endforeach
                                     </tbody>
                                 </table>

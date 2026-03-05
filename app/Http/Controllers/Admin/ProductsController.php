@@ -633,7 +633,7 @@ class ProductsController extends Controller
             $validator = Validator::make($request->all(), [
                 'section_id'    => 'required|exists:sections,id',
                 'category_id'   => 'required|exists:categories,id',
-                'subcategory_id'=> 'required|exists:subcategories,id',
+                'subcategory_id' => 'required|exists:subcategories,id',
                 'subject_id'    => 'required|exists:subjects,id',
                 'condition'     => 'required|in:new,old',
                 'product_name'  => 'required',
@@ -831,7 +831,8 @@ class ProductsController extends Controller
             }
 
             // For existing products, redirect normally
-            return redirect('admin/products')->with('success_message', $message);
+            $redirectUrl = Auth::guard('admin')->user()->type == 'vendor' ? 'vendor/products' : 'admin/products';
+            return redirect($redirectUrl)->with('success_message', $message);
         }
 
         $sections   = Section::where('status', 1)->get();
