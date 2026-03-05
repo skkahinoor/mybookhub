@@ -80,36 +80,24 @@
                                                     @if ($adminType === 'vendor')
                                                         <a href="{{ route('vendor.edit.author', $author->id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                            {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
-                                                        {{-- Confirm Deletion JS alert and Sweet Alert  --}}
-                                                        <a title="author" class="confirmDelete"
-                                                            href="{{ route('vendor.delete.author', $author->id) }}">
+                                                        <a href="javascript:void(0)" class="confirmDelete"
+                                                            data-module="author"
+                                                            data-url="{{ route('vendor.delete.author', $author->id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                            {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
-                                                        {{-- <a href="JavaScript:void(0)" class="confirmDelete" module="author" moduleid="{{ $subject['id'] }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> Icons from Skydash Admin Panel Template
-                                                    </a> --}}
+                                                    @else
+                                                        <a href="{{ route('admin.edit.author', $author->id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                                        </a>
+                                                        <a href="javascript:void(0)" class="confirmDelete"
+                                                            data-module="author"
+                                                            data-url="{{ route('admin.delete.author', $author->id) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                                        </a>
+                                                    @endif
                                                 </td>
-                                            @else
-                                                <a href="{{ route('admin.edit.author', $author->id) }}">
-                                                    <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                    {{-- Icons from Skydash Admin Panel Template --}}
-                                                </a>
-
-                                                {{-- Confirm Deletion JS alert and Sweet Alert  --}}
-                                                <a title="author" class="confirmDelete"
-                                                    href="{{ route('admin.delete.author', $author->id) }}">
-                                                    <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                    {{-- Icons from Skydash Admin Panel Template --}}
-                                                </a>
-                                                {{-- <a href="JavaScript:void(0)" class="confirmDelete" module="author" moduleid="{{ $subject['id'] }}">
-                                                    <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> Icons from Skydash Admin Panel Template
-                                                </a> --}}
-                                                </td>
-                                        @endif
-                                        </tr>
+                                            </tr>
                                         @endforeach
                                     </tbody>
                                 </table>

@@ -1,8 +1,6 @@
+/*
 import Swal from './sweetalert2.js'
 console.log(Swal);
-
-
-
 
 // Confirm Deletion alert using Pure JavaScript
 // $('.confirmDelete').click(function() {
@@ -49,3 +47,4 @@ $(document).on('click', '.confirmDelete', function() { // correcting the issue o
         }
     })
 });
+*/

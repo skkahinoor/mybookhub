@@ -812,9 +812,20 @@ $(document).ready(function () {
     //     */
     // });
 
-    $(document).on("click", ".confirmDelete", function () {
-        let module = $(this).data("module");
-        let deleteUrl = $(this).data("url");
+    $(document).on("click", ".confirmDelete", function (e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        
+        // console.log("confirmDelete clicked");
+        let module = $(this).data("module") || $(this).attr("title") || "item";
+        let deleteUrl = $(this).data("url") || $(this).attr("href");
+        
+        // console.log("Module:", module, "URL:", deleteUrl);
+
+        if (!deleteUrl || deleteUrl === "javascript:void(0)") {
+            // console.error("No delete URL found!");
+            return false;
+        }
 
         Swal.fire({
             title: "Are you sure?",
@@ -827,9 +838,12 @@ $(document).ready(function () {
             cancelButtonText: "Cancel",
         }).then((result) => {
             if (result.isConfirmed) {
+                // console.log("Confirmed, redirecting to:", deleteUrl);
                 window.location.href = deleteUrl;
             }
         });
+
+        return false;
     });
 
     // Show Categories <select> <option> depending on the selected (chosen) Section (show the relevant categories of the chosen section) in append_categories_level.blade.php page        // https://www.w3schools.com/jquery/event_change.asp

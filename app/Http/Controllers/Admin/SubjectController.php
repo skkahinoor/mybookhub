@@ -72,7 +72,10 @@ class SubjectController extends Controller
             'subject_icon' => $subject_icon,
         ]);
 
-        return redirect()->route('admin.subject')->with('success', 'Subject inserted successfully');
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.subject' : 'admin.subject';
+
+        return redirect()->route($route)->with('success_message', 'Subject inserted successfully');
     }
 
     public function edit($id)
@@ -85,7 +88,7 @@ class SubjectController extends Controller
         $subjects = Subject::find($id);
         $adminType = Auth::guard('admin')->user()->type;
         $subcategories = Subcategory::where('status', 1)->get()->toArray();
-        
+
         return view('admin.subject.edit_subject', compact('subjects', 'logos', 'headerLogo', 'adminType', 'subcategories'));
     }
 
@@ -128,7 +131,10 @@ class SubjectController extends Controller
             'name' => $request->name,
             'subject_icon' => $subject_icon,
         ]);
-        return redirect()->route('admin.subject')->with('success', 'Subject updated successfully');
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.subject' : 'admin.subject';
+
+        return redirect()->route($route)->with('success_message', 'Subject updated successfully');
     }
 
     public function delete($id)
@@ -140,17 +146,20 @@ class SubjectController extends Controller
         $subject = Subject::find($id);
 
         // If subject not found, just redirect with an error instead of 404
+        $adminType = Auth::guard('admin')->user()->type;
+        $route = $adminType === 'vendor' ? 'vendor.subject' : 'admin.subject';
+
         if (!$subject) {
             return redirect()
-                ->route('admin.subject')
-                ->with('error', 'Subject not found or already deleted.');
+                ->route($route)
+                ->with('error_message', 'Subject not found or already deleted.');
         }
 
         $subject->delete();
 
         return redirect()
-            ->route('admin.subject')
-            ->with('success', 'Subject deleted successfully');
+            ->route($route)
+            ->with('success_message', 'Subject deleted successfully');
     }
 
 

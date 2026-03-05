@@ -109,8 +109,9 @@
                                                                 ? 'vendor.delete_education'
                                                                 : 'admin.delete_education';
                                                     @endphp
-                                                    <a href="{{ route($deleteRoute, $section['id']) }}"
-                                                        onclick="return confirm('Are you sure you want to delete this education level?')">
+                                                    <a href="javascript:void(0)" class="confirmDelete"
+                                                        data-module="Education Level"
+                                                        data-url="{{ route($deleteRoute, $section['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>
                                                 </td>

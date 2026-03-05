@@ -76,8 +76,7 @@
                                                         href="{{ url($prefix . '/add-edit-subcategory/' . $subcategory['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
-                                                    <a href="{{ url($prefix . '/delete-subcategory/' . $subcategory['id']) }}"
-                                                        class="confirmDelete" data-module="subcategory"
+                                                    <a href="javascript:void(0)" class="confirmDelete" data-module="Class"
                                                         data-url="{{ url($prefix . '/delete-subcategory/' . $subcategory['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>

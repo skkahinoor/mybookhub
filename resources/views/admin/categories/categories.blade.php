@@ -105,12 +105,11 @@
                                                 <td>
                                                     <a href="{{ url($prefix . '/add-edit-category/' . $category['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
-                                                    <a href="{{ url($prefix . '/delete-category/' . $category['id']) }}">
-                                                        {{-- Check admin/js/custom.js and web.php (routes) --}}
+                                                    <a href="javascript:void(0)" class="confirmDelete"
+                                                        data-module="category"
+                                                        data-url="{{ url($prefix . '/delete-category/' . $category['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
                                                 </td>
                                             </tr>
