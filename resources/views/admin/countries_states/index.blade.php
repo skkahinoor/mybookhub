@@ -219,6 +219,10 @@
 
             <div class="row">
                 <div class="col-12">
+                    @php
+                        $adminType = Auth::guard('admin')->user()->type ?? 'admin';
+                        $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                    @endphp
                     <div class="page-header-custom">
                         <div class="page-header-content">
                             <div class="page-header-text">
@@ -284,7 +288,7 @@
                                                             <button class="action-btn edit" onclick="openCountryModal({{ $country->id }})" title="Edit">
                                                                 <i class="fas fa-edit"></i>
                                                             </button>
-                                                            <a href="{{ url('admin/delete-country/'.$country->id) }}" class="action-btn delete confirmDelete" title="Delete">
+                                                            <a href="{{ url($prefix . '/delete-country/'.$country->id) }}" class="action-btn delete confirmDelete" title="Delete">
                                                                 <i class="fas fa-trash"></i>
                                                             </a>
                                                         </div>
@@ -341,7 +345,7 @@
                                                             <button class="action-btn edit" onclick="openStateModal({{ $state->id }})" title="Edit">
                                                                 <i class="fas fa-edit"></i>
                                                             </button>
-                                                            <a href="{{ url('admin/delete-state/'.$state->id) }}" class="action-btn delete confirmDelete" title="Delete">
+                                                            <a href="{{ url($prefix . '/delete-state/'.$state->id) }}" class="action-btn delete confirmDelete" title="Delete">
                                                                 <i class="fas fa-trash"></i>
                                                             </a>
                                                         </div>
@@ -449,10 +453,12 @@
             $(document).on("click", ".updateCountryStatus", function() {
                 var status = $(this).prop('checked') ? "Active" : "Inactive";
                 var country_id = $(this).attr("country_id");
+                var prefix = "{{ $prefix }}";
+                var baseUrl = "{{ url('') }}";
                 $.ajax({
                     headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                     type: 'post',
-                    url: '/admin/update-country-status',
+                    url: baseUrl + '/' + prefix + '/update-country-status',
                     data: { status: status, country_id: country_id },
                     success: function(resp) {
                         if (resp['status'] == 0) {
@@ -470,10 +476,12 @@
             $(document).on("click", ".updateStateStatus", function() {
                 var status = $(this).prop('checked') ? "Active" : "Inactive";
                 var state_id = $(this).attr("state_id");
+                var prefix = "{{ $prefix }}";
+                var baseUrl = "{{ url('') }}";
                 $.ajax({
                     headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                     type: 'post',
-                    url: '/admin/update-state-status',
+                    url: baseUrl + '/' + prefix + '/update-state-status',
                     data: { status: status, state_id: state_id },
                     success: function(resp) {
                         if (resp['status'] == 0) {
@@ -508,31 +516,35 @@
         });
 
         function openCountryModal(id = null) {
+            var prefix = "{{ $prefix }}";
+            var baseUrl = "{{ url('') }}";
             if (id) {
-                $.get('/admin/add-edit-country/' + id, function(data) {
+                $.get(baseUrl + '/' + prefix + '/add-edit-country/' + id, function(data) {
                     $('#countryModalLabel').text(data.title);
                     $('#country_name').val(data.country.name);
                     $('#country_code').val(data.country.code);
-                    $('#countryForm').attr('action', '/admin/add-edit-country/' + id);
+                    $('#countryForm').attr('action', baseUrl + '/' + prefix + '/add-edit-country/' + id);
                     $('#countryModal').modal('show');
                 });
             } else {
                 $('#countryModalLabel').text('Add Country');
                 $('#country_name').val('');
                 $('#country_code').val('');
-                $('#countryForm').attr('action', '/admin/add-edit-country');
+                $('#countryForm').attr('action', baseUrl + '/' + prefix + '/add-edit-country');
                 $('#countryModal').modal('show');
             }
         }
 
         function openStateModal(id = null) {
+            var prefix = "{{ $prefix }}";
+            var baseUrl = "{{ url('') }}";
             if (id) {
-                $.get('/admin/add-edit-state/' + id, function(data) {
+                $.get(baseUrl + '/' + prefix + '/add-edit-state/' + id, function(data) {
                     $('#stateModalLabel').text(data.title);
                     $('#state_country_id').val(data.state.country_id);
                     $('#state_name').val(data.state.name);
                     $('#state_code').val(data.state.code);
-                    $('#stateForm').attr('action', '/admin/add-edit-state/' + id);
+                    $('#stateForm').attr('action', baseUrl + '/' + prefix + '/add-edit-state/' + id);
                     $('#stateModal').modal('show');
                 });
             } else {
@@ -540,7 +552,7 @@
                 $('#state_country_id').val('');
                 $('#state_name').val('');
                 $('#state_code').val('');
-                $('#stateForm').attr('action', '/admin/add-edit-state');
+                $('#stateForm').attr('action', baseUrl + '/' + prefix + '/add-edit-state');
                 $('#stateModal').modal('show');
             }
         }
