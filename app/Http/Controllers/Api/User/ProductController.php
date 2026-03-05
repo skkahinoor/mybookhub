@@ -25,6 +25,7 @@ class ProductController extends Controller
             'book_type_id' => 'nullable|integer|exists:book_types,id',
             'language_id'  => 'nullable|integer|exists:languages,id',
             'subcategory_id' => 'nullable|integer',
+            'subject_id' => 'nullable|integer',
             'min_price' => 'nullable|numeric|min:0',
             'max_price' => 'nullable|numeric|min:0',
             'search' => 'nullable|string|max:255',
@@ -43,7 +44,7 @@ class ProductController extends Controller
         $lat   = $request->lat;
         $lng   = $request->lng;
 
-        // Cache versioning to invalidate all product queries when data changes
+
         $cacheVersion = Cache::rememberForever('products_cache_version', function () {
             return time();
         });
@@ -69,13 +70,13 @@ class ProductController extends Controller
             ->select('products.*')
             ->join('products_attributes as pa', 'pa.product_id', '=', 'products.id')
             ->join('vendors as v', 'pa.vendor_id', '=', 'v.id')
-            ->join('users as u', 'v.user_id', '=', 'u.id') // 🔥 Correct vendor name source
+            ->join('users as u', 'v.user_id', '=', 'u.id')
             ->addSelect(
                 'pa.id as attribute_id',
                 'pa.stock',
                 'pa.product_discount',
                 'v.id as vendor_id',
-                'u.name as vendor_name',   // ✅ Correct
+                'u.name as vendor_name',
                 'v.plan as vendor_plan',
                 'v.location'
             )
@@ -83,11 +84,7 @@ class ProductController extends Controller
             ->where('products.status', 1)
             ->where('pa.stock', '>', 0);
 
-        /*
-        ===============================
-        FULLTEXT SEARCH
-        ===============================
-        */
+
         if ($request->search) {
 
             $searchTerm = trim($request->search);
@@ -107,11 +104,6 @@ class ProductController extends Controller
             );
         }
 
-        /*
-        ===============================
-        FILTERS
-        ===============================
-        */
         if ($request->section_id) {
             $query->where('products.section_id', $request->section_id);
         }
@@ -122,6 +114,10 @@ class ProductController extends Controller
 
         if ($request->subcategory_id) {
             $query->where('products.subcategory_id', $request->subcategory_id);
+        }
+
+        if ($request->subject_id) {
+            $query->where('products.subject_id', $request->subject_id);
         }
 
         if ($request->min_price) {
@@ -140,12 +136,7 @@ class ProductController extends Controller
             $query->where('products.language_id', $request->language_id);
         }
 
-        /*
-        ===============================
-        DISTANCE CALCULATION
-        Format: "20.27107,85.7938"
-        ===============================
-        */
+
         if ($lat && $lng) {
 
             $query->addSelect(DB::raw("
@@ -159,33 +150,18 @@ class ProductController extends Controller
             "));
         }
 
-        /*
-        ===============================
-        SORTING
-        ===============================
-        */
-
         if ($lat && $lng) {
-            $query->orderBy('distance', 'asc'); // 🔥 nearest first
+            $query->orderBy('distance', 'asc');
         }
 
-        // Pro vendors first
         $query->orderByRaw("CASE WHEN v.plan='pro' THEN 1 ELSE 2 END ASC");
 
-        // Higher discount
         $query->orderBy('pa.product_discount', 'desc');
 
-        // Higher stock
         $query->orderBy('pa.stock', 'desc');
 
-        // Lower price
         $query->orderBy('products.product_price', 'asc');
 
-        /*
-        ===============================
-        PAGINATION
-        ===============================
-        */
 
         $results = $query->paginate($limit, ['*'], 'page', $page);
 
@@ -249,7 +225,6 @@ class ProductController extends Controller
     {
         $user = auth('sanctum')->user();
 
-        // 1️⃣ Get Selected Attribute with Vendor + User
         $attribute = ProductsAttribute::with(['vendor.user'])
             ->where('id', $attribute_id)
             ->where('status', 1)
@@ -263,7 +238,6 @@ class ProductController extends Controller
             ], 404);
         }
 
-        // 2️⃣ Get Product with all relations
         $product = Product::with([
             'section',
             'category',
@@ -286,7 +260,6 @@ class ProductController extends Controller
             ], 404);
         }
 
-        // 3️⃣ Cart Check
         $inCart = false;
         $cartQty = 0;
 
@@ -307,7 +280,7 @@ class ProductController extends Controller
 
             'data' => [
 
-                // 📚 PRODUCT DETAILS
+
                 'product' => [
                     'id' => $product->id,
                     'name' => $product->product_name,
@@ -327,7 +300,6 @@ class ProductController extends Controller
                     'authors' => $product->authors,
                 ],
 
-                // 🏪 FULL VENDOR DETAILS
                 'vendor_offer' => [
                     'attribute_id' => $attribute->id,
                     'stock' => $attribute->stock,
@@ -335,7 +307,7 @@ class ProductController extends Controller
                     'sku' => $attribute->sku,
 
                     'vendor' => [
-                        // 🔹 Vendor Table Fields
+
                         'vendor_id' => $attribute->vendor->id ?? null,
                         'admin_id' => $attribute->vendor->admin_id ?? null,
                         'admin_type' => $attribute->vendor->admin_type ?? null,
@@ -348,7 +320,6 @@ class ProductController extends Controller
                         'gst_number' => $attribute->vendor->gst_number ?? null,
                         'status' => $attribute->vendor->status ?? null,
 
-                        // 🔹 User Table Fields
                         'user' => [
                             'user_id' => $attribute->vendor->user->id ?? null,
                             'name' => $attribute->vendor->user->name ?? null,
@@ -360,7 +331,6 @@ class ProductController extends Controller
                     ]
                 ],
 
-                // 🛒 CART STATUS
                 'cart_status' => [
                     'in_cart' => $inCart,
                     'quantity' => $cartQty

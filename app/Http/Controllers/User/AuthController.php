@@ -29,7 +29,7 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'login'    => 'required|string|max:150', // email or phone
-            'password' => 'required|min:6',
+            'password' => 'required|min:8',
         ]);
 
         if ($validator->fails()) {
