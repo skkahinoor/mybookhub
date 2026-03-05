@@ -537,6 +537,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="saveAttributesBtn">Save Attributes</button>
                 </div>
             </div>
@@ -663,7 +664,7 @@
             var initialClassId = "{{ old('subcategory_id', $product->subcategory_id ?? '') }}";
             var initialSubjectId = "{{ old('subject_id', $product->subject_id ?? '') }}";
 
-            function loadBoards(sectionId, selectedId) {
+            window.loadBoards = function(sectionId, selectedId) {
                 $board.empty().append('<option value=\"\">Select Board</option>');
                 $class.empty().append('<option value=\"\">Select Class</option>');
                 $subject.empty().append('<option value=\"\">Select Subject</option>');
@@ -685,7 +686,7 @@
                 });
             }
 
-            function loadClasses(sectionId, boardId, selectedId) {
+            window.loadClasses = function(sectionId, boardId, selectedId) {
                 $class.empty().append('<option value=\"\">Select Class</option>');
                 $subject.empty().append('<option value=\"\">Select Subject</option>');
 
@@ -707,7 +708,7 @@
                 });
             }
 
-            function loadSubjects(sectionId, boardId, classId, selectedId) {
+            window.loadSubjects = function(sectionId, boardId, classId, selectedId) {
                 $subject.empty().append('<option value=\"\">Select Subject</option>');
 
                 if (!sectionId || !boardId || !classId) {
@@ -731,29 +732,29 @@
 
             $section.on('change', function() {
                 var sectionId = $(this).val();
-                loadBoards(sectionId, null);
+                window.loadBoards(sectionId, null);
             });
 
             $board.on('change', function() {
                 var sectionId = $section.val();
                 var boardId = $(this).val();
-                loadClasses(sectionId, boardId, null);
+                window.loadClasses(sectionId, boardId, null);
             });
 
             $class.on('change', function() {
                 var sectionId = $section.val();
                 var boardId = $board.val();
                 var classId = $(this).val();
-                loadSubjects(sectionId, boardId, classId, null);
+                window.loadSubjects(sectionId, boardId, classId, null);
             });
 
             // Initial population for edit / validation error
             if (initialSectionId) {
-                loadBoards(initialSectionId, initialBoardId);
+                window.loadBoards(initialSectionId, initialBoardId);
                 if (initialBoardId) {
-                    loadClasses(initialSectionId, initialBoardId, initialClassId);
+                    window.loadClasses(initialSectionId, initialBoardId, initialClassId);
                     if (initialClassId) {
-                        loadSubjects(initialSectionId, initialBoardId, initialClassId, initialSubjectId);
+                        window.loadSubjects(initialSectionId, initialBoardId, initialClassId, initialSubjectId);
                     }
                 }
             }
@@ -766,7 +767,7 @@
             $("#product_name, #product_price, #description")
                 .prop("readonly", state);
 
-            $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id")
+            $("#section_id, #category_id, #subcategory_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id")
                 .toggleClass("readonly-select", state);
 
             $("#authors-select")
@@ -804,12 +805,27 @@
                     $("#description").val(d.description || '');
 
                     // dropdowns (NO trigger)
-                    $("#category_id").val(d.category_id || '');
                     $("#language_id").val(d.language_id || '');
                     $("#publisher_id").val(d.publisher_id || '');
-                    $("#subject_id").val(d.subject_id || '');
                     $("#edition_id").val(d.edition_id || '');
                     $("#book_type_id").val(d.book_type_id || '');
+
+                    // deterministic cascading load for Education Level -> Board -> Class -> Subject
+                    if (d.section_id) {
+                        $("#section_id").val(d.section_id);
+                        if (window.loadBoards) {
+                            window.loadBoards(d.section_id, d.category_id);
+                        }
+                        if (d.category_id && window.loadClasses) {
+                            window.loadClasses(d.section_id, d.category_id, d.subcategory_id);
+                        }
+                        if (d.subcategory_id && window.loadSubjects) {
+                            window.loadSubjects(d.section_id, d.category_id, d.subcategory_id, d.subject_id);
+                        }
+                    } else {
+                        $("#category_id").val(d.category_id || '');
+                        $("#subject_id").val(d.subject_id || '');
+                    }
 
                     // authors (SAFE CHECK)
                     if (Array.isArray(d.author_ids) && typeof authors !== 'undefined') {
@@ -842,7 +858,7 @@
                     setReadonly(false);
 
                     $("#product_name, #product_price, #description").val('');
-                    $("#category_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id").val(
+                    $("#section_id, #category_id, #subcategory_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id").val(
                         '');
                     $("#isbnImagePreview").html('');
 

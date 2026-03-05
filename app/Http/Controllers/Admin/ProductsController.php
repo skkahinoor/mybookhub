@@ -1345,7 +1345,9 @@ class ProductsController extends Controller
                 "message" => "Book found in local database",
                 "data" => [
                     "product_name" => $product->product_name,
-                    "category_id" => $product->category_id,
+                    "section_id"   => $product->section_id,
+                    "category_id"  => $product->category_id,
+                    "subcategory_id" => $product->subcategory_id,
                     "description"  => $product->description,
                     "image"        => $product->product_image,
                     "product_price" => $product->product_price,
