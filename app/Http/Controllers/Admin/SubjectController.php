@@ -72,7 +72,7 @@ class SubjectController extends Controller
             'subject_icon' => $subject_icon,
         ]);
 
-        return redirect()->back()->with('success', 'Subject inserted successfully');
+        return redirect()->route('admin.subject')->with('success', 'Subject inserted successfully');
     }
 
     public function edit($id)

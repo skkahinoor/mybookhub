@@ -29,11 +29,11 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'login'    => 'required|string|max:150', // email or phone
-            'password' => 'required|min:8',
+            'password' => 'required|min:6',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('user.login')
+            return redirect()->route('student.login')
                 ->with('error', $validator->errors()->first());
         }
 
@@ -65,7 +65,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
-            'password' => 'required|min:8',
+            'password' => 'required|min:6',
             'phone' => 'required|numeric|digits:10',
         ]);
 

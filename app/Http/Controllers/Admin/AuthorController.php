@@ -48,7 +48,7 @@ class AuthorController extends Controller
         $store = Author::create([
             'name' => $request->name,
         ]);
-        return redirect()->back()->with('success', 'Author name inserted successfully!!');
+        return redirect()->route('admin.author')->with('success', 'Author name inserted successfully!!');
         // return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
     }
 
