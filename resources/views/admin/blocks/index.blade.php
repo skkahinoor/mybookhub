@@ -209,8 +209,10 @@
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
 
 <script>
+let blocksTable = null;
+
 $(document).ready(function() {
-    $('#blocksTable').DataTable({
+    blocksTable = $('#blocksTable').DataTable({
         "pageLength": 10,
         "lengthMenu": [5, 10, 25, 50, 100],
         "ordering": true,
@@ -231,18 +233,25 @@ function updateBlockStatus(blockId, status) {
             _token: '{{ csrf_token() }}'
         },
         success: function(response) {
-            if (response.status == 0) {
-                $('#block-' + blockId)
-                    .removeClass('status-inactive')
+            // Server returns the NEW status (1 = active, 0 = inactive)
+            const $el = $('#block-' + blockId);
+            const isActive = String(response.status) === '1';
+
+            if (isActive) {
+                $el.removeClass('status-inactive')
                     .addClass('status-active')
                     .text('Active')
                     .attr('onclick', 'updateBlockStatus(' + blockId + ', "Active")');
             } else {
-                $('#block-' + blockId)
-                    .removeClass('status-active')
+                $el.removeClass('status-active')
                     .addClass('status-inactive')
                     .text('Inactive')
                     .attr('onclick', 'updateBlockStatus(' + blockId + ', "Inactive")');
+            }
+
+            // Refresh DataTable cell cache + keep current page
+            if (blocksTable) {
+                blocksTable.row($el.closest('tr')).invalidate().draw(false);
             }
         },
         error: function() {
