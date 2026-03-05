@@ -33,7 +33,7 @@ class AuthController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('user.login')
+            return redirect()->route('student.login')
                 ->with('error', $validator->errors()->first());
         }
 
