@@ -17,7 +17,7 @@
         body {
             background-color: var(--bg-light) !important;
             font-family: 'Poppins', sans-serif !important;
-            padding-bottom: 90px !important;
+            padding-bottom: 60px !important;
             /* Mobile padding for bottom nav */
         }
 
@@ -156,73 +156,79 @@
         .premium-banner {
             border-radius: 24px;
             overflow: hidden;
-            background: linear-gradient(135deg, #3A8DFF 0%, #1E70E0 100%);
-            color: white;
+            background: #f0f0f0;
             position: relative;
-            min-height: 180px;
-            display: flex;
-            align-items: center;
-        }
-
-        @media (min-width: 992px) {
-            .premium-banner {
-                min-height: 350px;
-            }
-
-            .banner-title {
-                font-size: 48px !important;
-            }
-
-            .banner-subtitle {
-                font-size: 20px !important;
-            }
-
-            .banner-content {
-                padding: 80px !important;
-            }
-        }
-
-        .banner-content {
-            padding: 25px;
-            width: 65%;
-            position: relative;
-            z-index: 2;
-        }
-
-        .banner-title {
-            font-weight: 800;
-            font-size: 24px;
-            margin-bottom: 4px;
-            letter-spacing: -0.5px;
-        }
-
-        .banner-subtitle {
-            font-size: 13px;
-            opacity: 0.9;
-            margin-bottom: 20px;
-            font-weight: 400;
-        }
-
-        .banner-btn {
-            background: white;
-            color: #1E70E0;
-            padding: 10px 28px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 700;
-            display: inline-block;
-            text-decoration: none !important;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 8;
+            display: block;
         }
 
         .banner-illustration {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        @media (min-width: 992px) {
+            .banner-container {
+                padding: 15px 20px 30px;
+            }
+
+            .premium-banner {
+                aspect-ratio: auto;
+                background: transparent;
+                height: auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .banner-illustration {
+                width: 100%;
+                height: auto;
+                max-height: 500px;
+                object-fit: contain;
+            }
+        }
+
+        /* Swiper Fixes */
+        .banner-swiper {
+            position: relative;
+            overflow: hidden;
+            border-radius: 24px;
+        }
+
+        .banner-container .banner-pagination {
             position: absolute;
-            right: 0px;
-            bottom: -5px;
-            width: 45%;
-            height: 110%;
-            object-fit: contain;
-            z-index: 1;
+            bottom: 15px !important;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .banner-container .swiper-pagination-bullet {
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 1;
+            width: 8px;
+            height: 8px;
+            margin: 0 4px !important;
+        }
+
+        .banner-container .swiper-pagination-bullet-active {
+            background: #fff !important;
+            width: 20px;
+            border-radius: 5px;
+        }
+
+        .banner-illustration {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         /* Info Bar */
@@ -529,7 +535,7 @@
             background: #fff;
             display: flex;
             justify-content: space-around;
-            padding: 12px 0 28px;
+            padding: 12px 0 12px;
             box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
             z-index: 1000;
             border-radius: 28px 28px 0 0;
@@ -883,15 +889,21 @@
 
     <!-- 2. Banner -->
     <div class="banner-container">
-        <div class="premium-banner">
-            <div class="banner-content">
-                <h2 class="banner-title">Student Special</h2>
-                <p class="banner-subtitle">Extra 20% discount for students</p>
-                <a href="#" class="banner-btn">Shop Now</a>
+        @if (!empty($sliderBanners) && count($sliderBanners) > 0)
+            <div class="swiper banner-swiper">
+                <div class="swiper-wrapper">
+                    @foreach ($sliderBanners as $banner)
+                        <div class="swiper-slide">
+                            <a href="{{ $banner['link'] ?? '#' }}" class="premium-banner">
+                                <img src="{{ $banner['image'] }}" class="banner-illustration" alt="{{ $banner['alt'] }}">
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="banner-pagination"></div>
             </div>
-            <img src="https://img.freepik.com/free-vector/hand-drawn-book-stack-illustration_23-2149341819.jpg?w=740"
-                class="banner-illustration" alt="Featured">
-        </div>
+        @else
+        @endif
     </div>
 
     <!-- 3. Selection Info Bar -->
@@ -1437,6 +1449,28 @@
                                 `<option value="${sub.id}">${sub.category_name}</option>`;
                         });
                     });
+            }
+        });
+
+        // Banner Slider Initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.querySelector('.banner-swiper')) {
+                new Swiper(".banner-swiper", {
+                    loop: true,
+                    autoplay: {
+                        delay: 4000,
+                        disableOnInteraction: false,
+                    },
+                    pagination: {
+                        el: ".banner-pagination",
+                        clickable: true,
+                    },
+                    speed: 1000,
+                    effect: 'fade',
+                    fadeEffect: {
+                        crossFade: true
+                    },
+                });
             }
         });
     </script>
