@@ -13,3 +13,22 @@ Route::get('/user/board/{id}', [HomeController::class, 'getcategories']);
 Route::get('/user/class', [HomeController::class, 'getSubcategories']);
 Route::get('/user/book-type', [HomeController::class, 'getBookTypes']);
 Route::get('/user/language', [HomeController::class, 'getLanguages']);
+
+// Cart Routes
+Route::get('/user/cart', [ProductController::class, 'getCart']);
+Route::post('/user/cart/add', [ProductController::class, 'cartAdd']);
+Route::post('/user/cart/update', [ProductController::class, 'cartUpdate']);
+Route::post('/user/cart/delete', [ProductController::class, 'cartDelete']);
+
+// Wishlist Routes
+Route::get('/user/wishlist', [ProductController::class, 'wishlist']);
+Route::post('/user/wishlist/add', [ProductController::class, 'wishlistAdd']);
+Route::post('/user/wishlist/remove', [ProductController::class, 'wishlistRemove']);
+
+// Coupon Route
+Route::post('/user/coupon/apply', [ProductController::class, 'applyCoupon']);
+
+// Checkout Auth Route
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/user/checkout', [ProductController::class, 'checkout']);
+});
