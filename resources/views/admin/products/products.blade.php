@@ -8,6 +8,9 @@
                         <div class="card-body">
                             <h4 class="card-title">Books</h4>
 
+                            @php
+                                $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                            @endphp
                             @if ($adminType == 'vendor')
                                 <a href="{{ url('vendor/add-edit-product') }}"
                                     style="max-width: 150px; float: right; display: inline-block"
@@ -51,7 +54,7 @@
                                             <th>Image</th>
                                             <th>Book Name</th>
                                             <th>Price</th>
-                                            <th>Section</th>
+                                            <th>Education Level</th>
                                             <th>Category</th> {{-- Through the relationship --}}
                                             <th>Edition</th>
                                             <th>Publisher</th>
@@ -129,9 +132,9 @@
                                                     <td>{{ $product->language->name ?? 'N/A' }}</td>
 
                                                     <!-- <td>
-                                                          <span
-                                                              class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
-                                                      </td> -->
+                                                              <span
+                                                                  class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
+                                                          </td> -->
                                                 @endif
                                                 {{-- <td>
                                                     @php
@@ -220,7 +223,7 @@
                                                     @else
                                                         {{-- Admin/Superadmin: Show edit, add stock, add images --}}
                                                         <a title="Edit Book"
-                                                            href="{{ url('admin/add-edit-product/' . $product->id) }}">
+                                                            href="{{ url($prefix . '/add-edit-product/' . $product->id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                         </a>
 

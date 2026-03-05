@@ -35,7 +35,7 @@
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Add Education Levels</h4>
+                            <h4 class="card-title">{{ $title }}</h4>
 
 
                             {{-- Our Bootstrap error code in case of wrong current password or the new password and confirm password are not matching: --}}
@@ -84,16 +84,23 @@
 
 
 
+                            @php
+                                $adminType = Auth::guard('admin')->user()->type;
+                                $formRoute =
+                                    $adminType === 'vendor'
+                                        ? 'vendor.add_edit_education_level'
+                                        : 'admin.add_edit_education_level';
+                            @endphp
                             <form class="forms-sample"
-                                @if (empty($section['id'])) action="{{ url('admin/add-edit-section') }}" @else action="{{ url('admin/add-edit-section/' . $section['id']) }}" @endif
+                                @if (empty($section['id'])) action="{{ route($formRoute) }}" @else action="{{ route($formRoute, $section['id']) }}" @endif
                                 method="post" enctype="multipart/form-data"> @csrf
                                 <!-- If the id is not passed in from the route, this measn 'Add a new Section', but if the id is passed in from the route, this means 'Edit the Section' -->
                                 <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
                                 <div class="form-group">
-                                    <label for="section_name">Education Name</label>
-                                    <input type="text" class="form-control" id="section_name"
-                                        placeholder="Enter Section Name" name="section_name"
-                                        @if (!empty($section['name'])) value="{{ $section['name'] }}" @else value="{{ old('section_name') }}" @endif>
+                                    <label for="education_level_name">Education Level Name</label>
+                                    <input type="text" class="form-control" id="education_level_name"
+                                        placeholder="Enter Education Level Name" name="education_level_name"
+                                        @if (!empty($section['name'])) value="{{ $section['name'] }}" @else value="{{ old('education_level_name') }}" @endif>
                                 </div>
                                 <div class="form-group">
                                     <label for="section_image">Education Icon</label>
@@ -104,8 +111,12 @@
                                         </a>
                                     @endif
                                 </div>
+                                @php
+                                    $indexRoute =
+                                        $adminType === 'vendor' ? 'vendor.education_levels' : 'admin.education_levels';
+                                @endphp
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                <a href="{{ url('admin/sections') }}" class="btn btn-light">Cancel</a>
+                                <a href="{{ route($indexRoute) }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
                     </div>

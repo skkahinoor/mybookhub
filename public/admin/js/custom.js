@@ -3,7 +3,7 @@
 $(document).ready(function () {
     // DataTables jQuery library
     // Calling the DataTable class for all pages
-    $("#sections").DataTable(); // in sections.blade.php
+    $("#education-levels").DataTable(); // in sections.blade.php
     $("#categories").DataTable(); // in categories.blade.php
     $("#brands").DataTable(); // in brands.blade.php
     $("#products").DataTable(); // in products.blade.php
@@ -83,11 +83,11 @@ $(document).ready(function () {
         });
     });
 
-    // Updating section status (active/inactive) using AJAX in sections.blade.php
+    // Updating education level status (active/inactive) using AJAX in sections.blade.php
     $(document).on("click", ".updateSectionStatus", function () {
         // '.updateSectionStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateSectionStatus').on('click', function() {
         var status = $(this).children("i").attr("status"); // Using HTML Custom Attributes
-        var section_id = $(this).attr("section_id"); // Using HTML Custom Attributes
+        var education_level_id = $(this).attr("education_level_id"); // Using HTML Custom Attributes
         var updateUrl = $(this).data("url");
 
         $.ajax({
@@ -96,15 +96,15 @@ $(document).ready(function () {
             }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
             type: "post",
             url: updateUrl, // check the web.php for this route and check the SectionController for the updateSectionStatus() method
-            data: { status: status, section_id: section_id }, // we pass the status and section_id
+            data: { status: status, education_level_id: education_level_id }, // we pass the status and education_level_id
             success: function (resp) {
                 if (resp.status == 0) {
                     // in case of success, reverse the status (active/inactive) and show the right icon in the frontend    // Or the same    if (resp['status'] == 0) {
-                    $("#section-" + section_id).html(
+                    $("#education-level-" + education_level_id).html(
                         '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
                     );
                 } else if (resp.status == 1) {
-                    $("#section-" + section_id).html(
+                    $("#education-level-" + education_level_id).html(
                         '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }
@@ -847,7 +847,9 @@ $(document).ready(function () {
         if (section_id != "") {
             $.ajax({
                 headers: {
-                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                        "content",
+                    ),
                 }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
                 type: "get",
                 url: window.BASE_URL + "/admin/append-categories-level",
@@ -916,7 +918,9 @@ $(document).ready(function () {
         if ($(".loadFilters").length > 0 && category_id != "") {
             $.ajax({
                 headers: {
-                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+                    "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr(
+                        "content",
+                    ),
                 },
                 type: "post",
                 url: window.BASE_URL + "/admin/category-filters",

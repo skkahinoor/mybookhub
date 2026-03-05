@@ -42,7 +42,7 @@
 
 
             <li class="nav-item">
-                <a @if (Session::get('page') == 'sections' ||
+                <a @if (Session::get('page') == 'education-levels' ||
                         Session::get('page') == 'categories' ||
                         Session::get('page') == 'products' ||
                         Session::get('page') == 'ebooks' ||
@@ -224,7 +224,7 @@
                 </div>
             </li>
             <li class="nav-item">
-                <a @if (Session::get('page') == 'sections' ||
+                <a @if (Session::get('page') == 'education-levels' ||
                         Session::get('page') == 'categories' ||
                         Session::get('page') == 'products' ||
                         Session::get('page') == 'edition' ||
@@ -248,7 +248,7 @@
                         style="background: #fff !important; color: #052CA3 !important">
                         @can('view_sections')
                             <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'sections') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    @if (Session::get('page') == 'education-levels') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/education-levels') }}">Education Levels</a></li>
                         @endcan
                         @can('view_categories')

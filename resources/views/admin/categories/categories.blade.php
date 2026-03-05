@@ -13,14 +13,18 @@
 
 
 
-                            <a href="{{ url('admin/add-edit-category') }}"
+                            @php
+                                $adminType = Auth::guard('admin')->user()->type;
+                                $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                            @endphp
+                            <a href="{{ url($prefix . '/add-edit-category') }}"
                                 style="max-width: 150px; float: right; display: inline-block"
                                 class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Board</a>
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
                             {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
-                            
+
                             @if (Session::has('success_message'))
                                 <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -99,16 +103,11 @@
                                                 </td>
 
                                                 <td>
-                                                    <a href="{{ url('admin/add-edit-category/' . $category['id']) }}">
+                                                    <a href="{{ url($prefix . '/add-edit-category/' . $category['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                         {{-- Icons from Skydash Admin Panel Template --}}
                                                     </a>
-
-                                                    {{-- Confirm Deletion JS alert and Sweet Alert --}}
-                                                    {{-- <a title="Category" class="confirmDelete" href="{{ url('admin/delete-category/' . $category['id']) }}"> --}}
-                                                    {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}} {{-- Icons from Skydash Admin Panel Template --}}
-                                                    {{-- </a> --}}
-                                                    <a href="{{ url('admin/delete-category/' . $category['id']) }}">
+                                                    <a href="{{ url($prefix . '/delete-category/' . $category['id']) }}">
                                                         {{-- Check admin/js/custom.js and web.php (routes) --}}
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                         {{-- Icons from Skydash Admin Panel Template --}}

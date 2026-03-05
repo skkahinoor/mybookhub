@@ -105,10 +105,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Sections (Sections, Categories, Subcategories, Products, Attributes)
         // Route::get('sections', 'SectionController@sections');
-        Route::get('education-levels', [SectionController::class, 'sections'])->name('education-levels');
-        Route::post('update-section-status', 'SectionController@updateSectionStatus')->name('admin.updatesectionstatus');               // Update Sections Status using AJAX in sections.blade.php
-        Route::get('delete-section/{id}', 'SectionController@deleteSection');                        // Delete a section in sections.blade.php
-        Route::match(['get', 'post'], 'add-edit-section/{id?}', 'SectionController@addEditSection'); // the slug {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the section, and if not passed, this means Add a Section
+        // Education Levels (Sections)
+        Route::get('education-levels', [SectionController::class, 'sections'])->name('admin.education_levels');
+        Route::post('update-education-level-status', 'SectionController@updateSectionStatus')->name('admin.updateeducationstatus');
+        Route::get('delete-education/{id}', 'SectionController@deleteSection')->name('admin.delete_education');
+        Route::match(['get', 'post'], 'add-edit-education/{id?}', 'SectionController@addEditSection')->name('admin.add_edit_education_level');
 
         //Type
         Route::get('types', [BookTypeController::class, 'types']);
@@ -283,10 +284,10 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             Route::post('update-product-status', [AdminProductsController::class, 'updateProductStatus'])->name('admin.updateproductstatus');               // Update Products Status using AJAX in products.blade.php
             Route::get('delete-product/{id}', [AdminProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
             Route::get('delete-product-attribute/{id}', [AdminProductsController::class, 'deleteProductAttribute']);     // Delete a product attribute (ProductsAttribute)
-        Route::match(['get', 'post'], 'add-edit-product/{id?}', [AdminProductsController::class, 'addEditProduct'])->name('admin.products.add'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
-        Route::get('products/boards', [AdminProductsController::class, 'getBoardsBySection'])->name('admin.products.boards');
-        Route::get('products/classes', [AdminProductsController::class, 'getClassesByBoard'])->name('admin.products.classes');
-        Route::get('products/subjects', [AdminProductsController::class, 'getSubjectsByClass'])->name('admin.products.subjects');
+            Route::match(['get', 'post'], 'add-edit-product/{id?}', [AdminProductsController::class, 'addEditProduct'])->name('admin.products.add'); // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means 'Edit/Update the Product', and if not passed, this means' Add a Product'    // GET request to render the add_edit_product.blade.php view, and POST request to submit the <form> in that view
+            Route::get('products/boards', [AdminProductsController::class, 'getBoardsBySection'])->name('admin.products.boards');
+            Route::get('products/classes', [AdminProductsController::class, 'getClassesByBoard'])->name('admin.products.classes');
+            Route::get('products/subjects', [AdminProductsController::class, 'getSubjectsByClass'])->name('admin.products.subjects');
             Route::post('save-product-attributes', [AdminProductsController::class, 'saveProductAttributes'])->name('admin.products.saveAttributes'); // Save product attributes (stock and discount) via AJAX
             Route::get('delete-product-image/{id}', [AdminProductsController::class, 'deleteProductImage']);             // Delete a product images (in the three folders: small, medium and large) in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
             Route::get('delete-product-video/{id}', [AdminProductsController::class, 'deleteProductVideo']);             // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE

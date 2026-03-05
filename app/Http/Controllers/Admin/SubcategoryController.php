@@ -110,7 +110,8 @@ class SubcategoryController extends Controller
             $subcategory->status = 1;
             $subcategory->save();
 
-            return redirect('admin/subcategories')->with('success_message', $message);
+            $redirectUrl = Auth::guard('admin')->user()->type == 'vendor' ? 'vendor/subcategories' : 'admin/subcategories';
+            return redirect($redirectUrl)->with('success_message', $message);
         }
 
         $categories = Category::with('section')->where('status', 1)->get()->toArray();

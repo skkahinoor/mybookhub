@@ -77,7 +77,7 @@ class CategoryController extends Controller
             $category = new Category();
             // dd($category);
 
-            $getCategories = array(); // An array that contains all the parent categories that are under this section
+            $getCategories = array(); // An array that contains all the parent categories that are under this education level
 
             $message = 'Category added successfully!';
         } else { // if the $id is passed in the route/URL parameters, this means Edit the Category
@@ -99,9 +99,9 @@ class CategoryController extends Controller
         }
 
 
-        if ($request->isMethod('post')) { 
+        if ($request->isMethod('post')) {
             $data = $request->all();
-           
+
             $rules = [
                 'category_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                 'section_id'    => 'required',
@@ -110,7 +110,7 @@ class CategoryController extends Controller
             $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
                 'category_name.required' => 'Category Name is required',
                 'category_name.regex'    => 'Valid Category Name is required',
-                'section_id.required'    => 'Section is required',
+                'section_id.required'    => 'Education Level is required',
                 'url.required'           => 'Category URL is required',
             ];
 
@@ -152,11 +152,12 @@ class CategoryController extends Controller
 
             $category->save(); // Save all data in the database
 
-            return redirect('admin/categories')->with('success_message', $message);
+            $redirectUrl = Auth::guard('admin')->user()->type == 'vendor' ? 'vendor/categories' : 'admin/categories';
+            return redirect($redirectUrl)->with('success_message', $message);
         }
 
 
-        // Get all sections
+        // Get all education levels
         $getSections = Section::get()->toArray();
         // dd($getSections);
 
@@ -165,10 +166,10 @@ class CategoryController extends Controller
     }
 
     public function appendCategoryLevel(Request $request)
-    { // (AJAX) Show Categories <select> <option> depending on the chosen Section (show the relevant categories of the chosen section) using AJAX in admin/js/custom.js in append_categories_level.blade.php page
+    { // (AJAX) Show Categories <select> <option> depending on the chosen Education Level (show the relevant categories of the chosen education level) using AJAX in admin/js/custom.js in append_categories_level.blade.php page
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        // Note: We created the <div> in a separate file in order for the appendCategoryLevel() method inside the CategoryController to be able to return the whole file as a response to the AJAX call in admin/js/custom.js to show the proper/relevant categories <select> box <option> depending on the selected (chosen) Section
+        // Note: We created the <div> in a separate file in order for the appendCategoryLevel() method inside the CategoryController to be able to return the whole file as a response to the AJAX call in admin/js/custom.js to show the proper/relevant categories <select> box <option> depending on the selected (chosen) Education Level
         if ($request->ajax()) { // if the request is coming via an AJAX call
             // if ($request->isMethod('get')) {
             $data = $request->all();

@@ -13,9 +13,9 @@
 
 
 
-                            <a href="{{ url('admin/add-edit-section') }}"
+                            <a href="{{ route('admin.add_edit_education_level') }}"
                                 style="max-width: 150px; float: right; display: inline-block"
-                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Education Levels</a>
+                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Education Level</a>
 
                             @if (Session::has('success_message'))
                                 <!-- Check AdminController.php, updateAdminPassword() method -->
@@ -30,7 +30,7 @@
 
                             <div class="table-responsive pt-3">
                                 {{-- DataTable --}}
-                                <table id="sections" class="table table-bordered"> {{-- using the id here for the DataTable --}}
+                                <table id="education-levels" class="table table-bordered"> {{-- using the id here for the DataTable --}}
                                     <thead>
                                         <tr>
                                             <th>ID</th>
@@ -48,8 +48,7 @@
                                                 <!-- IMAGE COLUMN -->
                                                 <td>
                                                     @if (!empty($section['image']))
-                                                        <img src="{{ $section['image'] }}"
-                                                            width="60" height="60"
+                                                        <img src="{{ $section['image'] }}" width="60" height="60"
                                                             style="object-fit: cover; border-radius: 6px; border:1px solid #ddd;">
                                                     @else
                                                         <img src="{{ asset('admin/images/no-image.png') }}" width="60"
@@ -62,27 +61,29 @@
 
                                                 <td>
                                                     @if ($adminType === 'vendor')
-                                                        <a class="updateSectionStatus" id="section-{{ $section['id'] }}"
-                                                            section_id="{{ $section['id'] }}"
-                                                            data-url="{{ route('vendor.updatesectionstatus') }}"
+                                                        <a class="updateSectionStatus"
+                                                            id="education-level-{{ $section['id'] }}"
+                                                            education_level_id="{{ $section['id'] }}"
+                                                            data-url="{{ route('vendor.updateeducationstatus') }}"
                                                             href="javascript:void(0)">
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                 status="Active"></i>
                                                         </a>
                                                     @else
                                                         @if ($section['status'] == 1)
-                                                            <a class="updateSectionStatus" id="section-{{ $section['id'] }}"
-                                                                section_id="{{ $section['id'] }}"
-                                                                data-url="{{ route('admin.updatesectionstatus') }}"
+                                                            <a class="updateSectionStatus"
+                                                                id="education-level-{{ $section['id'] }}"
+                                                                education_level_id="{{ $section['id'] }}"
+                                                                data-url="{{ route('admin.updateeducationstatus') }}"
                                                                 href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                     status="Active"></i>
                                                             </a>
                                                         @else
                                                             <a class="updateSectionStatus"
-                                                                id="section-{{ $section['id'] }}"
-                                                                section_id="{{ $section['id'] }}"
-                                                                data-url="{{ route('admin.updatesectionstatus') }}"
+                                                                id="education-level-{{ $section['id'] }}"
+                                                                education_level_id="{{ $section['id'] }}"
+                                                                data-url="{{ route('admin.updateeducationstatus') }}"
                                                                 href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
                                                                     status="Inactive"></i>
@@ -92,12 +93,24 @@
                                                 </td>
 
                                                 <td>
-                                                    <a href="{{ url('admin/add-edit-section/' . $section['id']) }}">
+                                                    @php
+                                                        $editRoute =
+                                                            $adminType === 'vendor'
+                                                                ? 'vendor.add_edit_education_level'
+                                                                : 'admin.add_edit_education_level';
+                                                    @endphp
+                                                    <a href="{{ route($editRoute, $section['id']) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
 
-                                                    <a href="{{ url('admin/delete-section/' . $section['id']) }}"
-                                                        onclick="return confirm('Are you sure you want to delete this section?')">
+                                                    @php
+                                                        $deleteRoute =
+                                                            $adminType === 'vendor'
+                                                                ? 'vendor.delete_education'
+                                                                : 'admin.delete_education';
+                                                    @endphp
+                                                    <a href="{{ route($deleteRoute, $section['id']) }}"
+                                                        onclick="return confirm('Are you sure you want to delete this education level?')">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>
                                                 </td>
