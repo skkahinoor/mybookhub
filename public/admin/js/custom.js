@@ -115,6 +115,42 @@ $(document).ready(function () {
         });
     });
 
+    // Updating Subcategory/Class status (active/inactive) using AJAX
+    $(document).on("click", ".updateSubcategoryStatus", function () {
+        var status = $(this).children("i").attr("status");
+        var subcategory_id = $(this).attr("subcategory_id");
+        var updateUrl = $(this).data("url");
+
+        if (!updateUrl) {
+            alert("Error: Update URL not found");
+            return;
+        }
+
+        $.ajax({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            type: "post",
+            url: updateUrl,
+            data: { status: status, subcategory_id: subcategory_id },
+            success: function (resp) {
+                if (resp.status == 0) {
+                    $("#subcategory-" + subcategory_id).html(
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
+                    );
+                } else if (resp.status == 1) {
+                    $("#subcategory-" + subcategory_id).html(
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
+                    );
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error("AJAX Error:", error);
+                alert("Error updating class status. Please check console for details.");
+            },
+        });
+    });
+
     // Updating Category status (active/inactive) using AJAX in categories.blade.php
     $(document).on("click", ".updateCategoryStatus", function () {
         // '.updateCategoryStatus' is the anchor link <a> CSS class    // This is the same as    $('.updateCategoryStatus').on('click', function() {
@@ -815,11 +851,11 @@ $(document).ready(function () {
     $(document).on("click", ".confirmDelete", function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        
+
         // console.log("confirmDelete clicked");
         let module = $(this).data("module") || $(this).attr("title") || "item";
         let deleteUrl = $(this).data("url") || $(this).attr("href");
-        
+
         // console.log("Module:", module, "URL:", deleteUrl);
 
         if (!deleteUrl || deleteUrl === "javascript:void(0)") {

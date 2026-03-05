@@ -48,14 +48,9 @@
                                                 <td>{{ $banner->title }}</td>
                                                 <td>{{ $banner->alt }}</td>
                                                 <td>
-                                                    <form action="{{ url('admin/update-banner-status') }}" method="POST">
-                                                        @csrf
-                                                        <input type="hidden" name="banner_id" value="{{ $banner->id }}">
-                                                        <input type="hidden" name="status" value="{{ $banner->status ? 0 : 1 }}">
-                                                        <button type="submit" class="btn btn-sm {{ $banner->status ? 'btn-success' : 'btn-secondary' }}">
-                                                            {{ $banner->status ? 'Active' : 'Inactive' }}
-                                                        </button>
-                                                    </form>
+                                                    <span class="badge {{ $banner->status ? 'badge-success' : 'badge-secondary' }}">
+                                                        {{ $banner->status ? 'Active' : 'Inactive' }}
+                                                    </span>
                                                 </td>
                                                 <td>
                                                     <a href="{{ url('admin/add-edit-banner/' . $banner->id) }}" class="btn btn-sm btn-primary">Edit</a>

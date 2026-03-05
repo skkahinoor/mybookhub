@@ -60,35 +60,27 @@
                                                 <td>{{ $section['name'] }}</td>
 
                                                 <td>
-                                                    @if ($adminType === 'vendor')
+                                                    @php
+                                                        $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                                                    @endphp
+                                                    @if ($section['status'] == 1)
                                                         <a class="updateSectionStatus"
                                                             id="education-level-{{ $section['id'] }}"
                                                             education_level_id="{{ $section['id'] }}"
-                                                            data-url="{{ route('vendor.updateeducationstatus') }}"
+                                                            data-url="{{ route($prefix . '.updateeducationstatus') }}"
                                                             href="javascript:void(0)">
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                 status="Active"></i>
                                                         </a>
                                                     @else
-                                                        @if ($section['status'] == 1)
-                                                            <a class="updateSectionStatus"
-                                                                id="education-level-{{ $section['id'] }}"
-                                                                education_level_id="{{ $section['id'] }}"
-                                                                data-url="{{ route('admin.updateeducationstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i>
-                                                            </a>
-                                                        @else
-                                                            <a class="updateSectionStatus"
-                                                                id="education-level-{{ $section['id'] }}"
-                                                                education_level_id="{{ $section['id'] }}"
-                                                                data-url="{{ route('admin.updateeducationstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i>
-                                                            </a>
-                                                        @endif
+                                                        <a class="updateSectionStatus"
+                                                            id="education-level-{{ $section['id'] }}"
+                                                            education_level_id="{{ $section['id'] }}"
+                                                            data-url="{{ route($prefix . '.updateeducationstatus') }}"
+                                                            href="javascript:void(0)">
+                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
+                                                                status="Inactive"></i>
+                                                        </a>
                                                     @endif
                                                 </td>
 
