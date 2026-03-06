@@ -19,9 +19,11 @@ use App\Models\Order;
 use App\Models\OrdersProduct;
 use App\Models\ShippingCharge;
 use App\Models\WalletTransaction;
+use App\Models\Payment;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\Vendor;
+use Razorpay\Api\Api;
 
 class ProductController extends Controller
 {
@@ -399,16 +401,16 @@ class ProductController extends Controller
 
         foreach ($cartItems as $item) {
             $price = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
-            
+
             $item->product_price = $price['product_price'] ?? 0;
             $item->final_price = $price['final_price'] ?? 0;
             $item->discount_amount = $price['discount'] ?? 0;
-            
+
             $item->discount_percent = 0;
             if ($item->product_price > 0 && $item->discount_amount > 0) {
                 $item->discount_percent = round(($item->discount_amount / $item->product_price) * 100);
             }
-            
+
             if ($item->product) {
                 $item->product->image_urls = [
                     'large'  => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
@@ -609,16 +611,16 @@ class ProductController extends Controller
 
         foreach ($wishlists as $item) {
             $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
-            
+
             $item->product_price = $priceDetails['product_price'] ?? 0;
             $item->final_price = $priceDetails['final_price'] ?? 0;
             $item->discount_amount = $priceDetails['discount'] ?? 0;
-            
+
             $item->discount_percent = 0;
             if ($item->product_price > 0 && $item->discount_amount > 0) {
                 $item->discount_percent = round(($item->discount_amount / $item->product_price) * 100);
             }
-            
+
             if ($item->product) {
                 $item->product->image_urls = [
                     'large'  => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
@@ -855,183 +857,284 @@ class ProductController extends Controller
         }
 
         $user = auth('sanctum')->user();
+
         if (!$user) {
-            return response()->json(['status' => false, 'message' => 'User must be logged in to checkout'], 401);
+            return response()->json([
+                'status' => false,
+                'message' => 'User must be logged in'
+            ], 401);
         }
 
         $user->load(['country', 'state', 'district']);
 
         if (empty($user->address) || empty($user->district_id) || empty($user->state_id) || empty($user->country_id) || empty($user->pincode) || empty($user->phone)) {
-            return response()->json(['status' => false, 'message' => 'Please update your address on your profile before proceeding to checkout.'], 400);
+            return response()->json([
+                'status' => false,
+                'message' => 'Please update your address before checkout'
+            ], 400);
         }
 
-        $getCartItems = Cart::where('user_id', $user->id)->get();
+        $cartItems = Cart::where('user_id', $user->id)->get();
 
-        if ($getCartItems->isEmpty()) {
-            return response()->json(['status' => false, 'message' => 'Shopping Cart is empty!'], 400);
+        if ($cartItems->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Cart is empty'
+            ], 400);
         }
 
         $total_price = 0;
-        $total_weight = 0;
 
-        foreach ($getCartItems as $item) {
-            $attribute = ProductsAttribute::with('product')->where('id', $item->product_attribute_id)->first();
+        foreach ($cartItems as $item) {
+
+            $attribute = ProductsAttribute::with('product')
+                ->where('id', $item->product_attribute_id)
+                ->first();
 
             if (!$attribute || !$attribute->product) {
-                return response()->json(['status' => false, 'message' => 'A product in your cart is no longer available.'], 400);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Product no longer available'
+                ], 400);
             }
 
             if ($attribute->product->status == 0 || $attribute->status == 0) {
-                return response()->json(['status' => false, 'message' => $attribute->product->product_name . ' is not available.'], 400);
+                return response()->json([
+                    'status' => false,
+                    'message' => $attribute->product->product_name . ' not available'
+                ], 400);
             }
 
-            if ($attribute->stock == 0 || $item->quantity > $attribute->stock) {
-                return response()->json(['status' => false, 'message' => $attribute->product->product_name . ' stock is insufficient.'], 400);
+            if ($attribute->stock < $item->quantity) {
+                return response()->json([
+                    'status' => false,
+                    'message' => $attribute->product->product_name . ' stock insufficient'
+                ], 400);
             }
 
-            $getCategoryStatus = Category::getCategoryStatus($attribute->product->category_id);
-            if ($getCategoryStatus == 0) {
-                return response()->json(['status' => false, 'message' => $attribute->product->product_name . ' category is disabled.'], 400);
-            }
+            $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
 
-            $attrPrice = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
-            $total_price += ($attrPrice['final_price'] * $item->quantity);
+            $total_price += ($priceDetails['final_price'] * $item->quantity);
         }
 
-        $shippingCountryName = $user->country ? $user->country->name : 'India';
-        $shipping_charges = ShippingCharge::getShippingCharges($total_weight, $shippingCountryName);
+        $shippingCountry = $user->country ? $user->country->name : 'India';
+
+        $shipping_charges = ShippingCharge::getShippingCharges(0, $shippingCountry);
+
         $coupon_amount = $request->coupon_amount ?? 0;
+
         $grand_total = $total_price + $shipping_charges - $coupon_amount;
 
         $wallet_amount = 0;
+
         if ($request->use_wallet && $user->wallet_balance > 0 && $grand_total > 150) {
-            $wallet_amount = min($user->wallet_balance, 20); // standard deduction logic from web
+
+            $wallet_amount = min($user->wallet_balance, 20);
+
             $grand_total -= $wallet_amount;
         }
 
-        if ($request->payment_gateway == 'COD') {
-            $payment_method = 'COD';
-            $order_status = 'New';
-        } else {
-            $payment_method = 'Prepaid';
-            $order_status = 'Pending';
-        }
+        $payment_method = $request->payment_gateway == 'COD' ? 'COD' : 'Prepaid';
+        $order_status = $request->payment_gateway == 'COD' ? 'New' : 'Pending';
 
         DB::beginTransaction();
+
         try {
-            $order = new Order;
-            $order->user_id = $user->id;
-            $order->name = $user->name;
-            $order->address = $user->address;
-            $order->city = $user->district ? $user->district->name : '';
-            $order->state = $user->state ? $user->state->name : '';
-            $order->country = $user->country ? $user->country->name : '';
-            $order->pincode = $user->pincode;
-            $order->mobile = $user->phone;
-            $order->email = $user->email;
-            $order->shipping_charges = $shipping_charges;
-            $order->coupon_code = $request->coupon_code;
-            $order->coupon_amount = $coupon_amount;
-            $order->order_status = $order_status;
-            $order->payment_method = $payment_method;
-            $order->payment_gateway = $request->payment_gateway;
-            $order->grand_total = $grand_total > 0 ? $grand_total : 0;
-            $order->wallet_amount = $wallet_amount;
-            $order->extra_discount = 0;
-            $order->save();
+
+            $order = Order::create([
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'address' => $user->address,
+                'city' => $user->district->name ?? '',
+                'state' => $user->state->name ?? '',
+                'country' => $user->country->name ?? '',
+                'pincode' => $user->pincode,
+                'mobile' => $user->phone,
+                'email' => $user->email,
+                'shipping_charges' => $shipping_charges,
+                'coupon_code' => $request->coupon_code,
+                'coupon_amount' => $coupon_amount,
+                'order_status' => $order_status,
+                'payment_method' => $payment_method,
+                'payment_gateway' => $request->payment_gateway,
+                'grand_total' => $grand_total > 0 ? $grand_total : 0,
+                'wallet_amount' => $wallet_amount,
+                'extra_discount' => 0
+            ]);
 
             if ($wallet_amount > 0) {
-                $userToUpdate = clone $user;
-                $userToUpdate->wallet_balance -= $wallet_amount;
-                $userToUpdate->save();
+
+                $user->wallet_balance -= $wallet_amount;
+                $user->save();
 
                 WalletTransaction::create([
                     'user_id' => $user->id,
                     'order_id' => $order->id,
                     'amount' => $wallet_amount,
                     'type' => 'debit',
-                    'description' => 'Used for order #' . $order->id,
+                    'description' => 'Used for order #' . $order->id
                 ]);
             }
 
-            foreach ($getCartItems as $item) {
-                $attribute = ProductsAttribute::with('product')->where('id', $item->product_attribute_id)->first();
-                $cartItem = new OrdersProduct;
-                $cartItem->order_id = $order->id;
-                $cartItem->user_id = $user->id;
-                $cartItem->admin_id = $attribute->admin_id ?? 0;
-                $cartItem->vendor_id = $attribute->vendor_id ?? 0;
+            foreach ($cartItems as $item) {
 
-                if ($attribute->vendor_id && $attribute->vendor_id > 0) {
-                    $cartItem->commission = Vendor::getVendorCommission($attribute->vendor_id);
-                }
-
-                $cartItem->product_id = $attribute->product_id;
-                $cartItem->product_name = $attribute->product->product_name;
+                $attribute = ProductsAttribute::with('product')->find($item->product_attribute_id);
 
                 $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
-                $cartItem->product_price = $priceDetails['final_price'];
-                $cartItem->product_qty = $item->quantity;
-                $cartItem->save();
-            }
 
-            if ($payment_method == 'COD') {
-                $orderDetails = Order::with('orders_products')->where('id', $order->id)->first()->toArray();
-                $messageData = [
-                    'email' => $user->email,
-                    'name' => $user->name,
-                    'order_id' => $order->id,
-                    'orderDetails' => $orderDetails,
-                ];
-                try {
-                    \Illuminate\Support\Facades\Mail::send('emails.order', $messageData, function ($message) use ($user) {
-                        $message->to($user->email)->subject('Order Placed');
-                    });
-                } catch (\Throwable $e) {
-                    Log::warning('Order email failed to send: ' . $e->getMessage());
+                $commission = 0;
+                if ($attribute->vendor_id && $attribute->vendor_id > 0) {
+                    $commission = Vendor::getVendorCommission($attribute->vendor_id);
                 }
 
-                \App\Models\WalletTransaction::checkAndCreditWallet($order->id);
-                Cart::where('user_id', $user->id)->delete();
-                DB::commit();
-
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Order placed successfully.',
+                OrdersProduct::create([
                     'order_id' => $order->id,
-                    'grand_total' => $order->grand_total,
-                    'payment_gateway' => 'COD'
-                ]);
-
-            } elseif ($request->payment_gateway == 'Razorpay') {
-                DB::commit();
-
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Order initiated successfully. Please complete the Razorpay payment.',
-                    'order_id' => $order->id,
-                    'grand_total' => $order->grand_total,
-                    'payment_gateway' => 'Razorpay',
-                    // Usually you might return a razorpay order ID here, or an endpoint
-                    'redirect_url' => url('/razorpay') 
-                ]);
-
-            } else {
-                DB::commit();
-
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Order initiated successfully. Other Prepaid payment methods coming soon.',
-                    'order_id' => $order->id,
-                    'grand_total' => $order->grand_total,
-                    'payment_gateway' => $request->payment_gateway
+                    'user_id' => $user->id,
+                    'admin_id' => $attribute->admin_id ?? 0,
+                    'vendor_id' => $attribute->vendor_id ?? 0,
+                    'product_id' => $attribute->product_id,
+                    'product_attribute_id' => $item->product_attribute_id,
+                    'product_name' => $attribute->product->product_name,
+                    'product_price' => $priceDetails['final_price'],
+                    'product_qty' => $item->quantity,
+                    'commission' => $commission
                 ]);
             }
 
+            if ($request->payment_gateway == 'COD') {
+
+                Cart::where('user_id', $user->id)->delete();
+
+                DB::commit();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Order placed successfully',
+                    'order_id' => $order->id,
+                    'grand_total' => $order->grand_total
+                ]);
+            }
+
+            if ($request->payment_gateway == 'Razorpay') {
+
+                $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+
+                $razorpayOrder = $api->order->create([
+                    'receipt' => 'order_' . $order->id,
+                    'amount' => $order->grand_total * 100,
+                    'currency' => 'INR'
+                ]);
+
+                $order->razorpay_order_id = $razorpayOrder['id'];
+                $order->save();
+
+                DB::commit();
+
+                return response()->json([
+                    'status' => true,
+                    'order_id' => $order->id,
+                    'razorpay_order_id' => $razorpayOrder['id'],
+                    'amount' => $order->grand_total
+                ]);
+            }
+
+            DB::commit();
         } catch (\Exception $e) {
+
             DB::rollBack();
-            Log::error('API Checkout failed: ' . $e->getMessage());
-            return response()->json(['status' => false, 'message' => 'Failed to place order.'], 500);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Checkout failed'
+            ], 500);
+        }
+    }
+    public function verifyRazorpayPayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'razorpay_payment_id' => 'required',
+            'razorpay_order_id' => 'required',
+            'razorpay_signature' => 'required',
+            'order_id' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+
+            $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+
+            $api->utility->verifyPaymentSignature([
+                'razorpay_order_id' => $request->razorpay_order_id,
+                'razorpay_payment_id' => $request->razorpay_payment_id,
+                'razorpay_signature' => $request->razorpay_signature
+            ]);
+
+            $order = Order::with('orders_products')->find($request->order_id);
+
+            if (!$order) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Order not found'
+                ]);
+            }
+
+            if (Payment::where('payment_id', $request->razorpay_payment_id)->exists()) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Payment already verified'
+                ]);
+            }
+
+            $order->update([
+                'payment_status' => 'Paid',
+                'order_status' => 'Paid'
+            ]);
+
+            Payment::create([
+                'order_id' => $order->id,
+                'user_id' => $order->user_id,
+                'payment_id' => $request->razorpay_payment_id,
+                'razorpay_order_id' => $request->razorpay_order_id,
+                'razorpay_signature' => $request->razorpay_signature,
+                'payer_id' => $order->user_id,
+                'payer_email' => $order->email,
+                'amount' => $order->grand_total,
+                'currency' => 'INR',
+                'payment_status' => 'Captured'
+            ]);
+
+            foreach ($order->orders_products as $item) {
+
+                ProductsAttribute::where('id', $item->product_attribute_id)
+                    ->decrement('stock', $item->product_qty);
+            }
+
+            Cart::where('user_id', $order->user_id)->delete();
+
+            WalletTransaction::checkAndCreditWallet($order->id);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Payment verified successfully'
+            ]);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Payment verification failed'
+            ], 400);
         }
     }
 }
