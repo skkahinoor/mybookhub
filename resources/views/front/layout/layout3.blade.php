@@ -61,6 +61,498 @@
 
 
     <style>
+        :root {
+            --primary-orange: #FF6B00;
+            --primary-blue: #2979FF;
+            --bg-light: #F8F9FB;
+            --text-dark: #1A1A1A;
+            --text-muted: #8E8E93;
+        }
+
+        /* Essential Layout Reset */
+        body {
+            background-color: var(--bg-light) !important;
+            font-family: 'Poppins', sans-serif !important;
+            padding-bottom: 70px !important;
+            /* Always make space for bottom nav */
+            margin: 0;
+        }
+
+        /* ============================
+           Premium Unified Header
+           ============================ */
+        .layout-app-header {
+            background: #fff;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-logo img {
+            height: 35px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .header-search {
+            flex: 1;
+            margin: 0 15px 0 10px;
+            position: relative;
+            max-width: 600px;
+        }
+
+        .header-search input {
+            width: 100%;
+            background: #F1F3F6;
+            border: 1.5px solid transparent;
+            border-radius: 14px;
+            padding: 12px 18px 12px 46px;
+            font-size: 14px;
+            color: var(--text-dark);
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .header-search input:focus {
+            background: #fff;
+            border-color: var(--primary-orange);
+            box-shadow: 0 8px 20px rgba(255, 107, 0, 0.08);
+        }
+
+        .header-search .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 14px;
+        }
+
+        .header-search .scan-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .header-icons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .header-icons .icon-btn {
+            position: relative;
+            color: #4A4A4A;
+            font-size: 20px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-icons .icon-btn:hover {
+            color: var(--primary-orange);
+            transform: translateY(-2px);
+        }
+
+        .header-icons .badge-dot {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: #FF3B30;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        .user-name-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-left: 8px;
+            white-space: nowrap;
+        }
+
+        .header-icons .icon-badge-num {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--primary-orange);
+            color: #fff;
+            font-size: 10px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            border: 1.5px solid #fff;
+        }
+
+        @media (max-width: 991px) {
+
+            .desktop-only-icon,
+            .user-name-text,
+            .header-filters {
+                display: none !important;
+            }
+        }
+
+        /* Category Menu Styling */
+        .category-menu-wrapper {
+            position: relative;
+            margin-left: 15px;
+            margin-right: 5px;
+        }
+
+        .category-trigger {
+            background: #F1F3F6;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: 1.5px solid transparent;
+            min-height: 44px;
+        }
+
+        .category-dropdown {
+            position: absolute;
+            top: 110%;
+            left: 0;
+            width: 650px;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            display: none;
+            z-index: 3000;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .category-dropdown.active {
+            display: flex;
+            animation: megaFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes megaFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Mega Menu Layout */
+        .mega-sidebar {
+            width: 220px;
+            background: #F8F9FA;
+            border-right: 1px solid #EEEEEE;
+            padding: 15px 0;
+        }
+
+        .sidebar-item {
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #444;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .sidebar-item i {
+            width: 20px;
+            text-align: center;
+            color: #888;
+            font-size: 16px;
+        }
+
+        .sidebar-item.active {
+            background: #fff;
+            color: var(--primary-orange);
+        }
+
+        .sidebar-item.active i {
+            color: var(--primary-orange);
+        }
+
+        .sidebar-item.active::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--primary-orange);
+        }
+
+        .mega-content-area {
+            flex: 1;
+            padding: 25px;
+            background: #fff;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        .section-pane {
+            display: none;
+        }
+
+        .section-pane.active {
+            display: block;
+        }
+
+        .boards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+        }
+
+        .board-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .board-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1A1A1A;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #F0F0F0;
+            margin-bottom: 5px;
+        }
+
+        .class-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .class-link {
+            font-size: 13px;
+            color: #666;
+            text-decoration: none !important;
+            transition: all 0.2s;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-left: -8px;
+        }
+
+        .class-link:hover {
+            background: #FFF5EE;
+            color: var(--primary-orange);
+            padding-left: 12px;
+        }
+
+        .category-trigger:hover {
+            border-color: rgba(255, 107, 0, 0.2);
+            background: #fff;
+        }
+
+
+
+        /* ============================
+           Premium Unified Bottom Nav
+           ============================ */
+        .layout-bottom-shelf {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #fff;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
+            z-index: 2000;
+            border-radius: 28px 28px 0 0;
+        }
+
+        .layout-shelf-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none !important;
+            color: #BDBDBD;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .layout-shelf-item.active,
+        .layout-shelf-item:hover {
+            color: var(--text-dark);
+        }
+
+        .layout-shelf-item i {
+            font-size: 22px;
+            margin-bottom: 5px;
+        }
+
+        .layout-fab-container {
+            position: relative;
+            top: -35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .layout-fab-button {
+            width: 62px;
+            height: 62px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 26px;
+            box-shadow: 0 10px 25px rgba(41, 121, 255, 0.35);
+            border: 4px solid #fff;
+            text-decoration: none !important;
+        }
+
+        .layout-fab-label {
+            margin-top: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #666;
+            white-space: nowrap;
+        }
+
+        .cart-tag {
+            position: absolute;
+            top: -5px;
+            right: -8px;
+            background: var(--primary-orange);
+            color: #fff;
+            font-size: 9px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            font-weight: 700;
+            border: 2px solid #fff;
+        }
+
+        @media (min-width: 992px) {
+            .layout-app-header {
+                padding: 15px 60px;
+                box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+            }
+
+            .header-icons {
+                gap: 25px;
+            }
+
+            .layout-bottom-shelf {
+                display: none !important;
+            }
+
+            body {
+                padding-bottom: 0 !important;
+            }
+
+            .header-search {
+                margin-left: 10px;
+                max-width: 500px !important;
+                flex: 1;
+            }
+        }
+
+        /* Fix for footer when app nav is present */
+        @media (max-width: 991px) {
+            .site-footer {
+                margin-bottom: 70px;
+            }
+
+            .layout-app-header {
+                display: flex;
+                flex-wrap: nowrap;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 12px;
+                gap: 8px;
+            }
+
+            .header-logo {
+                flex: 0 0 auto;
+                margin: 0;
+            }
+
+            .header-logo img {
+                height: 24px;
+            }
+
+            .header-search {
+                flex: 1;
+                margin: 0 !important;
+                max-width: none !important;
+            }
+
+            .header-search input {
+                height: 38px;
+                font-size: 13px;
+                padding: 5px 10px 5px 32px;
+            }
+
+            .header-search .search-icon {
+                left: 10px;
+                font-size: 12px;
+            }
+
+            .header-icons {
+                flex: 0 0 auto;
+                display: flex !important;
+                gap: 10px;
+                align-items: center;
+            }
+
+            .header-icons .icon-btn {
+                font-size: 18px;
+            }
+
+            .header-icons img {
+                width: 28px !important;
+                height: 28px !important;
+            }
+        }
+    </style>
+
+    <style>
         .ul-menu {
             cursor: pointer;
         }
@@ -152,435 +644,106 @@
             </div>
         </div>
 
-        <!-- Header -->
-        <header class="site-header mo-left header style-1">
-            <!-- Main Header -->
-            <div class="header-info-bar">
-                <div class="container clearfix">
-                    <!-- Website Logo -->
-                    <div class="logo-header logo-dark">
-                        @if (!empty($logos))
-                            <a href="{{ url('/') }}">
-                                <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
-                            </a>
-                        @endif
+        <!-- Premium Header -->
+        <header class="layout-app-header">
+            <div class="header-logo">
+                @if (!empty($logos))
+                    <a href="{{ url('/') }}">
+                        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
+                    </a>
+                @else
+                    <h4 class="mb-0 fw-bold">BookHub</h4>
+                @endif
+            </div>
+            <div class="category-menu-wrapper header-filters">
+                <div class="category-trigger" id="categoryToggle">
+                    <i class="fas fa-th-large"></i>
+                    <span>Category</span>
+                    <i class="fas fa-chevron-down arrow-icon" style="font-size: 10px; margin-left: 5px;"></i>
+                </div>
 
-                    </div>
-
-                    <!-- EXTRA NAV -->
-                    <div class="extra-nav">
-                        <div class="extra-cell">
-                            <ul class="navbar-nav header-right">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ url('/wishlist') }}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
-                                            width="24px" fill="#000000">
-                                            <path d="M0 0h24v24H0V0z" fill="none" />
-                                            <path
-                                                d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z" />
-                                        </svg>
-                                        <span
-                                            class="badge totalWishlistItems">{{ isset($headerWishlistItemsCount) ? $headerWishlistItemsCount : 0 }}</span>
-                                    </a>
-                                </li>
-
-                                {{-- <li class="nav-item">
-                                    <button type="button" class="nav-link box cart-btn">
-                                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24"
-                                            width="24px" fill="#000000">
-                                            <path d="M0 0h24v24H0V0z" fill="none" />
-                                            <path
-                                                d="M15.55 13c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.37-.66-.11-1.48-.87-1.48H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2h7.45zM6.16 6h12.15l-2.76 5H8.53L6.16 6zM7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
-                                        </svg>
-                                        <span
-                                            class="badge totalCartItems">{{ isset($headerCartItems) ? count($headerCartItems) : 0 }}</span>
-                                    </button>
-                                    <ul class="dropdown-menu cart-list headerCartItems">
-                                        @if (isset($headerCartItems) && count($headerCartItems) > 0)
-                                            @foreach ($headerCartItems as $item)
-                                                @php
-                                                    $getDiscountPriceDetail = \App\Models\Product::getDiscountPriceDetails(
-                                                        $item['product_id'],
-                                                    );
-                                                @endphp
-                                                <li class="cart-item">
-                                                    <div class="media">
-                                                        <div class="media-left">
-                                                            <a href="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
-                                                                class="main-image-link">
-                                                                <img src="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
-                                                                    alt="{{ $item['product']['product_name'] ?? 'Product' }}"
-                                                                    class="img-fluid rounded shadow-sm"
-                                                                    style="width: 100px; height: 100px; object-fit: cover;">
-                                                            </a>
-                                                        </div>
-                                                        <div class="media-body">
-                                                            <h6 class="dz-title"><a
-                                                                    href="{{ url('product/' . $item['product_id']) }}"
-                                                                    class="media-heading">{{ $item['product']['product_name'] ?? 'Product' }}</a>
-                                                            </h6>
-                                                            <span class="dz-price">
-                                                                @if ($getDiscountPriceDetail['discount'] > 0)
-                                                                    ₹{{ $getDiscountPriceDetail['final_price'] }} x
-                                                                    {{ $item['quantity'] ?? 1 }}
-                                                                @else
-                                                                    ₹{{ $getDiscountPriceDetail['final_price'] }} x
-                                                                    {{ $item['quantity'] ?? 1 }}
-                                                                @endif
-                                                            </span>
-
-                                                            <a href="javascript:void(0);"><span class="item-close"
-                                                                    data-cartid="{{ $item['id'] }}">&times;</span></a>
-
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                            <li class="cart-item text-center">
-                                                <h6 class="text-secondary">Total = ₹{{ $headerCartTotal }}</h6>
-                                            </li>
-                                            <li class="text-center d-flex">
-                                                <a href="{{ url('/cart') }}"
-                                                    class="btn btn-sm btn-primary me-2 btnhover w-100">View Cart</a>
-                                                <a href="{{ url('/checkout') }}"
-                                                    class="btn btn-sm btn-outline-primary btnhover w-100">Checkout</a>
-                                            </li>
-                                        @else
-                                            <li class="cart-item text-center">
-                                                <h6 class="text-secondary">Your cart is empty</h6>
-                                            </li>
-                                            <li class="text-center">
-                                                <a href="{{ url('/') }}"
-                                                    class="btn btn-sm btn-primary btnhover w-100">Start Shopping</a>
-                                            </li>
-                                        @endif
-                                    </ul>
-                                </li> --}}
-                                @guest
-                                    <li class="nav-item">
-                                        <div class="row">
-                                            <div class="col" style="padding-right: 3px;">
-                                                {{-- <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
-                                                    data-bs-target="#loginModal" class="btn text-white"
-                                                    style="font-size: 12px;">
-                                                    <i class="fas fa-user" style="margin-right:8px;"></i> Login
-                                                </a> --}}
-                                                <a href="{{ route('student.login') }}"
-                                                    class="btn btn-primary btnhover">Login</a>
-                                            </div>
-                                            <div class="col" style="padding-left: 3px;">
-                                                {{-- <a href="#" class="btn btn-primary btnhover" data-bs-toggle="modal"
-                                                    data-bs-target="#registerModal" class="btn text-white"
-                                                    style="font-size: 12px;">
-                                                    <i class="fas fa-user-plus" style="margin-right:4px;"></i> Register
-                                                </a> --}}
-                                                <a href="{{ route('student.register') }}"
-                                                    class="btn btn-primary btnhover">Register</a>
-                                            </div>
-                                        </div>
-                                    </li>
-                                @else
-                                    <li class="nav-item me-3" style="display: flex; align-items: center;">
-                                        <a href="{{ route('student.wallet') }}"
-                                            style="display: flex; align-items: center; gap: 8px; color: #ff9900; font-weight: 700; background: #fff5e6; padding: 8px 16px; border-radius: 30px; border: 1px solid #ffe3b3; transition: all 0.3s ease; text-decoration: none;">
-                                            <i class="fas fa-wallet" style="font-size: 1.1rem;"></i>
-                                            <span>₹{{ Auth::user()->wallet_balance }}</span>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item dropdown profile-dropdown  ms-2">
-                                        <a class="nav-link" href="javascript:void(0);" role="button"
-                                            data-bs-toggle="dropdown" aria-expanded="false">
-                                            @php
-                                                $avatar = optional(Auth::user())->profile_image ?? null;
-                                                // Check if avatar exists and handle both new location (asset/user) and old location (storage)
-                                                if ($avatar) {
-                                                    // Works for both asset/user/ and storage/ paths
-                                                    $avatarSrc = asset($avatar);
-                                                } else {
-                                                    $avatarSrc = asset('assets/images/avatar.png');
-                                                }
-                                            @endphp
-                                            <img src="{{ $avatarSrc }}" alt="profile" id="front-nav-avatar"
-                                                style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;" />
-                                            <div class="profile-info">
-                                                <h6 class="title">{{ Auth::user()->name }}</h6>
-                                                <span>{{ Auth::user()->email ?? 'Email Not Set' }}</span>
-                                            </div>
-                                        </a>
-                                        <div class="dropdown-menu py-0 dropdown-menu-end">
-                                            <div class="dropdown-body">
-                                                <a href="{{ route('student.account') }}"
-                                                    class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
-                                                    <div>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px"
-                                                            viewBox="0 0 24 24" width="20px" fill="#000000">
-                                                            <path d="M0 0h24v24H0V0z" fill="none" />
-                                                            <path
-                                                                d="M12 6c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2m0 10c2.7 0 5.8 1.29 6 2H6c.23-.72 3.31-2 6-2m0-12C9.79 4 8 5.79 8 8s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                                        </svg>
-                                                        <span class="ms-2">Profile</span>
-                                                    </div>
-                                                </a>
-                                                <a href="{{ url('student/orders') }}"
-                                                    class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
-                                                    <div>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px"
-                                                            viewBox="0 0 24 24" width="20px" fill="#000000">
-                                                            <path d="M0 0h24v24H0V0z" fill="none" />
-                                                            <path
-                                                                d="M15.55 13c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.37-.66-.11-1.48-.87-1.48H5.21l-.94-2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2h7.45zM6.16 6h12.15l-2.76 5H8.53L6.16 6zM7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
-                                                        </svg>
-                                                        <span class="ms-2">My Order</span>
-                                                    </div>
-                                                </a>
-                                                <a href="{{ url('wishlist') }}" method="POST"
-                                                    class="dropdown-item d-flex justify-content-between align-items-center ai-icon">
-                                                    <div>
-                                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px"
-                                                            viewBox="0 0 24 24" width="20px" fill="#000000">
-                                                            <path d="M0 0h24v24H0V0z" fill="none" />
-                                                            <path
-                                                                d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55l-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z" />
-                                                        </svg>
-                                                        <span class="ms-2">Wishlist</span>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                            <div class="dropdown-footer">
-                                                <a class="btn btn-primary w-100 btnhover btn-sm"
-                                                    href="{{ route('logout') }}"
-                                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Log
-                                                    Out</a>
-                                            </div>
-                                            <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                                                style="display: none;">
-                                                @csrf
-                                            </form>
-                                        </div>
-                                    </li>
-                                @endguest
-
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- header search nav -->
-                    <div class="header-search-nav">
-                        <div class="header-item-search">
-                            <div class="input-group search-input position-relative">
-                                <ul class="ul-menu"
-                                    style="background:#F5F5F5; height:48px; width:150px; padding-left:20px;padding-right:10px; margin-right:5px;">
-                                    <li class="text-dark"
-                                        style="font-weight:600; height:100%; font-size:0.9rem;line-height:48px; pointer:cursor;">
-                                        <span style="font-size: 13px;">Books Category</span> <i
-                                            class="fa-solid fa-angle-down"
-                                            style="font-size:0.6rem; margin-left:3px; vertical-align:middle;"></i>
-
-                                        <ul class="submenu">
-                                            <li class="position-relative"><a href="{{ url('/category-products') }}"
-                                                    class="d-flex justify-content-between text-dark align-items-center">All
-                                                    Books
-                                                </a>
-                                            </li>
-                                            @foreach ($sections as $section)
-                                                @if (!empty($section['categories']) && count($section['categories']) > 0)
-                                                    <li class="position-relative"><a href="#"
-                                                            class="d-flex justify-content-between text-dark align-items-center">{{ $section['name'] }}
-                                                            <i class="fa-solid fa-angle-right"></i></a>
-                                                        <ul class="submenu1">
-                                                            @foreach ($section['categories'] as $category)
-                                                                @if (!empty($category['sub_categories']) && count($category['sub_categories']) > 0)
-                                                                    <li class="dropdown-submenu position-relative">
-                                                                        <a class="dropdown-item dropdown-toggle"
-                                                                            href="{{ url('/category-products/' . $category['id']) }}">{{ $category['category_name'] }}</a>
-                                                                        <ul class="dropdown-menu">
-                                                                            @foreach ($category['sub_categories'] as $subcategory)
-                                                                                <li>
-                                                                                    <a class="dropdown-item text-dark"
-                                                                                        href="{{ url('/category-products/' . $subcategory['id']) }}">{{ $subcategory['category_name'] }}</a>
-                                                                                </li>
-                                                                            @endforeach
-                                                                        </ul>
-                                                                    </li>
-                                                                @else
-                                                                    <li>
-                                                                        <a class="dropdown-item text-dark"
-                                                                            href="{{ url('/category-products/' . $category['id']) }}">{{ $category['category_name'] }}</a>
-                                                                    </li>
-                                                                @endif
-                                                            @endforeach
-                                                        </ul>
-                                                    </li>
-                                                @else
-                                                    <li class="position-relative"><a
-                                                            href="{{ url('/category-products?section_id=' . $section['id']) }}"
-                                                            class="d-flex justify-content-between text-dark align-items-center">{{ $section['name'] }}
-                                                        </a>
-                                                    </li>
-                                                @endif
-                                            @endforeach
-                                        </ul>
-                                    </li>
-                                </ul>
-
-                                <input type="text" class="form-control" id="headerSearchInput"
-                                    aria-label="Text input with dropdown button" placeholder="Search Books Here"
-                                    style="border-top-left-radius:0px !important; border-bottom-left-radius:0px !important;">
-                                <button class="btn" id="headerSearchButton" type="button"><i
-                                        class="flaticon-loupe"></i></button>
+                <div class="category-dropdown" id="categoryMenu">
+                    <div class="mega-sidebar">
+                        @foreach ($navFilterData as $section)
+                            @php
+                                $icon = 'fa-book';
+                                if (str_contains(strtolower($section['name']), 'school')) {
+                                    $icon = 'fa-school';
+                                }
+                                if (str_contains(strtolower($section['name']), 'college')) {
+                                    $icon = 'fa-university';
+                                }
+                                if (str_contains(strtolower($section['name']), 'entrance')) {
+                                    $icon = 'fa-graduation-cap';
+                                }
+                            @endphp
+                            <div class="sidebar-item {{ $loop->first ? 'active' : '' }}"
+                                data-pane="pane-{{ $loop->index }}">
+                                <i class="fas {{ $icon }}"></i>
+                                <span>{{ $section['name'] }}</span>
                             </div>
-                        </div>
+                        @endforeach
+                    </div>
+
+                    <div class="mega-content-area">
+                        @foreach ($navFilterData as $section)
+                            <div class="section-pane {{ $loop->first ? 'active' : '' }}"
+                                id="pane-{{ $loop->index }}">
+                                <div class="boards-grid">
+                                    @foreach ($section['boards'] as $board)
+                                        <div class="board-column">
+                                            <div class="board-title">{{ $board['name'] }}</div>
+                                            <div class="class-list">
+                                                @foreach ($board['classes'] as $class)
+                                                    <a href="{{ url('/search-products?section_id=' . $class['section_id'] . '&category_id=' . $class['category_id'] . '&subcategory_id=' . $class['id']) }}"
+                                                        class="class-link">
+                                                        {{ $class['name'] }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
-            <!-- Main Header End -->
 
-            <!-- Main Header -->
-            <div class="sticky-header main-bar-wraper navbar-expand-lg">
-                <div class="main-bar clearfix">
-                    <div class="container clearfix">
-                        <div class="d-flex align-items-center justify-content-between w-100">
-                            <!-- Website Logo -->
-                            <div class="logo-header logo-dark">
-                                @if (!empty($logos))
-                                    <a href="{{ url('/') }}">
-                                        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
-                                            alt="BookHub">
-                                    </a>
-                                @endif
-                            </div>
-
-                            <div class="d-flex align-items-center gap-3">
-                                <!-- Mobile Header Icons (Visible on mobile/tablet only) -->
-                                <div class="mobile-nav-icons d-lg-none d-flex align-items-center gap-3">
-                                    @if (Auth::check())
-                                        <a href="{{ route('student.wallet') }}"
-                                            style="color: #ff9900; font-weight: 700; text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 5px;">
-                                            <i class="fas fa-wallet"></i> ₹{{ Auth::user()->wallet_balance }}
-                                        </a>
-                                    @endif
-                                    <a href="{{ url('/wishlist') }}"
-                                        style="position: relative; color: #333; display: flex; align-items: center;">
-                                        <i class="far fa-heart" style="font-size: 20px;"></i>
-                                        <span class="badge"
-                                            style="position: absolute; top: -8px; right: -8px; background: #ff9900; color: #fff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; padding: 0;">{{ $headerWishlistItemsCount ?? 0 }}</span>
-                                    </a>
-                                    <a href="{{ url('/cart') }}"
-                                        style="position: relative; color: #333; display: flex; align-items: center;">
-                                        <i class="fas fa-shopping-basket" style="font-size: 20px;"></i>
-                                        <span class="badge"
-                                            style="position: absolute; top: -8px; right: -8px; background: #ff9900; color: #fff; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; padding: 0;">{{ isset($headerCartItems) ? count($headerCartItems) : 0 }}</span>
-                                    </a>
-                                </div>
-
-                                <!-- Nav Toggle Button -->
-                                <button class="navbar-toggler collapsed navicon justify-content-end" type="button"
-                                    data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown"
-                                    aria-controls="navbarNavDropdown" aria-expanded="false"
-                                    aria-label="Toggle navigation">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- EXTRA NAV -->
-                        <div class="extra-nav">
-                            <div class="extra-cell d-flex align-items-center gap-3">
-                                <a href="{{ url('/contact') }}"
-                                    class="btn btn-primary btnhover d-none d-sm-inline-block">Get In Touch</a>
-                            </div>
-                        </div>
-
-                        <!-- Main Nav -->
-                        <div class="header-nav navbar-collapse collapse justify-content-start" id="navbarNavDropdown">
-                            <div class="logo-header logo-dark">
-                                @if (!empty($logos))
-                                    <a href="{{ url('/') }}">
-                                        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
-                                            alt="BookHub">
-                                    </a>
-                                @endif
-
-                            </div>
-                            <div class="search-input">
-                                <div class="input-group">
-                                    <input type="text" class="form-control" id="mobileSearchInput"
-                                        aria-label="Text input with dropdown button" placeholder="Search Books Here">
-                                    <button class="btn" id="mobileSearchButton" type="button"><i
-                                            class="flaticon-loupe"></i></button>
-                                </div>
-                            </div>
-                            <ul class="nav navbar-nav">
-                                <li class="nav-item"><a href="{{ url('/') }}"
-                                        class="nav-link"><span>Home</span></a>
-                                </li>
-
-
-                                {{-- When logged in: send to actual dashboard --}}
-                                @auth
-                                    <li class="nav-item">
-                                        <a href="{{ route('student.index') }}" class="nav-link">
-                                            <span>Dashboard</span>
-                                        </a>
-                                    </li>
-                                @endauth
-
-                                <li class="sub-menu-down"><a href="javascript:void(0);"><span><i
-                                                class="fas fa-tag me-2"></i> Condition
-                                            ({{ ucfirst($condition) }})</span></a>
-                                    <ul class="sub-menu">
-                                        <li><a href="javascript:void(0);" onclick="set('all')">All</a></li>
-                                        <li><a href="javascript:void(0);" onclick="set('new')">New</a></li>
-                                        <li><a href="javascript:void(0);" onclick="set('old')">Old</a></li>
-                                    </ul>
-                                </li>
-                                <li class="sub-menu-down"><a href="javascript:void(0);"><span><i
-                                                class="fas fa-globe me-2"></i>
-                                            Language ({{ ucfirst($selectedLanguage->name ?? 'All') }})</span></a>
-                                    <ul class="sub-menu">
-                                        <li><a href="javascript:void(0);" onclick="setLanguage('all')">All</a></li>
-                                        @foreach ($language as $lang)
-                                            <li><a href="javascript:void(0);"
-                                                    onclick="setLanguage('{{ $lang->id }}')">{{ $lang->name }}</a>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </li>
-                                {{-- <li class="sub-menu-down"><a href="javascript:void(0);"><span>Blog</span></a>
-                                    <ul class="sub-menu">
-                                        <li><a href="blog-grid.html">Blog Grid</a></li>
-                                        <li><a href="blog-large-sidebar.html">Blog Large Sidebar</a></li>
-                                        <li><a href="blog-list-sidebar.html">Blog List Sidebar</a></li>
-                                        <li><a href="blog-detail.html">Blog Details</a></li>
-                                    </ul>
-                                </li>
-                                <li><a href="contact-us.html"><span>Contact Us</span></a></li> --}}
-                            </ul>
-                            <div class="dz-social-icon">
-                                <ul>
-                                    <li><a class="fab fa-facebook-f" target="_blank"
-                                            href="https://www.facebook.com/dexignzone"></a></li>
-                                    <li><a class="fab fa-twitter" target="_blank"
-                                            href="https://www.twitter.com/dexignzones"></a></li>
-                                    <li><a class="fab fa-linkedin-in" target="_blank"
-                                            href="https://www.linkedin.com/showcase/3686700/admin/"></a></li>
-                                    <li><a class="fab fa-instagram" target="_blank"
-                                            href="https://www.instagram.com/website_templates__/"></a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="header-search">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" placeholder="Search" id="globalSearch">
             </div>
-            <!-- Main Header End -->
-
+            <div class="header-icons">
+                <a href="{{ url('/wishlist') }}" class="icon-btn desktop-only-icon">
+                    <i class="far fa-heart"></i>
+                    <span class="icon-badge-num totalWishlistItems">{{ $headerWishlistItemsCount ?? 0 }}</span>
+                </a>
+                <a href="{{ url('/cart') }}" class="icon-btn desktop-only-icon">
+                    <i class="fas fa-shopping-basket"></i>
+                    <span
+                        class="icon-badge-num totalCartItems">{{ isset($headerCartItems) ? count($headerCartItems) : 0 }}</span>
+                </a>
+                @auth
+                    <a href="#" class="icon-btn">
+                        <i class="far fa-bell"></i>
+                        <span class="badge-dot"></span>
+                    </a>
+                    <a href="{{ route('student.account') }}"
+                        style="display: flex; align-items: center; text-decoration: none;">
+                        <img src="{{ asset(Auth::user()->profile_image ?? 'assets/images/avatar.png') }}"
+                            style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid #F0F0F0;">
+                        <span class="user-name-text">{{ Auth::user()->name }}</span>
+                    </a>
+                @else
+                    <a href="{{ route('student.login') }}" class="icon-btn">
+                        <i class="far fa-user-circle"></i>
+                    </a>
+                @endauth
+            </div>
         </header>
-        <!-- Header End -->
 
         <div class="page-content bg-white">
-
             @yield('content')
         </div>
 
@@ -734,6 +897,43 @@
         <button class="scroltop" type="button"><i class="fas fa-arrow-up"></i></button>
     </div>
 
+    <!-- Unified Bottom Shelf Nav -->
+    <nav class="layout-bottom-shelf">
+        <a href="{{ url('/') }}" class="layout-shelf-item {{ request()->is('/') ? 'active' : '' }}">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+        </a>
+        <a href="{{ url('/category-products') }}"
+            class="layout-shelf-item {{ request()->is('category-products*') ? 'active' : '' }}">
+            <i class="fas fa-th-large"></i>
+            <span>Category</span>
+        </a>
+
+        <div class="layout-fab-container">
+            <a href="{{ Auth::check() ? route('student.index') : route('student.login') }}"
+                class="layout-fab-button">
+                <i class="fas fa-plus"></i>
+            </a>
+            <span class="layout-fab-label">Sell Old Book</span>
+        </div>
+
+        <a href="{{ url('/cart') }}" class="layout-shelf-item {{ request()->is('cart*') ? 'active' : '' }}"
+            style="position:relative;">
+            <i class="fas fa-shopping-basket" style="position: relative;">
+                @if (isset($headerCartItems) && count($headerCartItems) > 0)
+                    <span class="cart-tag">{{ count($headerCartItems) }}</span>
+                @endif
+            </i>
+            <span>Cart</span>
+        </a>
+        <a href="{{ Auth::check() ? route('student.account') : route('student.login') }}"
+            class="layout-shelf-item {{ request()->is('student/account*') ? 'active' : '' }}">
+            <i class="far fa-user"></i>
+            <span>Profile</span>
+        </a>
+    </nav>
+    <!-- Bottom Shelf Nav End -->
+
     {{-- Modals  --}}
 
     {{-- Login --}}
@@ -829,11 +1029,11 @@
 
 
     <script>
-        // Global search handlers for header and sticky inputs
+        // Global search handler for the new premium unified header
         (function() {
             function goToSearch(term) {
-                var base = document.querySelector('meta[name="base-url"]').getAttribute('content') || '';
-                var url = base.replace(/\/$/, '') + '/search-products';
+                var base = "{{ url('/') }}";
+                var url = base + '/search-products';
                 if (term && term.trim().length) {
                     window.location.href = url + '?search=' + encodeURIComponent(term.trim());
                 } else {
@@ -841,36 +1041,49 @@
                 }
             }
 
-            function bindSearch(inputId, buttonId) {
-                var input = document.getElementById(inputId);
-                var button = document.getElementById(buttonId);
-                if (!input || !button) return;
-
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    var searchTerm = input.value.trim();
-                    if (searchTerm.length > 0) {
-                        goToSearch(searchTerm);
-                    } else {
-                        alert('Please enter a book name to search.');
-                    }
-                });
-                input.addEventListener('keydown', function(e) {
+            var globalSearchInput = document.getElementById('globalSearch');
+            if (globalSearchInput) {
+                globalSearchInput.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
-                        var searchTerm = input.value.trim();
-                        if (searchTerm.length > 0) {
-                            goToSearch(searchTerm);
-                        } else {
-                            alert('Please enter a book name to search.');
+                        var term = this.value.trim();
+                        if (term.length > 0) {
+                            goToSearch(term);
                         }
                     }
                 });
             }
-
-            bindSearch('headerSearchInput', 'headerSearchButton');
-            bindSearch('mobileSearchInput', 'mobileSearchButton');
         })();
+    </script>
+    <script>
+        $(document).ready(function() {
+            // Mega Menu Toggle
+            $('#categoryToggle').on('click', function(e) {
+                e.stopPropagation();
+                $('#categoryMenu').toggleClass('active');
+                $(this).find('.arrow-icon').toggleClass('open');
+            });
+
+            // Sidebar Switching Logic
+            $('.sidebar-item').on('mouseenter click', function() {
+                $('.sidebar-item').removeClass('active');
+                $(this).addClass('active');
+
+                var targetPane = $(this).data('pane');
+                $('.section-pane').removeClass('active');
+                $('#' + targetPane).addClass('active');
+            });
+
+            // Close on outside click
+            $(document).on('click', function() {
+                $('#categoryMenu').removeClass('active');
+                $('#categoryToggle').find('.arrow-icon').removeClass('open');
+            });
+
+            $('#categoryMenu').on('click', function(e) {
+                e.stopPropagation();
+            });
+        });
     </script>
     <script>
         // Header mini-cart: delete item via AJAX
@@ -905,25 +1118,7 @@
             });
         });
     </script>
-    <script>
-        const li = document.querySelector(".ul-menu li");
-        const submenu = document.querySelector(".submenu");
-        li.addEventListener("click", function() {
-            submenu.classList.add("d-block");
-        });
 
-        document.addEventListener("click", function(e) {
-
-            if (!e.target.closest(".ul-menu")) {
-                submenu.classList.remove("d-block");
-            }
-
-            if (e.target.closest(".submenu1")) {
-                submenu.classList.remove("d-block");
-            }
-
-        });
-    </script>
     <script>
         function set(condition) {
             fetch("{{ route('set.condition') }}", {
