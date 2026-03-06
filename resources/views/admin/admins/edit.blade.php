@@ -66,7 +66,7 @@
 
                                 <div class="form-group">
                                     <label>Mobile <span class="text-danger">*</span></label>
-                                     <input type="text" name="mobile" class="form-control" value="{{ $admin['mobile'] ?? '' }}" required>
+                                     <input type="number" name="mobile" class="form-control" value="{{ $admin['mobile'] ?? '' }}" required>
                                 </div>
 
                                 {{-- <div class="form-group">
@@ -95,7 +95,7 @@
 
                                 @if (isset($vendorPersonal) && !empty($vendorPersonal) && isset($admin['type']) && $admin['type'] == 'vendor')
                                     {{-- Vendor Location Fields --}}
-                                    <div class="form-group">
+                                    {{-- <div class="form-group">
                                         <label>Address</label>
                                         <input type="text" name="vendor_address" class="form-control" value="{{ $vendorPersonal['address'] ?? '' }}">
                                     </div>
@@ -129,7 +129,7 @@
                                     <div class="form-group">
                                         <label>Pincode</label>
                                         <input type="text" name="vendor_pincode" class="form-control" value="{{ $vendorPersonal['pincode'] ?? '' }}">
-                                    </div>
+                                    </div> --}}
                                 @endif
 
                                 <button type="submit" class="btn btn-primary">Update</button>

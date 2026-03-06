@@ -70,7 +70,7 @@
 
                                 <div class="form-group">
                                     <label>Mobile <span class="text-danger">*</span></label>
-                                    <input type="text" name="mobile" class="form-control" value="{{ old('mobile') }}"
+                                    <input type="number" name="mobile" class="form-control" value="{{ old('mobile') }}"
                                            placeholder="Enter mobile number" required>
                                     @if ($errors->has('mobile'))
                                         <span class="text-danger">{{ $errors->first('mobile') }}</span>

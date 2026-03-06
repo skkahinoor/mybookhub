@@ -89,12 +89,12 @@ class SalesExecutiveController extends Controller
                 'name'   => $data['name'],
                 'email'  => $data['email'],
                 'phone'  => $data['phone'],
-                'address' => $data['address'] ?? null,
-                'country_id' => $data['country_id'] ?? null,
-                'state_id' => $data['state_id'] ?? null,
-                'district_id' => $data['district_id'] ?? null,
-                'block_id' => $data['block_id'] ?? null,
-                'pincode' => $data['pincode'] ?? null,
+                // 'address' => $data['address'] ?? null,
+                // 'country_id' => $data['country_id'] ?? null,
+                // 'state_id' => $data['state_id'] ?? null,
+                // 'district_id' => $data['district_id'] ?? null,
+                // 'block_id' => $data['block_id'] ?? null,
+                // 'pincode' => $data['pincode'] ?? null,
                 'status' => 1, // Default active? Or $data['status']
             ];
 
@@ -120,13 +120,13 @@ class SalesExecutiveController extends Controller
 
             // 2. Create/Update SalesExecutive Profile (only bank and target data)
             $profileData = [
-                'bank_name' => $data['bank_name'] ?? null,
-                'account_number' => $data['account_number'] ?? null,
-                'ifsc_code' => $data['ifsc_code'] ?? null,
-                'bank_branch' => $data['bank_branch'] ?? null,
-                'upi_id' => $data['upi_id'] ?? null,
-                'total_target' => $data['total_target'] ?? null,
-                'completed_target' => $data['completed_target'] ?? null,
+                // 'bank_name' => $data['bank_name'] ?? null,
+                // 'account_number' => $data['account_number'] ?? null,
+                // 'ifsc_code' => $data['ifsc_code'] ?? null,
+                // 'bank_branch' => $data['bank_branch'] ?? null,
+                // 'upi_id' => $data['upi_id'] ?? null,
+                // 'total_target' => $data['total_target'] ?? null,
+                // 'completed_target' => $data['completed_target'] ?? null,
 
                 'status' => 1,
                 'user_id' => $user->id,
