@@ -413,6 +413,15 @@
         </div>
     </div>
 
+    @php
+        $existingClassesForJs = $institution->institutionClasses->map(function ($c) {
+            return [
+                'sub_category_id' => $c->sub_category_id,
+                'strength' => $c->total_strength,
+                'name' => optional($c->subcategory)->subcategory_name ?? 'Class #' . $c->sub_category_id,
+            ];
+        })->values()->all();
+    @endphp
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
@@ -425,13 +434,8 @@
             var existingDistrict = '{{ old('district_id', $institution->district_id ?? '') }}';
             var existingBlock = '{{ old('block_id', $institution->block_id ?? '') }}';
 
-            /* Existing classes as a JS array: [[sub_category_id, name], ...] */
-            var existingClasses = @json(
-                $institution->institutionClasses->map(fn($c) => [
-                        'sub_category_id' => $c->sub_category_id,
-                        'strength' => $c->total_strength,
-                        'name' => optional($c->subcategory)->subcategory_name ?? 'Class #' . $c->sub_category_id,
-                    ]));
+            /* Existing classes as a JS array */
+            var existingClasses = @json($existingClassesForJs);
 
             var currentSubcategories = [];
             var classIndex = existingClasses.length;

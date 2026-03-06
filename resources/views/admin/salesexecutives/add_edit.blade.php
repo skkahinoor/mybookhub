@@ -7,7 +7,7 @@
                 <div class="col-12 grid-margin">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">{{ isset($salesExecutive) ? 'Edit' : 'Add' }} Sales Executive</h4>
+                            <h4 class="card-title">{{ !empty($user->id) ? 'Edit' : 'Add' }} Sales Executive</h4>
 
                             @if ($errors->any())
                                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -21,7 +21,7 @@
                             @endif
 
                             <form method="POST"
-                                action="{{ url('admin/add-edit-sales-executive' . (isset($salesExecutive) ? '/' . $user->id : '')) }}">
+                                action="{{ url('admin/add-edit-sales-executive' . (!empty($user->id) ? '/' . $user->id : '')) }}">
                                 @csrf
 
                                 <div class="form-group">
@@ -42,7 +42,7 @@
                                         value="{{ old('phone', $user->phone ?? '') }}" required>
                                 </div>
 
-                                @if (!isset($salesExecutive))
+                                @if (empty($user->id))
                                     <div class="form-group">
                                         <label>Password <span class="text-danger">*</span></label>
                                         <input type="password" name="password" class="form-control" required>
@@ -59,7 +59,7 @@
                                     </div>
                                 @endif
 
-                                <h5 class="mt-4 mb-3">Location Details</h5>
+                                {{-- <h5 class="mt-4 mb-3">Location Details</h5>
 
                                 <div class="form-group">
                                     <label>Address</label>
@@ -150,12 +150,12 @@
                                     <label>Completed Target</label>
                                     <input type="number" name="completed_target" class="form-control"
                                         value="{{ old('completed_target', $salesExecutive->completed_target ?? '') }}">
-                                </div>
+                                </div> --}}
 
 
 
                                 <button type="submit"
-                                    class="btn btn-primary">{{ isset($salesExecutive) ? 'Update' : 'Create' }}</button>
+                                    class="btn btn-primary">{{ !empty($user->id) ? 'Update' : 'Create' }}</button>
                                 <a href="{{ route('salesexecutives.index') }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
@@ -166,7 +166,7 @@
     </div>
 @endsection
 
-@section('scripts')
+{{-- @section('scripts')
     <script>
         $(document).ready(function() {
             // Current location values
@@ -286,4 +286,4 @@
             }
         });
     </script>
-@endsection
+@endsection --}}

@@ -44,12 +44,6 @@
                                 </button>
                             </div>
                             @endif
-
-
-
-                            {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
                             @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                                     <strong>Success:</strong> {{ Session::get('success_message') }}
@@ -73,10 +67,10 @@
                                     <label>Admin Username/Email</label>
                                     <input class="form-control" value="{{ $adminDetails['email'] }}" readonly> <!-- Check updateAdminPassword() method in AdminController.php -->
                                 </div>
-                                <div class="form-group">
+                                {{-- <div class="form-group">
                                     <label>Admin Type</label>
                                     <input class="form-control" value="{{ $adminDetails['type'] ?? '' }}" readonly>
-                                </div>
+                                </div> --}}
                                 <div class="form-group">
                                     <label for="current_password">Current Password</label>
                                     <input type="password" class="form-control" id="current_password" placeholder="Enter Current Password" name="current_password" required>

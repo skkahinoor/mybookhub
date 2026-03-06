@@ -233,9 +233,6 @@ class AdminController extends Controller
         }
 
         $adminDetails = Auth::guard('admin')->user()->toArray();
-        // Ensure image maps to profile_image if view expects it, or update view.
-        // User model accessor 'image' -> 'profile_image' handles this.
-
         return view('admin/settings/update_admin_password', compact('adminDetails', 'logos', 'headerLogo'));
     }
 
@@ -351,9 +348,6 @@ class AdminController extends Controller
                 } else { // In case the admins updates other fields but doesn't update the image itself (doesn't upload a new image), and originally there wasn't any image uploaded in the first place
                     $imageName = '';
                 }
-
-                // Vendor details need to be updated in BOTH `users` and `vendors` tables:
-                // Update Vendor Details in 'users' table
                 User::where('id', Auth::guard('admin')->user()->id)->update([
                     'name' => $data['vendor_name'],
                     'phone' => $data['vendor_mobile'],
@@ -533,9 +527,6 @@ class AdminController extends Controller
         // Fetch all of the world countries from the database table `countries`
         $countries = Country::where('status', true)->get()->toArray(); // get the countries which have `status` = true (to ignore the blacklisted countries, in case)
         // dd($countries);
-
-        // The 'GET' request: to show the update_vendor_details.blade.php page
-        // We'll create one view (not 3) for the 3 pages, but parts inside it will change depending on the $slug value
         return view('admin/settings/update_vendor_details', compact('slug', 'vendorDetails', 'countries', 'logos', 'headerLogo'));
     }
 
@@ -875,38 +866,13 @@ class AdminController extends Controller
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'phone' => $data['mobile'], // User model uses 'phone'
-                'status' => isset($data['status']) ? 1 : 0,
                 'profile_image' => $imageName, // User model uses 'profile_image'
+                'status' => 1, // Ensure status is active when adding or updating
             ];
 
             if (! empty($data['password'])) {
                 $userData['password'] = Hash::make($data['password']);
             }
-
-            // Determine Role (Default to Admin if not specified or context implies)
-            // The form should ideally have a role selector or implied type
-            // Based on original code `type` was often 'vendor' or 'admin'
-            // We'll stick to 'vendor' if it's a vendor add, else 'admin'
-            // For now, let's assume if it is NOT a vendor add, it is an ADMIN add
-            // Only 'admin' and 'vendor' were primary types here.
-
-            // Check if we are adding a vendor specifically (usually from a specific route or hidden field)
-            // But here it seems general. Let's look at `type` input or default.
-            // Original code: $adminData['type'] = 'vendor'; (Wait, it forced 'vendor'??)
-            // Line 800 in original: 'type' => 'vendor'.
-            // Actually, the original code looked like it defaulted to 'vendor' in `addEditAdmin` for some reason?
-            // Ah, looking closer at line 564 `public function admins($type = null)`...
-            // It seems this controller handles both.
-            // Let's assume if it creates a Vendor profile, account is Vendor.
-
-            // BUT wait, line 800 in viewed file said `'type' => 'vendor'`.
-            // Let's assume this form is used for Vendors mostly?
-            // Or maybe I missed where type is set.
-            // Let's look at existing `admins()` method logic.
-
-            // Re-reading logic: If it creates a Vendor profile (lines 809+), then it IS a vendor.
-
-            // ... (existing code).
 
             if (empty($userId)) {
                 // ADD MODE
@@ -928,9 +894,6 @@ class AdminController extends Controller
 
                 // Create Vendor Profile
                 $vendorData = [
-                    'name' => $data['name'],
-                    'email' => $data['email'],
-                    'mobile' => $data['mobile'],
                     'user_id' => $user->id, // LINK HERE
                 ];
                 Vendor::create($vendorData);
@@ -947,38 +910,10 @@ class AdminController extends Controller
 
                 $user->update($userData);
 
-                // Update Vendor Profile if linked
-                $vendor = Vendor::where('user_id', $user->id)->first();
-                if ($vendor) {
-                    $vendorUpdateData = [
-                        'name' => $data['name'],
-                        'email' => $data['email'],
-                        'mobile' => $data['mobile'],
-                    ];
-                    // Update location fields if provided
-                    if (isset($data['vendor_address'])) {
-                        $vendorUpdateData['address'] = $data['vendor_address'];
-                    }
-                    if (isset($data['vendor_pincode'])) {
-                        $vendorUpdateData['pincode'] = $data['vendor_pincode'];
-                    }
-                    if (isset($data['vendor_country_id'])) {
-                        $vendorUpdateData['country_id'] = $data['vendor_country_id'];
-                    }
-                    if (isset($data['vendor_state_id'])) {
-                        $vendorUpdateData['state_id'] = $data['vendor_state_id'];
-                    }
-                    if (isset($data['vendor_district_id'])) {
-                        $vendorUpdateData['district_id'] = $data['vendor_district_id'];
-                    }
-                    if (isset($data['vendor_block_id'])) {
-                        $vendorUpdateData['block_id'] = $data['vendor_block_id'];
-                    }
+                // The name, email, mobile, and status fields are stored in the 'users' table (updated above).
+                // The 'vendors' table does not have these columns, so we don't need to update them here.
 
-                    $vendor->update($vendorUpdateData);
-                }
-
-                return redirect('admin/admins')->with('success_message', 'Details updated successfully!');
+                return redirect('admin/admins')->with('success_message', 'Vendor updated successfully!');
             }
         }
 

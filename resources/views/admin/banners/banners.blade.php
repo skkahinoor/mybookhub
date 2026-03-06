@@ -9,7 +9,7 @@
                         <div class="card-body">
                             <h4 class="card-title">Home Page Banners</h4>
 
-                            <a href="{{ url('admin/add-edit-banner') }}" style="max-width: 150px; float: right; display: inline-block" class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Banner</a>
+                            <a href="{{ url('admin/add-edit-banner') }}" style="max-width: 150px; float: right; display: inline-block" class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Banner </a>
 
                             @if (Session::has('success_message'))
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">

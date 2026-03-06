@@ -11,7 +11,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="card-title mb-0">{{ $title }}</h4>
                                 <a href="{{ url('admin/add-edit-admin') }}" class="btn btn-primary">
-                                    <i class="mdi mdi-plus"></i> Add {{ $title }}
+                                    <i class="mdi mdi-plus"></i> Add Vendor
                                 </a>
                             </div>
 
@@ -39,9 +39,8 @@
                                 <table class="table table-bordered" id="admins-table">
                                     <thead>
                                         <tr>
-                                            <th>{{ $title }} ID</th>
-                                            <th>Name</th>
-                                            
+                                            <th>Vendor ID</th>
+                                            <th>Name</th>                                           
                                             <th>Mobile</th>
                                             <th>Email</th>
                                             <th>Image</th>
@@ -55,7 +54,6 @@
                                                 <tr>
                                                     <td>{{ $loop->iteration }}</td>
                                                     <td>{{ $admin['name'] }}</td>
-                    
                                                     <td>{{ $admin['mobile'] }}</td>
                                                     <td>{{ $admin['email'] }}</td>
                                                     <td>

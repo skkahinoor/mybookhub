@@ -14,6 +14,7 @@ class OrdersProduct extends Model
         'vendor_id',
         'admin_id',
         'product_id',
+        'product_attribute_id',
         'product_name',
         'product_price',
         'product_qty',
