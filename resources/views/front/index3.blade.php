@@ -13,137 +13,15 @@
             --text-muted: #8E8E93;
         }
 
-        /* Responsive Layout Logic */
+        /* Page-level body overrides */
         body {
             background-color: var(--bg-light) !important;
             font-family: 'Poppins', sans-serif !important;
-            padding-bottom: 60px !important;
-            /* Mobile padding for bottom nav */
         }
 
         .page-content {
             background-color: var(--bg-light) !important;
             padding-top: 0 !important;
-        }
-
-        /* Desktop View (PC) */
-        @media (min-width: 992px) {
-            body {
-                padding-bottom: 0 !important;
-            }
-
-            .app-header,
-            .bottom-shelf {
-                display: none !important;
-            }
-
-            /* Standard layout headers/footers should be visible on PC */
-            .site-header,
-            .site-footer,
-            .footer-top,
-            .footer-bottom,
-            .scroltop {
-                display: block !important;
-            }
-
-            /* REMOVE / HIDE the sticky sub-header bar on PC (Home, Condition, Language) */
-            .sticky-header,
-            .main-bar-wraper {
-                display: none !important;
-            }
-
-            /* OPTIONAL: Refine the main header bar for a cleaner look */
-            .header-info-bar {
-                padding: 15px 0 !important;
-                border-bottom: 1px solid #f0f0f0;
-            }
-        }
-
-        /* Mobile View */
-        @media (max-width: 991px) {
-
-            .site-header,
-            .site-footer,
-            .footer-top,
-            .footer-bottom,
-            .scroltop {
-                display: none !important;
-            }
-        }
-
-        /* Custom App Header (Mobile Only) */
-        .app-header {
-            background: #fff;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.03);
-        }
-
-        .header-logo img {
-            height: 32px;
-            object-fit: contain;
-        }
-
-        .header-search {
-            flex: 1;
-            margin: 0 15px;
-            position: relative;
-        }
-
-        .header-search input {
-            width: 100%;
-            background: #F2F2F7;
-            border: 1px solid transparent;
-            border-radius: 12px;
-            padding: 10px 15px 10px 42px;
-            font-size: 14px;
-            color: var(--text-dark);
-        }
-
-        .header-search .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #999;
-            font-size: 14px;
-        }
-
-        .header-search .scan-icon {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #666;
-            font-size: 16px;
-        }
-
-        .header-icons {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .header-icons .icon-btn {
-            position: relative;
-            color: var(--text-dark);
-            font-size: 20px;
-        }
-
-        .header-icons .badge-dot {
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            width: 8px;
-            height: 8px;
-            background: #FF3B30;
-            border-radius: 50%;
-            border: 2px solid #fff;
         }
 
         /* Premium Banner Slider */
@@ -421,191 +299,225 @@
 
         .book-card-v2 {
             background: #fff;
-            border-radius: 22px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: var(--card-shadow);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             position: relative;
             display: flex;
             flex-direction: column;
-            border: 1px solid rgba(0, 0, 0, 0.02);
+            border: 1px solid #eee;
             transition: all 0.3s ease;
+            height: 100%;
         }
 
         .book-card-v2:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
 
         .book-thumb {
             position: relative;
-            padding-top: 105%;
-            background: #F2F2F7;
+            width: 100%;
+            height: 280px;
+            /* Reference screenshot height */
+            background: #fdfdfd;
+            overflow: hidden;
         }
 
         .book-thumb img {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            /* Pull image to cover area like the screenshot */
+            transition: transform 0.5s ease;
+        }
+
+        .book-card-v2:hover .book-thumb img {
+            transform: scale(1.08);
         }
 
         .condition-badge {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            padding: 4px 12px;
-            border-radius: 8px;
+            top: 15px;
+            left: 15px;
+            padding: 6px 14px;
+            border-radius: 12px;
             font-size: 10px;
             font-weight: 800;
             color: #fff;
             text-transform: uppercase;
+            z-index: 5;
+            letter-spacing: 0.5px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(4px);
         }
 
         .badge-new {
-            background: #34C759;
+            background: linear-gradient(135deg, rgba(52, 199, 89, 0.9), rgba(40, 167, 69, 0.9));
         }
 
         .badge-used {
-            background: #007AFF;
+            background: linear-gradient(135deg, rgba(0, 122, 255, 0.9), rgba(0, 86, 179, 0.9));
         }
 
-        .btn-quick-add {
-            position: absolute;
-            bottom: -20px;
-            right: 15px;
-            width: 40px;
-            height: 40px;
-            background: var(--primary-orange);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 18px;
-            box-shadow: 0 6px 15px rgba(255, 107, 0, 0.4);
-            border: 3px solid #fff;
-            z-index: 10;
-            cursor: pointer;
+        .discount-pill {
+            background: rgba(255, 59, 48, 0.1);
+            color: #FF3B30;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: auto;
         }
 
         .book-info {
-            padding: 28px 15px 18px;
+            padding: 12px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
         .book-title {
             font-size: 14px;
             font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 2px;
+            color: #333;
+            margin: 0;
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 1;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            line-height: 1.35;
-            min-height: 38px;
+            line-height: 1.2;
+            min-height: auto;
+        }
+
+        .book-type {
+            font-size: 11px;
+            color: #666;
+            margin: 0;
         }
 
         .book-category {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-            font-weight: 500;
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
         }
 
         .book-price-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: space-between;
+            margin-top: auto;
+            margin-bottom: 8px;
         }
 
         .current-price {
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 800;
-            color: var(--text-dark);
+            color: #1a1a1a;
         }
 
-        /* Bottom Nav (Mobile Only) */
-        .bottom-shelf {
-            position: fixed;
-            bottom: 0;
-            left: 0;
+        .btn-quick-add {
             width: 100%;
-            background: #fff;
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 0 12px;
-            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
-            z-index: 1000;
-            border-radius: 28px 28px 0 0;
-        }
-
-        .shelf-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none !important;
-            color: #BDBDBD;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .shelf-item.active {
-            color: var(--text-dark);
-        }
-
-        .shelf-item i {
-            font-size: 22px;
-            margin-bottom: 5px;
-        }
-
-        .fab-container {
-            position: relative;
-            top: -40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .fab-button {
-            width: 62px;
-            height: 62px;
-            background: var(--primary-blue);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 28px;
-            box-shadow: 0 10px 25px rgba(41, 121, 255, 0.35);
-            border: 4px solid #fff;
-        }
-
-        .fab-label {
-            margin-top: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            color: #666;
-        }
-
-        .cart-tag {
-            position: absolute;
-            top: -5px;
-            right: -8px;
+            height: 38px;
             background: var(--primary-orange);
-            color: #fff;
-            font-size: 9px;
-            min-width: 16px;
-            height: 16px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 0 4px;
+            color: #fff;
+            font-size: 14px;
             font-weight: 700;
-            border: 2px solid #fff;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+            position: static;
+            /* Move back into flow if needed, but screenshot shows it at bottom */
+            margin-top: 4px;
         }
+
+        .btn-quick-add:hover {
+            background: #e66000;
+        }
+
+        .book-info {
+            padding: 12px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: #fff;
+        }
+
+        .book-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.2;
+            transition: color 0.3s ease;
+        }
+
+        .book-card-v2:hover .book-title {
+            color: var(--primary-orange);
+        }
+
+        .book-category {
+            font-size: 11px;
+            color: #888;
+            margin: 0;
+            display: block;
+        }
+
+        .book-category::before {
+            display: none;
+            /* Hide the icon to match screenshot */
+        }
+
+        .book-price-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .current-price {
+            font-size: 15px;
+            font-weight: 800;
+            color: #1a1a1a;
+        }
+
+        .old-price {
+            font-size: 12px;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        @media (max-width: 767px) {
+            .book-thumb {
+                height: 210px;
+            }
+
+            .book-info {
+                padding: 10px;
+            }
+
+            .btn-quick-add {
+                height: 34px;
+                font-size: 13px;
+            }
+
+            .book-title {
+                font-size: 13px;
+            }
+        }
+
+        /* (bottom-shelf nav handled by layout3.blade.php) */
 
         /* Filter Bottom Sheet */
         .modal-overlay {
@@ -855,37 +767,7 @@
     </style>
 
 
-    <!-- 1. Header (Mobile Only) -->
-    <header class="app-header">
-        <div class="header-logo">
-            @if (!empty($logos))
-                <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
-            @else
-                <h4 class="mb-0 fw-bold">BookHub</h4>
-            @endif
-        </div>
-        <div class="header-search">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" placeholder="Search" id="globalSearch">
-            <i class="fas fa-expand scan-icon"></i>
-        </div>
-        <div class="header-icons">
-            <a href="#" class="icon-btn">
-                <i class="far fa-bell"></i>
-                <span class="badge-dot"></span>
-            </a>
-            @auth
-                <a href="{{ route('student.account') }}">
-                    <img src="{{ asset(Auth::user()->profile_image ?? 'assets/images/avatar.png') }}"
-                        style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid #F0F0F0;">
-                </a>
-            @else
-                <a href="{{ route('student.login') }}" class="icon-btn">
-                    <i class="far fa-user-circle"></i>
-                </a>
-            @endauth
-        </div>
-    </header>
+    
 
     <!-- 2. Banner -->
     <div class="banner-container">
@@ -1126,39 +1008,6 @@
             </div>
         </div>
     </div>
-
-    <!-- 7. Bottom Navigation (Mobile Only) -->
-    <nav class="bottom-shelf">
-        <a href="{{ url('/') }}" class="shelf-item active">
-            <i class="fas fa-home"></i>
-            <span>Home</span>
-        </a>
-        <a href="#" class="shelf-item">
-            <i class="fas fa-th-large"></i>
-            <span>Category</span>
-        </a>
-
-        <div class="fab-container">
-            <a href="{{ Auth::check() ? route('student.index') : route('student.login') }}" class="fab-button"
-                style="text-decoration: none !important;">
-                <i class="fas fa-plus"></i>
-            </a>
-            <span class="fab-label">Sell Old Book</span>
-        </div>
-
-        <a href="{{ url('/cart') }}" class="shelf-item">
-            <i class="fas fa-shopping-basket" style="position: relative;">
-                @if (isset($headerCartItems) && count($headerCartItems) > 0)
-                    <span class="cart-tag">{{ count($headerCartItems) }}</span>
-                @endif
-            </i>
-            <span>Cart</span>
-        </a>
-        <a href="{{ Auth::check() ? route('student.account') : route('student.login') }}" class="shelf-item">
-            <i class="far fa-user"></i>
-            <span>Profile</span>
-        </a>
-    </nav>
 
     <!-- Filter Modal Backdrop -->
     <div class="modal-overlay" id="modalOverlay"></div>
