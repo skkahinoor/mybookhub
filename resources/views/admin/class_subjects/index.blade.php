@@ -27,8 +27,8 @@
                                     <thead>
                                         <tr>
                                             <th>ID</th>
-                                            <th>Section</th>
-                                            <th>Category</th>
+                                            <th>Education Level</th>
+                                            <th>Board</th>
                                             <th>Class Name</th>
                                             <th>Subject</th>
                                             <th>Actions</th>
@@ -44,13 +44,13 @@
                                                 <td>{{ $assignment->subject_names }}</td>
                                                 <td>
                                                     <a
-                                                        href="{{ route('admin.class_subjects.edit', $assignment->sub_category_id) }}">
+                                                        href="{{ route('admin.class_subjects.edit', $assignment->sub_category_id) }}?section_id={{ $assignment->section_id }}&category_id={{ $assignment->category_id }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
-                                                    {{-- Note: This will delete ALL subjects assigned to this Class --}}
-                                                    <a title="Delete All Assigned Subjects" class="confirmDelete"
+                                                    {{-- Note: This will delete subjects assigned to this Class for the specific Section and Category --}}
+                                                    <a title="Delete Assigned Subjects" class="confirmDelete"
                                                         data-module="Assignment"
-                                                        data-url="{{ route('admin.class_subjects.delete', $assignment->sub_category_id) }}">
+                                                        data-url="{{ route('admin.class_subjects.delete', $assignment->sub_category_id) }}?section_id={{ $assignment->section_id }}&category_id={{ $assignment->category_id }}">
                                                         <i style="font-size: 25px"
                                                             class="mdi mdi-delete-forever text-danger"></i>
                                                     </a>
