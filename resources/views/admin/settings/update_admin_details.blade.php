@@ -84,10 +84,7 @@
                                     <label>Admin Username/Email</label>
                                     <input class="form-control" value="{{ Auth::guard('admin')->user()->email }}" readonly> <!-- Check updateAdminPassword() method in AdminController.php --> {{-- Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances --}}
                                 </div>
-                                <div class="form-group">
-                                    <label>Admin Type</label>
-                                    <input class="form-control" value="{{ Auth::guard('admin')->user()->type }}" readonly> {{-- Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances --}}
-                                </div>
+                               
                                 <div class="form-group">
                                     <label for="admin_name">Name</label>
                                     <input type="text" class="form-control" id="admin_name" placeholder="Enter Name" name="admin_name" value="{{ Auth::guard('admin')->user()->name }}"> {{-- Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances --}}

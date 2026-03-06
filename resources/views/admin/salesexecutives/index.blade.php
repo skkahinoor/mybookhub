@@ -179,30 +179,7 @@
                                             <td style="padding: 8px; font-weight: bold;">Phone:</td>
                                             <td style="padding: 8px;">${data.phone || 'N/A'}</td>
                                         </tr>
-                                        <tr style="border-bottom: 1px solid #eee;">
-                                            <td style="padding: 8px; font-weight: bold;">Address:</td>
-                                            <td style="padding: 8px;">${data.address || 'N/A'}</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid #eee;">
-                                            <td style="padding: 8px; font-weight: bold;">City:</td>
-                                            <td style="padding: 8px;">${data.city || 'N/A'}</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid #eee;">
-                                            <td style="padding: 8px; font-weight: bold;">District:</td>
-                                            <td style="padding: 8px;">${data.district || 'N/A'}</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid #eee;">
-                                            <td style="padding: 8px; font-weight: bold;">State:</td>
-                                            <td style="padding: 8px;">${data.state || 'N/A'}</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid #eee;">
-                                            <td style="padding: 8px; font-weight: bold;">Country:</td>
-                                            <td style="padding: 8px;">${data.country || 'N/A'}</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid #eee;">
-                                            <td style="padding: 8px; font-weight: bold;">Pincode:</td>
-                                            <td style="padding: 8px;">${data.pincode || 'N/A'}</td>
-                                        </tr>
+                                       
                                         <tr style="border-bottom: 1px solid #eee;">
                                             <td style="padding: 8px; font-weight: bold;">Status:</td>
                                             <td style="padding: 8px;">${statusText}</td>

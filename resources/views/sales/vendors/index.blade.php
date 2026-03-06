@@ -91,7 +91,10 @@
                                     <td>{{ $vendor->user->email ?? 'N/A' }}</td>
                                     <td>{{ $vendor->user->phone ?? 'N/A' }}</td>
                                     <td>
-                                        @if ($vendor->status)
+                                        @php
+                                            $isActive = (int) (optional($vendor->user)->status ?? $vendor->status) === 1;
+                                        @endphp
+                                        @if ($isActive)
                                             <span class="badge bg-success">Active</span>
                                         @else
                                             <span class="badge bg-warning text-dark">Pending</span>
@@ -112,7 +115,7 @@
                                             </a>
                                         @endif
 
-                                        @if ($vendor->status == 0 && Auth::guard('sales')->user()->can('delete_vendors'))
+                                        @if (!$isActive && Auth::guard('sales')->user()->can('delete_vendors'))
                                             <form action="{{ route('sales.vendors.destroy', $vendor) }}" method="POST"
                                                 class="d-inline">
                                                 @csrf
