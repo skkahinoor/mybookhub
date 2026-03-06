@@ -286,6 +286,8 @@ class ProductController extends Controller
             }
         }
 
+        $basePath = url('front/images/product_images');
+
         return response()->json([
             'status' => true,
             'message' => 'Product details fetched successfully',
@@ -298,7 +300,17 @@ class ProductController extends Controller
                     'name' => $product->product_name,
                     'isbn' => $product->product_isbn,
                     'price' => $product->product_price,
-                    'image' => $product->product_image,
+                    'image_urls'       => [
+                        'large'  => $product->product_image
+                            ? $basePath . '/large/' . $product->product_image
+                            : null,
+                        'medium' => $product->product_image
+                            ? $basePath . '/medium/' . $product->product_image
+                            : null,
+                        'small'  => $product->product_image
+                            ? $basePath . '/small/' . $product->product_image
+                            : null,
+                    ],
                     'description' => $product->description,
 
                     'section' => $product->section,
@@ -368,9 +380,9 @@ class ProductController extends Controller
             ]);
         }
 
-        $cartItems = Cart::with(['product' => function($q) {
-                $q->select('id', 'category_id', 'product_name', 'product_image');
-            }])
+        $cartItems = Cart::with(['product' => function ($q) {
+            $q->select('id', 'category_id', 'product_name', 'product_image');
+        }])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
                     $q->where('user_id', $user_id);
@@ -383,10 +395,28 @@ class ProductController extends Controller
 
         $total_price = 0;
         $total_items = 0;
+        $basePath = url('front/images/product_images');
 
         foreach ($cartItems as $item) {
             $price = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
+            
+            $item->product_price = $price['product_price'] ?? 0;
             $item->final_price = $price['final_price'] ?? 0;
+            $item->discount_amount = $price['discount'] ?? 0;
+            
+            $item->discount_percent = 0;
+            if ($item->product_price > 0 && $item->discount_amount > 0) {
+                $item->discount_percent = round(($item->discount_amount / $item->product_price) * 100);
+            }
+            
+            if ($item->product) {
+                $item->product->image_urls = [
+                    'large'  => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
+                    'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
+                    'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
+                ];
+            }
+
             $total_price += ($price['final_price'] ?? 0) * $item->quantity;
             $total_items += $item->quantity;
         }
@@ -494,9 +524,9 @@ class ProductController extends Controller
         $session_id = $request->header('session-id', '');
 
         if ($user_id > 0 && $cartDetails->user_id != $user_id) {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         } elseif ($user_id == 0 && $cartDetails->session_id != $session_id) {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $availableStock = ProductsAttribute::where('id', $cartDetails->product_attribute_id)->value('stock');
@@ -530,9 +560,9 @@ class ProductController extends Controller
         $session_id = $request->header('session-id', '');
 
         if ($user_id > 0 && $cartDetails->user_id != $user_id) {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         } elseif ($user_id == 0 && $cartDetails->session_id != $session_id) {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $cartDetails->delete();
@@ -560,9 +590,9 @@ class ProductController extends Controller
             ]);
         }
 
-        $wishlists = Wishlist::with(['product' => function($q) {
-                $q->select('id', 'category_id', 'product_name', 'product_image');
-            }])
+        $wishlists = Wishlist::with(['product' => function ($q) {
+            $q->select('id', 'category_id', 'product_name', 'product_image');
+        }])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
                     $q->where('user_id', $user_id);
@@ -575,10 +605,28 @@ class ProductController extends Controller
 
         $total_price = 0;
         $total_items = 0;
+        $basePath = url('front/images/product_images');
 
         foreach ($wishlists as $item) {
             $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
+            
+            $item->product_price = $priceDetails['product_price'] ?? 0;
             $item->final_price = $priceDetails['final_price'] ?? 0;
+            $item->discount_amount = $priceDetails['discount'] ?? 0;
+            
+            $item->discount_percent = 0;
+            if ($item->product_price > 0 && $item->discount_amount > 0) {
+                $item->discount_percent = round(($item->discount_amount / $item->product_price) * 100);
+            }
+            
+            if ($item->product) {
+                $item->product->image_urls = [
+                    'large'  => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
+                    'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
+                    'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
+                ];
+            }
+
             $qty = $item->quantity ?? 1;
             $total_price += ($priceDetails['final_price'] ?? 0) * $qty;
             $total_items += $qty;
@@ -678,9 +726,9 @@ class ProductController extends Controller
         $session_id = $request->header('session-id', '');
 
         if ($user_id > 0 && $wishlistDetails->user_id != $user_id) {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         } elseif ($user_id == 0 && $wishlistDetails->session_id != $session_id) {
-             return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $wishlistDetails->delete();
@@ -746,7 +794,7 @@ class ProductController extends Controller
                 return response()->json(['status' => false, 'message' => 'This coupon code is not for one of the selected products category!'], 400);
             }
 
-            $attrPrice = Product::getDiscountAttributePrice($item['product_id'], $item['size'] ?? null);
+            $attrPrice = Product::getDiscountPriceDetailsByAttribute($item['product_attribute_id']);
             $total_amount += ($attrPrice['final_price'] * $item['quantity']);
         }
 
@@ -766,7 +814,7 @@ class ProductController extends Controller
             $productIds = Product::where('vendor_id', $couponDetails->vendor_id)->pluck('id')->toArray();
             foreach ($cartItems as $item) {
                 if (!in_array($item['product_id'], $productIds)) {
-                     return response()->json(['status' => false, 'message' => 'Coupon code is restricted to vendor products!'], 400);
+                    return response()->json(['status' => false, 'message' => 'Coupon code is restricted to vendor products!'], 400);
                 }
             }
         }
@@ -800,13 +848,6 @@ class ProductController extends Controller
             'coupon_code' => 'nullable|string',
             'coupon_amount' => 'nullable|numeric|min:0',
             'use_wallet' => 'nullable|boolean',
-            'address_name' => 'required|string|max:255',
-            'address_text' => 'required|string|max:500',
-            'city' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
-            'country' => 'required|string|max:255',
-            'pincode' => 'required|string|max:20',
-            'mobile' => 'required|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -816,6 +857,12 @@ class ProductController extends Controller
         $user = auth('sanctum')->user();
         if (!$user) {
             return response()->json(['status' => false, 'message' => 'User must be logged in to checkout'], 401);
+        }
+
+        $user->load(['country', 'state', 'district']);
+
+        if (empty($user->address) || empty($user->district_id) || empty($user->state_id) || empty($user->country_id) || empty($user->pincode) || empty($user->phone)) {
+            return response()->json(['status' => false, 'message' => 'Please update your address on your profile before proceeding to checkout.'], 400);
         }
 
         $getCartItems = Cart::where('user_id', $user->id)->get();
@@ -835,23 +882,24 @@ class ProductController extends Controller
             }
 
             if ($attribute->product->status == 0 || $attribute->status == 0) {
-                 return response()->json(['status' => false, 'message' => $attribute->product->product_name . ' is not available.'], 400);
+                return response()->json(['status' => false, 'message' => $attribute->product->product_name . ' is not available.'], 400);
             }
 
             if ($attribute->stock == 0 || $item->quantity > $attribute->stock) {
-                 return response()->json(['status' => false, 'message' => $attribute->product->product_name . ' stock is insufficient.'], 400);
+                return response()->json(['status' => false, 'message' => $attribute->product->product_name . ' stock is insufficient.'], 400);
             }
 
             $getCategoryStatus = Category::getCategoryStatus($attribute->product->category_id);
             if ($getCategoryStatus == 0) {
-                 return response()->json(['status' => false, 'message' => $attribute->product->product_name . ' category is disabled.'], 400);
+                return response()->json(['status' => false, 'message' => $attribute->product->product_name . ' category is disabled.'], 400);
             }
 
-            $attrPrice = Product::getDiscountAttributePrice($attribute->product_id, $item->size);
+            $attrPrice = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
             $total_price += ($attrPrice['final_price'] * $item->quantity);
         }
 
-        $shipping_charges = ShippingCharge::getShippingCharges($total_weight, $request->country);
+        $shippingCountryName = $user->country ? $user->country->name : 'India';
+        $shipping_charges = ShippingCharge::getShippingCharges($total_weight, $shippingCountryName);
         $coupon_amount = $request->coupon_amount ?? 0;
         $grand_total = $total_price + $shipping_charges - $coupon_amount;
 
@@ -873,13 +921,13 @@ class ProductController extends Controller
         try {
             $order = new Order;
             $order->user_id = $user->id;
-            $order->name = $request->address_name;
-            $order->address = $request->address_text;
-            $order->city = $request->city;
-            $order->state = $request->state;
-            $order->country = $request->country;
-            $order->pincode = $request->pincode;
-            $order->mobile = $request->mobile;
+            $order->name = $user->name;
+            $order->address = $user->address;
+            $order->city = $user->district ? $user->district->name : '';
+            $order->state = $user->state ? $user->state->name : '';
+            $order->country = $user->country ? $user->country->name : '';
+            $order->pincode = $user->pincode;
+            $order->mobile = $user->phone;
             $order->email = $user->email;
             $order->shipping_charges = $shipping_charges;
             $order->coupon_code = $request->coupon_code;
@@ -921,7 +969,7 @@ class ProductController extends Controller
                 $cartItem->product_id = $attribute->product_id;
                 $cartItem->product_name = $attribute->product->product_name;
 
-                $priceDetails = Product::getDiscountAttributePrice($attribute->product_id, $item->size ?? null);
+                $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
                 $cartItem->product_price = $priceDetails['final_price'];
                 $cartItem->product_qty = $item->quantity;
                 $cartItem->save();
@@ -944,18 +992,41 @@ class ProductController extends Controller
                 }
 
                 \App\Models\WalletTransaction::checkAndCreditWallet($order->id);
+                Cart::where('user_id', $user->id)->delete();
+                DB::commit();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Order placed successfully.',
+                    'order_id' => $order->id,
+                    'grand_total' => $order->grand_total,
+                    'payment_gateway' => 'COD'
+                ]);
+
+            } elseif ($request->payment_gateway == 'Razorpay') {
+                DB::commit();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Order initiated successfully. Please complete the Razorpay payment.',
+                    'order_id' => $order->id,
+                    'grand_total' => $order->grand_total,
+                    'payment_gateway' => 'Razorpay',
+                    // Usually you might return a razorpay order ID here, or an endpoint
+                    'redirect_url' => url('/razorpay') 
+                ]);
+
+            } else {
+                DB::commit();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Order initiated successfully. Other Prepaid payment methods coming soon.',
+                    'order_id' => $order->id,
+                    'grand_total' => $order->grand_total,
+                    'payment_gateway' => $request->payment_gateway
+                ]);
             }
-
-            Cart::where('user_id', $user->id)->delete();
-
-            DB::commit();
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Order placed successfully.',
-                'order_id' => $order->id,
-                'grand_total' => $order->grand_total
-            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -963,5 +1034,4 @@ class ProductController extends Controller
             return response()->json(['status' => false, 'message' => 'Failed to place order.'], 500);
         }
     }
-
 }
