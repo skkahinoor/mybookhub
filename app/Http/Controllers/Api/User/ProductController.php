@@ -1137,4 +1137,87 @@ class ProductController extends Controller
             ], 400);
         }
     }
+
+    public function orders(Request $request)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User must be logged in to view orders'
+            ], 401);
+        }
+
+        $orders = Order::with(['orders_products' => function($query) {
+            // Load the associated product attribute and product to get images/details if needed
+            // The orders_products table already has product_name, product_price, product_qty, etc.
+        }])
+        ->where('user_id', $user->id)
+        ->orderBy('id', 'desc')
+        ->paginate(10); // Paginate the results, 10 orders per page
+
+        // Format the orders to include full details
+        $formattedOrders = $orders->through(function ($order) {
+            
+            $basePath = url('front/images/product_images');
+
+            // Format order products
+            $products = $order->orders_products->map(function ($item) use ($basePath) {
+                // Fetch product details for image
+                $product = Product::find($item->product_id);
+                $imageUrl = null;
+                
+                if ($product && $product->product_image) {
+                     $imageUrl = $basePath . '/small/' . $product->product_image;
+                }
+
+                return [
+                    'order_product_id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'product_attribute_id' => $item->product_attribute_id,
+                    'product_name' => $item->product_name,
+                    'product_price' => $item->product_price,
+                    'product_qty' => $item->product_qty,
+                    'product_image' => $imageUrl,
+                    'vendor_id' => $item->vendor_id,
+                    'admin_id' => $item->admin_id,
+                ];
+            });
+
+            return [
+                'order_id' => $order->id,
+                'date' => $order->created_at->format('Y-m-d H:i:s'),
+                'name' => $order->name,
+                'address' => $order->address,
+                'city' => $order->city,
+                'state' => $order->state,
+                'country' => $order->country,
+                'pincode' => $order->pincode,
+                'mobile' => $order->mobile,
+                'email' => $order->email,
+                'shipping_charges' => $order->shipping_charges,
+                'coupon_code' => $order->coupon_code,
+                'coupon_amount' => $order->coupon_amount,
+                'order_status' => $order->order_status,
+                'payment_method' => $order->payment_method,
+                'payment_gateway' => $order->payment_gateway,
+                'payment_status' => $order->payment_status,
+                'grand_total' => $order->grand_total,
+                'wallet_amount' => $order->wallet_amount,
+                'products' => $products
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Orders fetched successfully',
+            'data' => [
+                'total' => $orders->total(),
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'orders' => $formattedOrders
+            ]
+        ]);
+    }
 }
