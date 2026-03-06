@@ -29,9 +29,9 @@
                             <form class="forms-sample" action="{{ route('admin.class_subjects.store') }}" method="POST">
                                 @csrf
                                 <div class="form-group">
-                                    <label for="section_id">Select Section</label>
+                                    <label for="section_id">Select Education Level</label>
                                     <select name="section_id" id="section_id" class="form-control" required>
-                                        <option value="">Select Section</option>
+                                        <option value="">Select Education Level</option>
                                         @foreach ($sections as $section)
                                             <option value="{{ $section->id }}">{{ $section->name }}</option>
                                         @endforeach

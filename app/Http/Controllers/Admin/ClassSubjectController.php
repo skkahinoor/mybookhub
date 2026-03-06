@@ -35,12 +35,14 @@ class ClassSubjectController extends Controller
             ->join('subjects', 'filter_class_subject.subject_id', '=', 'subjects.id')
             ->select(
                 'filter_class_subject.sub_category_id',
+                'filter_class_subject.section_id',
+                'filter_class_subject.category_id',
                 'sections.name as section_name',
                 'categories.category_name',
                 'subcategories.subcategory_name',
                 DB::raw('GROUP_CONCAT(subjects.name SEPARATOR ", ") as subject_names')
             )
-            ->groupBy('filter_class_subject.sub_category_id', 'sections.name', 'categories.category_name', 'subcategories.subcategory_name')
+            ->groupBy('filter_class_subject.sub_category_id', 'filter_class_subject.section_id', 'filter_class_subject.category_id', 'sections.name', 'categories.category_name', 'subcategories.subcategory_name')
             ->get();
 
         Session::put('page', 'class_subjects');
@@ -82,15 +84,19 @@ class ClassSubjectController extends Controller
             ];
         }
 
-        // We use attach or sync. Sync is better but we need to handle the fact that
-        // a subcategory might be assigned to multiple categories.
-        // If we want it to be unique per (Subcat, Subject), sync is fine.
-        $subCategory->subjects()->sync($syncData);
+        // Delete only the subjects mapped to this Class under the selected Section and Category to avoid overwriting ones in other categories
+        DB::table('filter_class_subject')
+            ->where('sub_category_id', $subCategory->id)
+            ->where('section_id', $request->section_id)
+            ->where('category_id', $request->category_id)
+            ->delete();
+
+        $subCategory->subjects()->attach($syncData);
 
         return redirect()->route('admin.class_subjects.index')->with('success_message', 'Subjects assigned successfully!');
     }
 
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -102,16 +108,30 @@ class ClassSubjectController extends Controller
 
         $sections = Section::where('status', 1)->get();
 
-        // Get current values from one of the assignments
-        $firstAssignment = DB::table('filter_class_subject')->where('sub_category_id', $id)->first();
-        $currentSectionId = $firstAssignment ? $firstAssignment->section_id : null;
-        $currentCategoryId = $firstAssignment ? $firstAssignment->category_id : null;
+        // Get current values from request or fallback
+        $currentSectionId = $request->section_id;
+        $currentCategoryId = $request->category_id;
+
+        if (!$currentSectionId || !$currentCategoryId) {
+            $firstAssignment = DB::table('filter_class_subject')->where('sub_category_id', $id)->first();
+            $currentSectionId = $firstAssignment ? $firstAssignment->section_id : null;
+            $currentCategoryId = $firstAssignment ? $firstAssignment->category_id : null;
+        }
 
         $categories = $currentSectionId ? Category::where('section_id', $currentSectionId)->get() : [];
         $subcategories = Subcategory::where('status', 1)->orWhere('id', $id)->get();
         $subjects = Subject::where('status', 1)->get();
 
-        $assignedSubjectIds = $subCategory->subjects->pluck('id')->toArray();
+        if ($currentSectionId && $currentCategoryId) {
+            $assignedSubjectIds = DB::table('filter_class_subject')
+                ->where('sub_category_id', $id)
+                ->where('section_id', $currentSectionId)
+                ->where('category_id', $currentCategoryId)
+                ->pluck('subject_id')
+                ->toArray();
+        } else {
+            $assignedSubjectIds = $subCategory->subjects->pluck('id')->toArray();
+        }
 
         return view('admin.class_subjects.edit_class_subject', compact('subCategory', 'sections', 'categories', 'subcategories', 'subjects', 'assignedSubjectIds', 'currentSectionId', 'currentCategoryId', 'logos', 'headerLogo', 'adminType'));
     }
@@ -136,15 +156,31 @@ class ClassSubjectController extends Controller
             ];
         }
 
-        $subCategory->subjects()->sync($syncData);
+        // Delete only the subjects mapped to this Class under the selected Section and Category to avoid overwriting ones in other categories
+        DB::table('filter_class_subject')
+            ->where('sub_category_id', $subCategory->id)
+            ->where('section_id', $request->section_id)
+            ->where('category_id', $request->category_id)
+            ->delete();
+
+        $subCategory->subjects()->attach($syncData);
 
         return redirect()->route('admin.class_subjects.index')->with('success_message', 'Class Subjects updated successfully!');
     }
 
-    public function delete($id)
+    public function delete(Request $request, $id)
     {
         // $id is now sub_category_id from the grouped index
-        DB::table('filter_class_subject')->where('sub_category_id', $id)->delete();
+        $query = DB::table('filter_class_subject')->where('sub_category_id', $id);
+
+        if ($request->has('section_id')) {
+            $query->where('section_id', $request->section_id);
+        }
+        if ($request->has('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $query->delete();
 
         return redirect()->route('admin.class_subjects.index')->with('success_message', 'Class Subject assignments removed successfully.');
     }

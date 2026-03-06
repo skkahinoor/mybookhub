@@ -32,7 +32,8 @@
 
                                 <div class="form-group">
                                     <label for="section_id">Select Section</label>
-                                    <select name="section_id" id="section_id" class="form-control" required>
+                                    <input type="hidden" name="section_id" value="{{ $currentSectionId }}">
+                                    <select id="section_id" class="form-control" disabled>
                                         <option value="">Select Section</option>
                                         @foreach ($sections as $section)
                                             <option value="{{ $section->id }}"
@@ -44,7 +45,8 @@
                                 <div id="appendCategoriesLevel">
                                     <div class="form-group">
                                         <label for="category_id">Select Category</label>
-                                        <select name="category_id" id="category_id" class="form-control" required>
+                                        <input type="hidden" name="category_id" value="{{ $currentCategoryId }}">
+                                        <select id="category_id" class="form-control" disabled>
                                             <option value="">Select Category</option>
                                             @foreach ($categories as $category)
                                                 <option value="{{ $category->id }}"
@@ -57,7 +59,8 @@
                                 <div id="appendSubcategoriesLevel">
                                     <div class="form-group">
                                         <label for="subcategory_id">Select Class (Subcategory)</label>
-                                        <select name="subcategory_id" id="subcategory_id" class="form-control" required>
+                                        <input type="hidden" name="subcategory_id" value="{{ $subCategory->id }}">
+                                        <select id="subcategory_id" class="form-control" disabled>
                                             <option value="">Select Class</option>
                                             @foreach ($subcategories as $subcategory)
                                                 <option value="{{ $subcategory->id }}"
