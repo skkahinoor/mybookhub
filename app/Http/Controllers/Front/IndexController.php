@@ -103,8 +103,7 @@ class IndexController extends Controller
         }
 
         $sliderProducts = $sliderProductsQuery->orderBy('id', 'desc')
-            ->limit(10)
-            ->get();
+            ->paginate(12);
 
         /* SUBJECTS */
         $homeSubjects = collect([]);

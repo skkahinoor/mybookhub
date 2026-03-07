@@ -268,96 +268,176 @@
             gap: 8px;
         }
 
-        /* Product Grid */
-        .book-grid {
-            padding: 0 18px;
+        /* Product Grid Wall */
+        .book-wall {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 16px;
+            padding: 20px 40px;
             max-width: 1400px;
             margin: 0 auto;
         }
 
-        @media (min-width: 768px) {
-            .book-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (min-width: 992px) {
-            .book-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 24px;
-            }
-        }
-
-        @media (min-width: 1400px) {
-            .book-grid {
+        /* RESPONSIVE */
+        @media (max-width: 1200px) {
+            .book-wall {
                 grid-template-columns: repeat(5, 1fr);
             }
         }
 
-        .book-card-v2 {
-            background: #fff;
-            border-radius: 12px;
+        @media (max-width: 1000px) {
+            .book-wall {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 750px) {
+            .book-wall {
+                grid-template-columns: repeat(3, 1fr);
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .book-wall {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 10px;
+            }
+        }
+
+        /* CARD */
+        .book-item {
+            background: white;
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: .25s;
             display: flex;
             flex-direction: column;
-            border: 1px solid #eee;
-            transition: all 0.3s ease;
             height: 100%;
         }
 
-        .book-card-v2:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        .book-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
         }
 
-        .book-thumb {
+        /* COVER */
+        .cover {
+            aspect-ratio: 2/3;
             position: relative;
-            width: 100%;
-            height: 280px;
-            /* Reference screenshot height */
-            background: #fdfdfd;
             overflow: hidden;
+            background: #fff;
         }
 
-        .book-thumb img {
+        .cover img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            /* Pull image to cover area like the screenshot */
-            transition: transform 0.5s ease;
+            transition: .3s;
         }
 
-        .book-card-v2:hover .book-thumb img {
-            transform: scale(1.08);
+        .book-item:hover .cover img {
+            transform: scale(1.05);
         }
 
+        /* BADGE */
         .condition-badge {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            padding: 6px 14px;
-            border-radius: 12px;
+            top: 6px;
+            left: 6px;
             font-size: 10px;
-            font-weight: 800;
-            color: #fff;
+            padding: 3px 7px;
+            border-radius: 20px;
+            color: white;
+            z-index: 2;
             text-transform: uppercase;
-            z-index: 5;
-            letter-spacing: 0.5px;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(4px);
+            font-weight: 600;
         }
 
         .badge-new {
-            background: linear-gradient(135deg, rgba(52, 199, 89, 0.9), rgba(40, 167, 69, 0.9));
+            background: #22c55e;
         }
 
         .badge-used {
-            background: linear-gradient(135deg, rgba(0, 122, 255, 0.9), rgba(0, 86, 179, 0.9));
+            background: #f59e0b;
+        }
+
+        /* INFO */
+        .info {
+            padding: 10px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title {
+            font-size: 12px;
+            font-weight: 600;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 4px;
+            line-height: 1.3;
+            color: #333;
+            text-decoration: none !important;
+        }
+
+        .author {
+            font-size: 11px;
+            color: #777;
+            margin-top: 2px;
+        }
+
+        /* PRICE */
+        .price {
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: auto;
+            color: #1a1a1a;
+            padding-top: 8px;
+        }
+
+        /* BUTTON */
+        .cart-btn {
+            width: 100%;
+            margin-top: 8px;
+            background: #ff6b00;
+            border: none;
+            color: white;
+            padding: 7px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .cart-btn:hover {
+            background: #e45d00;
+        }
+
+        /* SKELETON LOADER for infinite scroll */
+        .skeleton {
+            animation: pulse 1.2s infinite;
+            background: linear-gradient(90deg, #eee, #ddd, #eee);
+            height: 300px;
+            border-radius: 8px;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: .8
+            }
+
+            50% {
+                opacity: .4
+            }
+
+            100% {
+                opacity: .8
+            }
         }
 
         .discount-pill {
@@ -812,18 +892,18 @@
             background: #fff;
             border-radius: 20px;
             padding: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
             display: flex;
             flex-direction: column;
             gap: 12px;
-            border: 1px solid rgba(0,0,0,0.02);
+            border: 1px solid rgba(0, 0, 0, 0.02);
             transition: all 0.3s ease;
             position: relative;
         }
 
         .student-book-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
         }
 
         .student-book-img {
@@ -901,7 +981,7 @@
     </style>
 
 
-    
+
 
     <!-- 2. Banner -->
     <div class="banner-container">
@@ -947,8 +1027,8 @@
             data-condition="old">Old</a>
     </div>
 
-    <!-- 6. Product Grid -->
-    <div class="book-grid" id="homeProductGrid">
+    <!-- 6. Product Grid Wall -->
+    <div class="book-wall" id="homeProductGrid">
         @include('front.partials.home_product_grid')
     </div>
 
@@ -971,44 +1051,46 @@
     </style>
 
     <!-- 7. Sell Book Community Section -->
-    @if(isset($sellBookRequests) && $sellBookRequests->count() > 0)
-    <div class="sell-book-section">
-        <div class="section-header">
-            <h2><i class="fas fa-users" style="color: var(--primary-orange);"></i> Student <span>Marketplace</span></h2>
-            <a href="javascript:void(0)" class="btn-change">View All</a>
-        </div>
-        
-        <div class="sell-book-scroll">
-            @foreach($sellBookRequests as $sbook)
-            <div class="student-book-card">
-                @if($sbook->book_status == 'sold')
-                    <div class="sold-overlay">Sold</div>
-                @endif
-                
-                <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}" 
-                     class="student-book-img {{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}" 
-                     alt="{{ $sbook->book_title }}">
-                
-                <div class="student-info">
-                    <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}" class="student-avatar" alt="User">
-                    <span class="student-name">By {{ $sbook->user->name }}</span>
-                    <span class="ms-auto condition-tag">{{ $sbook->book_condition }}</span>
-                </div>
-                
-                <h3 class="student-book-title">{{ $sbook->book_title }}</h3>
-                
-                <div class="student-book-price">
-                    <span>₹{{ number_format($sbook->expected_price, 2) }}</span>
-                    @if($sbook->book_status != 'sold')
-                        <a href="{{ route('student.sell-book.show', $sbook->id) }}" class="btn btn-sm" style="background: #f2f2f7; border-radius: 10px; font-weight: 700; font-size: 11px; color: var(--text-dark);">Details</a>
-                    @else
-                        <span style="font-size: 11px; color: #ff4757; font-weight: 700;">SOLD OUT</span>
-                    @endif
-                </div>
+    @if (isset($sellBookRequests) && $sellBookRequests->count() > 0)
+        <div class="sell-book-section">
+            <div class="section-header">
+                <h2><i class="fas fa-users" style="color: var(--primary-orange);"></i> Student <span>Marketplace</span></h2>
+                <a href="javascript:void(0)" class="btn-change">View All</a>
             </div>
-            @endforeach
+
+            <div class="sell-book-scroll">
+                @foreach ($sellBookRequests as $sbook)
+                    <div class="student-book-card">
+                        @if ($sbook->book_status == 'sold')
+                            <div class="sold-overlay">Sold</div>
+                        @endif
+
+                        <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}"
+                            class="student-book-img {{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}"
+                            alt="{{ $sbook->book_title }}">
+
+                        <div class="student-info">
+                            <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}"
+                                class="student-avatar" alt="User">
+                            <span class="student-name">By {{ $sbook->user->name }}</span>
+                            <span class="ms-auto condition-tag">{{ $sbook->book_condition }}</span>
+                        </div>
+
+                        <h3 class="student-book-title">{{ $sbook->book_title }}</h3>
+
+                        <div class="student-book-price">
+                            <span>₹{{ number_format($sbook->expected_price, 2) }}</span>
+                            @if ($sbook->book_status != 'sold')
+                                <a href="{{ route('student.sell-book.show', $sbook->id) }}" class="btn btn-sm"
+                                    style="background: #f2f2f7; border-radius: 10px; font-weight: 700; font-size: 11px; color: var(--text-dark);">Details</a>
+                            @else
+                                <span style="font-size: 11px; color: #ff4757; font-weight: 700;">SOLD OUT</span>
+                            @endif
+                        </div>
+                    </div>
+                @endforeach
+            </div>
         </div>
-    </div>
     @endif
 
     <!-- CTA Block -->
@@ -1401,16 +1483,72 @@
 
         overlay.addEventListener('click', () => toggleModal(false));
 
+        // Infinite Scroll Logic
+        let currentPage = 1;
+        let isLoading = false;
+        let hasMore = true;
+
+        window.addEventListener("scroll", () => {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && !isLoading && hasMore) {
+                loadMoreBooks();
+            }
+        });
+
+        function loadMoreBooks() {
+            isLoading = true;
+            currentPage++;
+
+            const activeChip = document.querySelector('.condition-chip.active');
+            const condition = activeChip ? activeChip.dataset.condition : 'all';
+            const sectionId = sectionSelect.value;
+            const categoryId = categorySelect.value;
+            const subcategoryId = subcategorySelect.value;
+            const distance = rangeSlider.value;
+
+            // Get selected book types & languages
+            const bookTypes = Array.from(document.querySelectorAll('input[name="book_types[]"]:checked')).map(cb => cb
+                .value);
+            const languages = Array.from(document.querySelectorAll('input[name="languages[]"]:checked')).map(cb => cb
+                .value);
+
+            let queryParams =
+                `?filter_update=1&page=${currentPage}&condition=${condition}&section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&distance=${distance}`;
+            if (bookTypes.length > 0) queryParams += `&book_types=${bookTypes.join(',')}`;
+            if (languages.length > 0) queryParams += `&languages=${languages.join(',')}`;
+
+            // Show skeleton or loader if needed
+            const gridContainer = document.getElementById('homeProductGrid');
+
+            fetch(`{{ url('/') }}${queryParams}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.html.trim() === '') {
+                        hasMore = false;
+                    } else {
+                        gridContainer.insertAdjacentHTML('beforeend', data.html);
+                    }
+                    isLoading = false;
+                })
+                .catch(err => {
+                    console.error(err);
+                    isLoading = false;
+                });
+        }
+
         function updateHomeGrid(subjectId = null, activeSubjectName = null) {
+            currentPage = 1;
+            hasMore = true;
+            isLoading = false;
+
             const gridContainer = document.getElementById('homeProductGrid');
             const subjectsContainer = document.getElementById('homeSubjectsContainer');
             const selectionInfo = document.getElementById('currentSelectionInfo');
             const activeChip = document.querySelector('.condition-chip.active');
             const condition = activeChip ? activeChip.dataset.condition : 'all';
-
-            const sectionSelect = document.getElementById('filterSection');
-            const categorySelect = document.getElementById('filterCategory');
-            const subcategorySelect = document.getElementById('filterSubcategory');
 
             const sectionId = sectionSelect.value;
             const categoryId = categorySelect.value;
@@ -1429,7 +1567,7 @@
             subjectsContainer.style.opacity = '0.5';
 
             let queryParams =
-                `?filter_update=1&condition=${condition}&section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&distance=${distance}`;
+                `?filter_update=1&page=1&condition=${condition}&section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&distance=${distance}`;
 
             if (bookTypes.length > 0) queryParams += `&book_types=${bookTypes.join(',')}`;
             if (languages.length > 0) queryParams += `&languages=${languages.join(',')}`;
