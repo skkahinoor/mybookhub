@@ -41,7 +41,8 @@
     </title>
 
     <!-- MOBILE SPECIFIC -->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 
     <!-- STYLESHEETS -->
     <link rel="stylesheet" type="text/css"
@@ -69,13 +70,13 @@
             --text-muted: #8E8E93;
         }
 
-        /* Essential Layout Reset */
         body {
             background-color: var(--bg-light) !important;
             font-family: 'Poppins', sans-serif !important;
-            padding-bottom: 70px !important;
-            /* Always make space for bottom nav */
-            margin: 0;
+            padding-bottom: 60px !important;
+            margin: 0 !important;
+            width: 100%;
+            overflow-x: hidden;
         }
 
         /* ============================
@@ -385,68 +386,79 @@
            Premium Unified Bottom Nav
            ============================ */
         .layout-bottom-shelf {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #fff;
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 0;
-            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.05);
-            z-index: 2000;
-            border-radius: 28px 28px 0 0;
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 58px !important;
+            /* Exact height to prevent stretching */
+            background: #fff !important;
+            display: flex !important;
+            justify-content: space-around !important;
+            align-items: flex-end !important;
+            /* Content stays at the bottom */
+            padding-bottom: 2px !important;
+            /* Tiny gap for labels */
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.08) !important;
+            z-index: 9999 !important;
+            border-radius: 24px 24px 0 0 !important;
+            margin: 0 !important;
         }
 
         .layout-shelf-item {
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-end;
+            height: 52px !important;
             text-decoration: none !important;
             color: #BDBDBD;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
-            transition: all 0.3s ease;
         }
 
-        .layout-shelf-item.active,
-        .layout-shelf-item:hover {
+        .layout-shelf-item.active {
             color: var(--text-dark);
         }
 
         .layout-shelf-item i {
-            font-size: 22px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 1px;
         }
 
         .layout-fab-container {
-            position: relative;
-            top: -35px;
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: flex-end;
+            height: 52px !important;
+            position: relative;
         }
 
         .layout-fab-button {
-            width: 62px;
-            height: 62px;
+            width: 58px;
+            height: 58px;
             background: var(--primary-blue);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
-            font-size: 26px;
-            box-shadow: 0 10px 25px rgba(41, 121, 255, 0.35);
+            font-size: 24px;
+            box-shadow: 0 8px 20px rgba(41, 121, 255, 0.3);
             border: 4px solid #fff;
+            position: absolute;
+            top: -28px;
             text-decoration: none !important;
         }
 
         .layout-fab-label {
-            margin-top: 6px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             color: #666;
+            margin-bottom: 0;
             white-space: nowrap;
         }
 
@@ -496,7 +508,7 @@
         /* Fix for footer when app nav is present */
         @media (max-width: 991px) {
             .site-footer {
-                margin-bottom: 70px;
+                margin-bottom: 0;
             }
 
             .layout-app-header {

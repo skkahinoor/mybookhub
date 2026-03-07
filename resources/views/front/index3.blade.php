@@ -440,6 +440,47 @@
             }
         }
 
+        /* Load More Button */
+        .load-more-container {
+            display: flex;
+            justify-content: center;
+            padding: 30px 20px;
+            width: 100%;
+        }
+
+        .btn-load-more {
+            background: #fff;
+            color: var(--primary-orange);
+            border: 2px solid var(--primary-orange);
+            padding: 12px 40px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.1);
+        }
+
+        .btn-load-more:hover {
+            background: var(--primary-orange);
+            color: #fff;
+            box-shadow: 0 8px 25px rgba(255, 107, 0, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .btn-load-more:disabled {
+            border-color: #eee;
+            color: #ccc;
+            background: #f9f9f9;
+            cursor: not-allowed;
+            pointer-events: none;
+            box-shadow: none;
+        }
+
+        .btn-load-more i {
+            margin-right: 8px;
+        }
+
         .discount-pill {
             background: rgba(255, 59, 48, 0.1);
             color: #FF3B30;
@@ -608,7 +649,7 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(2px);
-            z-index: 2000;
+            z-index: 10000;
             display: none;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -621,10 +662,10 @@
             width: 100%;
             background: #fff;
             border-radius: 28px 28px 0 0;
-            z-index: 2001;
+            z-index: 10001;
             transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
-            padding: 24px;
+            padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
             box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
             max-height: 90vh;
             display: flex;
@@ -786,8 +827,10 @@
             display: grid;
             grid-template-columns: 1fr 1.5fr;
             gap: 12px;
-            margin-top: 20px;
+            margin-top: 15px;
             padding-top: 15px;
+            padding-bottom: 20px;
+            /* Added padding to ensure buttons are fully visible */
             border-top: 1px solid #F0F0F0;
         }
 
@@ -1032,8 +1075,12 @@
         @include('front.partials.home_product_grid')
     </div>
 
-    <!-- Extra Spacing (Mobile Only) -->
-    <div class="py-4 d-lg-none"></div>
+    <!-- Load More Button -->
+    <div class="load-more-container" id="loadMoreContainer" {!! !$sliderProducts->hasMorePages() ? 'style="display:none;"' : '' !!}>
+        <button class="btn-load-more" id="loadMoreBtn">
+            <i class="fas fa-sync-alt"></i> Load More Books
+        </button>
+    </div>
 
     <style>
         .sales-cta-card {
@@ -1094,7 +1141,7 @@
     @endif
 
     <!-- CTA Block -->
-    <div class="container py-5">
+    <div class="container pt-5 pb-4">
         <!-- Sales Card -->
         <div class="sales-cta-card shadow-lg mb-5 position-relative">
 
@@ -1137,7 +1184,8 @@
                                     style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);">
                                     <span class="text-white me-2"><i class="fa-solid fa-coins fs-5"></i></span>
                                     <div class="text-start">
-                                        <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Earn more
+                                        <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Earn
+                                            more
                                         </h6>
                                     </div>
                                 </div>
@@ -1483,19 +1531,25 @@
 
         overlay.addEventListener('click', () => toggleModal(false));
 
-        // Infinite Scroll Logic
+        // Load More Logic
         let currentPage = 1;
         let isLoading = false;
         let hasMore = true;
 
-        window.addEventListener("scroll", () => {
-            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500 && !isLoading && hasMore) {
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
+
+        loadMoreBtn.addEventListener("click", () => {
+            if (!isLoading && hasMore) {
                 loadMoreBooks();
             }
         });
 
         function loadMoreBooks() {
             isLoading = true;
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+
             currentPage++;
 
             const activeChip = document.querySelector('.condition-chip.active');
@@ -1516,7 +1570,6 @@
             if (bookTypes.length > 0) queryParams += `&book_types=${bookTypes.join(',')}`;
             if (languages.length > 0) queryParams += `&languages=${languages.join(',')}`;
 
-            // Show skeleton or loader if needed
             const gridContainer = document.getElementById('homeProductGrid');
 
             fetch(`{{ url('/') }}${queryParams}`, {
@@ -1528,14 +1581,19 @@
                 .then(data => {
                     if (data.html.trim() === '') {
                         hasMore = false;
+                        loadMoreContainer.style.display = 'none';
                     } else {
                         gridContainer.insertAdjacentHTML('beforeend', data.html);
+                        loadMoreBtn.disabled = false;
+                        loadMoreBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Load More Books';
                     }
                     isLoading = false;
                 })
                 .catch(err => {
                     console.error(err);
                     isLoading = false;
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Load More Books';
                 });
         }
 
@@ -1591,6 +1649,15 @@
 
                     gridContainer.style.opacity = '1';
                     subjectsContainer.style.opacity = '1';
+
+                    // Update "Load More" button based on has_more status
+                    if (data.has_more) {
+                        loadMoreContainer.style.display = 'flex';
+                        loadMoreBtn.disabled = false;
+                        loadMoreBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Load More Books';
+                    } else {
+                        loadMoreContainer.style.display = 'none';
+                    }
 
                     // Update selection info text
                     const sectionText = sectionSelect.options[sectionSelect.selectedIndex].text;
