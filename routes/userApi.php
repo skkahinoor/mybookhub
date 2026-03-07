@@ -10,6 +10,8 @@ Route::get('/user/products', [ProductController::class, 'index']);
 Route::get('/user/product-details/{attribute_id}', [ProductController::class, 'productDetails']);
 Route::get('/user/search-suggestions', [ProductController::class, 'suggestions']);
 Route::get('/user/education-level', [HomeController::class, 'getSections']);
+Route::get('/user/institution', [HomeController::class, 'getInstitutions']);
+Route::get('/user/institution-class/{institution_id}', [HomeController::class, 'getInstitutionclass']);
 Route::get('/user/board/{id}', [HomeController::class, 'getcategories']);
 Route::get('/user/class', [HomeController::class, 'getSubcategories']);
 Route::get('/user/book-type', [HomeController::class, 'getBookTypes']);
@@ -41,4 +43,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/checkout', [ProductController::class, 'checkout']);
     Route::post('/user/verify', [ProductController::class, 'verifyRazorpayPayment']);
     Route::get('/user/orders', [ProductController::class, 'orders']);
+    Route::get('/user/wallet/transactions', [HomeController::class, 'getWalletTransactions']);
 });

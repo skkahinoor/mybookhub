@@ -133,8 +133,8 @@ class ProfileController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'institution_id' => 'nullable|integer',
-            'institution_classes_id' => 'nullable|integer',
+            'institution_id' => 'nullable|integer|exists:institution_managements,id',
+            'institution_classes_id' => 'nullable|integer|exists:institution_classes,id',
             'roll_number' => 'nullable|string|max:255',
         ]);
 
@@ -255,4 +255,5 @@ class ProfileController extends Controller
             'message' => 'Password changed successfully'
         ], 200);
     }
+    
 }
