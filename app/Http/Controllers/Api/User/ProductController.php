@@ -1049,6 +1049,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
+    
     public function verifyRazorpayPayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -1221,6 +1222,44 @@ class ProductController extends Controller
         ]);
     }
 
-    
+    public function orderStatus(Request $request, $id)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User must be logged in to view order status'
+            ], 401);
+        }
+
+        $order = Order::with(['logs' => function($query) {
+            $query->orderBy('id', 'asc');
+        }])->where('id', $id)->where('user_id', $user->id)->first();
+
+        if (!$order) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Order status fetched successfully',
+            'data' => [
+                'order_id' => $order->id,
+                'current_status' => $order->order_status,
+                'tracking_number' => $order->tracking_number,
+                'courier_name' => $order->courier_name,
+                'logs' => $order->logs->map(function($log) {
+                    return [
+                        'status' => $log->order_status,
+                        'date' => $log->created_at->format('d M Y, h:i A'),
+                    ];
+                })
+            ]
+        ]);
+    }
 
 }
