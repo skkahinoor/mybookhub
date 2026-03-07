@@ -149,7 +149,7 @@
                                 </div>
                             @endif
 
-                            <form action="{{ route('user.book.request.store') }}" method="POST">
+                            <form action="{{ route('student.book.request.store') }}" method="POST">
                                 @csrf
 
                                 <div class="row">
@@ -203,7 +203,7 @@
                                     <button type="submit" class="btn btn-primary" style="background-color:#cf8938;border:none;">
                                         <i class="fas fa-paper-plane"></i> Submit Request
                                     </button>
-                                    <a href="{{ route('user.book.indexrequest') }}" class="text-decoration-none">
+                                    <a href="{{ route('student.book.indexrequest') }}" class="text-decoration-none">
                                         View My Requests <i class="fas fa-arrow-right"></i>
                                     </a>
                                 </div>

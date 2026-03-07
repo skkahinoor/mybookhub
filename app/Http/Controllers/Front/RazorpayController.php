@@ -15,32 +15,57 @@ use App\Models\Payment;
 use App\Models\Section;
 use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\Mail;
+use Razorpay\Api\Api;
 
 class RazorpayController extends Controller
 {
     public function razorpay()
-    {
-        if (Session::has('order_id')) {
-            $order_id = Session::get('order_id');
-            $order = Order::with('orders_products')->where('id', $order_id)->first();
+{
+    if (Session::has('order_id')) {
 
-            if (!$order) {
-                return redirect('cart');
-            }
+        $order_id = Session::get('order_id');
 
-            $grand_total = $order->grand_total;
-            $user = Auth::user();
-            $condition = session('condition', 'new');
-            $sections  = Section::all();
-            $logos     = HeaderLogo::all();
-            $language  = Language::get();
+        $order = Order::with('orders_products')->where('id',$order_id)->first();
 
-
-            return view('front.razorpay.razorpay', compact('order', 'grand_total', 'user', 'logos', 'sections', 'condition', 'language'));
-        } else {
+        if (!$order) {
             return redirect('cart');
         }
+
+        $grand_total = $order->grand_total;
+
+        $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+
+        $razorpayOrder = $api->order->create([
+            'receipt' => 'order_'.$order_id,
+            'amount' => $grand_total * 100,
+            'currency' => 'INR'
+        ]);
+
+        // Save razorpay order id
+        $order->razorpay_order_id = $razorpayOrder['id'];
+        $order->save();
+
+        $user = Auth::user();
+
+        $condition = session('condition','new');
+        $sections = Section::all();
+        $logos = HeaderLogo::all();
+        $language = Language::get();
+
+        return view('front.razorpay.razorpay',compact(
+            'order',
+            'grand_total',
+            'user',
+            'logos',
+            'sections',
+            'condition',
+            'language',
+            'razorpayOrder'
+        ));
     }
+
+    return redirect('cart');
+}
 
     public function payment(Request $request)
     {
@@ -60,6 +85,7 @@ class RazorpayController extends Controller
             $payment->order_id = $order_id;
             $payment->user_id = Auth::user()->id;
             $payment->payment_id = $input['razorpay_payment_id'];
+            $payment->razorpay_order_id = $input['razorpay_order_id'];
             $payment->payer_id = Auth::user()->id;
             $payment->payer_email = Auth::user()->email;
             $payment->amount = $input['totalAmount'];

@@ -31,4 +31,6 @@ Route::post('/user/coupon/apply', [ProductController::class, 'applyCoupon']);
 // Checkout Auth Route
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/checkout', [ProductController::class, 'checkout']);
+    Route::post('/user/verify', [ProductController::class, 'verifyRazorpayPayment']);
+    Route::get('/user/orders', [ProductController::class, 'orders']);
 });

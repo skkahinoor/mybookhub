@@ -20,18 +20,10 @@
                     alt="{{ $product->product_name }}">
             </a>
             <div class="condition-badge {{ $isNew ? 'badge-new' : 'badge-used' }}">
-                {{ $isNew ? 'New' : 'Used' }}
+                {{ $isNew ? 'New' : 'Old' }}
             </div>
-
-            <form action="{{ url('cart/add') }}" method="POST">
-                @csrf
-                <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
-                <input type="hidden" name="quantity" value="1">
-                <button type="submit" class="btn-quick-add">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </form>
         </div>
+
         <div class="book-info">
             <h3 class="book-title">
                 <a href="{{ url('product/' . $attributeId) }}" class="text-dark text-decoration-none">
@@ -41,7 +33,19 @@
             <div class="book-category">{{ $product->authors->pluck('name')->first() ?? 'NCERT' }}</div>
             <div class="book-price-row">
                 <span class="current-price">₹{{ $finalPrice }}</span>
+                @if ($discount > 0)
+                    <span class="old-price">₹{{ round($originalPrice) }}</span>
+                @endif
             </div>
+
+            <form action="{{ url('cart/add') }}" method="POST">
+                @csrf
+                <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" class="btn-quick-add" title="Add to Cart">
+                    Add
+                </button>
+            </form>
         </div>
     </div>
 @endforeach
