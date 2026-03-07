@@ -1021,6 +1021,24 @@
             border-radius: 6px;
             font-weight: 700;
         }
+
+        .cta-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 40px;
+        }
+
+        @media (max-width: 750px) {
+            .cta-container {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .cta-container {
+                padding: 10px;
+            }
+        }
     </style>
 
 
@@ -1141,7 +1159,7 @@
     @endif
 
     <!-- CTA Block -->
-    <div class="container pt-5 pb-4">
+    <div class="cta-container pt-5 pb-4">
         <!-- Sales Card -->
         <div class="sales-cta-card shadow-lg mb-5 position-relative">
 
