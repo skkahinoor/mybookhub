@@ -12,6 +12,9 @@ use App\Models\Category;
 use App\Models\Subcategory;
 use App\Models\BookType;
 use App\Models\Language;
+use App\Models\InstitutionManagement;
+use App\Models\InstitutionClass;
+use App\Models\WalletTransaction;
 
 class HomeController extends Controller
 {
@@ -70,6 +73,30 @@ class HomeController extends Controller
         ]);
     }
 
+    public function getInstitutions()
+    {
+        $institutions = InstitutionManagement::where('status', 1)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name']);
+
+        return response()->json([
+            'status' => true,
+            'data'   => $institutions
+        ]);
+    }
+
+    public function getInstitutionclass($institution_id)
+    {
+        $institutionClasses = InstitutionClass::with('subcategory')
+            ->where('institution_id', $institution_id)
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data'   => $institutionClasses
+        ]);
+    }
+
     public function getcategories($section_id)
     {
         $categories = Category::where('status', 1)
@@ -116,6 +143,29 @@ class HomeController extends Controller
         return response()->json([
             'status' => true,
             'data'   => $language
+        ]);
+    }
+
+    public function getWalletTransactions(Request $request)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not authenticated',
+            ], 401);
+        }
+
+        $transactions = WalletTransaction::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Wallet transactions fetched successfully',
+            'wallet_balance' => $user->wallet_balance,
+            'data' => $transactions
         ]);
     }
 }
