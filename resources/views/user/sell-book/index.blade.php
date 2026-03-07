@@ -60,9 +60,15 @@
                                         </thead>
                                         <tbody>
                                             @foreach($requests as $key => $request)
-                                                <tr>
+                                                <tr class="{{ $request->book_status == 'sold' ? 'table-active text-muted' : '' }}">
                                                     <td>{{ $key + 1 }}</td>
-                                                    <td>{{ $request->book_title }}</td>
+                                                    <td>
+                                                        @if($request->book_status == 'sold')
+                                                            <del>{{ $request->book_title }}</del>
+                                                        @else
+                                                            {{ $request->book_title }}
+                                                        @endif
+                                                    </td>
                                                     <td>{{ $request->author_name ?? 'N/A' }}</td>
                                                     <td>
                                                         @if($request->request_status == 'pending')
@@ -81,14 +87,18 @@
                                                         @elseif($request->book_status == 'rejected')
                                                             <span class="badge badge-danger">Rejected</span>
                                                         @elseif($request->book_status == 'sold')
-                                                            <span class="badge badge-primary">Sold</span>
+                                                            <span class="badge badge-danger text-white"><i class="mdi mdi-sale"></i> SOLD</span>
                                                         @else
                                                             <span class="badge badge-secondary">Not Submitted</span>
                                                         @endif
                                                     </td>
                                                     <td>
                                                         @if($request->expected_price)
-                                                            ₹{{ number_format($request->expected_price, 2) }}
+                                                            @if($request->book_status == 'sold')
+                                                                <del>₹{{ number_format($request->expected_price, 2) }}</del>
+                                                            @else
+                                                                ₹{{ number_format($request->expected_price, 2) }}
+                                                            @endif
                                                         @else
                                                             N/A
                                                         @endif
@@ -96,7 +106,7 @@
                                                     <td>{{ $request->created_at->format('d M Y') }}</td>
                                                     <td>
                                                         <a href="{{ route('student.sell-book.show', $request->id) }}" 
-                                                           class="btn btn-sm btn-info" title="View Details">
+                                                           class="btn btn-sm {{ $request->book_status == 'sold' ? 'btn-secondary' : 'btn-info' }}" title="View Details">
                                                             <i class="bi bi-eye"></i>
                                                         </a>
                                                         @if($request->request_status == 'approved' && !$request->hasBookDetails())
@@ -104,6 +114,13 @@
                                                                class="btn btn-sm btn-primary" title="Fill Book Details">
                                                                 <i class="bi bi-pen"></i>
                                                             </a>
+                                                        @elseif($request->request_status == 'approved' && $request->book_status == 'approved')
+                                                            <form action="{{ route('student.sell-book.mark-sold', $request->id) }}" method="POST" class="d-inline">
+                                                                @csrf
+                                                                <button type="submit" class="btn btn-sm btn-success" title="Mark as Sold" onclick="return confirm('Are you sure you want to mark this book as sold?')">
+                                                                    <i class="bi bi-check-circle"></i>
+                                                                </button>
+                                                            </form>
                                                         @endif
                                                     </td>
                                                 </tr>

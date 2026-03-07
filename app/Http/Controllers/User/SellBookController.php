@@ -94,7 +94,12 @@ class SellBookController extends Controller
                 ->with('info_message', 'Book details have already been submitted.');
         }
 
-        return view('user.sell-book.edit', compact('request', 'logos', 'headerLogo'));
+        $subjects = \App\Models\Subject::where('status', 1)->get();
+        $languages = \App\Models\Language::where('status', 1)->get();
+        $categories = \App\Models\Category::where('status', 1)->get();
+        $bookTypes = \App\Models\BookType::where('status', 1)->get();
+
+        return view('user.sell-book.edit', compact('request', 'logos', 'headerLogo', 'subjects', 'languages', 'categories', 'bookTypes'));
     }
 
     /**
@@ -114,9 +119,15 @@ class SellBookController extends Controller
     
         // Validation
         $request->validate([
+            'book_title'       => 'required|string|max:255',
+            'author_name'      => 'nullable|string|max:255',
             'isbn'             => 'required|string|max:255',
             'publisher'        => 'nullable|string|max:255',
             'edition'          => 'nullable|string|max:100',
+            'subject_id'       => 'nullable|integer|exists:subjects,id',
+            'language_id'      => 'nullable|integer|exists:languages,id',
+            'category_id'      => 'nullable|integer|exists:categories,id',
+            'book_type_id'     => 'nullable|integer|exists:book_types,id',
             'year_published'   => 'nullable|integer|min:1900|max:' . date('Y'),
             'book_condition'   => 'required|string|in:Excellent,Good,Fair,Poor',
             'book_description' => 'nullable|string|max:2000',
@@ -172,5 +183,68 @@ class SellBookController extends Controller
             ->route('student.sell-book.show', $id)
             ->with('success_message', 'Book details submitted successfully! Admin will review and update the status.');
     }
-}
+    /**
+     * Mark the approved book as sold
+     */
+    public function markAsSold($id)
+    {
+        $sellRequest = SellBookRequest::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
+        if ($sellRequest->request_status !== 'approved' || $sellRequest->book_status !== 'approved') {
+            return redirect()->back()
+                ->with('error_message', 'You can only sell books that are fully approved.');
+        }
+
+        $sellRequest->update(['book_status' => 'sold']);
+
+        return redirect()->back()
+            ->with('success_message', 'Congratulations! Your book has been marked as sold.');
+    }
+    /**
+     * Get book details by ISBN for auto-filling
+     */
+    public function getBookByIsbn($isbn)
+    {
+        // Clean the input ISBN (remove spaces, dashes, etc)
+        $cleanSearch = preg_replace('/[^0-9X]/i', '', $isbn);
+        
+        // Exact match on raw column
+        $product = \App\Models\Product::with(['publisher', 'edition', 'authors'])
+            ->where('product_isbn', $isbn)
+            ->where('status', 1)
+            ->first();
+
+        // If not found, try searching clean ISBN
+        if (!$product && strlen($cleanSearch) > 0) {
+            $product = \App\Models\Product::with(['publisher', 'edition', 'authors'])
+                ->where(function($query) use ($isbn, $cleanSearch) {
+                    $query->where('product_isbn', 'like', "%{$isbn}%")
+                          ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
+                          ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
+                })
+                ->where('status', 1)
+                ->first();
+        }
+
+        if ($product) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'product_name' => $product->product_name,
+                    'author_name' => $product->authors->pluck('name')->join(', '),
+                    'publisher' => $product->publisher->name ?? '',
+                    'edition' => $product->edition->edition ?? '',
+                    'subject_id' => $product->subject_id,
+                    'language_id' => $product->language_id,
+                    'category_id' => $product->category_id,
+                    'book_type_id' => $product->book_type_id,
+                    'product_price' => $product->product_price,
+                ]
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Book not found']);
+    }
+}

@@ -51,5 +51,7 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
         Route::get('/sell-book/{id}', [SellBookController::class, 'show'])->name('student.sell-book.show');
         Route::get('/sell-book/{id}/edit', [SellBookController::class, 'edit'])->name('student.sell-book.edit');
         Route::put('/sell-book/{id}', [SellBookController::class, 'update'])->name('student.sell-book.update');
+        Route::post('/sell-book/{id}/mark-sold', [SellBookController::class, 'markAsSold'])->name('student.sell-book.mark-sold');
+        Route::get('/sell-book/check-isbn/{isbn}', [SellBookController::class, 'getBookByIsbn'])->name('student.sell-book.check-isbn');
     });
 });
