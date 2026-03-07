@@ -764,6 +764,140 @@
                 visibility: visible;
             }
         }
+
+
+
+        /* Sell Book Community Section */
+        .sell-book-section {
+            padding: 40px 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-header h2 span {
+            color: var(--primary-orange);
+        }
+
+        .sell-book-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px;
+            padding-bottom: 15px;
+            scrollbar-width: none;
+        }
+
+        .sell-book-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .student-book-card {
+            min-width: 260px;
+            background: #fff;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border: 1px solid rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .student-book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+        }
+
+        .student-book-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 15px;
+            background: #f8f8f8;
+        }
+
+        .sold-overlay {
+            position: absolute;
+            top: 25px;
+            right: 0;
+            background: #ff4757;
+            color: white;
+            padding: 4px 15px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            border-radius: 20px 0 0 20px;
+            z-index: 2;
+            box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .student-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #eee;
+        }
+
+        .student-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .student-book-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+            line-height: 1.3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .student-book-price {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary-orange);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .condition-tag {
+            font-size: 10px;
+            padding: 3px 8px;
+            background: #f0f7ff;
+            color: #007aff;
+            border-radius: 6px;
+            font-weight: 700;
+        }
     </style>
 
 
@@ -835,6 +969,47 @@
             overflow: hidden !important;
         }
     </style>
+
+    <!-- 7. Sell Book Community Section -->
+    @if(isset($sellBookRequests) && $sellBookRequests->count() > 0)
+    <div class="sell-book-section">
+        <div class="section-header">
+            <h2><i class="fas fa-users" style="color: var(--primary-orange);"></i> Student <span>Marketplace</span></h2>
+            <a href="javascript:void(0)" class="btn-change">View All</a>
+        </div>
+        
+        <div class="sell-book-scroll">
+            @foreach($sellBookRequests as $sbook)
+            <div class="student-book-card">
+                @if($sbook->book_status == 'sold')
+                    <div class="sold-overlay">Sold</div>
+                @endif
+                
+                <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}" 
+                     class="student-book-img {{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}" 
+                     alt="{{ $sbook->book_title }}">
+                
+                <div class="student-info">
+                    <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}" class="student-avatar" alt="User">
+                    <span class="student-name">By {{ $sbook->user->name }}</span>
+                    <span class="ms-auto condition-tag">{{ $sbook->book_condition }}</span>
+                </div>
+                
+                <h3 class="student-book-title">{{ $sbook->book_title }}</h3>
+                
+                <div class="student-book-price">
+                    <span>₹{{ number_format($sbook->expected_price, 2) }}</span>
+                    @if($sbook->book_status != 'sold')
+                        <a href="{{ route('student.sell-book.show', $sbook->id) }}" class="btn btn-sm" style="background: #f2f2f7; border-radius: 10px; font-weight: 700; font-size: 11px; color: var(--text-dark);">Details</a>
+                    @else
+                        <span style="font-size: 11px; color: #ff4757; font-weight: 700;">SOLD OUT</span>
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
 
     <!-- CTA Block -->
     <div class="container py-5">
