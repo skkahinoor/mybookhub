@@ -273,6 +273,7 @@ class IndexController extends Controller
                 return response()->json([
                     'html' => view('front.partials.home_product_grid', compact('sliderProducts'))->render(),
                     'subjects_html' => view('front.partials.home_subjects', compact('homeSubjects'))->render(),
+                    'has_more' => $sliderProducts->hasMorePages(),
                     'info' => (isset($request->info) ? $request->info : '')
                 ]);
             }
