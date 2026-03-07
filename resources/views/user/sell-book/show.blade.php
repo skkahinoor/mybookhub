@@ -99,6 +99,18 @@
                                         Fill Book Details
                                     </a>
                                 </div>
+                            @elseif($request->request_status == 'approved' && $request->book_status == 'approved')
+                                <div class="alert alert-success d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <strong>Ready to Sell!</strong> Your book details have been approved. You can now mark it as sold.
+                                    </div>
+                                    <form action="{{ route('student.sell-book.mark-sold', $request->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Are you sure you want to mark this book as sold?')">
+                                            <i class="mdi mdi-check-circle"></i> Sell It
+                                        </button>
+                                    </form>
+                                </div>
                             @endif
 
                             <!-- Book Information -->
@@ -108,9 +120,24 @@
                                     
                                     <div class="row">
                                         @if($request->book_image)
-                                            <div class="col-md-4 mb-3">
-                                                <img src="{{ asset($request->book_image) }}" alt="Book Image" 
-                                                     class="img-fluid rounded" style="max-height: 300px;">
+                                            <div class="col-md-4 mb-3 position-relative">
+                                                <div class="image-container mx-auto" style="position: relative; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                                                    <img src="{{ asset($request->book_image) }}" alt="Book Image" 
+                                                         class="img-fluid rounded" style="width: 100%; object-fit: cover; {{ $request->book_status == 'sold' ? 'filter: grayscale(40%) contrast(1.2);' : '' }}">
+                                                    
+                                                    @if($request->book_status == 'sold')
+                                                    <!-- Beautiful Sold Ribbon -->
+                                                    <div style="position: absolute; top: 20px; right: -35px; background: #ff4757; color: white; padding: 5px 40px; transform: rotate(45deg); font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); letter-spacing: 1px; z-index: 10; text-transform: uppercase;">
+                                                        Sold Out
+                                                    </div>
+                                                    <!-- Watermark over image -->
+                                                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.2); z-index: 5;">
+                                                        <div style="color: #ff4757; font-size: 3rem; font-weight: 900; transform: rotate(-30deg); border: 4px solid #ff4757; padding: 10px 20px; border-radius: 10px; opacity: 0.8; text-transform: uppercase; box-shadow: 0 0 15px rgba(255,71,87,0.3);">
+                                                            SOLD
+                                                        </div>
+                                                    </div>
+                                                    @endif
+                                                </div>
                                             </div>
                                         @endif
                                         <div class="{{ $request->book_image ? 'col-md-8' : 'col-md-12' }}">

@@ -30,16 +30,16 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="book_title">Book Title</label>
-                                            <input type="text" class="form-control" id="book_title" 
-                                                   value="{{ $request->book_title }}" disabled>
+                                            <label for="book_title">Book Title <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="book_title" name="book_title" 
+                                                   value="{{ old('book_title', $request->book_title) }}" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="author_name">Author Name</label>
-                                            <input type="text" class="form-control" id="author_name" 
-                                                   value="{{ $request->author_name ?? 'N/A' }}" disabled>
+                                            <input type="text" class="form-control" id="author_name" name="author_name" 
+                                                   value="{{ old('author_name', $request->author_name) }}">
                                         </div>
                                     </div>
                                 </div>
@@ -70,12 +70,63 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="year_published">Year Published</label>
-                                            <input type="number" class="form-control" id="year_published" name="year_published" 
-                                                   placeholder="e.g., 2020" min="1900" max="{{ date('Y') }}" 
-                                                   value="{{ old('year_published') }}">
+                                            <label for="category_id">Category</label>
+                                            <select class="form-control" id="category_id" name="category_id">
+                                                <option value="">Select Category</option>
+                                                @foreach($categories as $category)
+                                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                                        {{ $category->category_name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="subject_id">Subject</label>
+                                            <select class="form-control" id="subject_id" name="subject_id">
+                                                <option value="">Select Subject</option>
+                                                @foreach($subjects as $subject)
+                                                    <option value="{{ $subject->id }}" {{ old('subject_id') == $subject->id ? 'selected' : '' }}>
+                                                        {{ $subject->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="language_id">Language</label>
+                                            <select class="form-control" id="language_id" name="language_id">
+                                                <option value="">Select Language</option>
+                                                @foreach($languages as $language)
+                                                    <option value="{{ $language->id }}" {{ old('language_id') == $language->id ? 'selected' : '' }}>
+                                                        {{ $language->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="book_type_id">Book Type</label>
+                                            <select class="form-control" id="book_type_id" name="book_type_id">
+                                                <option value="">Select Book Type</option>
+                                                @foreach($bookTypes as $type)
+                                                    <option value="{{ $type->id }}" {{ old('book_type_id') == $type->id ? 'selected' : '' }}>
+                                                        {{ $type->book_type }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                   
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="book_condition">Book Condition <span class="text-danger">*</span></label>
@@ -87,7 +138,7 @@
                                                 <option value="Poor" {{ old('book_condition') == 'Poor' ? 'selected' : '' }}>Poor</option>
                                             </select>
                                         </div>
-                                    </div>
+                                    </div>                                  
                                 </div>
 
                                 <div class="form-group">
@@ -123,4 +174,110 @@
 </div>
 
 @include('user.layout.footer')
+
+</div>
+<!-- plugins:js -->
+<script src="{{ asset('user/vendors/js/vendor.bundle.base.js') }}"></script>
+<!-- endinject -->
+<!-- inject:js -->
+<script src="{{ asset('user/js/off-canvas.js') }}"></script>
+<script src="{{ asset('user/js/hoverable-collapse.js') }}"></script>
+<script src="{{ asset('user/js/template.js') }}"></script>
+<script src="{{ asset('user/js/settings.js') }}"></script>
+<script src="{{ asset('user/js/todolist.js') }}"></script>
+<!-- endinject -->
+
+<script>
+// Use standard JS to ensure it runs even if jQuery takes a sec to init
+document.addEventListener('DOMContentLoaded', function() {
+    let originalPrice = 0;
+    let lastCheckedIsbn = '';
+    const isbnInput = document.getElementById('isbn');
+    const conditionSelect = document.getElementById('book_condition');
+    const priceInput = document.getElementById('expected_price');
+
+    if (isbnInput) {
+        isbnInput.addEventListener('change', function() { checkIsbn(true); });
+        isbnInput.addEventListener('blur', function() { checkIsbn(true); });
+        
+        // Initial check on load (without alert)
+        if (isbnInput.value.length >= 7) {
+            checkIsbn(false);
+        }
+    }
+
+    if (conditionSelect) {
+        conditionSelect.addEventListener('change', calculateSuggestedPrice);
+    }
+
+    function checkIsbn(showAlert) {
+        let isbn = isbnInput.value.trim();
+        if (isbn.length >= 7 && isbn !== lastCheckedIsbn) { 
+            lastCheckedIsbn = isbn;
+            console.log("Checking ISBN:", isbn);
+            fetch("{{ url('student/sell-book/check-isbn') }}/" + encodeURIComponent(isbn), {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(response => {
+                if (response.success) {
+                    console.log("Book Found:", response.data);
+                    document.getElementById('book_title').value = response.data.product_name;
+                    document.getElementById('author_name').value = response.data.author_name;
+                    document.getElementById('publisher').value = response.data.publisher;
+                    document.getElementById('edition').value = response.data.edition;
+                    
+                    // New fields auto-fill
+                    if (response.data.category_id) document.getElementById('category_id').value = response.data.category_id;
+                    if (response.data.subject_id) document.getElementById('subject_id').value = response.data.subject_id;
+                    if (response.data.language_id) document.getElementById('language_id').value = response.data.language_id;
+                    if (response.data.book_type_id) document.getElementById('book_type_id').value = response.data.book_type_id;
+
+                    originalPrice = parseFloat(response.data.product_price);
+                    calculateSuggestedPrice();
+                    
+                    if (showAlert) {
+                        alert('Book found: ' + response.data.product_name + '! Details filled.');
+                    }
+                } else {
+                    console.log("Book not found in DB.");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+
+    function calculateSuggestedPrice() {
+        if (originalPrice > 0) {
+            let condition = conditionSelect.value;
+            let percentage = 0;
+
+            switch(condition) {
+                case 'Excellent': percentage = 0.8; break;
+                case 'Good':      percentage = 0.7; break;
+                case 'Fair':      percentage = 0.6; break;
+                case 'Poor':      percentage = 0.5; break;
+            }
+
+            if (percentage > 0) {
+                let suggestedPrice = (originalPrice * percentage).toFixed(2);
+                priceInput.value = suggestedPrice;
+                
+                let hint = document.getElementById('price_hint');
+                if (!hint) {
+                    hint = document.createElement('small');
+                    hint.id = 'price_hint';
+                    hint.className = 'text-success d-block mt-1';
+                    priceInput.parentNode.appendChild(hint);
+                }
+                hint.innerText = 'Suggested price (Admin Rule): ' + suggestedPrice;
+            }
+        }
+    }
+});
+</script>
+</body>
+</html>
 

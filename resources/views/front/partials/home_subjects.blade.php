@@ -5,7 +5,7 @@
                 onclick="filterBySubject({{ $sub->id }})">
                 <div class="category-icon">
                     @if ($sub->subject_icon)
-                        <img src="{{ asset('front/images/subject_icons/' . $sub->subject_icon) }}"
+                        <img src="{{ asset('admin/images/subject_icons/' . $sub->subject_icon) }}"
                             onerror="this.src='https://img.icons8.com/color/96/book.png'" alt="{{ $sub->name }}">
                     @else
                         <img src="https://img.icons8.com/color/96/book.png" alt="{{ $sub->name }}">

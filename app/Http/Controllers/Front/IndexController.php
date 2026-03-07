@@ -75,7 +75,7 @@ class IndexController extends Controller
         // --- NEW FILTERS ---
         // 1. Book Types (Multiple)
         if ($request->filled('book_types')) {
-            $bookTypeIds = is_array($request->book_types) ? $request->book_types : explode(',', (string)$request->book_types);
+            $bookTypeIds = is_array($request->input('book_types')) ? $request->input('book_types') : explode(',', (string)$request->input('book_types'));
             $sliderProductsQuery->whereHas('product', function ($q) use ($bookTypeIds) {
                 $q->whereIn('book_type_id', $bookTypeIds);
             });
@@ -83,7 +83,7 @@ class IndexController extends Controller
 
         // 2. Languages (Multiple)
         if ($request->filled('languages')) {
-            $langIds = is_array($request->languages) ? $request->languages : explode(',', (string)$request->languages);
+            $langIds = is_array($request->input('languages')) ? $request->input('languages') : explode(',', (string)$request->input('languages'));
             $sliderProductsQuery->whereHas('product', function ($q) use ($langIds) {
                 $q->whereIn('language_id', $langIds);
             });
@@ -262,6 +262,13 @@ class IndexController extends Controller
             $total_price += $getDiscountPriceDetails['final_price'] * $item['quantity'];
         }
 
+        // Fetch SellBookRequests
+        $sellBookRequests = \App\Models\SellBookRequest::with('user')
+            ->whereIn('book_status', ['approved', 'sold'])
+            ->orderBy('id', 'desc')
+            ->limit(10)
+            ->get();
+
         if ($request->ajax()) {
             if ($request->has('filter_update')) {
                 return response()->json([
@@ -302,7 +309,8 @@ class IndexController extends Controller
             'totalProducts',
             'totalAuthors',
             'getCartItems',
-            'total_price'
+            'total_price',
+            'sellBookRequests'
         ));
     }
 
