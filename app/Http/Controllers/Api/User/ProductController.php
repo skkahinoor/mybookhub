@@ -23,6 +23,7 @@ use App\Models\Payment;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Models\OrdersLog;
 use Razorpay\Api\Api;
 
 class ProductController extends Controller
@@ -1281,4 +1282,60 @@ class ProductController extends Controller
         ]);
     }
 
+    public function cancelOrder(Request $request, $id)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User must be logged in'
+            ], 401);
+        }
+
+        $order = Order::where('id', $id)->where('user_id', $user->id)->first();
+
+        if (!$order) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        if ($order->order_status != 'Pending') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Only Pending orders can be cancelled. Current status is ' . $order->order_status
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Update status
+            $order->update(['order_status' => 'Cancelled']);
+
+            // Revert Wallet
+            WalletTransaction::revertWallet($id);
+
+            // Log status
+            $log = new OrdersLog;
+            $log->order_id = $id;
+            $log->order_status = 'Cancelled';
+            $log->save();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Order #' . $id . ' has been cancelled successfully.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to cancel order: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
