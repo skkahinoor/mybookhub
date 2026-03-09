@@ -1312,7 +1312,7 @@
                                     </ul>
 
                                     <div class="mt-auto d-flex flex-column gap-2">
-                                        <a href="{{ route('vendor.register') }}"
+                                        <a href="{{ url('/vendors') }}"
                                             class="btn w-100 py-3 d-flex align-items-center justify-content-center gap-2"
                                             style="background: #111827; color: white; border: none; font-weight: 700; border-radius: 12px; font-size: 1.05rem; transition: all 0.3s ease;"
                                             onmouseover="this.style.background='#000'; this.style.transform='translateY(-2px)';"
