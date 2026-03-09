@@ -107,13 +107,22 @@ class IndexController extends Controller
 
         /* SUBJECTS */
         $homeSubjects = collect([]);
-        if ($request->filled('subcategory_id')) {
-            $subjectIds = FilterClassSubject::where('sub_category_id', $request->subcategory_id)
-                ->pluck('subject_id');
+        if ($request->filled('section_id') || $request->filled('category_id') || $request->filled('subcategory_id')) {
+            $subjectIdsQuery = FilterClassSubject::query();
+            if ($request->filled('section_id')) {
+                $subjectIdsQuery->where('section_id', $request->section_id);
+            }
+            if ($request->filled('category_id')) {
+                $subjectIdsQuery->where('category_id', $request->category_id);
+            }
+            if ($request->filled('subcategory_id')) {
+                $subjectIdsQuery->where('sub_category_id', $request->subcategory_id);
+            }
+            $subjectIds = $subjectIdsQuery->distinct()->pluck('subject_id');
             $homeSubjects = Subject::whereIn('id', $subjectIds)->where('status', 1)->get();
         } else {
             // Default subjects for the initial load
-            $homeSubjects = Subject::where('status', 1)->limit(10)->get();
+            $homeSubjects = Subject::where('status', 1)->limit(20)->get();
         }
 
 

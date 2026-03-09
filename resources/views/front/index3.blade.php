@@ -2,21 +2,20 @@
 
 @section('content')
     <style>
-        /* Modern Design System */
         :root {
-            --primary-orange: #FF6B00;
-            --primary-blue: #2979FF;
-            --bg-light: #F8F9FB;
-            --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
-            --header-bg: #FFFFFF;
-            --text-dark: #1A1A1A;
-            --text-muted: #8E8E93;
+            --primary-blue: #0056D2;
+            --secondary-blue: #1E3A8A;
+            --primary-orange: #F97316;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --bg-light: #F8FAFC;
+            --white: #FFFFFF;
         }
 
         /* Page-level body overrides */
         body {
             background-color: var(--bg-light) !important;
-            font-family: 'Poppins', sans-serif !important;
+            font-family: 'Inter', sans-serif !important;
         }
 
         .page-content {
@@ -24,623 +23,783 @@
             padding-top: 0 !important;
         }
 
-        /* Premium Banner Slider */
-        .banner-container {
-            padding: 15px 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .premium-banner {
-            border-radius: 24px;
-            overflow: hidden;
-            background: #f0f0f0;
-            position: relative;
-            width: 100%;
-            height: auto;
-            aspect-ratio: 16 / 8;
-            display: block;
-        }
-
-        .banner-illustration {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        @media (min-width: 992px) {
-            .banner-container {
-                padding: 15px 20px 30px;
-            }
-
-            .premium-banner {
-                aspect-ratio: auto;
-                background: transparent;
-                height: auto;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .banner-illustration {
-                width: 100%;
-                height: auto;
-                max-height: 500px;
-                object-fit: contain;
-            }
-        }
-
-        /* Swiper Fixes */
-        .banner-swiper {
-            position: relative;
-            overflow: hidden;
-            border-radius: 24px;
-        }
-
-        .banner-container .banner-pagination {
-            position: absolute;
-            bottom: 15px !important;
-            left: 0;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            z-index: 10;
-        }
-
-        .banner-container .swiper-pagination-bullet {
-            background: rgba(255, 255, 255, 0.5);
-            opacity: 1;
-            width: 8px;
-            height: 8px;
-            margin: 0 4px !important;
-        }
-
-        .banner-container .swiper-pagination-bullet-active {
-            background: #fff !important;
-            width: 20px;
-            border-radius: 5px;
-        }
-
-        .banner-illustration {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* Info Bar */
-        .selection-bar {
-            padding: 5px 22px;
+        /* HERO */
+        .hero {
+            background: var(--white);
+            padding: 50px 8%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
-            max-width: 1400px;
-            margin-left: auto;
-            margin-right: auto;
+            gap: 40px;
         }
 
-        .selection-info {
+        @media (max-width: 991px) {
+            .hero {
+                flex-direction: column;
+                text-align: center;
+                padding: 40px 20px;
+            }
+
+            .hero-content {
+                max-width: 100%;
+            }
+        }
+
+        .hero-content {
+            max-width: 600px;
+        }
+
+        .hero h1 {
+            font-size: 44px;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1.2;
+            margin-bottom: 5px;
+        }
+
+        .hero h1 span {
+            color: var(--secondary-blue);
+        }
+
+        .hero .headline-sub {
+            font-size: 20px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 5px;
+        }
+
+        .hero .save-text {
             font-size: 14px;
             color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .btn-change {
-            color: var(--primary-orange);
-            font-weight: 700;
-            font-size: 14px;
-            text-decoration: none !important;
-        }
-
-        /* Categories */
-        .category-wrapper {
             margin-bottom: 25px;
-            max-width: 1400px;
-            margin-left: auto;
-            margin-right: auto;
         }
 
-        .category-scroll {
+        .search-container-hero {
+            max-width: 480px;
+            margin-bottom: 30px;
             display: flex;
-            overflow-x: auto;
-            padding: 5px 20px 10px;
-            gap: 18px;
-            scrollbar-width: none;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 4px;
         }
 
-        @media (min-width: 992px) {
-            .category-scroll {
+        @media (max-width: 991px) {
+            .search-container-hero {
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        .search-container-hero input {
+            flex: 1;
+            padding: 12px 15px;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 15px;
+        }
+
+        .btn-search-hero {
+            background: var(--primary-blue);
+            border: none;
+            padding: 0 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 35px;
+        }
+
+        @media (max-width: 991px) {
+            .hero-btns {
                 justify-content: center;
-                gap: 45px;
-                padding: 30px;
-            }
-
-            .category-icon {
-                width: 90px !important;
-                height: 90px !important;
-            }
-
-            .category-label {
-                font-size: 14px !important;
-                margin-top: 5px;
             }
         }
 
-        .category-scroll::-webkit-scrollbar {
+        .btn-premium {
+            padding: 14px 40px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none !important;
+            font-size: 16px;
+            transition: 0.2s;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-blue {
+            background: #0056d2;
+            color: white !important;
+            border-bottom: 4px solid #0042a5;
+        }
+
+        .btn-orange {
+            background: var(--primary-orange);
+            color: white !important;
+            border-bottom: 4px solid #c2410c;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+
+        .trust-badges {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 991px) {
+            .trust-badges {
+                justify-content: center;
+            }
+        }
+
+        .trust-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            background: #F1F5F9;
+            padding: 8px 15px;
+            border-radius: 30px;
+        }
+
+        .hero-illustration img {
+            max-width: 500px;
+            width: 100%;
+        }
+
+        /* SUBJECTS */
+        .subjects-strip {
+            background: var(--white);
+            padding: 30px 8%;
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            border-top: 1px solid #f1f5f9;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        .subjects-strip::-webkit-scrollbar {
             display: none;
         }
 
-        .category-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 68px;
+        .subject-item-premium {
+            min-width: 100px;
+            text-align: center;
             text-decoration: none !important;
         }
 
-        .category-icon {
-            width: 64px;
-            height: 64px;
+        .subject-circle-premium {
+            width: 70px;
+            height: 70px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 50%;
-            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 8px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-            overflow: hidden;
-            border: 2px solid #fff;
+            margin: 0 auto 10px;
+            font-size: 28px;
+            transition: 0.3s;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
-        .category-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .category-item.active .category-icon {
-            border-color: var(--primary-orange);
-            box-shadow: 0 0 0 2px var(--primary-orange);
-            transform: scale(1.05);
-            transition: all 0.3s ease;
-        }
-
-        .category-item.active .category-label {
-            color: var(--primary-orange);
-        }
-
-        .category-label {
-            font-size: 12px;
-            color: #444;
+        .subject-item-premium span {
+            font-size: 13px;
             font-weight: 600;
+            color: #64748b;
         }
 
-        /* Filter Chips */
-        .tab-filters {
-            padding: 0 20px;
+        .subject-item-premium:hover .subject-circle-premium {
+            transform: translateY(-5px);
+            border-color: var(--primary-blue);
+        }
+
+        /* FILTER */
+        .filter-section-premium {
+            padding: 30px 8% 20px;
+        }
+
+        .location-info-premium {
             display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            max-width: 1400px;
-            margin-left: auto;
-            margin-right: auto;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #94A3B8;
+            margin-bottom: 20px;
         }
 
-        @media (min-width: 992px) {
-            .tab-filters {
-                justify-content: center;
-                gap: 15px;
-                margin-bottom: 40px;
-            }
-        }
-
-        .tab-filters::-webkit-scrollbar {
-            display: none;
-        }
-
-        .filter-chip {
-            background: #fff;
-            border: 1px solid #EDEDED;
-            padding: 10px 24px;
-            border-radius: 14px;
-            font-size: 14px;
-            color: var(--text-dark);
-            font-weight: 600;
+        .change-loc-premium {
+            color: var(--primary-orange);
             text-decoration: none !important;
-            white-space: nowrap;
+            font-weight: 700;
         }
 
-        .filter-chip.active {
+        .pills-premium {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .pill-premium {
+            padding: 8px 25px;
+            background: white;
+            border: 1px solid #E2E8F0;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-decoration: none !important;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .pill-premium.active {
             background: var(--primary-orange);
-            color: #fff;
+            color: white !important;
             border-color: var(--primary-orange);
-            box-shadow: 0 8px 20px rgba(255, 107, 0, 0.25);
+            border-bottom: 2px solid #c2410c;
         }
 
-        .filter-chip.icon-chip {
-            padding-left: 15px;
+        .pill-premium.filter-btn-premium {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        /* Product Grid Wall */
-        .book-wall {
+        /* GRID */
+        .grid-premium {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 16px;
-            padding: 20px 40px;
-            max-width: 1400px;
-            margin: 0 auto;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            padding: 0 8% 50px;
         }
 
-        /* RESPONSIVE */
         @media (max-width: 1200px) {
-            .book-wall {
-                grid-template-columns: repeat(5, 1fr);
-            }
-        }
-
-        @media (max-width: 1000px) {
-            .book-wall {
+            .grid-premium {
                 grid-template-columns: repeat(4, 1fr);
             }
         }
 
-        @media (max-width: 750px) {
-            .book-wall {
+        @media (max-width: 900px) {
+            .grid-premium {
                 grid-template-columns: repeat(3, 1fr);
-                padding: 20px;
             }
         }
 
-        @media (max-width: 500px) {
-            .book-wall {
+        @media (max-width: 600px) {
+            .grid-premium {
                 grid-template-columns: repeat(2, 1fr);
-                padding: 10px;
+                gap: 10px;
+                padding: 0 10px 40px;
             }
         }
 
-        /* CARD */
-        .book-item {
+        .card-premium {
             background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transition: .25s;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-
-        .book-item:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
-        }
-
-        /* COVER */
-        .cover {
-            aspect-ratio: 2/3;
+            border-radius: 12px;
+            padding: 12px;
             position: relative;
-            overflow: hidden;
-            background: #fff;
-        }
-
-        .cover img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: .3s;
-        }
-
-        .book-item:hover .cover img {
-            transform: scale(1.05);
-        }
-
-        /* BADGE */
-        .condition-badge {
-            position: absolute;
-            top: 6px;
-            left: 6px;
-            font-size: 10px;
-            padding: 3px 7px;
-            border-radius: 20px;
-            color: white;
-            z-index: 2;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .badge-new {
-            background: #22c55e;
-        }
-
-        .badge-used {
-            background: #f59e0b;
-        }
-
-        /* INFO */
-        .info {
-            padding: 10px;
-            flex-grow: 1;
+            transition: 0.3s;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
             display: flex;
             flex-direction: column;
+            height: 100%;
+            text-decoration: none !important;
+            color: inherit;
         }
 
-        .title {
-            font-size: 12px;
+        .card-premium:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        .p-badge-premium {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 8px;
+            border-radius: 3px;
+            color: white;
+            z-index: 10;
+            text-transform: uppercase;
+        }
+
+        .b-bestseller-premium {
+            background: #F97316;
+        }
+
+        .b-discount-premium {
+            background: #F97316;
+        }
+
+        .b-used-premium {
+            background: #14B8A6;
+        }
+
+        .card-img-premium {
+            width: 100%;
+            height: 180px;
+            background: #F1F5F9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        .card-img-premium img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .card-title-premium {
+            font-size: 14px;
             font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            margin-bottom: 4px;
-            line-height: 1.3;
-            color: #333;
-            text-decoration: none !important;
+            height: 40px;
         }
 
-        .author {
-            font-size: 11px;
-            color: #777;
-            margin-top: 2px;
-        }
-
-        /* PRICE */
-        .price {
-            font-size: 14px;
-            font-weight: 700;
-            margin-top: auto;
-            color: #1a1a1a;
-            padding-top: 8px;
-        }
-
-        /* BUTTON */
-        .cart-btn {
-            width: 100%;
-            margin-top: 8px;
-            background: #ff6b00;
-            border: none;
-            color: white;
-            padding: 7px;
-            border-radius: 5px;
+        .card-stars-premium {
+            color: #FBBF24;
             font-size: 12px;
-            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .card-price-premium {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-orange);
+            margin-bottom: 15px;
+            margin-top: auto;
+        }
+
+        .btn-cart-premium {
+            width: 100%;
+            padding: 10px;
+            background: #0056D2;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 13px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             transition: 0.2s;
         }
 
-        .cart-btn:hover {
-            background: #e45d00;
+        .btn-cart-premium:hover {
+            background: #0042a5;
         }
 
-        /* SKELETON LOADER for infinite scroll */
-        .skeleton {
-            animation: pulse 1.2s infinite;
-            background: linear-gradient(90deg, #eee, #ddd, #eee);
-            height: 300px;
-            border-radius: 8px;
-        }
-
-        @keyframes pulse {
-            0% {
-                opacity: .8
-            }
-
-            50% {
-                opacity: .4
-            }
-
-            100% {
-                opacity: .8
-            }
-        }
-
-        /* Load More Button */
-        .load-more-container {
-            display: flex;
-            justify-content: center;
-            padding: 30px 20px;
-            width: 100%;
-        }
-
-        .btn-load-more {
-            background: #fff;
-            color: var(--primary-orange);
-            border: 2px solid var(--primary-orange);
-            padding: 12px 40px;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.1);
-        }
-
-        .btn-load-more:hover {
-            background: var(--primary-orange);
-            color: #fff;
-            box-shadow: 0 8px 25px rgba(255, 107, 0, 0.25);
-            transform: translateY(-2px);
-        }
-
-        .btn-load-more:disabled {
-            border-color: #eee;
-            color: #ccc;
-            background: #f9f9f9;
-            cursor: not-allowed;
-            pointer-events: none;
-            box-shadow: none;
-        }
-
-        .btn-load-more i {
-            margin-right: 8px;
-        }
-
-        .discount-pill {
-            background: rgba(255, 59, 48, 0.1);
-            color: #FF3B30;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            margin-left: auto;
-        }
-
-        .book-info {
-            padding: 12px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .book-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #333;
-            margin: 0;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.2;
-            min-height: auto;
-        }
-
-        .book-type {
-            font-size: 11px;
-            color: #666;
-            margin: 0;
-        }
-
-        .book-category {
-            font-size: 11px;
-            color: #888;
-            margin-bottom: 4px;
-        }
-
-        .book-price-row {
+        /* SELL SECTION */
+        .sell-hero-premium {
+            background: white;
+            padding: 60px 8%;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-top: auto;
-            margin-bottom: 8px;
+            gap: 40px;
         }
 
-        .current-price {
-            font-size: 16px;
-            font-weight: 800;
-            color: #1a1a1a;
+        @media (max-width: 991px) {
+            .sell-hero-premium {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .sell-steps-premium {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
         }
 
-        .btn-quick-add {
-            width: 100%;
-            height: 38px;
-            background: var(--primary-orange);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 14px;
+        .sell-content-premium {
+            max-width: 500px;
+        }
+
+        .sell-content-premium h2 {
+            font-size: 32px;
+            color: #1e3a8a;
+            margin-bottom: 10px;
             font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: background 0.3s;
-            position: static;
-            /* Move back into flow if needed, but screenshot shows it at bottom */
-            margin-top: 4px;
         }
 
-        .btn-quick-add:hover {
-            background: #e66000;
-        }
-
-        .book-info {
-            padding: 12px;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            background: #fff;
-        }
-
-        .book-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #333;
-            margin: 0;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.2;
-            transition: color 0.3s ease;
-        }
-
-        .book-card-v2:hover .book-title {
+        .sell-content-premium h2 span {
             color: var(--primary-orange);
         }
 
-        .book-category {
+        .sell-content-premium .steps-head-premium {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            color: var(--text-muted);
+        }
+
+        .sell-steps-premium {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 35px;
+        }
+
+        .sell-step-premium {
+            background: #EFF6FF;
+            border: 1px solid #DBEAFE;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e40af;
+            white-space: nowrap;
+        }
+
+        .sell-hero-premium img {
+            max-width: 480px;
+            width: 100%;
+            border-radius: 20px;
+        }
+
+        /* BANNERS */
+        .banners-premium {
+            padding: 40px 8% 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .banner-premium-card {
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            min-height: 380px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 991px) {
+            .banner-premium-card {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .v-text-premium,
+            .v-card-premium,
+            .s-card-premium {
+                max-width: 100% !important;
+                width: 100% !important;
+            }
+        }
+
+        .v-banner-premium {
+            background: linear-gradient(135deg, #1e3a8a 0%, #9d174d 100%);
+            padding: 50px;
+            color: white;
+            position: relative;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .v-text-premium {
+            max-width: 60%;
+        }
+
+        .v-label-premium {
+            background: white;
+            color: var(--primary-orange);
             font-size: 11px;
-            color: #888;
-            margin: 0;
-            display: block;
+            font-weight: 800;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 25px;
+            text-transform: uppercase;
         }
 
-        .book-category::before {
-            display: none;
-            /* Hide the icon to match screenshot */
+        .v-text-premium h2 {
+            font-size: 44px;
+            margin-bottom: 20px;
+            line-height: 1.1;
+            font-weight: 700;
         }
 
-        .book-price-row {
+        .v-text-premium h2 span {
+            color: #facc15;
+        }
+
+        .v-points-premium {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .v-point-premium {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .v-card-premium {
+            background: white;
+            border-radius: 20px;
+            width: 340px;
+            padding: 40px;
+            color: var(--text-dark);
+            text-align: left;
+        }
+
+        .v-card-premium h3 {
+            font-size: 22px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .v-card-premium p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        .check-item-premium {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .check-icon-premium {
+            color: #10B981;
+            font-weight: 800;
+        }
+
+        .btn-reg-premium {
+            width: 100%;
+            background: #0f172a;
+            color: white !important;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            margin-top: 15px;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            justify-content: flex-start;
-            gap: 8px;
-            margin-top: 4px;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none !important;
         }
 
-        .current-price {
+        .s-banner-premium {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0369a1 100%);
+            padding: 50px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .s-card-premium {
+            background: white;
+            border-radius: 20px;
+            width: 380px;
+            padding: 40px;
+            color: var(--text-dark);
+            text-align: center;
+        }
+
+        .s-icon-premium {
+            width: 70px;
+            height: 70px;
+            background: #FFEDD5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 30px;
+        }
+
+        .btn-join-premium {
+            width: 100%;
+            background: #EA580C;
+            color: white !important;
+            padding: 16px;
+            border: none;
+            border-radius: 35px;
+            font-weight: 700;
+            margin-top: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
             font-size: 15px;
+            text-decoration: none !important;
+        }
+
+        /* TESTIMONIALS */
+        .testimonials-premium {
+            padding: 60px 8%;
+            text-align: center;
+        }
+
+        .t-title-premium {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 40px;
+        }
+
+        .t-title-premium span {
+            color: var(--primary-blue);
+        }
+
+        .t-grid-premium {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .t-grid-premium {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .t-card-premium {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: left;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .t-card-premium p {
+            font-size: 15px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 15px;
+        }
+
+        .t-stars-premium {
+            color: var(--primary-orange);
+            margin-bottom: 12px;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        .t-author-premium {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        /* WHATSAPP */
+        .whatsapp-premium {
+            padding: 40px 8%;
+            text-align: center;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .wa-text-premium {
+            font-size: 15px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 20px;
+        }
+
+        .wa-text-premium span {
+            color: #22C55E;
+        }
+
+        .wa-btn-premium {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #22C55E;
+            color: white !important;
+            padding: 12px 30px;
+            border-radius: 10px;
+            text-decoration: none !important;
+            font-weight: 700;
+            font-size: 16px;
+            transition: 0.3s;
+        }
+
+        .wa-btn-premium:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
+        }
+
+        /* STUDENT MARKETPLACE SPECIFIC */
+        .student-avatar {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .sold-overlay {
+            position: absolute;
+            top: 15px;
+            right: 0;
+            background: #ff4757;
+            color: white;
+            padding: 4px 15px;
+            font-size: 11px;
             font-weight: 800;
-            color: #1a1a1a;
+            text-transform: uppercase;
+            border-radius: 20px 0 0 20px;
+            z-index: 2;
+            box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
         }
 
-        .old-price {
-            font-size: 12px;
-            color: #999;
-            text-decoration: line-through;
+        .grayscale {
+            filter: grayscale(100%);
+            opacity: 0.7;
         }
 
-        @media (max-width: 767px) {
-            .book-thumb {
-                height: 210px;
-            }
-
-            .book-info {
-                padding: 10px;
-            }
-
-            .btn-quick-add {
-                height: 34px;
-                font-size: 13px;
-            }
-
-            .book-title {
-                font-size: 13px;
-            }
-        }
-
-        /* (bottom-shelf nav handled by layout3.blade.php) */
-
-        /* Filter Bottom Sheet */
+        /* Filter Sheet - Keep functional styles */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -653,6 +812,11 @@
             display: none;
             opacity: 0;
             transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: block;
+            opacity: 1;
         }
 
         .filter-bottom-sheet {
@@ -673,19 +837,9 @@
             visibility: hidden;
         }
 
-        .filter-body {
-            overflow-y: auto;
-            padding-right: 5px;
-            flex: 1;
-        }
-
-        .filter-body::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .filter-body::-webkit-scrollbar-thumb {
-            background: #EEE;
-            border-radius: 10px;
+        .filter-bottom-sheet.active {
+            transform: translateY(0);
+            visibility: visible;
         }
 
         .filter-header {
@@ -711,6 +865,12 @@
             color: #999;
             cursor: pointer;
             font-size: 18px;
+        }
+
+        .filter-body {
+            overflow-y: auto;
+            padding-right: 5px;
+            flex: 1;
         }
 
         .filter-group {
@@ -740,11 +900,6 @@
             background-position: right 15px center;
         }
 
-        /* Range Slider */
-        .range-container {
-            padding: 10px 5px;
-        }
-
         .range-slider {
             -webkit-appearance: none;
             width: 100%;
@@ -764,16 +919,6 @@
             box-shadow: 0 4px 10px rgba(255, 107, 0, 0.3);
         }
 
-        .range-labels {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 10px;
-            font-size: 11px;
-            color: #999;
-            font-weight: 600;
-        }
-
-        /* Checkbox Group */
         .checkbox-group {
             display: flex;
             flex-direction: column;
@@ -785,7 +930,6 @@
             display: flex;
             align-items: center;
             cursor: pointer;
-            user-select: none;
         }
 
         .checkbox-item input {
@@ -798,10 +942,7 @@
             border: 2.5px solid #DDD;
             border-radius: 6px;
             margin-right: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+            position: relative;
         }
 
         .checkbox-item input:checked+.checkbox-custom {
@@ -815,12 +956,10 @@
             font-weight: 900;
             color: #fff;
             font-size: 10px;
-        }
-
-        .checkbox-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #444;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
 
         .filter-actions {
@@ -828,10 +967,8 @@
             grid-template-columns: 1fr 1.5fr;
             gap: 12px;
             margin-top: 15px;
-            padding-top: 15px;
-            padding-bottom: 20px;
-            /* Added padding to ensure buttons are fully visible */
             border-top: 1px solid #F0F0F0;
+            padding-top: 20px;
         }
 
         .btn-cancel {
@@ -843,17 +980,11 @@
             font-weight: 700;
             text-align: center;
             text-decoration: none !important;
-            transition: all 0.2s;
-        }
-
-        .btn-cancel:hover {
-            background: #F8F9FA;
-            border-color: #CCC;
         }
 
         .btn-apply {
             background: var(--primary-orange);
-            color: #fff;
+            color: #fff !important;
             border: none;
             padding: 14px;
             border-radius: 12px;
@@ -861,16 +992,6 @@
             text-align: center;
             text-decoration: none !important;
             box-shadow: 0 8px 20px rgba(255, 107, 0, 0.25);
-        }
-
-        .modal-overlay.active {
-            display: block;
-            opacity: 1;
-        }
-
-        .filter-bottom-sheet.active {
-            transform: translateY(0);
-            visibility: visible;
         }
 
         @media (min-width: 992px) {
@@ -884,215 +1005,119 @@
 
             .filter-bottom-sheet.active {
                 transform: translateX(-50%) translateY(0);
-                visibility: visible;
             }
         }
 
-
-
-        /* Sell Book Community Section */
-        .sell-book-section {
-            padding: 40px 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .section-header {
+        /* Load More Button */
+        .load-more-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .section-header h2 {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--text-dark);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .section-header h2 span {
-            color: var(--primary-orange);
-        }
-
-        .sell-book-scroll {
-            display: flex;
-            overflow-x: auto;
-            gap: 20px;
-            padding-bottom: 15px;
-            scrollbar-width: none;
-        }
-
-        .sell-book-scroll::-webkit-scrollbar {
-            display: none;
-        }
-
-        .student-book-card {
-            min-width: 260px;
-            background: #fff;
-            border-radius: 20px;
-            padding: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            border: 1px solid rgba(0, 0, 0, 0.02);
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .student-book-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
-        }
-
-        .student-book-img {
+            justify-content: center;
+            padding: 30px 20px;
             width: 100%;
-            height: 220px;
-            object-fit: cover;
-            border-radius: 15px;
-            background: #f8f8f8;
-            display: block;
         }
 
-        .sold-overlay {
-            position: absolute;
-            top: 25px;
-            right: 0;
-            background: #ff4757;
-            color: white;
-            padding: 4px 15px;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-            border-radius: 20px 0 0 20px;
-            z-index: 2;
-            box-shadow: 0 4px 10px rgba(255, 71, 87, 0.3);
-        }
-
-        .student-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 5px;
-        }
-
-        .student-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid #eee;
-        }
-
-        .student-name {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        .student-book-title {
+        .btn-load-more {
+            background: #fff;
+            color: var(--primary-orange);
+            border: 2px solid var(--primary-orange);
+            padding: 12px 40px;
+            border-radius: 12px;
             font-size: 15px;
             font-weight: 700;
-            color: var(--text-dark);
-            margin: 0;
-            line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            height: 38px;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .student-book-price {
-            font-size: 16px;
-            font-weight: 800;
+        .btn-load-more:hover {
+            background: var(--primary-orange);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .btn-load-more:disabled {
+            border-color: #eee;
+            color: #ccc;
+            background: #f9f9f9;
+            cursor: not-allowed;
+        }
+
+        .category-item.active .category-icon {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 2px var(--primary-orange);
+            transform: scale(1.05);
+            transition: all 0.3s ease;
+        }
+
+        .category-item.active .category-label {
             color: var(--primary-orange);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .condition-tag {
-            font-size: 10px;
-            padding: 3px 8px;
-            background: #f0f7ff;
-            color: #007aff;
-            border-radius: 6px;
-            font-weight: 700;
-        }
-
-        .cta-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 20px 40px;
-        }
-
-        @media (max-width: 750px) {
-            .cta-container {
-                padding: 20px;
-            }
-        }
-
-        @media (max-width: 500px) {
-            .cta-container {
-                padding: 10px;
-            }
         }
     </style>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>India’s Smart Marketplace for <span>Books</span></h1>
+            <p class="headline-sub">Buy • Sell • Rent • Print Notes</p>
+            <p class="save-text">Save up to 70% on textbooks</p>
 
+            <form action="{{ url('/search-products') }}" method="GET" class="search-container-hero">
+                <input type="text" name="search" placeholder="Search books, authors, ISBN...">
+                <button type="submit" class="btn-search-hero">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </form>
 
-
-
-    <!-- 2. Banner -->
-    <div class="banner-container">
-        @if (!empty($sliderBanners) && count($sliderBanners) > 0)
-            <div class="swiper banner-swiper">
-                <div class="swiper-wrapper">
-                    @foreach ($sliderBanners as $banner)
-                        <div class="swiper-slide">
-                            <a href="{{ $banner['link'] ?? '#' }}" class="premium-banner">
-                                <img src="{{ $banner['image'] }}" class="banner-illustration" alt="{{ $banner['alt'] }}">
-                            </a>
-                        </div>
-                    @endforeach
-                </div>
-                <div class="banner-pagination"></div>
+            <div class="hero-btns">
+                <a href="{{ url('/search-products') }}" class="btn-premium btn-blue">Buy Books</a>
+                <a href="{{ url('/search-products') }}" class="btn-premium btn-orange">Sell Old Books</a>
             </div>
-        @else
-        @endif
-    </div>
 
-    <!-- 3. Selection Info Bar -->
-    <div class="selection-bar">
-        <div class="selection-info" id="currentSelectionInfo">
-            Showing Books for <strong>All</strong>
+            <div class="trust-badges">
+                <div class="trust-item"><span>🛡️</span> {{ number_format($totalProducts) }}+ Books</div>
+                <div class="trust-item"><span>🏷️</span> Used Books Up to 70% Off</div>
+                <div class="trust-item"><span>🚚</span> Free Delivery on Orders ₹499+</div>
+            </div>
         </div>
-        <a href="javascript:void(0)" class="btn-change" id="openFilter">Change</a>
-    </div>
+        <div class="hero-illustration">
+            <img src="{{ asset('front/theme_illustrations/hero_books.png') }}" alt="Hero Illustration">
+        </div>
+    </section>
 
-    <!-- 4. Categories -->
-    <div class="category-wrapper" id="homeSubjectsContainer">
+    <!-- Subjects Strip -->
+    <div class="subjects-strip" id="homeSubjectsContainer">
         @include('front.partials.home_subjects')
     </div>
 
-    <div class="tab-filters">
-        <a href="javascript:void(0)" class="filter-chip icon-chip" id="openFilterChip">
-            <i class="fas fa-sliders-h"></i> Filter
-        </a>
-        <a href="javascript:void(0)" class="filter-chip condition-chip {{ $condition == 'all' ? 'active' : '' }}"
-            data-condition="all">All</a>
-        <a href="javascript:void(0)" class="filter-chip condition-chip {{ $condition == 'new' ? 'active' : '' }}"
-            data-condition="new">New</a>
-        <a href="javascript:void(0)" class="filter-chip condition-chip {{ $condition == 'old' ? 'active' : '' }}"
-            data-condition="old">Old</a>
+    <!-- Filter Section -->
+    <div class="filter-section-premium">
+        <div class="location-info-premium">
+            <div class="selection-info" id="currentSelectionInfo">
+                Showing Books for <strong>All</strong>
+            </div>
+            <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">Change</a>
+        </div>
+
+        <div class="pills-premium">
+            <a href="javascript:void(0)" class="pill-premium filter-btn-premium" id="openFilterChip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg> Filter
+            </a>
+            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'all' ? 'active' : '' }}"
+                data-condition="all">All</a>
+            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'new' ? 'active' : '' }}"
+                data-condition="new">New</a>
+            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'old' ? 'active' : '' }}"
+                data-condition="old">Old</a>
+        </div>
     </div>
 
-    <!-- 6. Product Grid Wall -->
-    <div class="book-wall" id="homeProductGrid">
+    <!-- Product Grid -->
+    <div class="grid-premium" id="homeProductGrid">
         @include('front.partials.home_product_grid')
     </div>
 
@@ -1103,234 +1128,145 @@
         </button>
     </div>
 
-    <style>
-        .sales-cta-card {
-            background-color: #1e3a8a !important;
-            border-radius: 28px !important;
-            overflow: hidden !important;
-        }
-
-        .vendor-cta-card {
-            background-color: #ff9900 !important;
-            /* using fallback orange if var --primary fails */
-            border-radius: 28px !important;
-            overflow: hidden !important;
-        }
-    </style>
-
-    <!-- 7. Sell Book Community Section -->
-    @if(isset($sellBookRequests) && $sellBookRequests->count() > 0)
-    <div class="sell-book-section">
-        <div class="section-header">
-            <h2><i class="fas fa-users" style="color: var(--primary-orange);"></i> Student <span>Marketplace</span></h2>
-            <a href="{{ route('marketplace') }}" class="btn-change">View All</a>
-        </div>
-        
-        <div class="sell-book-scroll">
-            @foreach($sellBookRequests as $sbook)
-            <div class="student-book-card">
-                @if($sbook->book_status == 'sold')
-                    <div class="sold-overlay">Sold</div>
-                @endif
-                <a href="{{ route('marketplace.detail', $sbook->id) }}">
-                <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}" 
-                     class="student-book-img {{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}" 
-                     alt="{{ $sbook->book_title }}">
-                </a>
-                <div class="student-info">
-                    <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}" class="student-avatar" alt="User">
-                    <span class="student-name">By {{ $sbook->user->name }}</span>
-                    <span class="ms-auto condition-tag">{{ $sbook->book_condition }}</span>
-                </div>
-                
-                <h3 class="student-book-title">{{ $sbook->book_title }}</h3>
-                
-                <div class="student-book-price">
-                    <span>₹{{ number_format($sbook->expected_price, 2) }}</span>
-                    @if($sbook->book_status != 'sold')
-                        <a href="{{ route('marketplace.detail', $sbook->id) }}" class="btn btn-sm" style="background: #f2f2f7; border-radius: 10px; font-weight: 700; font-size: 11px; color: var(--text-dark);">Buy Now</a>
-                    @else
-                        <span style="font-size: 11px; color: #ff4757; font-weight: 700;">SOLD OUT</span>
-                    @endif
-                </div>
+    <!-- Sell Hero Section -->
+    <section class="sell-hero-premium">
+        <div class="sell-content-premium">
+            <h2>Turn Your <span>Old Books into Cash</span></h2>
+            <p class="steps-head-premium">Sell Used Books in 3 Easy Steps:</p>
+            <div class="sell-steps-premium">
+                <div class="sell-step-premium">📁 Upload Book Photo</div>
+                <div class="sell-step-premium">💰 Set Your Price</div>
+                <div class="sell-step-premium">💵 Get Paid</div>
             </div>
+            <div class="hero-btns">
+                <a href="{{ url('/search-products') }}" class="btn-premium btn-orange">Sell Your Books</a>
+                <a href="{{ url('/marketplace') }}" class="btn-premium btn-blue">Browse Used Books</a>
+            </div>
+        </div>
+        <img src="{{ asset('front/theme_illustrations/sell_books.png') }}" alt="Sell Illustration">
+    </section>
+
+    <!-- Student Marketplace (Community) Section -->
+    @if (isset($sellBookRequests) && $sellBookRequests->count() > 0)
+        <div class="filter-section-premium pb-0">
+            <div class="location-info-premium mb-4">
+                <h2 style="font-size: 24px; font-weight: 700; color: #1e3a8a; margin: 0;">Student <span>Marketplace</span>
+                </h2>
+                <a href="{{ route('marketplace') }}" class="change-loc-premium">View All</a>
+            </div>
+        </div>
+        <div class="grid-premium" id="studentMarketplaceGrid">
+            @foreach ($sellBookRequests as $sbook)
+                <div class="card-premium">
+                    @if ($sbook->book_status == 'sold')
+                        <div class="sold-overlay">Sold</div>
+                    @endif
+                    <a href="{{ route('marketplace.detail', $sbook->id) }}" class="card-img-premium">
+                        <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}"
+                            class="{{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}"
+                            alt="{{ $sbook->book_title }}">
+                    </a>
+                    <div class="student-info mb-2">
+                        <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}"
+                            class="student-avatar" alt="User">
+                        <span class="student-name">By {{ $sbook->user->name }}</span>
+                        <span class="ms-auto condition-tag">{{ strtoupper($sbook->book_condition) }}</span>
+                    </div>
+                    <a href="{{ route('marketplace.detail', $sbook->id) }}" class="card-title-premium text-dark"
+                        style="text-decoration: none;">
+                        {{ $sbook->book_title }}
+                    </a>
+                    <div class="card-stars-premium">★★★★★</div>
+                    <div class="card-price-premium">₹{{ number_format($sbook->expected_price, 0) }}</div>
+
+                    <a href="{{ route('marketplace.detail', $sbook->id) }}" class="btn-cart-premium"
+                        style="background: {{ $sbook->book_status == 'sold' ? '#64748B' : '#0056D2' }}; text-decoration: none;">
+                        {{ $sbook->book_status == 'sold' ? 'Sold Out' : 'View Details' }}
+                    </a>
+                </div>
             @endforeach
         </div>
-    </div>
     @endif
 
-    <!-- CTA Block -->
-    <div class="cta-container pt-5 pb-4">
-        <!-- Sales Card -->
-        <div class="sales-cta-card shadow-lg mb-5 position-relative">
-
-            <!-- Decorative Background Elements -->
-            <div class="position-absolute rounded-circle"
-                style="width: 300px; height: 300px; background: radial-gradient(circle, rgba(29,78,216,0.5) 0%, rgba(0,0,0,0) 70%); top: -100px; right: -50px; pointer-events: none;">
-            </div>
-            <div class="position-absolute rounded-circle"
-                style="width: 200px; height: 200px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0) 70%); bottom: -50px; left: -50px; pointer-events: none;">
-            </div>
-
-            <div class="position-relative z-1">
-                <div class="py-5 px-4 px-md-5">
-                    <div class="row align-items-center text-white g-4">
-                        <div class="col-xl-7 col-lg-7 text-center text-lg-start">
-                            <span class="badge bg-white text-primary mb-3 px-3 py-2 rounded-pill shadow-sm"
-                                style="font-weight: 700; font-size: 0.85rem;">
-                                <i class="fas fa-rocket me-1"></i> Career Opportunity
-                            </span>
-                            <h2 class="text-white fw-bold mb-3"
-                                style="font-size: clamp(2rem, 4vw, 2.75rem); letter-spacing: -0.5px; line-height: 1.2;">
-                                Become a BookHub <span style="color: #60a5fa;">Sales Executive</span>
-                            </h2>
-                            <p class="mb-4"
-                                style="font-size: 1.1rem; opacity: 0.9; line-height: 1.6; max-width: 600px; margin: 0 auto; margin-lg-0;">
-                                Help schools and institutions discover the right books while earning
-                                attractive commissions, marketing support, and exclusive incentives.
-                            </p>
-                            <div
-                                class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3 gap-md-4 mt-4">
-                                <div class="d-flex align-items-center bg-white bg-opacity-10 px-4 py-2 rounded-pill"
-                                    style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);">
-                                    <span class="text-white me-2"><i class="fa-solid fa-chart-line fs-5"></i></span>
-                                    <div class="text-start">
-                                        <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Grow
-                                            network</h6>
-                                    </div>
-                                </div>
-                                <div class="d-flex align-items-center bg-white bg-opacity-10 px-4 py-2 rounded-pill"
-                                    style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);">
-                                    <span class="text-white me-2"><i class="fa-solid fa-coins fs-5"></i></span>
-                                    <div class="text-start">
-                                        <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Earn
-                                            more
-                                        </h6>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-5 col-lg-5 mt-5 mt-lg-0">
-                            <div class="card border-0 shadow-lg"
-                                style="border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
-                                <div class="card-body p-4 p-md-5 text-center">
-                                    <div class="mb-4">
-                                        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 text-primary rounded-circle mb-3"
-                                            style="width: 60px; height: 60px;">
-                                            <i class="fas fa-user-plus fs-4"></i>
-                                        </div>
-                                        <h4 class="fw-bold mb-2 text-dark" style="font-size: 1.5rem;">Register Today</h4>
-                                        <p class="text-secondary small" style="font-size: 0.95rem;">Fill out a short
-                                            application, and our team will get in touch with you shortly.</p>
-                                    </div>
-                                    <a href="{{ url('/sales') }}"
-                                        class="btn w-100 py-3 d-flex align-items-center justify-content-center gap-2"
-                                        style="background: var(--primary-orange); color: white; border: none; font-weight: 700; border-radius: 14px; font-size: 1.1rem; box-shadow: 0 8px 20px rgba(255, 153, 0, 0.3); transition: all 0.3s ease;"
-                                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px rgba(255, 153, 0, 0.4)';"
-                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 20px rgba(255, 153, 0, 0.3)';">
-                                        Join As Sales Executive <i class="fa-solid fa-arrow-right"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <!-- Opportunity Banners -->
+    <div class="banners-premium">
+        <!-- Vendor Opportunity -->
+        <div class="banner-premium-card v-banner-premium">
+            <div class="v-text-premium">
+                <span class="v-label-premium">🤝 Vendor Opportunity</span>
+                <h2>Turn Your Catalog into <span>Revenue</span></h2>
+                <p style="opacity: 0.9; margin-bottom: 25px; line-height: 1.6;">Upload your books once and let BookHub
+                    handle the marketing. Expand your reach with only a 5% promotion fee.</p>
+                <div class="v-points-premium">
+                    <div class="v-point-premium">📄 Easy Uploads</div>
+                    <div class="v-point-premium">⚡ Automated Marketing</div>
                 </div>
+            </div>
+            <div class="v-card-premium">
+                <h3>Free Plan & Pro Plan</h3>
+                <p>Start free with 100 books, or switch to Pro for unlimited potential.</p>
+                <div class="check-list-premium">
+                    <div class="check-item-premium"><span class="check-icon-premium">✓</span> No technical setup needed
+                    </div>
+                    <div class="check-item-premium"><span class="check-icon-premium">✓</span> We drive the traffic</div>
+                    <div class="check-item-premium"><span class="check-icon-premium">✓</span> Transparent analytics</div>
+                </div>
+                <a href="{{ url('/vendors') }}" class="btn-reg-premium">Register Bookstore →</a>
+                <a href="{{ url('/contact') }}" class="btn-reg-premium"
+                    style="background: transparent; color: #64748b !important; border: 1px solid #e2e8f0;">Talk To Team</a>
             </div>
         </div>
 
-        <!-- Vendor Card -->
-        <div class="vendor-cta-card shadow-lg mb-5 position-relative"
-            style="background: linear-gradient(135deg, #1e3a8a 0%, #db2777 100%) !important; border-radius: 28px; overflow: hidden; transform: translateY(0); transition: all 0.3s ease;">
-            <!-- Decorative Elements -->
-            <div class="position-absolute rounded-circle"
-                style="width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0) 70%); top: -50px; right: -50px; pointer-events: none;">
-            </div>
-            <div class="position-absolute rounded-circle"
-                style="width: 150px; height: 150px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(0,0,0,0) 70%); bottom: -20px; left: -20px; pointer-events: none;">
-            </div>
-
-            <div class="position-relative z-1">
-                <div class="py-5 px-4 px-md-5">
-                    <div class="row align-items-center gy-5">
-                        <div class="col-lg-7 text-center text-lg-start">
-                            <span class="badge bg-white text-dark mb-3 px-3 py-2 rounded-pill shadow-sm"
-                                style="font-weight: 700; font-size: 0.85rem;">
-                                <i class="fas fa-store me-1" style="color: #ff9900;"></i> Vendor Opportunity
-                            </span>
-                            <h2 class="text-white fw-bold mb-3"
-                                style="font-size: clamp(2rem, 4vw, 2.75rem); letter-spacing: -0.5px; line-height: 1.2;">
-                                Turn Your Catalog into <span style="color: #ffe0b2;">Revenue</span>
-                            </h2>
-                            <p class="mb-4 text-white"
-                                style="font-size: 1.1rem; opacity: 0.9; line-height: 1.6; max-width: 600px; margin: 0 auto; margin-lg-0;">
-                                Upload your books once and let BookHub handle the marketing. Expand your reach with only a
-                                5% promotion fee.
-                            </p>
-
-                            <div
-                                class="d-flex flex-wrap justify-content-center justify-content-lg-start gap-3 gap-md-4 mt-4 mb-4 mb-lg-0">
-                                <div class="d-flex align-items-center bg-white bg-opacity-10 px-4 py-2 rounded-pill"
-                                    style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
-                                    <div class="rounded-circle bg-white d-flex align-items-center justify-content-center me-2"
-                                        style="width: 32px; height: 32px;">
-                                        <i class="fa fa-book" style="color: #ff9900; font-size: 0.85rem;"></i>
-                                    </div>
-                                    <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Easy Uploads
-                                    </h6>
-                                </div>
-                                <div class="d-flex align-items-center bg-white bg-opacity-10 px-4 py-2 rounded-pill"
-                                    style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);">
-                                    <div class="rounded-circle bg-white d-flex align-items-center justify-content-center me-2"
-                                        style="width: 32px; height: 32px;">
-                                        <i class="fa fa-bullhorn" style="color: #ff9900; font-size: 0.85rem;"></i>
-                                    </div>
-                                    <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Automated
-                                        Marketing</h6>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-5">
-                            <div class="card border-0 shadow-lg h-100"
-                                style="border-radius: 24px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
-                                <div
-                                    class="card-body p-4 p-md-5 d-flex flex-column justify-content-center text-center text-md-start">
-                                    <h4 class="fw-bold mb-3 text-dark" style="font-size: 1.5rem;">Free Plan & Pro Plan
-                                    </h4>
-                                    <p class="mb-4 text-secondary" style="font-size: 0.95rem;">
-                                        Start free with 100 books, or switch to Pro for unlimited potential.
-                                    </p>
-
-                                    <ul class="list-unstyled mb-4 text-dark text-start mx-auto mx-md-0"
-                                        style="font-size: 1rem; font-weight: 600; max-width: fit-content;">
-                                        <li class="mb-3 d-flex align-items-center"><i class="fa fa-check-circle fs-5 me-3"
-                                                style="color: #10b981;"></i> No technical setup needed</li>
-                                        <li class="mb-3 d-flex align-items-center"><i class="fa fa-check-circle fs-5 me-3"
-                                                style="color: #10b981;"></i> We drive the traffic</li>
-                                        <li class="mb-3 d-flex align-items-center"><i class="fa fa-check-circle fs-5 me-3"
-                                                style="color: #10b981;"></i> Transparent analytics</li>
-                                    </ul>
-
-                                    <div class="mt-auto d-flex flex-column gap-2">
-                                        <a href="{{ url('/vendors') }}"
-                                            class="btn w-100 py-3 d-flex align-items-center justify-content-center gap-2"
-                                            style="background: #111827; color: white; border: none; font-weight: 700; border-radius: 12px; font-size: 1.05rem; transition: all 0.3s ease;"
-                                            onmouseover="this.style.background='#000'; this.style.transform='translateY(-2px)';"
-                                            onmouseout="this.style.background='#111827'; this.style.transform='translateY(0)';">
-                                            Register Bookstore <i class="fa-solid fa-arrow-right"></i>
-                                        </a>
-                                        <a href="{{ url('/contact') }}" class="btn btn-outline-dark w-100 py-3"
-                                            style="border-radius: 12px; font-weight: 700; font-size: 1.05rem;">
-                                            Talk To Team
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <!-- Sales Executive Opportunity -->
+        <div class="banner-premium-card s-banner-premium">
+            <div class="v-text-premium">
+                <span class="v-label-premium" style="background: rgba(255,255,255,0.2); color: white;">🚀 Career
+                    Opportunity</span>
+                <h2>Become a BookHub <span>Sales Executive</span></h2>
+                <p style="opacity: 0.9; margin-bottom: 25px; line-height: 1.6;">Help schools and institutions discover the
+                    right books while earning attractive commissions, marketing support, and exclusive incentives.</p>
+                <div class="v-points-premium">
+                    <div class="v-point-premium">🌱 Grow network</div>
+                    <div class="v-point-premium">👤 Earn more</div>
                 </div>
             </div>
+            <div class="s-card-premium">
+                <div class="s-icon-premium">👤</div>
+                <h3 style="margin-bottom: 10px;">Register Today</h3>
+                <p>Fill out a short application, and our team will be in touch with you shortly.</p>
+                <a href="{{ url('/sales') }}" class="btn-join-premium">Join As Sales Executive →</a>
+            </div>
         </div>
+    </div>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-premium">
+        <h2 class="t-title-premium">What Our <span>Students</span> Say</h2>
+        <div class="t-grid-premium">
+            <div class="t-card-premium">
+                <p>"Got my NCERT books at half price!"</p>
+                <div class="t-stars-premium">★★★★★</div>
+                <div class="t-author-premium">– Ananya, Class 10</div>
+            </div>
+            <div class="t-card-premium">
+                <p>"Sold my old engineering books easily."</p>
+                <div class="t-stars-premium">★★★★★</div>
+                <div class="t-author-premium">– Rahul, B.Tech Student</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WhatsApp CTA -->
+    <div class="whatsapp-premium">
+        <p class="wa-text-premium">Need Books Quickly? Order on <span>WhatsApp</span></p>
+        <a href="https://wa.me/91XXXXXXXXXX" target="_blank" class="wa-btn-premium">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                <path
+                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z">
+                </path>
+            </svg>
+            Chat on WhatsApp
+        </a>
     </div>
 
     <!-- Filter Modal Backdrop -->
@@ -1616,7 +1552,7 @@
                 });
         }
 
-        function updateHomeGrid(subjectId = null, activeSubjectName = null) {
+        function updateHomeGrid(subjectId = null, activeSubjectName = null, stayOpen = false) {
             currentPage = 1;
             hasMore = true;
             isLoading = false;
@@ -1710,7 +1646,9 @@
                     selectionInfo.innerHTML = displayText;
 
                     // Close the sheet (if open)
-                    toggleModal(false);
+                    if (!stayOpen) {
+                        toggleModal(false);
+                    }
                 })
                 .catch(err => {
                     console.error(err);
@@ -1756,6 +1694,7 @@
                         });
                     });
             }
+            updateHomeGrid(null, null, true);
         });
 
         categorySelect.addEventListener('change', function() {
@@ -1774,6 +1713,11 @@
                         });
                     });
             }
+            updateHomeGrid(null, null, true);
+        });
+
+        subcategorySelect.addEventListener('change', function() {
+            updateHomeGrid(null, null, true);
         });
 
         // Banner Slider Initialization
