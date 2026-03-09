@@ -36,13 +36,14 @@ class ProductController extends Controller
             'page' => 'nullable|integer|min:1',
             'section_id' => 'nullable|integer',
             'category_id' => 'nullable|integer',
-            'book_type_id' => 'nullable|integer|exists:book_types,id',
-            'language_id'  => 'nullable|integer|exists:languages,id',
+            'book_type_id' => 'nullable',
+            'language_id'  => 'nullable',
             'subcategory_id' => 'nullable|integer',
-            'subject_id' => 'nullable|integer',
+            'subject_id' => 'nullable',
             'min_price' => 'nullable|numeric|min:0',
             'max_price' => 'nullable|numeric|min:0',
             'search' => 'nullable|string|max:255',
+            'isbn' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -100,7 +101,6 @@ class ProductController extends Controller
 
 
         if ($request->search) {
-
             $searchTerm = trim($request->search);
             $words = explode(' ', $searchTerm);
             $booleanSearch = '';
@@ -111,11 +111,18 @@ class ProductController extends Controller
                 }
             }
 
-            $query->whereRaw(
-                "MATCH(products.product_name, products.meta_title, products.meta_keywords)
-                 AGAINST(? IN BOOLEAN MODE)",
-                [trim($booleanSearch)]
-            );
+            $query->where(function ($q) use ($searchTerm, $booleanSearch) {
+                $q->where('products.product_isbn', $searchTerm)
+                    ->orWhereRaw(
+                        "MATCH(products.product_name, products.meta_title, products.meta_keywords)
+                         AGAINST(? IN BOOLEAN MODE)",
+                        [trim($booleanSearch)]
+                    );
+            });
+        }
+
+        if ($request->isbn) {
+            $query->where('products.product_isbn', $request->isbn);
         }
 
         if ($request->section_id) {
@@ -131,7 +138,11 @@ class ProductController extends Controller
         }
 
         if ($request->subject_id) {
-            $query->where('products.subject_id', $request->subject_id);
+            if (is_array($request->subject_id)) {
+                $query->whereIn('products.subject_id', $request->subject_id);
+            } else {
+                $query->where('products.subject_id', $request->subject_id);
+            }
         }
 
         if ($request->min_price) {
@@ -143,11 +154,19 @@ class ProductController extends Controller
         }
 
         if ($request->book_type_id) {
-            $query->where('products.book_type_id', $request->book_type_id);
+            if (is_array($request->book_type_id)) {
+                $query->whereIn('products.book_type_id', $request->book_type_id);
+            } else {
+                $query->where('products.book_type_id', $request->book_type_id);
+            }
         }
 
         if ($request->language_id) {
-            $query->where('products.language_id', $request->language_id);
+            if (is_array($request->language_id)) {
+                $query->whereIn('products.language_id', $request->language_id);
+            } else {
+                $query->where('products.language_id', $request->language_id);
+            }
         }
 
 
@@ -1049,7 +1068,7 @@ class ProductController extends Controller
             ], 500);
         }
     }
-    
+
     public function verifyRazorpayPayment(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -1160,7 +1179,7 @@ class ProductController extends Controller
 
         // Format the orders to include full details
         $formattedOrders = $orders->through(function ($order) {
-            
+
             $basePath = url('front/images/product_images');
 
             // Format order products
@@ -1168,7 +1187,7 @@ class ProductController extends Controller
                 // Fetch product details for image
                 $product = Product::find($item->product_id);
                 $imageUrl = null;
-                
+
                 if ($product && $product->product_image) {
                      $imageUrl = $basePath . '/small/' . $product->product_image;
                 }

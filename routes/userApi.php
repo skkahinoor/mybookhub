@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\User\HomeController;
 use App\Http\Controllers\Api\User\ProductController;
 use App\Http\Controllers\Api\User\ProfileController;
 
+Route::post('/user/register', [ProfileController::class,'register']);
+Route::post('/user/verify-otp', [ProfileController::class,'verifyOtp']);
 Route::get('/user/home', [HomeController::class, 'home']);
 Route::get('/user/products', [ProductController::class, 'index']);
 Route::get('/user/product-details/{attribute_id}', [ProductController::class, 'productDetails']);
