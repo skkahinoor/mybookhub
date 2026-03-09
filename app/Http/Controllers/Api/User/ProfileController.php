@@ -7,9 +7,171 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use GuzzleHttp\Client;
+use App\Models\Notification;
+use Spatie\Permission\Models\Role;
 
 class ProfileController extends Controller
 {
+    public function sendSMS($phone, $otp)
+    {
+        $to = '91' . preg_replace('/[^0-9]/', '', $phone);
+
+        try {
+            $client = new Client();
+
+            $payload = [
+                "template_id" => env('MSG91_TEMPLATE_ID'),
+                "recipients" => [
+                    [
+                        "mobiles" => $to,
+                        "OTP" => $otp
+                    ]
+                ]
+            ];
+
+            $response = $client->post("https://control.msg91.com/api/v5/flow/", [
+                'json' => $payload,
+                'headers' => [
+                    'accept' => 'application/json',
+                    'authkey' => env('MSG91_AUTH_KEY'),
+                    'content-type' => 'application/json'
+                ],
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+
+            Log::error("MSG91 ERROR: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function register(Request $request)
+    {
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'phone' => 'required|string|max:20|unique:users,phone',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        Cache::put('student_reg_name_' . $request->phone, $request->name, now()->addMinutes(10));
+        Cache::put('student_reg_email_' . $request->phone, $request->email, now()->addMinutes(10));
+        Cache::put('student_reg_phone_' . $request->phone, $request->phone, now()->addMinutes(10));
+        Cache::put('student_reg_password_' . $request->phone, Hash::make($request->password), now()->addMinutes(10));
+
+        $otp = rand(100000, 999999);
+
+        DB::table('otps')->updateOrInsert(
+            ['phone' => $request->phone],
+            ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+        );
+
+        $sendStatus = $this->sendSMS($request->phone, $otp);
+
+        if (!$sendStatus) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to send OTP'
+            ], 500);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP sent successfully'
+        ]);
+    }
+
+    public function verifyOtp(Request $request)
+    {
+
+        $request->validate([
+            'phone' => 'required',
+            'otp' => 'required'
+        ]);
+
+        $otpRecord = DB::table('otps')
+            ->where('phone', $request->phone)
+            ->where('otp', $request->otp)
+            ->first();
+
+        if (!$otpRecord) {
+            return response()->json([
+                "status" => false,
+                "message" => "Invalid OTP"
+            ], 400);
+        }
+
+        $name = Cache::get('student_reg_name_' . $request->phone);
+        $email = Cache::get('student_reg_email_' . $request->phone);
+        $phone = Cache::get('student_reg_phone_' . $request->phone);
+        $password = Cache::get('student_reg_password_' . $request->phone);
+
+        if (!$phone) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Session expired'
+            ], 400);
+        }
+
+        $role = Role::where('name', 'student')->first();
+
+        if (!$role) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Student role not found'
+            ]);
+        }
+
+        $user = User::create([
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
+            'password' => $password,
+            'role_id' => $role->id,
+            'status' => 1,
+        ]);
+
+        $user->assignRole($role);
+
+        Notification::create([
+            'type' => 'student_registration',
+            'title' => 'New Student Registered',
+            'message' => "Student {$name} has registered successfully.",
+            'related_id' => $user->id,
+            'related_type' => 'App\Models\User',
+            'is_read' => false,
+        ]);
+
+        Cache::forget('student_reg_name_' . $phone);
+        Cache::forget('student_reg_email_' . $phone);
+        Cache::forget('student_reg_phone_' . $phone);
+        Cache::forget('student_reg_password_' . $phone);
+
+        DB::table('otps')->where('phone', $phone)->delete();
+
+        return response()->json([
+            "status" => true,
+            "message" => "Student registered successfully",
+            "data" => $user
+        ]);
+    }
+
     public function getProfile(Request $request)
     {
         $user = $request->user();
@@ -82,7 +244,7 @@ class ProfileController extends Controller
 
         if ($request->hasFile('profile_image')) {
             $image = $request->file('profile_image');
-            
+
             if ($userToUpdate->profile_image) {
                 $oldImagePath = public_path($userToUpdate->profile_image);
                 if (file_exists($oldImagePath) && is_file($oldImagePath)) {
@@ -93,13 +255,13 @@ class ProfileController extends Controller
             $timestamp = time();
             $extension = $image->getClientOriginalExtension();
             $fileName = "avatar_{$userToUpdate->id}_{$timestamp}.{$extension}";
-            
+
             $destinationPath = public_path('asset/user');
-            
+
             if (!file_exists($destinationPath)) {
                 mkdir($destinationPath, 0755, true);
             }
-            
+
             $image->move($destinationPath, $fileName);
             $userToUpdate->profile_image = 'asset/user/' . $fileName;
         }
@@ -255,5 +417,5 @@ class ProfileController extends Controller
             'message' => 'Password changed successfully'
         ], 200);
     }
-    
+
 }

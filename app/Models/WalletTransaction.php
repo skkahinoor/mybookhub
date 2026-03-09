@@ -28,13 +28,16 @@ class WalletTransaction extends Model
 
     public static function checkAndCreditWallet($orderId)
     {
-        $order = Order::with('orders_products.product.category')->find($orderId);
+        $order = Order::with('orders_products.product.bookType')->find($orderId);
         if (! $order) {
             return;
         }
 
-        // Ensure we don't credit for Pending orders (Razorpay pending flow)
-        if ($order->order_status == 'Pending') {
+        // Allow crediting if the order is 'Paid' (Online) or 'Delivered' (COD)
+        // OR if at least one item in the order has been 'Delivered'
+        $isAnyItemDelivered = $order->orders_products->contains('item_status', 'Delivered');
+
+        if (!in_array($order->order_status, ['Paid', 'Delivered']) && !$isAnyItemDelivered) {
             return;
         }
 
