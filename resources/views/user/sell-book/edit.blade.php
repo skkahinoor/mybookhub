@@ -138,16 +138,16 @@
                                                 <option value="Poor" {{ old('book_condition') == 'Poor' ? 'selected' : '' }}>Poor</option>
                                             </select>
                                         </div>
-                                    </div>                                  
-                                </div>
-
-                                <div class="form-group">
+                                    </div>  
+                                    <div class="col-md-6">
+                                         <div class="form-group">
                                     <label for="expected_price">Expected Price (₹) <span class="text-danger">*</span></label>
                                     <input type="number" class="form-control" id="expected_price" name="expected_price" 
                                            placeholder="Enter expected price" step="0.01" min="0" 
                                            value="{{ old('expected_price') }}" required>
+                                     </div>
+                                    </div>                                
                                 </div>
-
                                 <div class="form-group">
                                     <label for="book_description">Book Description</label>
                                     <textarea class="form-control" id="book_description" name="book_description" 

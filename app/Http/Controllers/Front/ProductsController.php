@@ -23,6 +23,8 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Wishlist;
 use App\Models\WalletTransaction;
+use App\Models\SellBookRequest;
+use App\Models\BookType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -1543,5 +1545,84 @@ class ProductsController extends Controller
         }
 
         return $wishlistStatus;
+    }
+
+    public function marketplace(Request $request)
+    {
+        $condition = session('condition', 'new');
+        $sections = Section::all();
+        $footerProducts = Product::orderBy('id', 'Desc')
+            ->where('status', 1)
+            ->take(3)
+            ->get()
+            ->toArray();
+        $category = Category::limit(10)->get();
+        $language = Language::get();
+        $logos = HeaderLogo::first();
+
+        $sellBookRequests = SellBookRequest::with('user')
+            ->whereIn('book_status', ['approved', 'sold'])
+            ->orderBy('id', 'desc')
+            ->paginate(12);
+
+        $meta_title = 'Student Marketplace - Buy & Sell Old Books';
+        $meta_description = 'Find used books from other students at great prices.';
+        $meta_keywords = 'used books, student marketplace, sell books, buy books';
+
+        return view('front.products.marketplace', compact(
+            'sellBookRequests',
+            'condition',
+            'sections',
+            'footerProducts',
+            'category',
+            'language',
+            'logos',
+            'meta_title',
+            'meta_description',
+            'meta_keywords'
+        ));
+    }
+
+    public function marketplaceDetail($id)
+    {
+        $condition = session('condition', 'new');
+        $sections = Section::all();
+        $footerProducts = Product::orderBy('id', 'Desc')
+            ->where('status', 1)
+            ->take(3)
+            ->get()
+            ->toArray();
+        $category = Category::limit(10)->get();
+        $language = Language::get();
+        $logos = HeaderLogo::first();
+
+        $bookDetails = SellBookRequest::with('user')->findOrFail($id);
+
+        // Front user statistics
+        $totalUsers = User::role('student', 'web')->count();
+        $totalVendors = User::role('vendor', 'web')->count();
+        $totalProducts = Product::where('status', 1)->count();
+        $totalAuthors = Author::where('status', 1)->count();
+
+        $meta_title = $bookDetails->book_title . ' - Student Marketplace';
+        $meta_description = $bookDetails->book_description;
+        $meta_keywords = 'used books, ' . $bookDetails->book_title;
+
+        return view('front.products.marketplace_detail', compact(
+            'bookDetails',
+            'condition',
+            'sections',
+            'footerProducts',
+            'category',
+            'language',
+            'logos',
+            'meta_title',
+            'meta_description',
+            'meta_keywords',
+            'totalUsers',
+            'totalVendors',
+            'totalProducts',
+            'totalAuthors'
+        ));
     }
 }

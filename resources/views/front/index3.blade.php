@@ -828,10 +828,11 @@
 
         .student-book-img {
             width: 100%;
-            height: 180px;
+            height: 220px;
             object-fit: cover;
             border-radius: 15px;
             background: #f8f8f8;
+            display: block;
         }
 
         .sold-overlay {
@@ -876,9 +877,11 @@
             color: var(--text-dark);
             margin: 0;
             line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            height: 38px;
         }
 
         .student-book-price {
@@ -975,7 +978,7 @@
     <div class="sell-book-section">
         <div class="section-header">
             <h2><i class="fas fa-users" style="color: var(--primary-orange);"></i> Student <span>Marketplace</span></h2>
-            <a href="javascript:void(0)" class="btn-change">View All</a>
+            <a href="{{ route('marketplace') }}" class="btn-change">View All</a>
         </div>
         
         <div class="sell-book-scroll">
@@ -984,11 +987,11 @@
                 @if($sbook->book_status == 'sold')
                     <div class="sold-overlay">Sold</div>
                 @endif
-                
+                <a href="{{ route('marketplace.detail', $sbook->id) }}">
                 <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}" 
                      class="student-book-img {{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}" 
                      alt="{{ $sbook->book_title }}">
-                
+                </a>
                 <div class="student-info">
                     <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}" class="student-avatar" alt="User">
                     <span class="student-name">By {{ $sbook->user->name }}</span>
@@ -1000,7 +1003,7 @@
                 <div class="student-book-price">
                     <span>₹{{ number_format($sbook->expected_price, 2) }}</span>
                     @if($sbook->book_status != 'sold')
-                        <a href="{{ route('student.sell-book.show', $sbook->id) }}" class="btn btn-sm" style="background: #f2f2f7; border-radius: 10px; font-weight: 700; font-size: 11px; color: var(--text-dark);">Details</a>
+                        <a href="{{ route('marketplace.detail', $sbook->id) }}" class="btn btn-sm" style="background: #f2f2f7; border-radius: 10px; font-weight: 700; font-size: 11px; color: var(--text-dark);">Buy Now</a>
                     @else
                         <span style="font-size: 11px; color: #ff4757; font-weight: 700;">SOLD OUT</span>
                     @endif
