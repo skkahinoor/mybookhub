@@ -602,6 +602,10 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     // Category Products Route
     Route::get('/category-products/{category_id?}', 'ProductsController@categoryProducts');
 
+    // Marketplace routes
+    Route::get('/marketplace', 'ProductsController@marketplace')->name('marketplace');
+    Route::get('/marketplace/book/{id}', 'ProductsController@marketplaceDetail')->name('marketplace.detail');
+
     // Add this route with your other front-end routes
     Route::get('/search-products', [App\Http\Controllers\Front\IndexController::class, 'searchProducts']);
 });
