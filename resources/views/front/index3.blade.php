@@ -1082,7 +1082,7 @@
             </div>
         </div>
         <div class="hero-illustration">
-            <img src="{{ asset('front/theme_illustrations/hero_books.png') }}" alt="Hero Illustration">
+            <img src="{{ asset('front/theme_illustrations/studentbook.png') }}" alt="Hero Illustration">
         </div>
     </section>
 
@@ -1169,7 +1169,7 @@
                     <div class="student-info mb-2">
                         <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}"
                             class="student-avatar" alt="User">
-                        <span class="student-name">By {{ $sbook->user->name }}</span>
+                        <span class="student-name">By {{ $sbook->user->name ?? 'not' }}</span>
                         <span class="ms-auto condition-tag">{{ strtoupper($sbook->book_condition) }}</span>
                     </div>
                     <a href="{{ route('marketplace.detail', $sbook->id) }}" class="card-title-premium text-dark"
