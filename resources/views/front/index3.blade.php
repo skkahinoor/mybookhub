@@ -268,96 +268,217 @@
             gap: 8px;
         }
 
-        /* Product Grid */
-        .book-grid {
-            padding: 0 18px;
+        /* Product Grid Wall */
+        .book-wall {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             gap: 16px;
+            padding: 20px 40px;
             max-width: 1400px;
             margin: 0 auto;
         }
 
-        @media (min-width: 768px) {
-            .book-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
-        @media (min-width: 992px) {
-            .book-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 24px;
-            }
-        }
-
-        @media (min-width: 1400px) {
-            .book-grid {
+        /* RESPONSIVE */
+        @media (max-width: 1200px) {
+            .book-wall {
                 grid-template-columns: repeat(5, 1fr);
             }
         }
 
-        .book-card-v2 {
-            background: #fff;
-            border-radius: 12px;
+        @media (max-width: 1000px) {
+            .book-wall {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 750px) {
+            .book-wall {
+                grid-template-columns: repeat(3, 1fr);
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .book-wall {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 10px;
+            }
+        }
+
+        /* CARD */
+        .book-item {
+            background: white;
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: .25s;
             display: flex;
             flex-direction: column;
-            border: 1px solid #eee;
-            transition: all 0.3s ease;
             height: 100%;
         }
 
-        .book-card-v2:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        .book-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
         }
 
-        .book-thumb {
+        /* COVER */
+        .cover {
+            aspect-ratio: 2/3;
             position: relative;
-            width: 100%;
-            height: 280px;
-            /* Reference screenshot height */
-            background: #fdfdfd;
             overflow: hidden;
+            background: #fff;
         }
 
-        .book-thumb img {
+        .cover img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            /* Pull image to cover area like the screenshot */
-            transition: transform 0.5s ease;
+            transition: .3s;
         }
 
-        .book-card-v2:hover .book-thumb img {
-            transform: scale(1.08);
+        .book-item:hover .cover img {
+            transform: scale(1.05);
         }
 
+        /* BADGE */
         .condition-badge {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            padding: 6px 14px;
-            border-radius: 12px;
+            top: 6px;
+            left: 6px;
             font-size: 10px;
-            font-weight: 800;
-            color: #fff;
+            padding: 3px 7px;
+            border-radius: 20px;
+            color: white;
+            z-index: 2;
             text-transform: uppercase;
-            z-index: 5;
-            letter-spacing: 0.5px;
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(4px);
+            font-weight: 600;
         }
 
         .badge-new {
-            background: linear-gradient(135deg, rgba(52, 199, 89, 0.9), rgba(40, 167, 69, 0.9));
+            background: #22c55e;
         }
 
         .badge-used {
-            background: linear-gradient(135deg, rgba(0, 122, 255, 0.9), rgba(0, 86, 179, 0.9));
+            background: #f59e0b;
+        }
+
+        /* INFO */
+        .info {
+            padding: 10px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title {
+            font-size: 12px;
+            font-weight: 600;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 4px;
+            line-height: 1.3;
+            color: #333;
+            text-decoration: none !important;
+        }
+
+        .author {
+            font-size: 11px;
+            color: #777;
+            margin-top: 2px;
+        }
+
+        /* PRICE */
+        .price {
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: auto;
+            color: #1a1a1a;
+            padding-top: 8px;
+        }
+
+        /* BUTTON */
+        .cart-btn {
+            width: 100%;
+            margin-top: 8px;
+            background: #ff6b00;
+            border: none;
+            color: white;
+            padding: 7px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .cart-btn:hover {
+            background: #e45d00;
+        }
+
+        /* SKELETON LOADER for infinite scroll */
+        .skeleton {
+            animation: pulse 1.2s infinite;
+            background: linear-gradient(90deg, #eee, #ddd, #eee);
+            height: 300px;
+            border-radius: 8px;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: .8
+            }
+
+            50% {
+                opacity: .4
+            }
+
+            100% {
+                opacity: .8
+            }
+        }
+
+        /* Load More Button */
+        .load-more-container {
+            display: flex;
+            justify-content: center;
+            padding: 30px 20px;
+            width: 100%;
+        }
+
+        .btn-load-more {
+            background: #fff;
+            color: var(--primary-orange);
+            border: 2px solid var(--primary-orange);
+            padding: 12px 40px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 0, 0.1);
+        }
+
+        .btn-load-more:hover {
+            background: var(--primary-orange);
+            color: #fff;
+            box-shadow: 0 8px 25px rgba(255, 107, 0, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .btn-load-more:disabled {
+            border-color: #eee;
+            color: #ccc;
+            background: #f9f9f9;
+            cursor: not-allowed;
+            pointer-events: none;
+            box-shadow: none;
+        }
+
+        .btn-load-more i {
+            margin-right: 8px;
         }
 
         .discount-pill {
@@ -528,7 +649,7 @@
             height: 100%;
             background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(2px);
-            z-index: 2000;
+            z-index: 10000;
             display: none;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -541,10 +662,10 @@
             width: 100%;
             background: #fff;
             border-radius: 28px 28px 0 0;
-            z-index: 2001;
+            z-index: 10001;
             transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
-            padding: 24px;
+            padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
             box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
             max-height: 90vh;
             display: flex;
@@ -706,8 +827,10 @@
             display: grid;
             grid-template-columns: 1fr 1.5fr;
             gap: 12px;
-            margin-top: 20px;
+            margin-top: 15px;
             padding-top: 15px;
+            padding-bottom: 20px;
+            /* Added padding to ensure buttons are fully visible */
             border-top: 1px solid #F0F0F0;
         }
 
@@ -812,18 +935,18 @@
             background: #fff;
             border-radius: 20px;
             padding: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
             display: flex;
             flex-direction: column;
             gap: 12px;
-            border: 1px solid rgba(0,0,0,0.02);
+            border: 1px solid rgba(0, 0, 0, 0.02);
             transition: all 0.3s ease;
             position: relative;
         }
 
         .student-book-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
         }
 
         .student-book-img {
@@ -901,10 +1024,28 @@
             border-radius: 6px;
             font-weight: 700;
         }
+
+        .cta-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 40px;
+        }
+
+        @media (max-width: 750px) {
+            .cta-container {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .cta-container {
+                padding: 10px;
+            }
+        }
     </style>
 
 
-    
+
 
     <!-- 2. Banner -->
     <div class="banner-container">
@@ -950,13 +1091,17 @@
             data-condition="old">Old</a>
     </div>
 
-    <!-- 6. Product Grid -->
-    <div class="book-grid" id="homeProductGrid">
+    <!-- 6. Product Grid Wall -->
+    <div class="book-wall" id="homeProductGrid">
         @include('front.partials.home_product_grid')
     </div>
 
-    <!-- Extra Spacing (Mobile Only) -->
-    <div class="py-4 d-lg-none"></div>
+    <!-- Load More Button -->
+    <div class="load-more-container" id="loadMoreContainer" {!! !$sliderProducts->hasMorePages() ? 'style="display:none;"' : '' !!}>
+        <button class="btn-load-more" id="loadMoreBtn">
+            <i class="fas fa-sync-alt"></i> Load More Books
+        </button>
+    </div>
 
     <style>
         .sales-cta-card {
@@ -1015,7 +1160,7 @@
     @endif
 
     <!-- CTA Block -->
-    <div class="container py-5">
+    <div class="cta-container pt-5 pb-4">
         <!-- Sales Card -->
         <div class="sales-cta-card shadow-lg mb-5 position-relative">
 
@@ -1058,7 +1203,8 @@
                                     style="backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);">
                                     <span class="text-white me-2"><i class="fa-solid fa-coins fs-5"></i></span>
                                     <div class="text-start">
-                                        <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Earn more
+                                        <h6 class="mb-0 text-white" style="font-weight: 600; font-size: 0.95rem;">Earn
+                                            more
                                         </h6>
                                     </div>
                                 </div>
@@ -1404,16 +1550,82 @@
 
         overlay.addEventListener('click', () => toggleModal(false));
 
+        // Load More Logic
+        let currentPage = 1;
+        let isLoading = false;
+        let hasMore = true;
+
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const loadMoreContainer = document.getElementById('loadMoreContainer');
+
+        loadMoreBtn.addEventListener("click", () => {
+            if (!isLoading && hasMore) {
+                loadMoreBooks();
+            }
+        });
+
+        function loadMoreBooks() {
+            isLoading = true;
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+
+            currentPage++;
+
+            const activeChip = document.querySelector('.condition-chip.active');
+            const condition = activeChip ? activeChip.dataset.condition : 'all';
+            const sectionId = sectionSelect.value;
+            const categoryId = categorySelect.value;
+            const subcategoryId = subcategorySelect.value;
+            const distance = rangeSlider.value;
+
+            // Get selected book types & languages
+            const bookTypes = Array.from(document.querySelectorAll('input[name="book_types[]"]:checked')).map(cb => cb
+                .value);
+            const languages = Array.from(document.querySelectorAll('input[name="languages[]"]:checked')).map(cb => cb
+                .value);
+
+            let queryParams =
+                `?filter_update=1&page=${currentPage}&condition=${condition}&section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&distance=${distance}`;
+            if (bookTypes.length > 0) queryParams += `&book_types=${bookTypes.join(',')}`;
+            if (languages.length > 0) queryParams += `&languages=${languages.join(',')}`;
+
+            const gridContainer = document.getElementById('homeProductGrid');
+
+            fetch(`{{ url('/') }}${queryParams}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.html.trim() === '') {
+                        hasMore = false;
+                        loadMoreContainer.style.display = 'none';
+                    } else {
+                        gridContainer.insertAdjacentHTML('beforeend', data.html);
+                        loadMoreBtn.disabled = false;
+                        loadMoreBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Load More Books';
+                    }
+                    isLoading = false;
+                })
+                .catch(err => {
+                    console.error(err);
+                    isLoading = false;
+                    loadMoreBtn.disabled = false;
+                    loadMoreBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Load More Books';
+                });
+        }
+
         function updateHomeGrid(subjectId = null, activeSubjectName = null) {
+            currentPage = 1;
+            hasMore = true;
+            isLoading = false;
+
             const gridContainer = document.getElementById('homeProductGrid');
             const subjectsContainer = document.getElementById('homeSubjectsContainer');
             const selectionInfo = document.getElementById('currentSelectionInfo');
             const activeChip = document.querySelector('.condition-chip.active');
             const condition = activeChip ? activeChip.dataset.condition : 'all';
-
-            const sectionSelect = document.getElementById('filterSection');
-            const categorySelect = document.getElementById('filterCategory');
-            const subcategorySelect = document.getElementById('filterSubcategory');
 
             const sectionId = sectionSelect.value;
             const categoryId = categorySelect.value;
@@ -1432,7 +1644,7 @@
             subjectsContainer.style.opacity = '0.5';
 
             let queryParams =
-                `?filter_update=1&condition=${condition}&section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&distance=${distance}`;
+                `?filter_update=1&page=1&condition=${condition}&section_id=${sectionId}&category_id=${categoryId}&subcategory_id=${subcategoryId}&distance=${distance}`;
 
             if (bookTypes.length > 0) queryParams += `&book_types=${bookTypes.join(',')}`;
             if (languages.length > 0) queryParams += `&languages=${languages.join(',')}`;
@@ -1456,6 +1668,15 @@
 
                     gridContainer.style.opacity = '1';
                     subjectsContainer.style.opacity = '1';
+
+                    // Update "Load More" button based on has_more status
+                    if (data.has_more) {
+                        loadMoreContainer.style.display = 'flex';
+                        loadMoreBtn.disabled = false;
+                        loadMoreBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Load More Books';
+                    } else {
+                        loadMoreContainer.style.display = 'none';
+                    }
 
                     // Update selection info text
                     const sectionText = sectionSelect.options[sectionSelect.selectedIndex].text;
