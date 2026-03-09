@@ -198,6 +198,10 @@ class OrderController extends Controller
             // Update Order Status in `orders` table
             Order::where('id', $data['order_id'])->update(['order_status' => $data['order_status']]);
 
+            if ($data['order_status'] == 'Delivered') {
+                \App\Models\WalletTransaction::checkAndCreditWallet($data['order_id']);
+            }
+
             if (!empty($data['courier_name']) && !empty($data['tracking_number'])) {
                 Order::where('id', $data['order_id'])->update([
                     'courier_name'    => $data['courier_name'],
@@ -267,6 +271,13 @@ class OrderController extends Controller
 
             // Update Order Item Status in `orders_products` table
             OrdersProduct::where('id', $data['order_item_id'])->update(['item_status' => $data['order_item_status']]);
+
+            if ($data['order_item_status'] == 'Delivered') {
+                $itemRec = OrdersProduct::select('order_id')->where('id', $data['order_item_id'])->first();
+                if ($itemRec) {
+                    \App\Models\WalletTransaction::checkAndCreditWallet($itemRec->order_id);
+                }
+            }
 
             if (!empty($data['item_courier_name']) && !empty($data['item_tracking_number'])) { // if a 'vendor' or 'admin' updates the order Item Status to 'Shipped' in admin/orders/order_details.blade.php, and submits both Courier Name and Tracking Number HTML input fields
                 OrdersProduct::where('id', $data['order_item_id'])->update([
