@@ -38,7 +38,7 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
-        
+
         // Dynamic Role Fetching
         $role = \Spatie\Permission\Models\Role::where('name', 'user')->where('guard_name', 'web')->first();
         $roleId = $role ? $role->id : 4;
@@ -59,7 +59,14 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
+        $session_id = \Illuminate\Support\Facades\Session::get('session_id');
+        if (empty($session_id)) {
+            $session_id = \Illuminate\Support\Facades\Session::getId();
+        }
+
         Auth::login($user);
+
+        \App\Models\Cart::mergeCart($session_id, Auth::id());
 
         return redirect(RouteServiceProvider::HOME);
     }
