@@ -1288,119 +1288,102 @@ class ProductsController extends Controller
                 $total_price += ($getDiscountAttributePrice['final_price'] * $item['quantity']);
             }
 
-            // Calculate Shipping Charges `shipping_charges`
-            $shipping_charges = 0;
-
-            // Get the Shipping Charge based on the chosen Delivery Address
-            $shipping_charges = ShippingCharge::getShippingCharges($total_weight, $deliveryAddress['country']);
-
-            // Grand Total (`grand_total`)
-            $grand_total = $total_price + $shipping_charges - Session::get('couponAmount');
-
-            // Wallet Deduction Logic
-            $wallet_amount = 0;
+            $total_shipping_charges = ShippingCharge::getShippingCharges($total_weight, $deliveryAddress['country']);
+            $total_coupon_amount = Session::get('couponAmount') ?? 0;
+            $total_wallet_amount = 0;
             if (isset($data['use_wallet']) && $data['use_wallet'] == 1 && Auth::user()->wallet_balance > 0) {
-                $wallet_amount = min(Auth::user()->wallet_balance, 20);
-                $grand_total = $grand_total - $wallet_amount;
+                $total_wallet_amount = min(Auth::user()->wallet_balance, 20);
             }
 
-            Session::put('grand_total', $grand_total);
-            $order = new Order;
-            $order->user_id = Auth::user()->id; // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
-            $order->name = $deliveryAddress['name'];
-            $order->address = $deliveryAddress['address'];
-            $order->city = $deliveryAddress['city'];
-            $order->state = $deliveryAddress['state'];
-            $order->country = $deliveryAddress['country'];
-            $order->pincode = $deliveryAddress['pincode'];
-            $order->mobile = $deliveryAddress['mobile'];
-            $order->email = Auth::user()->email; // Retrieving The Authenticated User: https://laravel.com/docs/9.x/authentication#retrieving-the-authenticated-user
-            $order->shipping_charges = $shipping_charges;
-            $order->coupon_code = Session::get('couponCode');   // it was set inside applyCoupon() method
-            $order->coupon_amount = Session::get('couponAmount'); // it was set inside applyCoupon() method
-            $order->order_status = $order_status;
-            $order->payment_method = $payment_method;
-            $order->payment_gateway = $data['payment_gateway'];
-            $order->grand_total = $grand_total;
-            $order->wallet_amount = $wallet_amount;
-            $order->extra_discount = 0;
-
-            $order->save();
-
-            if ($wallet_amount > 0) {
-                // Deduct from User Balance
-                $user = User::find(Auth::user()->id);
-                $user->wallet_balance -= $wallet_amount;
-                $user->save();
-
-                // Create Wallet Transaction Entry
-                WalletTransaction::create([
-                    'user_id' => $user->id,
-                    'order_id' => $order->id,
-                    'amount' => $wallet_amount,
-                    'type' => 'debit',
-                    'description' => 'Used for order #' . $order->id,
-                ]);
-            }
-            $order_id = DB::getPdo()->lastInsertId();
-
+            $order_ids = [];
             foreach ($getCartItems as $item) {
-                $cartItem = new OrdersProduct;
-                $cartItem->order_id = $order_id;
-                $cartItem->user_id = Auth::user()->id;
+                // Get item price
+                $getDiscountAttributePrice = Product::getDiscountAttributePrice(
+                    $item['product_id'],
+                    $item['size'] ?? null
+                );
+                $item_price = ($getDiscountAttributePrice['final_price'] * $item['quantity']);
 
-                // Get the specific attribute row for this cart item
+                // Calculate proportions
+                $proportion = ($total_price > 0) ? ($item_price / $total_price) : 0;
+                
+                $item_shipping = round($total_shipping_charges * $proportion, 2);
+                $item_coupon = round($total_coupon_amount * $proportion, 2);
+                $item_wallet = round($total_wallet_amount * $proportion, 2);
+                
+                $item_grand_total = $item_price + $item_shipping - $item_coupon - $item_wallet;
+
+                $order = new Order;
+                $order->user_id = Auth::user()->id;
+                $order->name = $deliveryAddress['name'];
+                $order->address = $deliveryAddress['address'];
+                $order->city = $deliveryAddress['city'];
+                $order->state = $deliveryAddress['state'];
+                $order->country = $deliveryAddress['country'];
+                $order->pincode = $deliveryAddress['pincode'];
+                $order->mobile = $deliveryAddress['mobile'];
+                $order->email = Auth::user()->email;
+                $order->shipping_charges = $item_shipping;
+                $order->coupon_code = ($item_coupon > 0) ? Session::get('couponCode') : null;
+                $order->coupon_amount = $item_coupon;
+                $order->order_status = $order_status;
+                $order->payment_method = $payment_method;
+                $order->payment_gateway = $data['payment_gateway'];
+                $order->grand_total = max(0, $item_grand_total);
+                $order->wallet_amount = $item_wallet;
+                $order->extra_discount = 0;
+                $order->save();
+
+                $order_ids[] = $order->id;
+
+                // Create OrdersProduct for this specific order
                 $attribute = ProductsAttribute::with('product')
                     ->where('id', $item['product_attribute_id'])
-                    ->where('status', 1)
                     ->first();
 
-                if (! $attribute || ! $attribute->product) {
-                    DB::rollBack();
+                $cartItem = new OrdersProduct;
+                $cartItem->order_id = $order->id;
+                $cartItem->user_id = Auth::user()->id;
 
-                    return redirect('/cart')->with('error_message', 'One of the products in your cart is no longer available.');
-                }
-
-                // Continue filling in data into the `orders_products` table
                 // Set default values if null (0 for admin products, actual vendor_id for vendor products)
                 $cartItem->admin_id = $attribute->admin_id ?? 0;
                 $cartItem->vendor_id = $attribute->vendor_id ?? 0;
 
-                if ($attribute->vendor_id && $attribute->vendor_id > 0) { // if the order product's seller is a 'vendor'
-                    $vendorCommission = Vendor::getVendorCommission($attribute->vendor_id);
-                    $cartItem->commission = $vendorCommission;
+                if ($attribute->vendor_id && $attribute->vendor_id > 0) {
+                    $cartItem->commission = Vendor::getVendorCommission($attribute->vendor_id);
                 }
 
-                $cartItem->product_id = $attribute->product_id;
-                $cartItem->product_name = $attribute->product->product_name;
-
-                // Price based on this attribute (size) using discount rules
-                $priceDetails = Product::getDiscountAttributePrice(
-                    $attribute->product_id,
-                    $item['size'] ?? null
-                );
-                $cartItem->product_price = $priceDetails['final_price'];
-
-                // Stock check for this specific attribute
-                $availableStock = (int) $attribute->stock;
-                if ($item['quantity'] > $availableStock) {
-                    DB::rollBack();
-                    $message = $attribute->product->product_name
-                        . ' with ' . ($item['size'] ?? '') . ' size stock is not available/enough for your order. Please reduce its quantity and try again!';
-
-                    return redirect('/cart')->with('error_message', $message);
-                }
-
+                $cartItem->product_id = $item['product_id'];
+                $cartItem->product_name = $attribute?->product?->product_name ?? 'Product';
+                $cartItem->product_price = $getDiscountAttributePrice['final_price'];
                 $cartItem->product_qty = $item['quantity'];
-
-                // Persist the order product row now that all fields are set
+                $cartItem->item_status = "New"; 
+                $cartItem->product_attribute_id = $item['product_attribute_id'];
                 $cartItem->save();
             }
 
-            Session::put('order_id', $order_id);
+            if ($total_wallet_amount > 0) {
+                // Deduct from User Balance
+                $user = User::find(Auth::user()->id);
+                $user->wallet_balance -= $total_wallet_amount;
+                $user->save();
+
+                // Create Wallet Transaction (Link to first order or create generic)
+                WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'order_id' => $order_ids[0], 
+                    'amount' => $total_wallet_amount,
+                    'type' => 'debit',
+                    'description' => 'Used for orders: ' . implode(', ', $order_ids),
+                ]);
+            }
+
+            Session::put('order_ids', $order_ids);
+            Session::put('order_id', $order_ids[0]); 
+            Session::put('grand_total', $total_price + $total_shipping_charges - $total_coupon_amount - $total_wallet_amount);
 
             DB::commit();
-            $orderDetails = Order::with('orders_products')->where('id', $order_id)->first()->toArray();
+            $orderDetails = Order::with('orders_products')->whereIn('id', $order_ids)->get()->toArray();
 
             if ($data['payment_gateway'] == 'COD') {
 
@@ -1408,7 +1391,7 @@ class ProductsController extends Controller
                 $messageData = [
                     'email' => $email,
                     'name' => Auth::user()->name,
-                    'order_id' => $order_id,
+                    'order_id' => $order_ids[0],
                     'orderDetails' => $orderDetails,
                 ];
 
@@ -1431,7 +1414,7 @@ class ProductsController extends Controller
                 echo 'Other Prepaid payment methods coming soon';
             }
 
-            Log::info('Checkout success: Order ID ' . $order_id . ' saved. Redirecting to thanks.');
+            Log::info('Checkout success: Order IDs ' . implode(', ', $order_ids) . ' saved. Redirecting to thanks.');
 
             return redirect('thanks'); // redirect to front/products/thanks.blade.php page
         }
@@ -1456,21 +1439,25 @@ class ProductsController extends Controller
         // if (! in_array($condition, ['new', 'old'])) {
         //     $condition = 'new';
         // }
-        if (Session::has('order_id')) {
-            $order_id = Session::get('order_id');
-            // Wallet Credit Logic
-            \App\Models\WalletTransaction::checkAndCreditWallet($order_id);
+        if (Session::has('order_ids') || Session::has('order_id')) {
+            $order_ids = Session::has('order_ids') ? Session::get('order_ids') : [Session::get('order_id')];
+            
+            foreach ($order_ids as $id) {
+                // Wallet Credit Logic (only happens once per user because of model guards)
+                \App\Models\WalletTransaction::checkAndCreditWallet($id);
+            }
 
             // We empty the Cart after placing the order
             Cart::where('user_id', Auth::user()->id)->delete();
 
-            $orderDetails = Order::find($order_id);
+            $orders = Order::whereIn('id', $order_ids)->get();
+            $total_grand_total = $orders->sum('grand_total');
 
-            return view('front.products.thanks')->with(compact('logos', 'sections', 'language', 'condition', 'orderDetails'));
+            return view('front.products.thanks')->with(compact('logos', 'sections', 'language', 'condition', 'orders', 'total_grand_total'));
         } else {
-            Log::info('Thanks redirect: order_id missing from session');
+            Log::info('Thanks redirect: order information missing from session');
 
-            return redirect('cart')->with('error_message', 'Order session expired. Your cart is preserved.'); // added message for debug
+            return redirect('cart')->with('error_message', 'Order session expired. Your cart is preserved.');
         }
     }
 

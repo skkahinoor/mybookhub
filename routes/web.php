@@ -117,6 +117,22 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-type/{id}', [BookTypeController::class, 'deleteType']);
         Route::post('update-type-status', [BookTypeController::class, 'updateTypeStatus'])->name('admin.updatetypestatus');
 
+        // Old Book Conditions
+        Route::resource('old-book-conditions',
+            App\Http\Controllers\Admin\OldBookConditionController::class
+        )->names([
+            'index'   => 'admin.old_book_conditions.index',
+            'create'  => 'admin.old_book_conditions.create',
+            'store'   => 'admin.old_book_conditions.store',
+            'edit'    => 'admin.old_book_conditions.edit',
+            'update'  => 'admin.old_book_conditions.update',
+            'destroy' => 'admin.old_book_conditions.destroy',
+        ]);
+        Route::get('old-book-conditions/{id}/delete',
+            [App\Http\Controllers\Admin\OldBookConditionController::class, 'destroy']
+        )->name('admin.old_book_conditions.destroy.get');
+
+
         // Categories
         Route::get('categories', 'CategoryController@categories')->name('admin.categories');                                      // Categories in Catalogue Management in Admin Panel
         Route::post('update-category-status', 'CategoryController@updateCategoryStatus')->name('admin.updatecategorystatus');               // Update Categories Status using AJAX in categories.blade.php

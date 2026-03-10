@@ -20,52 +20,52 @@ use Razorpay\Api\Api;
 class RazorpayController extends Controller
 {
     public function razorpay()
-{
-    if (Session::has('order_id')) {
+    {
+        if (Session::has('order_ids') || Session::has('order_id')) {
 
-        $order_id = Session::get('order_id');
+            $order_ids = Session::has('order_ids') ? Session::get('order_ids') : [Session::get('order_id')];
+            $orders = Order::with('orders_products')->whereIn('id', $order_ids)->get();
 
-        $order = Order::with('orders_products')->where('id',$order_id)->first();
+            if ($orders->isEmpty()) {
+                return redirect('cart');
+            }
 
-        if (!$order) {
-            return redirect('cart');
+            $grand_total = $orders->sum('grand_total');
+
+            $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+
+            $razorpayOrder = $api->order->create([
+                'receipt' => 'order_' . implode('_', $order_ids),
+                'amount' => round($grand_total * 100),
+                'currency' => 'INR'
+            ]);
+
+            // Save razorpay order id to all related orders
+            Order::whereIn('id', $order_ids)->update(['razorpay_order_id' => $razorpayOrder['id']]);
+
+            $order = $orders->first(); // For view compatibility if needed
+            $user = Auth::user();
+
+            $condition = session('condition', 'new');
+            $sections = Section::all();
+            $logos = HeaderLogo::all();
+            $language = Language::get();
+
+            return view('front.razorpay.razorpay', compact(
+                'order',
+                'orders',
+                'grand_total',
+                'user',
+                'logos',
+                'sections',
+                'condition',
+                'language',
+                'razorpayOrder'
+            ));
         }
 
-        $grand_total = $order->grand_total;
-
-        $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
-
-        $razorpayOrder = $api->order->create([
-            'receipt' => 'order_'.$order_id,
-            'amount' => $grand_total * 100,
-            'currency' => 'INR'
-        ]);
-
-        // Save razorpay order id
-        $order->razorpay_order_id = $razorpayOrder['id'];
-        $order->save();
-
-        $user = Auth::user();
-
-        $condition = session('condition','new');
-        $sections = Section::all();
-        $logos = HeaderLogo::all();
-        $language = Language::get();
-
-        return view('front.razorpay.razorpay',compact(
-            'order',
-            'grand_total',
-            'user',
-            'logos',
-            'sections',
-            'condition',
-            'language',
-            'razorpayOrder'
-        ));
+        return redirect('cart');
     }
-
-    return redirect('cart');
-}
 
     public function payment(Request $request)
     {
@@ -75,52 +75,47 @@ class RazorpayController extends Controller
 
         if (isset($input['razorpay_payment_id']) && !empty($input['razorpay_payment_id'])) {
 
-            $order_id = Session::get('order_id');
+            $order_ids = Session::has('order_ids') ? Session::get('order_ids') : [Session::get('order_id')];
+            $orders = Order::with('orders_products')->whereIn('id', $order_ids)->get();
 
-            // Verify payment signature here if using orders API (Recommended for production)
-            // For now, implementing basic capture flow based on frontend success
+            foreach ($orders as $order) {
+                // Record Payment for each order
+                $payment = new Payment;
+                $payment->order_id = $order->id;
+                $payment->user_id = $order->user_id;
+                $payment->payment_id = $input['razorpay_payment_id'];
+                $payment->razorpay_order_id = $input['razorpay_order_id'];
+                $payment->payer_id = $order->user_id;
+                $payment->payer_email = $order->email;
+                $payment->amount = $order->grand_total;
+                $payment->currency = 'INR';
+                $payment->payment_status = 'Captured';
+                $payment->save();
 
-            // Record Payment
-            $payment = new Payment;
-            $payment->order_id = $order_id;
-            $payment->user_id = Auth::user()->id;
-            $payment->payment_id = $input['razorpay_payment_id'];
-            $payment->razorpay_order_id = $input['razorpay_order_id'];
-            $payment->payer_id = Auth::user()->id;
-            $payment->payer_email = Auth::user()->email;
-            $payment->amount = $input['totalAmount'];
-            $payment->currency = 'INR';
-            $payment->payment_status = 'Captured';
-            $payment->save();
+                // Update Order Status
+                $order->update(['order_status' => 'Paid']);
 
-            // Update Order Status
-            Order::where('id', $order_id)->update(['order_status' => 'Paid']);
+                // Wallet Credit Logic
+                \App\Models\WalletTransaction::checkAndCreditWallet($order->id);
 
-            // Wallet Credit Logic
-            \App\Models\WalletTransaction::checkAndCreditWallet($order_id);
-
-            // Reduce Stock
-            $orderDetails = Order::with('orders_products')->where('id', $order_id)->first()->toArray();
-            foreach ($orderDetails['orders_products'] as $key => $item) {
-                // Get current stock
-                $currentStock = ProductsAttribute::where(['product_id' => $item['product_id']])->value('stock');
-
-                $newStock = $currentStock - $item['product_qty'];
-
-                ProductsAttribute::where(['product_id' => $item['product_id']])
-                    ->update(['stock' => $newStock]);
+                // Reduce Stock
+                foreach ($order->orders_products as $item) {
+                    $currentStock = ProductsAttribute::where('id', $item->product_attribute_id)->value('stock');
+                    ProductsAttribute::where('id', $item->product_attribute_id)
+                        ->update(['stock' => max(0, $currentStock - $item->product_qty)]);
+                }
             }
 
             // Empty Cart
-            Cart::where('user_id', Auth::user()->id)->delete();
+            Cart::where('user_id', $orders->first()->user_id)->delete();
 
-            // Send Email
-            $email = Auth::user()->email;
+            // Send Email for first order (or iterate for all if needed, but usually one is enough for acknowledgment)
+            $email = $orders->first()->email;
             $messageData = [
                 'email' => $email,
-                'name' => Auth::user()->name,
-                'order_id' => $order_id,
-                'orderDetails' => $orderDetails
+                'name' => $orders->first()->name,
+                'order_id' => $order_ids[0],
+                'orderDetails' => $orders->toArray()
             ];
 
             try {
