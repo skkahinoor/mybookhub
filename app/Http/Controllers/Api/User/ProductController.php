@@ -1024,47 +1024,42 @@ class ProductController extends Controller
         DB::beginTransaction();
 
         try {
-
-            $order = Order::create([
-                'user_id' => $user->id,
-                'name' => $user->name,
-                'address' => $user->address,
-                'city' => $user->district->name ?? '',
-                'state' => $user->state->name ?? '',
-                'country' => $user->country->name ?? '',
-                'pincode' => $user->pincode,
-                'mobile' => $user->phone,
-                'email' => $user->email,
-                'shipping_charges' => $shipping_charges,
-                'coupon_code' => $request->coupon_code,
-                'coupon_amount' => $coupon_amount,
-                'order_status' => $order_status,
-                'payment_method' => $payment_method,
-                'payment_gateway' => $request->payment_gateway,
-                'grand_total' => $grand_total > 0 ? $grand_total : 0,
-                'wallet_amount' => $wallet_amount,
-                'extra_discount' => 0
-            ]);
-
-            if ($wallet_amount > 0) {
-
-                $user->wallet_balance -= $wallet_amount;
-                $user->save();
-
-                WalletTransaction::create([
-                    'user_id' => $user->id,
-                    'order_id' => $order->id,
-                    'amount' => $wallet_amount,
-                    'type' => 'debit',
-                    'description' => 'Used for order #' . $order->id
-                ]);
-            }
-
+            $order_ids = [];
             foreach ($cartItems as $item) {
-
                 $attribute = ProductsAttribute::with('product')->find($item->product_attribute_id);
-
                 $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
+                $item_price = $priceDetails['final_price'] * $item->quantity;
+
+                // Proportional distribution
+                $proportion = ($total_price > 0) ? ($item_price / $total_price) : 0;
+                $item_shipping = round($shipping_charges * $proportion, 2);
+                $item_coupon = round($coupon_amount * $proportion, 2);
+                $item_wallet = round($wallet_amount * $proportion, 2);
+                
+                $item_grand_total = max(0, $item_price + $item_shipping - $item_coupon - $item_wallet);
+
+                $order = Order::create([
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'address' => $user->address,
+                    'city' => $user->district->name ?? '',
+                    'state' => $user->state->name ?? '',
+                    'country' => $user->country->name ?? '',
+                    'pincode' => $user->pincode,
+                    'mobile' => $user->phone,
+                    'email' => $user->email,
+                    'shipping_charges' => $item_shipping,
+                    'coupon_code' => ($item_coupon > 0) ? $request->coupon_code : null,
+                    'coupon_amount' => $item_coupon,
+                    'order_status' => $order_status,
+                    'payment_method' => $payment_method,
+                    'payment_gateway' => $request->payment_gateway,
+                    'grand_total' => $item_grand_total,
+                    'wallet_amount' => $item_wallet,
+                    'extra_discount' => 0
+                ]);
+
+                $order_ids[] = $order->id;
 
                 $commission = 0;
                 if ($attribute->vendor_id && $attribute->vendor_id > 0) {
@@ -1081,7 +1076,21 @@ class ProductController extends Controller
                     'product_name' => $attribute->product->product_name,
                     'product_price' => $priceDetails['final_price'],
                     'product_qty' => $item->quantity,
+                    'item_status' => $order_status,
                     'commission' => $commission
+                ]);
+            }
+
+            if ($wallet_amount > 0) {
+                $user->wallet_balance -= $wallet_amount;
+                $user->save();
+
+                WalletTransaction::create([
+                    'user_id' => $user->id,
+                    'order_id' => $order_ids[0],
+                    'amount' => $wallet_amount,
+                    'type' => 'debit',
+                    'description' => 'Used for API orders: ' . implode(', ', $order_ids)
                 ]);
             }
 
@@ -1094,8 +1103,9 @@ class ProductController extends Controller
                 return response()->json([
                     'status' => true,
                     'message' => 'Order placed successfully',
-                    'order_id' => $order->id,
-                    'grand_total' => $order->grand_total
+                    'order_id' => $order_ids[0],
+                    'order_ids' => $order_ids,
+                    'grand_total' => $total_price + $shipping_charges - $coupon_amount - $wallet_amount
                 ]);
             }
 
@@ -1103,22 +1113,24 @@ class ProductController extends Controller
 
                 $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
 
+                $total_grand_total = Order::whereIn('id', $order_ids)->sum('grand_total');
+
                 $razorpayOrder = $api->order->create([
-                    'receipt' => 'order_' . $order->id,
-                    'amount' => $order->grand_total * 100,
+                    'receipt' => 'order_' . implode('_', $order_ids),
+                    'amount' => round($total_grand_total * 100),
                     'currency' => 'INR'
                 ]);
 
-                $order->razorpay_order_id = $razorpayOrder['id'];
-                $order->save();
+                Order::whereIn('id', $order_ids)->update(['razorpay_order_id' => $razorpayOrder['id']]);
 
                 DB::commit();
 
                 return response()->json([
                     'status' => true,
-                    'order_id' => $order->id,
+                    'order_id' => $order_ids[0],
+                    'order_ids' => $order_ids,
                     'razorpay_order_id' => $razorpayOrder['id'],
-                    'amount' => $order->grand_total
+                    'amount' => $total_grand_total
                 ]);
             }
 
@@ -1129,7 +1141,7 @@ class ProductController extends Controller
 
             return response()->json([
                 'status' => false,
-                'message' => 'Checkout failed'
+                'message' => 'Checkout failed: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -1162,13 +1174,14 @@ class ProductController extends Controller
                 'razorpay_signature' => $request->razorpay_signature
             ]);
 
-            $order = Order::with('orders_products')->find($request->order_id);
+            $order_ids = is_array($request->order_id) ? $request->order_id : [$request->order_id];
+            $orders = Order::with('orders_products')->whereIn('id', $order_ids)->get();
 
-            if (!$order) {
+            if ($orders->isEmpty()) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Order not found'
-                ]);
+                    'message' => 'Orders not found'
+                ], 404);
             }
 
             if (Payment::where('payment_id', $request->razorpay_payment_id)->exists()) {
@@ -1178,33 +1191,34 @@ class ProductController extends Controller
                 ]);
             }
 
-            $order->update([
-                'payment_status' => 'Paid',
-                'order_status' => 'Paid'
-            ]);
+            foreach ($orders as $order) {
+                $order->update([
+                    'payment_status' => 'Paid',
+                    'order_status' => 'Paid'
+                ]);
 
-            Payment::create([
-                'order_id' => $order->id,
-                'user_id' => $order->user_id,
-                'payment_id' => $request->razorpay_payment_id,
-                'razorpay_order_id' => $request->razorpay_order_id,
-                'razorpay_signature' => $request->razorpay_signature,
-                'payer_id' => $order->user_id,
-                'payer_email' => $order->email,
-                'amount' => $order->grand_total,
-                'currency' => 'INR',
-                'payment_status' => 'Captured'
-            ]);
+                Payment::create([
+                    'order_id' => $order->id,
+                    'user_id' => $order->user_id,
+                    'payment_id' => $request->razorpay_payment_id,
+                    'razorpay_order_id' => $request->razorpay_order_id,
+                    'razorpay_signature' => $request->razorpay_signature,
+                    'payer_id' => $order->user_id,
+                    'payer_email' => $order->email,
+                    'amount' => $order->grand_total,
+                    'currency' => 'INR',
+                    'payment_status' => 'Captured'
+                ]);
 
-            foreach ($order->orders_products as $item) {
+                foreach ($order->orders_products as $item) {
+                    ProductsAttribute::where('id', $item->product_attribute_id)
+                        ->decrement('stock', $item->product_qty);
+                }
 
-                ProductsAttribute::where('id', $item->product_attribute_id)
-                    ->decrement('stock', $item->product_qty);
+                WalletTransaction::checkAndCreditWallet($order->id);
             }
 
-            Cart::where('user_id', $order->user_id)->delete();
-
-            WalletTransaction::checkAndCreditWallet($order->id);
+            Cart::where('user_id', $orders->first()->user_id)->delete();
 
             DB::commit();
 
