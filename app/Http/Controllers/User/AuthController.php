@@ -53,7 +53,14 @@ class AuthController extends Controller
         }
 
         if (Auth::attempt($credentials)) {
-            return redirect('/');
+            // Merge guest cart with user cart
+            $session_id = \Illuminate\Support\Facades\Session::get('session_id');
+            if (empty($session_id)) {
+                $session_id = \Illuminate\Support\Facades\Session::getId();
+            }
+            \App\Models\Cart::mergeCart($session_id, Auth::id());
+
+            return redirect()->intended('/');
         }
 
         return redirect()->route('student.login')->with('error', 'Invalid credentials');
