@@ -2,6 +2,250 @@
 
 @section('content')
     <style>
+    .hero{
+position:relative;
+padding:80px 8%;
+display:flex;
+align-items:center;
+justify-content:space-between;
+overflow:hidden;
+background:linear-gradient(180deg,#EEF5FD 0%,#E6F0FA 100%);
+border-bottom-left-radius:60px;
+border-bottom-right-radius:60px;
+min-height: 520px;
+gap:60px;
+}
+
+/* Background Circle */
+
+.hero::before{
+content:"";
+position:absolute;
+width:600px;
+height:600px;
+background:#dde7f3;
+border-radius:50%;
+right:-200px;
+top:-150px;
+z-index:0;
+}
+
+/* Floating Shape */
+
+.hero::after{
+content:"";
+position:absolute;
+width:90px;
+height:30px;
+background:#c7d9f2;
+border-radius:20px;
+right:420px;
+top:120px;
+transform:rotate(25deg);
+animation:float 4s ease-in-out infinite;
+}
+
+/* Animation */
+
+@keyframes float{
+0%{transform:translateY(0px) rotate(25deg);}
+50%{transform:translateY(-10px) rotate(25deg);}
+100%{transform:translateY(0px) rotate(25deg);}
+}
+
+/* LEFT CONTENT */
+
+.hero-left{
+max-width:600px;
+z-index:1;
+}
+
+.hero h1{
+font-size:44px;
+font-weight:700;
+letter-spacing:-0.5px;
+color:#2c3e50;
+margin-bottom:20px;
+line-height:1.25;
+}
+
+.hero h1 span{
+color:#1b66c9;
+font-size:1.2em;
+font-weight:700;
+}
+
+.sub{
+font-size:20px;
+margin-bottom:10px;
+color:#3c4a5a;
+}
+
+.save{
+margin-bottom:25px;
+color:#6b7b8c;
+}
+
+/* SEARCH BAR */
+
+.search-box{
+display:flex;
+background:white;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 10px 20px rgba(0,0,0,0.1);
+margin-bottom:25px;
+transition:.3s;
+}
+
+.search-box:hover{
+transform:translateY(-2px);
+box-shadow:0 12px 25px rgba(0,0,0,0.15);
+}
+
+.search-box input{
+flex:1;
+border:none;
+padding:16px;
+font-size:16px;
+outline:none;
+}
+
+.search-btn{
+background:#1b66c9;
+color:white;
+border:none;
+padding:0 24px;
+cursor:pointer;
+font-size:18px;
+}
+
+/* BUTTONS */
+
+.buttons{
+display:flex;
+gap:16px;
+margin-top:25px;
+}
+
+.btn{
+padding:16px 32px;
+font-size:16px;
+border-radius:10px;
+border:none;
+font-size:18px;
+font-weight:600;
+cursor:pointer;
+transition:.3s;
+}
+
+.buy{
+background:#1b66c9;
+color:white;
+box-shadow:0 8px 18px rgba(0,0,0,0.2);
+}
+
+.buy:hover{
+transform:translateY(-3px);
+}
+
+.sell{
+background:#ff6a00;
+color:white;
+box-shadow:0 8px 18px rgba(0,0,0,0.2);
+}
+
+.sell:hover{
+transform:translateY(-3px);
+}
+
+/* RIGHT IMAGE */
+
+.hero-right{
+z-index:1;
+}
+
+.hero-right img{
+max-width:450px;
+height:auto;
+width:450px;
+animation:float2 6s ease-in-out infinite;
+}
+
+@keyframes float2{
+0%{transform:translateY(0);}
+50%{transform:translateY(-15px);}
+100%{transform:translateY(0);}
+}
+
+/* FEATURE BAR */
+
+.features{
+margin-top:35px;
+
+display:flex;
+align-items:center;
+gap:30px;
+
+background:#ffffff;
+padding:16px 32px;
+
+border-radius:20px;
+width:fit-content;
+
+box-shadow:0 12px 28px rgba(0,0,0,0.08);
+
+}
+
+.feature{
+display:flex;
+align-items:center;
+gap:10px;
+
+font-weight:600;
+font-size:15px;
+
+color:#2c3e50;
+white-space:nowrap;
+}
+
+.feature i{
+color:#1b66c9;
+font-size:18px;
+}
+
+.divider{
+height:20px;
+width:1px;
+background:#e5e7eb;
+}
+.feature:hover{
+transform:translateY(-2px);
+transition:0.2s;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:900px){
+
+.hero{
+flex-direction:column;
+text-align:center;
+}
+
+.hero-right img{
+max-width:420px;
+margin-top:40px;
+}
+
+.features{
+width:100%;
+justify-content:center;
+flex-wrap:wrap;
+}
+
+}
+    
         :root {
             --primary-blue: #0056D2;
             --secondary-blue: #1E3A8A;
@@ -24,104 +268,7 @@
         }
 
         /* HERO */
-        .hero {
-            background: var(--white);
-            padding: 50px 8%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 40px;
-        }
-
-        @media (max-width: 991px) {
-            .hero {
-                flex-direction: column;
-                text-align: center;
-                padding: 40px 20px;
-            }
-
-            .hero-content {
-                max-width: 100%;
-            }
-        }
-
-        .hero-content {
-            max-width: 600px;
-        }
-
-        .hero h1 {
-            font-size: 44px;
-            font-weight: 700;
-            color: #1e293b;
-            line-height: 1.2;
-            margin-bottom: 5px;
-        }
-
-        .hero h1 span {
-            color: var(--secondary-blue);
-        }
-
-        .hero .headline-sub {
-            font-size: 20px;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 5px;
-        }
-
-        .hero .save-text {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 25px;
-        }
-
-        .search-container-hero {
-            max-width: 480px;
-            margin-bottom: 30px;
-            display: flex;
-            background: #F8FAFC;
-            border: 1px solid #E2E8F0;
-            border-radius: 8px;
-            padding: 4px;
-        }
-
-        @media (max-width: 991px) {
-            .search-container-hero {
-                margin-left: auto;
-                margin-right: auto;
-            }
-        }
-
-        .search-container-hero input {
-            flex: 1;
-            padding: 12px 15px;
-            border: none;
-            outline: none;
-            background: transparent;
-            font-size: 15px;
-        }
-
-        .btn-search-hero {
-            background: var(--primary-blue);
-            border: none;
-            padding: 0 18px;
-            border-radius: 6px;
-            cursor: pointer;
-            color: white;
-            display: flex;
-            align-items: center;
-        }
-
-        .hero-btns {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 35px;
-        }
-
-        @media (max-width: 991px) {
-            .hero-btns {
-                justify-content: center;
-            }
-        }
+        
 
         .btn-premium {
             padding: 14px 40px;
@@ -175,59 +322,78 @@
             border-radius: 30px;
         }
 
-        .hero-illustration img {
-            max-width: 500px;
-            width: 100%;
-        }
 
         /* SUBJECTS */
         .subjects-strip {
-            background: var(--white);
-            padding: 30px 8%;
-            display: flex;
-            gap: 20px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            border-top: 1px solid #f1f5f9;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-        }
+    background: var(--white);
+    padding: 20px 8%;
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-top: 1px solid #f1f5f9;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 
-        .subjects-strip::-webkit-scrollbar {
-            display: none;
-        }
+    /* smoother scrolling */
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+}
 
-        .subject-item-premium {
-            min-width: 100px;
-            text-align: center;
-            text-decoration: none !important;
-        }
+.subjects-strip::-webkit-scrollbar {
+    display: none;
+}
 
-        .subject-circle-premium {
-            width: 70px;
-            height: 70px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 28px;
-            transition: 0.3s;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
-        }
+.subject-item-premium {
+    min-width: 100px;
+    text-align: center;
+    text-decoration: none !important;
+    scroll-snap-align: start;
+    cursor: pointer;
+}
 
-        .subject-item-premium span {
-            font-size: 13px;
-            font-weight: 600;
-            color: #64748b;
-        }
+.subject-circle-premium {
+    width: 74px;
+    height: 74px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 28px;
+    transition: all .25s ease;
+    box-shadow:0 2px 6px rgba(0,0,0,0.04);
+}
 
-        .subject-item-premium:hover .subject-circle-premium {
-            transform: translateY(-5px);
-            border-color: var(--primary-blue);
-        }
+.subject-item-premium span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+}
 
+/* Hover effect */
+.subject-item-premium:hover .subject-circle-premium {
+transform:translateY(-6px) scale(1.05);
+border-color:var(--primary-blue);
+background:#f1f6ff;
+box-shadow:0 12px 24px rgba(0,0,0,0.12);
+}
+/* Active subject */
+.subject-item-premium.active .subject-circle-premium {
+    border: 2px solid var(--primary-blue);
+    background: #eef4ff;
+}
+.subjects-strip{
+cursor:grab;
+}
+
+.subjects-strip:active{
+cursor:grabbing;
+}
+.subject-item-premium.active span {
+    color: var(--primary-blue);
+}
         /* FILTER */
         .filter-section-premium {
             padding: 30px 8% 20px;
@@ -325,10 +491,10 @@
             color: inherit;
         }
 
-        .card-premium:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
-        }
+        .card-premium:hover{
+transform:translateY(-6px) scale(1.01);
+box-shadow:0 18px 35px rgba(0,0,0,0.12);
+}
 
         .p-badge-premium {
             position: absolute;
@@ -357,15 +523,15 @@
 
         .card-img-premium {
             width: 100%;
-            height: 180px;
-            background: #F1F5F9;
+            height:200px;
+            background:#f8fafc;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin-bottom: 15px;
             overflow: hidden;
-            padding: 10px;
+            padding: 12px;
         }
 
         .card-img-premium img {
@@ -1051,54 +1217,124 @@
         .category-item.active .category-label {
             color: var(--primary-orange);
         }
+      .book-context{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:10px;
+font-size:14px;
+color:#64748b;
+margin:14px 0 6px;
+padding:8px 18px;
+background:white;
+border-radius:30px;
+width:fit-content;
+margin-left:auto;
+margin-right:auto;
+box-shadow:0 3px 10px rgba(0,0,0,0.05);
+}
+.change-loc-premium{
+color:#ff6a00;
+font-weight:600;
+text-decoration:none;
+cursor:pointer;
+}
+.change-loc-premium:hover{
+text-decoration:underline;
+}
+.subjects-wrapper{
+    position: relative;
+}
+
+/* left fade */
+.subjects-wrapper::before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    height:100%;
+    width:40px;
+    pointer-events:none;
+    background:linear-gradient(to right, #ffffff, rgba(255,255,255,0));
+    z-index:2;
+}
+
+/* right fade */
+.subjects-wrapper::after{
+    content:"";
+    position:absolute;
+    right:0;
+    top:0;
+    height:100%;
+    width:40px;
+    pointer-events:none;
+    background:linear-gradient(to left, #ffffff, rgba(255,255,255,0));
+    z-index:2;
+}
     </style>
     <!-- Hero Section -->
     <section class="hero">
-        <div class="hero-content">
-            <h1>India’s Smart Marketplace for <span>Books</span></h1>
-            <p class="headline-sub">Buy • Sell • Rent • Print Notes</p>
-            <p class="save-text">Save up to 70% on textbooks</p>
 
-            <form action="{{ url('/search-products') }}" method="GET" class="search-container-hero">
-                <input type="text" name="search" placeholder="Search books, authors, ISBN...">
-                <button type="submit" class="btn-search-hero">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                </button>
-            </form>
+<div class="hero-left">
 
-            <div class="hero-btns">
-                <a href="{{ url('/search-products') }}" class="btn-premium btn-blue">Buy Books</a>
-                <a href="{{ url('/search-products') }}" class="btn-premium btn-orange">Sell Old Books</a>
-            </div>
+<h1>India's Smart Marketplace for <span>Books</span></h1>
 
-            <div class="trust-badges">
-                <div class="trust-item"><span>🛡️</span> {{ number_format($totalProducts) }}+ Books</div>
-                <div class="trust-item"><span>🏷️</span> Used Books Up to 70% Off</div>
-                <div class="trust-item"><span>🚚</span> Free Delivery on Orders ₹499+</div>
-            </div>
-        </div>
-        <div class="hero-illustration">
-            <img src="{{ asset('front/theme_illustrations/studentbook.png') }}" alt="Hero Illustration">
-        </div>
-    </section>
+<div class="sub">Buy • Sell • Rent • Print Notes</div>
 
+<div class="save">Save up to 70% on textbooks</div>
+
+<div class="buttons">
+<button class="btn buy">Buy Books</button>
+<button class="btn sell">Sell Old Books</button>
+</div>
+
+<div class="features">
+
+<div class="feature">
+<i class="fa-solid fa-check-circle"></i>
+50,000+ Books
+</div>
+
+<div class="divider"></div>
+
+<div class="feature">
+<i class="fa-solid fa-box"></i>
+Used Books Up to <span style="color:#1b66c9;">70% Off</span>
+</div>
+
+<div class="divider"></div>
+
+<div class="feature">
+<i class="fa-solid fa-truck"></i>
+Free Delivery on Orders ₹499+
+</div>
+
+</div>
+
+</div>
+
+<div class="hero-right">
+<img src="{{ asset('uploads/logos/9176205_6615.svg') }}">
+</div>
+
+</section>
+
+<div class="book-context">
+    <span>Showing books for: <strong>All</strong></span>
+
+    <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">
+        Change
+    </a>
+</div>
     <!-- Subjects Strip -->
-    <div class="subjects-strip" id="homeSubjectsContainer">
+    <div class="subjects-wrapper">
+        <div class="subjects-strip" id="homeSubjectsContainer">
         @include('front.partials.home_subjects')
     </div>
-
+</div>
     <!-- Filter Section -->
     <div class="filter-section-premium">
-        <div class="location-info-premium">
-            <div class="selection-info" id="currentSelectionInfo">
-                Showing Books for <strong>All</strong>
-            </div>
-            <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">Change</a>
-        </div>
+        
 
         <div class="pills-premium">
             <a href="javascript:void(0)" class="pill-premium filter-btn-premium" id="openFilterChip">
