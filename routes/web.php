@@ -468,6 +468,10 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
         Route::match(['get', 'post'], '/' . $url, 'ProductsController@listing');
     }
 
+    Route::post('/set-bookgenie-session', [IndexController::class, 'setBookgenieSession']);
+    Route::get('/bookgenie-search', [IndexController::class, 'bookgenieSearch']);
+
+
     // Vendor Login/Register
     Route::get('vendor/login-register', 'VendorController@loginRegister'); // render vendor login_register.blade.php page
 
@@ -493,7 +497,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
 
 
     // Render Single Product Detail Page in front/products/detail.blade.php
-    Route::get('/product/{id}', 'ProductsController@detail');
+    Route::get('/product/{id}', 'ProductsController@detail')->name('front.products.detail');
 
     Route::post('get-product-price', 'ProductsController@getProductPrice');
 

@@ -134,12 +134,12 @@
             gap: 25px;
         }
 
-        .icon {
+        .header-icons .icon {
             position: relative;
             cursor: pointer;
         }
 
-        .badge {
+        .header-icons .badge {
             position: absolute;
             top: -6px;
             right: -8px;
@@ -1281,6 +1281,648 @@
                 });
             }
         });
+    </script>
+
+    {{-- ✨ BookGenie AI Floating Widget --}}
+    <style>
+        /* BookGenie FAB Button */
+        .bg-fab {
+            position: fixed;
+            bottom: 60px;
+            left: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            box-shadow: 0 8px 28px rgba(59, 130, 246, 0.45);
+            cursor: pointer;
+            z-index: 99990;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: bg-pulse 2.5s infinite;
+        }
+
+        .bg-fab:hover {
+            transform: scale(1.12);
+            box-shadow: 0 12px 36px rgba(59, 130, 246, 0.6);
+        }
+
+        @keyframes bg-pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 8px 28px rgba(59, 130, 246, 0.45);
+            }
+
+            50% {
+                box-shadow: 0 8px 40px rgba(59, 130, 246, 0.75);
+            }
+        }
+
+        .bg-fab-img {
+            width: 32px;
+            height: 32px;
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .bg-fab-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 18px;
+            height: 18px;
+            background: #ff6b00;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            font-size: 10px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        /* BookGenie Panel */
+        .bg-panel {
+            position: fixed;
+            bottom: 150px;
+            left: 20px;
+            width: 340px;
+            max-height: 480px;
+            border-radius: 20px;
+            background: #fff;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+            z-index: 99991;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideUpPanel 0.3s ease;
+        }
+
+        .bg-panel.open {
+            display: flex;
+        }
+
+        @keyframes slideUpPanel {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bg-panel-header {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            padding: 16px 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .bg-panel-header-icon {
+            width: 38px;
+            height: 38px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .bg-panel-header-text h5 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .bg-panel-header-text p {
+            margin: 0;
+            font-size: 11px;
+            opacity: 0.85;
+        }
+
+        .bg-panel-close {
+            margin-left: auto;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .bg-panel-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .bg-panel-body {
+            padding: 18px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .bg-bubble {
+            background: #f0f4ff;
+            border-radius: 14px 14px 14px 4px;
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #1e3a8a;
+            margin-bottom: 14px;
+            line-height: 1.5;
+        }
+
+        .bg-action-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .bg-action-btn.primary {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+        }
+
+        .bg-action-btn.primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .bg-action-btn.secondary {
+            background: #f0f4ff;
+            color: #1e3a8a;
+        }
+
+        .bg-action-btn.secondary:hover {
+            background: #dce8ff;
+        }
+
+        .bg-personalize-form {
+            display: none;
+        }
+
+        .bg-personalize-form.open {
+            display: block;
+        }
+
+        .bg-form-group {
+            margin-bottom: 12px;
+        }
+
+        .bg-form-group label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .bg-form-group select {
+            width: 100%;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-size: 13px;
+            color: #333;
+            background: #f8faff;
+            font-family: 'Poppins', sans-serif;
+            transition: border-color 0.2s;
+        }
+
+        .bg-form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .bg-current-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #eef3ff;
+            border: 1px solid #c7d9ff;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 12px;
+            color: #1e3a8a;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        /* Chat Styles */
+        .bg-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .bg-msg {
+            max-width: 85%;
+            padding: 10px 14px;
+            font-size: 13px;
+            line-height: 1.5;
+            border-radius: 14px;
+        }
+
+        .bg-msg.bot {
+            background: #f0f4ff;
+            color: #1e3a8a;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .bg-msg.user {
+            background: #1e3a8a;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .bg-results-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 5px 0 10px;
+            margin-top: 8px;
+            scrollbar-width: thin;
+        }
+
+        .bg-product-card {
+            flex: 0 0 160px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 10px;
+            text-decoration: none !important;
+            color: inherit !important;
+            transition: transform 0.2s;
+        }
+
+        .bg-product-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+
+        .bg-product-img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .bg-product-name {
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 30px;
+        }
+
+        .bg-product-price {
+            color: #ff6b00;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .bg-product-vendor {
+            font-size: 10px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .bg-product-distance {
+            font-size: 10px;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .bg-chat-footer {
+            padding: 12px 18px;
+            border-top: 1px solid #eee;
+            background: #fff;
+            display: flex;
+            gap: 8px;
+        }
+
+        .bg-chat-input {
+            flex: 1;
+            border: 2px solid #f0f0f0;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .bg-chat-input:focus {
+            border-color: #3b82f6;
+        }
+
+        .bg-chat-send {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .bg-chat-send:hover {
+            background: #3b82f6;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 480px) {
+            .bg-panel {
+                left: 10px;
+                right: 10px;
+                width: auto;
+                bottom: 140px;
+            }
+
+            .bg-fab {
+                bottom: 60px;
+                left: 16px;
+            }
+        }
+    </style>
+
+    <!-- BookGenie Floating Button -->
+    <button class="bg-fab" id="bgFab" title="BookGenie AI">
+        <span class="bg-fab-img">✨</span>
+        <span class="bg-fab-badge" id="bgFabBadge" style="display:none;">!</span>
+    </button>
+
+    <!-- BookGenie Panel -->
+    <div class="bg-panel" id="bgPanel">
+        <div class="bg-panel-header">
+            <div class="bg-panel-header-icon">✨</div>
+            <div class="bg-panel-header-text">
+                <h5>BookGenie AI</h5>
+                <p>Your personal book assistant</p>
+            </div>
+            <button class="bg-panel-close" id="bgPanelClose"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="bg-panel-body" id="bgPanelBody" style="position: relative;">
+            <div class="bg-messages" id="bgChatMessages"
+                style="padding: 15px; display: flex; flex-direction: column; gap: 12px;">
+                <!-- Messages will be injected here via JS -->
+            </div>
+
+            <!-- Personalization form (overlay hidden by default) -->
+            <div class="bg-personalize-form" id="bgPersonalizeForm"
+                style="display:none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 100; padding: 20px; border-radius: 20px;">
+                <h6
+                    style="font-weight: 700; margin-bottom: 20px; color: #1e3a8a; display: flex; justify-content: space-between; align-items: center;">
+                    <span>✨ Personalize</span>
+                    <button id="bgWidgetCancel"
+                        style="border: none; background: none; color: #888; cursor: pointer;"><i
+                            class="fas fa-times"></i></button>
+                </h6>
+                <div class="bg-form-group">
+                    <label>Education Level (Section)</label>
+                    <select id="bgWidgetSection">
+                        <option value="">Select Education Level</option>
+                        @foreach (\App\Models\Section::all() as $sec)
+                            <option value="{{ $sec->id }}"
+                                {{ session('bg_section_id') == $sec->id ? 'selected' : '' }}>{{ $sec->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="bg-form-group">
+                    <label>Board / Domain (Category)</label>
+                    <select id="bgWidgetCategory">
+                        <option value="">Select Board</option>
+                    </select>
+                </div>
+                <div class="bg-form-group">
+                    <label>Class / Stream</label>
+                    <select id="bgWidgetSubcategory">
+                        <option value="">Select Class</option>
+                    </select>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button class="bg-action-btn primary" id="bgWidgetApply" style="margin:0; width: 100%;">
+                        <i class="fas fa-check"></i> Apply Preferences
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Footer -->
+        <div class="bg-chat-footer">
+            <input type="text" class="bg-chat-input" id="bgChatInput" placeholder="Type book name or ISBN...">
+            <button class="bg-chat-send" id="bgChatSend">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const fab = document.getElementById('bgFab');
+            const panel = document.getElementById('bgPanel');
+            const closeBtn = document.getElementById('bgPanelClose');
+            const personalizeForm = document.getElementById('bgPersonalizeForm');
+            const cancelBtn = document.getElementById('bgWidgetCancel');
+            const applyBtn = document.getElementById('bgWidgetApply');
+            const chatInput = document.getElementById('bgChatInput');
+            const chatSend = document.getElementById('bgChatSend');
+            const chatMessages = document.getElementById('bgChatMessages');
+            const panelBody = document.getElementById('bgPanelBody');
+
+            const wSection = document.getElementById('bgWidgetSection');
+            const wCategory = document.getElementById('bgWidgetCategory');
+            const wSubcategory = document.getElementById('bgWidgetSubcategory');
+
+            // --- UI Controls ---
+            fab.addEventListener('click', () => {
+                panel.classList.toggle('open');
+                if (panel.classList.contains('open') && chatMessages.children.length === 0) {
+                    initChat();
+                }
+            });
+            closeBtn.addEventListener('click', () => panel.classList.remove('open'));
+            document.addEventListener('click', (e) => {
+                if (!panel.contains(e.target) && !fab.contains(e.target)) {
+                    panel.classList.remove('open');
+                }
+            });
+
+            function initChat() {
+                const name =
+                    '@auth {{ Auth::user()->name }} @else there @endauth';
+                const welcomeMsg =
+                    `👋 Hi <strong>${name.trim()}</strong>! I'm BookGenie, your AI library assistant. <br><br>I can help you find books by name/ISBN or personalize your feed based on your education level.`;
+                appendMessage('bot', welcomeMsg);
+
+                // Show personalization prompt after a small delay
+                setTimeout(() => {
+                    const personalizeContent = `
+                            <div style="margin-top:10px;">
+                                <p style="font-size:12px; margin-bottom:10px; color:#666;">Want me to recommend books for your class?</p>
+                                <button class="bg-action-btn primary" onclick="document.dispatchEvent(new CustomEvent('bgOpenForm'))">
+                                    <i class="fas fa-magic"></i> Personalize My Feed
+                                </button>
+                            </div>
+                        `;
+                    appendMessage('bot', personalizeContent);
+                }, 800);
+            }
+
+            document.addEventListener('bgOpenForm', () => {
+                personalizeForm.style.display = 'block';
+                // Pre-fill logic here if needed
+            });
+
+            cancelBtn.addEventListener('click', () => personalizeForm.style.display = 'none');
+
+            // --- Chat Engine ---
+            function appendMessage(role, content, results = null) {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = `bg-msg ${role}`;
+                msgDiv.innerHTML = content;
+                chatMessages.appendChild(msgDiv);
+
+                if (results && results.length > 0) {
+                    const scrollDiv = document.createElement('div');
+                    scrollDiv.className = 'bg-results-scroll';
+                    results.forEach(item => {
+                        const card = `
+                                <a href="${item.url}" class="bg-product-card">
+                                    <img src="${item.image || '/front/images/product_images/large/no-image.png'}" class="bg-product-img">
+                                    <div class="bg-product-name">${item.name}</div>
+                                    <div class="bg-product-price">${item.price}</div>
+                                    <div class="bg-product-vendor">${item.shop}</div>
+                                    ${item.distance ? `<div class="bg-product-distance"><i class="fas fa-map-marker-alt"></i> ${item.distance}</div>` : ''}
+                                </a>
+                            `;
+                        scrollDiv.innerHTML += card;
+                    });
+                    chatMessages.appendChild(scrollDiv);
+                }
+                panelBody.scrollTop = panelBody.scrollHeight;
+            }
+
+            function handleChatSearch() {
+                const query = chatInput.value.trim();
+                if (!query) return;
+                appendMessage('user', query);
+                chatInput.value = '';
+
+                const typingId = 'bg-typing-' + Date.now();
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'bg-msg bot';
+                typingDiv.id = typingId;
+                typingDiv.innerText = 'Searching...';
+                chatMessages.appendChild(typingDiv);
+                panelBody.scrollTop = panelBody.scrollHeight;
+
+                fetch(`{{ url('bookgenie-search') }}?q=${encodeURIComponent(query)}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const tMsg = document.getElementById(typingId);
+                        if (tMsg) tMsg.remove();
+                        if (data.results && data.results.length > 0) {
+                            appendMessage('bot', `I found ${data.results.length} listing(s) for "${query}":`, data
+                                .results);
+                        } else {
+                            appendMessage('bot', data.message || "I couldn't find any listings for that.");
+                        }
+                    })
+                    .catch(() => {
+                        const tMsg = document.getElementById(typingId);
+                        if (tMsg) tMsg.remove();
+                        appendMessage('bot', "Connection error. Please try again.");
+                    });
+            }
+
+            chatSend.addEventListener('click', handleChatSearch);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleChatSearch();
+            });
+
+            // --- Form Cascades ---
+            wSection.addEventListener('change', function() {
+                const secId = this.value;
+                if (secId) {
+                    fetch(`{{ url('get-filter-categories') }}?section_id=${secId}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            wCategory.innerHTML = '<option value="">Select Board</option>';
+                            data.forEach(c => wCategory.innerHTML +=
+                                `<option value="${c.id}">${c.category_name}</option>`);
+                        });
+                }
+            });
+            wCategory.addEventListener('change', function() {
+                const catId = this.value;
+                const secId = wSection.value;
+                if (catId) {
+                    fetch(`{{ url('get-filter-subcategories') }}?category_id=${catId}&section_id=${secId}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            wSubcategory.innerHTML = '<option value="">Select Class</option>';
+                            data.forEach(s => wSubcategory.innerHTML +=
+                                `<option value="${s.id}">${s.category_name}</option>`);
+                        });
+                }
+            });
+
+            applyBtn.addEventListener('click', function() {
+                fetch(`{{ url('set-bookgenie-session') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        section_id: wSection.value,
+                        category_id: wCategory.value,
+                        subcategory_id: wSubcategory.value,
+                        bookgenie_shown: true
+                    })
+                }).then(() => window.location.reload());
+            });
+        })();
     </script>
 
     @yield('scripts')

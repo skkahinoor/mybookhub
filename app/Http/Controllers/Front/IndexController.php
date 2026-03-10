@@ -27,7 +27,16 @@ class IndexController extends Controller
     {
         $sliderBanners  = Banner::where('type', 'Slider')->where('status', 1)->get()->toArray();
         $fixBanners     = Banner::where('type', 'Fix')->where('status', 1)->get()->toArray();
-        $condition      = session('condition', 'new');
+        $condition      = session('condition', 'all');
+
+        $sessionSectionId = session('bg_section_id');
+        $sessionCategoryId = session('bg_category_id');
+        $sessionSubcategoryId = session('bg_subcategory_id');
+
+        $currentSectionId = $request->filled('section_id') ? $request->section_id : $sessionSectionId;
+        $currentCategoryId = $request->filled('category_id') ? $request->category_id : $sessionCategoryId;
+        $currentSubcategoryId = $request->filled('subcategory_id') ? $request->subcategory_id : $sessionSubcategoryId;
+
         $sliderProductsQuery = ProductsAttribute::with([
             'product:id,product_name,product_isbn,product_image,product_price,category_id,section_id,condition',
             'product.authors',
@@ -36,21 +45,21 @@ class IndexController extends Controller
         ])
             ->where('status', 1);
 
-        if ($request->filled('section_id')) {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
-                $q->where('section_id', $request->section_id);
+        if ($currentSectionId) {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($currentSectionId) {
+                $q->where('section_id', $currentSectionId);
             });
         }
 
-        if ($request->filled('category_id')) {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
-                $q->where('category_id', $request->category_id);
+        if ($currentCategoryId) {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($currentCategoryId) {
+                $q->where('category_id', $currentCategoryId);
             });
         }
 
-        if ($request->filled('subcategory_id')) {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
-                $q->where('subcategory_id', $request->subcategory_id);
+        if ($currentSubcategoryId) {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($currentSubcategoryId) {
+                $q->where('subcategory_id', $currentSubcategoryId);
             });
         }
 
@@ -107,16 +116,16 @@ class IndexController extends Controller
 
         /* SUBJECTS */
         $homeSubjects = collect([]);
-        if ($request->filled('section_id') || $request->filled('category_id') || $request->filled('subcategory_id')) {
+        if ($currentSectionId || $currentCategoryId || $currentSubcategoryId) {
             $subjectIdsQuery = FilterClassSubject::query();
-            if ($request->filled('section_id')) {
-                $subjectIdsQuery->where('section_id', $request->section_id);
+            if ($currentSectionId) {
+                $subjectIdsQuery->where('section_id', $currentSectionId);
             }
-            if ($request->filled('category_id')) {
-                $subjectIdsQuery->where('category_id', $request->category_id);
+            if ($currentCategoryId) {
+                $subjectIdsQuery->where('category_id', $currentCategoryId);
             }
-            if ($request->filled('subcategory_id')) {
-                $subjectIdsQuery->where('sub_category_id', $request->subcategory_id);
+            if ($currentSubcategoryId) {
+                $subjectIdsQuery->where('sub_category_id', $currentSubcategoryId);
             }
             $subjectIds = $subjectIdsQuery->distinct()->pluck('subject_id');
             $homeSubjects = Subject::whereIn('id', $subjectIds)->where('status', 1)->get();
@@ -319,7 +328,10 @@ class IndexController extends Controller
             'totalAuthors',
             'getCartItems',
             'total_price',
-            'sellBookRequests'
+            'sellBookRequests',
+            'currentSectionId',
+            'currentCategoryId',
+            'currentSubcategoryId'
         ));
     }
 
@@ -333,6 +345,96 @@ class IndexController extends Controller
     {
         session(['condition' => $request->condition]);
         return response()->json(['success' => true]);
+    }
+
+    public function setBookgenieSession(Request $request)
+    {
+        if ($request->has('bookgenie_shown')) {
+            session(['bookgenie_shown' => true]);
+        }
+
+        if ($request->filled('section_id')) {
+            session(['bg_section_id' => $request->section_id]);
+        }
+        if ($request->filled('category_id')) {
+            session(['bg_category_id' => $request->category_id]);
+        }
+        if ($request->filled('subcategory_id')) {
+            session(['bg_subcategory_id' => $request->subcategory_id]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function bookgenieSearch(Request $request)
+    {
+        $query = trim($request->get('q', ''));
+
+        if (strlen($query) < 2) {
+            return response()->json(['results' => [], 'message' => 'Please type at least 2 characters.']);
+        }
+
+        $userLat = session('user_latitude');
+        $userLng = session('user_longitude');
+
+        $results = ProductsAttribute::with([
+            'product:id,product_name,product_isbn,product_image,product_price',
+            'vendor:id,user_id,location',
+            'vendor.vendorbusinessdetails:vendor_id,shop_name,shop_address',
+        ])
+            ->where('status', 1)
+            ->whereHas('product', function ($q) use ($query) {
+                $q->where('status', 1)
+                    ->where(function ($q2) use ($query) {
+                        $q2->where('product_name', 'like', "%{$query}%")
+                            ->orWhere('product_isbn', 'like', "%{$query}%");
+                    });
+            })
+            ->limit(8)
+            ->get();
+
+        $formatted = $results->map(function ($attr) use ($userLat, $userLng) {
+            $product = $attr->product;
+            $vendor  = $attr->vendor;
+
+            // Calculate distance
+            $distance = null;
+            if ($userLat && $userLng && $vendor && $vendor->location) {
+                [$vLat, $vLng] = array_pad(explode(',', $vendor->location), 2, null);
+                if (is_numeric($vLat) && is_numeric($vLng)) {
+                    $R  = 6371;
+                    $dL = deg2rad((float)$vLat - (float)$userLat);
+                    $dN = deg2rad((float)$vLng - (float)$userLng);
+                    $a  = sin($dL / 2) ** 2 + cos(deg2rad((float)$userLat)) * cos(deg2rad((float)$vLat)) * sin($dN / 2) ** 2;
+                    $distance = round($R * 2 * atan2(sqrt($a), sqrt(1 - $a)), 1);
+                }
+            }
+
+            $finalPrice = Product::getDiscountPrice($attr->product_id, $attr->vendor_id);
+            $shopName   = optional($vendor?->vendorbusinessdetails)->shop_name ?? 'Unknown Vendor';
+            $address    = optional($vendor?->vendorbusinessdetails)->shop_address ?? '';
+
+            return [
+                'id'          => $attr->id,
+                'product_id'  => $product?->id,
+                'name'        => $product?->product_name ?? 'Unknown',
+                'isbn'        => $product?->product_isbn,
+                'image'       => $product?->product_image
+                    ? asset('front/images/product_images/large/' . $product->product_image)
+                    : null,
+                'price'       => '₹' . number_format($finalPrice, 0),
+                'shop'        => $shopName,
+                'address'     => $address,
+                'distance'    => $distance !== null ? $distance . ' km away' : null,
+                'url'         => route('front.products.detail', $attr->id),
+            ];
+        });
+
+        $message = $results->isEmpty()
+            ? "Sorry, I couldn't find any books matching \"" . e($query) . "\". Try a different name or ISBN."
+            : null;
+
+        return response()->json(['results' => $formatted, 'message' => $message]);
     }
 
     public function getFilterCategories(Request $request)
