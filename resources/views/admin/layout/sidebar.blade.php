@@ -312,6 +312,9 @@
                                     class="nav-link" href="{{ url('admin/sell-book-requests') }}">Sell Old Books
                                     Requests</a></li>
                         @endcan
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'old_book_conditions') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.old_book_conditions.index') }}">Old Book Conditions</a></li>
                     </ul>
                 </div>
             </li>
