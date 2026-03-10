@@ -18,7 +18,12 @@ class Authenticate extends Middleware
             return route('vendor.login');
         }
 
-        // Default fallback
-        return route('admin.login');
+        // If sales routes → sales login
+        if ($request->is('sales/*')) {
+            return route('sales.login');
+        }
+
+        // Default fallback (Student login)
+        return route('student.login');
     }
 }
