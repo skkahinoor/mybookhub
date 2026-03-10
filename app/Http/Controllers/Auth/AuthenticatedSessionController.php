@@ -28,9 +28,16 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request)
     {
+        $session_id = \Illuminate\Support\Facades\Session::get('session_id');
+        if (empty($session_id)) {
+            $session_id = \Illuminate\Support\Facades\Session::getId();
+        }
+
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        \App\Models\Cart::mergeCart($session_id, Auth::id());
 
         if ($request->user()->hasRole('admin')) {
             return redirect()->intended('/admin/dashboard');

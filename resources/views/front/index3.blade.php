@@ -2,250 +2,267 @@
 
 @section('content')
     <style>
-    .hero{
-position:relative;
-padding:80px 8%;
-display:flex;
-align-items:center;
-justify-content:space-between;
-overflow:hidden;
-background:linear-gradient(180deg,#EEF5FD 0%,#E6F0FA 100%);
-border-bottom-left-radius:60px;
-border-bottom-right-radius:60px;
-min-height: 520px;
-gap:60px;
-}
+        .hero {
+            position: relative;
+            padding: 80px 8%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            overflow: hidden;
+            background: linear-gradient(180deg, #EEF5FD 0%, #E6F0FA 100%);
+            border-bottom-left-radius: 60px;
+            border-bottom-right-radius: 60px;
+            min-height: 520px;
+            gap: 60px;
+        }
 
-/* Background Circle */
+        /* Background Circle */
 
-.hero::before{
-content:"";
-position:absolute;
-width:600px;
-height:600px;
-background:#dde7f3;
-border-radius:50%;
-right:-200px;
-top:-150px;
-z-index:0;
-}
+        .hero::before {
+            content: "";
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: #dde7f3;
+            border-radius: 50%;
+            right: -200px;
+            top: -150px;
+            z-index: 0;
+        }
 
-/* Floating Shape */
+        /* Floating Shape */
 
-.hero::after{
-content:"";
-position:absolute;
-width:90px;
-height:30px;
-background:#c7d9f2;
-border-radius:20px;
-right:420px;
-top:120px;
-transform:rotate(25deg);
-animation:float 4s ease-in-out infinite;
-}
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 90px;
+            height: 30px;
+            background: #c7d9f2;
+            border-radius: 20px;
+            right: 420px;
+            top: 120px;
+            transform: rotate(25deg);
+            animation: float 4s ease-in-out infinite;
+        }
 
-/* Animation */
+        /* Animation */
 
-@keyframes float{
-0%{transform:translateY(0px) rotate(25deg);}
-50%{transform:translateY(-10px) rotate(25deg);}
-100%{transform:translateY(0px) rotate(25deg);}
-}
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(25deg);
+            }
 
-/* LEFT CONTENT */
+            50% {
+                transform: translateY(-10px) rotate(25deg);
+            }
 
-.hero-left{
-max-width:600px;
-z-index:1;
-}
+            100% {
+                transform: translateY(0px) rotate(25deg);
+            }
+        }
 
-.hero h1{
-font-size:44px;
-font-weight:700;
-letter-spacing:-0.5px;
-color:#2c3e50;
-margin-bottom:20px;
-line-height:1.25;
-}
+        /* LEFT CONTENT */
 
-.hero h1 span{
-color:#1b66c9;
-font-size:1.2em;
-font-weight:700;
-}
+        .hero-left {
+            max-width: 600px;
+            z-index: 1;
+        }
 
-.sub{
-font-size:20px;
-margin-bottom:10px;
-color:#3c4a5a;
-}
+        .hero h1 {
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            line-height: 1.25;
+        }
 
-.save{
-margin-bottom:25px;
-color:#6b7b8c;
-}
+        .hero h1 span {
+            color: #1b66c9;
+            font-size: 1.2em;
+            font-weight: 700;
+        }
 
-/* SEARCH BAR */
+        .sub {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: #3c4a5a;
+        }
 
-.search-box{
-display:flex;
-background:white;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 10px 20px rgba(0,0,0,0.1);
-margin-bottom:25px;
-transition:.3s;
-}
+        .save {
+            margin-bottom: 25px;
+            color: #6b7b8c;
+        }
 
-.search-box:hover{
-transform:translateY(-2px);
-box-shadow:0 12px 25px rgba(0,0,0,0.15);
-}
+        /* SEARCH BAR */
 
-.search-box input{
-flex:1;
-border:none;
-padding:16px;
-font-size:16px;
-outline:none;
-}
+        .search-box {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+            transition: .3s;
+        }
 
-.search-btn{
-background:#1b66c9;
-color:white;
-border:none;
-padding:0 24px;
-cursor:pointer;
-font-size:18px;
-}
+        .search-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+        }
 
-/* BUTTONS */
+        .search-box input {
+            flex: 1;
+            border: none;
+            padding: 16px;
+            font-size: 16px;
+            outline: none;
+        }
 
-.buttons{
-display:flex;
-gap:16px;
-margin-top:25px;
-}
+        .search-btn {
+            background: #1b66c9;
+            color: white;
+            border: none;
+            padding: 0 24px;
+            cursor: pointer;
+            font-size: 18px;
+        }
 
-.btn{
-padding:16px 32px;
-font-size:16px;
-border-radius:10px;
-border:none;
-font-size:18px;
-font-weight:600;
-cursor:pointer;
-transition:.3s;
-}
+        /* BUTTONS */
 
-.buy{
-background:#1b66c9;
-color:white;
-box-shadow:0 8px 18px rgba(0,0,0,0.2);
-}
+        .buttons {
+            display: flex;
+            gap: 16px;
+            margin-top: 25px;
+        }
 
-.buy:hover{
-transform:translateY(-3px);
-}
+        .btn {
+            padding: 16px 32px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: none;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .3s;
+        }
 
-.sell{
-background:#ff6a00;
-color:white;
-box-shadow:0 8px 18px rgba(0,0,0,0.2);
-}
+        .buy {
+            background: #1b66c9;
+            color: white;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+        }
 
-.sell:hover{
-transform:translateY(-3px);
-}
+        .buy:hover {
+            transform: translateY(-3px);
+        }
 
-/* RIGHT IMAGE */
+        .sell {
+            background: #ff6a00;
+            color: white;
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+        }
 
-.hero-right{
-z-index:1;
-}
+        .sell:hover {
+            transform: translateY(-3px);
+        }
 
-.hero-right img{
-max-width:450px;
-height:auto;
-width:450px;
-animation:float2 6s ease-in-out infinite;
-}
+        /* RIGHT IMAGE */
 
-@keyframes float2{
-0%{transform:translateY(0);}
-50%{transform:translateY(-15px);}
-100%{transform:translateY(0);}
-}
+        .hero-right {
+            z-index: 1;
+        }
 
-/* FEATURE BAR */
+        .hero-right img {
+            max-width: 450px;
+            height: auto;
+            width: 450px;
+            animation: float2 6s ease-in-out infinite;
+        }
 
-.features{
-margin-top:35px;
+        @keyframes float2 {
+            0% {
+                transform: translateY(0);
+            }
 
-display:flex;
-align-items:center;
-gap:30px;
+            50% {
+                transform: translateY(-15px);
+            }
 
-background:#ffffff;
-padding:16px 32px;
+            100% {
+                transform: translateY(0);
+            }
+        }
 
-border-radius:20px;
-width:fit-content;
+        /* FEATURE BAR */
 
-box-shadow:0 12px 28px rgba(0,0,0,0.08);
+        .features {
+            margin-top: 35px;
 
-}
+            display: flex;
+            align-items: center;
+            gap: 30px;
 
-.feature{
-display:flex;
-align-items:center;
-gap:10px;
+            background: #ffffff;
+            padding: 16px 32px;
 
-font-weight:600;
-font-size:15px;
+            border-radius: 20px;
+            width: fit-content;
 
-color:#2c3e50;
-white-space:nowrap;
-}
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
 
-.feature i{
-color:#1b66c9;
-font-size:18px;
-}
+        }
 
-.divider{
-height:20px;
-width:1px;
-background:#e5e7eb;
-}
-.feature:hover{
-transform:translateY(-2px);
-transition:0.2s;
-}
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
 
-/* RESPONSIVE */
+            font-weight: 600;
+            font-size: 15px;
 
-@media(max-width:900px){
+            color: #2c3e50;
+            white-space: nowrap;
+        }
 
-.hero{
-flex-direction:column;
-text-align:center;
-}
+        .feature i {
+            color: #1b66c9;
+            font-size: 18px;
+        }
 
-.hero-right img{
-max-width:420px;
-margin-top:40px;
-}
+        .divider {
+            height: 20px;
+            width: 1px;
+            background: #e5e7eb;
+        }
 
-.features{
-width:100%;
-justify-content:center;
-flex-wrap:wrap;
-}
+        .feature:hover {
+            transform: translateY(-2px);
+            transition: 0.2s;
+        }
 
-}
-    
+        /* RESPONSIVE */
+
+        @media(max-width:900px) {
+
+            .hero {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .hero-right img {
+                max-width: 420px;
+                margin-top: 40px;
+            }
+
+            .features {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+        }
+
         :root {
             --primary-blue: #0056D2;
             --secondary-blue: #1E3A8A;
@@ -268,7 +285,7 @@ flex-wrap:wrap;
         }
 
         /* HERO */
-        
+
 
         .btn-premium {
             padding: 14px 40px;
@@ -325,75 +342,79 @@ flex-wrap:wrap;
 
         /* SUBJECTS */
         .subjects-strip {
-    background: var(--white);
-    padding: 20px 8%;
-    display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    scrollbar-width: none;
-    border-top: 1px solid #f1f5f9;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+            background: var(--white);
+            padding: 20px 8%;
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            border-top: 1px solid #f1f5f9;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
 
-    /* smoother scrolling */
-    scroll-behavior: smooth;
-    scroll-snap-type: x mandatory;
-}
+            /* smoother scrolling */
+            scroll-behavior: smooth;
+            scroll-snap-type: x mandatory;
+        }
 
-.subjects-strip::-webkit-scrollbar {
-    display: none;
-}
+        .subjects-strip::-webkit-scrollbar {
+            display: none;
+        }
 
-.subject-item-premium {
-    min-width: 100px;
-    text-align: center;
-    text-decoration: none !important;
-    scroll-snap-align: start;
-    cursor: pointer;
-}
+        .subject-item-premium {
+            min-width: 100px;
+            text-align: center;
+            text-decoration: none !important;
+            scroll-snap-align: start;
+            cursor: pointer;
+        }
 
-.subject-circle-premium {
-    width: 74px;
-    height: 74px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 10px;
-    font-size: 28px;
-    transition: all .25s ease;
-    box-shadow:0 2px 6px rgba(0,0,0,0.04);
-}
+        .subject-circle-premium {
+            width: 74px;
+            height: 74px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 28px;
+            transition: all .25s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
 
-.subject-item-premium span {
-    font-size: 13px;
-    font-weight: 600;
-    color: #64748b;
-}
+        .subject-item-premium span {
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+        }
 
-/* Hover effect */
-.subject-item-premium:hover .subject-circle-premium {
-transform:translateY(-6px) scale(1.05);
-border-color:var(--primary-blue);
-background:#f1f6ff;
-box-shadow:0 12px 24px rgba(0,0,0,0.12);
-}
-/* Active subject */
-.subject-item-premium.active .subject-circle-premium {
-    border: 2px solid var(--primary-blue);
-    background: #eef4ff;
-}
-.subjects-strip{
-cursor:grab;
-}
+        /* Hover effect */
+        .subject-item-premium:hover .subject-circle-premium {
+            transform: translateY(-6px) scale(1.05);
+            border-color: var(--primary-blue);
+            background: #f1f6ff;
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+        }
 
-.subjects-strip:active{
-cursor:grabbing;
-}
-.subject-item-premium.active span {
-    color: var(--primary-blue);
-}
+        /* Active subject */
+        .subject-item-premium.active .subject-circle-premium {
+            border: 2px solid var(--primary-blue);
+            background: #eef4ff;
+        }
+
+        .subjects-strip {
+            cursor: grab;
+        }
+
+        .subjects-strip:active {
+            cursor: grabbing;
+        }
+
+        .subject-item-premium.active span {
+            color: var(--primary-blue);
+        }
+
         /* FILTER */
         .filter-section-premium {
             padding: 30px 8% 20px;
@@ -491,10 +512,10 @@ cursor:grabbing;
             color: inherit;
         }
 
-        .card-premium:hover{
-transform:translateY(-6px) scale(1.01);
-box-shadow:0 18px 35px rgba(0,0,0,0.12);
-}
+        .card-premium:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.12);
+        }
 
         .p-badge-premium {
             position: absolute;
@@ -523,8 +544,8 @@ box-shadow:0 18px 35px rgba(0,0,0,0.12);
 
         .card-img-premium {
             width: 100%;
-            height:200px;
-            background:#f8fafc;
+            height: 200px;
+            background: #f8fafc;
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -1217,124 +1238,128 @@ box-shadow:0 18px 35px rgba(0,0,0,0.12);
         .category-item.active .category-label {
             color: var(--primary-orange);
         }
-      .book-context{
-display:flex;
-justify-content:center;
-align-items:center;
-gap:10px;
-font-size:14px;
-color:#64748b;
-margin:14px 0 6px;
-padding:8px 18px;
-background:white;
-border-radius:30px;
-width:fit-content;
-margin-left:auto;
-margin-right:auto;
-box-shadow:0 3px 10px rgba(0,0,0,0.05);
-}
-.change-loc-premium{
-color:#ff6a00;
-font-weight:600;
-text-decoration:none;
-cursor:pointer;
-}
-.change-loc-premium:hover{
-text-decoration:underline;
-}
-.subjects-wrapper{
-    position: relative;
-}
 
-/* left fade */
-.subjects-wrapper::before{
-    content:"";
-    position:absolute;
-    left:0;
-    top:0;
-    height:100%;
-    width:40px;
-    pointer-events:none;
-    background:linear-gradient(to right, #ffffff, rgba(255,255,255,0));
-    z-index:2;
-}
+        .book-context {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            color: #64748b;
+            margin: 14px 0 6px;
+            padding: 8px 18px;
+            background: white;
+            border-radius: 30px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
 
-/* right fade */
-.subjects-wrapper::after{
-    content:"";
-    position:absolute;
-    right:0;
-    top:0;
-    height:100%;
-    width:40px;
-    pointer-events:none;
-    background:linear-gradient(to left, #ffffff, rgba(255,255,255,0));
-    z-index:2;
-}
+        .change-loc-premium {
+            color: #ff6a00;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .change-loc-premium:hover {
+            text-decoration: underline;
+        }
+
+        .subjects-wrapper {
+            position: relative;
+        }
+
+        /* left fade */
+        .subjects-wrapper::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 40px;
+            pointer-events: none;
+            background: linear-gradient(to right, #ffffff, rgba(255, 255, 255, 0));
+            z-index: 2;
+        }
+
+        /* right fade */
+        .subjects-wrapper::after {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: 40px;
+            pointer-events: none;
+            background: linear-gradient(to left, #ffffff, rgba(255, 255, 255, 0));
+            z-index: 2;
+        }
     </style>
     <!-- Hero Section -->
     <section class="hero">
 
-<div class="hero-left">
+        <div class="hero-left">
 
-<h1>India's Smart Marketplace for <span>Books</span></h1>
+            <h1>India's Smart Marketplace for <span>Books</span></h1>
 
-<div class="sub">Buy • Sell • Rent • Print Notes</div>
+            <div class="sub">Buy • Sell • Rent • Print Notes</div>
 
-<div class="save">Save up to 70% on textbooks</div>
+            <div class="save">Save up to 70% on textbooks</div>
 
-<div class="buttons">
-<button class="btn buy">Buy Books</button>
-<button class="btn sell">Sell Old Books</button>
-</div>
+            <div class="buttons">
+                <a href="{{ url('/search-products') }}" class="btn buy" style="text-decoration:none;">Buy Books</a>
+                <a href="{{ url('/marketplace') }}" class="btn sell" style="text-decoration:none;">Sell Old Books</a>
+            </div>
 
-<div class="features">
+            <div class="features">
 
-<div class="feature">
-<i class="fa-solid fa-check-circle"></i>
-50,000+ Books
-</div>
+                <div class="feature">
+                    <i class="fa-solid fa-check-circle"></i>
+                    50,000+ Books
+                </div>
 
-<div class="divider"></div>
+                <div class="divider"></div>
 
-<div class="feature">
-<i class="fa-solid fa-box"></i>
-Used Books Up to <span style="color:#1b66c9;">70% Off</span>
-</div>
+                <div class="feature">
+                    <i class="fa-solid fa-box"></i>
+                    Used Books Up to <span style="color:#1b66c9;">70% Off</span>
+                </div>
 
-<div class="divider"></div>
+                <div class="divider"></div>
 
-<div class="feature">
-<i class="fa-solid fa-truck"></i>
-Free Delivery on Orders ₹499+
-</div>
+                <div class="feature">
+                    <i class="fa-solid fa-truck"></i>
+                    Free Delivery on Orders ₹499+
+                </div>
 
-</div>
+            </div>
 
-</div>
+        </div>
 
-<div class="hero-right">
-<img src="{{ asset('uploads/logos/9176205_6615.svg') }}">
-</div>
+        <div class="hero-right">
+            <img src="{{ asset('uploads/logos/9176205_6615.svg') }}">
+        </div>
 
-</section>
+    </section>
 
-<div class="book-context">
-    <span>Showing books for: <strong>All</strong></span>
+    <div class="book-context">
+        <span id="currentSelectionInfo">Showing books for: <strong>All</strong></span>
 
-    <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">
-        Change
-    </a>
-</div>
+        <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">
+            Change
+        </a>
+    </div>
     <!-- Subjects Strip -->
     <div class="subjects-wrapper">
         <div class="subjects-strip" id="homeSubjectsContainer">
-        @include('front.partials.home_subjects')
+            @include('front.partials.home_subjects')
+        </div>
     </div>
-</div>
     <!-- Filter Section -->
     <div class="filter-section-premium">
-        
+
 
         <div class="pills-premium">
             <a href="javascript:void(0)" class="pill-premium filter-btn-premium" id="openFilterChip">
@@ -1399,8 +1424,7 @@ Free Delivery on Orders ₹499+
                     @endif
                     <a href="{{ route('marketplace.detail', $sbook->id) }}" class="card-img-premium">
                         <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}"
-                            class="{{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}"
-                            alt="{{ $sbook->book_title }}">
+                            class="{{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}" alt="{{ $sbook->book_title }}">
                     </a>
                     <div class="student-info mb-2">
                         <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}"
@@ -1430,7 +1454,7 @@ Free Delivery on Orders ₹499+
         <div class="banner-premium-card v-banner-premium">
             <div class="v-text-premium">
                 <span class="v-label-premium">🤝 Vendor Opportunity</span>
-                <h2>Turn Your Catalog into <span>Revenue</span></h2>
+                <h2 style="color: #ffffffff;">Turn Your Catalog into <span>Revenue</span></h2>
                 <p style="opacity: 0.9; margin-bottom: 25px; line-height: 1.6;">Upload your books once and let BookHub
                     handle the marketing. Expand your reach with only a 5% promotion fee.</p>
                 <div class="v-points-premium">
@@ -1458,7 +1482,7 @@ Free Delivery on Orders ₹499+
             <div class="v-text-premium">
                 <span class="v-label-premium" style="background: rgba(255,255,255,0.2); color: white;">🚀 Career
                     Opportunity</span>
-                <h2>Become a BookHub <span>Sales Executive</span></h2>
+                <h2 style="color: #ffffffff;">Become a BookHub <span>Sales Executive</span></h2>
                 <p style="opacity: 0.9; margin-bottom: 25px; line-height: 1.6;">Help schools and institutions discover the
                     right books while earning attractive commissions, marketing support, and exclusive incentives.</p>
                 <div class="v-points-premium">
@@ -1879,7 +1903,7 @@ Free Delivery on Orders ₹499+
                         displayText += 'All';
                     }
                     displayText += '</strong>';
-                    selectionInfo.innerHTML = displayText;
+                    if (selectionInfo) selectionInfo.innerHTML = displayText;
 
                     // Close the sheet (if open)
                     if (!stayOpen) {

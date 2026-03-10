@@ -61,6 +61,7 @@ class Cart extends Model
         return $getCartItems;
     }
 
+
     // Get total cart items count
     public static function totalCartItems()
     {
@@ -72,5 +73,27 @@ class Cart extends Model
             $totalCartItems = Cart::where('session_id', $session_id)->sum('quantity');
         }
         return $totalCartItems;
+    }
+
+    public static function mergeCart($session_id, $user_id)
+    {
+        if (empty($session_id)) {
+            return;
+        }
+
+        $sessionCartItems = Cart::where('session_id', $session_id)->where('user_id', 0)->get();
+        foreach ($sessionCartItems as $item) {
+            $userCartItem = Cart::where(['user_id' => $user_id, 'product_attribute_id' => $item->product_attribute_id])->first();
+            if ($userCartItem) {
+                // If item already exists for the user, update quantity
+                $userCartItem->quantity += $item->quantity;
+                $userCartItem->save();
+                $item->delete();
+            } else {
+                // If item doesn't exist, update user_id
+                $item->user_id = $user_id;
+                $item->save();
+            }
+        }
     }
 }

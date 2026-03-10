@@ -229,7 +229,7 @@
                                         </li>
                                         <li class="meta-item">
                                             <span class="meta-label">Seller</span>
-                                            <span class="meta-value text-dark">{{ $bookDetails->user->name }}</span>
+                                            <span class="meta-value text-dark">{{ $bookDetails->user->name ?? 'Unknown' }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -318,14 +318,14 @@
                                         <img src="{{ asset($bookDetails->user->profile_image ?? 'assets/images/avatar.png') }}" 
                                              class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
                                         <div>
-                                            <h5 class="mb-0">{{ $bookDetails->user->name }}</h5>
+                                            <h5 class="mb-0">{{ $bookDetails->user->name ?? 'Unknown' }}</h5>
                                             <small class="text-muted">Student Member</small>
                                         </div>
                                     </div>
                                     <p>Contact this student directly to arrange pickup and payment.</p>
                                     <div class="d-flex gap-2">
-                                        <a href="tel:{{ $bookDetails->user->mobile }}" class="btn btn-sm btn-dark"><i class="fas fa-phone me-1"></i> Call Seller</a>
-                                        <a href="https://wa.me/{{ $bookDetails->user->mobile }}" class="btn btn-sm btn-success"><i class="fab fa-whatsapp me-1"></i> WhatsApp</a>
+                                        <a href="tel:{{ $bookDetails->user->mobile ?? '#' }}" class="btn btn-sm btn-dark"><i class="fas fa-phone me-1"></i> Call Seller</a>
+                                        <a href="https://wa.me/{{ $bookDetails->user->mobile ?? '#' }}" class="btn btn-sm btn-success"><i class="fab fa-whatsapp me-1"></i> WhatsApp</a>
                                     </div>
                                 </div>
                             </div>

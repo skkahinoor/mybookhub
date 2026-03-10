@@ -193,7 +193,7 @@
             
             <div class="student-info">
                 <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}" class="student-avatar" alt="User">
-                <span class="student-name">By {{ $sbook->user->name }}</span>
+                <span class="student-name">By {{ $sbook->user->name ?? 'Unknown' }}</span>
                 <span class="ms-auto condition-tag">{{ $sbook->book_condition }}</span>
             </div>
             

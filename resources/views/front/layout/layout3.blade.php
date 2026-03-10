@@ -83,15 +83,15 @@
            Premium Unified Header
            ============================ */
         .layout-app-header {
-                background: #EEF5FD;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    position: sticky;
-    top: 0;
-    z-index: 2000;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            background: #EEF5FD;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            position: sticky;
+            top: 0;
+            z-index: 2000;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
         }
 
         .header-logo img {
@@ -101,19 +101,19 @@
         }
 
         .header-search {
-            display:flex;
-background:white;
-border-radius:8px;
-overflow:hidden;
-width:420px;
-box-shadow:0 2px 10px rgba(0,0,0,0.08);
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            width: 420px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         }
 
         .header-search input {
-            flex:1;
-border:none;
-padding:10px;
-outline:none;
+            flex: 1;
+            border: none;
+            padding: 10px;
+            outline: none;
         }
 
         .header-search input:focus {
@@ -121,33 +121,35 @@ outline:none;
             border-color: var(--primary-orange);
             box-shadow: 0 8px 20px rgba(255, 107, 0, 0.08);
         }
-.header-search button{
-background:#2f6fc2;
-color:white;
-border:none;
-padding:10px 16px;
-}
 
-.header-icons{
-display:flex;
-gap:25px;
-}
+        .header-search button {
+            background: #2f6fc2;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+        }
 
-.icon{
-position:relative;
-cursor:pointer;
-}
+        .header-icons {
+            display: flex;
+            gap: 25px;
+        }
 
-.badge{
-position:absolute;
-top:-6px;
-right:-8px;
-background:#ff6b00;
-color:white;
-font-size:10px;
-padding:3px 6px;
-border-radius:50%;
-}
+        .icon {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            background: #ff6b00;
+            color: white;
+            font-size: 10px;
+            padding: 3px 6px;
+            border-radius: 50%;
+        }
+
         .header-search .search-icon {
             position: absolute;
             left: 15px;
@@ -226,11 +228,41 @@ border-radius:50%;
             border: 1.5px solid #fff;
         }
 
+        /* Vendor Login Button */
+        .btn-vendor-login {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: #fff !important;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none !important;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            border: none;
+            margin-left: 12px;
+            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.25);
+        }
+
+        .btn-vendor-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.35);
+            filter: brightness(1.08);
+        }
+
+        .btn-vendor-login i {
+            font-size: 13px;
+        }
+
         @media (max-width: 991px) {
 
             .desktop-only-icon,
             .user-name-text,
-            .header-filters {
+            .header-filters,
+            .btn-vendor-login {
                 display: none !important;
             }
         }
@@ -523,7 +555,7 @@ border-radius:50%;
 
             .header-search {
                 margin-left: 10px;
-                max-width: 500px !important;
+                max-width: 420px !important;
                 flex: 1;
             }
         }
@@ -539,7 +571,7 @@ border-radius:50%;
                 flex-wrap: nowrap;
                 justify-content: space-between;
                 align-items: center;
-                padding: 10px 12px;
+                padding: 8px 10px;
                 gap: 8px;
             }
 
@@ -553,15 +585,23 @@ border-radius:50%;
             }
 
             .header-search {
-                flex: 1;
+                flex: 1 1 0;
+                min-width: 0;
+                width: auto !important;
                 margin: 0 !important;
                 max-width: none !important;
             }
 
             .header-search input {
-                height: 38px;
+                height: 36px;
                 font-size: 13px;
-                padding: 5px 10px 5px 32px;
+                padding: 5px 10px;
+                min-width: 0;
+            }
+
+            .header-search button {
+                padding: 8px 12px;
+                font-size: 14px;
             }
 
             .header-search .search-icon {
@@ -572,17 +612,48 @@ border-radius:50%;
             .header-icons {
                 flex: 0 0 auto;
                 display: flex !important;
-                gap: 10px;
+                gap: 8px;
                 align-items: center;
             }
 
             .header-icons .icon-btn {
-                font-size: 18px;
+                font-size: 17px;
             }
 
             .header-icons img {
-                width: 28px !important;
-                height: 28px !important;
+                width: 26px !important;
+                height: 26px !important;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 480px) {
+            .layout-app-header {
+                padding: 6px 8px;
+                gap: 6px;
+            }
+
+            .header-logo img {
+                height: 20px;
+            }
+
+            .header-search input {
+                font-size: 12px;
+                height: 34px;
+                padding: 4px 8px;
+            }
+
+            .header-search button {
+                padding: 6px 10px;
+                font-size: 13px;
+            }
+
+            .header-icons {
+                gap: 6px;
+            }
+
+            .header-icons .icon-btn {
+                font-size: 16px;
             }
         }
     </style>
@@ -745,10 +816,14 @@ border-radius:50%;
                 </div>
             </div>
 
-            <div class="header-search">
-<input type="text" placeholder="Search books, authors, ISBN...">
-<button><i class="fa fa-search"></i></button>
-</div>
+            <form class="header-search" id="headerSearchForm" action="{{ url('/search-products') }}" method="GET"
+                onsubmit="return handleHeaderSearch(event)">
+                <input type="text" id="globalSearch" name="search" placeholder="Search books, authors, ISBN...">
+                <button type="submit"><i class="fa fa-search"></i></button>
+            </form>
+            <a href="{{ url('vendor/login') }}" class="btn-vendor-login desktop-only-icon">
+                <i class="fas fa-store"></i> Vendor Login
+            </a>
             <div class="header-icons">
                 <a href="{{ url('/wishlist') }}" class="icon-btn desktop-only-icon">
                     <i class="far fa-heart"></i>
@@ -1065,30 +1140,19 @@ border-radius:50%;
 
     <script>
         // Global search handler for the new premium unified header
-        (function() {
-            function goToSearch(term) {
-                var base = "{{ url('/') }}";
-                var url = base + '/search-products';
-                if (term && term.trim().length) {
-                    window.location.href = url + '?search=' + encodeURIComponent(term.trim());
-                } else {
-                    window.location.href = url;
-                }
+        function handleHeaderSearch(e) {
+            e.preventDefault();
+            var input = document.getElementById('globalSearch');
+            var term = input ? input.value.trim() : '';
+            var base = "{{ url('/') }}";
+            var url = base + '/search-products';
+            if (term.length > 0) {
+                window.location.href = url + '?search=' + encodeURIComponent(term);
+            } else {
+                window.location.href = url;
             }
-
-            var globalSearchInput = document.getElementById('globalSearch');
-            if (globalSearchInput) {
-                globalSearchInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        var term = this.value.trim();
-                        if (term.length > 0) {
-                            goToSearch(term);
-                        }
-                    }
-                });
-            }
-        })();
+            return false;
+        }
     </script>
     <script>
         $(document).ready(function() {
