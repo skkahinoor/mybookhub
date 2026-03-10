@@ -1025,6 +1025,30 @@ class ProductController extends Controller
 
         try {
             $order_ids = [];
+            $eligible_item_ids = [];
+            if ($coupon) {
+                foreach ($cartItems as $item) {
+                    $attribute = ProductsAttribute::with('product')->find($item->product_attribute_id);
+                    if (!$attribute) continue;
+                    $product = $attribute->product;
+                    
+                    $isEligible = true;
+                    if (!empty($coupon->categories)) {
+                        $catArr = explode(',', $coupon->categories);
+                        if (!in_array($product->category_id, $catArr)) {
+                            $isEligible = false;
+                        }
+                    }
+                    if ($coupon->vendor_id && $attribute->vendor_id != $coupon->vendor_id) {
+                        $isEligible = false;
+                    }
+                    
+                    if ($isEligible) {
+                        $eligible_item_ids[] = $item->product_attribute_id;
+                    }
+                }
+            }
+
             foreach ($cartItems as $item) {
                 $attribute = ProductsAttribute::with('product')->find($item->product_attribute_id);
                 $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
@@ -1033,7 +1057,14 @@ class ProductController extends Controller
                 // Proportional distribution
                 $proportion = ($total_price > 0) ? ($item_price / $total_price) : 0;
                 $item_shipping = round($shipping_charges * $proportion, 2);
-                $item_coupon = round($coupon_amount * $proportion, 2);
+                
+                // Coupon Logic: Only apply if item is eligible
+                $item_coupon = 0;
+                if ($coupon && in_array($item->product_attribute_id, $eligible_item_ids) && $discountableSubTotal > 0) {
+                    $coupon_proportion = $item_price / $discountableSubTotal;
+                    $item_coupon = round($coupon_amount * $coupon_proportion, 2);
+                }
+
                 $item_wallet = round($wallet_amount * $proportion, 2);
                 
                 $item_grand_total = max(0, $item_price + $item_shipping - $item_coupon - $item_wallet);
