@@ -763,101 +763,122 @@ class ProductController extends Controller
 
     public function applyCoupon(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $request->validate([
             'code' => 'required|string',
             'cart_items' => 'required|array',
-            'cart_items.*.product_id' => 'required|integer',
             'cart_items.*.product_attribute_id' => 'required|integer',
-            'cart_items.*.quantity' => 'required|integer|min:1',
-            'cart_items.*.size' => 'nullable|string'
+            'cart_items.*.quantity' => 'required|integer|min:1'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
-        }
-
-        $code = $request->code;
-        $cartItems = $request->cart_items;
         $user = auth('sanctum')->user();
         $user_id = $user ? $user->id : 0;
 
-        $couponDetails = Coupon::where('coupon_code', $code)->first();
+        $couponCode = $request->code;
+        $cartItems = $request->cart_items;
 
-        if (!$couponDetails) {
-            return response()->json(['status' => false, 'message' => 'The coupon is invalid!'], 404);
+        /** Get Coupon */
+        $coupon = Coupon::where('coupon_code', $couponCode)
+            ->where('status', 1)
+            ->whereDate('expiry_date', '>=', now())
+            ->first();
+
+        if (!$coupon) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid or expired coupon'
+            ]);
         }
 
-        if ($couponDetails->status == 0) {
-            return response()->json(['status' => false, 'message' => 'The coupon is inactive!'], 400);
-        }
+        /** Single Time Coupon Check */
+        if ($coupon->coupon_type == 'Single Time' && $user_id > 0) {
 
-        if ($couponDetails->expiry_date < date('Y-m-d')) {
-            return response()->json(['status' => false, 'message' => 'The coupon is expired!'], 400);
-        }
+            $used = Order::where([
+                'coupon_code' => $couponCode,
+                'user_id' => $user_id
+            ])->exists();
 
-        if ($couponDetails->coupon_type == 'Single Time' && $user_id > 0) {
-            $couponCount = Order::where([
-                'coupon_code' => $code,
-                'user_id' => $user_id,
-            ])->count();
-            if ($couponCount >= 1) {
-                return response()->json(['status' => false, 'message' => 'This coupon code is already availed by you!'], 400);
+            if ($used) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'This coupon already used by you'
+                ]);
             }
         }
 
-        $catArr = explode(',', $couponDetails->categories);
-        $total_amount = 0;
+        /** Calculate Cart Subtotal and Discountable Amount */
+        $subTotal = 0;
+        $discountableSubTotal = 0;
 
         foreach ($cartItems as $item) {
-            $product = Product::find($item['product_id']);
-            if (!$product) continue;
 
-            if (!empty($catArr) && $catArr[0] !== "" && !in_array($product->category_id, $catArr)) {
-                return response()->json(['status' => false, 'message' => 'This coupon code is not for one of the selected products category!'], 400);
-            }
+            $attribute = ProductsAttribute::with('product')
+                ->where('id', $item['product_attribute_id'])
+                ->first();
 
-            $attrPrice = Product::getDiscountPriceDetailsByAttribute($item['product_attribute_id']);
-            $total_amount += ($attrPrice['final_price'] * $item['quantity']);
-        }
+            if (!$attribute) continue;
 
-        if (!empty($couponDetails->users)) {
-            $usersArr = explode(',', $couponDetails->users);
-            if (count($usersArr) && $user_id > 0) {
-                $userEmail = $user->email;
-                if (!in_array($userEmail, $usersArr)) {
-                    return response()->json(['status' => false, 'message' => 'This coupon code is not available for you!'], 403);
-                }
-            } elseif (count($usersArr) && $user_id == 0) {
-                return response()->json(['status' => false, 'message' => 'Please login to use this coupon!'], 401);
-            }
-        }
+            $product = $attribute->product;
 
-        if ($couponDetails->vendor_id > 0) {
-            $productIds = Product::where('vendor_id', $couponDetails->vendor_id)->pluck('id')->toArray();
-            foreach ($cartItems as $item) {
-                if (!in_array($item['product_id'], $productIds)) {
-                    return response()->json(['status' => false, 'message' => 'Coupon code is restricted to vendor products!'], 400);
+            $priceDetails = Product::getDiscountPriceDetailsByAttribute($item['product_attribute_id']);
+
+            $itemPrice = $priceDetails['final_price'];
+
+            $itemTotal = $itemPrice * $item['quantity'];
+
+            $subTotal += $itemTotal;
+
+            // Check if this item is eligible for the coupon
+            $isEligible = true;
+
+            /** Category Restriction */
+            if (!empty($coupon->categories)) {
+                $catArr = explode(',', $coupon->categories);
+                if (!in_array($product->category_id, $catArr)) {
+                    $isEligible = false;
                 }
             }
+
+            /** Vendor Restriction */
+            if ($coupon->vendor_id && $attribute->vendor_id != $coupon->vendor_id) {
+                $isEligible = false;
+            }
+
+            if ($isEligible) {
+                $discountableSubTotal += $itemTotal;
+            }
         }
 
-        $couponAmount = 0;
-        if ($couponDetails->amount_type == 'Fixed') {
-            $couponAmount = $couponDetails->amount;
+        if ($discountableSubTotal <= 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'This coupon is not valid for any items in your cart.'
+            ]);
+        }
+
+        $subTotal = round($subTotal);
+        $discountableSubTotal = round($discountableSubTotal);
+
+        /** Coupon Calculation */
+        if ($coupon->amount_type === 'Percentage') {
+            $couponDiscount = round(($discountableSubTotal * $coupon->amount) / 100);
         } else {
-            $couponAmount = $total_amount * ($couponDetails->amount / 100);
+            $couponDiscount = round($coupon->amount);
         }
 
-        $grand_total = $total_amount - $couponAmount;
+        /** Prevent Over Discount */
+        $couponDiscount = min($couponDiscount, $discountableSubTotal);
+
+        $grandTotal = $subTotal - $couponDiscount;
 
         return response()->json([
             'status' => true,
-            'message' => 'Coupon Code successfully applied.',
             'data' => [
-                'coupon_code' => $code,
-                'coupon_amount' => $couponAmount,
-                'total_amount' => $total_amount,
-                'grand_total' => $grand_total > 0 ? $grand_total : 0
+                'coupon_code' => $coupon->coupon_code,
+                'amount_type' => $coupon->amount_type,
+                'amount' => $coupon->amount,
+                'sub_total' => $subTotal,
+                'coupon_discount' => $couponDiscount,
+                'grand_total' => $grandTotal
             ]
         ]);
     }
@@ -904,6 +925,7 @@ class ProductController extends Controller
         }
 
         $total_price = 0;
+        $discountableSubTotal = 0;
 
         foreach ($cartItems as $item) {
 
@@ -933,15 +955,57 @@ class ProductController extends Controller
             }
 
             $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
+            $itemPrice = $priceDetails['final_price'];
+            $itemTotal = $itemPrice * $item->quantity;
 
-            $total_price += ($priceDetails['final_price'] * $item->quantity);
+            $total_price += $itemTotal;
+
+            /** PRE-CHCEK ELIGIBILITY FOR COUPON RE-CALCULATION */
+            if ($request->coupon_code) {
+                $coupon = Coupon::where('coupon_code', $request->coupon_code)
+                    ->where('status', 1)
+                    ->whereDate('expiry_date', '>=', now())
+                    ->first();
+
+                if ($coupon) {
+                    $isEligible = true;
+
+                    // Category Restriction
+                    if (!empty($coupon->categories)) {
+                        $catArr = explode(',', $coupon->categories);
+                        if (!in_array($attribute->product->category_id, $catArr)) {
+                            $isEligible = false;
+                        }
+                    }
+
+                    // Vendor Restriction
+                    if ($coupon->vendor_id && $attribute->vendor_id != $coupon->vendor_id) {
+                        $isEligible = false;
+                    }
+
+                    if ($isEligible) {
+                        $discountableSubTotal += $itemTotal;
+                    }
+                }
+            }
         }
 
         $shippingCountry = $user->country ? $user->country->name : 'India';
-
         $shipping_charges = ShippingCharge::getShippingCharges(0, $shippingCountry);
 
-        $coupon_amount = $request->coupon_amount ?? 0;
+        // SECURE COUPON CALCULATION (Don't trust $request->coupon_amount)
+        $coupon_amount = 0;
+        if ($request->coupon_code && $discountableSubTotal > 0) {
+            $coupon = Coupon::where('coupon_code', $request->coupon_code)->first();
+            if ($coupon) {
+                if ($coupon->amount_type === 'Percentage') {
+                    $coupon_amount = round(($discountableSubTotal * $coupon->amount) / 100);
+                } else {
+                    $coupon_amount = round($coupon->amount);
+                }
+                $coupon_amount = min($coupon_amount, $discountableSubTotal);
+            }
+        }
 
         $grand_total = $total_price + $shipping_charges - $coupon_amount;
 
@@ -1170,13 +1234,13 @@ class ProductController extends Controller
             ], 401);
         }
 
-        $orders = Order::with(['orders_products' => function($query) {
+        $orders = Order::with(['orders_products' => function ($query) {
             // Load the associated product attribute and product to get images/details if needed
             // The orders_products table already has product_name, product_price, product_qty, etc.
         }])
-        ->where('user_id', $user->id)
-        ->orderBy('id', 'desc')
-        ->paginate(10); // Paginate the results, 10 orders per page
+            ->where('user_id', $user->id)
+            ->orderBy('id', 'desc')
+            ->paginate(10); // Paginate the results, 10 orders per page
 
         // Format the orders to include full details
         $formattedOrders = $orders->through(function ($order) {
@@ -1190,7 +1254,7 @@ class ProductController extends Controller
                 $imageUrl = null;
 
                 if ($product && $product->product_image) {
-                     $imageUrl = $basePath . '/small/' . $product->product_image;
+                    $imageUrl = $basePath . '/small/' . $product->product_image;
                 }
 
                 return [
@@ -1253,7 +1317,7 @@ class ProductController extends Controller
             ], 401);
         }
 
-        $order = Order::with(['logs' => function($query) {
+        $order = Order::with(['logs' => function ($query) {
             $query->orderBy('id', 'asc');
         }])->where('id', $id)->where('user_id', $user->id)->first();
 
@@ -1272,7 +1336,7 @@ class ProductController extends Controller
                 'current_status' => $order->order_status,
                 'tracking_number' => $order->tracking_number,
                 'courier_name' => $order->courier_name,
-                'logs' => $order->logs->map(function($log) {
+                'logs' => $order->logs->map(function ($log) {
                     return [
                         'status' => $log->order_status,
                         'date' => $log->created_at->format('d M Y, h:i A'),
@@ -1302,40 +1366,73 @@ class ProductController extends Controller
             ], 404);
         }
 
-        $allowedStatuses = ['New', 'Pending', 'In Progress'];
-        if (!in_array($order->order_status, $allowedStatuses)) {
+        $allowedStatuses = ['new', 'pending', 'in progress'];
+        if (!in_array(strtolower($order->order_status), $allowedStatuses)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Only ' . implode(', ', $allowedStatuses) . ' orders can be cancelled. Current status is ' . $order->order_status
+                'message' => 'Only ' . implode(', ', array_map('ucwords', $allowedStatuses)) . ' orders can be cancelled. Current status is ' . $order->order_status
             ], 400);
         }
+
+        $orderProductId = $request->order_product_id;
 
         DB::beginTransaction();
 
         try {
-            // Update status
-            $order->update(['order_status' => 'Cancelled']);
+            if ($orderProductId) {
+                // PARTIAL CANCELLATION: Only cancel specific item
+                $productItem = OrdersProduct::where('id', $orderProductId)
+                    ->where('order_id', $id)
+                    ->first();
 
-            // Revert Wallet
-            WalletTransaction::revertWallet($id);
+                if (!$productItem) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Order item not found'
+                    ], 404);
+                }
+
+                $productItem->update(['item_status' => 'Cancelled']);
+
+                // Check if ALL items are now cancelled
+                $activeItemsCount = OrdersProduct::where('order_id', $id)
+                    ->where('item_status', '!=', 'Cancelled')
+                    ->count();
+
+                if ($activeItemsCount == 0) {
+                    $order->update(['order_status' => 'Cancelled']);
+                    WalletTransaction::revertWallet($id);
+                }
+
+                $message = 'Item "' . $productItem->product_name . '" has been cancelled successfully.';
+            } else {
+                // FULL CANCELLATION: Mark everything as cancelled
+                $order->update(['order_status' => 'Cancelled']);
+                OrdersProduct::where('order_id', $id)->update(['item_status' => 'Cancelled']);
+                WalletTransaction::revertWallet($id);
+                $message = 'Entire order #' . $id . ' has been cancelled successfully.';
+            }
 
             // Log status
             $log = new OrdersLog;
             $log->order_id = $id;
             $log->order_status = 'Cancelled';
+            if ($orderProductId) {
+                $log->order_item_id = $orderProductId;
+            }
             $log->save();
 
             DB::commit();
 
             return response()->json([
                 'status' => true,
-                'message' => 'Order #' . $id . ' has been cancelled successfully.'
+                'message' => $message
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to cancel order: ' . $e->getMessage()
+                'message' => 'Failed to cancel: ' . $e->getMessage()
             ], 500);
         }
     }
