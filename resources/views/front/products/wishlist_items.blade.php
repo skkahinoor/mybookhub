@@ -31,14 +31,21 @@
 
             {{-- Add to Cart --}}
             <td>
-                {{-- <form action="{{ url('cart/add') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="product_attribute_id" value="{{ $item['product_attribute_id'] }}">
-                    <input type="hidden" name="quantity" value="{{ $item['quantity'] }}">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-shopping-cart"></i> Add to Cart
-                    </button>
-                </form> --}}
+                <div class="d-flex align-items-center gap-2">
+                    <div class="quantity-controls">
+                        <button type="button" class="qty-btn qty-minus" data-min="1">−</button>
+                        <input type="text" class="qty-input" value="{{ $item['quantity'] ?? 1 }}" readonly>
+                        <button type="button" class="qty-btn qty-plus" data-max="100">+</button>
+                    </div>
+                    <form action="{{ url('cart/add') }}" method="POST" class="wishlist-add-to-cart-form">
+                        @csrf
+                        <input type="hidden" name="product_attribute_id" value="{{ $item['product_attribute_id'] }}">
+                        <input type="hidden" name="quantity" class="wishlist-hidden-qty" value="{{ $item['quantity'] ?? 1 }}">
+                        <button type="submit" class="btn btn-primary btn-sm add-to-cart-btn" title="Add to Cart">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                    </form>
+                </div>
             </td>
 
             {{-- Remove --}}
@@ -160,101 +167,3 @@
     }
 </style>
 
-<script>
-    function initializeWishlistScripts() {
-        // For each wishlist row, sync the qty controls with the hidden quantity for Add to Cart
-        document.querySelectorAll('tr').forEach(function(row) {
-            const qtyInput = row.querySelector('.qty-input');
-            const minusBtn = row.querySelector('.qty-minus');
-            const plusBtn = row.querySelector('.qty-plus');
-            const hiddenQty = row.querySelector('.wishlist-hidden-qty');
-            const form = row.querySelector('.wishlist-add-to-cart-form');
-
-            if (!qtyInput || !minusBtn || !plusBtn || !hiddenQty) return;
-
-            function clamp(val, min, max) {
-                if (min !== null && val < min) return min;
-                if (max !== null && val > max) return max;
-                return val;
-            }
-
-            function updateButtons() {
-                const min = parseInt(minusBtn.getAttribute('data-min') || '1', 10);
-                const max = parseInt(plusBtn.getAttribute('data-max') || '1000', 10);
-                const current = parseInt(qtyInput.value || '1', 10);
-                minusBtn.disabled = current <= min;
-                plusBtn.disabled = current >= max;
-            }
-
-            function setQty(newQty) {
-                const min = parseInt(minusBtn.getAttribute('data-min') || '1', 10);
-                const max = parseInt(plusBtn.getAttribute('data-max') || '1000', 10);
-                const clamped = clamp(newQty, min, max);
-                qtyInput.value = clamped;
-                hiddenQty.value = clamped;
-                updateButtons();
-            }
-
-            minusBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const current = parseInt(qtyInput.value || '1', 10);
-                setQty(current - 1);
-            });
-
-            plusBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                const current = parseInt(qtyInput.value || '1', 10);
-                setQty(current + 1);
-            });
-
-            // Ensure initial sync
-            hiddenQty && setQty(parseInt(hiddenQty.value || qtyInput.value || '1', 10));
-
-            // Optional: ensure form uses current qty on submit
-            if (form) {
-                form.addEventListener('submit', function() {
-                    hiddenQty.value = qtyInput.value;
-                });
-            }
-        });
-
-        // Bind delete handlers (unbind previous to prevent duplicates)
-        document.querySelectorAll('.deleteWishlistItem').forEach(function(btn) {
-            btn.onclick = function(e) {
-                e.preventDefault();
-                var id = this.getAttribute('data-wishlist-id');
-                if (!id) return;
-
-                fetch("{{ route('wishlist.remove') }}", {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                .getAttribute('content'),
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify({
-                            wishlist_id: id
-                        })
-                    })
-                    .then(function(res) {
-                        if (!res.ok) throw new Error('Bad response');
-                        return res.json();
-                    })
-                    .then(function(resp) {
-                        if (resp.status) {
-                            // Force full page refresh so header counts and summaries stay in sync
-                            window.location.reload();
-                            return;
-                        }
-                        alert(resp.message || 'Could not remove item.');
-                    })
-                    .catch(function() {
-                        alert('Something went wrong.');
-                    });
-            };
-        });
-    }
-
-    document.addEventListener('DOMContentLoaded', initializeWishlistScripts);
-</script>

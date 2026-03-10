@@ -1219,7 +1219,7 @@ border-radius:50%;
         });
     </script>
 
-
+    @yield('scripts')
 </body>
 
 </html>

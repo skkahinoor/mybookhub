@@ -62,6 +62,68 @@
     .dz-content {
         flex: 1;
     }
+
+    /* Premium Status Badges */
+    .status-badge-premium {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .status-sold {
+        background: linear-gradient(135deg, #ff416c, #ff4b2b);
+        color: white;
+        border: none;
+    }
+
+    .condition-tag {
+        display: inline-flex;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 12px;
+        background: #eef2ff;
+        color: #4f46e5;
+        border: 1px solid #e0e7ff;
+    }
+
+    .condition-good {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #d1fae5;
+    }
+
+    /* Sold Out Ribbon on Image */
+    .sold-ribbon {
+        position: absolute;
+        top: 25px;
+        left: -10px;
+        background: #ef4444;
+        color: white;
+        padding: 8px 35px;
+        font-weight: 900;
+        font-size: 14px;
+        text-transform: uppercase;
+        transform: rotate(-10deg);
+        z-index: 10;
+        box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+        border-radius: 4px;
+    }
+
+    .sold-ribbon::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 0;
+        border-top: 10px solid #991b1b;
+        border-left: 10px solid transparent;
+    }
 </style>
 
     <section class="content-inner-1" style="background: #fff; padding: 40px 0;">
@@ -80,7 +142,7 @@
                                 style="width: 398px; height: 572px; object-fit: cover; {{ $bookDetails->book_status == 'sold' ? 'filter: grayscale(100%);' : '' }}">
                             
                             @if($bookDetails->book_status == 'sold')
-                                <div style="position: absolute; top: 20px; left: 20px; background: #ff4757; color: white; padding: 5px 15px; font-weight: 800; border-radius: 5px; transform: rotate(-10deg); box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                                <div class="sold-ribbon">
                                     SOLD OUT
                                 </div>
                             @endif
@@ -153,7 +215,9 @@
                                         </li>
                                         <li class="meta-item">
                                             <span class="meta-label">Condition</span>
-                                            <span class="meta-value text-info">{{ $bookDetails->book_condition }}</span>
+                                            <span class="condition-tag {{ strtolower($bookDetails->book_condition) == 'good' ? 'condition-good' : '' }}">
+                                                {{ $bookDetails->book_condition }}
+                                            </span>
                                         </li>
                                         <li class="meta-item">
                                             <span class="meta-label">Edition</span>
@@ -187,12 +251,10 @@
                                                class="btn btn-primary btnhover2" style="padding: 15px 40px; border-radius: 10px; font-weight: 700;">
                                                 <i class="fa-solid fa-cart-shopping me-2"></i> BUY NOW
                                             </a>
-                                            
-                                            <a href="tel:{{ $bookDetails->user->mobile }}" class="btn btn-outline-secondary ms-2" style="padding: 15px 25px; border-radius: 10px;">
-                                                <i class="fas fa-phone"></i>
-                                            </a>
                                         @else
-                                            <span class="badge bg-danger p-3" style="font-size: 1.2rem; border-radius: 10px;">ITEM SOLD</span>
+                                            <div class="status-badge-premium status-sold">
+                                                <i class="fas fa-check-circle me-2"></i> ITEM SOLD
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
@@ -226,7 +288,11 @@
                                     </tr>
                                     <tr>
                                         <th>Condition</th>
-                                        <td><span class="badge bg-info">{{ $bookDetails->book_condition }}</span></td>
+                                        <td>
+                                            <span class="condition-tag {{ strtolower($bookDetails->book_condition) == 'good' ? 'condition-good' : '' }}">
+                                                {{ $bookDetails->book_condition }}
+                                            </span>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th>Publisher</th>
