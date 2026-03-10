@@ -29,7 +29,9 @@
         .main-image-preview {
             width: 100%;
             aspect-ratio: 2/3;
-            object-fit: cover;
+            object-fit: contain;
+            background: #fff;
+            padding: 20px;
             border-radius: 12px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
             transition: transform 0.3s ease;
@@ -318,7 +320,7 @@
                         <div class="highlights-grid">
                             <div class="highlight-item">
                                 <span>Author</span>
-                                <span>{{ isset($productDetails['authors']) && count($productDetails['authors']) > 0 ? collect($productDetails['authors'])->pluck('name')->first() : 'Unknown' }}</span>
+                                <span>{{ isset($productDetails['authors']) && count($productDetails['authors']) > 0 ? collect($productDetails['authors'])->pluck('name')->join(', ') : 'Unknown' }}</span>
                             </div>
                             <div class="highlight-item">
                                 <span>Publisher</span>
@@ -482,6 +484,88 @@
                     font-size: 18px;
                     font-weight: 800;
                     margin-bottom: 20px;
+                }
+
+                /* Related Books Custom CSS */
+                .related-book-card {
+                    background: #fff;
+                    border: 1px solid #eee;
+                    border-radius: 12px;
+                    padding: 12px;
+                    transition: all 0.2s;
+                    text-decoration: none !important;
+                }
+
+                .related-book-card:hover {
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+                    transform: translateY(-2px);
+                    border-color: #ddd;
+                }
+
+                .related-book-card .dz-media {
+                    width: 75px;
+                    height: 100px;
+                    border-radius: 6px;
+                    overflow: hidden;
+                    background: #fff;
+                    flex-shrink: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 4px;
+                }
+
+                .related-book-card .dz-media img {
+                    max-width: 100%;
+                    max-height: 100%;
+                    object-fit: contain;
+                }
+
+                .related-book-card .dz-content {
+                    flex: 1;
+                    min-width: 0;
+                }
+
+                .related-book-card .subtitle {
+                    font-size: 14px;
+                    font-weight: 700;
+                    margin-bottom: 4px;
+                    line-height: 1.3;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .related-book-card .dz-tags {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0 0 6px 0;
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 4px;
+                    font-size: 11px;
+                    color: #888;
+                }
+
+                .related-book-card .dz-tags li {
+                    background: #f0f2f5;
+                    padding: 2px 6px;
+                    border-radius: 4px;
+                }
+
+                .related-book-card .price {
+                    font-size: 15px;
+                    font-weight: 700;
+                    color: var(--primary-orange);
+                    display: flex;
+                    align-items: center;
+                }
+
+                .related-book-card .price del {
+                    font-size: 12px;
+                    color: #aaa;
+                    font-weight: 400;
+                    margin-left: 6px;
                 }
             </style>
 
@@ -647,13 +731,14 @@
                                                 {{-- META --}}
                                                 <ul class="dz-tags">
                                                     @if ($product->publisher)
-                                                        <li>{{ strtoupper($product->publisher->name) }},</li>
+                                                        <li>{{ strtoupper($product->publisher->name) }}</li>
                                                     @endif
                                                     @if ($product->category)
-                                                        <li>{{ strtoupper($product->category->category_name) }},</li>
+                                                        <li>{{ strtoupper($product->category->category_name) }}</li>
                                                     @endif
                                                     @if ($product->authors->isNotEmpty())
-                                                        <li>{{ strtoupper($product->authors->first()->name) }}</li>
+                                                        <li>{{ strtoupper($product->authors->pluck('name')->join(', ')) }}
+                                                        </li>
                                                     @endif
                                                 </ul>
 
@@ -709,17 +794,18 @@
                                                 </div>
 
                                                 {{-- ADD TO CART --}}
-                                                {{-- <form action="{{ url('cart/add') }}" method="POST">
+                                                <form action="{{ url('cart/add') }}" method="POST">
                                                     @csrf
                                                     <input type="hidden" name="product_attribute_id"
                                                         value="{{ $similarProduct->id }}">
                                                     <input type="hidden" name="quantity" value="1">
 
-                                                    <button type="submit" class="btn btn-primary btnhover2">
-                                                        <i class="flaticon-shopping-cart-1"></i>
-                                                        <span>&nbsp;&nbsp;Add to cart</span>
+                                                    <button type="submit" class="btn btn-sm"
+                                                        style="background:var(--primary-orange);color:white;font-weight:600;padding:6px 14px;border-radius:6px;border:none;font-size:12px;transition:0.2s;">
+                                                        <i class="flaticon-shopping-cart-1" style="font-size:12px"></i>
+                                                        <span>Add to cart</span>
                                                     </button>
-                                                </form> --}}
+                                                </form>
 
                                             </div>
                                         </div>
