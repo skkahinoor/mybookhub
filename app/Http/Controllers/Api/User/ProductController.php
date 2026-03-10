@@ -1302,10 +1302,11 @@ class ProductController extends Controller
             ], 404);
         }
 
-        if ($order->order_status != 'Pending') {
+        $allowedStatuses = ['New', 'Pending', 'In Progress'];
+        if (!in_array($order->order_status, $allowedStatuses)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Only Pending orders can be cancelled. Current status is ' . $order->order_status
+                'message' => 'Only ' . implode(', ', $allowedStatuses) . ' orders can be cancelled. Current status is ' . $order->order_status
             ], 400);
         }
 
