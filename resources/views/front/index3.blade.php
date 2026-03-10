@@ -470,144 +470,160 @@
         }
 
         /* GRID */
-        .grid-premium {
+        .book-wall {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 20px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
             padding: 0 8% 50px;
         }
 
-        @media (max-width: 1200px) {
-            .grid-premium {
+        /* RESPONSIVE */
+
+        @media(max-width:1200px) {
+            .book-wall {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        @media(max-width:1000px) {
+            .book-wall {
                 grid-template-columns: repeat(4, 1fr);
             }
         }
 
-        @media (max-width: 900px) {
-            .grid-premium {
+        @media(max-width:750px) {
+            .book-wall {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
 
-        @media (max-width: 600px) {
-            .grid-premium {
+        @media(max-width:500px) {
+            .book-wall {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
                 padding: 0 10px 40px;
             }
         }
 
-        .card-premium {
+        /* CARD */
+
+        .book-item {
             background: white;
-            border-radius: 12px;
-            padding: 12px;
-            position: relative;
-            transition: 0.3s;
-            border: 1px solid #f1f5f9;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
-            display: flex;
-            flex-direction: column;
-            height: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: .25s;
             text-decoration: none !important;
             color: inherit;
         }
 
-        .card-premium:hover {
-            transform: translateY(-6px) scale(1.01);
-            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.12);
+        .book-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
         }
 
-        .p-badge-premium {
+        /* COVER */
+
+        .cover {
+            aspect-ratio: 2/3;
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: .3s;
+        }
+
+        .book-item:hover .cover img {
+            transform: scale(1.05);
+        }
+
+        /* BADGE */
+
+        .condition {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 6px;
+            left: 6px;
             font-size: 10px;
-            font-weight: 800;
-            padding: 4px 8px;
-            border-radius: 3px;
+            padding: 3px 7px;
+            border-radius: 20px;
             color: white;
             z-index: 10;
+            font-weight: 600;
             text-transform: uppercase;
         }
 
-        .b-bestseller-premium {
-            background: #F97316;
+        .new {
+            background: #22c55e;
         }
 
-        .b-discount-premium {
-            background: #F97316;
+        .used {
+            background: #f59e0b;
         }
 
-        .b-used-premium {
-            background: #14B8A6;
+        /* INFO */
+
+        .info {
+            padding: 10px;
         }
 
-        .card-img-premium {
-            width: 100%;
-            height: 200px;
-            background: #f8fafc;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 15px;
-            overflow: hidden;
-            padding: 12px;
-        }
-
-        .card-img-premium img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
-
-        .card-title-premium {
-            font-size: 14px;
+        .title {
+            font-size: 12px;
             font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-            line-height: 1.4;
+            color: #1A1A1A;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            height: 40px;
+            text-decoration: none !important;
+            line-height: 1.4;
+            height: 33px;
         }
 
-        .card-stars-premium {
-            color: #FBBF24;
-            font-size: 12px;
-            margin-bottom: 12px;
+        .title:hover {
+            color: #ff6b00;
         }
 
-        .card-price-premium {
-            font-size: 18px;
+        .author {
+            font-size: 11px;
+            color: #777;
+            margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* PRICE */
+
+        .price {
+            font-size: 14px;
             font-weight: 700;
-            color: var(--primary-orange);
-            margin-bottom: 15px;
-            margin-top: auto;
+            margin-top: 6px;
+            color: #1A1A1A;
         }
 
-        .btn-cart-premium {
+        /* BUTTON */
+
+        .cart-btn {
             width: 100%;
-            padding: 10px;
-            background: #0056D2;
-            color: white;
+            margin-top: 8px;
+            background: #ff6b00;
             border: none;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 13px;
+            color: white;
+            padding: 6px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: 0.2s;
+            transition: .3s;
         }
 
-        .btn-cart-premium:hover {
-            background: #0042a5;
+        .cart-btn:hover {
+            background: #e45d00;
         }
 
         /* SELL SECTION */
@@ -1378,7 +1394,7 @@
     </div>
 
     <!-- Product Grid -->
-    <div class="grid-premium" id="homeProductGrid">
+    <div class="book-wall" id="homeProductGrid">
         @include('front.partials.home_product_grid')
     </div>
 
@@ -1416,33 +1432,45 @@
                 <a href="{{ route('marketplace') }}" class="change-loc-premium">View All</a>
             </div>
         </div>
-        <div class="grid-premium" id="studentMarketplaceGrid">
+        <div class="book-wall" id="studentMarketplaceGrid">
             @foreach ($sellBookRequests as $sbook)
-                <div class="card-premium">
+                <div class="book-item">
                     @if ($sbook->book_status == 'sold')
                         <div class="sold-overlay">Sold</div>
                     @endif
-                    <a href="{{ route('marketplace.detail', $sbook->id) }}" class="card-img-premium">
-                        <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}"
-                            class="{{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}" alt="{{ $sbook->book_title }}">
-                    </a>
-                    <div class="student-info mb-2">
-                        <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}"
-                            class="student-avatar" alt="User">
-                        <span class="student-name">By {{ $sbook->user->name ?? 'not' }}</span>
-                        <span class="ms-auto condition-tag">{{ strtoupper($sbook->book_condition) }}</span>
-                    </div>
-                    <a href="{{ route('marketplace.detail', $sbook->id) }}" class="card-title-premium text-dark"
-                        style="text-decoration: none;">
-                        {{ $sbook->book_title }}
-                    </a>
-                    <div class="card-stars-premium">★★★★★</div>
-                    <div class="card-price-premium">₹{{ number_format($sbook->expected_price, 0) }}</div>
 
-                    <a href="{{ route('marketplace.detail', $sbook->id) }}" class="btn-cart-premium"
-                        style="background: {{ $sbook->book_status == 'sold' ? '#64748B' : '#0056D2' }}; text-decoration: none;">
-                        {{ $sbook->book_status == 'sold' ? 'Sold Out' : 'View Details' }}
-                    </a>
+                    <div class="cover">
+                        <span class="condition used">
+                            {{ strtoupper($sbook->book_condition) }}
+                        </span>
+                        <a href="{{ route('marketplace.detail', $sbook->id) }}">
+                            <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}"
+                                class="{{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}"
+                                alt="{{ $sbook->book_title }}">
+                        </a>
+                    </div>
+
+                    <div class="info">
+                        <div class="student-info mb-2"
+                            style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                            <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}"
+                                class="student-avatar" alt="User"
+                                style="width: 20px; height: 20px; border-radius: 50%;">
+                            <span class="student-name">By {{ $sbook->user->name ?? 'not' }}</span>
+                        </div>
+
+                        <a href="{{ route('marketplace.detail', $sbook->id) }}" class="title"
+                            style="text-decoration: none;">
+                            {{ $sbook->book_title }}
+                        </a>
+
+                        <div class="price">₹{{ number_format($sbook->expected_price, 0) }}</div>
+
+                        <a href="{{ route('marketplace.detail', $sbook->id) }}" class="cart-btn"
+                            style="background: {{ $sbook->book_status == 'sold' ? '#64748B' : '#0056D2' }}; text-decoration: none; display: block; text-align: center; box-sizing: border-box;">
+                            {{ $sbook->book_status == 'sold' ? 'Sold Out' : 'View Details' }}
+                        </a>
+                    </div>
                 </div>
             @endforeach
         </div>

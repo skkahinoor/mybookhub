@@ -57,7 +57,7 @@
 												<th class="col-name">Product Name</th>
 												<th class="col-price">Unit Price</th>
 											{{-- <th>Quantity</th> --}}
-												{{-- <th class="col-action">Add to Cart</th> --}}
+												<th class="col-action">Add to Cart</th>
 												<th class="col-action">Actions</th>
 										</tr>
 									</thead>
@@ -106,6 +106,161 @@
 				</div>
 			</div>
 		</div>
+@endsection
+
+@section('scripts')
+<script>
+    function initializeWishlistScripts() {
+        // For each wishlist row, sync the qty controls with the hidden quantity for Add to Cart
+        document.querySelectorAll('#wishlistItems tr').forEach(function(row) {
+            const qtyInput = row.querySelector('.qty-input');
+            const minusBtn = row.querySelector('.qty-minus');
+            const plusBtn = row.querySelector('.qty-plus');
+            const hiddenQty = row.querySelector('.wishlist-hidden-qty');
+            const form = row.querySelector('.wishlist-add-to-cart-form');
+
+            if (!qtyInput || !minusBtn || !plusBtn || !hiddenQty) return;
+
+            function clamp(val, min, max) {
+                if (min !== null && val < min) return min;
+                if (max !== null && val > max) return max;
+                return val;
+            }
+
+            function updateButtons() {
+                const min = parseInt(minusBtn.getAttribute('data-min') || '1', 10);
+                const max = parseInt(plusBtn.getAttribute('data-max') || '1000', 10);
+                const current = parseInt(qtyInput.value || '1', 10);
+                minusBtn.disabled = current <= min;
+                plusBtn.disabled = current >= max;
+            }
+
+            function setQty(newQty) {
+                const min = parseInt(minusBtn.getAttribute('data-min') || '1', 10);
+                const max = parseInt(plusBtn.getAttribute('data-max') || '1000', 10);
+                const clamped = clamp(newQty, min, max);
+                qtyInput.value = clamped;
+                hiddenQty.value = clamped;
+                updateButtons();
+            }
+
+            // Remove old listeners to prevent duplicates if re-initialized
+            const newMinus = minusBtn.cloneNode(true);
+            minusBtn.parentNode.replaceChild(newMinus, minusBtn);
+            const newPlus = plusBtn.cloneNode(true);
+            plusBtn.parentNode.replaceChild(newPlus, plusBtn);
+
+            newMinus.addEventListener('click', function(e) {
+                e.preventDefault();
+                const current = parseInt(qtyInput.value || '1', 10);
+                setQty(current - 1);
+            });
+
+            newPlus.addEventListener('click', function(e) {
+                e.preventDefault();
+                const current = parseInt(qtyInput.value || '1', 10);
+                setQty(current + 1);
+            });
+
+            // Ensure initial sync
+            setQty(parseInt(hiddenQty.value || qtyInput.value || '1', 10));
+
+            if (form) {
+                form.onsubmit = function(e) {
+                    e.preventDefault();
+                    hiddenQty.value = qtyInput.value;
+
+                    const formData = new FormData(form);
+                    const btn = form.querySelector('.add-to-cart-btn');
+                    const originalHtml = btn.innerHTML;
+
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                    fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(resp => {
+                        if (resp.status) {
+                            alert(resp.message || 'Added to cart!');
+                            if (resp.totalCartItems !== undefined) {
+                                document.querySelectorAll('.totalCartItems').forEach(el => {
+                                    el.textContent = resp.totalCartItems;
+                                });
+                            }
+                        } else {
+                            alert(resp.message || 'Could not add to cart.');
+                        }
+                    })
+                    .catch(() => alert('Something went wrong.'))
+                    .finally(() => {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    });
+                };
+            }
+        });
+
+        // Bind delete handlers
+        document.querySelectorAll('.deleteWishlistItem').forEach(function(btn) {
+            btn.onclick = function(e) {
+                e.preventDefault();
+                var id = this.getAttribute('data-wishlist-id');
+                if (!id) return;
+
+                if(!confirm('Are you sure you want to remove this item?')) return;
+
+                fetch("{{ route('wishlist.remove') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                .getAttribute('content'),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            wishlist_id: id
+                        })
+                    })
+                    .then(function(res) {
+                        return res.json();
+                    })
+                    .then(function(resp) {
+                        if (resp.status) {
+                            if (resp.totalWishlistItems === 0) {
+                                window.location.reload();
+                                return;
+                            }
+                            
+                            if (resp.view) {
+                                document.querySelector('#wishlistItems').innerHTML = resp.view;
+                                initializeWishlistScripts();
+                            }
+                            
+                            if (resp.totalWishlistItems !== undefined) {
+                                document.querySelectorAll('.totalWishlistItems').forEach(el => {
+                                    el.textContent = resp.totalWishlistItems;
+                                });
+                            }
+                            return;
+                        }
+                        alert(resp.message || 'Could not remove item.');
+                    })
+                    .catch(function() {
+                        alert('Something went wrong.');
+                    });
+            };
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeWishlistScripts);
+</script>
 @endsection
 
 <style>
