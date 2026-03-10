@@ -83,15 +83,15 @@
            Premium Unified Header
            ============================ */
         .layout-app-header {
-            background: #fff;
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            position: sticky;
-            top: 0;
-            z-index: 2000;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+                background: #EEF5FD;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
         }
 
         .header-logo img {
@@ -101,22 +101,19 @@
         }
 
         .header-search {
-            flex: 1;
-            margin: 0 15px 0 10px;
-            position: relative;
-            max-width: 600px;
+            display:flex;
+background:white;
+border-radius:8px;
+overflow:hidden;
+width:420px;
+box-shadow:0 2px 10px rgba(0,0,0,0.08);
         }
 
         .header-search input {
-            width: 100%;
-            background: #F1F3F6;
-            border: 1.5px solid transparent;
-            border-radius: 14px;
-            padding: 12px 18px 12px 46px;
-            font-size: 14px;
-            color: var(--text-dark);
-            outline: none;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex:1;
+border:none;
+padding:10px;
+outline:none;
         }
 
         .header-search input:focus {
@@ -124,7 +121,33 @@
             border-color: var(--primary-orange);
             box-shadow: 0 8px 20px rgba(255, 107, 0, 0.08);
         }
+.header-search button{
+background:#2f6fc2;
+color:white;
+border:none;
+padding:10px 16px;
+}
 
+.header-icons{
+display:flex;
+gap:25px;
+}
+
+.icon{
+position:relative;
+cursor:pointer;
+}
+
+.badge{
+position:absolute;
+top:-6px;
+right:-8px;
+background:#ff6b00;
+color:white;
+font-size:10px;
+padding:3px 6px;
+border-radius:50%;
+}
         .header-search .search-icon {
             position: absolute;
             left: 15px;
@@ -723,9 +746,9 @@
             </div>
 
             <div class="header-search">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" placeholder="Search" id="globalSearch">
-            </div>
+<input type="text" placeholder="Search books, authors, ISBN...">
+<button><i class="fa fa-search"></i></button>
+</div>
             <div class="header-icons">
                 <a href="{{ url('/wishlist') }}" class="icon-btn desktop-only-icon">
                     <i class="far fa-heart"></i>
