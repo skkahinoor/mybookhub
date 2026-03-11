@@ -614,6 +614,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
 
         // Razorpay routes:
         Route::get('razorpay', 'RazorpayController@razorpay');
+        Route::get('razorpay-direct', 'RazorpayController@razorpayDirect');
         Route::post('razorpay/pay', 'RazorpayController@payment')->name('razorpay.payment');
         Route::get('razorpay/success', 'RazorpayController@success');
         Route::get('razorpay/fail', 'RazorpayController@fail');
