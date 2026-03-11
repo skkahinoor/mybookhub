@@ -1,17 +1,8 @@
 @if (isset($homeSubjects) && $homeSubjects->count() > 0)
     @foreach ($homeSubjects as $sub)
-        <a href="javascript:void(0)" class="subject-item-premium subject-filter-btn" data-subject-id="{{ $sub->id }}"
+        <a href="javascript:void(0)" class="subject-tablet subject-filter-btn" data-subject-id="{{ $sub->id }}"
             onclick="filterBySubject({{ $sub->id }})">
-            <div class="subject-circle-premium">
-                @if ($sub->subject_icon)
-                    <img src="{{ asset('admin/images/subject_icons/' . $sub->subject_icon) }}"
-                        style="width: 40px; height: 40px; object-fit: contain;"
-                        onerror="this.parentElement.innerText='📚'" alt="{{ $sub->name }}">
-                @else
-                    📚
-                @endif
-            </div>
-            <span class="category-label">{{ $sub->name }}</span>
+            {{ $sub->name }}
         </a>
     @endforeach
 @else
