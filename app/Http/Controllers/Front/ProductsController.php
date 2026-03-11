@@ -1305,11 +1305,11 @@ class ProductsController extends Controller
 
                 // Calculate proportions
                 $proportion = ($total_price > 0) ? ($item_price / $total_price) : 0;
-                
+
                 $item_shipping = round($total_shipping_charges * $proportion, 2);
                 $item_coupon = round($total_coupon_amount * $proportion, 2);
                 $item_wallet = round($total_wallet_amount * $proportion, 2);
-                
+
                 $item_grand_total = $item_price + $item_shipping - $item_coupon - $item_wallet;
 
                 $order = new Order;
@@ -1356,7 +1356,7 @@ class ProductsController extends Controller
                 $cartItem->product_name = $attribute?->product?->product_name ?? 'Product';
                 $cartItem->product_price = $getDiscountAttributePrice['final_price'];
                 $cartItem->product_qty = $item['quantity'];
-                $cartItem->item_status = "New"; 
+                $cartItem->item_status = "New";
                 $cartItem->product_attribute_id = $item['product_attribute_id'];
                 $cartItem->save();
 
@@ -1375,7 +1375,7 @@ class ProductsController extends Controller
                 // Create Wallet Transaction (Link to first order or create generic)
                 WalletTransaction::create([
                     'user_id' => $user->id,
-                    'order_id' => $order_ids[0], 
+                    'order_id' => $order_ids[0],
                     'amount' => $total_wallet_amount,
                     'type' => 'debit',
                     'description' => 'Used for orders: ' . implode(', ', $order_ids),
@@ -1383,7 +1383,7 @@ class ProductsController extends Controller
             }
 
             Session::put('order_ids', $order_ids);
-            Session::put('order_id', $order_ids[0]); 
+            Session::put('order_id', $order_ids[0]);
             Session::put('grand_total', $total_price + $total_shipping_charges - $total_coupon_amount - $total_wallet_amount);
 
             DB::commit();
@@ -1445,7 +1445,7 @@ class ProductsController extends Controller
         // }
         if (Session::has('order_ids') || Session::has('order_id')) {
             $order_ids = Session::has('order_ids') ? Session::get('order_ids') : [Session::get('order_id')];
-            
+
             foreach ($order_ids as $id) {
                 // Wallet Credit Logic (only happens once per user because of model guards)
                 \App\Models\WalletTransaction::checkAndCreditWallet($id);

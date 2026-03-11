@@ -334,6 +334,12 @@
                                 <span>ISBN</span>
                                 <span>{{ $productDetails['product_isbn'] }}</span>
                             </div>
+                            <div class="highlight-item">
+                                <span>Availability</span>
+                                <span class="{{ $totalStock > 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $totalStock > 0 ? $totalStock . ' units available' : 'Out of Stock' }}
+                                </span>
+                            </div>
                         </div>
 
                         @php
@@ -360,7 +366,7 @@
                             <form action="{{ url('cart/add') }}" method="POST" class="d-flex flex-grow-1 gap-2">
                                 @csrf
                                 <input type="hidden" name="product_attribute_id" value="{{ $productAttribute->id }}">
-                                <input type="number" name="quantity" value="1" min="1" class="qty-selector">
+                                <input type="number" name="quantity" value="1" min="1" max="{{ $productAttribute->stock }}" class="qty-selector">
                                 <button type="submit" class="btn-add-cart-custom">
                                     <i class="fas fa-shopping-bag"></i> Add to Cart
                                 </button>
