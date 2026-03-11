@@ -104,6 +104,13 @@
                                                             ₹{{ $discountDetails['product_price'] }}
                                                         @endif
                                                     </td>
+                                                    <td>
+                                                        @if($product->condition)
+                                                            <span class="badge badge-info">{{ $product->condition->name }} ({{ $product->condition->percentage }}%)</span>
+                                                        @else
+                                                            {{ ucfirst($product->product->condition ?? 'N/A') }}
+                                                        @endif
+                                                    </td>
                                                     <td>{{ $product->product->section->name ?? 'N/A' }}</td>
                                                     <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
                                                     <td>{{ $product->product->edition->edition ?? 'N/A' }}</td>
