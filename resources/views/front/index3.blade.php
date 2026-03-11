@@ -244,23 +244,36 @@
         /* RESPONSIVE */
 
         @media(max-width:900px) {
-
             .hero {
                 flex-direction: column;
                 text-align: center;
+                padding: 40px 20px;
+                gap: 30px;
+                border-bottom-left-radius: 40px;
+                border-bottom-right-radius: 40px;
+            }
+
+            .hero h1 {
+                font-size: 28px;
             }
 
             .hero-right img {
-                max-width: 420px;
-                margin-top: 40px;
+                max-width: 100%;
+                width: 280px;
+                margin-top: 20px;
             }
 
             .features {
                 width: 100%;
                 justify-content: center;
                 flex-wrap: wrap;
+                gap: 15px;
+                padding: 12px 20px;
             }
 
+            .feature {
+                font-size: 13px;
+            }
         }
 
         :root {
@@ -340,135 +353,442 @@
         }
 
 
-        /* SUBJECTS */
-        .subjects-strip {
-            background: var(--white);
-            padding: 5px 8%;
+        /* FILTER / SUBJECTS NAV BAR */
+        .filter-nav-bar {
+            padding: 10px 8%;
             display: flex;
-            gap: 20px;
+            align-items: center;
+            gap: 15px;
             overflow-x: auto;
             scrollbar-width: none;
-            border-top: 1px solid #f1f5f9;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-            scroll-behavior: smooth;
-            scroll-snap-type: x mandatory;
-            justify-content: center;
-            align-content: center;
-
-        }
-
-        .subjects-strip::-webkit-scrollbar {
-            display: none;
-        }
-
-        .subject-item-premium {
-            min-width: 100px;
-            text-align: center;
-            text-decoration: none !important;
-            scroll-snap-align: start;
-            cursor: pointer;
-        }
-
-        .subject-circle-premium {
-            width: 60px;
-            height: 60px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 27px;
-            transition: all .25s ease;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-        }
-
-        .subject-item-premium span {
-            font-size: 13px;
-            font-weight: 600;
-            color: #64748b;
-        }
-
-        /* Hover effect */
-        .subject-item-premium:hover .subject-circle-premium {
-            transform: translateY(-6px) scale(1.05);
-            border-color: var(--primary-blue);
-            background: #f1f6ff;
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-        }
-
-        /* Active subject */
-        .subject-item-premium.active .subject-circle-premium {
-            border: 2px solid var(--primary-blue);
-            background: #eef4ff;
-        }
-
-        .subjects-strip {
-            cursor: grab;
-        }
-
-        .subjects-strip:active {
-            cursor: grabbing;
-        }
-
-        .subject-item-premium.active span {
-            color: var(--primary-blue);
-        }
-
-        /* FILTER */
-        .filter-section-premium {
-            padding: 10px 8% 10px;
-        }
-
-        .location-info-premium {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-            color: #94A3B8;
+            -ms-overflow-style: none;
             margin-bottom: 20px;
         }
 
-        .change-loc-premium {
-            color: var(--primary-orange);
-            text-decoration: none !important;
-            font-weight: 700;
+        .filter-nav-bar::-webkit-scrollbar {
+            display: none;
         }
 
-        .pills-premium {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            align-content: center;
-            align-items: center;
-        }
-
-        .pill-premium {
-            padding: 8px 25px;
-            background: white;
-            border: 1px solid #E2E8F0;
-            border-radius: 25px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-muted);
-            cursor: pointer;
-            text-decoration: none !important;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        .pill-premium.active {
-            background: var(--primary-orange);
-            color: white !important;
-            border-color: var(--primary-orange);
-            border-bottom: 2px solid #c2410c;
-        }
-
-        .pill-premium.filter-btn-premium {
+        .filter-btn-trigger {
             display: flex;
             align-items: center;
             gap: 8px;
+            background: #fff;
+            border: 1px solid #E2E8F0;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            transition: .2s;
+        }
+
+        .filter-btn-trigger:hover {
+            border-color: #1b66c9;
+            background: #f8fbff;
+        }
+
+        .subject-tablet {
+            padding: 8px 20px;
+            background: #fff;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: .2s;
+            text-decoration: none !important;
+        }
+
+        .subject-tablet:hover {
+            border-color: #cbd5e1;
+            background: #f8fafc;
+        }
+
+        .subject-tablet.active {
+            background: #1b66c9;
+            color: #fff !important;
+            border-color: #1b66c9;
+        }
+
+        .showing-context {
+            padding: 15px 8% 5px;
+            font-size: 14px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .showing-context {
+                padding: 10px 15px;
+                flex-direction: column;
+                gap: 8px;
+                border-bottom: 1px solid #f1f5f9;
+            }
+
+            .context-left {
+                width: 100%;
+                justify-content: center;
+                flex-direction: row;
+                flex-wrap: wrap;
+                font-size: 13px;
+                gap: 4px;
+            }
+
+            .sort-by-container {
+                width: 100%;
+                justify-content: center;
+                padding-top: 6px;
+                border-top: 1px dashed #e2e8f0;
+                gap: 6px;
+                font-size: 13px;
+            }
+
+            .sort-select-premium {
+                padding: 0 8px;
+                height: 30px;
+                font-size: 12px;
+                min-width: 110px;
+            }
+        }
+
+        .context-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .showing-context strong {
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        .change-link {
+            color: #1b66c9;
+            font-weight: 600;
+            text-decoration: none !important;
+            cursor: pointer;
+            margin-left: 5px;
+            font-size: 13px;
+        }
+
+        .sort-by-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sort-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        .sort-select-premium {
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
+            padding: 5px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e293b;
+            outline: none;
+            cursor: pointer;
+            transition: .2s;
+            min-width: 130px;
+        }
+
+        .sort-select-premium:focus {
+            border-color: #1b66c9;
+            box-shadow: 0 0 0 3px rgba(27, 102, 201, 0.08);
+        }
+
+        /* SIDEBAR FILTER (DRAWER) */
+        .drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 99998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .drawer-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .filter-drawer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 350px;
+            height: 100%;
+            background: #fff;
+            z-index: 99999;
+            transform: translateX(-100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-drawer.active {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drawer-header h2 {
+            font-size: 20px;
+            font-weight: 800;
+            margin: 0;
+            color: #1e293b;
+            letter-spacing: -0.5px;
+        }
+
+        .drawer-close {
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 20px;
+            padding: 8px;
+            line-height: 1;
+            transition: .2s;
+        }
+
+        .drawer-close:hover {
+            color: #1e293b;
+            background: #f8fafc;
+            border-radius: 50%;
+        }
+
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* Filter Groups */
+        .filter-group {
+            margin-bottom: 32px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            color: #64748b;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #f1f5f9;
+            border-radius: 12px;
+            font-size: 15px;
+            color: #1e293b;
+            background: #f8fafc;
+            outline: none;
+            transition: .2s;
+            font-weight: 500;
+        }
+
+        .filter-select:focus {
+            border-color: #1b66c9;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(27, 102, 201, 0.08);
+        }
+
+        /* Range Slider */
+        .range-container {
+            padding-top: 10px;
+        }
+
+        .range-labels {
+            position: relative;
+            height: 20px;
+            margin-top: 10px;
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .range-labels span {
+            position: absolute;
+            top: 0;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        .range-labels span:nth-child(1) {
+            left: 0;
+            transform: none;
+        }
+
+        .range-labels span:nth-child(2) {
+            left: 25%;
+        }
+
+        .range-labels span:nth-child(3) {
+            left: 50%;
+        }
+
+        .range-labels span:nth-child(4) {
+            left: 100%;
+            transform: translateX(-100%);
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #f97316;
+            border: 4px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(249, 115, 22, 0.3);
+            transition: .2s;
+        }
+
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        /* Checkbox Group */
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 4px 0;
+        }
+
+        .checkbox-item input {
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            accent-color: #1b66c9;
+        }
+
+        .checkbox-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            transition: .2s;
+        }
+
+        .checkbox-item:hover .checkbox-label {
+            color: #1e293b;
+        }
+
+        /* Drawer Actions */
+        .filter-actions {
+            padding: 24px;
+            border-top: 1px solid #f1f5f9;
+            background: #f8fafc;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-apply {
+            flex: 2;
+            background: #f97316;
+            color: #fff !important;
+            text-align: center;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none !important;
+            transition: .2s;
+            font-size: 15px;
+            border: none;
+            box-shadow: 0 8px 16px rgba(249, 115, 22, 0.2);
+        }
+
+        .btn-apply:hover {
+            background: #ea580c;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background: #fff;
+            color: #64748b !important;
+            text-align: center;
+            padding: 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-weight: 700;
+            text-decoration: none !important;
+            transition: .2s;
+            font-size: 15px;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f5f9;
+            color: #1e293b !important;
+        }
+
+        /* CARD BADGE */
+        .condition {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 10;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .condition.new {
+            background: #10b981;
+        }
+
+        .condition.used {
+            background: #f59e0b;
         }
 
         /* GRID */
@@ -1004,214 +1324,7 @@
             opacity: 0.7;
         }
 
-        /* Filter Sheet - Keep functional styles */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(2px);
-            z-index: 10000;
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
 
-        .modal-overlay.active {
-            display: block;
-            opacity: 1;
-        }
-
-        .filter-bottom-sheet {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #fff;
-            border-radius: 28px 28px 0 0;
-            z-index: 10001;
-            transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
-            padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
-            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.15);
-            max-height: 90vh;
-            display: flex;
-            flex-direction: column;
-            visibility: hidden;
-        }
-
-        .filter-bottom-sheet.active {
-            transform: translateY(0);
-            visibility: visible;
-        }
-
-        .filter-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .filter-header h2 {
-            font-size: 20px;
-            font-weight: 800;
-            margin: 0;
-            color: var(--text-dark);
-        }
-
-        .filter-close {
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #999;
-            cursor: pointer;
-            font-size: 18px;
-        }
-
-        .filter-body {
-            overflow-y: auto;
-            padding-right: 5px;
-            flex: 1;
-        }
-
-        .filter-group {
-            margin-bottom: 20px;
-        }
-
-        .filter-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-        }
-
-        .filter-select {
-            width: 100%;
-            background: #F8F9FB;
-            border: 1px solid #EDEDED;
-            border-radius: 12px;
-            padding: 12px 15px;
-            font-size: 15px;
-            color: var(--text-dark);
-            font-weight: 500;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 15px center;
-        }
-
-        .range-slider {
-            -webkit-appearance: none;
-            width: 100%;
-            height: 6px;
-            background: #EEE;
-            outline: none;
-            border-radius: 10px;
-        }
-
-        .range-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 22px;
-            height: 22px;
-            background: var(--primary-orange);
-            cursor: pointer;
-            border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(255, 107, 0, 0.3);
-        }
-
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 10px;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .checkbox-item input {
-            display: none;
-        }
-
-        .checkbox-custom {
-            width: 20px;
-            height: 20px;
-            border: 2.5px solid #DDD;
-            border-radius: 6px;
-            margin-right: 12px;
-            position: relative;
-        }
-
-        .checkbox-item input:checked+.checkbox-custom {
-            background: var(--primary-orange);
-            border-color: var(--primary-orange);
-        }
-
-        .checkbox-item input:checked+.checkbox-custom::after {
-            content: "\f00c";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            color: #fff;
-            font-size: 10px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .filter-actions {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 12px;
-            margin-top: 15px;
-            border-top: 1px solid #F0F0F0;
-            padding-top: 20px;
-        }
-
-        .btn-cancel {
-            background: #fff;
-            color: #444;
-            border: 1px solid #DDD;
-            padding: 14px;
-            border-radius: 12px;
-            font-weight: 700;
-            text-align: center;
-            text-decoration: none !important;
-        }
-
-        .btn-apply {
-            background: var(--primary-orange);
-            color: #fff !important;
-            border: none;
-            padding: 14px;
-            border-radius: 12px;
-            font-weight: 700;
-            text-align: center;
-            text-decoration: none !important;
-            box-shadow: 0 8px 20px rgba(255, 107, 0, 0.25);
-        }
-
-        @media (min-width: 992px) {
-            .filter-bottom-sheet {
-                max-width: 450px;
-                left: 50%;
-                transform: translateX(-50%) translateY(100%);
-                border-radius: 28px;
-                bottom: 20px;
-            }
-
-            .filter-bottom-sheet.active {
-                transform: translateX(-50%) translateY(0);
-            }
-        }
 
         /* Load More Button */
         .load-more-container {
@@ -1322,9 +1435,7 @@
 
             <h1>India's Smart Marketplace for <span>Books</span></h1>
 
-            <div class="sub">Buy • Sell • Rent • Print Notes</div>
-
-            <div class="save">Save up to 70% on textbooks</div>
+            <div class="save">Find the right book in seconds - Sell the old book in minutes.</div>
 
             <div class="features">
 
@@ -1357,35 +1468,51 @@
 
     </section>
 
-    <div class="book-context">
-        <span id="currentSelectionInfo">Showing books for:
-            <strong>{{ $currentSectionId ? $sections->find($currentSectionId)?->name ?? 'All' : 'All' }}</strong></span>
+    <div class="showing-context">
+        <div class="context-left">
+            <span>Showing books for:</span>
+            <strong id="currentSelectionInfo">
+                {{ $currentSectionId ? $sections->find($currentSectionId)?->name ?? 'All Categories' : 'All Categories' }}
+                @if (isset($currentSubCategoryId) && $currentSubCategoryId)
+                    > {{ \App\Models\Category::find($currentSubCategoryId)?->category_name }}
+                @endif
+            </strong>
+            <a href="javascript:void(0)" class="change-link" id="openFilter"> (Change)</a>
+        </div>
 
-        <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">
-            Change
-        </a>
-    </div>
-    <!-- Subjects Strip -->
-    <div class="subjects-wrapper">
-        <div class="subjects-strip" id="homeSubjectsContainer">
-            @include('front.partials.home_subjects')
+        <div class="sort-by-container">
+            <span class="sort-label">Sort by:</span>
+            <select class="sort-select-premium" id="homeSortBy">
+                <option value="all">All Books</option>
+                <option value="new">New Books</option>
+                <option value="used">Old Books</option>
+            </select>
         </div>
     </div>
-    <!-- Filter Section -->
-    <div class="filter-section-premium">
-        <div class="pills-premium">
-            <a href="javascript:void(0)" class="pill-premium filter-btn-premium" id="openFilterChip">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                </svg> Filter
-            </a>
-            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'all' ? 'active' : '' }}"
-                data-condition="all">All</a>
-            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'new' ? 'active' : '' }}"
-                data-condition="new">New</a>
-            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'old' ? 'active' : '' }}"
-                data-condition="old">Old</a>
+
+    <!-- Filter Nav Bar -->
+    <div class="filter-nav-bar">
+        <button class="filter-btn-trigger" id="openFilterChip">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="21" x2="4" y2="14"></line>
+                <line x1="4" y1="10" x2="4" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12" y2="3"></line>
+                <line x1="20" y1="21" x2="20" y2="16"></line>
+                <line x1="20" y1="12" x2="20" y2="3"></line>
+                <line x1="1" y1="14" x2="7" y2="14"></line>
+                <line x1="9" y1="8" x2="15" y2="8"></line>
+                <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+            Filter
+        </button>
+
+        <a href="javascript:void(0)" class="subject-tablet active subject-filter-btn" data-subject-id="all"
+            onclick="filterBySubject('all')">All</a>
+
+        <div id="homeSubjectsContainer" style="display: contents;">
+            @include('front.partials.home_subjects')
         </div>
     </div>
 
@@ -1419,58 +1546,6 @@
         <img src="{{ asset('front/theme_illustrations/sell_books.png') }}" alt="Sell Illustration">
     </section>
 
-    <!-- Student Marketplace (Community) Section -->
-    @if (isset($sellBookRequests) && $sellBookRequests->count() > 0)
-        <div class="filter-section-premium pb-0">
-            <div class="location-info-premium mb-4">
-                <h2 style="font-size: 24px; font-weight: 700; color: #1e3a8a; margin: 0;">Student <span>Marketplace</span>
-                </h2>
-                <a href="{{ route('marketplace') }}" class="change-loc-premium">View All</a>
-            </div>
-        </div>
-        <div class="book-wall" id="studentMarketplaceGrid">
-            @foreach ($sellBookRequests as $sbook)
-                <div class="book-item">
-                    @if ($sbook->book_status == 'sold')
-                        <div class="sold-overlay">Sold</div>
-                    @endif
-
-                    <div class="cover">
-                        <span class="condition used">
-                            {{ strtoupper($sbook->book_condition) }}
-                        </span>
-                        <a href="{{ route('marketplace.detail', $sbook->id) }}">
-                            <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}"
-                                class="{{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}"
-                                alt="{{ $sbook->book_title }}">
-                        </a>
-                    </div>
-
-                    <div class="info">
-                        <div class="student-info mb-2"
-                            style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
-                            <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}"
-                                class="student-avatar" alt="User"
-                                style="width: 20px; height: 20px; border-radius: 50%;">
-                            <span class="student-name">By {{ $sbook->user->name ?? 'not' }}</span>
-                        </div>
-
-                        <a href="{{ route('marketplace.detail', $sbook->id) }}" class="title"
-                            style="text-decoration: none;">
-                            {{ $sbook->book_title }}
-                        </a>
-
-                        <div class="price">₹{{ number_format($sbook->expected_price, 0) }}</div>
-
-                        <a href="{{ route('marketplace.detail', $sbook->id) }}" class="cart-btn"
-                            style="background: {{ $sbook->book_status == 'sold' ? '#64748B' : '#0056D2' }}; text-decoration: none; display: block; text-align: center; box-sizing: border-box;">
-                            {{ $sbook->book_status == 'sold' ? 'Sold Out' : 'View Details' }}
-                        </a>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-    @endif
 
     <!-- Opportunity Banners -->
     <div class="banners-premium">
@@ -1540,32 +1615,19 @@
         </div>
     </section>
 
-    <!-- WhatsApp CTA -->
-    <div class="whatsapp-premium">
-        <p class="wa-text-premium">Need Books Quickly? Order on <span>WhatsApp</span></p>
-        <a href="https://wa.me/91XXXXXXXXXX" target="_blank" class="wa-btn-premium">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-                <path
-                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z">
-                </path>
-            </svg>
-            Chat on WhatsApp
-        </a>
-    </div>
 
-    <!-- Filter Modal Backdrop -->
-    <div class="modal-overlay" id="modalOverlay"></div>
 
-    <!-- Filter Bottom Sheet -->
-    <div class="filter-bottom-sheet" id="filterSheet">
-        <div class="filter-header">
-            <h2>Filters</h2>
-            <div class="filter-close" id="closeFilter">
+    <!-- Filter Drawer (Left Sidebar) -->
+    <div class="drawer-overlay" id="modalOverlay"></div>
+    <div class="filter-drawer" id="filterSheet">
+        <div class="drawer-header">
+            <h2>Select Filters</h2>
+            <div class="drawer-close" id="closeFilter">
                 <i class="fas fa-times"></i>
             </div>
         </div>
 
-        <div class="filter-body">
+        <div class="drawer-body">
             <!-- Basic Filters (Triggered by Change) -->
             <div id="basicFiltersContent">
                 <div class="filter-group">
@@ -1627,7 +1689,6 @@
                             @foreach ($bookTypes as $bt)
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="book_types[]" value="{{ $bt->id }}" checked>
-                                    <span class="checkbox-custom"></span>
                                     <span class="checkbox-label">{{ $bt->book_type }}</span>
                                 </label>
                             @endforeach
@@ -1642,7 +1703,6 @@
                             @foreach ($languages as $lang)
                                 <label class="checkbox-item">
                                     <input type="checkbox" name="languages[]" value="{{ $lang->id }}" checked>
-                                    <span class="checkbox-custom"></span>
                                     <span class="checkbox-label">{{ $lang->name }}</span>
                                 </label>
                             @endforeach
@@ -1691,7 +1751,7 @@
                         if (savedSubId) {
                             fetch(
                                     `{{ url('get-filter-subcategories') }}?category_id=${savedCategoryId}&section_id=${savedSectionId}`
-                                    )
+                                )
                                 .then(r => r.json())
                                 .then(subs => {
                                     const sub = document.getElementById('filterSubcategory');
@@ -1751,7 +1811,7 @@
         const subcategorySelect = document.getElementById('filterSubcategory');
 
         function toggleModal(show, mode = 'advanced') {
-            const h2 = sheet.querySelector('.filter-header h2');
+            const h2 = sheet.querySelector('.drawer-header h2');
             const basic = document.getElementById('basicFiltersContent');
             const advanced = document.getElementById('advancedFiltersContent');
             const resetBtn = document.getElementById('resetBtn');
@@ -1805,6 +1865,8 @@
             // Reset checkboxes
             document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
 
+            document.getElementById('homeSortBy').value = 'all';
+
             updateHomeGrid();
         });
 
@@ -1831,8 +1893,7 @@
 
             currentPage++;
 
-            const activeChip = document.querySelector('.condition-chip.active');
-            const condition = activeChip ? activeChip.dataset.condition : 'all';
+            const condition = document.getElementById('homeSortBy').value;
             const sectionId = sectionSelect.value;
             const categoryId = categorySelect.value;
             const subcategoryId = subcategorySelect.value;
@@ -1884,8 +1945,7 @@
             const gridContainer = document.getElementById('homeProductGrid');
             const subjectsContainer = document.getElementById('homeSubjectsContainer');
             const selectionInfo = document.getElementById('currentSelectionInfo');
-            const activeChip = document.querySelector('.condition-chip.active');
-            const condition = activeChip ? activeChip.dataset.condition : 'all';
+            const condition = document.getElementById('homeSortBy').value;
 
             const sectionId = sectionSelect.value;
             const categoryId = categorySelect.value;
@@ -1938,36 +1998,26 @@
                         loadMoreContainer.style.display = 'none';
                     }
 
-                    // Update selection info text
                     const sectionText = sectionSelect.options[sectionSelect.selectedIndex].text;
                     const categoryText = categorySelect.options[categorySelect.selectedIndex].text;
                     const subcategoryText = subcategorySelect.options[subcategorySelect.selectedIndex].text;
 
-                    let displayText = 'Showing ';
-                    if (condition !== 'all') {
-                        displayText += (condition === 'new' ? 'New ' : 'old ');
+                    let displayParts = [];
+                    if (sectionId && sectionId !== '') displayParts.push(sectionText);
+                    if (categoryId && categoryId !== '') displayParts.push(categoryText);
+                    if (subcategoryId && subcategoryId !== '') displayParts.push(subcategoryText);
+
+                    let displayText = displayParts.length > 0 ? displayParts.join(' > ') : 'All Categories';
+
+                    if (activeSubjectName && activeSubjectName !== '') {
+                        displayText = activeSubjectName + ' in ' + displayText;
                     }
 
-                    if (activeSubjectName) {
-                        displayText += `<strong>${activeSubjectName}</strong> Books `;
-                    } else {
-                        displayText += 'Books ';
-                    }
+                    // Add condition prefix if not 'all'
+                    if (condition === 'new') displayText = 'New ' + displayText;
+                    if (condition === 'used') displayText = 'Old ' + displayText;
 
-                    displayText += 'for <strong>';
-
-                    let parts = [];
-                    if (sectionId) parts.push(sectionText);
-                    if (categoryId) parts.push(categoryText);
-                    if (subcategoryId) parts.push(subcategoryText);
-
-                    if (parts.length > 0) {
-                        displayText += parts.join(', ');
-                    } else {
-                        displayText += 'All';
-                    }
-                    displayText += '</strong>';
-                    if (selectionInfo) selectionInfo.innerHTML = displayText;
+                    if (selectionInfo) selectionInfo.innerText = displayText;
 
                     // Close the sheet (if open)
                     if (!stayOpen) {
@@ -1980,12 +2030,8 @@
                 });
         }
 
-        document.querySelectorAll('.condition-chip').forEach(chip => {
-            chip.addEventListener('click', function() {
-                document.querySelectorAll('.condition-chip').forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
-                updateHomeGrid();
-            });
+        document.getElementById('homeSortBy').addEventListener('change', function() {
+            updateHomeGrid();
         });
 
         document.getElementById('applyBtn').addEventListener('click', () => updateHomeGrid());
@@ -1993,14 +2039,16 @@
         function filterBySubject(subjectId) {
             let activeSubjectName = '';
             // Highlight active subject
-            document.querySelectorAll('.subject-filter-btn').forEach(btn => {
+            document.querySelectorAll('.subject-tablet').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.dataset.subjectId == subjectId) {
                     btn.classList.add('active');
-                    activeSubjectName = btn.querySelector('.category-label').innerText;
+                    activeSubjectName = btn.innerText;
+                } else if (subjectId === 'all' && btn.dataset.subjectId === 'all') {
+                    btn.classList.add('active');
                 }
             });
-            updateHomeGrid(subjectId, activeSubjectName);
+            updateHomeGrid(subjectId === 'all' ? null : subjectId, activeSubjectName);
         }
         sectionSelect.addEventListener('change', function() {
             const sectionId = this.value;

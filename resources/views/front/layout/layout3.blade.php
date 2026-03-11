@@ -105,33 +105,46 @@
             background: white;
             border-radius: 8px;
             overflow: hidden;
-            width: 420px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            flex: 1;
+            max-width: 450px;
+            margin: 0 20px;
+            border: 1.5px solid #F0F0F0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            height: 40px;
         }
 
         .header-search input {
             flex: 1;
             border: none;
-            padding: 10px;
+            padding: 0 15px;
             outline: none;
-        }
-
-        .header-search input:focus {
-            background: #fff;
-            border-color: var(--primary-orange);
-            box-shadow: 0 8px 20px rgba(255, 107, 0, 0.08);
+            height: 100%;
+            font-size: 14px;
         }
 
         .header-search button {
             background: #2f6fc2;
             color: white;
             border: none;
-            padding: 10px 16px;
+            padding: 0 16px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: .2s;
+            flex-shrink: 0;
+        }
+
+        .header-search button:hover {
+            background: #235aa8;
         }
 
         .header-icons {
             display: flex;
-            gap: 25px;
+            align-items: center;
+            gap: 20px;
+            margin-left: auto;
         }
 
         .header-icons .icon {
@@ -228,33 +241,17 @@
             border: 1.5px solid #fff;
         }
 
-        /* Vendor Login Button */
-        .btn-vendor-login {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-            color: #fff !important;
-            padding: 9px 18px;
-            border-radius: 8px;
+        .header-text-link {
             font-size: 13px;
             font-weight: 600;
+            color: #4A4A4A;
             text-decoration: none !important;
-            white-space: nowrap;
             transition: all 0.2s ease;
-            border: none;
-            margin-left: 12px;
-            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.25);
+            white-space: nowrap;
         }
 
-        .btn-vendor-login:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(30, 58, 138, 0.35);
-            filter: brightness(1.08);
-        }
-
-        .btn-vendor-login i {
-            font-size: 13px;
+        .header-text-link:hover {
+            color: var(--primary-orange);
         }
 
         @media (max-width: 991px) {
@@ -262,7 +259,7 @@
             .desktop-only-icon,
             .user-name-text,
             .header-filters,
-            .btn-vendor-login {
+            .header-text-link {
                 display: none !important;
             }
         }
@@ -537,7 +534,7 @@
 
         @media (min-width: 992px) {
             .layout-app-header {
-                padding: 15px 60px;
+                padding: 5px 50px;
                 box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
             }
 
@@ -567,17 +564,9 @@
             }
 
             .layout-app-header {
-                display: flex;
-                flex-wrap: nowrap;
-                justify-content: space-between;
-                align-items: center;
-                padding: 8px 10px;
+                padding: 10px 10px;
+                height: 60px;
                 gap: 8px;
-            }
-
-            .header-logo {
-                flex: 0 0 auto;
-                margin: 0;
             }
 
             .header-logo img {
@@ -585,76 +574,50 @@
             }
 
             .header-search {
-                flex: 1 1 0;
-                min-width: 0;
-                width: auto !important;
-                margin: 0 !important;
-                max-width: none !important;
+                margin: 0 4px;
+                height: 38px;
             }
 
             .header-search input {
-                height: 36px;
                 font-size: 13px;
-                padding: 5px 10px;
-                min-width: 0;
+                padding: 0 8px;
             }
 
             .header-search button {
-                padding: 8px 12px;
-                font-size: 14px;
-            }
-
-            .header-search .search-icon {
-                left: 10px;
-                font-size: 12px;
+                padding: 0 10px;
             }
 
             .header-icons {
-                flex: 0 0 auto;
-                display: flex !important;
                 gap: 8px;
-                align-items: center;
             }
 
             .header-icons .icon-btn {
-                font-size: 17px;
-            }
-
-            .header-icons img {
-                width: 26px !important;
-                height: 26px !important;
+                font-size: 18px;
             }
         }
 
-        /* Extra small screens */
+        /* Support for very small screens */
         @media (max-width: 480px) {
             .layout-app-header {
-                padding: 6px 8px;
-                gap: 6px;
-                height: 70px;
+                padding: 8px 10px;
+                height: 60px;
+                gap: 8px;
             }
 
             .header-logo img {
-                height: 20px;
+                height: 22px;
             }
 
-            .header-search input {
-                font-size: 12px;
+            .header-search {
                 height: 34px;
-                padding: 4px 8px;
             }
 
             .header-search button {
-                padding: 6px 10px;
-                font-size: 13px;
+                padding: 0 10px;
             }
 
             .header-icons {
-                gap: 6px;
-            }
-
-            .header-icons .icon-btn {
-                font-size: 16px;
+                gap: 8px;
             }
         }
     </style>
@@ -822,10 +785,13 @@
                 <input type="text" id="globalSearch" name="search" placeholder="Search books, authors, ISBN...">
                 <button type="submit"><i class="fa fa-search"></i></button>
             </form>
-            <a href="{{ url('vendor/login') }}" class="btn-vendor-login desktop-only-icon">
-                <i class="fas fa-store"></i> Vendor Login
-            </a>
             <div class="header-icons">
+                <a href="{{ url('vendor/login') }}" class="header-text-link desktop-only-icon">
+                    Vendor Login
+                </a>
+                <a href="{{ Auth::check() ? route('student.sell-book.index') : route('student.login') }}" class="header-text-link desktop-only-icon">
+                    Sell Book
+                </a>
                 <a href="{{ url('/wishlist') }}" class="icon-btn desktop-only-icon">
                     <i class="far fa-heart"></i>
                     <span class="icon-badge-num totalWishlistItems">{{ $headerWishlistItemsCount ?? 0 }}</span>
@@ -1795,17 +1761,20 @@
                     `👋 Hi <strong>${name.trim()}</strong>! I'm BookGenie, your AI library assistant. <br><br>I can help you find books by name/ISBN or personalize your feed based on your education level.`;
                 appendMessage('bot', welcomeMsg);
 
-                // Show personalization prompt after a small delay
+                // Show personalization prompt & WhatsApp CTA after a small delay
                 setTimeout(() => {
-                    const personalizeContent = `
-                            <div style="margin-top:10px;">
-                                <p style="font-size:12px; margin-bottom:10px; color:#666;">Want me to recommend books for your class?</p>
+                    const extraContent = `
+                            <div style="margin-top:10px; display: flex; flex-direction: column; gap: 8px;">
+                                <p style="font-size:12px; margin-bottom:5px; color:#666;">Need help finding a book quickly?</p>
                                 <button class="bg-action-btn primary" onclick="document.dispatchEvent(new CustomEvent('bgOpenForm'))">
                                     <i class="fas fa-magic"></i> Personalize My Feed
                                 </button>
+                                <a href="https://wa.me/91XXXXXXXXXX" target="_blank" class="bg-action-btn secondary" style="text-decoration: none; background: #25D366; color: white !important; border: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                    <i class="fab fa-whatsapp"></i> Chat on WhatsApp
+                                </a>
                             </div>
                         `;
-                    appendMessage('bot', personalizeContent);
+                    appendMessage('bot', extraContent);
                 }, 800);
             }
 
