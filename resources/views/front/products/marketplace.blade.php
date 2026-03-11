@@ -329,45 +329,45 @@
         <div class="mp-grid">
             @forelse($sellBookRequests as $sbook)
                 @php
-                    $cond = strtolower($sbook->book_condition ?? '');
+                    $cond = strtolower($sbook->product->condition ?? '');
                     $condClass = in_array($cond, ['excellent','good','fair','poor']) ? $cond : 'default';
                 @endphp
 
                 <div class="mp-book-card">
                     <div class="mp-img-wrap">
-                        <img src="{{ asset($sbook->book_image ?? 'front/images/product/default.jpg') }}"
-                             alt="{{ $sbook->book_title }}"
-                             class="{{ $sbook->book_status == 'sold' ? 'grayscale' : '' }}"
-                             style="{{ $sbook->book_status == 'sold' ? 'filter:grayscale(80%)' : '' }}">
+                        <img src="{{ $sbook->product->product_image ? asset('front/images/product_images/small/'.$sbook->product->product_image) : asset('front/images/product/default.jpg') }}"
+                             alt="{{ $sbook->product->product_name }}"
+                             class="{{ $sbook->stock == 0 ? 'grayscale' : '' }}"
+                             style="{{ $sbook->stock == 0 ? 'filter:grayscale(80%)' : '' }}">
 
-                        @if($sbook->book_status == 'sold')
+                        @if($sbook->stock == 0)
                             <div class="mp-sold-banner">
                                 <div class="mp-sold-badge">Sold Out</div>
                             </div>
                         @endif
 
-                        <span class="mp-condition {{ $condClass }}">{{ $sbook->book_condition }}</span>
+                        <span class="mp-condition {{ $condClass }}">{{ strtoupper($cond) }}</span>
                     </div>
 
                     <div class="mp-card-body">
                         <div class="mp-seller-row">
-                            <img src="{{ asset($sbook->user->profile_image ?? 'assets/images/avatar.png') }}"
+                            <img src="{{ $sbook->user->image ? asset('front/images/users/'.$sbook->user->image) : asset('assets/images/avatar.png') }}"
                                  class="mp-seller-avatar" alt="Seller">
                             <span class="mp-seller-name">{{ $sbook->user->name ?? 'Unknown' }}</span>
                         </div>
 
-                        <div class="mp-book-title">{{ $sbook->book_title }}</div>
-                        @if($sbook->author_name)
-                            <div class="mp-book-subtitle">{{ $sbook->author_name }}</div>
+                        <div class="mp-book-title">{{ $sbook->product->product_name }}</div>
+                        @if($sbook->product->authors->isNotEmpty())
+                            <div class="mp-book-subtitle">{{ $sbook->product->authors->pluck('name')->implode(', ') }}</div>
                         @endif
 
                         <div class="mp-card-footer">
                             <div class="mp-price">
-                                ₹{{ number_format($sbook->expected_price, 0) }}
+                                ₹{{ number_format($sbook->product->product_price, 0) }}
                                 <small>/book</small>
                             </div>
 
-                            @if($sbook->book_status != 'sold')
+                            @if($sbook->stock > 0)
                                 <a href="{{ route('marketplace.detail', $sbook->id) }}" class="btn-buy-now">
                                     <i class="fas fa-bolt"></i> Buy Now
                                 </a>

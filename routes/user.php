@@ -47,11 +47,14 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
         // Sell Old Book routes
         Route::get('/sell-book', [SellBookController::class, 'index'])->name('student.sell-book.index');
         Route::get('/sell-book/create', [SellBookController::class, 'create'])->name('student.sell-book.create');
+        Route::post('/sell-book/check-isbn', [SellBookController::class, 'getBookByIsbn'])->name('student.sell-book.check-isbn');
+        Route::post('/sell-book/name-suggestions', [SellBookController::class, 'nameSuggestions'])->name('student.sell-book.name-suggestions');
+        Route::post('/sell-book/add-publisher-ajax', [SellBookController::class, 'addPublisherAjax'])->name('student.sell-book.addPublisherAjax');
+        Route::get('/sell-book/boards', [SellBookController::class, 'getBoards'])->name('student.sell-book.boards');
+        Route::get('/sell-book/classes', [SellBookController::class, 'getClasses'])->name('student.sell-book.classes');
+        Route::get('/sell-book/subjects', [SellBookController::class, 'getSubjects'])->name('student.sell-book.subjects');
+
         Route::post('/sell-book', [SellBookController::class, 'store'])->name('student.sell-book.store');
-        Route::get('/sell-book/{id}', [SellBookController::class, 'show'])->name('student.sell-book.show');
-        Route::get('/sell-book/{id}/edit', [SellBookController::class, 'edit'])->name('student.sell-book.edit');
-        Route::put('/sell-book/{id}', [SellBookController::class, 'update'])->name('student.sell-book.update');
-        Route::post('/sell-book/{id}/mark-sold', [SellBookController::class, 'markAsSold'])->name('student.sell-book.mark-sold');
-        Route::get('/sell-book/check-isbn/{isbn}', [SellBookController::class, 'getBookByIsbn'])->name('student.sell-book.check-isbn');
+        Route::post('/sell-book/{id}', [SellBookController::class, 'store'])->name('student.sell-book.update');
     });
 });

@@ -270,9 +270,13 @@ class IndexController extends Controller
             $total_price += $getDiscountPriceDetails['final_price'] * $item['quantity'];
         }
 
-        // Fetch SellBookRequests
-        $sellBookRequests = \App\Models\SellBookRequest::with('user')
-            ->whereIn('book_status', ['approved', 'sold'])
+        // Fetch Student Old Books for Marketplace Section
+        $sellBookRequests = \App\Models\ProductsAttribute::with(['product', 'user'])
+            ->where('admin_type', 'user')
+            ->where('admin_approved', 1)
+            ->whereHas('product', function($q) {
+                $q->where('condition', 'old');
+            })
             ->orderBy('id', 'desc')
             ->limit(10)
             ->get();

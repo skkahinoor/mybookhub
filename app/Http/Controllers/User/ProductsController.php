@@ -442,18 +442,20 @@ class ProductsController extends Controller
                 ->get();
         } else {
 
-            $products = ProductsAttribute::orderBy('id', 'desc')
+            $products = Product::orderBy('id', 'desc')
                 ->with([
-                    'product:id,product_name,product_isbn,product_image,category_id,section_id,condition,publisher_id,edition_id,language_id,product_price,status',
-                    'product.category:id,category_name',
-                    'product.section:id,name',
-                    'product.publisher:id,name',
-                    'product.edition:id,edition',
-                    'product.language:id,name',
-                    'condition:id,name,percentage',
-                    'vendor:id,user_id',
+                    'category:id,category_name',
+                    'section:id,name',
+                    'publisher:id,name',
+                    'edition:id,edition',
+                    'language:id,name',
                 ])
                 ->get();
+
+            foreach ($products as $product) {
+                $product->total_stock = ProductsAttribute::where('product_id', $product->id)
+                    ->sum('stock');
+            }
         }
 
         return view(
@@ -585,8 +587,7 @@ class ProductsController extends Controller
                                 'message'          => $errorMessage,
                                 'product_id'       => $existingProduct->id,
                                 'stock'            => (int) ($existingAttribute->stock ?? 0),
-                                'product_discount'      => (float) ($existingAttribute->product_discount ?? 0),
-                                'old_book_condition_id' => $existingAttribute->old_book_condition_id ?? (int) ($data['old_book_condition_id'] ?? 0),
+                                'product_discount' => (float) ($existingAttribute->product_discount ?? 0),
                             ], 422);
                         }
 
@@ -825,7 +826,6 @@ class ProductsController extends Controller
                     'status' => 'success',
                     'message' => $message,
                     'product_id' => $product->id,
-                    'old_book_condition_id' => $request->old_book_condition_id,
                     'show_modal' => true
                 ]);
             }
@@ -838,12 +838,11 @@ class ProductsController extends Controller
         $sections   = Section::where('status', 1)->get();
         $publishers = Publisher::where('status', 1)->get()->toArray();
         $authors    = Author::where('status', 1)->get();
-        $categories    = Category::where('status', 1)->get();
-        $subjects      = Subject::where('status', 1)->get();
-        $subcategories = Subcategory::where('status', 1)->get();
+        $subjects      = Subject::where('status', 1)->get()->toArray();
+        $subcategories = Subcategory::where('status', 1)->get()->toArray();
         $languages     = Language::get();
         $editions      = Edition::all();
-        $bookTypes     = BookType::where('status', 1)->get();
+        $bookTypes     = BookType::where('status', 1)->get()->toArray();
         $conditions    = \App\Models\OldBookCondition::orderBy('id', 'asc')->get();
 
         return view('admin.products.add_edit_product')->with(compact(
@@ -854,7 +853,6 @@ class ProductsController extends Controller
             'authors',
             'subjects',
             'subcategories',
-            'categories',
             'languages',
             'editions',
             'bookTypes',
@@ -955,13 +953,10 @@ class ProductsController extends Controller
             'product_id' => 'required|exists:products,id',
             'stock' => 'required|integer|min:0',
             'product_discount' => 'nullable|numeric|min:0|max:100',
-            'old_book_condition_id' => 'nullable|exists:old_book_conditions,id',
         ]);
 
         $user = Auth::guard('admin')->user();
         $data = $request->all();
-
-        $oldBookConditionId = !empty($data['old_book_condition_id']) ? (int)$data['old_book_condition_id'] : null;
 
         $attributeQuery = ProductsAttribute::where('product_id', $data['product_id']);
 
@@ -970,31 +965,16 @@ class ProductsController extends Controller
                 ->where('admin_type', 'vendor');
         } else {
             $attributeQuery->where('admin_id', $user->id)
-                ->where(function($q) {
-                    $q->where('admin_type', 'admin')->orWhere('admin_type', 'superadmin');
-                });
+                ->where('admin_type', 'admin')
+                ->orWhere('admin_type', 'superadmin');
         }
 
         $existingAttribute = $attributeQuery->first();
-
-        $product = Product::find($data['product_id']);
-        $price = $product->product_price;
-
-        if ($oldBookConditionId) {
-            $condition = \App\Models\OldBookCondition::find($oldBookConditionId);
-            if ($condition && $price > 0) {
-                $price = ($price * $condition->percentage) / 100;
-            }
-        }
 
         if ($existingAttribute) {
             // Update existing attribute
             $existingAttribute->stock = (int) $data['stock'];
             $existingAttribute->product_discount = (float) ($data['product_discount'] ?? 0);
-            $existingAttribute->price = $price; // Save calculated price
-            if ($oldBookConditionId) {
-                $existingAttribute->old_book_condition_id = $oldBookConditionId;
-            }
             $existingAttribute->save();
         } else {
             // Create new attribute
@@ -1002,9 +982,7 @@ class ProductsController extends Controller
             $attribute->product_id = $data['product_id'];
             $attribute->stock = (int) $data['stock'];
             $attribute->product_discount = (float) ($data['product_discount'] ?? 0);
-            $attribute->price = $price; // Save calculated price
-            $attribute->old_book_condition_id = $oldBookConditionId;
-            $attribute->sku = 'BH-P' . $data['product_id'] . '-' . ($user->type === 'vendor' ? 'V' . $user->vendor_id : 'A' . $user->id);
+            $attribute->sku = 'BH' . '-' . 'P' . $data['product_id'] . '-' . 'V' . $user->vendor_id;
             $attribute->status = 1;
 
             if ($user->type === 'vendor') {
@@ -1064,7 +1042,8 @@ class ProductsController extends Controller
 
         $message = 'Book Image has been deleted successfully!';
 
-        return redirect()->back()->with('success_message', $message);
+
+        return redirect()->back()->with('success_message', $message, 'logos');
         return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
     }
 
@@ -1092,14 +1071,14 @@ class ProductsController extends Controller
                     // SKU duplicate check (Prevent duplicate SKU) because SKU is UNIQUE for every product
                     $skuCount = ProductsAttribute::where('sku', $value)->count();
                     if ($skuCount > 0) { // if there's an SKU for the product ALREADY EXISTING
-                        return redirect()->back()->with('error_message', 'SKU already exists! Please add another SKU!');
+                        return redirect()->back()->with('error_message', 'SKU already exists! Please add another SKU!', 'logos');
                         return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
                     }
 
                     // Size duplicate check (Prevent duplicate Size) because Size is UNIQUE for every product
                     $sizeCount = ProductsAttribute::where(['product_id' => $id, 'size' => $data['size'][$key]])->count();
                     if ($sizeCount > 0) { // if there's an SKU for the product ALREADY EXISTING
-                        return redirect()->back()->with('error_message', 'Size already exists! Please add another Size!');
+                        return redirect()->back()->with('error_message', 'Size already exists! Please add another Size!', 'logos');
                         return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
                     }
 
@@ -1116,7 +1095,7 @@ class ProductsController extends Controller
                     $attribute->save();
                 }
             }
-            return redirect()->back()->with('success_message', 'Book Attributes have been addded successfully!');
+            return redirect()->back()->with('success_message', 'Book Attributes have been addded successfully!', 'logos');
             return view('admin.products.products', compact('products', 'logos', 'headerLogo'));
         }
 
@@ -1176,7 +1155,7 @@ class ProductsController extends Controller
                 }
             }
 
-            return redirect()->back()->with('success_message', 'Book Attributes have been updated successfully!');
+            return redirect()->back()->with('success_message', 'Book Attributes have been updated successfully!', 'logos');
             return view('admin.attributes.add_edit_attributes', compact('product', 'logos', 'headerLogo'));
         }
     }
@@ -1313,7 +1292,7 @@ class ProductsController extends Controller
 
         $message = 'Book Image has been deleted successfully!';
 
-        return redirect()->back()->with('success_message', $message);
+        return redirect()->back()->with('success_message', $message, 'logos');
         return view('admin.images.add_images', compact('product', 'logos', 'headerLogo'));
     }
 
@@ -1329,7 +1308,7 @@ class ProductsController extends Controller
 
         $message = 'Book Attribute has been deleted successfully!';
 
-        return redirect()->back()->with('success_message', $message);
+        return redirect()->back()->with('success_message', $message, 'logos');
         return view('admin.attributes.add_edit_attributes', compact('product', 'logos', 'headerLogo'));
     }
 
@@ -1345,7 +1324,7 @@ class ProductsController extends Controller
 
         $message = 'Book Video has been deleted successfully!';
 
-        return redirect()->back()->with('success_message', $message);
+        return redirect()->back()->with('success_message', $message, 'logos');
         return view('admin.products.add_edit_product', compact('product', 'logos', 'headerLogo'));
     }
 
@@ -1357,7 +1336,7 @@ class ProductsController extends Controller
 
         $isbn = $request->isbn;
 
-        $product = Product::with(['publisher', 'subject', 'edition', 'language', 'authors', 'category', 'subcategory'])
+        $product = Product::with(['publisher', 'subject', 'edition', 'language', 'authors'])
             ->where('product_isbn', $isbn)
             ->first();
 
@@ -1370,9 +1349,7 @@ class ProductsController extends Controller
                     "product_name" => $product->product_name,
                     "section_id"   => $product->section_id,
                     "category_id"  => $product->category_id,
-                    "category_name" => $product->category->category_name ?? '',
                     "subcategory_id" => $product->subcategory_id,
-                    "subcategory_name" => $product->subcategory->subcategory_name ?? '',
                     "description"  => $product->description,
                     "image"        => $product->product_image,
                     "product_price" => $product->product_price,
@@ -1380,7 +1357,6 @@ class ProductsController extends Controller
 
                     "publisher_id" => $product->publisher_id,
                     "subject_id"   => $product->subject_id,
-                    "subject_name" => $product->subject->name ?? '',
                     "edition_id"   => $product->edition_id,
                     "language_id"  => $product->language_id,
                     "book_type_id" => $product->book_type_id,

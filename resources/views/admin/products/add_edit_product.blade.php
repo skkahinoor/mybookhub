@@ -292,8 +292,6 @@
                                     </div>
                                 </div>
 
-
-
                                 <div class="form-group">
                                     <div class="form-group">
                                         <label for="product_isbn">ISBN Number <small class="text-muted">(10-13
@@ -343,6 +341,11 @@
                                     <label for="category_id">Board</label>
                                     <select name="category_id" id="category_id" class="form-control text-dark">
                                         <option value="">Select Board</option>
+                                        @foreach($categories as $cat)
+                                            <option value="{{ $cat->id }}" {{ old('category_id', $product->category_id ?? '') == $cat->id ? 'selected' : '' }}>
+                                                {{ $cat->category_name }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
 
@@ -350,6 +353,11 @@
                                     <label for="subcategory_id">Class</label>
                                     <select name="subcategory_id" id="subcategory_id" class="form-control text-dark">
                                         <option value="">Select Class</option>
+                                        @foreach($subcategories as $sub)
+                                            <option value="{{ $sub->id }}" {{ old('subcategory_id', $product->subcategory_id ?? '') == $sub->id ? 'selected' : '' }}>
+                                                {{ $sub->subcategory_name }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
 
@@ -357,6 +365,11 @@
                                     <label for="subject_id">Subject</label>
                                     <select name="subject_id" id="subject_id" class="form-control text-dark">
                                         <option value="">Select Subject</option>
+                                        @foreach($subjects as $sub)
+                                            <option value="{{ $sub->id }}" {{ old('subject_id', $product->subject_id ?? '') == $sub->id ? 'selected' : '' }}>
+                                                {{ $sub->name }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
 
@@ -443,12 +456,26 @@
                                         @endforeach
                                     </select>
                                 </div>
+                                 
                                 <div class="form-group">
                                     <label for="product_price">Price</label>
                                     <input type="text" class="form-control" id="product_price"
                                         placeholder="Enter Book Price" name="product_price"
                                         @if (!empty($product['product_price'])) value="{{ $product['product_price'] }}" @else value="{{ old('product_price') }}" @endif>
 
+                                </div>
+                                 <div class="form-group mt-3" id="old_condition_wrapper" style="display: {{ old('condition', !empty($product->id) ? $product->condition ?? 'new' : 'new') === 'old' ? 'block' : 'none' }};">
+                                    <label for="old_book_condition_id">Book Condition <span class="text-danger">*</span></label>
+                                    <select name="old_book_condition_id" id="old_book_condition_id" class="form-control text-dark">
+                                        <option value="">Select Condition</option>
+                                        @foreach($conditions as $cond)
+                                            <option value="{{ $cond->id }}" data-percentage="{{ $cond->percentage }}"
+                                                {{ old('old_book_condition_id', $product->firstAttribute->old_book_condition_id ?? '') == $cond->id ? 'selected' : '' }}>
+                                                {{ $cond->name }} ({{ $cond->percentage }}%)
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">Price will be auto-calculated based on selected condition percentage.</small>
                                 </div>
 
                                 <div class="form-group">
@@ -520,6 +547,7 @@
                     <form id="attributesForm">
                         @csrf
                         <input type="hidden" id="modal_product_id" name="product_id">
+                        <input type="hidden" id="modal_old_book_condition_id" name="old_book_condition_id">
 
                         <div class="form-group">
                             <label for="modal_stock">Stock <span class="text-danger">*</span></label>
@@ -648,6 +676,43 @@
                 }
             });
 
+            // Toggle old condition dropdown and calculate price
+            function updatePriceByCondition() {
+                let condition = $('input[name="condition"]:checked').val();
+                let $wrapper = $('#old_condition_wrapper');
+                let $priceInput = $('#product_price');
+                let originalPrice = parseFloat($priceInput.data('original-price')) || parseFloat($priceInput.val()) || 0;
+
+                if (condition === 'old') {
+                    $wrapper.show();
+                    let percentage = $('#old_book_condition_id option:selected').data('percentage');
+                    if (percentage) {
+                        let newPrice = (originalPrice * parseFloat(percentage)) / 100;
+                        $priceInput.val(newPrice.toFixed(2));
+                    }
+                } else {
+                    $wrapper.hide();
+                    if ($priceInput.data('original-price')) {
+                        $priceInput.val($priceInput.data('original-price'));
+                    }
+                }
+            }
+
+            $('input[name="condition"]').on('change', function() {
+                updatePriceByCondition();
+            });
+
+            $('#old_book_condition_id').on('change', function() {
+                updatePriceByCondition();
+            });
+
+            // Store original price when manually entered
+            $('#product_price').on('change', function() {
+                if ($('input[name="condition"]:checked').val() === 'new') {
+                    $(this).data('original-price', $(this).val());
+                }
+            });
+
         });
     </script>
 
@@ -664,34 +729,42 @@
             var initialClassId = "{{ old('subcategory_id', $product->subcategory_id ?? '') }}";
             var initialSubjectId = "{{ old('subject_id', $product->subject_id ?? '') }}";
 
-            window.loadBoards = function(sectionId, selectedId) {
-                $board.empty().append('<option value=\"\">Select Board</option>');
-                $class.empty().append('<option value=\"\">Select Class</option>');
-                $subject.empty().append('<option value=\"\">Select Subject</option>');
+            window.loadBoards = function(sectionId, selectedId, selectedName) {
+                $board.empty().append('<option value="">Select Board</option>');
+                $class.empty().append('<option value="">Select Class</option>');
+                $subject.empty().append('<option value="">Select Subject</option>');
 
                 if (!sectionId) {
                     return;
+                }
+
+                if (selectedId && selectedName) {
+                    $board.append($('<option></option>').val(selectedId).text(selectedName).prop('selected', true));
                 }
 
                 $.get(boardsUrl, {
                     section_id: sectionId
                 }, function(data) {
                     $.each(data, function(_, item) {
-                        var opt = $('<option></option>').val(item.id).text(item.category_name);
                         if (selectedId && parseInt(selectedId) === parseInt(item.id)) {
-                            opt.attr('selected', 'selected');
+                            return; // Already added
                         }
+                        var opt = $('<option></option>').val(item.id).text(item.category_name);
                         $board.append(opt);
                     });
                 });
             }
 
-            window.loadClasses = function(sectionId, boardId, selectedId) {
-                $class.empty().append('<option value=\"\">Select Class</option>');
-                $subject.empty().append('<option value=\"\">Select Subject</option>');
+            window.loadClasses = function(sectionId, boardId, selectedId, selectedName) {
+                $class.empty().append('<option value="">Select Class</option>');
+                $subject.empty().append('<option value="">Select Subject</option>');
 
                 if (!sectionId || !boardId) {
                     return;
+                }
+
+                if (selectedId && selectedName) {
+                    $class.append($('<option></option>').val(selectedId).text(selectedName).prop('selected', true));
                 }
 
                 $.get(classesUrl, {
@@ -699,20 +772,24 @@
                     category_id: boardId
                 }, function(data) {
                     $.each(data, function(_, item) {
-                        var opt = $('<option></option>').val(item.id).text(item.subcategory_name);
                         if (selectedId && parseInt(selectedId) === parseInt(item.id)) {
-                            opt.attr('selected', 'selected');
+                            return; // Already added
                         }
+                        var opt = $('<option></option>').val(item.id).text(item.subcategory_name);
                         $class.append(opt);
                     });
                 });
             }
 
-            window.loadSubjects = function(sectionId, boardId, classId, selectedId) {
-                $subject.empty().append('<option value=\"\">Select Subject</option>');
+            window.loadSubjects = function(sectionId, boardId, classId, selectedId, selectedName) {
+                $subject.empty().append('<option value="">Select Subject</option>');
 
                 if (!sectionId || !boardId || !classId) {
                     return;
+                }
+
+                if (selectedId && selectedName) {
+                    $subject.append($('<option></option>').val(selectedId).text(selectedName).prop('selected', true));
                 }
 
                 $.get(subjectsUrl, {
@@ -721,10 +798,10 @@
                     sub_category_id: classId
                 }, function(data) {
                     $.each(data, function(_, item) {
-                        var opt = $('<option></option>').val(item.id).text(item.name);
                         if (selectedId && parseInt(selectedId) === parseInt(item.id)) {
-                            opt.attr('selected', 'selected');
+                            return; // Already added
                         }
+                        var opt = $('<option></option>').val(item.id).text(item.name);
                         $subject.append(opt);
                     });
                 });
@@ -748,13 +825,17 @@
                 window.loadSubjects(sectionId, boardId, classId, null);
             });
 
+            var initialBoardName = "{{ $product->category->category_name ?? '' }}";
+            var initialClassName = "{{ $product->subcategory->subcategory_name ?? '' }}";
+            var initialSubjectName = "{{ $product->subject->name ?? '' }}";
+
             // Initial population for edit / validation error
             if (initialSectionId) {
-                window.loadBoards(initialSectionId, initialBoardId);
+                window.loadBoards(initialSectionId, initialBoardId, initialBoardName);
                 if (initialBoardId) {
-                    window.loadClasses(initialSectionId, initialBoardId, initialClassId);
+                    window.loadClasses(initialSectionId, initialBoardId, initialClassId, initialClassName);
                     if (initialClassId) {
-                        window.loadSubjects(initialSectionId, initialBoardId, initialClassId, initialSubjectId);
+                        window.loadSubjects(initialSectionId, initialBoardId, initialClassId, initialSubjectId, initialSubjectName);
                     }
                 }
             }
@@ -814,13 +895,13 @@
                     if (d.section_id) {
                         $("#section_id").val(d.section_id);
                         if (window.loadBoards) {
-                            window.loadBoards(d.section_id, d.category_id);
+                            window.loadBoards(d.section_id, d.category_id, d.category_name);
                         }
                         if (d.category_id && window.loadClasses) {
-                            window.loadClasses(d.section_id, d.category_id, d.subcategory_id);
+                            window.loadClasses(d.section_id, d.category_id, d.subcategory_id, d.subcategory_name);
                         }
                         if (d.subcategory_id && window.loadSubjects) {
-                            window.loadSubjects(d.section_id, d.category_id, d.subcategory_id, d.subject_id);
+                            window.loadSubjects(d.section_id, d.category_id, d.subcategory_id, d.subject_id, d.subject_name);
                         }
                     } else {
                         $("#category_id").val(d.category_id || '');
@@ -848,6 +929,14 @@
                     } else {
                         $("#isbnImagePreview").html('');
                     }
+
+                    // Save original price for condition calculation
+                    if (d.product_price) {
+                        $("#product_price").data('original-price', d.product_price);
+                    }
+
+                    // update price if it's already set to old
+                    updatePriceByCondition();
 
                     // 🔒 DISABLE AFTER ALL VALUES SET
                     setReadonly(true);
@@ -1034,6 +1123,7 @@
                             'vendor') {
                             // Show modal for new products (Vendors only)
                             $('#modal_product_id').val(response.product_id);
+                            $('#modal_old_book_condition_id').val(response.old_book_condition_id);
                             $('#attributesModal').modal('show');
                             submitBtn.prop('disabled', false).text('Submit');
                         } else {
@@ -1071,8 +1161,8 @@
                                 }).then((result) => {
                                     if (result.isConfirmed && resp.product_id) {
                                         // Prefill and open the same attributes modal used on products list
-                                        $('#modal_product_id').val(resp
-                                            .product_id);
+                                        $('#modal_product_id').val(resp.product_id);
+                                        $('#modal_old_book_condition_id').val(resp.old_book_condition_id); // Add this
                                         if (typeof resp.stock !== 'undefined') {
                                             $('#modal_stock').val(resp.stock);
                                         }
@@ -1152,6 +1242,33 @@
             $('#skipAttributesBtn').on('click', function() {
                 $('#attributesModal').modal('hide');
                 window.location.href = "{{ url('admin/products') }}";
+            });
+
+            // Auto-fill discount from condition percentage when modal opens
+            $('#attributesModal').on('show.bs.modal', function() {
+                var selectedCondition = $('#old_book_condition_id option:selected');
+                var percentage = selectedCondition.data('percentage');
+                var conditionId = selectedCondition.val();
+
+                // Set condition id in hidden modal field
+                $('#modal_old_book_condition_id').val(conditionId || '');
+
+                if (percentage !== undefined && percentage !== '') {
+                    $('#modal_product_discount').val(percentage);
+                }
+            });
+
+            // Also update discount live when condition changes
+            $(document).on('change', '#old_book_condition_id', function() {
+                var selected = $(this).find('option:selected');
+                var percentage = selected.data('percentage');
+                var conditionId = selected.val();
+
+                $('#modal_old_book_condition_id').val(conditionId || '');
+
+                if (percentage !== undefined && percentage !== '') {
+                    $('#modal_product_discount').val(percentage);
+                }
             });
         });
     </script>
