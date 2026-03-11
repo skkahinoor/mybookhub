@@ -13,6 +13,7 @@ use App\Models\Language;
 use App\Models\ProductsAttribute;
 use App\Models\Payment;
 use App\Models\Section;
+use App\Models\User;
 use App\Models\WalletTransaction;
 use Illuminate\Support\Facades\Mail;
 use Razorpay\Api\Api;
@@ -22,7 +23,7 @@ class RazorpayController extends Controller
     public function razorpayDirect(Request $request)
     {
         $razorpay_order_id = $request->get('order_id');
-        
+
         if (!$razorpay_order_id) {
             return redirect('cart');
         }
@@ -125,7 +126,7 @@ class RazorpayController extends Controller
         if (isset($input['razorpay_payment_id']) && !empty($input['razorpay_payment_id'])) {
 
             $order_ids = Session::has('order_ids') ? Session::get('order_ids') : [Session::get('order_id')];
-            
+
             // If no order in session, try to find by razorpay_order_id
             if (empty($order_ids) || (count($order_ids) == 1 && $order_ids[0] == null)) {
                 if (isset($input['razorpay_order_id'])) {
