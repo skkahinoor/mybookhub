@@ -4,7 +4,7 @@
     <style>
         .hero {
             position: relative;
-            padding: 80px 8%;
+            padding: 15px 8%;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -12,7 +12,6 @@
             background: linear-gradient(180deg, #EEF5FD 0%, #E6F0FA 100%);
             border-bottom-left-radius: 60px;
             border-bottom-right-radius: 60px;
-            min-height: 520px;
             gap: 60px;
         }
 
@@ -1326,11 +1325,6 @@
             <div class="sub">Buy • Sell • Rent • Print Notes</div>
 
             <div class="save">Save up to 70% on textbooks</div>
-
-            <div class="buttons">
-                <a href="{{ url('/search-products') }}" class="btn buy" style="text-decoration:none;">Buy Books</a>
-                <a href="{{ url('/marketplace') }}" class="btn sell" style="text-decoration:none;">Sell Old Books</a>
-            </div>
 
             <div class="features">
 
