@@ -41,12 +41,16 @@
                         <div class="summary shadow-sm">
                             <div class="row g-0">
                                 <div class="col-md-6 summary-item">
-                                    <span class="label">Order No.</span>
-                                    <span class="value">#{{ $orderDetails->id }}</span>
+                                    <span class="label">Order No(s).</span>
+                                    <span class="value">
+                                        @foreach($orders as $key => $order)
+                                            #{{ $order->id }}{{ !$loop->last ? ',' : '' }}
+                                        @endforeach
+                                    </span>
                                 </div>
                                 <div class="col-md-6 summary-item">
-                                    <span class="label">Grand Total</span>
-                                    <span class="value">₹{{ number_format($orderDetails->grand_total, 2) }}</span>
+                                    <span class="label">Total Amount</span>
+                                    <span class="value">₹{{ number_format($total_grand_total, 2) }}</span>
                                 </div>
                             </div>
                         </div>

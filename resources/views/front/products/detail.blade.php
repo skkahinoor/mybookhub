@@ -28,13 +28,13 @@
 
         .main-image-preview {
             width: 100%;
+            max-width: 400px;
             aspect-ratio: 2/3;
-            object-fit: contain;
-            background: #fff;
-            padding: 20px;
+            object-fit: cover;
             border-radius: 12px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
             transition: transform 0.3s ease;
+            margin: 0 auto;
         }
 
         .main-image-preview:hover {
@@ -224,13 +224,13 @@
 
             .action-row {
                 position: fixed;
-                bottom: 0;
+                bottom: 58px;
                 left: 0;
                 width: 100%;
                 background: #fff;
                 padding: 12px 20px;
                 margin-bottom: 0;
-                z-index: 1000;
+                z-index: 10000;
                 box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
                 gap: 10px;
                 border-radius: 20px 20px 0 0;
@@ -241,7 +241,7 @@
             }
 
             .content-inner-1 {
-                padding-bottom: 80px;
+                padding-bottom: 140px;
             }
         }
     </style>
@@ -252,7 +252,7 @@
                 <div class="row g-0">
                     <div class="col-lg-5 main-media-col">
                         <a href="{{ asset('front/images/product_images/large/' . $productDetails['product_image']) }}"
-                            class="main-image-link">
+                            class="main-image-link" style="padding: 20px;">
                             <img src="{{ asset('front/images/product_images/large/' . $productDetails['product_image']) }}"
                                 alt="{{ $productDetails['product_name'] }}" class="main-image-preview">
                         </a>
@@ -334,6 +334,12 @@
                                 <span>ISBN</span>
                                 <span>{{ $productDetails['product_isbn'] }}</span>
                             </div>
+                            <div class="highlight-item">
+                                <span>Availability</span>
+                                <span class="{{ $totalStock > 0 ? 'text-success' : 'text-danger' }}">
+                                    {{ $totalStock > 0 ? $totalStock . ' units available' : 'Out of Stock' }}
+                                </span>
+                            </div>
                         </div>
 
                         @php
@@ -350,8 +356,8 @@
                                 ₹{{ number_format($finalPrice, 2) }}
                                 @if ($discount)
                                     <span class="old-price">₹{{ number_format($originalPrice, 2) }}</span>
-                                    <span class="badge bg-danger rounded-pill"
-                                        style="font-size: 12px; vertical-align: middle; margin-left: 10px;">SALE</span>
+                                    <span
+                                        style="font-size: 11px; background: #FF3B30; color: white; padding: 4px 10px; border-radius: 20px; font-weight: 700; margin-left: 10px; display: inline-flex; align-items: center; justify-content: center; height: 24px;">SALE</span>
                                 @endif
                             </div>
                         </div>
@@ -360,7 +366,7 @@
                             <form action="{{ url('cart/add') }}" method="POST" class="d-flex flex-grow-1 gap-2">
                                 @csrf
                                 <input type="hidden" name="product_attribute_id" value="{{ $productAttribute->id }}">
-                                <input type="number" name="quantity" value="1" min="1" class="qty-selector">
+                                <input type="number" name="quantity" value="1" min="1" max="{{ $productAttribute->stock }}" class="qty-selector">
                                 <button type="submit" class="btn-add-cart-custom">
                                     <i class="fas fa-shopping-bag"></i> Add to Cart
                                 </button>
@@ -606,6 +612,7 @@
                                     </table>
                                 </div>
                             </div>
+                            
 
                             <!-- Reviews Tab -->
                             <div id="reviews-tab" class="tab-pane fade">

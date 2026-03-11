@@ -117,17 +117,30 @@
                                     @php
                                         $productImage = \App\Models\Product::getProductImage($product->product_id);
                                     @endphp
-                                    <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
-                                        alt="{{ $product->product_name }}"
-                                        style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 20px;">
+                                    <div style="position: relative;">
+                                        <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
+                                            alt="{{ $product->product_name }}"
+                                            style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 20px;">
+                                        <span class="badge badge-primary" style="position: absolute; top: -10px; left: 0; font-size: 10px;">
+                                            {{ $product->item_status ?? 'Ordered' }}
+                                        </span>
+                                    </div>
                                     <div class="flex-grow-1">
-                                        <h6 class="mb-2">{{ $product->product_name }}</h6>
-                                        <p class="text-muted mb-1">Quantity: {{ $product->product_qty }}</p>
-                                        <p class="text-muted mb-0">Price:
+                                        <h6 class="mb-1">{{ $product->product_name }}</h6>
+                                        <p class="mb-1" style="font-size: 11px;">
+                                            <span class="text-muted">Vendor:</span> 
+                                            @php
+                                                $vendor = \App\Models\Vendor::where('id', $product->vendor_id)->first();
+                                                $shopName = $vendor ? $vendor->shop_name : 'Admin';
+                                            @endphp
+                                            <span class="badge badge-light text-dark border">{{ $shopName }}</span>
+                                        </p>
+                                        <p class="text-muted mb-1" style="font-size: 13px;">Quantity: {{ $product->product_qty }}</p>
+                                        <p class="text-muted mb-0" style="font-size: 13px;">Price:
                                             ₹{{ number_format($product->product_price, 2) }}</p>
                                         @if ($product->courier_name)
                                             <p class="text-info mb-0 mt-2">
-                                                <small>Courier: {{ $product->courier_name }} | Tracking:
+                                                <small><i class="fas fa-truck me-1"></i> {{ $product->courier_name }} | Tracking:
                                                     {{ $product->tracking_number }}</small>
                                             </p>
                                         @endif

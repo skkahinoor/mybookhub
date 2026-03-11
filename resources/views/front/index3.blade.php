@@ -4,7 +4,7 @@
     <style>
         .hero {
             position: relative;
-            padding: 80px 8%;
+            padding: 15px 8%;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -12,9 +12,9 @@
             background: linear-gradient(180deg, #EEF5FD 0%, #E6F0FA 100%);
             border-bottom-left-radius: 60px;
             border-bottom-right-radius: 60px;
-            min-height: 520px;
             gap: 60px;
         }
+
 
         /* Background Circle */
 
@@ -343,17 +343,18 @@
         /* SUBJECTS */
         .subjects-strip {
             background: var(--white);
-            padding: 20px 8%;
+            padding: 5px 8%;
             display: flex;
             gap: 20px;
             overflow-x: auto;
             scrollbar-width: none;
             border-top: 1px solid #f1f5f9;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-
-            /* smoother scrolling */
             scroll-behavior: smooth;
             scroll-snap-type: x mandatory;
+            justify-content: center;
+            align-content: center;
+
         }
 
         .subjects-strip::-webkit-scrollbar {
@@ -369,8 +370,8 @@
         }
 
         .subject-circle-premium {
-            width: 74px;
-            height: 74px;
+            width: 60px;
+            height: 60px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 50%;
@@ -378,7 +379,7 @@
             align-items: center;
             justify-content: center;
             margin: 0 auto 10px;
-            font-size: 28px;
+            font-size: 27px;
             transition: all .25s ease;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
         }
@@ -417,7 +418,7 @@
 
         /* FILTER */
         .filter-section-premium {
-            padding: 30px 8% 20px;
+            padding: 10px 8% 10px;
         }
 
         .location-info-premium {
@@ -439,8 +440,9 @@
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin-bottom: 30px;
             flex-wrap: wrap;
+            align-content: center;
+            align-items: center;
         }
 
         .pill-premium {
@@ -581,7 +583,7 @@
             overflow: hidden;
             text-decoration: none !important;
             line-height: 1.4;
-            height: 33px;
+            /* height: 33px; */
         }
 
         .title:hover {
@@ -1324,11 +1326,6 @@
 
             <div class="save">Save up to 70% on textbooks</div>
 
-            <div class="buttons">
-                <a href="{{ url('/search-products') }}" class="btn buy" style="text-decoration:none;">Buy Books</a>
-                <a href="{{ url('/marketplace') }}" class="btn sell" style="text-decoration:none;">Sell Old Books</a>
-            </div>
-
             <div class="features">
 
                 <div class="feature">
@@ -1361,7 +1358,8 @@
     </section>
 
     <div class="book-context">
-        <span id="currentSelectionInfo">Showing books for: <strong>All</strong></span>
+        <span id="currentSelectionInfo">Showing books for:
+            <strong>{{ $currentSectionId ? $sections->find($currentSectionId)?->name ?? 'All' : 'All' }}</strong></span>
 
         <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">
             Change
@@ -1375,8 +1373,6 @@
     </div>
     <!-- Filter Section -->
     <div class="filter-section-premium">
-
-
         <div class="pills-premium">
             <a href="javascript:void(0)" class="pill-premium filter-btn-premium" id="openFilterChip">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1577,7 +1573,8 @@
                     <select class="filter-select" id="filterSection">
                         <option value="">Select Category</option>
                         @foreach ($sections as $sec)
-                            <option value="{{ $sec->id }}">{{ $sec->name }}</option>
+                            <option value="{{ $sec->id }}" {{ $currentSectionId == $sec->id ? 'selected' : '' }}>
+                                {{ $sec->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -1669,6 +1666,45 @@
         const sheet = document.getElementById('filterSheet');
         const rangeSlider = document.getElementById('distanceRange');
         const rangeValue = document.getElementById('rangeValue');
+
+        // Pre-populate filter dropdowns from saved BookGenie session on page load
+        (function restoreBookGenieFilters() {
+            const savedSectionId = '{{ $currentSectionId ?? '' }}';
+            const savedCategoryId = '{{ $currentCategoryId ?? '' }}';
+            const savedSubId = '{{ $currentSubcategoryId ?? '' }}';
+
+            if (!savedSectionId) return;
+
+            // Category
+            if (savedCategoryId) {
+                fetch(`{{ url('get-filter-categories') }}?section_id=${savedSectionId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        const cat = document.getElementById('filterCategory');
+                        cat.innerHTML = '<option value="">Select Sub Category</option>';
+                        data.forEach(c => {
+                            cat.innerHTML +=
+                                `<option value="${c.id}" ${c.id == savedCategoryId ? 'selected' : ''}>${c.category_name}</option>`;
+                        });
+
+                        // Subcategory
+                        if (savedSubId) {
+                            fetch(
+                                    `{{ url('get-filter-subcategories') }}?category_id=${savedCategoryId}&section_id=${savedSectionId}`
+                                    )
+                                .then(r => r.json())
+                                .then(subs => {
+                                    const sub = document.getElementById('filterSubcategory');
+                                    sub.innerHTML = '<option value="">Select Class</option>';
+                                    subs.forEach(s => {
+                                        sub.innerHTML +=
+                                            `<option value="${s.id}" ${s.id == savedSubId ? 'selected' : ''}>${s.category_name}</option>`;
+                                    });
+                                });
+                        }
+                    });
+            }
+        })();
 
         // Location Detection
         function detectLocation() {
@@ -2030,4 +2066,161 @@
             }
         });
     </script>
+
+    @if (!Auth::check() && !session()->has('bookgenie_shown'))
+        <div class="modal fade" id="bookGenieModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius:24px; border:none; overflow:hidden;">
+                    <div
+                        style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 30px; text-align: center; color: white;">
+                        <h3 style="font-weight: 800; color: white; margin-bottom: 10px;">✨ BookGenie AI</h3>
+                        <p style="opacity: 0.9; margin: 0; font-size: 14px;">Help BookGenie AI to personalize and display
+                            books that perfectly fit you!</p>
+                    </div>
+                    <div class="modal-body" style="padding: 30px;">
+                        <div class="mb-4">
+                            <label style="font-weight: 700; color: #333; margin-bottom: 8px;">Education Level
+                                (Section)</label>
+                            <select id="bgSectionSelect" class="form-select"
+                                style="border-radius: 12px; border: 2px solid #eee; padding: 12px; height: 50px;">
+                                <option value="">Select Education Level</option>
+                                @foreach ($sections as $sec)
+                                    <option value="{{ $sec->id }}">{{ $sec->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label style="font-weight: 700; color: #333; margin-bottom: 8px;">Board / Domain
+                                (Category)</label>
+                            <select id="bgCategorySelect" class="form-select"
+                                style="border-radius: 12px; border: 2px solid #eee; padding: 12px; height: 50px;" disabled>
+                                <option value="">Select Board</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label style="font-weight: 700; color: #333; margin-bottom: 8px;">Class / Stream (Sub
+                                Category)</label>
+                            <select id="bgSubcategorySelect" class="form-select"
+                                style="border-radius: 12px; border: 2px solid #eee; padding: 12px; height: 50px;" disabled>
+                                <option value="">Select Class</option>
+                            </select>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="button" class="btn btn-light w-50" id="closeBookGenie"
+                                style="border-radius: 12px; font-weight: 700; padding: 12px;">Skip</button>
+                            <button type="button" class="btn text-white w-50" id="applyBookGenie"
+                                style="background: var(--primary-orange); border-radius: 12px; font-weight: 700; padding: 12px;">Personalize
+                                <i class="fas fa-magic ms-1"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Show modal automatically
+                var bookGenieModal = new bootstrap.Modal(document.getElementById('bookGenieModal'));
+                bookGenieModal.show();
+
+                // Cascading selects for BookGenie
+                const bgSection = document.getElementById('bgSectionSelect');
+                const bgCategory = document.getElementById('bgCategorySelect');
+                const bgSubcategory = document.getElementById('bgSubcategorySelect');
+
+                bgSection.addEventListener('change', function() {
+                    const sectionId = this.value;
+                    if (sectionId) {
+                        bgCategory.innerHTML = '<option value="">Loading...</option>';
+                        bgCategory.disabled = true;
+                        fetch(`{{ url('get-filter-categories') }}?section_id=${sectionId}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                bgCategory.innerHTML = '<option value="">Select Board</option>';
+                                data.forEach(cat => {
+                                    bgCategory.innerHTML +=
+                                        `<option value="${cat.id}">${cat.category_name}</option>`;
+                                });
+                                bgCategory.disabled = false;
+                            });
+                    } else {
+                        bgCategory.innerHTML = '<option value="">Select Board</option>';
+                        bgCategory.disabled = true;
+                        bgSubcategory.innerHTML = '<option value="">Select Class</option>';
+                        bgSubcategory.disabled = true;
+                    }
+                });
+
+                bgCategory.addEventListener('change', function() {
+                    const categoryId = this.value;
+                    const sectionId = bgSection.value;
+                    if (categoryId) {
+                        bgSubcategory.innerHTML = '<option value="">Loading...</option>';
+                        bgSubcategory.disabled = true;
+                        fetch(
+                                `{{ url('get-filter-subcategories') }}?category_id=${categoryId}&section_id=${sectionId}`
+                            )
+                            .then(res => res.json())
+                            .then(data => {
+                                bgSubcategory.innerHTML = '<option value="">Select Class</option>';
+                                data.forEach(sub => {
+                                    bgSubcategory.innerHTML +=
+                                        `<option value="${sub.id}">${sub.category_name}</option>`;
+                                });
+                                bgSubcategory.disabled = false;
+                            });
+                    } else {
+                        bgSubcategory.innerHTML = '<option value="">Select Class</option>';
+                        bgSubcategory.disabled = true;
+                    }
+                });
+
+                function dismissBookGenie(withData = false) {
+                    bookGenieModal.hide();
+
+                    let payload = {
+                        bookgenie_shown: true
+                    };
+
+                    if (withData) {
+                        payload.section_id = bgSection.value;
+                        payload.category_id = bgCategory.value;
+                        payload.subcategory_id = bgSubcategory.value;
+                    }
+
+                    fetch(`{{ url('set-bookgenie-session') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                document.getElementById('closeBookGenie').addEventListener('click', function() {
+                    dismissBookGenie(false);
+                });
+
+                document.getElementById('applyBookGenie').addEventListener('click', function() {
+                    // Set the hidden filter bottom sheet values
+                    document.getElementById('filterSection').value = bgSection.value;
+
+                    document.getElementById('filterCategory').innerHTML = bgCategory.innerHTML;
+                    document.getElementById('filterCategory').value = bgCategory.value;
+
+                    document.getElementById('filterSubcategory').innerHTML = bgSubcategory.innerHTML;
+                    document.getElementById('filterSubcategory').value = bgSubcategory.value;
+
+                    // Perform AJAX update
+                    if (typeof updateHomeGrid === 'function') {
+                        updateHomeGrid(null, null, true);
+                    }
+
+                    dismissBookGenie(true);
+                });
+            });
+        </script>
+    @endif
 @endsection

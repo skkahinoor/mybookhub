@@ -484,6 +484,10 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
         Route::match(['get', 'post'], '/' . $url, 'ProductsController@listing');
     }
 
+    Route::post('/set-bookgenie-session', [IndexController::class, 'setBookgenieSession']);
+    Route::get('/bookgenie-search', [IndexController::class, 'bookgenieSearch']);
+
+
     // Vendor Login/Register
     Route::get('vendor/login-register', 'VendorController@loginRegister'); // render vendor login_register.blade.php page
 
@@ -509,7 +513,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
 
 
     // Render Single Product Detail Page in front/products/detail.blade.php
-    Route::get('/product/{id}', 'ProductsController@detail');
+    Route::get('/product/{id}', 'ProductsController@detail')->name('front.products.detail');
 
     Route::post('get-product-price', 'ProductsController@getProductPrice');
 
@@ -608,12 +612,14 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
         // Make an iyzipay payment (redirect the user to iyzico payment gateway with the order details)
         Route::get('iyzipay/pay', 'IyzipayController@pay');
 
-        // Razorpay routes:
-        Route::get('razorpay', 'RazorpayController@razorpay');
-        Route::post('razorpay/pay', 'RazorpayController@payment')->name('razorpay.payment');
-        Route::get('razorpay/success', 'RazorpayController@success');
-        Route::get('razorpay/fail', 'RazorpayController@fail');
-    });
+    }); 
+
+    // Razorpay routes (outside auth for mobile compatibility)
+    Route::get('razorpay', 'RazorpayController@razorpay');
+    Route::get('razorpay-direct', 'RazorpayController@razorpayDirect');
+    Route::post('razorpay/pay', 'RazorpayController@payment')->name('razorpay.payment');
+    Route::get('razorpay/success', 'RazorpayController@success');
+    Route::get('razorpay/fail', 'RazorpayController@fail');
 
     // Category Products Route
     Route::get('/category-products/{category_id?}', 'ProductsController@categoryProducts');

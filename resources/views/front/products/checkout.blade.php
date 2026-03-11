@@ -519,6 +519,7 @@
                                                         $getDiscountAttributePrice = \App\Models\Product::getDiscountAttributePrice(
                                                             $item['product_id'],
                                                             $item['size'],
+                                                            $item['product_attribute_id']
                                                         );
                                                         $total_price +=
                                                             $getDiscountAttributePrice['final_price'] *
