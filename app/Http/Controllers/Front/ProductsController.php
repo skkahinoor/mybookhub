@@ -1138,11 +1138,8 @@ class ProductsController extends Controller
         $total_weight = 0;
 
         foreach ($getCartItems as $item) {
-            $attrPrice = Product::getDiscountAttributePrice($item['product_id'], $item['size']);
+            $attrPrice = Product::getDiscountAttributePrice($item['product_id'], $item['size'], $item['product_attribute_id']);
             $total_price = $total_price + ($attrPrice['final_price'] * $item['quantity']);
-
-            // $product_weight = $item['product']['product_weight'];
-            // $total_weight   = $total_weight + $product_weight;
         }
 
         // Fetch the user with location relations and prepare address data for checkout
@@ -1283,7 +1280,8 @@ class ProductsController extends Controller
                 // Use attribute-based pricing (per size) from ProductsAttribute table
                 $getDiscountAttributePrice = Product::getDiscountAttributePrice(
                     $item['product_id'],
-                    $item['size'] ?? null
+                    $item['size'] ?? null,
+                    $item['product_attribute_id']
                 );
                 $total_price += ($getDiscountAttributePrice['final_price'] * $item['quantity']);
             }
@@ -1300,7 +1298,8 @@ class ProductsController extends Controller
                 // Get item price
                 $getDiscountAttributePrice = Product::getDiscountAttributePrice(
                     $item['product_id'],
-                    $item['size'] ?? null
+                    $item['size'] ?? null,
+                    $item['product_attribute_id']
                 );
                 $item_price = ($getDiscountAttributePrice['final_price'] * $item['quantity']);
 
@@ -1360,6 +1359,11 @@ class ProductsController extends Controller
                 $cartItem->item_status = "New"; 
                 $cartItem->product_attribute_id = $item['product_attribute_id'];
                 $cartItem->save();
+
+                // Reduce stock for COD orders immediately
+                if ($data['payment_gateway'] == 'COD') {
+                    $attribute->decrement('stock', $item['quantity']);
+                }
             }
 
             if ($total_wallet_amount > 0) {
