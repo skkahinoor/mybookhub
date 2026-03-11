@@ -16,21 +16,6 @@
             gap: 60px;
         }
 
-        .sticky-filter-wrapper {
-            position: sticky;
-            top: 80px; /* Match header height */
-            z-index: 1000;
-            background: #F8FAFC;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-            padding-bottom: 5px;
-        }
-
-        @media (max-width: 991px) {
-            .sticky-filter-wrapper {
-                top: 58px; /* Mobile header adjustment if needed */
-            }
-        }
 
         /* Background Circle */
 
@@ -359,17 +344,18 @@
         /* SUBJECTS */
         .subjects-strip {
             background: var(--white);
-            padding: 20px 8%;
+            padding: 5px 8%;
             display: flex;
             gap: 20px;
             overflow-x: auto;
             scrollbar-width: none;
             border-top: 1px solid #f1f5f9;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-
-            /* smoother scrolling */
             scroll-behavior: smooth;
             scroll-snap-type: x mandatory;
+            justify-content: center;
+            align-content: center;
+
         }
 
         .subjects-strip::-webkit-scrollbar {
@@ -385,8 +371,8 @@
         }
 
         .subject-circle-premium {
-            width: 74px;
-            height: 74px;
+            width: 60px;
+            height: 60px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             border-radius: 50%;
@@ -394,7 +380,7 @@
             align-items: center;
             justify-content: center;
             margin: 0 auto 10px;
-            font-size: 28px;
+            font-size: 27px;
             transition: all .25s ease;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
         }
@@ -433,7 +419,7 @@
 
         /* FILTER */
         .filter-section-premium {
-            padding: 30px 8% 20px;
+            padding: 10px 8% 10px;
         }
 
         .location-info-premium {
@@ -455,8 +441,9 @@
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin-bottom: 30px;
             flex-wrap: wrap;
+            align-content: center;
+            align-items: center;
         }
 
         .pill-premium {
@@ -597,7 +584,7 @@
             overflow: hidden;
             text-decoration: none !important;
             line-height: 1.4;
-            height: 33px;
+            /* height: 33px; */
         }
 
         .title:hover {
@@ -1376,52 +1363,48 @@
 
     </section>
 
-    <div class="main-book-section">
-        <div class="sticky-filter-wrapper">
-            <div class="book-context">
-                <span id="currentSelectionInfo">Showing books for:
-                    <strong>{{ $currentSectionId ? $sections->find($currentSectionId)?->name ?? 'All' : 'All' }}</strong></span>
+    <div class="book-context">
+        <span id="currentSelectionInfo">Showing books for:
+            <strong>{{ $currentSectionId ? $sections->find($currentSectionId)?->name ?? 'All' : 'All' }}</strong></span>
 
-                <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">
-                    Change
-                </a>
-            </div>
-            <!-- Subjects Strip -->
-            <div class="subjects-wrapper">
-                <div class="subjects-strip" id="homeSubjectsContainer">
-                    @include('front.partials.home_subjects')
-                </div>
-            </div>
-            <!-- Filter Section -->
-            <div class="filter-section-premium">
-                <div class="pills-premium">
-                    <a href="javascript:void(0)" class="pill-premium filter-btn-premium" id="openFilterChip">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                        </svg> Filter
-                    </a>
-                    <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'all' ? 'active' : '' }}"
-                        data-condition="all">All</a>
-                    <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'new' ? 'active' : '' }}"
-                        data-condition="new">New</a>
-                    <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'old' ? 'active' : '' }}"
-                        data-condition="old">Old</a>
-                </div>
-            </div>
+        <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">
+            Change
+        </a>
+    </div>
+    <!-- Subjects Strip -->
+    <div class="subjects-wrapper">
+        <div class="subjects-strip" id="homeSubjectsContainer">
+            @include('front.partials.home_subjects')
         </div>
+    </div>
+    <!-- Filter Section -->
+    <div class="filter-section-premium">
+        <div class="pills-premium">
+            <a href="javascript:void(0)" class="pill-premium filter-btn-premium" id="openFilterChip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg> Filter
+            </a>
+            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'all' ? 'active' : '' }}"
+                data-condition="all">All</a>
+            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'new' ? 'active' : '' }}"
+                data-condition="new">New</a>
+            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'old' ? 'active' : '' }}"
+                data-condition="old">Old</a>
+        </div>
+    </div>
 
-        <!-- Product Grid -->
-        <div class="book-wall" id="homeProductGrid">
-            @include('front.partials.home_product_grid')
-        </div>
+    <!-- Product Grid -->
+    <div class="book-wall" id="homeProductGrid">
+        @include('front.partials.home_product_grid')
+    </div>
 
-        <!-- Load More Button -->
-        <div class="load-more-container" id="loadMoreContainer" {!! !$sliderProducts->hasMorePages() ? 'style="display:none;"' : '' !!}>
-            <button class="btn-load-more" id="loadMoreBtn">
-                <i class="fas fa-sync-alt"></i> Load More Books
-            </button>
-        </div>
+    <!-- Load More Button -->
+    <div class="load-more-container" id="loadMoreContainer" {!! !$sliderProducts->hasMorePages() ? 'style="display:none;"' : '' !!}>
+        <button class="btn-load-more" id="loadMoreBtn">
+            <i class="fas fa-sync-alt"></i> Load More Books
+        </button>
     </div>
 
     <!-- Sell Hero Section -->
@@ -1713,7 +1696,8 @@
                         // Subcategory
                         if (savedSubId) {
                             fetch(
-                                    `{{ url('get-filter-subcategories') }}?category_id=${savedCategoryId}&section_id=${savedSectionId}`)
+                                    `{{ url('get-filter-subcategories') }}?category_id=${savedCategoryId}&section_id=${savedSectionId}`
+                                    )
                                 .then(r => r.json())
                                 .then(subs => {
                                     const sub = document.getElementById('filterSubcategory');
