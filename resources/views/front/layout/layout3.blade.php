@@ -631,6 +631,7 @@
             .layout-app-header {
                 padding: 6px 8px;
                 gap: 6px;
+                height: 70px;
             }
 
             .header-logo img {

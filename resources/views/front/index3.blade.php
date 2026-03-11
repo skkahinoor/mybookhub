@@ -16,6 +16,22 @@
             gap: 60px;
         }
 
+        .sticky-filter-wrapper {
+            position: sticky;
+            top: 80px; /* Match header height */
+            z-index: 1000;
+            background: #F8FAFC;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+            padding-bottom: 5px;
+        }
+
+        @media (max-width: 991px) {
+            .sticky-filter-wrapper {
+                top: 58px; /* Mobile header adjustment if needed */
+            }
+        }
+
         /* Background Circle */
 
         .hero::before {
@@ -1360,50 +1376,52 @@
 
     </section>
 
-    <div class="book-context">
-        <span id="currentSelectionInfo">Showing books for:
-            <strong>{{ $currentSectionId ? $sections->find($currentSectionId)?->name ?? 'All' : 'All' }}</strong></span>
+    <div class="main-book-section">
+        <div class="sticky-filter-wrapper">
+            <div class="book-context">
+                <span id="currentSelectionInfo">Showing books for:
+                    <strong>{{ $currentSectionId ? $sections->find($currentSectionId)?->name ?? 'All' : 'All' }}</strong></span>
 
-        <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">
-            Change
-        </a>
-    </div>
-    <!-- Subjects Strip -->
-    <div class="subjects-wrapper">
-        <div class="subjects-strip" id="homeSubjectsContainer">
-            @include('front.partials.home_subjects')
+                <a href="javascript:void(0)" class="change-loc-premium" id="openFilter">
+                    Change
+                </a>
+            </div>
+            <!-- Subjects Strip -->
+            <div class="subjects-wrapper">
+                <div class="subjects-strip" id="homeSubjectsContainer">
+                    @include('front.partials.home_subjects')
+                </div>
+            </div>
+            <!-- Filter Section -->
+            <div class="filter-section-premium">
+                <div class="pills-premium">
+                    <a href="javascript:void(0)" class="pill-premium filter-btn-premium" id="openFilterChip">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                        </svg> Filter
+                    </a>
+                    <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'all' ? 'active' : '' }}"
+                        data-condition="all">All</a>
+                    <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'new' ? 'active' : '' }}"
+                        data-condition="new">New</a>
+                    <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'old' ? 'active' : '' }}"
+                        data-condition="old">Old</a>
+                </div>
+            </div>
         </div>
-    </div>
-    <!-- Filter Section -->
-    <div class="filter-section-premium">
 
-
-        <div class="pills-premium">
-            <a href="javascript:void(0)" class="pill-premium filter-btn-premium" id="openFilterChip">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                </svg> Filter
-            </a>
-            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'all' ? 'active' : '' }}"
-                data-condition="all">All</a>
-            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'new' ? 'active' : '' }}"
-                data-condition="new">New</a>
-            <a href="javascript:void(0)" class="pill-premium condition-chip {{ $condition == 'old' ? 'active' : '' }}"
-                data-condition="old">Old</a>
+        <!-- Product Grid -->
+        <div class="book-wall" id="homeProductGrid">
+            @include('front.partials.home_product_grid')
         </div>
-    </div>
 
-    <!-- Product Grid -->
-    <div class="book-wall" id="homeProductGrid">
-        @include('front.partials.home_product_grid')
-    </div>
-
-    <!-- Load More Button -->
-    <div class="load-more-container" id="loadMoreContainer" {!! !$sliderProducts->hasMorePages() ? 'style="display:none;"' : '' !!}>
-        <button class="btn-load-more" id="loadMoreBtn">
-            <i class="fas fa-sync-alt"></i> Load More Books
-        </button>
+        <!-- Load More Button -->
+        <div class="load-more-container" id="loadMoreContainer" {!! !$sliderProducts->hasMorePages() ? 'style="display:none;"' : '' !!}>
+            <button class="btn-load-more" id="loadMoreBtn">
+                <i class="fas fa-sync-alt"></i> Load More Books
+            </button>
+        </div>
     </div>
 
     <!-- Sell Hero Section -->
