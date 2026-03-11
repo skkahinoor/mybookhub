@@ -22,7 +22,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Wishlist;
 use App\Models\WalletTransaction;
-use App\Models\SellBookRequest;
+
 use App\Models\BookType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -1550,8 +1550,12 @@ class ProductsController extends Controller
         $language = Language::get();
         $logos = HeaderLogo::first();
 
-        $sellBookRequests = SellBookRequest::with('user')
-            ->whereIn('book_status', ['approved', 'sold'])
+        $sellBookRequests = ProductsAttribute::with(['product.authors', 'user'])
+            ->where('admin_type', 'user')
+            ->where('admin_approved', 1)
+            ->whereHas('product', function($q) {
+                $q->where('condition', 'old');
+            })
             ->orderBy('id', 'desc')
             ->paginate(12);
 
@@ -1586,7 +1590,7 @@ class ProductsController extends Controller
         $language = Language::get();
         $logos = HeaderLogo::first();
 
-        $bookDetails = SellBookRequest::with('user')->findOrFail($id);
+        $bookDetails = ProductsAttribute::with(['product.authors', 'product.publisher', 'product.edition', 'user', 'oldBookCondition'])->findOrFail($id);
 
         // Front user statistics
         $totalUsers = User::role('student', 'web')->count();

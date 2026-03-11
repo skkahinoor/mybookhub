@@ -23,6 +23,8 @@ class ProductsAttribute extends Model
 
     protected $fillable = [
         'product_id',
+        'user_id',
+        'old_book_condition_id',
         'price',
         'stock',
         'sku',
@@ -31,6 +33,7 @@ class ProductsAttribute extends Model
         'admin_id',
         'admin_type',
         'product_discount',
+        'admin_approved',
 
         // Flags
         'is_featured',
@@ -59,6 +62,16 @@ class ProductsAttribute extends Model
     public function admin()
     {
         return $this->belongsTo(User::class, 'admin_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function condition()
+    {
+        return $this->belongsTo(OldBookCondition::class, 'old_book_condition_id');
     }
 
     /**

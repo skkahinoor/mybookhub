@@ -137,11 +137,11 @@
                 <div class="col">
                     <div class="dz-box">
                         <div class="dz-media">
-                            <img src="{{ asset($bookDetails->book_image ?? 'front/images/product/default.jpg') }}"
-                                alt="{{ $bookDetails->book_title }}" class="img-fluid rounded shadow-sm"
-                                style="width: 398px; height: 572px; object-fit: cover; {{ $bookDetails->book_status == 'sold' ? 'filter: grayscale(100%);' : '' }}">
+                            <img src="{{ $bookDetails->product->product_image ? asset('front/images/product_images/small/'.$bookDetails->product->product_image) : asset('front/images/product/default.jpg') }}"
+                                alt="{{ $bookDetails->product->product_name }}" class="img-fluid rounded shadow-sm"
+                                style="width: 398px; height: 572px; object-fit: cover; {{ $bookDetails->stock == 0 ? 'filter: grayscale(100%);' : '' }}">
                             
-                            @if($bookDetails->book_status == 'sold')
+                            @if($bookDetails->stock == 0)
                                 <div class="sold-ribbon">
                                     SOLD OUT
                                 </div>
@@ -149,7 +149,7 @@
                         </div>
                         <div class="dz-content">
                             <div class="dz-header">
-                                <h3 class="title">{{ $bookDetails->book_title }}</h3>
+                                <h3 class="title">{{ $bookDetails->product->product_name }}</h3>
                                 <div class="shop-item-rating">
                                     <div class="d-lg-flex d-sm-inline-flex d-flex align-items-center">
                                         <div class="text-warning me-2">
@@ -204,28 +204,27 @@
                                             word-break: break-all;
                                         }
                                     </style>
+                                    @php
+                                        $cond = strtolower($bookDetails->product->condition ?? '');
+                                    @endphp
                                     <ul class="marketplace-book-meta">
                                         <li class="meta-item">
                                             <span class="meta-label">Written by</span>
-                                            <span class="meta-value">{{ $bookDetails->author_name ?? 'N/A' }}</span>
+                                            <span class="meta-value">{{ $bookDetails->product->authors->pluck('name')->implode(', ') ?: 'N/A' }}</span>
                                         </li>
                                         <li class="meta-item">
                                             <span class="meta-label">Publisher</span>
-                                            <span class="meta-value text-dark">{{ $bookDetails->publisher ?? 'N/A' }}</span>
+                                            <span class="meta-value text-dark">{{ $bookDetails->product->publisher->name ?? 'N/A' }}</span>
                                         </li>
                                         <li class="meta-item">
                                             <span class="meta-label">Condition</span>
-                                            <span class="condition-tag {{ strtolower($bookDetails->book_condition) == 'good' ? 'condition-good' : '' }}">
-                                                {{ $bookDetails->book_condition }}
+                                            <span class="condition-tag {{ $cond == 'good' ? 'condition-good' : '' }}">
+                                                {{ strtoupper($cond) }}
                                             </span>
                                         </li>
                                         <li class="meta-item">
                                             <span class="meta-label">Edition</span>
-                                            <span class="meta-value text-dark">{{ $bookDetails->edition ?? 'N/A' }}</span>
-                                        </li>
-                                        <li class="meta-item">
-                                            <span class="meta-label">Year</span>
-                                            <span class="meta-value text-dark">{{ $bookDetails->year_published ?? 'N/A' }}</span>
+                                            <span class="meta-value text-dark">{{ $bookDetails->product->edition->edition ?? 'N/A' }}</span>
                                         </li>
                                         <li class="meta-item">
                                             <span class="meta-label">Seller</span>
@@ -236,18 +235,18 @@
                                 
                                 <div class="book-detail m-b30">
                                     <h6 class="meta-label">Description</h6>
-                                    <p class="m-b0" style="color: #666; font-size: 14px; line-height: 1.6;">{{ $bookDetails->book_description ?? 'No description provided by the seller.' }}</p>
+                                    <p class="m-b0" style="color: #666; font-size: 14px; line-height: 1.6;">{{ $bookDetails->product->description ?? 'No description provided by the seller.' }}</p>
                                 </div>
 
                                 <div class="book-footer">
                                     <div class="price">
-                                        <h5>₹{{ number_format($bookDetails->expected_price, 2) }}</h5>
+                                        <h5>₹{{ number_format($bookDetails->product->product_price, 2) }}</h5>
                                     </div>
                                     
                                     <div class="product-num">
-                                        @if($bookDetails->book_status != 'sold')
+                                        @if($bookDetails->stock > 0)
                                             {{-- Buy Now Button - Links to WhatsApp for direct purchase --}}
-                                            <a href="https://wa.me/{{ $bookDetails->user->mobile }}?text=Hi, I am interested in buying your book '{{ $bookDetails->book_title }}' listed on BookHub Marketplace." 
+                                            <a href="https://wa.me/{{ $bookDetails->user->mobile }}?text=Hi, I am interested in buying your book '{{ $bookDetails->product->product_name }}' listed on BookHub Marketplace." 
                                                class="btn btn-primary btnhover2" style="padding: 15px 40px; border-radius: 10px; font-weight: 700;">
                                                 <i class="fa-solid fa-cart-shopping me-2"></i> BUY NOW
                                             </a>
@@ -276,38 +275,34 @@
                                 <table class="table border book-overview">
                                     <tr>
                                         <th>Book Title</th>
-                                        <td>{{ $bookDetails->book_title }}</td>
+                                        <td>{{ $bookDetails->product->product_name }}</td>
                                     </tr>
                                     <tr>
                                         <th>Author</th>
-                                        <td>{{ $bookDetails->author_name ?? 'N/A' }}</td>
+                                        <td>{{ $bookDetails->product->authors->pluck('name')->implode(', ') ?: 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>ISBN</th>
-                                        <td>{{ $bookDetails->isbn ?? 'N/A' }}</td>
+                                        <td>{{ $bookDetails->product->product_isbn ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Condition</th>
                                         <td>
-                                            <span class="condition-tag {{ strtolower($bookDetails->book_condition) == 'good' ? 'condition-good' : '' }}">
-                                                {{ $bookDetails->book_condition }}
+                                            <span class="condition-tag {{ $cond == 'good' ? 'condition-good' : '' }}">
+                                                {{ strtoupper($cond) }}
                                             </span>
                                         </td>
                                     </tr>
                                     <tr>
                                         <th>Publisher</th>
-                                        <td>{{ $bookDetails->publisher ?? 'N/A' }}</td>
+                                        <td>{{ $bookDetails->product->publisher->name ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
                                         <th>Edition</th>
-                                        <td>{{ $bookDetails->edition ?? 'N/A' }}</td>
+                                        <td>{{ $bookDetails->product->edition->edition ?? 'N/A' }}</td>
                                     </tr>
                                     <tr>
-                                        <th>Year Published</th>
-                                        <td>{{ $bookDetails->year_published ?? 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Listing Date</th>
+                                        <th>Upload Date</th>
                                         <td>{{ $bookDetails->created_at->format('d M, Y') }}</td>
                                     </tr>
                                 </table>
@@ -315,7 +310,7 @@
                             <div id="seller-tab" class="tab-pane">
                                 <div class="seller-card p-4 bg-light rounded">
                                     <div class="d-flex align-items-center mb-3">
-                                        <img src="{{ asset($bookDetails->user->profile_image ?? 'assets/images/avatar.png') }}" 
+                                        <img src="{{ $bookDetails->user->image ? asset('front/images/users/'.$bookDetails->user->image) : asset('assets/images/avatar.png') }}" 
                                              class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;">
                                         <div>
                                             <h5 class="mb-0">{{ $bookDetails->user->name ?? 'Unknown' }}</h5>

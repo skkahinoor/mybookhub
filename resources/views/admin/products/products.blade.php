@@ -49,18 +49,20 @@
                                 <table id="products" class="table table-bordered"> {{-- using the id here for the DataTable --}}
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
+                                            <th>#</th>
                                             <th>ISBN</th>
                                             <th>Image</th>
                                             <th>Book Name</th>
                                             <th>Price</th>
+                                            <th>Condition</th>
                                             <th>Education Level</th>
-                                            <th>Category</th> {{-- Through the relationship --}}
+                                            <th>Category</th>
                                             <th>Edition</th>
                                             <th>Publisher</th>
                                             <th>Language</th>
-                                            @if ($adminType == 'vendor')
-                                                <th>Stock</th>
+                                            <th>Stock</th>
+                                            @if ($adminType !== 'vendor')
+                                                <th>Seller</th>
                                             @endif
                                             <th>Status</th>
                                             <th>Actions</th>
@@ -109,52 +111,62 @@
                                                     <td>{{ $product->product->language->name ?? 'N/A' }}</td>
                                                     <td>{{ $product->stock ?? 'N/A' }}</td>
                                                 @else
-                                                    {{-- Admin/Superadmin: Display from Product --}}
-
-                                                    <td>ISBN-{{ $product->product_isbn ?? 'N/A' }} <span
-                                                            class="text-muted">({{ ucfirst($product->condition ?? 'N/A') }})</span>
+                                                    {{-- Admin/Superadmin: Display from ProductsAttribute (same structure as vendor) --}}
+                                                    <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }}
+                                                        <span class="text-muted">({{ ucfirst($product->product->condition ?? 'N/A') }})</span>
                                                     </td>
                                                     <td>
-                                                        @if (!empty($product->product_image))
+                                                        @if (!empty($product->product->product_image))
                                                             <img style="width:120px; height:100px"
-                                                                src="{{ asset('front/images/product_images/small/' . $product->product_image) }}">
+                                                                src="{{ asset('front/images/product_images/small/' . $product->product->product_image) }}">
                                                         @else
                                                             <img style="width:120px; height:100px"
                                                                 src="{{ asset('front/images/product_images/small/no-image.png') }}">
                                                         @endif
                                                     </td>
-                                                    <td> {{ $product->product_name ?? 'N/A' }}</td>
-                                                    <td>₹{{ $product->product_price ?? 'N/A' }}</td>
-                                                    <td>{{ $product->section->name ?? 'N/A' }}</td>
-                                                    <td>{{ $product->category->category_name ?? 'N/A' }}</td>
-                                                    <td>{{ $product->edition->edition ?? 'N/A' }}</td>
-                                                    <td>{{ $product->publisher->name ?? 'N/A' }}</td>
-                                                    <td>{{ $product->language->name ?? 'N/A' }}</td>
-
-                                                    <!-- <td>
-                                                              <span
-                                                                  class="badge badge-info">{{ $product->total_stock ?? 0 }}</span>
-                                                          </td> -->
-                                                @endif
-                                                {{-- <td>
-                                                    @php
-                                                        $attr = $product->firstAttribute ?? null;
-                                                    @endphp
-
-                                                    @if ($attr)
-                                                        @if ($attr->admin_type == 'vendor')
-                                                            <a target="_blank"
-                                                                href="{{ url('admin/view-vendor-details/' . $attr->vendor_id) }}">
-                                                                {{ ucfirst($attr->admin_type) }}
-                                                            </a>
+                                                    <td>{{ $product->product->product_name ?? 'N/A' }}</td>
+                                                    <td>
+                                                        @php
+                                                            $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($product->id);
+                                                        @endphp
+                                                        @if ($discountDetails['discount'] > 0)
+                                                            <span style="text-decoration: line-through;">₹{{ $discountDetails['product_price'] }}</span><br>
+                                                            <span class="text-danger">₹{{ $discountDetails['final_price'] }}</span>
                                                         @else
-                                                            {{ ucfirst($attr->admin_type) }}
+                                                            ₹{{ $discountDetails['product_price'] }}
                                                         @endif
-                                                    @else
-                                                        <span class="text-muted">Not Set</span>
-                                                    @endif
-                                                </td> --}}
+                                                    </td>
+                                                    <td>
+                                                        @if($product->condition)
+                                                            <span class="badge badge-info">{{ $product->condition->name }} ({{ $product->condition->percentage }}%)</span>
+                                                        @else
+                                                            {{ ucfirst($product->product->condition ?? 'N/A') }}
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $product->product->section->name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->edition->edition ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->publisher->name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product->language->name ?? 'N/A' }}</td>
+                                                    <td><span class="badge badge-secondary">{{ $product->stock ?? 0 }}</span></td>
+                                                @endif
 
+                                                {{-- Seller column: only for admin --}}
+                                                @if ($adminType !== 'vendor')
+                                                    <td>
+                                                        @if($product->admin_type === 'vendor' && $product->vendor)
+                                                            <span class="badge badge-warning">Vendor</span>
+                                                            <small class="d-block text-muted">ID: {{ $product->vendor_id }}</small>
+                                                        @elseif($product->admin_type === 'user' || $product->user_id)
+                                                            <span class="badge badge-info">User</span>
+                                                            <small class="d-block text-muted">ID: {{ $product->user_id }}</small>
+                                                        @elseif($product->admin_id)
+                                                            <span class="badge badge-secondary">Admin</span>
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                @endif
                                                 <td>
                                                     @if ($adminType === 'vendor')
                                                         {{-- Vendor: Use attribute status --}}
@@ -176,18 +188,18 @@
                                                             </a>
                                                         @endif
                                                     @else
-                                                        {{-- Admin/Superadmin: Use product status --}}
-                                                        @if ($product->status == 1)
-                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
-                                                                product_id="{{ $product->id }}"
+                                                        {{-- Admin: Toggle product status (from product table) --}}
+                                                        @if (($product->product->status ?? 0) == 1)
+                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
+                                                                product_id="{{ $product->product_id }}"
                                                                 data-url="{{ route('admin.updateproductstatus') }}"
                                                                 href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                     status="Active"></i>
                                                             </a>
                                                         @else
-                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
-                                                                product_id="{{ $product->id }}"
+                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
+                                                                product_id="{{ $product->product_id }}"
                                                                 data-url="{{ route('admin.updateproductstatus') }}"
                                                                 href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
@@ -221,31 +233,17 @@
                                                             <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                         </a>
                                                     @else
-                                                        {{-- Admin/Superadmin: Show edit, add stock, add images --}}
+                                                        {{-- Admin/Superadmin: Edit the product, delete attribute --}}
                                                         <a title="Edit Book"
-                                                            href="{{ url($prefix . '/add-edit-product/' . $product->id) }}">
+                                                            href="{{ url($prefix . '/add-edit-product/' . $product->product_id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                         </a>
 
-                                                        @php
-                                                            // Get the first attribute for this product and current admin to show current stock/discount
-                                                            $firstAttribute = \App\Models\ProductsAttribute::where(
-                                                                'product_id',
-                                                                $product->id,
-                                                            )
-                                                                ->where('admin_id', Auth::guard('admin')->user()->id)
-                                                                ->where('admin_type', 'admin')
-                                                                ->first();
-                                                        @endphp
-
-                                                        {{-- <a href="#" title="Add Stock" data-bs-toggle="modal"
-                                                            data-bs-target="#addAttributeModal" data-id="{{ $product->id }}"
-                                                            data-name="{{ $product->product_name ?? 'N/A' }}"
-                                                            data-stock="{{ $firstAttribute->stock ?? 0 }}"
-                                                            data-discount="{{ $firstAttribute->product_discount ?? 0 }}"
-                                                            id="openAddAttributeModal">
-                                                            <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
-                                                        </a> --}}
+                                                        <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
+                                                            onclick="return confirm('Are you sure you want to delete this entry?')"
+                                                            title="Delete Entry">
+                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                                        </a>
                                                     @endif
                                                 </td>
                                             </tr>
