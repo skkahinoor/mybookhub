@@ -1407,14 +1407,116 @@
             flex: 1;
         }
 
-        .bg-bubble {
+        .bg-msg.bot {
             background: #f0f4ff;
-            border-radius: 14px 14px 14px 4px;
-            padding: 12px 14px;
-            font-size: 13px;
             color: #1e3a8a;
-            margin-bottom: 14px;
-            line-height: 1.5;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.05);
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .bg-msg.user {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bg-typing-dots {
+            display: inline-flex;
+            gap: 4px;
+            padding: 4px 8px;
+        }
+
+        .bg-typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: #3b82f6;
+            border-radius: 50%;
+            animation: bgTyping 1s infinite alternate;
+        }
+
+        .bg-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .bg-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bgTyping {
+            from { opacity: 0.3; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1.2); }
+        }
+
+        .bg-quick-actions {
+            display: flex;
+            gap: 12px;
+            padding: 15px;
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .bg-quick-actions .bg-action-btn {
+            margin: 0;
+            flex: 1;
+            font-size: 11px;
+            padding: 10px 5px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .bg-chips-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 15px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .bg-chips-scroll::-webkit-scrollbar { display: none; }
+
+        .bg-chip {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e3a8a;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .bg-chip:hover {
+            border-color: #3b82f6;
+            background: #f0f7ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .bg-panel-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            padding: 18px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
         }
 
         .bg-action-btn {
@@ -1444,12 +1546,14 @@
         }
 
         .bg-action-btn.secondary {
-            background: #f0f4ff;
+            background: #ffffff;
             color: #1e3a8a;
+            border: 1.5px solid #e2e8f0;
         }
 
         .bg-action-btn.secondary:hover {
-            background: #dce8ff;
+            background: #f8fafc;
+            border-color: #cbd5e1;
         }
 
         .bg-personalize-form {
@@ -1533,6 +1637,30 @@
             border-bottom-right-radius: 4px;
         }
 
+        .bg-inline-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .bg-chip-mini {
+            background: #fff;
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .bg-chip-mini:hover {
+            background: #3b82f6;
+            color: white;
+        }
+
         .bg-results-scroll {
             display: flex;
             gap: 10px;
@@ -1600,39 +1728,67 @@
             border-top: 1px solid #eee;
             background: #fff;
             display: flex;
+            align-items: center;
             gap: 8px;
         }
 
-        .bg-chat-input {
+        .bg-chat-input-wrapper {
             flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .bg-chat-input {
+            width: 100%;
             border: 2px solid #f0f0f0;
-            border-radius: 20px;
-            padding: 8px 15px;
-            font-size: 13px;
+            border-radius: 25px;
+            padding: 10px 45px 10px 15px;
+            font-size: 14px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.2s;
+            background: #f9fafb;
         }
 
         .bg-chat-input:focus {
             border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .bg-voice-btn {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        .bg-voice-btn:hover {
+            color: #3b82f6;
         }
 
         .bg-chat-send {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
-            background: #1e3a8a;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
             color: white;
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
         }
 
         .bg-chat-send:hover {
-            background: #3b82f6;
+            transform: scale(1.05) rotate(-10deg);
+            box-shadow: 0 6px 15px rgba(30, 58, 138, 0.3);
         }
 
         /* Mobile adjustments */
@@ -1662,17 +1818,35 @@
         <div class="bg-panel-header">
             <div class="bg-panel-header-icon">✨</div>
             <div class="bg-panel-header-text">
-                <h5>BookGenie AI</h5>
-                <p>Your personal book assistant</p>
+                <h5 style="margin:0; font-size:16px; font-weight:700;">BookGenie AI</h5>
+                <p style="margin:0; font-size:11px; opacity:0.8;">Your personal helper</p>
             </div>
-            <button class="bg-panel-close" id="bgPanelClose"><i class="fas fa-times"></i></button>
+            <button class="bg-panel-close" id="bgPanelClose" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;"><i class="fas fa-times"></i></button>
         </div>
-        <div class="bg-panel-body" id="bgPanelBody" style="position: relative;">
-            <div class="bg-messages" id="bgChatMessages"
-                style="padding: 15px; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Main Actions -->
+        <div class="bg-quick-actions">
+             <button class="bg-action-btn primary" style="margin:0; flex:1; font-size:12px; padding: 10px;" onclick="document.dispatchEvent(new CustomEvent('bgOpenForm'))">
+                <i class="fas fa-magic"></i> Personalize Feed
+             </button>
+             <a href="{{ url('student/sell-book') }}" class="bg-action-btn secondary" style="margin:0; flex:1; font-size:12px; padding: 10px; text-decoration:none;">
+                <i class="fas fa-plus-circle"></i> Sell My Book
+             </a>
+        </div>
+
+        <div class="bg-chips-scroll" id="bgChips">
+            <div class="bg-chip" data-query="explore_sections">🔍 Browse by Board</div>
+            @php
+                $trendingCats = \App\Models\Category::where('status', 1)->limit(5)->get();
+            @endphp
+            @foreach($trendingCats as $tc)
+                <div class="bg-chip" data-query="{{ $tc->category_name }}">📙 {{ $tc->category_name }}</div>
+            @endforeach
+        </div>
+
+        <div class="bg-panel-body" id="bgPanelBody" style="position: relative; height: 320px; overflow-y: auto;">
+            <div class="bg-messages" id="bgChatMessages" style="padding: 0 15px 15px;">
                 <!-- Messages will be injected here via JS -->
             </div>
-
             <!-- Personalization form (overlay hidden by default) -->
             <div class="bg-personalize-form" id="bgPersonalizeForm"
                 style="display:none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 100; padding: 20px; border-radius: 20px;">
@@ -1704,6 +1878,11 @@
                     <label>Class / Stream</label>
                     <select id="bgWidgetSubcategory">
                         <option value="">Select Class</option>
+                </div>
+                <div class="bg-form-group">
+                    <label>Subject</label>
+                    <select id="bgWidgetSubject">
+                        <option value="">Select Subject</option>
                     </select>
                 </div>
                 <div style="margin-top: 20px;">
@@ -1716,7 +1895,10 @@
 
         <!-- Chat Footer -->
         <div class="bg-chat-footer">
-            <input type="text" class="bg-chat-input" id="bgChatInput" placeholder="Type book name or ISBN...">
+            <div class="bg-chat-input-wrapper">
+                <input type="text" class="bg-chat-input" id="bgChatInput" placeholder="Ask me anything...">
+                <button class="bg-voice-btn" id="bgVoiceBtn" title="Voice Search"><i class="fas fa-microphone"></i></button>
+            </div>
             <button class="bg-chat-send" id="bgChatSend">
                 <i class="fas fa-paper-plane"></i>
             </button>
@@ -1739,56 +1921,69 @@
             const wSection = document.getElementById('bgWidgetSection');
             const wCategory = document.getElementById('bgWidgetCategory');
             const wSubcategory = document.getElementById('bgWidgetSubcategory');
+            const wSubject = document.getElementById('bgWidgetSubject');
 
             // --- UI Controls ---
-            fab.addEventListener('click', () => {
-                panel.classList.toggle('open');
-                if (panel.classList.contains('open') && chatMessages.children.length === 0) {
-                    initChat();
-                }
-            });
-            closeBtn.addEventListener('click', () => panel.classList.remove('open'));
-            document.addEventListener('click', (e) => {
-                if (!panel.contains(e.target) && !fab.contains(e.target)) {
-                    panel.classList.remove('open');
-                }
-            });
+            if (fab && panel) {
+                fab.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    panel.classList.toggle('open');
+                    if (panel.classList.contains('open') && chatMessages && chatMessages.children.length === 0) {
+                        initChat();
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (panel.classList.contains('open') && !panel.contains(e.target) && !fab.contains(e.target)) {
+                        panel.classList.remove('open');
+                    }
+                });
+            }
+
+            if (closeBtn && panel) {
+                closeBtn.addEventListener('click', () => panel.classList.remove('open'));
+            }
+
+            function showBotTyping() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'bg-msg bot typing-indicator';
+                typingDiv.id = 'bgBotTyping';
+                typingDiv.innerHTML = `<div class="bg-typing-dots"><span></span><span></span><span></span></div>`;
+                chatMessages.appendChild(typingDiv);
+                panelBody.scrollTop = panelBody.scrollHeight;
+            }
+
+            function hideBotTyping() {
+                const indicator = document.getElementById('bgBotTyping');
+                if (indicator) indicator.remove();
+            }
 
             function initChat() {
-                const name =
-                    '@auth {{ Auth::user()->name }} @else there @endauth';
-                const welcomeMsg =
-                    `👋 Hi <strong>${name.trim()}</strong>! I'm BookGenie, your AI library assistant. <br><br>I can help you find books by name/ISBN or personalize your feed based on your education level.`;
-                appendMessage('bot', welcomeMsg);
-
-                // Show personalization prompt & WhatsApp CTA after a small delay
+                const name = '@auth {{ Auth::user()->name }} @else friend @endauth';
+                showBotTyping();
                 setTimeout(() => {
-                    const extraContent = `
-                            <div style="margin-top:10px; display: flex; flex-direction: column; gap: 8px;">
-                                <p style="font-size:12px; margin-bottom:5px; color:#666;">Need help finding a book quickly?</p>
-                                <button class="bg-action-btn primary" onclick="document.dispatchEvent(new CustomEvent('bgOpenForm'))">
-                                    <i class="fas fa-magic"></i> Personalize My Feed
-                                </button>
-                                <a href="https://wa.me/91XXXXXXXXXX" target="_blank" class="bg-action-btn secondary" style="text-decoration: none; background: #25D366; color: white !important; border: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                                    <i class="fab fa-whatsapp"></i> Chat on WhatsApp
-                                </a>
-                            </div>
-                        `;
-                    appendMessage('bot', extraContent);
-                }, 800);
+                    hideBotTyping();
+                    const welcomeMsg = `👋 Hi <strong>${name.trim()}</strong>! I'm BookGenie. I can help you find any book, personalize your feed, or even help you sell your old ones. What's on your mind?`;
+                    appendMessage('bot', welcomeMsg);
+                    
+                    // Show WhatsApp option
+                    setTimeout(() => {
+                        const waMsg = `Need urgent help? You can also <a href="https://wa.me/91XXXXXXXXXX" target="_blank" style="color:#25D366; font-weight:700; text-decoration:none;"><i class="fab fa-whatsapp"></i> Chat with us on WhatsApp</a>`;
+                        appendMessage('bot', waMsg);
+                    }, 500);
+                }, 1000);
             }
 
             document.addEventListener('bgOpenForm', () => {
                 personalizeForm.style.display = 'block';
-                // Pre-fill logic here if needed
             });
 
             cancelBtn.addEventListener('click', () => personalizeForm.style.display = 'none');
 
-            // --- Chat Engine ---
             function appendMessage(role, content, results = null) {
                 const msgDiv = document.createElement('div');
                 msgDiv.className = `bg-msg ${role}`;
+                msgDiv.style.marginBottom = '12px';
                 msgDiv.innerHTML = content;
                 chatMessages.appendChild(msgDiv);
 
@@ -1808,47 +2003,266 @@
                         scrollDiv.innerHTML += card;
                     });
                     chatMessages.appendChild(scrollDiv);
+
+                    // Add Apply button
+                    if (window.lastBgFilters) {
+                        const actionDiv = document.createElement('div');
+                        actionDiv.className = 'bg-bot-actions';
+                        actionDiv.innerHTML = `<button class="bg-apply-main-btn" onclick="window.applyBgFilters()">✨ View all on Main Screen</button>`;
+                        chatMessages.appendChild(actionDiv);
+                    }
                 }
                 panelBody.scrollTop = panelBody.scrollHeight;
             }
 
-            function handleChatSearch() {
-                const query = chatInput.value.trim();
-                if (!query) return;
-                appendMessage('user', query);
-                chatInput.value = '';
+            function handleChatSearch(input = null) {
+                let query = '';
+                let extraParams = '';
+                let activeFilters = {};
 
-                const typingId = 'bg-typing-' + Date.now();
-                const typingDiv = document.createElement('div');
-                typingDiv.className = 'bg-msg bot';
-                typingDiv.id = typingId;
-                typingDiv.innerText = 'Searching...';
-                chatMessages.appendChild(typingDiv);
-                panelBody.scrollTop = panelBody.scrollHeight;
+                if (typeof input === 'string') {
+                    query = input;
+                } else if (input && typeof input === 'object' && input.q !== undefined) {
+                    query = input.q;
+                    if (input.filters) {
+                        activeFilters = input.filters;
+                        Object.keys(input.filters).forEach(k => {
+                            extraParams += `&${k}=${input.filters[k]}`;
+                        });
+                    }
+                    // For filter selections, the message already exists or we want to show the selected name
+                    appendMessage('user', query);
+                } else {
+                    query = chatInput.value.trim();
+                }
 
-                fetch(`{{ url('bookgenie-search') }}?q=${encodeURIComponent(query)}`)
+                if (!query && !extraParams) return;
+                if (query === '[object PointerEvent]' || query === '[object KeyboardEvent]') return;
+
+                if (typeof input !== 'string' && (!input || input.q === undefined)) {
+                    appendMessage('user', query);
+                    chatInput.value = '';
+                }
+
+                window.lastBgFilters = activeFilters;
+                
+                // If filters are present, we don't need text search for the subject name
+                let actualSearchQuery = Object.keys(activeFilters).length > 0 ? '' : query;
+
+                showBotTyping();
+                fetch(`{{ url('bookgenie-search') }}?q=${encodeURIComponent(actualSearchQuery)}${extraParams}`)
                     .then(r => r.json())
                     .then(data => {
-                        const tMsg = document.getElementById(typingId);
-                        if (tMsg) tMsg.remove();
+                        hideBotTyping();
                         if (data.results && data.results.length > 0) {
-                            appendMessage('bot', `I found ${data.results.length} listing(s) for "${query}":`, data
-                                .results);
+                            appendMessage('bot', `I found some matches for your selection:`, data.results);
                         } else {
-                            appendMessage('bot', data.message || "I couldn't find any listings for that.");
+                            appendMessage('bot', `I couldn't find a direct match for this combination. Try exploring another class or subject.`);
                         }
                     })
                     .catch(() => {
-                        const tMsg = document.getElementById(typingId);
-                        if (tMsg) tMsg.remove();
+                        hideBotTyping();
                         appendMessage('bot', "Connection error. Please try again.");
                     });
             }
 
-            chatSend.addEventListener('click', handleChatSearch);
-            chatInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') handleChatSearch();
+            window.applyBgFilters = function() {
+                if (!window.lastBgFilters) return;
+                
+                const params = new URLSearchParams(window.lastBgFilters);
+                params.append('bookgenie_shown', 'true');
+
+                fetch(`{{ url('set-bookgenie-session') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(window.lastBgFilters)
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close panel and reload page to reflect filters on main screen
+                        panel.classList.remove('open');
+                        window.location.reload();
+                    }
+                });
+            };
+
+            window.bgFlow = function(type, id, name) {
+                appendMessage('user', name);
+                showBotTyping();
+                
+                let url = '';
+                if (type === 'category') {
+                    currentFlowFilters = { section_id: id };
+                    url = `{{ url('get-filter-categories') }}?section_id=${id}`;
+                } else if (type === 'subcategory') {
+                    currentFlowFilters.category_id = id;
+                    url = `{{ url('get-filter-subcategories') }}?section_id=${currentFlowFilters.section_id}&category_id=${id}`;
+                } else if (type === 'subject') {
+                    currentFlowFilters.subcategory_id = id;
+                    url = `{{ url('get-filter-subjects') }}?section_id=${currentFlowFilters.section_id}&category_id=${currentFlowFilters.category_id}&subcategory_id=${id}`;
+                }
+
+                fetch(url)
+                    .then(r => r.json())
+                    .then(data => {
+                        hideBotTyping();
+                        
+                        let nextType = '';
+                        let prompt = '';
+                        if (type === 'category') { nextType = 'subcategory'; prompt = 'Awesome! Now select your Board:'; }
+                        else if (type === 'subcategory') { nextType = 'subject'; prompt = 'Almost there! Which Class?'; }
+                        else if (type === 'subject') { nextType = 'finish'; prompt = 'Finally, select your Subject:'; }
+
+                        if (data.length > 0) {
+                            let html = `<p>${prompt}</p><div class="bg-inline-chips">`;
+                            data.forEach(item => {
+                                const itemName = item.category_name || item.name;
+                                if (nextType === 'finish') {
+                                    const filters = {
+                                        section_id: currentFlowFilters.section_id,
+                                        category_id: currentFlowFilters.category_id,
+                                        subcategory_id: currentFlowFilters.subcategory_id,
+                                        subject_id: item.id
+                                    };
+                                    // Use single quotes for attribute and double quotes for JSON, escaping double quotes for compatibility
+                                    const filterStr = JSON.stringify(filters).replace(/"/g, '&quot;');
+                                    html += `<div class="bg-chip-mini" onclick="handleChatSearch({q: '${itemName.replace(/'/g, "\\'")}', filters: ${filterStr}})">${itemName}</div>`;
+                                } else {
+                                    html += `<div class="bg-chip-mini" onclick="window.bgFlow('${nextType}', ${item.id}, '${itemName.replace(/'/g, "\\")}')">${itemName}</div>`;
+                                }
+                            });
+                            html += '</div>';
+                            appendMessage('bot', html);
+                        } else {
+                           if (type === 'subcategory') {
+                                // If no subcategories found for Category, search by category
+                                appendMessage('bot', `I didn't find specific classes for this board, but I can show you all books in ${name}:`);
+                                handleChatSearch({
+                                    q: name,
+                                    filters: { section_id: currentFlowFilters.section_id, category_id: id }
+                                });
+                           } else if (type === 'subject') {
+                                // If no subjects found for Class, search by class
+                                appendMessage('bot', `I didn't find specific subjects for ${name}, but I found these books for you:`);
+                                handleChatSearch({
+                                    q: name,
+                                    filters: { 
+                                        section_id: currentFlowFilters.section_id, 
+                                        category_id: currentFlowFilters.category_id,
+                                        subcategory_id: id 
+                                    }
+                                });
+                           } else {
+                                appendMessage('bot', "No options found for this selection. Try searching manually or browsing another board.");
+                           }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Flow error:', err);
+                        hideBotTyping();
+                        appendMessage('bot', "Oops! Something went wrong while loading options. Please try again.");
+                    });
+            };
+
+            // Chips click handling
+            document.querySelectorAll('.bg-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const q = chip.dataset.query;
+                    appendMessage('user', q);
+                    handleChatSearch(q);
+                });
             });
+
+            // --- Voice Search Flow ---
+            const voiceBtn = document.getElementById('bgVoiceBtn');
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if (voiceBtn && SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'en-IN';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                voiceBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (voiceBtn.classList.contains('listening')) {
+                        recognition.stop();
+                    } else {
+                        // Small delay to ensure browser handles the interaction appropriately
+                        setTimeout(() => {
+                            try {
+                                recognition.start();
+                            } catch (err) {
+                                console.error('Voice recovery:', err);
+                                // If already started, just stop and restart
+                                recognition.stop();
+                                setTimeout(() => recognition.start(), 100);
+                            }
+                        }, 50);
+                    }
+                });
+
+                recognition.onstart = () => {
+                    voiceBtn.classList.add('listening');
+                    chatInput.placeholder = "Listening... speak now";
+                    chatInput.style.borderColor = '#3b82f6';
+                    chatInput.style.boxShadow = '0 0 12px rgba(59, 130, 246, 0.4)';
+                    // Help the user notice the permission prompt
+                    if (!localStorage.getItem('bgVoiceHintShown')) {
+                        appendMessage('bot', "Please click 'Allow' if your browser asks for microphone access. 🎤");
+                        localStorage.setItem('bgVoiceHintShown', 'true');
+                    }
+                };
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    if (transcript) {
+                        chatInput.value = transcript;
+                        appendMessage('user', transcript);
+                        handleChatSearch(transcript);
+                    }
+                };
+
+                recognition.onend = () => {
+                    voiceBtn.classList.remove('listening');
+                    chatInput.placeholder = "Ask me anything...";
+                    chatInput.style.borderColor = '';
+                    chatInput.style.boxShadow = '';
+                };
+
+                recognition.onerror = (event) => {
+                    voiceBtn.classList.remove('listening');
+                    if (event.error === 'no-speech') return; // Ignore silent timeouts
+                    
+                    let errorMsg = "Sorry, I couldn't hear you.";
+                    if (event.error === 'not-allowed') {
+                        errorMsg = "🎤 Mic access blocked! Please click the icon in your address bar to allow microphone access.";
+                    } else if (event.error === 'network') {
+                        errorMsg = "Network error. Please check your connection.";
+                    }
+                    
+                    appendMessage('bot', errorMsg);
+                };
+            } else if (voiceBtn) {
+                voiceBtn.addEventListener('click', () => {
+                   appendMessage('bot', "Voice search is not supported in this browser. Please use Chrome or Edge for the best experience.");
+                });
+            }
+
+            if (chatSend) {
+                chatSend.addEventListener('click', () => handleChatSearch());
+            }
+            if (chatInput) {
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') handleChatSearch();
+                });
+            }
 
             // --- Form Cascades ---
             wSection.addEventListener('change', function() {
@@ -1877,20 +2291,59 @@
                 }
             });
 
+            wSubcategory.addEventListener('change', function() {
+                const subId = this.value;
+                const catId = wCategory.value;
+                const secId = wSection.value;
+                if (subId) {
+                    fetch(`{{ url('get-filter-subjects') }}?subcategory_id=${subId}&category_id=${catId}&section_id=${secId}`)
+                        .then(r => r.json())
+                        .then(data => {
+                            wSubject.innerHTML = '<option value="">Select Subject</option>';
+                            data.forEach(s => wSubject.innerHTML +=
+                                `<option value="${s.id}">${s.category_name}</option>`);
+                        });
+                }
+            });
+
             applyBtn.addEventListener('click', function() {
-                fetch(`{{ url('set-bookgenie-session') }}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        section_id: wSection.value,
-                        category_id: wCategory.value,
-                        subcategory_id: wSubcategory.value,
-                        bookgenie_shown: true
-                    })
-                }).then(() => window.location.reload());
+                const secId = wSection.value;
+                const catId = wCategory.value;
+                const subId = wSubcategory.value;
+                const subjId = wSubject.value;
+
+                if (!secId) {
+                    alert('Please select at least an Education Level.');
+                    return;
+                }
+
+                // Hide the form
+                personalizeForm.style.display = 'none';
+
+                let filters = { section_id: secId };
+                let names = [wSection.options[wSection.selectedIndex].text];
+
+                if (catId) {
+                    filters.category_id = catId;
+                    names.push(wCategory.options[wCategory.selectedIndex].text);
+                }
+                if (subId) {
+                    filters.subcategory_id = subId;
+                    names.push(wSubcategory.options[wSubcategory.selectedIndex].text);
+                }
+                if (subjId) {
+                    filters.subject_id = subjId;
+                    names.push(wSubject.options[wSubject.selectedIndex].text);
+                }
+
+                const queryName = names.join(', ');
+                
+                // Show in chat
+                document.getElementById('bgChatInput').value = '';
+                handleChatSearch({
+                    q: queryName,
+                    filters: filters
+                });
             });
         })();
     </script>

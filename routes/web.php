@@ -119,7 +119,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-type-status', [BookTypeController::class, 'updateTypeStatus'])->name('admin.updatetypestatus');
 
         // Old Book Conditions
-        Route::resource('old-book-conditions',
+        Route::resource(
+            'old-book-conditions',
             App\Http\Controllers\Admin\OldBookConditionController::class
         )->names([
             'index'   => 'admin.old_book_conditions.index',
@@ -129,7 +130,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             'update'  => 'admin.old_book_conditions.update',
             'destroy' => 'admin.old_book_conditions.destroy',
         ]);
-        Route::get('old-book-conditions/{id}/delete',
+        Route::get(
+            'old-book-conditions/{id}/delete',
             [App\Http\Controllers\Admin\OldBookConditionController::class, 'destroy']
         )->name('admin.old_book_conditions.destroy.get');
 
@@ -476,6 +478,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     Route::post('/set-location-session', [App\Http\Controllers\Front\LocationController::class, 'setLocationSession']);
     Route::get('/get-filter-categories', [IndexController::class, 'getFilterCategories'])->name('get.filter.categories');
     Route::get('/get-filter-subcategories', [IndexController::class, 'getFilterSubcategories'])->name('get.filter.subcategories');
+    Route::get('/get-filter-subjects', [IndexController::class, 'getFilterSubjects'])->name('get.filter.subjects');
     $catUrls = \App\Models\Category::select('url')->where('status', 1)->pluck('url')->reject(function ($url) {
         return empty($url) || $url === '/' || $url === '#';
     })->toArray(); // Routes like: /men, /women, /shirts, ...
@@ -612,15 +615,15 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
         // Make an iyzipay payment (redirect the user to iyzico payment gateway with the order details)
         Route::get('iyzipay/pay', 'IyzipayController@pay');
 
-    }); 
 
-    // Razorpay routes (outside auth for mobile compatibility)
-    Route::get('razorpay', 'RazorpayController@razorpay');
-    Route::get('razorpay-direct', 'RazorpayController@razorpayDirect');
-    Route::post('razorpay/pay', 'RazorpayController@payment')->name('razorpay.payment');
-    Route::get('razorpay/success', 'RazorpayController@success');
-    Route::get('razorpay/fail', 'RazorpayController@fail');
 
+        // Razorpay routes (outside auth for mobile compatibility)
+        Route::get('razorpay', 'RazorpayController@razorpay');
+        Route::get('razorpay-direct', 'RazorpayController@razorpayDirect');
+        Route::post('razorpay/pay', 'RazorpayController@payment')->name('razorpay.payment');
+        Route::get('razorpay/success', 'RazorpayController@success');
+        Route::get('razorpay/fail', 'RazorpayController@fail');
+    });
     // Category Products Route
     Route::get('/category-products/{category_id?}', 'ProductsController@categoryProducts');
 
