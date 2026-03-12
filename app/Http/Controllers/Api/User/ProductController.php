@@ -82,7 +82,7 @@ class ProductController extends Controller
 
     private function sqlSearch($request, $limit, $page, $lat, $lng)
     {
-        $query = Product::with(['category', 'subcategory', 'section', 'subject', 'bookType', 'language'])
+        $query = Product::with(['category', 'subcategory', 'section', 'subject', 'bookType', 'language', 'authors'])
             ->select('products.*')
             ->join('products_attributes as pa', 'pa.product_id', '=', 'products.id')
             ->join('vendors as v', 'pa.vendor_id', '=', 'v.id')
@@ -249,8 +249,18 @@ class ProductController extends Controller
                     'category'    => $product->category,
                     'subcategory' => $product->subcategory,
                     'section'     => $product->section,
-                    'subject'     => $product->subject
+                    'subject'     => $product->subject,
+                    'author_name' => $product->authors->pluck('name')->join(', '),
+
+'authors' => $product->authors->map(function ($author) {
+    return [
+        'id'   => $author->id,
+        'name' => $author->name,
+    ];
+}),
                 ];
+                
+               
             })->items()
         ];
     }
@@ -343,20 +353,22 @@ class ProductController extends Controller
                     'book_type' => $product->bookType,
                     'language' => $product->language,
                     'edition' => $product->edition,
-                    'authors' => $product->authors,
+                    'author_name' => $product->authors->pluck('author_name')->join(', '),
+                    'authors' => $product->authors->map(function ($author) {
+                        return [
+                            'id' => $author->id,
+                            'name' => $author->author_name,
+                        ];
+                    }),
                 ],
-
                 'vendor_offer' => [
                     'attribute_id' => $attribute->id,
                     'stock' => $attribute->stock,
                     'discount' => $attribute->product_discount,
                     'sku' => $attribute->sku,
-
                     'vendor' => [
-
                         'vendor_id' => $attribute->vendor->id ?? null,
-                        'admin_id' => $attribute->vendor->admin_id ?? null,
-                        'admin_type' => $attribute->vendor->admin_type ?? null,
+                        'name' => $product->authors->pluck('author_name')->join(', ') ?: ($attribute->vendor->user->name ?? 'Verified Seller'),
                         'shop_name' => $attribute->vendor->shop_name ?? null,
                         'address' => $attribute->vendor->address ?? null,
                         'city' => $attribute->vendor->city ?? null,
@@ -368,7 +380,7 @@ class ProductController extends Controller
 
                         'user' => [
                             'user_id' => $attribute->vendor->user->id ?? null,
-                            'name' => $attribute->vendor->user->name ?? null,
+                            'name' => $product->authors->pluck('author_name')->join(', ') ?: ($attribute->vendor->user->name ?? 'Verified Seller'),
                             'email' => $attribute->vendor->user->email ?? null,
                             'mobile' => $attribute->vendor->user->mobile ?? null,
                             'image' => $attribute->vendor->user->image ?? null,
@@ -403,7 +415,7 @@ class ProductController extends Controller
         }
 
         $cartItems = Cart::with(['product' => function ($q) {
-            $q->select('id', 'category_id', 'product_name', 'product_image');
+            $q->select('id', 'category_id', 'product_name', 'product_image')->with('authors');
         }])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
@@ -437,6 +449,23 @@ class ProductController extends Controller
                     'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
                     'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
+                $authorString = $item->product->authors->pluck('author_name')->join(', ');
+                $item->product->author_name = $authorString;
+                $item->product->authors = $item->product->authors->map(function ($author) {
+                    return [
+                        'id' => $author->id,
+                        'name' => $author->author_name,
+                    ];
+                });
+                
+                // Overwrite vendor name for app display
+                if ($authorString) {
+                    if (is_array($item->product->vendor) || is_object($item->product->vendor)) {
+                        $item->product->vendor['name'] = $authorString;
+                    } else {
+                        $item->product->vendor = ['name' => $authorString];
+                    }
+                }
             }
 
             $total_price += ($price['final_price'] ?? 0) * $item->quantity;
@@ -613,7 +642,7 @@ class ProductController extends Controller
         }
 
         $wishlists = Wishlist::with(['product' => function ($q) {
-            $q->select('id', 'category_id', 'product_name', 'product_image');
+            $q->select('id', 'category_id', 'product_name', 'product_image', 'product_isbn', 'subcategory_id', 'subject_id', 'language_id', 'book_type_id', 'vendor_id')->with(['authors', 'subcategory', 'subject', 'language', 'bookType', 'vendor']);
         }])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
@@ -647,6 +676,23 @@ class ProductController extends Controller
                     'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
                     'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
+                $authorString = $item->product->authors->pluck('author_name')->join(', ');
+                $item->product->author_name = $authorString;
+                $item->product->authors = $item->product->authors->map(function ($author) {
+                    return [
+                        'id' => $author->id,
+                        'name' => $author->author_name,
+                    ];
+                });
+
+                // Overwrite vendor name for app display
+                if ($authorString) {
+                    if (is_array($item->product->vendor) || is_object($item->product->vendor)) {
+                        $item->product->vendor['name'] = $authorString;
+                    } else {
+                        $item->product->vendor = ['name' => $authorString];
+                    }
+                }
             }
 
             $qty = $item->quantity ?? 1;

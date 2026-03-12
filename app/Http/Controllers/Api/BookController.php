@@ -18,6 +18,7 @@ use App\Models\Admin;
 use App\Models\Category;
 use App\Models\Vendor;
 use App\Models\ProductsAttribute;
+use App\Models\FilterClassSubject;
 
 class BookController extends Controller
 {
@@ -420,130 +421,188 @@ class BookController extends Controller
     }
 
     public function storeManualProduct(Request $request)
-    {
-        if ($resp = $this->checkAccess($request)) {
-            return $resp;
-        }
-
-        $request->validate([
-            'condition'     => 'required|in:new,old',
-            'product_isbn' => [
-                'required',
-                'string',
-                Rule::unique('products')->where(function ($query) use ($request) {
-                    return $query->where('condition', $request->condition);
-                }),
-                'regex:/^(?:\d{10}|\d{13})$/',
-            ],
-            'product_name'  => 'required|string|max:255',
-            'product_price' => 'required|numeric|min:0',
-            'description'   => 'nullable|string',
-            'product_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'category_id'   => 'required|exists:categories,id',
-            'subcategory_id'   => 'required|exists:subcategories,id',
-            'publisher_id'  => 'nullable|exists:publishers,id',
-            'subject_id'    => 'nullable|exists:subjects,id',
-            'edition_id'    => 'nullable|exists:editions,id',
-            'language_id'   => 'nullable|exists:languages,id',
-            'book_type_id'   => 'nullable|exists:book_types,id',
-            'author_ids'    => 'nullable|array',
-            'author_ids.*'  => 'exists:authors,id',
-            'meta_title'    => 'nullable|string',
-            'meta_keywords' => 'nullable|string',
-            'meta_description' => 'nullable|string'
-        ]);
-
-        $categoryDetails = Category::find($request->category_id);
-
-        if (!$categoryDetails || !$categoryDetails->section_id) {
-            return response()->json([
-                'status'  => false,
-                'message' => 'Invalid category or section not found'
-            ], 422);
-        }
-
-        $exists = Product::where('product_isbn', $request->product_isbn)
-            ->where('condition', $request->condition)
-            ->exists();
-
-        if ($exists) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Product with same ISBN and condition already exists'
-            ], 422);
-        }
-
-        $product = Product::create([
-            'condition'     => $request->condition,
-            'product_isbn'  => $request->product_isbn,
-            'product_name'  => $request->product_name,
-            'description'   => $request->description,
-            'product_price' => $request->product_price,
-            'section_id'    => $categoryDetails->section_id,
-            'category_id'   => $request->category_id,
-            'subcategory_id'   => $request->subcategory_id,
-            'publisher_id'  => $request->publisher_id,
-            'subject_id'    => $request->subject_id,
-            'edition_id'    => $request->edition_id,
-            'language_id'   => $request->language_id,
-            'book_type_id'   => $request->book_type_id,
-            'meta_title'    => $request->meta_title,
-            'meta_keywords' => $request->meta_keywords,
-            'meta_description'   => $request->meta_description,
-            'status'        => 1
-        ]);
-
-        if ($request->hasFile('product_image')) {
-            $image_tmp = $request->file('product_image');
-
-            if ($image_tmp->isValid()) {
-                $extension = $image_tmp->getClientOriginalExtension();
-                $imageName = rand(111, 99999) . '.' . $extension;
-
-                Image::make($image_tmp)->resize(1000, 1000)
-                    ->save(public_path('front/images/product_images/large/' . $imageName));
-
-                Image::make($image_tmp)->resize(500, 500)
-                    ->save(public_path('front/images/product_images/medium/' . $imageName));
-
-                Image::make($image_tmp)->resize(250, 250)
-                    ->save(public_path('front/images/product_images/small/' . $imageName));
-
-                $product->update([
-                    'product_image' => $imageName
-                ]);
-            }
-        }
-
-        if ($request->filled('author_ids')) {
-            $product->authors()->sync($request->author_ids);
-        }
-
-        $product->load([
-            'section',
-            'category',
-            'subcategory',
-            'publisher',
-            'subject',
-            'edition',
-            'language',
-            'authors'
-        ]);
-
-        $basePath = url('front/images/product_images');
-
-        $product->image_urls = [
-            'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-            'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-            'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
-        ];
-
-        return response()->json([
-            'status'  => true,
-            'message' => 'Product added successfully',
-            'data'    => $product
-        ], 201);
+{
+    if ($resp = $this->checkAccess($request)) {
+        return $resp;
     }
+
+    $request->validate([
+        'condition' => 'required|in:new,old',
+
+        'product_isbn' => [
+            'required',
+            'string',
+            Rule::unique('products')->where(function ($query) use ($request) {
+                return $query->where('condition', $request->condition);
+            }),
+            'regex:/^(?:\d{10}|\d{13})$/',
+        ],
+
+        'product_name'  => 'required|string|max:255',
+        'product_price' => 'required|numeric|min:0',
+        'description'   => 'nullable|string',
+        'product_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+
+        'section_id'    => 'required|exists:sections,id',
+        'category_id'   => 'required|exists:categories,id',
+        'subcategory_id'=> 'required|exists:subcategories,id',
+
+        'publisher_id'  => 'nullable|exists:publishers,id',
+        'subject_id'    => 'nullable|exists:subjects,id',
+        'edition_id'    => 'nullable|exists:editions,id',
+        'language_id'   => 'nullable|exists:languages,id',
+        'book_type_id'  => 'nullable|exists:book_types,id',
+
+        'author_ids'   => 'nullable|array',
+        'author_ids.*' => 'exists:authors,id',
+
+        'meta_title'       => 'nullable|string',
+        'meta_keywords'    => 'nullable|string',
+        'meta_description' => 'nullable|string'
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validate Section → Category → Subcategory using mapping table
+    |--------------------------------------------------------------------------
+    */
+
+    $validRelation = FilterClassSubject::where('section_id', $request->section_id)
+        ->where('category_id', $request->category_id)
+        ->where('sub_category_id', $request->subcategory_id)
+        ->exists();
+
+    if (!$validRelation) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Invalid section, category or subcategory combination'
+        ], 422);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Check duplicate ISBN
+    |--------------------------------------------------------------------------
+    */
+
+    $exists = Product::where('product_isbn', $request->product_isbn)
+        ->where('condition', $request->condition)
+        ->exists();
+
+    if ($exists) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Product with same ISBN and condition already exists'
+        ], 422);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Create Product
+    |--------------------------------------------------------------------------
+    */
+
+    $product = Product::create([
+        'condition'      => $request->condition,
+        'product_isbn'   => $request->product_isbn,
+        'product_name'   => $request->product_name,
+        'description'    => $request->description,
+        'product_price'  => $request->product_price,
+
+        'section_id'     => $request->section_id,
+        'category_id'    => $request->category_id,
+        'subcategory_id' => $request->subcategory_id,
+
+        'publisher_id' => $request->publisher_id,
+        'subject_id'   => $request->subject_id,
+        'edition_id'   => $request->edition_id,
+        'language_id'  => $request->language_id,
+        'book_type_id' => $request->book_type_id,
+
+        'meta_title'       => $request->meta_title,
+        'meta_keywords'    => $request->meta_keywords,
+        'meta_description' => $request->meta_description,
+
+        'status' => 1
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Upload Product Image
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->hasFile('product_image')) {
+
+        $image_tmp = $request->file('product_image');
+
+        if ($image_tmp->isValid()) {
+
+            $extension = $image_tmp->getClientOriginalExtension();
+            $imageName = rand(111, 99999) . '.' . $extension;
+
+            Image::make($image_tmp)->resize(1000, 1000)
+                ->save(public_path('front/images/product_images/large/' . $imageName));
+
+            Image::make($image_tmp)->resize(500, 500)
+                ->save(public_path('front/images/product_images/medium/' . $imageName));
+
+            Image::make($image_tmp)->resize(250, 250)
+                ->save(public_path('front/images/product_images/small/' . $imageName));
+
+            $product->update([
+                'product_image' => $imageName
+            ]);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attach Authors
+    |--------------------------------------------------------------------------
+    */
+
+    if ($request->filled('author_ids')) {
+        $product->authors()->sync($request->author_ids);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Load Relations
+    |--------------------------------------------------------------------------
+    */
+
+    $product->load([
+        'section',
+        'category',
+        'subcategory',
+        'publisher',
+        'subject',
+        'edition',
+        'language',
+        'authors'
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Generate Image URLs
+    |--------------------------------------------------------------------------
+    */
+
+    $basePath = url('front/images/product_images');
+
+    $product->image_urls = [
+        'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
+        'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
+        'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+    ];
+
+    return response()->json([
+        'status'  => true,
+        'message' => 'Product added successfully',
+        'data'    => $product
+    ], 201);
+}
 
     public function productSummary(Request $request)
     {
