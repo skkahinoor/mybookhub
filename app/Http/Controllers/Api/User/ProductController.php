@@ -252,15 +252,13 @@ class ProductController extends Controller
                     'subject'     => $product->subject,
                     'author_name' => $product->authors->pluck('name')->join(', '),
 
-'authors' => $product->authors->map(function ($author) {
-    return [
-        'id'   => $author->id,
-        'name' => $author->name,
-    ];
-}),
+                    'authors' => $product->authors->map(function ($author) {
+                        return [
+                            'id'   => $author->id,
+                            'name' => $author->name,
+                        ];
+                    }),
                 ];
-                
-               
             })->items()
         ];
     }
@@ -304,6 +302,12 @@ class ProductController extends Controller
             ], 404);
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | Cart Check
+    |--------------------------------------------------------------------------
+    */
+
         $inCart = false;
         $cartQty = 0;
 
@@ -318,6 +322,20 @@ class ProductController extends Controller
             }
         }
 
+        /*
+    |--------------------------------------------------------------------------
+    | Author Names
+    |--------------------------------------------------------------------------
+    */
+
+        $authorNames = $product->authors->pluck('name')->join(', ');
+
+        /*
+    |--------------------------------------------------------------------------
+    | Image Path
+    |--------------------------------------------------------------------------
+    */
+
         $basePath = url('front/images/product_images');
 
         return response()->json([
@@ -326,23 +344,18 @@ class ProductController extends Controller
 
             'data' => [
 
-
                 'product' => [
                     'id' => $product->id,
                     'name' => $product->product_name,
                     'isbn' => $product->product_isbn,
                     'price' => $product->product_price,
-                    'image_urls'       => [
-                        'large'  => $product->product_image
-                            ? $basePath . '/large/' . $product->product_image
-                            : null,
-                        'medium' => $product->product_image
-                            ? $basePath . '/medium/' . $product->product_image
-                            : null,
-                        'small'  => $product->product_image
-                            ? $basePath . '/small/' . $product->product_image
-                            : null,
+
+                    'image_urls' => [
+                        'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
+                        'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
+                        'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
                     ],
+
                     'description' => $product->description,
 
                     'section' => $product->section,
@@ -353,22 +366,28 @@ class ProductController extends Controller
                     'book_type' => $product->bookType,
                     'language' => $product->language,
                     'edition' => $product->edition,
-                    'author_name' => $product->authors->pluck('author_name')->join(', '),
+
+                    'author_name' => $authorNames,
+
                     'authors' => $product->authors->map(function ($author) {
                         return [
                             'id' => $author->id,
-                            'name' => $author->author_name,
+                            'name' => $author->name,
                         ];
-                    }),
+                    })
                 ],
+
                 'vendor_offer' => [
                     'attribute_id' => $attribute->id,
                     'stock' => $attribute->stock,
                     'discount' => $attribute->product_discount,
                     'sku' => $attribute->sku,
+
                     'vendor' => [
                         'vendor_id' => $attribute->vendor->id ?? null,
-                        'name' => $product->authors->pluck('author_name')->join(', ') ?: ($attribute->vendor->user->name ?? 'Verified Seller'),
+
+                        'name' => $authorNames ?: ($attribute->vendor->user->name ?? 'Verified Seller'),
+
                         'shop_name' => $attribute->vendor->shop_name ?? null,
                         'address' => $attribute->vendor->address ?? null,
                         'city' => $attribute->vendor->city ?? null,
@@ -380,7 +399,7 @@ class ProductController extends Controller
 
                         'user' => [
                             'user_id' => $attribute->vendor->user->id ?? null,
-                            'name' => $product->authors->pluck('author_name')->join(', ') ?: ($attribute->vendor->user->name ?? 'Verified Seller'),
+                            'name' => $authorNames ?: ($attribute->vendor->user->name ?? 'Verified Seller'),
                             'email' => $attribute->vendor->user->email ?? null,
                             'mobile' => $attribute->vendor->user->mobile ?? null,
                             'image' => $attribute->vendor->user->image ?? null,
@@ -457,7 +476,7 @@ class ProductController extends Controller
                         'name' => $author->author_name,
                     ];
                 });
-                
+
                 // Overwrite vendor name for app display
                 if ($authorString) {
                     if (is_array($item->product->vendor) || is_object($item->product->vendor)) {
@@ -1077,7 +1096,7 @@ class ProductController extends Controller
                     $attribute = ProductsAttribute::with('product')->find($item->product_attribute_id);
                     if (!$attribute) continue;
                     $product = $attribute->product;
-                    
+
                     $isEligible = true;
                     if (!empty($coupon->categories)) {
                         $catArr = explode(',', $coupon->categories);
@@ -1088,7 +1107,7 @@ class ProductController extends Controller
                     if ($coupon->vendor_id && $attribute->vendor_id != $coupon->vendor_id) {
                         $isEligible = false;
                     }
-                    
+
                     if ($isEligible) {
                         $eligible_item_ids[] = $item->product_attribute_id;
                     }
@@ -1103,7 +1122,7 @@ class ProductController extends Controller
                 // Proportional distribution
                 $proportion = ($total_price > 0) ? ($item_price / $total_price) : 0;
                 $item_shipping = round($shipping_charges * $proportion, 2);
-                
+
                 // Coupon Logic: Only apply if item is eligible
                 $item_coupon = 0;
                 if ($coupon && in_array($item->product_attribute_id, $eligible_item_ids) && $discountableSubTotal > 0) {
@@ -1112,7 +1131,7 @@ class ProductController extends Controller
                 }
 
                 $item_wallet = round($wallet_amount * $proportion, 2);
-                
+
                 $item_grand_total = max(0, $item_price + $item_shipping - $item_coupon - $item_wallet);
 
                 $order = Order::create([
