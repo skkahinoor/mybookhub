@@ -15,6 +15,7 @@ use App\Models\Language;
 use App\Models\InstitutionManagement;
 use App\Models\InstitutionClass;
 use App\Models\WalletTransaction;
+use App\Models\FilterClassSubject;
 
 class HomeController extends Controller
 {
@@ -97,28 +98,51 @@ class HomeController extends Controller
         ]);
     }
 
-    public function getcategories($section_id)
+    public function getCategories($section_id)
     {
-        $categories = Category::where('status', 1)
-            ->where('section_id', $section_id)
-            ->orderBy('category_name', 'asc')
-            ->get(['id', 'category_name', 'section_id']);
+        $categories = FilterClassSubject::where('section_id', $section_id)
+            ->with('category:id,category_name')
+            ->distinct()
+            ->get()
+            ->pluck('category')
+            ->unique('id')
+            ->values();
 
         return response()->json([
             'status' => true,
-            'data'   => $categories
+            'data' => $categories
         ]);
     }
 
-    public function getSubcategories()
+    public function getSubcategories($category_id)
     {
-        $subcategory = Subcategory::where('status', 1)
-            ->orderBy('subcategory_name', 'asc')
-            ->get(['id', 'subcategory_name']);
+        $subcategories = FilterClassSubject::where('category_id', $category_id)
+            ->with('subcategory:id,subcategory_name')
+            ->distinct()
+            ->get()
+            ->pluck('subcategory')
+            ->unique('id')
+            ->values();
 
         return response()->json([
             'status' => true,
-            'data'   => $subcategory
+            'data' => $subcategories
+        ]);
+    }
+
+    public function getSubjects($subcategory_id)
+    {
+        $subjects = FilterClassSubject::where('sub_category_id', $subcategory_id)
+            ->with('subject:id,name')
+            ->distinct()
+            ->get()
+            ->pluck('subject')
+            ->unique('id')
+            ->values();
+
+        return response()->json([
+            'status' => true,
+            'data' => $subjects
         ]);
     }
 

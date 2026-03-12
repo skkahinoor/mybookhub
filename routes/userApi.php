@@ -15,7 +15,8 @@ Route::get('/user/education-level', [HomeController::class, 'getSections']);
 Route::get('/user/institution', [HomeController::class, 'getInstitutions']);
 Route::get('/user/institution-class/{institution_id}', [HomeController::class, 'getInstitutionclass']);
 Route::get('/user/board/{id}', [HomeController::class, 'getcategories']);
-Route::get('/user/class', [HomeController::class, 'getSubcategories']);
+Route::get('/user/class/{id}', [HomeController::class, 'getSubcategories']);
+Route::get('/user/subjects/{id}', [HomeController::class, 'getSubjects']);
 Route::get('/user/book-type', [HomeController::class, 'getBookTypes']);
 Route::get('/user/language', [HomeController::class, 'getLanguages']);
 
