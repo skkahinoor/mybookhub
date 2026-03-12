@@ -271,6 +271,7 @@
 
                                 @csrf
 
+                                @if($adminType === 'vendor')
                                 <div class="d-flex align-items-center condition-toggle" role="group"
                                     aria-label="Condition">
                                     <div>
@@ -291,6 +292,9 @@
                                         </label>
                                     </div>
                                 </div>
+                                @else
+                                <input type="hidden" name="condition" id="new" value="new">
+                                @endif
 
                                 <div class="form-group">
                                     <div class="form-group">
@@ -464,6 +468,7 @@
                                         @if (!empty($product['product_price'])) value="{{ $product['product_price'] }}" @else value="{{ old('product_price') }}" @endif>
 
                                 </div>
+                                @if($adminType === 'vendor')
                                  <div class="form-group mt-3" id="old_condition_wrapper" style="display: {{ old('condition', !empty($product->id) ? $product->condition ?? 'new' : 'new') === 'old' ? 'block' : 'none' }};">
                                     <label for="old_book_condition_id">Book Condition <span class="text-danger">*</span></label>
                                     <select name="old_book_condition_id" id="old_book_condition_id" class="form-control text-dark">
@@ -475,8 +480,8 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    <small class="text-muted">Price will be auto-calculated based on selected condition percentage.</small>
                                 </div>
+                                @endif
 
                                 <div class="form-group">
                                     <label for="product_image">Image (Recommended Size: 1000x1000)</label>
@@ -678,23 +683,13 @@
 
             // Toggle old condition dropdown and calculate price
             function updatePriceByCondition() {
-                let condition = $('input[name="condition"]:checked').val();
+                let condition = $('input[name="condition"]:checked').val() || $('input[name="condition"]').val();
                 let $wrapper = $('#old_condition_wrapper');
-                let $priceInput = $('#product_price');
-                let originalPrice = parseFloat($priceInput.data('original-price')) || parseFloat($priceInput.val()) || 0;
 
                 if (condition === 'old') {
                     $wrapper.show();
-                    let percentage = $('#old_book_condition_id option:selected').data('percentage');
-                    if (percentage) {
-                        let newPrice = (originalPrice * parseFloat(percentage)) / 100;
-                        $priceInput.val(newPrice.toFixed(2));
-                    }
                 } else {
                     $wrapper.hide();
-                    if ($priceInput.data('original-price')) {
-                        $priceInput.val($priceInput.data('original-price'));
-                    }
                 }
             }
 
@@ -704,13 +699,6 @@
 
             $('#old_book_condition_id').on('change', function() {
                 updatePriceByCondition();
-            });
-
-            // Store original price when manually entered
-            $('#product_price').on('change', function() {
-                if ($('input[name="condition"]:checked').val() === 'new') {
-                    $(this).data('original-price', $(this).val());
-                }
             });
 
         });
