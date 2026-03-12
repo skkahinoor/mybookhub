@@ -588,6 +588,8 @@ class ProductsController extends Controller
                                 'product_id'       => $existingProduct->id,
                                 'stock'            => (int) ($existingAttribute->stock ?? 0),
                                 'product_discount' => (float) ($existingAttribute->product_discount ?? 0),
+                                'user_product_price' => $existingAttribute->user_product_price,
+                                'old_book_condition_id' => $existingAttribute->old_book_condition_id ?? (int) ($data['old_book_condition_id'] ?? 0),
                             ], 422);
                         }
 
@@ -950,13 +952,16 @@ class ProductsController extends Controller
         }
 
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'stock' => 'required|integer|min:0',
-            'product_discount' => 'nullable|numeric|min:0|max:100',
+            'product_id'            => 'required|exists:products,id',
+            'stock'                 => 'required|integer|min:0',
+            'product_discount'      => 'nullable|numeric|min:0|max:100',
+            'old_book_condition_id' => 'nullable|exists:old_book_conditions,id',
         ]);
 
         $user = Auth::guard('admin')->user();
         $data = $request->all();
+
+        $oldBookConditionId = !empty($data['old_book_condition_id']) ? (int)$data['old_book_condition_id'] : null;
 
         $attributeQuery = ProductsAttribute::where('product_id', $data['product_id']);
 
@@ -965,41 +970,48 @@ class ProductsController extends Controller
                 ->where('admin_type', 'vendor');
         } else {
             $attributeQuery->where('admin_id', $user->id)
-                ->where('admin_type', 'admin')
-                ->orWhere('admin_type', 'superadmin');
+                ->where(function($q) {
+                    $q->where('admin_type', 'admin')->orWhere('admin_type', 'superadmin');
+                });
         }
 
         $existingAttribute = $attributeQuery->first();
 
+        // Update stock and discount
+
         if ($existingAttribute) {
-            // Update existing attribute
-            $existingAttribute->stock = (int) $data['stock'];
-            $existingAttribute->product_discount = (float) ($data['product_discount'] ?? 0);
+            $existingAttribute->stock              = (int) $data['stock'];
+            $existingAttribute->product_discount   = (float) ($data['product_discount'] ?? 0);
+            $existingAttribute->user_product_price = null; // Always NULL for admin/vendor entries
+            if ($oldBookConditionId) {
+                $existingAttribute->old_book_condition_id = $oldBookConditionId;
+            }
             $existingAttribute->save();
         } else {
-            // Create new attribute
             $attribute = new ProductsAttribute();
-            $attribute->product_id = $data['product_id'];
-            $attribute->stock = (int) $data['stock'];
-            $attribute->product_discount = (float) ($data['product_discount'] ?? 0);
-            $attribute->sku = 'BH' . '-' . 'P' . $data['product_id'] . '-' . 'V' . $user->vendor_id;
+            $attribute->product_id           = $data['product_id'];
+            $attribute->stock                = (int) $data['stock'];
+            $attribute->product_discount     = (float) ($data['product_discount'] ?? 0);
+            $attribute->user_product_price   = null; 
+            $attribute->old_book_condition_id = $oldBookConditionId;
+            $attribute->sku    = 'BH-P' . $data['product_id'] . '-' . ($user->type === 'vendor' ? 'V' . $user->vendor_id : 'A' . $user->id);
             $attribute->status = 1;
 
             if ($user->type === 'vendor') {
                 $attribute->admin_type = 'vendor';
-                $attribute->vendor_id = $user->vendor_id;
-                $attribute->admin_id = null;
+                $attribute->vendor_id  = $user->vendor_id;
+                $attribute->admin_id   = null;
             } else {
                 $attribute->admin_type = 'admin';
-                $attribute->admin_id = $user->id;
-                $attribute->vendor_id = null;
+                $attribute->admin_id   = $user->id;
+                $attribute->vendor_id  = null;
             }
 
             $attribute->save();
         }
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Product attributes saved successfully!'
         ]);
     }

@@ -521,7 +521,7 @@
                                     {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                 </div>
 
-                                <button type="submit" class="btn btn-primary mr-2">Submit</button>
+                                <button type="submit" class="btn btn-primary mr-2" id="submitBtn">Submit</button>
 
                                 <a href="{{ url($prefix . '/products') }}" class="btn btn-light">Cancel</a>
                             </form>
@@ -1118,17 +1118,17 @@
                     contentType: false,
                     success: function(response) {
                         var userType = "{{ auth('admin')->user()->type }}";
+                        var productsUrl = userType === 'vendor' ? "{{ url('vendor/products') }}" : "{{ url('admin/products') }}";
 
-                        if (response.show_modal && response.product_id && userType ===
-                            'vendor') {
-                            // Show modal for new products (Vendors only)
+                        if (response.show_modal && response.product_id) {
+                            // Show modal for new products (both Vendors and Admins)
                             $('#modal_product_id').val(response.product_id);
-                            $('#modal_old_book_condition_id').val(response.old_book_condition_id);
+                            $('#modal_old_book_condition_id').val(response.old_book_condition_id || '');
                             $('#attributesModal').modal('show');
                             submitBtn.prop('disabled', false).text('Submit');
                         } else {
-                            // Redirect for existing products or Admins
-                            window.location.href = "{{ url('admin/products') }}";
+                            // Redirect for existing products
+                            window.location.href = productsUrl;
                         }
                     },
                     error: function(xhr) {
@@ -1162,14 +1162,12 @@
                                     if (result.isConfirmed && resp.product_id) {
                                         // Prefill and open the same attributes modal used on products list
                                         $('#modal_product_id').val(resp.product_id);
-                                        $('#modal_old_book_condition_id').val(resp.old_book_condition_id); // Add this
+                                        $('#modal_old_book_condition_id').val(resp.old_book_condition_id);
                                         if (typeof resp.stock !== 'undefined') {
                                             $('#modal_stock').val(resp.stock);
                                         }
-                                        if (typeof resp.product_discount !==
-                                            'undefined') {
-                                            $('#modal_product_discount').val(
-                                                resp.product_discount);
+                                        if (typeof resp.product_discount !== 'undefined') {
+                                            $('#modal_product_discount').val(resp.product_discount);
                                         }
                                         $('#attributesModal').modal('show');
                                     }
@@ -1212,13 +1210,16 @@
 
                 btn.prop('disabled', true).text('Saving...');
 
+                var saveAttrUrl = "{{ auth('admin')->user()->type === 'vendor' ? route('vendor.products.saveAttributes') : route('admin.products.saveAttributes') }}";
+                var productsUrl = "{{ auth('admin')->user()->type === 'vendor' ? url('vendor/products') : url('admin/products') }}";
+
                 $.ajax({
-                    url: "{{ route('admin.products.saveAttributes') }}",
+                    url: saveAttrUrl,
                     type: 'POST',
                     data: formData,
                     success: function(response) {
                         $('#attributesModal').modal('hide');
-                        window.location.href = "{{ url('admin/products') }}";
+                        window.location.href = productsUrl;
                     },
                     error: function(xhr) {
                         btn.prop('disabled', false).text('Save Attributes');
@@ -1240,20 +1241,21 @@
 
             // Handle skip button
             $('#skipAttributesBtn').on('click', function() {
+                var skipUrl = "{{ auth('admin')->user()->type === 'vendor' ? url('vendor/products') : url('admin/products') }}";
                 $('#attributesModal').modal('hide');
-                window.location.href = "{{ url('admin/products') }}";
+                window.location.href = skipUrl;
             });
 
             // Auto-fill discount from condition percentage when modal opens
             $('#attributesModal').on('show.bs.modal', function() {
                 var selectedCondition = $('#old_book_condition_id option:selected');
-                var percentage = selectedCondition.data('percentage');
+                var percentage = parseFloat(selectedCondition.data('percentage'));
                 var conditionId = selectedCondition.val();
 
                 // Set condition id in hidden modal field
                 $('#modal_old_book_condition_id').val(conditionId || '');
 
-                if (percentage !== undefined && percentage !== '') {
+                if (!isNaN(percentage)) {
                     $('#modal_product_discount').val(percentage);
                 }
             });
@@ -1261,12 +1263,12 @@
             // Also update discount live when condition changes
             $(document).on('change', '#old_book_condition_id', function() {
                 var selected = $(this).find('option:selected');
-                var percentage = selected.data('percentage');
+                var percentage = parseFloat(selected.data('percentage'));
                 var conditionId = selected.val();
 
                 $('#modal_old_book_condition_id').val(conditionId || '');
 
-                if (percentage !== undefined && percentage !== '') {
+                if (!isNaN(percentage)) {
                     $('#modal_product_discount').val(percentage);
                 }
             });

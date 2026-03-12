@@ -261,12 +261,12 @@ class SellBookController extends Controller
         if (!empty($data['old_book_condition_id'])) {
             $condition = OldBookCondition::find($data['old_book_condition_id']);
             if ($condition && $product->product_price > 0) {
-                $attribute->price = ($product->product_price * $condition->percentage) / 100;
+                $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
             } else {
-                $attribute->price = $product->product_price;
+                $attribute->user_product_price = $product->product_price;
             }
         } else {
-            $attribute->price = $product->product_price;
+            $attribute->user_product_price = $product->product_price;
         }
 
         $attribute->save();

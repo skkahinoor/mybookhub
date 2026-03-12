@@ -207,50 +207,17 @@ class Product extends Model
     {
         $attribute = null;
 
-        // If attribute_id is provided, use it directly for precise results
         if (!empty($attribute_id)) {
-            $attribute = ProductsAttribute::where('id', $attribute_id)
-                ->where('status', 1)
-                ->first();
-        } 
-        // Fallback to product_id and size (might be ambiguous in multi-vendor)
-        elseif (!empty($size)) {
-            $attribute = ProductsAttribute::where([
-                'product_id' => $product_id,
-                'size'       => $size,
-            ])->where('status', 1)->first();
+            $attribute = ProductsAttribute::where('id', $attribute_id)->where('status', 1)->first();
+        } elseif (!empty($size)) {
+            $attribute = ProductsAttribute::where(['product_id' => $product_id, 'size' => $size])->where('status', 1)->first();
         }
 
-        // If attribute exists, compute discount against attribute price using product discount
         if ($attribute) {
-            $attributePrice = (float) $attribute->price;
-
-            // If attribute price is 0, fallback to product level base price
-            if ($attributePrice <= 0) {
-                $productDetails = Product::select('product_price')->find($product_id);
-                $attributePrice = (float) ($productDetails->product_price ?? 0);
-            }
-
-            $productDiscount = (float) ($attribute->product_discount ?? 0);
-
-            if ($productDiscount > 0) {
-                $finalPrice = $attributePrice - ($attributePrice * $productDiscount / 100);
-            } else {
-                $finalPrice = $attributePrice;
-            }
-
-            $discount = max(0, $attributePrice - $finalPrice);
-
-            return [
-                'product_price' => round($attributePrice, 2),
-                'final_price'   => round($finalPrice, 2),
-                'discount'      => round($discount, 2),
-            ];
+            return self::getDiscountPriceDetailsByAttribute($attribute->id);
         }
 
-        // Fallback: when no attribute found, use the product-level price rules
         $details = self::getDiscountPriceDetails($product_id);
-
         return [
             'product_price' => $details['product_price'] ?? 0,
             'final_price'   => $details['final_price'] ?? 0,
@@ -260,9 +227,8 @@ class Product extends Model
 
     public static function getDiscountPriceDetailsByAttribute($attribute_id)
     {
-        $attribute = ProductsAttribute::with('product')
+        $attribute = ProductsAttribute::with(['product', 'condition'])
             ->where('id', $attribute_id)
-            ->where('status', 1)
             ->first();
 
         if (!$attribute || !$attribute->product) {
@@ -273,20 +239,41 @@ class Product extends Model
             ];
         }
 
-        $originalPrice  = (float) $attribute->product->product_price;
-        $productDiscount = (float) $attribute->product_discount;
+        $originalPrice = (float) $attribute->product->product_price;
 
-        // ✅ Apply ONLY product discount
-        if ($productDiscount > 0) {
-            $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
+        // 1. Determine the Base and Final Price
+        if ($attribute->user_id !== null) {
+            // Student/User entry: Use manual user_product_price if set, else calculate from condition
+            if ($attribute->user_product_price !== null && $attribute->user_product_price > 0) {
+                $finalPrice = (float) $attribute->user_product_price;
+            } elseif ($attribute->old_book_condition_id && $attribute->condition) {
+                // Fallback for students if manual price missing: MRP * condition %
+                $finalPrice = ($originalPrice * $attribute->condition->percentage) / 100;
+            } else {
+                $finalPrice = $originalPrice;
+            }
         } else {
-            $finalPrice = $originalPrice;
+            // Vendor/Admin entry: Differ calculation between old and new books
+            $discountValue = (float) ($attribute->product_discount ?? 0);
+            
+            if ($attribute->old_book_condition_id && $attribute->condition) {
+                // OLD BOOK: The 'product_discount' column stores the condition percentage (e.g. 60)
+                // Final Price = Base Price * Percentage
+                $finalPrice = ($originalPrice * $discountValue) / 100;
+            } else {
+                // NEW BOOK: The 'product_discount' column stores a literal discount
+                // Final Price = Base Price - (Base Price * Discount)
+                $finalPrice = $originalPrice - ($originalPrice * $discountValue / 100);
+            }
         }
 
+        // Total savings (original price - what you pay)
+        $totalDiscountAmount = max(0, $originalPrice - $finalPrice);
+
         return [
-            'product_price' => round($originalPrice),
-            'final_price'   => round($finalPrice),
-            'discount'      => round($originalPrice - $finalPrice),
+            'product_price' => round($originalPrice, 2), // Strike-through price
+            'final_price'   => round($finalPrice, 2),    // Paying price
+            'discount'      => round($totalDiscountAmount, 2),
         ];
     }
 

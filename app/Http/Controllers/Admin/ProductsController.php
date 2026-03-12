@@ -586,6 +586,7 @@ class ProductsController extends Controller
                                 'product_id'       => $existingProduct->id,
                                 'stock'            => (int) ($existingAttribute->stock ?? 0),
                                 'product_discount'      => (float) ($existingAttribute->product_discount ?? 0),
+                                'user_product_price'    => $existingAttribute->user_product_price,
                                 'old_book_condition_id' => $existingAttribute->old_book_condition_id ?? (int) ($data['old_book_condition_id'] ?? 0),
                             ], 422);
                         }
@@ -952,9 +953,9 @@ class ProductsController extends Controller
         }
 
         $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'stock' => 'required|integer|min:0',
-            'product_discount' => 'nullable|numeric|min:0|max:100',
+            'product_id'            => 'required|exists:products,id',
+            'stock'                 => 'required|integer|min:0',
+            'product_discount'      => 'nullable|numeric|min:0|max:100',
             'old_book_condition_id' => 'nullable|exists:old_book_conditions,id',
         ]);
 
@@ -977,21 +978,13 @@ class ProductsController extends Controller
 
         $existingAttribute = $attributeQuery->first();
 
-        $product = Product::find($data['product_id']);
-        $price = $product->product_price;
-
-        if ($oldBookConditionId) {
-            $condition = \App\Models\OldBookCondition::find($oldBookConditionId);
-            if ($condition && $price > 0) {
-                $price = ($price * $condition->percentage) / 100;
-            }
-        }
+        // Update stock and discount
 
         if ($existingAttribute) {
             // Update existing attribute
-            $existingAttribute->stock = (int) $data['stock'];
-            $existingAttribute->product_discount = (float) ($data['product_discount'] ?? 0);
-            $existingAttribute->price = $price; // Save calculated price
+            $existingAttribute->stock              = (int) $data['stock'];
+            $existingAttribute->product_discount   = (float) ($data['product_discount'] ?? 0);
+            $existingAttribute->user_product_price = null; // Always NULL for admin/vendor entries
             if ($oldBookConditionId) {
                 $existingAttribute->old_book_condition_id = $oldBookConditionId;
             }
@@ -999,32 +992,33 @@ class ProductsController extends Controller
         } else {
             // Create new attribute
             $attribute = new ProductsAttribute();
-            $attribute->product_id = $data['product_id'];
-            $attribute->stock = (int) $data['stock'];
-            $attribute->product_discount = (float) ($data['product_discount'] ?? 0);
-            $attribute->price = $price; // Save calculated price
+            $attribute->product_id           = $data['product_id'];
+            $attribute->stock                = (int) $data['stock'];
+            $attribute->product_discount     = (float) ($data['product_discount'] ?? 0);
+            $attribute->user_product_price   = null; 
             $attribute->old_book_condition_id = $oldBookConditionId;
-            $attribute->sku = 'BH-P' . $data['product_id'] . '-' . ($user->type === 'vendor' ? 'V' . $user->vendor_id : 'A' . $user->id);
+            $attribute->sku    = 'BH-P' . $data['product_id'] . '-' . ($user->type === 'vendor' ? 'V' . $user->vendor_id : 'A' . $user->id);
             $attribute->status = 1;
 
             if ($user->type === 'vendor') {
                 $attribute->admin_type = 'vendor';
-                $attribute->vendor_id = $user->vendor_id;
-                $attribute->admin_id = null;
+                $attribute->vendor_id  = $user->vendor_id;
+                $attribute->admin_id   = null;
             } else {
                 $attribute->admin_type = 'admin';
-                $attribute->admin_id = $user->id;
-                $attribute->vendor_id = null;
+                $attribute->admin_id   = $user->id;
+                $attribute->vendor_id  = null;
             }
 
             $attribute->save();
         }
 
         return response()->json([
-            'status' => 'success',
+            'status'  => 'success',
             'message' => 'Product attributes saved successfully!'
         ]);
     }
+
 
     public function deleteProductImage($id)
     {
