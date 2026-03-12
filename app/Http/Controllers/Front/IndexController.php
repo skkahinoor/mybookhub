@@ -32,10 +32,12 @@ class IndexController extends Controller
         $sessionSectionId = session('bg_section_id');
         $sessionCategoryId = session('bg_category_id');
         $sessionSubcategoryId = session('bg_subcategory_id');
+        $sessionSubjectId = session('bg_subject_id');
 
         $currentSectionId = $request->filled('section_id') ? $request->section_id : $sessionSectionId;
         $currentCategoryId = $request->filled('category_id') ? $request->category_id : $sessionCategoryId;
         $currentSubcategoryId = $request->filled('subcategory_id') ? $request->subcategory_id : $sessionSubcategoryId;
+        $currentSubjectId = $request->filled('subject_id') ? $request->subject_id : $sessionSubjectId;
 
         $sliderProductsQuery = ProductsAttribute::with([
             'product:id,product_name,product_isbn,product_image,product_price,category_id,section_id,condition',
@@ -75,9 +77,9 @@ class IndexController extends Controller
             });
         }
 
-        if ($request->filled('subject_id')) {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
-                $q->where('subject_id', $request->subject_id);
+        if ($currentSubjectId) {
+            $sliderProductsQuery->whereHas('product', function ($q) use ($currentSubjectId) {
+                $q->where('subject_id', $currentSubjectId);
             });
         }
 
@@ -335,7 +337,8 @@ class IndexController extends Controller
             'sellBookRequests',
             'currentSectionId',
             'currentCategoryId',
-            'currentSubcategoryId'
+            'currentSubcategoryId',
+            'currentSubjectId'
         ));
     }
 
@@ -366,6 +369,9 @@ class IndexController extends Controller
         if ($request->filled('subcategory_id')) {
             session(['bg_subcategory_id' => $request->subcategory_id]);
         }
+        if ($request->filled('subject_id')) {
+            session(['bg_subject_id' => $request->subject_id]);
+        }
 
         return response()->json(['success' => true]);
     }
@@ -374,7 +380,10 @@ class IndexController extends Controller
     {
         $query = trim($request->get('q', ''));
 
-        if (strlen($query) < 2) {
+        // Relax length requirement if filters are present
+        $hasFilters = $request->filled('section_id') || $request->filled('category_id') || $request->filled('subcategory_id') || $request->filled('subject_id');
+
+        if (strlen($query) < 2 && !$hasFilters) {
             return response()->json(['results' => [], 'message' => 'Please type at least 2 characters.']);
         }
 
@@ -382,17 +391,25 @@ class IndexController extends Controller
         $userLng = session('user_longitude');
 
         $results = ProductsAttribute::with([
-            'product:id,product_name,product_isbn,product_image,product_price',
+            'product',
             'vendor:id,user_id,location',
             'vendor.vendorbusinessdetails:vendor_id,shop_name,shop_address',
         ])
             ->where('status', 1)
-            ->whereHas('product', function ($q) use ($query) {
-                $q->where('status', 1)
-                    ->where(function ($q2) use ($query) {
+            ->whereHas('product', function ($q) use ($query, $request) {
+                $q->where('status', 1);
+                
+                if ($request->filled('section_id')) $q->where('section_id', $request->section_id);
+                if ($request->filled('category_id')) $q->where('category_id', $request->category_id);
+                if ($request->filled('subcategory_id')) $q->where('subcategory_id', $request->subcategory_id);
+                if ($request->filled('subject_id')) $q->where('subject_id', $request->subject_id);
+
+                if ($query) {
+                    $q->where(function ($q2) use ($query) {
                         $q2->where('product_name', 'like', "%{$query}%")
                             ->orWhere('product_isbn', 'like', "%{$query}%");
                     });
+                }
             })
             ->limit(8)
             ->get();
@@ -466,6 +483,21 @@ class IndexController extends Controller
             ->get(['id', 'subcategory_name as category_name']); // using aliased name for frontend compatibility
 
         return response()->json($subcategories);
+    }
+
+    public function getFilterSubjects(Request $request)
+    {
+        $subjectIds = FilterClassSubject::where('section_id', $request->section_id)
+            ->where('category_id', $request->category_id)
+            ->where('sub_category_id', $request->subcategory_id)
+            ->distinct()
+            ->pluck('subject_id');
+
+        $subjects = Subject::whereIn('id', $subjectIds)
+            ->where('status', 1)
+            ->get(['id', 'name as category_name']); // using aliased name for frontend compatibility
+
+        return response()->json($subjects);
     }
 
     public function searchProducts(Request $request)

@@ -478,6 +478,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     Route::post('/set-location-session', [App\Http\Controllers\Front\LocationController::class, 'setLocationSession']);
     Route::get('/get-filter-categories', [IndexController::class, 'getFilterCategories'])->name('get.filter.categories');
     Route::get('/get-filter-subcategories', [IndexController::class, 'getFilterSubcategories'])->name('get.filter.subcategories');
+    Route::get('/get-filter-subjects', [IndexController::class, 'getFilterSubjects'])->name('get.filter.subjects');
     $catUrls = \App\Models\Category::select('url')->where('status', 1)->pluck('url')->reject(function ($url) {
         return empty($url) || $url === '/' || $url === '#';
     })->toArray(); // Routes like: /men, /women, /shirts, ...

@@ -25,7 +25,7 @@ class ProductsAttribute extends Model
         'product_id',
         'user_id',
         'old_book_condition_id',
-        'price',
+        'user_product_price',
         'stock',
         'sku',
         'status',
