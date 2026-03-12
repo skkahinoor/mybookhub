@@ -97,9 +97,9 @@ class Product extends Model
     }
 
     public function authors()
-    {
-        return $this->belongsToMany(Author::class, 'author_product');
-    }
+{
+    return $this->belongsToMany(Author::class, 'author_product', 'product_id', 'author_id');
+}
 
     // public function attributes()
     // {

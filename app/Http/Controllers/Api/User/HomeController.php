@@ -133,7 +133,7 @@ class HomeController extends Controller
     public function getSubjects($subcategory_id)
     {
         $subjects = FilterClassSubject::where('sub_category_id', $subcategory_id)
-            ->with('subject:id,name')
+            ->with('subject:id,name,subject_icon')
             ->distinct()
             ->get()
             ->pluck('subject')
