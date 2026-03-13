@@ -6,10 +6,8 @@
         }
 
         $attributeId = $sliderProduct->id;
-        $originalPrice = (float) $product->product_price;
-        $discount = (float) ($sliderProduct->product_discount ?? 0);
-        $finalPrice =
-            $discount > 0 ? round($originalPrice - ($originalPrice * $discount) / 100) : round($originalPrice);
+        $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($attributeId);
+        
         $condition = strtolower(trim($product->condition ?? 'new'));
         $isNew = $condition == 'new';
         $conditionClass = $isNew ? 'new' : 'used';
@@ -34,7 +32,14 @@
             <div class="author">
                 {{ $product->authors && $product->authors->count() > 0 ? $product->authors->pluck('name')->implode(', ') : 'Unknown Author' }}
             </div>
-            <div class="price">₹{{ number_format($finalPrice, 0) }}</div>
+            <div class="price">
+                @if ($discountDetails['discount'] > 0)
+                    <span class="original-price">₹{{ number_format($discountDetails['product_price'], 0) }}</span>
+                    <span class="final-price text-danger">₹{{ number_format($discountDetails['final_price'], 0) }}</span>
+                @else
+                    <span class="final-price">₹{{ number_format($discountDetails['product_price'], 0) }}</span>
+                @endif
+            </div>
 
             <form action="{{ url('cart/add') }}" method="POST">
                 @csrf

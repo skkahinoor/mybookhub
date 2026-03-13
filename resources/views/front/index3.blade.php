@@ -926,6 +926,25 @@
             font-weight: 700;
             margin-top: 6px;
             color: #1A1A1A;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: #94A3B8;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .final-price {
+            color: #1A1A1A;
+        }
+
+        .final-price.text-danger {
+            color: #ef4444 !important;
         }
 
         /* BUTTON */
