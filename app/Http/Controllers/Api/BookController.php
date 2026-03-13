@@ -15,10 +15,11 @@ use App\Models\Edition;
 use App\Models\Author;
 use App\Models\Language;
 use App\Models\Admin;
-use App\Models\Category;
 use App\Models\Vendor;
+use App\Models\Category;
 use App\Models\ProductsAttribute;
 use App\Models\FilterClassSubject;
+use App\Models\OldBookCondition;
 
 class BookController extends Controller
 {
@@ -53,6 +54,16 @@ class BookController extends Controller
             ], 403);
         }
         return null;
+    }
+
+    public function getOldBookConditions()
+    {
+        $conditions = OldBookCondition::orderBy('id', 'asc')->get();
+        return response()->json([
+            'status' => true,
+            'message' => 'Conditions fetched successfully',
+            'data' => $conditions
+        ]);
     }
 
     public function getProduct(Request $request)
@@ -421,188 +432,226 @@ class BookController extends Controller
     }
 
     public function storeManualProduct(Request $request)
-{
-    if ($resp = $this->checkAccess($request)) {
-        return $resp;
-    }
+    {
+        if ($resp = $this->checkAccess($request)) {
+            return $resp;
+        }
 
-    $request->validate([
-        'condition' => 'required|in:new,old',
+        $request->validate([
+            'condition' => 'required|in:new,old',
 
-        'product_isbn' => [
-            'required',
-            'string',
-            Rule::unique('products')->where(function ($query) use ($request) {
-                return $query->where('condition', $request->condition);
-            }),
-            'regex:/^(?:\d{10}|\d{13})$/',
-        ],
+            'product_isbn' => [
+                'required',
+                'string',
+                Rule::unique('products')->where(function ($query) use ($request) {
+                    return $query->where('condition', $request->condition);
+                }),
+                'regex:/^(?:\d{10}|\d{13})$/',
+            ],
 
-        'product_name'  => 'required|string|max:255',
-        'product_price' => 'required|numeric|min:0',
-        'description'   => 'nullable|string',
-        'product_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'product_name'  => 'required|string|max:255',
+            'product_price' => 'required|numeric|min:0',
+            'description'   => 'nullable|string',
+            'product_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
 
-        'section_id'    => 'required|exists:sections,id',
-        'category_id'   => 'required|exists:categories,id',
-        'subcategory_id'=> 'required|exists:subcategories,id',
+            'section_id'    => 'required|exists:sections,id',
+            'category_id'   => 'required|exists:categories,id',
+            'subcategory_id' => 'required|exists:subcategories,id',
 
-        'publisher_id'  => 'nullable|exists:publishers,id',
-        'subject_id'    => 'nullable|exists:subjects,id',
-        'edition_id'    => 'nullable|exists:editions,id',
-        'language_id'   => 'nullable|exists:languages,id',
-        'book_type_id'  => 'nullable|exists:book_types,id',
+            'publisher_id'  => 'nullable|exists:publishers,id',
+            'subject_id'    => 'nullable|exists:subjects,id',
+            'edition_id'    => 'nullable|exists:editions,id',
+            'language_id'   => 'nullable|exists:languages,id',
+            'book_type_id'  => 'nullable|exists:book_types,id',
+            'old_book_condition_id' => 'nullable|exists:old_book_conditions,id',
+            'stock'         => 'nullable|integer|min:0',
 
-        'author_ids'   => 'nullable|array',
-        'author_ids.*' => 'exists:authors,id',
+            'author_ids'   => 'nullable|array',
+            'author_ids.*' => 'exists:authors,id',
 
-        'meta_title'       => 'nullable|string',
-        'meta_keywords'    => 'nullable|string',
-        'meta_description' => 'nullable|string'
-    ]);
+            'meta_title'       => 'nullable|string',
+            'meta_keywords'    => 'nullable|string',
+            'meta_description' => 'nullable|string'
+        ], [
+            'product_isbn.unique' => 'Product with same ISBN and condition already exists'
+        ]);
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Validate Section → Category → Subcategory using mapping table
     |--------------------------------------------------------------------------
     */
 
-    $validRelation = FilterClassSubject::where('section_id', $request->section_id)
-        ->where('category_id', $request->category_id)
-        ->where('sub_category_id', $request->subcategory_id)
-        ->exists();
+        $validRelation = FilterClassSubject::where('section_id', $request->section_id)
+            ->where('category_id', $request->category_id)
+            ->where('sub_category_id', $request->subcategory_id)
+            ->exists();
 
-    if (!$validRelation) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Invalid section, category or subcategory combination'
-        ], 422);
-    }
+        if (!$validRelation) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid section, category or subcategory combination'
+            ], 422);
+        }
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Check duplicate ISBN
     |--------------------------------------------------------------------------
     */
 
-    $exists = Product::where('product_isbn', $request->product_isbn)
-        ->where('condition', $request->condition)
-        ->exists();
+        $exists = Product::where('product_isbn', $request->product_isbn)
+            ->where('condition', $request->condition)
+            ->exists();
 
-    if ($exists) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Product with same ISBN and condition already exists'
-        ], 422);
-    }
+        if ($exists) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Product with same ISBN and condition already exists'
+            ], 422);
+        }
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Create Product
     |--------------------------------------------------------------------------
     */
 
-    $product = Product::create([
-        'condition'      => $request->condition,
-        'product_isbn'   => $request->product_isbn,
-        'product_name'   => $request->product_name,
-        'description'    => $request->description,
-        'product_price'  => $request->product_price,
+        $product = Product::create([
+            'condition'      => $request->condition,
+            'product_isbn'   => $request->product_isbn,
+            'product_name'   => $request->product_name,
+            'description'    => $request->description,
+            'product_price'  => $request->product_price,
 
-        'section_id'     => $request->section_id,
-        'category_id'    => $request->category_id,
-        'subcategory_id' => $request->subcategory_id,
+            'section_id'     => $request->section_id,
+            'category_id'    => $request->category_id,
+            'subcategory_id' => $request->subcategory_id,
 
-        'publisher_id' => $request->publisher_id,
-        'subject_id'   => $request->subject_id,
-        'edition_id'   => $request->edition_id,
-        'language_id'  => $request->language_id,
-        'book_type_id' => $request->book_type_id,
+            'publisher_id' => $request->publisher_id,
+            'subject_id'   => $request->subject_id,
+            'edition_id'   => $request->edition_id,
+            'language_id'  => $request->language_id,
+            'book_type_id' => $request->book_type_id,
 
-        'meta_title'       => $request->meta_title,
-        'meta_keywords'    => $request->meta_keywords,
-        'meta_description' => $request->meta_description,
+            'meta_title'       => $request->meta_title,
+            'meta_keywords'    => $request->meta_keywords,
+            'meta_description' => $request->meta_description,
 
-        'status' => 1
-    ]);
+            'status' => 1
+        ]);
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Upload Product Image
     |--------------------------------------------------------------------------
     */
 
-    if ($request->hasFile('product_image')) {
+        if ($request->hasFile('product_image')) {
 
-        $image_tmp = $request->file('product_image');
+            $image_tmp = $request->file('product_image');
 
-        if ($image_tmp->isValid()) {
+            if ($image_tmp->isValid()) {
 
-            $extension = $image_tmp->getClientOriginalExtension();
-            $imageName = rand(111, 99999) . '.' . $extension;
+                $extension = $image_tmp->getClientOriginalExtension();
+                $imageName = rand(111, 99999) . '.' . $extension;
 
-            Image::make($image_tmp)->resize(1000, 1000)
-                ->save(public_path('front/images/product_images/large/' . $imageName));
+                Image::make($image_tmp)->resize(1000, 1000)
+                    ->save(public_path('front/images/product_images/large/' . $imageName));
 
-            Image::make($image_tmp)->resize(500, 500)
-                ->save(public_path('front/images/product_images/medium/' . $imageName));
+                Image::make($image_tmp)->resize(500, 500)
+                    ->save(public_path('front/images/product_images/medium/' . $imageName));
 
-            Image::make($image_tmp)->resize(250, 250)
-                ->save(public_path('front/images/product_images/small/' . $imageName));
+                Image::make($image_tmp)->resize(250, 250)
+                    ->save(public_path('front/images/product_images/small/' . $imageName));
 
-            $product->update([
-                'product_image' => $imageName
-            ]);
+                $product->update([
+                    'product_image' => $imageName
+                ]);
+            }
         }
-    }
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Attach Authors
     |--------------------------------------------------------------------------
     */
 
-    if ($request->filled('author_ids')) {
-        $product->authors()->sync($request->author_ids);
-    }
+        if ($request->filled('author_ids')) {
+            $product->authors()->sync($request->author_ids);
+        }
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Load Relations
     |--------------------------------------------------------------------------
     */
 
-    $product->load([
-        'section',
-        'category',
-        'subcategory',
-        'publisher',
-        'subject',
-        'edition',
-        'language',
-        'authors'
-    ]);
+        $product->load([
+            'section',
+            'category',
+            'subcategory',
+            'publisher',
+            'subject',
+            'edition',
+            'language',
+            'authors'
+        ]);
 
-    /*
+        /*
     |--------------------------------------------------------------------------
     | Generate Image URLs
     |--------------------------------------------------------------------------
     */
 
-    $basePath = url('front/images/product_images');
+        $basePath = url('front/images/product_images');
 
-    $product->image_urls = [
-        'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-        'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-        'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
-    ];
+        $product->image_urls = [
+            'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
+            'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
+            'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+        ];
 
-    return response()->json([
-        'status'  => true,
-        'message' => 'Product added successfully',
-        'data'    => $product
-    ], 201);
-}
+        /*
+    |--------------------------------------------------------------------------
+    | Create Product Attribute (Especially for Old Books with Condition)
+    |--------------------------------------------------------------------------
+    */
+
+        $admin = $request->user();
+        $vendorId = ($admin->type === 'vendor') ? $admin->vendor_id : null;
+        $adminId = ($admin->type !== 'vendor') ? $admin->id : null;
+        $adminType = $admin->type === 'vendor' ? 'vendor' : 'admin';
+
+        $stock = $request->stock ?? 1; // Default to 1 if not provided
+        $discount = 0;
+
+        if ($request->condition === 'old' && $request->old_book_condition_id) {
+            $condition = OldBookCondition::find($request->old_book_condition_id);
+            if ($condition) {
+                // For old books, we store the percentage in 'product_discount' column
+                $discount = $condition->percentage;
+            }
+        }
+
+        ProductsAttribute::create([
+            'product_id' => $product->id,
+            'vendor_id'  => $vendorId,
+            'admin_id'   => $adminId,
+            'admin_type' => $adminType,
+            'stock'      => $stock,
+            'sku'        => 'BH-P' . $product->id . '-' . ($adminType === 'vendor' ? 'V' . $vendorId : 'A' . $adminId),
+            'status'     => 1,
+            'product_discount'      => $discount,
+            'old_book_condition_id' => $request->old_book_condition_id,
+        ]);
+
+        return response()->json([
+            'status'  => true,
+            'message' => 'Product and attributes added successfully',
+            'data'    => $product
+        ], 201);
+    }
 
     public function productSummary(Request $request)
     {
