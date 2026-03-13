@@ -12,6 +12,7 @@ use App\Models\HeaderLogo;
 use App\Models\Language;
 use App\Models\Order;
 use App\Models\OrdersProduct;
+use App\Models\Notification;
 use App\Models\Product;
 use App\Models\ProductsAttribute;
 use App\Models\ProductsFilter;
@@ -1387,6 +1388,19 @@ class ProductsController extends Controller
             Session::put('grand_total', $total_price + $total_shipping_charges - $total_coupon_amount - $total_wallet_amount);
 
             DB::commit();
+
+            // Student notification: order placed
+            if (Auth::check()) {
+                Notification::create([
+                    'type' => 'order_placed',
+                    'title' => 'Order placed successfully',
+                    'message' => 'Your order #' . $order_ids[0] . ' has been placed. Total: ₹' . number_format((float) Session::get('grand_total'), 2),
+                    'related_id' => (int) Auth::id(),
+                    'related_type' => User::class,
+                    'is_read' => false,
+                ]);
+            }
+
             $orderDetails = Order::with('orders_products')->whereIn('id', $order_ids)->get()->toArray();
 
             if ($data['payment_gateway'] == 'COD') {
