@@ -660,9 +660,13 @@ class ProductController extends Controller
             ]);
         }
 
-        $wishlists = Wishlist::with(['product' => function ($q) {
-            $q->select('id', 'category_id', 'product_name', 'product_image', 'product_isbn', 'subcategory_id', 'subject_id', 'language_id', 'book_type_id', 'vendor_id')->with(['authors', 'subcategory', 'subject', 'language', 'bookType', 'vendor']);
-        }])
+        $wishlists = Wishlist::with([
+            'attribute.vendor',
+            'product' => function ($q) {
+                $q->select('id', 'category_id', 'product_name', 'product_image', 'product_isbn', 'subcategory_id', 'subject_id', 'language_id', 'book_type_id')
+                  ->with(['authors', 'subcategory', 'subject', 'language', 'bookType']);
+            }
+        ])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
                     $q->where('user_id', $user_id);
