@@ -85,12 +85,16 @@ class ProductController extends Controller
         $query = Product::with(['category', 'subcategory', 'section', 'subject', 'bookType', 'language', 'authors'])
             ->select('products.*')
             ->join('products_attributes as pa', 'pa.product_id', '=', 'products.id')
+            ->leftJoin('old_book_conditions as obc', 'pa.old_book_condition_id', '=', 'obc.id')
             ->join('vendors as v', 'pa.vendor_id', '=', 'v.id')
             ->join('users as u', 'v.user_id', '=', 'u.id')
             ->addSelect(
                 'pa.id as attribute_id',
                 'pa.stock',
                 'pa.product_discount',
+                'pa.old_book_condition_id',
+                'obc.name as condition_name',
+                'obc.percentage as condition_percentage',
                 'v.id as vendor_id',
                 'u.name as vendor_name',
                 'v.plan as vendor_plan',
@@ -225,6 +229,11 @@ class ProductController extends Controller
                     ],
                     'description'     => $product->description,
                     'condition'       => $product->condition,
+                    'old_book_condition' => $product->old_book_condition_id ? [
+                        'id' => $product->old_book_condition_id,
+                        'name' => $product->condition_name,
+                        'percentage' => $product->condition_percentage,
+                    ] : null,
                     'stock'           => $product->stock,
                     'attribute_id'    => $product->attribute_id,
                     'product_discount' => $product->product_discount,
@@ -267,7 +276,7 @@ class ProductController extends Controller
     {
         $user = auth('sanctum')->user();
 
-        $attribute = ProductsAttribute::with(['vendor.user'])
+        $attribute = ProductsAttribute::with(['vendor.user', 'condition'])
             ->where('id', $attribute_id)
             ->where('status', 1)
             ->where('stock', '>', 0)
@@ -368,6 +377,11 @@ class ProductController extends Controller
                     'stock' => $attribute->stock,
                     'discount' => $attribute->product_discount,
                     'sku' => $attribute->sku,
+                    'old_book_condition' => $attribute->condition ? [
+                        'id' => $attribute->condition->id,
+                        'name' => $attribute->condition->name,
+                        'percentage' => $attribute->condition->percentage,
+                    ] : null,
 
                     'vendor' => [
                         'vendor_id' => $attribute->vendor->id ?? null,
