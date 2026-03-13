@@ -302,11 +302,6 @@ class ProductController extends Controller
             ], 404);
         }
 
-        /*
-    |--------------------------------------------------------------------------
-    | Cart Check
-    |--------------------------------------------------------------------------
-    */
 
         $inCart = false;
         $cartQty = 0;
@@ -322,19 +317,9 @@ class ProductController extends Controller
             }
         }
 
-        /*
-    |--------------------------------------------------------------------------
-    | Author Names
-    |--------------------------------------------------------------------------
-    */
 
         $authorNames = $product->authors->pluck('name')->join(', ');
 
-        /*
-    |--------------------------------------------------------------------------
-    | Image Path
-    |--------------------------------------------------------------------------
-    */
 
         $basePath = url('front/images/product_images');
 
@@ -349,6 +334,7 @@ class ProductController extends Controller
                     'name' => $product->product_name,
                     'isbn' => $product->product_isbn,
                     'price' => $product->product_price,
+                    'condition' => $product->condition,
 
                     'image_urls' => [
                         'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
@@ -386,7 +372,7 @@ class ProductController extends Controller
                     'vendor' => [
                         'vendor_id' => $attribute->vendor->id ?? null,
 
-                        'name' => $authorNames ?: ($attribute->vendor->user->name ?? 'Verified Seller'),
+                        'name' => $attribute->vendor->user->name ?? 'Verified Seller',
 
                         'shop_name' => $attribute->vendor->shop_name ?? null,
                         'address' => $attribute->vendor->address ?? null,
@@ -399,7 +385,7 @@ class ProductController extends Controller
 
                         'user' => [
                             'user_id' => $attribute->vendor->user->id ?? null,
-                            'name' => $authorNames ?: ($attribute->vendor->user->name ?? 'Verified Seller'),
+                            'name' => $attribute->vendor->user->name ?? 'Verified Seller',
                             'email' => $attribute->vendor->user->email ?? null,
                             'mobile' => $attribute->vendor->user->mobile ?? null,
                             'image' => $attribute->vendor->user->image ?? null,
