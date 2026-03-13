@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\BookRequest;
 use App\Models\HeaderLogo;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Wishlist;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
@@ -50,6 +53,13 @@ class DashboardController extends Controller
             ->latest('created_at')
             ->take(5)
             ->get();
+
+        $wishlistCount = (int) Wishlist::where('user_id', $userId)->sum('quantity');
+
+        $bookRequestsCount = (int) BookRequest::where('requested_by_user', $userId)->count();
+        $pendingBookRequestsCount = (int) BookRequest::where('requested_by_user', $userId)
+            ->where('status', 'pending')
+            ->count();
         
         // Today's Orders
         $todayOrders = Order::where('user_id', $userId)
@@ -99,7 +109,53 @@ class DashboardController extends Controller
         }
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        return view('user.dashboard.index', compact('logos', 'headerLogo', 'totalOrders', 'totalSpent', 'pendingOrders', 'deliveredOrders', 'monthlyData', 'todayOrders', 'todayOrdersWorth', 'weeklyOrders', 'weeklyOrdersWorth', 'monthlyOrders', 'monthlyOrdersWorth', 'recentOrders', 'wishlistItems'));
+
+        // Student-specific notifications
+        // Some notifications are global (no related_id/type). For students, show:
+        // - notifications explicitly tied to this user (related_type=User, related_id=userId)
+        // - global announcements (related_id/type null)
+        $studentNotificationsQuery = Notification::query()
+            ->where(function ($q) use ($userId) {
+                $q->where(function ($q2) use ($userId) {
+                    $q2->where('related_type', User::class)
+                        ->where('related_id', $userId);
+                })->orWhere(function ($q2) {
+                    $q2->whereNull('related_type')
+                        ->whereNull('related_id');
+                });
+            });
+
+        $studentNotifications = (clone $studentNotificationsQuery)
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        $unreadAlertsCount = (clone $studentNotificationsQuery)
+            ->where('is_read', false)
+            ->count();
+
+        return view('user.dashboard.index', compact(
+            'logos',
+            'headerLogo',
+            'totalOrders',
+            'totalSpent',
+            'pendingOrders',
+            'deliveredOrders',
+            'monthlyData',
+            'todayOrders',
+            'todayOrdersWorth',
+            'weeklyOrders',
+            'weeklyOrdersWorth',
+            'monthlyOrders',
+            'monthlyOrdersWorth',
+            'recentOrders',
+            'wishlistItems',
+            'studentNotifications',
+            'unreadAlertsCount',
+            'wishlistCount',
+            'bookRequestsCount',
+            'pendingBookRequestsCount'
+        ));
     }
 }
 
