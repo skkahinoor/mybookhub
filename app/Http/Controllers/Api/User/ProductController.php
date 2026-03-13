@@ -334,6 +334,7 @@ class ProductController extends Controller
                     'name' => $product->product_name,
                     'isbn' => $product->product_isbn,
                     'price' => $product->product_price,
+                    'condition' => $product->condition,
 
                     'image_urls' => [
                         'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
