@@ -93,7 +93,7 @@ class ProductController extends Controller
         // Personalization logic for students
         if ($user && $user->hasRole('student')) {
             $user->load(['institution', 'institutionClass']);
-            
+
             // Auto-apply Section (type) if not provided
             if (!$request->section_id && $user->institution && $user->institution->type) {
                 $query->where('section_id', $user->institution->type);
@@ -310,8 +310,8 @@ class ProductController extends Controller
 
         $vendorOffers = $attributes->map(function ($attr) use ($lat, $lng, $user) {
             $distance = isset($attr->distance) ? round($attr->distance, 2) : null;
-            
-            // Fallback for manual distance calculation if needed for any reason, 
+
+            // Fallback for manual distance calculation if needed for any reason,
             // but we use the SQL result now for consistency and performance.
             if ($distance === null && $lat && $lng && $attr->vendor && $attr->vendor->location) {
                 $vendorLoc = explode(',', $attr->vendor->location);
