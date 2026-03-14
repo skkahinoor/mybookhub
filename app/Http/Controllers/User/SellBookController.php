@@ -3,30 +3,26 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Author;
 use App\Models\BookType;
 use App\Models\Category;
-use App\Models\Section;
-use App\Models\ProductsFilter;
-use App\Models\Product;
-use App\Models\ProductsAttribute;
-use App\Models\ProductsImage;
-use App\Models\Vendor;
-use App\Models\Publisher;
-use App\Models\Author;
 use App\Models\Edition;
+use App\Models\HeaderLogo;
+use App\Models\Language;
 use App\Models\Notification;
 use App\Models\OldBookCondition;
-use App\Models\HeaderLogo;
+use App\Models\Product;
+use App\Models\ProductsAttribute;
+use App\Models\Publisher;
+use App\Models\Section;
 use App\Models\Subcategory;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Session;
-use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Http;
-use App\Models\Language;
+use Illuminate\Support\Facades\View;
+use Intervention\Image\Facades\Image;
 
 class SellBookController extends Controller
 {
@@ -40,9 +36,9 @@ class SellBookController extends Controller
         $user_id = Auth::id();
 
         // Fetch products that this user has added attributes for
-        $userProducts = Product::whereHas('attributes', function($q) use ($user_id) {
+        $userProducts = Product::whereHas('attributes', function ($q) use ($user_id) {
             $q->where('user_id', $user_id);
-        })->with(['attributes' => function($q) use ($user_id) {
+        })->with(['attributes' => function ($q) use ($user_id) {
             $q->where('user_id', $user_id);
         }, 'category'])->orderBy('created_at', 'desc')->get();
 
@@ -59,9 +55,9 @@ class SellBookController extends Controller
         $headerLogo = HeaderLogo::first();
 
         // Replicating admin data fetching
-        $title = "Sell Old Book";
+        $title = 'Sell Old Book';
         $product = new Product;
-        
+
         $publishers = Publisher::where('status', 1)->get();
         $authors = Author::where('status', 1)->get();
         $sections = Section::where('status', 1)->get();
@@ -84,11 +80,11 @@ class SellBookController extends Controller
         $user = Auth::user();
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        $title = "Edit Old Book";
-        
+        $title = 'Edit Old Book';
+
         // Find product
         $product = Product::with(['authors'])->find($id);
-        if (!$product) {
+        if (! $product) {
             return redirect()->back()->with('error_message', 'Product not found.');
         }
 
@@ -96,8 +92,8 @@ class SellBookController extends Controller
         $attribute = ProductsAttribute::where('product_id', $id)
             ->where('user_id', $user->id)
             ->first();
-            
-        if (!$attribute) {
+
+        if (! $attribute) {
             return redirect()->back()->with('error_message', 'You do not have permission to edit this product.');
         }
 
@@ -129,171 +125,192 @@ class SellBookController extends Controller
     {
         try {
             $user = Auth::user();
-        
-        if ($id == "") {
-            $product = new Product;
-            $message = "Product added successfully!";
-        } else {
-            $product = Product::find($id);
-            $message = "Product updated successfully!";
-        }
 
-        $request->validate([
-            'section_id' => 'required|integer|exists:sections,id',
-            'category_id' => 'required|integer|exists:categories,id',
-            'subcategory_id' => 'required|integer|exists:subcategories,id',
-            'product_name' => 'required|string|max:255',
-            'product_price' => 'required|numeric|min:0',
-            'old_book_condition_id' => 'required|exists:old_book_conditions,id',
-            'language_id' => 'required|exists:languages,id',
-        ]);
-
-        $data = $request->all();
-
-        // Clean ISBN if provided
-        $cleanIsbn = null;
-        if (!empty($data['product_isbn'])) {
-            $cleanIsbn = preg_replace('/[^0-9X]/i', '', $data['product_isbn']);
-            if (strlen($cleanIsbn) != 10 && strlen($cleanIsbn) != 13) {
-                if ($request->ajax()) {
-                    return response()->json(['status' => false, 'message' => 'Invalid ISBN. It must be 10 or 13 characters.'], 422);
-                }
-                return redirect()->back()->with('error_message', 'Invalid ISBN. It must be 10 or 13 characters.')->withInput();
+            if ($id == '') {
+                $product = new Product;
+                $message = 'Product added successfully!';
+            } else {
+                $product = Product::find($id);
+                $message = 'Product updated successfully!';
             }
-        }
 
-        // ==========================================
-        // DEDUPLICATION: Check if product already exists globally
-        // ==========================================
-        $existingProduct = null;
-        if (!empty($cleanIsbn) && empty($id)) {
-            $existingProduct = Product::whereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanIsbn])->first();
-        }
+            $request->validate([
+                'section_id' => 'required|integer|exists:sections,id',
+                'category_id' => 'required|integer|exists:categories,id',
+                'subcategory_id' => 'required|integer|exists:subcategories,id',
+                'product_name' => 'required|string|max:255',
+                'product_price' => 'required|numeric|min:0',
+                'old_book_condition_id' => 'required|exists:old_book_conditions,id',
+                'language_id' => 'required|exists:languages,id',
+            ]);
 
-        if ($existingProduct && empty($id)) {
+            $data = $request->all();
+
+            // Clean ISBN if provided
+            // Clean ISBN if provided
+            $cleanIsbn = null;
+            if (! empty($data['product_isbn'])) {
+                $cleanIsbn = preg_replace('/[^0-9X]/i', '', $data['product_isbn']);
+
+                // Allow ISBN length between 10 and 13
+                if (strlen($cleanIsbn) < 10 || strlen($cleanIsbn) > 13) {
+                    if ($request->ajax()) {
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Invalid ISBN. It must be between 10 and 13 characters.',
+                        ], 422);
+                    }
+
+                    return redirect()->back()
+                        ->with('error_message', 'Invalid ISBN. It must be between 10 and 13 characters.')
+                        ->withInput();
+                }
+            }
+
             // ==========================================
-            // AUTO-FILL CASE: Re-use existing global product
+            // DEDUPLICATION: Check if product already exists globally
             // ==========================================
-            $product = $existingProduct;
-            $message = "Old book added successfully from existing records!";
+            $existingProduct = null;
+            if (! empty($cleanIsbn) && empty($id)) {
+                $existingProduct = Product::whereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanIsbn])->first();
+            }
 
-            // Check if user already added this product
-            $userHasIt = ProductsAttribute::where('product_id', $product->id)
+            if ($existingProduct && empty($id)) {
+                // ==========================================
+                // AUTO-FILL CASE: Re-use existing global product
+                // ==========================================
+                $product = $existingProduct;
+                $message = 'Old book added successfully from existing records!';
+
+                // Check if user already added this product
+                $userHasIt = ProductsAttribute::where('product_id', $product->id)
+                    ->where('user_id', $user->id)
+                    ->first();
+
+                if ($userHasIt) {
+                    if ($request->ajax()) {
+                        return response()->json(['status' => false, 'message' => 'You have already added this old book.'], 422);
+                    }
+
+                    return redirect()->back()->with('error_message', 'You have already added this old book.');
+                }
+            } else {
+                // ==========================================
+                // MANUAL ENTRY OR UPDATE CASE
+                // ==========================================
+                // Only update product details if we are creating a new one or if we're allowed to edit
+                $product->section_id = $data['section_id'] ?? null;
+                $product->category_id = $data['category_id'] ?? null;
+                $product->subcategory_id = $data['subcategory_id'] ?? null;
+                $product->subject_id = $data['subject_id'] ?? null;
+                $product->language_id = $data['language_id'] ?? null;
+                $product->publisher_id = $data['publisher_id'] ?? null;
+
+                // Image handling
+                if ($request->hasFile('product_image')) {
+                    $image_tmp = $request->file('product_image');
+                    if ($image_tmp->isValid()) {
+                        $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
+                        $extension = $image_tmp->getClientOriginalExtension();
+                        $imageName = $image_name.'-'.rand(111, 99999).'.'.$extension;
+                        $largeImagePath = public_path('front/images/product_images/large/'.$imageName);
+                        $mediumImagePath = public_path('front/images/product_images/medium/'.$imageName);
+                        $smallImagePath = public_path('front/images/product_images/small/'.$imageName);
+                        Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);
+                        Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
+                        Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
+                        $product->product_image = $imageName;
+                    }
+                }
+
+                $product->condition = 'old';
+                $product->product_name = $data['product_name'];
+                $product->product_isbn = $data['product_isbn'] ?? null;
+                $product->product_price = $data['product_price']; // This is the BASE/MRP price
+                $product->edition_id = $data['edition_id'] ?? null;
+                $product->description = $data['description'] ?? null;
+                $product->meta_title = $data['meta_title'] ?? null;
+                $product->meta_keywords = $data['meta_keywords'] ?? null;
+                $product->meta_description = $data['meta_description'] ?? null;
+                $product->book_type_id = $data['book_type_id'] ?? null;
+                $product->status = 0; // Requires admin verification
+
+                $product->save();
+
+                if (! empty($request->author_id)) {
+                    $product->authors()->sync($request->author_id);
+                }
+            }
+
+            // ==========================================
+            // CREATE/UPDATE PRODUCT ATTRIBUTE FOR USER
+            // ==========================================
+            $attribute = ProductsAttribute::where('product_id', $product->id)
                 ->where('user_id', $user->id)
                 ->first();
 
-            if ($userHasIt) {
-                if ($request->ajax()) {
-                    return response()->json(['status' => false, 'message' => 'You have already added this old book.'], 422);
+            if (! $attribute) {
+                $attribute = new ProductsAttribute;
+                $attribute->product_id = $product->id;
+                $attribute->user_id = $user->id;
+                $attribute->admin_type = 'user';
+                $attribute->sku = 'BH-P'.$product->id.'-U'.$user->id;
+            }
+
+            $attribute->old_book_condition_id = $data['old_book_condition_id'] ?? null;
+            $attribute->stock = 1;
+            $attribute->product_discount = 0;
+            $attribute->admin_approved = 0; // Requires verification
+            $attribute->status = 0; // Hidden until approved
+
+            // Calculate Price based on condition percentage
+            if (! empty($data['old_book_condition_id'])) {
+                $condition = OldBookCondition::find($data['old_book_condition_id']);
+                if ($condition && $product->product_price > 0) {
+                    $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
+                } else {
+                    $attribute->user_product_price = $product->product_price;
                 }
-                return redirect()->back()->with('error_message', 'You have already added this old book.');
-            }
-        } else {
-            // ==========================================
-            // MANUAL ENTRY OR UPDATE CASE
-            // ==========================================
-            // Only update product details if we are creating a new one or if we're allowed to edit
-            $product->section_id       = $data['section_id'] ?? null;
-            $product->category_id      = $data['category_id'] ?? null;
-            $product->subcategory_id   = $data['subcategory_id'] ?? null;
-            $product->subject_id       = $data['subject_id'] ?? null;
-            $product->language_id      = $data['language_id'] ?? null;
-            $product->publisher_id     = $data['publisher_id'] ?? null;
-            
-            // Image handling
-            if ($request->hasFile('product_image')) {
-                $image_tmp = $request->file('product_image');
-                if ($image_tmp->isValid()) {
-                    $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = $image_name . '-' . rand(111, 99999) . '.' . $extension;
-                    $largeImagePath = public_path('front/images/product_images/large/' . $imageName);
-                    $mediumImagePath = public_path('front/images/product_images/medium/' . $imageName);
-                    $smallImagePath = public_path('front/images/product_images/small/' . $imageName);
-                    Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);
-                    Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
-                    Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
-                    $product->product_image = $imageName;
-                }
-            }
-
-            $product->condition        = 'old';
-            $product->product_name     = $data['product_name'];
-            $product->product_isbn     = $data['product_isbn'] ?? null;
-            $product->product_price    = $data['product_price']; // This is the BASE/MRP price
-            $product->edition_id       = $data['edition_id'] ?? null;
-            $product->description      = $data['description'] ?? null;
-            $product->meta_title       = $data['meta_title'] ?? null;
-            $product->meta_keywords    = $data['meta_keywords'] ?? null;
-            $product->meta_description = $data['meta_description'] ?? null;
-            $product->book_type_id     = $data['book_type_id'] ?? null;
-            $product->status           = 0; // Requires admin verification
-            
-            $product->save();
-            
-            if (!empty($request->author_id)) {
-                $product->authors()->sync($request->author_id);
-            }
-        }
-
-        // ==========================================
-        // CREATE/UPDATE PRODUCT ATTRIBUTE FOR USER
-        // ==========================================
-        $attribute = ProductsAttribute::where('product_id', $product->id)
-            ->where('user_id', $user->id)
-            ->first();
-
-        if (!$attribute) {
-            $attribute = new ProductsAttribute();
-            $attribute->product_id = $product->id;
-            $attribute->user_id = $user->id;
-            $attribute->admin_type = 'user';
-            $attribute->sku = 'BH-P' . $product->id . '-U' . $user->id;
-        }
-
-        $attribute->old_book_condition_id = $data['old_book_condition_id'] ?? null;
-        $attribute->stock = 1;
-        $attribute->product_discount = 0;
-        $attribute->admin_approved = 0; // Requires verification
-        $attribute->status = 0; // Hidden until approved
-
-        // Calculate Price based on condition percentage
-        if (!empty($data['old_book_condition_id'])) {
-            $condition = OldBookCondition::find($data['old_book_condition_id']);
-            if ($condition && $product->product_price > 0) {
-                $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
             } else {
                 $attribute->user_product_price = $product->product_price;
             }
-        } else {
-            $attribute->user_product_price = $product->product_price;
-        }
 
-        $attribute->save();
+            $attribute->save();
 
-        // Notification for admin
-        if ($id == null) {
-            Notification::create([
-                'type' => 'product_added',
-                'title' => 'New Product Added by User',
-                'message' => "Student '{$user->name}' added a new old book '{$product->product_name}' (ISBN: {$product->product_isbn}).",
-                'related_id' => $product->id,
-                'related_type' => 'App\Models\Product',
-                'vendor_id' => null,
-                'is_read' => false,
-            ]);
-        }
+            // Notification for admin
+            if ($id == null) {
+                Notification::create([
+                    'type' => 'product_added',
+                    'title' => 'New Product Added by User',
+                    'message' => "Student '{$user->name}' added a new old book '{$product->product_name}' (ISBN: {$product->product_isbn}).",
+                    'related_id' => $product->id,
+                    'related_type' => 'App\Models\Product',
+                    'vendor_id' => null,
+                    'is_read' => false,
+                ]);
 
-        if ($request->ajax()) {
-            return response()->json(['status' => true, 'message' => $message]);
-        }
+                // Notify student that their sell request was submitted
+                Notification::create([
+                    'type' => 'sell_book_submitted',
+                    'title' => 'Sell request submitted',
+                    'message' => "Your listing for '{$product->product_name}' has been submitted and is under review. We will notify you once it is approved.",
+                    'related_id' => (int) $user->id,
+                    'related_type' => \App\Models\User::class,
+                    'is_read' => false,
+                ]);
+            }
 
-        return redirect()->route('student.sell-book.index')->with('success_message', $message . ' Awaiting admin verification.');
+            if ($request->ajax()) {
+                return response()->json(['status' => true, 'message' => $message]);
+            }
+
+            return redirect()->route('student.sell-book.index')->with('success_message', $message.' Awaiting admin verification.');
 
         } catch (\Exception $e) {
             if ($request->ajax()) {
                 return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
             }
+
             return redirect()->back()->with('error_message', $e->getMessage())->withInput();
         }
     }
@@ -313,19 +330,19 @@ class SellBookController extends Controller
             if ($existing) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Publisher already exists.'
+                    'message' => 'Publisher already exists.',
                 ]);
             }
 
-            $publisher = new Publisher();
+            $publisher = new Publisher;
             $publisher->name = $request->name;
-            $publisher->status = 1; 
+            $publisher->status = 1;
             $publisher->save();
 
             return response()->json([
                 'status' => 'success',
                 'id' => $publisher->id,
-                'name' => $publisher->name
+                'name' => $publisher->name,
             ]);
         }
 
@@ -336,20 +353,20 @@ class SellBookController extends Controller
     {
         $isbn = $request->input('isbn');
         if (empty($isbn)) {
-             return response()->json(['status' => false, 'message' => 'ISBN is required']);
+            return response()->json(['status' => false, 'message' => 'ISBN is required']);
         }
         $cleanSearch = preg_replace('/[^0-9X]/i', '', $isbn);
-        
+
         $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
             ->where('product_isbn', $isbn)
             ->first();
 
-        if (!$product && strlen($cleanSearch) > 0) {
+        if (! $product && strlen($cleanSearch) > 0) {
             $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
-                ->where(function($query) use ($isbn, $cleanSearch) {
+                ->where(function ($query) use ($isbn, $cleanSearch) {
                     $query->where('product_isbn', 'like', "%{$isbn}%")
-                          ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
-                          ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
+                        ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
+                        ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
                 })
                 ->first();
         }
@@ -375,14 +392,14 @@ class SellBookController extends Controller
                     'product_price' => $product->product_price,
                     'description' => $product->description,
                     'image' => $product->product_image,
-                ]
+                ],
             ]);
         }
 
         // External API Lookup (ISBNDB)
         $key = config('services.isbn.key');
-        if (!$key) {
-             return response()->json(['status' => false, 'message' => 'Book not found and API key missing.']);
+        if (! $key) {
+            return response()->json(['status' => false, 'message' => 'Book not found and API key missing.']);
         }
 
         try {
@@ -394,19 +411,19 @@ class SellBookController extends Controller
 
                 // Prepare master record
                 $publisher_id = null;
-                if (!empty($book['publisher'])) {
+                if (! empty($book['publisher'])) {
                     $publisher = Publisher::firstOrCreate(['name' => $book['publisher']], ['status' => 1]);
                     $publisher_id = $publisher->id;
                 }
 
                 $subject_id = null;
-                if (!empty($book['subjects'][0])) {
+                if (! empty($book['subjects'][0])) {
                     $subject = Subject::firstOrCreate(['name' => $book['subjects'][0]], ['status' => 1]);
                     $subject_id = $subject->id;
                 }
 
                 $author_ids = [];
-                if (!empty($book['authors'])) {
+                if (! empty($book['authors'])) {
                     foreach ($book['authors'] as $name) {
                         $author = Author::firstOrCreate(['name' => $name], ['status' => 1]);
                         $author_ids[] = $author->id;
@@ -421,13 +438,13 @@ class SellBookController extends Controller
                     'data' => [
                         'product_name' => $book['title'] ?? '',
                         'product_isbn' => $isbn,
-                        'description'  => $book['synopsis'] ?? '',
+                        'description' => $book['synopsis'] ?? '',
                         'product_price' => $book['msrp'] ?? 0,
-                        'image_url'     => $book['image'] ?? null,
-                        'publisher_id'  => $publisher_id,
-                        'subject_id'    => $subject_id,
-                        'author_ids'    => $author_ids,
-                    ]
+                        'image_url' => $book['image'] ?? null,
+                        'publisher_id' => $publisher_id,
+                        'subject_id' => $subject_id,
+                        'author_ids' => $author_ids,
+                    ],
                 ]);
             }
         } catch (\Exception $e) {
@@ -440,17 +457,17 @@ class SellBookController extends Controller
     public function nameSuggestions(Request $request)
     {
         $query = $request->input('query');
-        if (!$query || strlen($query) < 2) {
-             return response()->json(['status' => true, 'data' => []]);
+        if (! $query || strlen($query) < 2) {
+            return response()->json(['status' => true, 'data' => []]);
         }
 
-        $books = Product::where('product_name', 'LIKE', '%' . $query . '%')
+        $books = Product::where('product_name', 'LIKE', '%'.$query.'%')
             ->limit(10)
             ->get(['id', 'product_name', 'product_isbn']);
 
         return response()->json([
             'status' => true,
-            'data'   => $books
+            'data' => $books,
         ]);
     }
 
@@ -460,7 +477,9 @@ class SellBookController extends Controller
     public function getBoards(Request $request)
     {
         $sectionId = $request->query('section_id');
-        if (!$sectionId) return response()->json([]);
+        if (! $sectionId) {
+            return response()->json([]);
+        }
 
         $boards = Category::where('status', 1)
             ->where('section_id', $sectionId)
@@ -476,10 +495,12 @@ class SellBookController extends Controller
      */
     public function getClasses(Request $request)
     {
-        $sectionId  = $request->query('section_id');
+        $sectionId = $request->query('section_id');
         $categoryId = $request->query('category_id');
 
-        if (!$sectionId || !$categoryId) return response()->json([]);
+        if (! $sectionId || ! $categoryId) {
+            return response()->json([]);
+        }
 
         $classes = DB::table('filter_class_subject')
             ->join('subcategories', 'filter_class_subject.sub_category_id', '=', 'subcategories.id')
@@ -498,11 +519,13 @@ class SellBookController extends Controller
      */
     public function getSubjects(Request $request)
     {
-        $sectionId     = $request->query('section_id');
-        $categoryId    = $request->query('category_id');
+        $sectionId = $request->query('section_id');
+        $categoryId = $request->query('category_id');
         $subCategoryId = $request->query('sub_category_id');
 
-        if (!$sectionId || !$categoryId || !$subCategoryId) return response()->json([]);
+        if (! $sectionId || ! $categoryId || ! $subCategoryId) {
+            return response()->json([]);
+        }
 
         $subjects = DB::table('filter_class_subject')
             ->join('subjects', 'filter_class_subject.subject_id', '=', 'subjects.id')

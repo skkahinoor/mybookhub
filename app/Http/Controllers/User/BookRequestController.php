@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\BookRequest;
 use App\Models\BookRequestReply;
 use App\Models\HeaderLogo;
+use App\Models\Notification;
+use App\Models\User;
+use Illuminate\Http\Request;
 use App\Models\Language;
 use App\Models\Product;
 use App\Models\Section;
@@ -54,6 +56,15 @@ class BookRequestController extends Controller
             'author_name'       => $request->author_name,
             'message'           => $request->message,
             'requested_by_user' => Auth::id(),
+        ]);
+
+        Notification::create([
+            'type' => 'book_request_submitted',
+            'title' => 'Book request submitted',
+            'message' => 'Your request for "' . $request->book_title . '" has been submitted. We will get back to you soon.',
+            'related_id' => (int) Auth::id(),
+            'related_type' => User::class,
+            'is_read' => false,
         ]);
 
         return redirect()->back()->with('success', 'Your book request has been submitted!');
