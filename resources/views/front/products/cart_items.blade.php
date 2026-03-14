@@ -208,7 +208,7 @@
 
                     {{-- Product Name --}}
                     <td class="product-item-name">
-                        <a href="{{ url('product/' . $item['product_attribute_id']) }}">
+                        <a href="{{ url('product/' . $item['product_id']) }}">
                             {{ $item['product']['product_name'] ?? 'Product' }}
                         </a>
                     </td>
