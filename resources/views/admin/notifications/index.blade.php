@@ -225,10 +225,15 @@
 
     @push('scripts')
         <script>
+            // Determine base URLs depending on whether we're in admin or vendor module
+            var isVendor = {{ request()->is('vendor/*') ? 'true' : 'false' }};
+            var baseUrl = isVendor ? "{{ url('vendor') }}" : "{{ url('admin') }}";
+            var baseNotificationsUrl = isVendor ? "{{ url('vendor/notifications') }}" : "{{ url('admin/notifications') }}";
+
             $('#notificationsTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: '{{ route('notifications.index') }}',
+                ajax: isVendor ? "{{ route('vendor.notifications.index') }}" : "{{ route('notifications.index') }}",
                 order: [
                     [4, 'desc']
                 ],
@@ -357,7 +362,7 @@
                     );
 
                     $.ajax({
-                        url: 'institution-management/' + id + '/details',
+                        url: baseUrl + '/institution-management/' + id + '/details',
                         type: 'GET',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -481,7 +486,7 @@
 
                 function updateInstitutionStatus(status, institutionId, notificationId) {
                     $.ajax({
-                        url: 'update-institution-status',
+                        url: baseUrl + '/update-institution-status',
                         type: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -494,7 +499,7 @@
                             // Mark notification as read
                             if (notificationId) {
                                 $.ajax({
-                                    url: '/admin/notifications/' + notificationId + '/read',
+                                    url: baseNotificationsUrl + '/' + notificationId + '/read',
                                     type: 'POST',
                                     headers: {
                                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -521,7 +526,7 @@
                     );
 
                     $.ajax({
-                        url: 'students/' + id + '/details',
+                        url: baseUrl + '/students/' + id + '/details',
                         type: 'GET',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -613,7 +618,7 @@
 
                 function updateStudentStatus(status, studentId, notificationId) {
                     $.ajax({
-                        url: 'students/' + studentId + '/update-status',
+                        url: baseUrl + '/students/' + studentId + '/update-status',
                         type: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -625,7 +630,7 @@
                             // Mark notification as read
                             if (notificationId) {
                                 $.ajax({
-                                    url: '/admin/notifications/' + notificationId + '/read',
+                                    url: baseNotificationsUrl + '/' + notificationId + '/read',
                                     type: 'POST',
                                     headers: {
                                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -675,7 +680,7 @@
                     );
 
                     $.ajax({
-                        url: '{{ url('admin/sales-executive') }}/' + id + '/details',
+                        url: baseUrl + '/sales-executive/' + id + '/details',
                         type: 'GET',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -760,7 +765,7 @@
 
                 function updateSalesExecutiveStatus(statusText) {
                     $.ajax({
-                        url: '{{ url('admin/update-sales-executive-status') }}',
+                        url: baseUrl + '/update-sales-executive-status',
                         type: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -773,8 +778,7 @@
                             // Mark notification as read
                             if (currentNotificationId) {
                                 $.ajax({
-                                    url: '{{ url('admin/notifications') }}/' +
-                                        currentNotificationId + '/read',
+                                    url: baseNotificationsUrl + '/' + currentNotificationId + '/read',
                                     type: 'POST',
                                     headers: {
                                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -792,14 +796,14 @@
                     });
                 }
 
-                // Mark individual notification as read
-                $('.mark-as-read').on('click', function(e) {
+                // Mark individual notification as read (delegated for DataTables)
+                $(document).on('click', '.mark-as-read', function(e) {
                     e.preventDefault();
                     var notificationId = $(this).data('id');
                     var row = $(this).closest('tr');
 
                     $.ajax({
-                        url: '{{ url('admin/notifications') }}/' + notificationId + '/read',
+                        url: baseNotificationsUrl + '/' + notificationId + '/read',
                         type: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -813,8 +817,13 @@
                                     '<span class="badge badge-success">Read</span>');
                                 row.find('.mark-as-read').remove();
 
+                                // Update unread count in header if it exists
+                                if(typeof updateNotificationCount === "function"){
+                                    updateNotificationCount();
+                                }
+                                
                                 // Show success message
-                                alert('Notification marked as read');
+                                // alert('Notification marked as read');
                             }
                         },
                         error: function(xhr) {
@@ -831,7 +840,7 @@
                     }
 
                     $.ajax({
-                        url: '{{ url('admin/notifications/mark-all-read') }}',
+                        url: baseNotificationsUrl + '/mark-all-read',
                         type: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
