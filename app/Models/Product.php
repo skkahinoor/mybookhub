@@ -274,9 +274,9 @@ class Product extends Model
         $totalDiscountAmount = max(0, $originalPrice - $finalPrice);
 
         return [
-            'product_price' => round($originalPrice, 2), // Strike-through price
-            'final_price'   => round($finalPrice, 2),    // Paying price
-            'discount'      => round($totalDiscountAmount, 2),
+            'product_price' => round($originalPrice), // Strike-through price
+            'final_price'   => round($finalPrice),    // Paying price
+            'discount'      => round($totalDiscountAmount),
         ];
     }
 
