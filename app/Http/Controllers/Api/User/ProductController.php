@@ -663,8 +663,22 @@ class ProductController extends Controller
         $wishlists = Wishlist::with([
             'attribute.vendor',
             'product' => function ($q) {
-                $q->select('id', 'category_id', 'product_name', 'product_image', 'product_isbn', 'subcategory_id', 'subject_id', 'language_id', 'book_type_id')
-                  ->with(['authors', 'subcategory', 'subject', 'language', 'bookType']);
+                $q->select(
+                    'id',
+                    'category_id',
+                    'product_name',
+                    'product_image',
+                    'product_isbn',
+                    'subcategory_id',
+                    'subject_id',
+                    'language_id',
+                    'book_type_id'
+                )->with([
+                    'subcategory',
+                    'subject',
+                    'language',
+                    'bookType'
+                ]);
             }
         ])
             ->where(function ($q) use ($user_id, $session_id) {
@@ -682,6 +696,7 @@ class ProductController extends Controller
         $basePath = url('front/images/product_images');
 
         foreach ($wishlists as $item) {
+
             $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
 
             $item->product_price = $priceDetails['product_price'] ?? 0;
@@ -699,23 +714,6 @@ class ProductController extends Controller
                     'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
                     'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
-                $authorString = $item->product->authors->pluck('author_name')->join(', ');
-                $item->product->author_name = $authorString;
-                $item->product->authors = $item->product->authors->map(function ($author) {
-                    return [
-                        'id' => $author->id,
-                        'name' => $author->author_name,
-                    ];
-                });
-
-                // Overwrite vendor name for app display
-                if ($authorString) {
-                    if (is_array($item->product->vendor) || is_object($item->product->vendor)) {
-                        $item->product->vendor['name'] = $authorString;
-                    } else {
-                        $item->product->vendor = ['name' => $authorString];
-                    }
-                }
             }
 
             $qty = $item->quantity ?? 1;
