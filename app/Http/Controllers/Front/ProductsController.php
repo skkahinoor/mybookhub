@@ -52,12 +52,24 @@ class ProductsController extends Controller
                 // Get the entered URL in the browser address bar category details
                 $categoryDetails = Category::categoryDetails($url); // get the categories of the opened $url (get categories depending on the $url)
 
-                $categoryProducts = Product::with('publisher')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1); // moving the paginate() method after checking for the sorting filter
+                $categoryProducts = Product::with(['publisher', 'authors', 'category'])
+                    ->whereIn('category_id', $categoryDetails['catIds'])
+                    ->whereHas('attributes', function($q) {
+                        $q->where('status', 1);
+                    })
+                    ->where('status', 1);
 
                 $productFilters = ProductsFilter::productFilters(); // Get all the (enabled/active) Filters    // (Another way to go is using an AJAX call to get the $productFilters!)
                 foreach ($productFilters as $key => $filter) {
                     if (isset($filter['filter_column']) && isset($data[$filter['filter_column']]) && ! empty($filter['filter_column']) && ! empty($data[$filter['filter_column']])) {
-                        $categoryProducts->whereIn($filter['filter_column'], $data[$filter['filter_column']]);
+                        // If filter column is in products table, query directly, otherwise query via attributes
+                        if (in_array($filter['filter_column'], ['product_name', 'product_isbn', 'product_price'])) {
+                            $categoryProducts->whereIn($filter['filter_column'], $data[$filter['filter_column']]);
+                        } else {
+                            $categoryProducts->whereHas('attributes', function($q) use ($filter, $data) {
+                                $q->whereIn($filter['filter_column'], $data[$filter['filter_column']]);
+                            });
+                        }
                     }
                 }
 
@@ -76,31 +88,26 @@ class ProductsController extends Controller
                 }
 
                 if (isset($data['size']) && ! empty($data['size'])) {                                                                   // coming from the AJAX call in front/js/custom.js    // example:    $data['size'] = 'Large'
-                    $productIds = ProductsAttribute::select('product_id')->whereIn('size', $data['size'])->pluck('product_id')->toArray(); // fetch the products ids of the $data['size'] from the `products_attributes` table
-
-                    $categoryProducts->whereIn('products.id', $productIds); // `products.id` means that `products` is the table name (means grab the `id` column of the `products` table)
+                    $categoryProducts->whereHas('attributes', function($q) use ($data) {
+                        $q->whereIn('size', $data['size']);
+                    });
                 }
 
                 $productIds = [];
 
                 if (isset($data['price']) && ! empty($data['price'])) {
                     foreach ($data['price'] as $key => $price) {
-                        $priceArr = explode('-', $price);                                                                                           // Example: First loop iteration: 0, 1000    then Second loop iteration: 1000, 2000, ...etc
-                        if (isset($priceArr[0]) && isset($priceArr[1])) {                                                                           // Example: First loop iteration: 0, 1000    then Second loop iteration: 1000, 2000, ...etc
-                            $productIds[] = Product::select('id')->whereBetween('product_price', [$priceArr[0], $priceArr[1]])->pluck('id')->toArray(); // fetch the products ids of the range $priceArr[0] and $priceArr[1] (whereBetween() method) from the `products` table    // whereBetween(): https://laravel.com/docs/9.x/queries#additional-where-clauses    // e.g.    [    [2], [4, 5], [6]    ]
+                        $priceArr = explode('-', $price);
+                        if (isset($priceArr[0]) && isset($priceArr[1])) {
+                             $categoryProducts->whereBetween('product_price', [$priceArr[0], $priceArr[1]]);
                         }
                     }
-
-                    $productIds = array_unique(\Illuminate\Support\Arr::flatten($productIds)); // Arr::flatten(): https://laravel.com/docs/9.x/helpers#method-array-flatten    // We use array_unique() function to eliminate any repeated product ids
-                    $categoryProducts->whereIn('products.id', $productIds);
                 }
 
                 // Size, price, color, publisher, … are also Dynamic Filters, but won't be managed like the other Dynamic Filters, but we will manage every filter of them from the suitable respective database table, like the 'size' Filter from the `products_attributes` database table, 'color' Filter and `price` Filter from `products` table, 'publisher' Filter from `publishers` table
                 // Fourth: the 'publisher' filter (from `products` and `publishers` database table)
                 if (isset($data['publisher']) && ! empty($data['publisher'])) {                                            // coming from the AJAX call in front/js/custom.js    // example:    $data['publisher'] = 'Large'
-                    $productIds = Product::select('id')->whereIn('publisher_id', $data['publisher'])->pluck('id')->toArray(); // fetch the products ids with `publisher_id` of $data['publisher'] from the `products` table
-
-                    $categoryProducts->whereIn('products.id', $productIds); // `products.id` means that `products` is the table name (means grab the `id` column of the `products` table)
+                    $categoryProducts->whereIn('publisher_id', $data['publisher']);
                 }
 
                 // Pagination (after the Sorting Filter)
@@ -350,13 +357,19 @@ class ProductsController extends Controller
                 $categoryIds = array_merge([$category_id], $subCategories);
 
                 // Get products for this category and its subcategories
-                $products = Product::with(['publisher', 'authors'])
+                $products = Product::with(['publisher', 'authors', 'category'])
                     ->whereIn('category_id', $categoryIds)
+                    ->whereHas('attributes', function($q) {
+                        $q->where('status', 1);
+                    })
                     ->where('status', 1);
             }
         } else {
             // If no category_id provided, show all products
-            $products = Product::with(['publisher', 'authors'])
+            $products = Product::with(['publisher', 'authors', 'category'])
+                ->whereHas('attributes', function($q) {
+                    $q->where('status', 1);
+                })
                 ->where('status', 1);
         }
 
@@ -485,42 +498,161 @@ class ProductsController extends Controller
             ->get()
             ->toArray();
 
-        $productAttribute = ProductsAttribute::with([
-            'product.section',
-            'product.category',
-            'product.language',
-            'product.publisher',
-            'product.authors',
-            // 'product.images',
-            'vendor',
+        $product = Product::with([
+            'section',
+            'category',
+            'language',
+            'publisher',
+            'authors',
+            'edition',
+            'subject',
+            'bookType'
         ])
-            ->where('id', $id)
-            ->where('status', 1)
-            ->firstOrFail();
+        ->where('id', $id)
+        ->where('status', 1)
+        ->firstOrFail();
 
-        $product = $productAttribute->product;
         $productId = $product->id;
-        $vendorId = $productAttribute->vendor_id;
 
-        $productDetails = $product->toArray();
+        // Persist distance in session if provided
+        if ($request->filled('distance')) {
+            session(['distance' => (int)$request->distance]);
+        }
+        $userLat = session('user_latitude');
+        $userLng = session('user_longitude');
+        $distanceRadius = session('distance', 10);
 
-        $productDetails['vendor_id'] = $vendorId;
-        $productDetails['attribute_id'] = $productAttribute->id;
-        $productDetails['stock'] = (int) $productAttribute->stock;
-        $productDetails['product_discount'] = (float) $productAttribute->product_discount;
+        // Fetch ALL active sellers for this product to calculate Price Range and Buy Box
+        $allSellersQuery = ProductsAttribute::with(['vendor.vendorbusinessdetails', 'user', 'vendor', 'ratings', 'condition'])
+            ->where('product_id', $productId)
+            ->where('status', 1)
+            ->where('stock', '>', 0);
 
-        $basePrice = (float) $product->product_price;
-        $discount = (float) $productAttribute->product_discount;
-
-        if ($discount > 0) {
-            $finalPrice = round($basePrice - ($basePrice * $discount / 100));
-            $discountPercent = round($discount);
-        } else {
-            $finalPrice = round($basePrice);
-            $discountPercent = 0;
+        if ($userLat && $userLng && $distanceRadius < 100) {
+            $allSellersQuery->whereHas('vendor', function ($q) use ($userLat, $userLng, $distanceRadius) {
+                $q->whereNotNull('location')
+                    ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distanceRadius]);
+            });
         }
 
-        $totalStock = (int) $productAttribute->stock;
+        $allSellers = $allSellersQuery->get();
+
+        if ($allSellers->isEmpty()) {
+            // Check if there are ANY active sellers with stock at any distance
+            $anyActiveWithStock = ProductsAttribute::where('product_id', $productId)
+                ->where('status', 1)
+                ->where('stock', '>', 0)
+                ->exists();
+
+            if (!$anyActiveWithStock) {
+                // Fallback for truly out of stock products (show inactive/out of stock attributes for context)
+                $allSellers = ProductsAttribute::with(['vendor.vendorbusinessdetails', 'user', 'vendor', 'ratings', 'condition'])
+                    ->where('product_id', $productId)
+                    ->where('status', 1)
+                    ->get();
+            }
+        }
+
+        if ($allSellers->isEmpty()) {
+            // If NO sellers found at all, we show product with out-of-stock state
+            $productAttribute = null;
+            $attributeId = null;
+            $sortedSellers = collect();
+            $minPrice = 0;
+            $maxPrice = 0;
+            $finalPrice = 0;
+            $discountPercent = 0;
+            $totalStock = 0;
+            $otherSellers = collect();
+            $productDetails = $product->toArray();
+            $productDetails['vendor_id'] = null;
+            $productDetails['attribute_id'] = null;
+            $productDetails['stock'] = 0;
+        } else {
+            // Apply sorting to all sellers to determine the order (Main Buy Box logic)
+            $userLat = (float)session('user_latitude');
+            $userLng = (float)session('user_longitude');
+
+            $sort = request('sort', 'buybox');
+
+            $sortedSellers = $allSellers->sort(function ($a, $b) use ($productId, $userLat, $userLng, $sort) {
+                if ($sort === 'price') {
+                    $aPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $a->id)['final_price'] ?? 999999;
+                    $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
+                    if ($aPrice != $bPrice) return $aPrice <=> $bPrice;
+                }
+
+                if ($sort === 'distance' && $userLat && $userLng) {
+                    $getDist = function ($loc) use ($userLat, $userLng) {
+                        if (!$loc) return 999999;
+                        $parts = explode(',', $loc);
+                        if (count($parts) != 2) return 999999;
+                        return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float)$parts[0])) * cos(deg2rad((float)$parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float)$parts[0]))));
+                    };
+                    $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
+                    $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
+                    if ($aDist != $bDist) return $aDist <=> $bDist;
+                }
+
+                // Default / Buy Box Priority
+                // Priority 1: Plan
+                $planOrder = ['pro' => 1, 'free' => 2];
+                $aPlan = isset($a->vendor->plan) ? ($planOrder[$a->vendor->plan] ?? 3) : 3;
+                $bPlan = isset($b->vendor->plan) ? ($planOrder[$b->vendor->plan] ?? 3) : 3;
+                if ($aPlan != $bPlan) return $aPlan <=> $bPlan;
+
+                // Priority 2: Distance (as fallback if not explicitly sorting)
+                if ($userLat && $userLng && $sort !== 'distance') {
+                    $getDist = function ($loc) use ($userLat, $userLng) {
+                        if (!$loc) return 999999;
+                        $parts = explode(',', $loc);
+                        if (count($parts) != 2) return 999999;
+                        return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float)$parts[0])) * cos(deg2rad((float)$parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float)$parts[0]))));
+                    };
+                    $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
+                    $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
+                    if ($aDist != $bDist) return $aDist <=> $bDist;
+                }
+
+                // Priority 3: Stock
+                if ($a->stock != $b->stock) return $b->stock <=> $a->stock;
+
+                // Priority 4: Price (as fallback)
+                if ($sort !== 'price') {
+                    $aPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $a->id)['final_price'] ?? 999999;
+                    $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
+                    return $aPrice <=> $bPrice;
+                }
+                
+                return 0;
+            })->values();
+
+            // Winner is the first in the sorted list
+            $productAttribute = $sortedSellers->first();
+            $attributeId = $productAttribute->id;
+
+            // Calculate Price Range
+            $prices = $sortedSellers->map(function ($s) use ($productId) {
+                return \App\Models\Product::getDiscountAttributePrice($productId, null, $s->id)['final_price'];
+            })->filter()->values();
+
+            $minPrice = $prices->min();
+            $maxPrice = $prices->max();
+
+            $productDetails = $product->toArray();
+            $productDetails['vendor_id'] = $productAttribute->vendor_id;
+            $productDetails['attribute_id'] = $attributeId;
+            $productDetails['stock'] = (int) $productAttribute->stock;
+
+            $priceDetails = \App\Models\Product::getDiscountAttributePrice($productId, null, $attributeId);
+            $finalPrice = $priceDetails['final_price'];
+            $discountPercent = $productAttribute->product_discount;
+
+            $totalStock = $productAttribute->stock;
+
+            $otherSellers = $sortedSellers; // Pass all sellers, winner will be first
+        }
+
 
         if (! $product->category) {
             abort(404, 'Product category not found');
@@ -547,19 +679,7 @@ class ProductsController extends Controller
             ->take(3)
             ->values();
 
-        $attributeId = $productAttribute->id;
 
-        $ratings = Rating::with('user')
-            ->where('product_id', $productId)
-            ->where('product_attribute_id', $attributeId)
-            ->where('status', 1)
-            ->get();
-
-        $ratingCount = $ratings->count();
-        $ratingSum = $ratings->sum('rating');
-
-        $avgRating = $ratingCount ? round($ratingSum / $ratingCount, 2) : 0;
-        $avgStarRating = $ratingCount ? round($ratingSum / $ratingCount) : 0;
 
         // Front user statistics (front users are 'student')
         $totalUsers = User::role('student', 'web')->count();
@@ -574,16 +694,14 @@ class ProductsController extends Controller
         return view('front.products.detail')->with(compact(
             'productDetails',
             'productAttribute',
-            'basePrice',
             'finalPrice',
             'discountPercent',
             'totalStock',
             'categoryDetails',
             'similarProducts',
-            'ratings',
-            'ratingCount',
-            'avgRating',
-            'avgStarRating',
+            'otherSellers',
+            'minPrice',
+            'maxPrice',
             'condition',
             'category',
             'footerProducts',
@@ -593,12 +711,114 @@ class ProductsController extends Controller
             'meta_title',
             'meta_description',
             'meta_keywords',
-            // ✅ FIXED VARIABLES
             'totalUsers',
             'totalVendors',
             'totalProducts',
             'totalAuthors'
         ));
+    }
+
+    public function allSellers($id)
+    {
+        $product = Product::with([
+            'section',
+            'category',
+            'language',
+            'publisher',
+            'authors',
+            'edition',
+            'subject',
+            'bookType'
+        ])
+        ->where('id', $id)
+        ->where('status', 1)
+        ->firstOrFail();
+
+        $productId = $product->id;
+
+        // Persist distance in session if provided
+        if (request()->filled('distance')) {
+            session(['distance' => (int)request()->distance]);
+        }
+        $userLat = session('user_latitude');
+        $userLng = session('user_longitude');
+        $distanceRadius = session('distance', 10);
+
+        $allSellersQuery = ProductsAttribute::with(['vendor.vendorbusinessdetails', 'user', 'vendor', 'ratings', 'condition'])
+            ->where('product_id', $productId)
+            ->where('status', 1)
+            ->where('stock', '>', 0);
+
+        if ($userLat && $userLng && $distanceRadius < 100) {
+            $allSellersQuery->whereHas('vendor', function ($q) use ($userLat, $userLng, $distanceRadius) {
+                $q->whereNotNull('location')
+                    ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distanceRadius]);
+            });
+        }
+
+        $allSellers = $allSellersQuery->get();
+
+        if ($allSellers->isEmpty()) {
+            if ($distanceRadius < 100 && $userLat && $userLng) {
+                return redirect()->back()->with('error_message', "No active sellers found within {$distanceRadius} km.");
+            }
+            return redirect()->back()->with('error_message', 'No active sellers found for this product.');
+        }
+
+        $userLat = (float)session('user_latitude');
+        $userLng = (float)session('user_longitude');
+        $sort = request('sort', 'buybox');
+
+        $sortedSellers = $allSellers->sort(function ($a, $b) use ($productId, $userLat, $userLng, $sort) {
+            if ($sort === 'price') {
+                $aPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $a->id)['final_price'] ?? 999999;
+                $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
+                if ($aPrice != $bPrice) return $aPrice <=> $bPrice;
+            }
+
+            if ($sort === 'distance' && $userLat && $userLng) {
+                $getDist = function ($loc) use ($userLat, $userLng) {
+                    if (!$loc) return 999999;
+                    $parts = explode(',', $loc);
+                    if (count($parts) != 2) return 999999;
+                    return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float)$parts[0])) * cos(deg2rad((float)$parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float)$parts[0]))));
+                };
+                $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
+                $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
+                if ($aDist != $bDist) return $aDist <=> $bDist;
+            }
+
+            // Buy Box Priorities
+            $planOrder = ['pro' => 1, 'free' => 2];
+            $aPlan = isset($a->vendor->plan) ? ($planOrder[$a->vendor->plan] ?? 3) : 3;
+            $bPlan = isset($b->vendor->plan) ? ($planOrder[$b->vendor->plan] ?? 3) : 3;
+            if ($aPlan != $bPlan) return $aPlan <=> $bPlan;
+
+            if ($userLat && $userLng && $sort !== 'distance') {
+                $getDist = function ($loc) use ($userLat, $userLng) {
+                    if (!$loc) return 999999;
+                    $parts = explode(',', $loc);
+                    if (count($parts) != 2) return 999999;
+                    return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float)$parts[0])) * cos(deg2rad((float)$parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float)$parts[0]))));
+                };
+                $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
+                $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
+                if ($aDist != $bDist) return $aDist <=> $bDist;
+            }
+
+            if ($a->stock != $b->stock) return $b->stock <=> $a->stock;
+
+            if ($sort !== 'price') {
+                $aPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $a->id)['final_price'] ?? 999999;
+                $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
+                return $aPrice <=> $bPrice;
+            }
+            return 0;
+        })->values();
+
+        $productDetails = $product->toArray();
+
+        return view('front.products.all_sellers')->with(compact('product', 'productDetails', 'sortedSellers'));
     }
 
     // The AJAX call from front/js/custom.js file, to show the the correct related `price` and `stock` depending on the selected `size` (from the `products_attributes` table)) by clicking the size <select> box in front/products/detail.blade.php
