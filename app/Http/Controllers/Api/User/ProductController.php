@@ -699,9 +699,9 @@ class ProductController extends Controller
 
             $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
 
-            $item->product_price = $priceDetails['product_price'] ?? 0;
-            $item->final_price = $priceDetails['final_price'] ?? 0;
-            $item->discount_amount = $priceDetails['discount'] ?? 0;
+            $item->product_price = round($priceDetails['product_price'] ?? 0);
+            $item->final_price = round($priceDetails['final_price'] ?? 0);
+            $item->discount_amount = round($priceDetails['discount'] ?? 0);
 
             $item->discount_percent = 0;
             if ($item->product_price > 0 && $item->discount_amount > 0) {
@@ -717,7 +717,8 @@ class ProductController extends Controller
             }
 
             $qty = $item->quantity ?? 1;
-            $total_price += ($priceDetails['final_price'] ?? 0) * $qty;
+
+            $total_price += round($priceDetails['final_price'] ?? 0) * $qty;
             $total_items += $qty;
         }
 
@@ -726,7 +727,7 @@ class ProductController extends Controller
             'message' => 'Wishlist fetched successfully',
             'data' => [
                 'wishlist_items' => $wishlists,
-                'total_price' => $total_price,
+                'total_price' => round($total_price),
                 'total_items' => $total_items
             ]
         ]);
