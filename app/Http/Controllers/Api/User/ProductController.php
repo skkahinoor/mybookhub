@@ -451,11 +451,12 @@ class ProductController extends Controller
         $basePath = url('front/images/product_images');
 
         foreach ($cartItems as $item) {
+
             $price = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
 
-            $item->product_price = $price['product_price'] ?? 0;
-            $item->final_price = $price['final_price'] ?? 0;
-            $item->discount_amount = $price['discount'] ?? 0;
+            $item->product_price = round($price['product_price'] ?? 0);
+            $item->final_price = round($price['final_price'] ?? 0);
+            $item->discount_amount = round($price['discount'] ?? 0);
 
             $item->discount_percent = 0;
             if ($item->product_price > 0 && $item->discount_amount > 0) {
@@ -468,8 +469,10 @@ class ProductController extends Controller
                     'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
                     'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
+
                 $authorString = $item->product->authors->pluck('author_name')->join(', ');
                 $item->product->author_name = $authorString;
+
                 $item->product->authors = $item->product->authors->map(function ($author) {
                     return [
                         'id' => $author->id,
@@ -477,7 +480,6 @@ class ProductController extends Controller
                     ];
                 });
 
-                // Overwrite vendor name for app display
                 if ($authorString) {
                     if (is_array($item->product->vendor) || is_object($item->product->vendor)) {
                         $item->product->vendor['name'] = $authorString;
@@ -487,8 +489,10 @@ class ProductController extends Controller
                 }
             }
 
-            $total_price += ($price['final_price'] ?? 0) * $item->quantity;
-            $total_items += $item->quantity;
+            $qty = $item->quantity ?? 1;
+
+            $total_price += round($price['final_price'] ?? 0) * $qty;
+            $total_items += $qty;
         }
 
         return response()->json([
@@ -496,7 +500,7 @@ class ProductController extends Controller
             'message' => 'Cart fetched successfully',
             'data' => [
                 'cart_items' => $cartItems,
-                'total_price' => $total_price,
+                'total_price' => round($total_price),
                 'total_items' => $total_items
             ]
         ]);
