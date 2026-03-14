@@ -122,10 +122,13 @@ class Product extends Model
     }
 
     // Relationship of a Product `products` table with Vendor `vendors` table (every product belongs to a vendor)
+    // Deprecated: vendor_id does not exist on products table. Use ProductsAttribute relationship instead.
+    /*
     public function vendor()
     {
         return $this->belongsTo('App\Models\Vendor', 'vendor_id')->with('vendorbusinessdetails'); // 'vendor_id' is the Foreign Key of the Relationship
     }
+    */
 
     // A static method (to be able to be called directly without instantiating an object in index.blade.php) to determine the final price of a product because a product can have a discount from TWO things: either a `CATEGORY` discount or `PRODUCT` discount
     public static function getDiscountPrice($product_id, $vendor_id = null)

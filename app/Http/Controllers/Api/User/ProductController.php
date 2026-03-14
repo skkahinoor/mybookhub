@@ -289,6 +289,25 @@ class ProductController extends Controller
             ], 404);
         }
 
+        $lat = $request->lat;
+        $lng = $request->lng;
+        $distance = null;
+
+        if ($lat && $lng && $attribute->vendor && $attribute->vendor->location) {
+            $vendorLoc = explode(',', $attribute->vendor->location);
+            if (count($vendorLoc) == 2) {
+                $vLat = (float)trim($vendorLoc[0]);
+                $vLng = (float)trim($vendorLoc[1]);
+
+                $theta = $lng - $vLng;
+                $dist = sin(deg2rad($lat)) * sin(deg2rad($vLat)) + cos(deg2rad($lat)) * cos(deg2rad($vLat)) * cos(deg2rad($theta));
+                $dist = acos($dist);
+                $dist = rad2deg($dist);
+                $miles = $dist * 60 * 1.1515;
+                $distance = round($miles * 1.609344, 2);
+            }
+        }
+
         $product = Product::with([
             'section',
             'category',
@@ -366,8 +385,8 @@ class ProductController extends Controller
 
                     'authors' => $product->authors->map(function ($author) {
                         return [
-                            'id' => $author->id,
-                            'name' => $author->name,
+                            'id' => is_array($author) ? ($author['id'] ?? null) : ($author->id ?? null),
+                            'name' => is_array($author) ? ($author['name'] ?? null) : ($author->name ?? null),
                         ];
                     })
                 ],
@@ -404,7 +423,8 @@ class ProductController extends Controller
                             'mobile' => $attribute->vendor->user->mobile ?? null,
                             'image' => $attribute->vendor->user->image ?? null,
                             'created_at' => $attribute->vendor->user->created_at ?? null,
-                        ]
+                        ],
+                        'distance' => $distance
                     ]
                 ],
 
@@ -451,11 +471,12 @@ class ProductController extends Controller
         $basePath = url('front/images/product_images');
 
         foreach ($cartItems as $item) {
+
             $price = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
 
-            $item->product_price = $price['product_price'] ?? 0;
-            $item->final_price = $price['final_price'] ?? 0;
-            $item->discount_amount = $price['discount'] ?? 0;
+            $item->product_price = round($price['product_price'] ?? 0);
+            $item->final_price = round($price['final_price'] ?? 0);
+            $item->discount_amount = round($price['discount'] ?? 0);
 
             $item->discount_percent = 0;
             if ($item->product_price > 0 && $item->discount_amount > 0) {
@@ -468,8 +489,10 @@ class ProductController extends Controller
                     'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
                     'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
+
                 $authorString = $item->product->authors->pluck('author_name')->join(', ');
                 $item->product->author_name = $authorString;
+
                 $item->product->authors = $item->product->authors->map(function ($author) {
                     return [
                         'id' => $author->id,
@@ -477,7 +500,6 @@ class ProductController extends Controller
                     ];
                 });
 
-                // Overwrite vendor name for app display
                 if ($authorString) {
                     if (is_array($item->product->vendor) || is_object($item->product->vendor)) {
                         $item->product->vendor['name'] = $authorString;
@@ -487,8 +509,10 @@ class ProductController extends Controller
                 }
             }
 
-            $total_price += ($price['final_price'] ?? 0) * $item->quantity;
-            $total_items += $item->quantity;
+            $qty = $item->quantity ?? 1;
+
+            $total_price += round($price['final_price'] ?? 0) * $qty;
+            $total_items += $qty;
         }
 
         return response()->json([
@@ -496,7 +520,7 @@ class ProductController extends Controller
             'message' => 'Cart fetched successfully',
             'data' => [
                 'cart_items' => $cartItems,
-                'total_price' => $total_price,
+                'total_price' => round($total_price),
                 'total_items' => $total_items
             ]
         ]);
@@ -660,9 +684,27 @@ class ProductController extends Controller
             ]);
         }
 
-        $wishlists = Wishlist::with(['product' => function ($q) {
-            $q->select('id', 'category_id', 'product_name', 'product_image', 'product_isbn', 'subcategory_id', 'subject_id', 'language_id', 'book_type_id', 'vendor_id')->with(['authors', 'subcategory', 'subject', 'language', 'bookType', 'vendor']);
-        }])
+        $wishlists = Wishlist::with([
+            'attribute.vendor',
+            'product' => function ($q) {
+                $q->select(
+                    'id',
+                    'category_id',
+                    'product_name',
+                    'product_image',
+                    'product_isbn',
+                    'subcategory_id',
+                    'subject_id',
+                    'language_id',
+                    'book_type_id'
+                )->with([
+                    'subcategory',
+                    'subject',
+                    'language',
+                    'bookType'
+                ]);
+            }
+        ])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
                     $q->where('user_id', $user_id);
@@ -678,11 +720,12 @@ class ProductController extends Controller
         $basePath = url('front/images/product_images');
 
         foreach ($wishlists as $item) {
+
             $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
 
-            $item->product_price = $priceDetails['product_price'] ?? 0;
-            $item->final_price = $priceDetails['final_price'] ?? 0;
-            $item->discount_amount = $priceDetails['discount'] ?? 0;
+            $item->product_price = round($priceDetails['product_price'] ?? 0);
+            $item->final_price = round($priceDetails['final_price'] ?? 0);
+            $item->discount_amount = round($priceDetails['discount'] ?? 0);
 
             $item->discount_percent = 0;
             if ($item->product_price > 0 && $item->discount_amount > 0) {
@@ -695,27 +738,11 @@ class ProductController extends Controller
                     'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
                     'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
-                $authorString = $item->product->authors->pluck('author_name')->join(', ');
-                $item->product->author_name = $authorString;
-                $item->product->authors = $item->product->authors->map(function ($author) {
-                    return [
-                        'id' => $author->id,
-                        'name' => $author->author_name,
-                    ];
-                });
-
-                // Overwrite vendor name for app display
-                if ($authorString) {
-                    if (is_array($item->product->vendor) || is_object($item->product->vendor)) {
-                        $item->product->vendor['name'] = $authorString;
-                    } else {
-                        $item->product->vendor = ['name' => $authorString];
-                    }
-                }
             }
 
             $qty = $item->quantity ?? 1;
-            $total_price += ($priceDetails['final_price'] ?? 0) * $qty;
+
+            $total_price += round($priceDetails['final_price'] ?? 0) * $qty;
             $total_items += $qty;
         }
 
@@ -724,7 +751,7 @@ class ProductController extends Controller
             'message' => 'Wishlist fetched successfully',
             'data' => [
                 'wishlist_items' => $wishlists,
-                'total_price' => $total_price,
+                'total_price' => round($total_price),
                 'total_items' => $total_items
             ]
         ]);
