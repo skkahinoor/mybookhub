@@ -386,6 +386,7 @@ class ProductController extends Controller
                         'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
                     ],
                     'description' => $product->description,
+                    'condition' => $product->condition,
                     'section' => $product->section,
                     'category' => $product->category,
                     'subcategory' => $product->subcategory,
