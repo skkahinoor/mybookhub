@@ -475,7 +475,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     Route::get('/', 'IndexController@index');
     Route::post('set-condition', [IndexController::class, 'setCondition'])->name('set.condition');
     Route::post('/set-language', [IndexController::class, 'setLanguage']);
-    Route::post('/set-location-session', [App\Http\Controllers\Front\LocationController::class, 'setLocationSession']);
+    Route::match(['get', 'post'], '/set-location-session', [App\Http\Controllers\Front\LocationController::class, 'setLocationSession']);
     Route::get('/get-filter-categories', [IndexController::class, 'getFilterCategories'])->name('get.filter.categories');
     Route::get('/get-filter-subcategories', [IndexController::class, 'getFilterSubcategories'])->name('get.filter.subcategories');
     Route::get('/get-filter-subjects', [IndexController::class, 'getFilterSubjects'])->name('get.filter.subjects');
@@ -517,6 +517,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
 
     // Render Single Product Detail Page in front/products/detail.blade.php
     Route::get('/product/{id}', 'ProductsController@detail')->name('front.products.detail');
+    Route::get('/product/{id}/all-sellers', 'ProductsController@allSellers')->name('front.products.all-sellers');
 
     Route::post('get-product-price', 'ProductsController@getProductPrice');
 

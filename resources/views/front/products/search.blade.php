@@ -363,30 +363,25 @@
             <div class="products-grid mb-5">
                 @foreach($products as $product)
                     @php
-                        $p = $product->product;
-                        if (!$p) continue;
-                        $originalPrice  = (float) $p->product_price;
-                        $vendorDiscount = (float) ($product->product_discount ?? 0);
-                        if ($vendorDiscount > 0) {
-                            $finalPrice     = round($originalPrice - ($originalPrice * $vendorDiscount) / 100);
-                            $discountPercent = round($vendorDiscount);
-                        } else {
-                            $finalPrice     = round($originalPrice);
-                            $discountPercent = 0;
+                        $originalPrice  = (float) $product->product_price;
+                        $finalPrice     = \App\Models\Product::getDiscountPrice($product->id);
+                        $discountPercent = 0;
+                        if ($originalPrice > 0 && $finalPrice < $originalPrice) {
+                            $discountPercent = round((($originalPrice - $finalPrice) / $originalPrice) * 100);
                         }
-                        $authors = $p->authors->pluck('author_name')->implode(', ');
+                        $authors = $product->authors->pluck('name')->implode(', ');
                     @endphp
 
                     <div class="prod-card">
                         <div class="prod-card-img-wrap">
                             <a href="{{ url('product/' . $product->id) }}">
                                 <img
-                                    src="{{ asset('front/images/product_images/small/' . $p->product_image) }}"
-                                    alt="{{ $p->product_name }}"
+                                    src="{{ asset('front/images/product_images/small/' . $product->product_image) }}"
+                                    alt="{{ $product->product_name }}"
                                     onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
                             </a>
-                            <span class="prod-badge {{ $p->condition == 'new' ? 'new' : 'old' }}">
-                                {{ ucfirst($p->condition) }}
+                            <span class="prod-badge {{ $product->condition == 'new' ? 'new' : 'old' }}">
+                                {{ ucfirst($product->condition) }}
                             </span>
                             @if($discountPercent > 0)
                                 <span class="prod-discount-badge">-{{ $discountPercent }}%</span>
@@ -394,16 +389,16 @@
                         </div>
 
                         <div class="prod-card-body">
-                            <div class="prod-card-title">{{ $p->product_name }}</div>
+                            <div class="prod-card-title">{{ $product->product_name }}</div>
                             @if($authors)
                                 <div class="prod-author">{{ $authors }}</div>
                             @endif
 
                             <div class="prod-card-footer">
                                 <div class="prod-price">
-                                    <span class="final">₹{{ $finalPrice }}</span>
+                                    <span class="final">₹{{ number_format($finalPrice, 0) }}</span>
                                     @if($discountPercent > 0)
-                                        <span class="original">₹{{ round($originalPrice) }}</span>
+                                        <span class="original">₹{{ number_format($originalPrice, 0) }}</span>
                                     @endif
                                 </div>
                                 <a href="{{ url('product/' . $product->id) }}" class="btn-add-to-cart">

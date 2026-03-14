@@ -1,12 +1,11 @@
-@foreach ($sliderProducts as $sliderProduct)
+@foreach ($sliderProducts as $product)
     @php
-        $product = $sliderProduct->product;
         if (!$product) {
             continue;
         }
 
-        $attributeId = $sliderProduct->id;
-        $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($attributeId);
+        $minPrice = \App\Models\Product::getDiscountPrice($product->id);
+        $minPriceText = (isset($minPrice) && $minPrice > 0) ? number_format($minPrice, 0) : ($product->product_price ? number_format($product->product_price, 0) : null);
         
         $condition = strtolower(trim($product->condition ?? 'new'));
         $isNew = $condition == 'new';
@@ -18,7 +17,7 @@
             <span class="condition {{ $conditionClass }}">
                 {{ $conditionText }}
             </span>
-            <a href="{{ url('product/' . $attributeId) }}">
+            <a href="{{ url('product/' . $product->id) }}">
                 <img src="{{ asset('front/images/product_images/small/' . ($product->product_image ?? 'no-image.png')) }}"
                     onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'"
                     alt="{{ $product->product_name }}" loading="lazy">
@@ -26,27 +25,21 @@
         </div>
 
         <div class="info">
-            <a href="{{ url('product/' . $attributeId) }}" class="title" style="text-decoration: none;">
+            <a href="{{ url('product/' . $product->id) }}" class="title" style="text-decoration: none;">
                 {{ $product->product_name }}
             </a>
             <div class="author">
                 {{ $product->authors && $product->authors->count() > 0 ? $product->authors->pluck('name')->implode(', ') : 'Unknown Author' }}
             </div>
             <div class="price">
-                @if ($discountDetails['discount'] > 0)
-                    <span class="original-price">₹{{ number_format($discountDetails['product_price'], 0) }}</span>
-                    <span class="final-price text-danger">₹{{ number_format($discountDetails['final_price'], 0) }}</span>
+                @if ($minPriceText)
+                    <span class="final-price text-danger">From ₹{{ $minPriceText }}</span>
                 @else
-                    <span class="final-price">₹{{ number_format($discountDetails['product_price'], 0) }}</span>
+                    <span class="final-price">Price Unavailable</span>
                 @endif
             </div>
-
-            <form action="{{ url('cart/add') }}" method="POST">
-                @csrf
-                <input type="hidden" name="product_attribute_id" value="{{ $attributeId }}">
-                <input type="hidden" name="quantity" value="1">
-                <button type="submit" class="cart-btn">Add</button>
-            </form>
+            
+            {{-- Removed "Add to Cart" button as requested, user will click through to details to see sellers --}}
         </div>
     </div>
 @endforeach

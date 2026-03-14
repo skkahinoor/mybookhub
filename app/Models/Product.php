@@ -228,11 +228,14 @@ class Product extends Model
         ];
     }
 
-    public static function getDiscountPriceDetailsByAttribute($attribute_id)
+    public static function getDiscountPriceDetailsByAttribute($attribute_id, $attributeModel = null)
     {
-        $attribute = ProductsAttribute::with(['product', 'condition'])
-            ->where('id', $attribute_id)
-            ->first();
+        $attribute = $attributeModel;
+        if (!$attribute) {
+            $attribute = ProductsAttribute::with(['product', 'condition'])
+                ->where('id', $attribute_id)
+                ->first();
+        }
 
         if (!$attribute || !$attribute->product) {
             return [
@@ -274,9 +277,9 @@ class Product extends Model
         $totalDiscountAmount = max(0, $originalPrice - $finalPrice);
 
         return [
-            'product_price' => round($originalPrice, 2), // Strike-through price
-            'final_price'   => round($finalPrice, 2),    // Paying price
-            'discount'      => round($totalDiscountAmount, 2),
+            'product_price' => round($originalPrice), // Strike-through price
+            'final_price'   => round($finalPrice),    // Paying price
+            'discount'      => round($totalDiscountAmount),
         ];
     }
 

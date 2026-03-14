@@ -39,74 +39,65 @@ class IndexController extends Controller
         $currentSubcategoryId = $request->filled('subcategory_id') ? $request->subcategory_id : $sessionSubcategoryId;
         $currentSubjectId = $request->filled('subject_id') ? $request->subject_id : $sessionSubjectId;
 
-        $sliderProductsQuery = ProductsAttribute::with([
-            'product:id,product_name,product_isbn,product_image,product_price,category_id,section_id,condition',
-            'product.authors',
-            'vendor.vendorbusinessdetails',
-            'ratings:id,product_attribute_id,rating'
-        ])
+        // Persist distance in session
+        if ($request->filled('distance')) {
+            session(['distance' => (int)$request->distance]);
+        }
+        $currentDistance = session('distance', 10);
+
+        $sliderProductsQuery = Product::with([
+                'authors',
+                'publisher'
+            ])
+            ->whereHas('attributes', function($q) {
+                $q->where('status', 1);
+            })
             ->where('status', 1);
 
         if ($currentSectionId) {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($currentSectionId) {
-                $q->where('section_id', $currentSectionId);
-            });
+            $sliderProductsQuery->where('section_id', $currentSectionId);
         }
 
         if ($currentCategoryId) {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($currentCategoryId) {
-                $q->where('category_id', $currentCategoryId);
-            });
+            $sliderProductsQuery->where('category_id', $currentCategoryId);
         }
 
         if ($currentSubcategoryId) {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($currentSubcategoryId) {
-                $q->where('subcategory_id', $currentSubcategoryId);
-            });
+            $sliderProductsQuery->where('subcategory_id', $currentSubcategoryId);
         }
 
         if ($request->filled('condition')) {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($request) {
-                if ($request->condition !== 'all') {
-                    $q->where('condition', $request->condition);
-                }
-            });
+            if ($request->condition !== 'all') {
+                $sliderProductsQuery->where('condition', $request->condition);
+            }
         } elseif ($condition !== 'all') {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($condition) {
-                $q->where('condition', $condition);
-            });
+            $sliderProductsQuery->where('condition', $condition);
         }
 
         if ($currentSubjectId) {
-            $sliderProductsQuery->whereHas('product', function ($q) use ($currentSubjectId) {
-                $q->where('subject_id', $currentSubjectId);
-            });
+            $sliderProductsQuery->where('subject_id', $currentSubjectId);
         }
 
         // --- NEW FILTERS ---
         // 1. Book Types (Multiple)
         if ($request->filled('book_types')) {
             $bookTypeIds = is_array($request->input('book_types')) ? $request->input('book_types') : explode(',', (string)$request->input('book_types'));
-            $sliderProductsQuery->whereHas('product', function ($q) use ($bookTypeIds) {
-                $q->whereIn('book_type_id', $bookTypeIds);
-            });
+            $sliderProductsQuery->whereIn('book_type_id', $bookTypeIds);
         }
 
         // 2. Languages (Multiple)
         if ($request->filled('languages')) {
             $langIds = is_array($request->input('languages')) ? $request->input('languages') : explode(',', (string)$request->input('languages'));
-            $sliderProductsQuery->whereHas('product', function ($q) use ($langIds) {
-                $q->whereIn('language_id', $langIds);
-            });
+            $sliderProductsQuery->whereIn('language_id', $langIds);
         }
 
         // 3. Distance Range
         $userLat = session('user_latitude');
         $userLng = session('user_longitude');
-        if ($request->filled('distance') && $userLat && $userLng) {
-            $distance = (int)$request->distance;
+        if ($userLat && $userLng) {
+            $distance = $currentDistance;
             if ($distance < 100) { // 100+ means show all
-                $sliderProductsQuery->whereHas('vendor', function ($q) use ($userLat, $userLng, $distance) {
+                $sliderProductsQuery->whereHas('attributes.vendor', function ($q) use ($userLat, $userLng, $distance) {
                     $q->whereNotNull('location')
                         ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);
                 });
@@ -157,29 +148,29 @@ class IndexController extends Controller
         //     ->orderBy('id', 'desc')
         //     ->get();
 
-        $newProducts = ProductsAttribute::with(['product.authors', 'product.publisher', 'product.edition'])
-            ->whereHas('product', function ($query) use ($condition) {
-                $query->where('status', 1)
-                    ->when($condition !== 'all', function ($q) use ($condition) {
-                        $q->where('condition', $condition);
-                    })
-                    ->when(session('language') && session('language') !== 'all', function ($q) {
-                        $q->where('language_id', session('language'));
-                    });
+        $newProducts = Product::with(['authors', 'publisher'])
+            ->whereHas('attributes', function($q) {
+                $q->where('status', 1);
+            })
+            ->when($condition !== 'all', function ($query) use ($condition) {
+                $query->where('condition', $condition);
+            })
+            ->when(session('language') && session('language') !== 'all', function ($query) {
+                $query->where('language_id', session('language'));
             })
             ->where('status', 1)
             ->orderBy('id', 'desc')
-            ->paginate(8);
+            ->get();
 
-        $slidingProducts = ProductsAttribute::with(['product.authors', 'product.publisher', 'product.edition'])
-            ->whereHas('product', function ($query) use ($condition) {
-                $query->where('status', 1)
-                    ->when($condition !== 'all', function ($q) use ($condition) {
-                        $q->where('condition', $condition);
-                    })
-                    ->when(session('language') && session('language') !== 'all', function ($q) {
-                        $q->where('language_id', session('language'));
-                    });
+        $slidingProducts = Product::with(['authors', 'publisher'])
+            ->whereHas('attributes', function($q) {
+                $q->where('status', 1);
+            })
+            ->when($condition !== 'all', function ($query) use ($condition) {
+                $query->where('condition', $condition);
+            })
+            ->when(session('language') && session('language') !== 'all', function ($query) {
+                $query->where('language_id', session('language'));
             })
             ->where('status', 1)
             ->orderBy('id', 'desc')
@@ -188,69 +179,50 @@ class IndexController extends Controller
 
         $category = Category::limit(10)->get();
 
-        $footerProducts = ProductsAttribute::with('product')
-            ->whereHas('product', function ($query) use ($condition) {
-                $query->where('status', 1)
-                    ->when($condition !== 'all', function ($q) use ($condition) {
-                        $q->where('condition', $condition);
-                    });
+        $footerProducts = Product::whereHas('attributes', function($q) {
+                $q->where('status', 1);
+            })
+            ->when($condition !== 'all', function ($query) use ($condition) {
+                $query->where('condition', $condition);
             })
             ->where('status', 1)
             ->orderBy('id', 'Desc')
             ->take(3)
-            ->get()
-            ->toArray();
-
-        // Best Sellers - now from ProductsAttribute table
-        $bestSellers = ProductsAttribute::with([
-            'product' => function ($query) use ($condition) {
-                $query->where('status', 1)
-                    ->when($condition !== 'all', function ($q) use ($condition) {
-                        $q->where('condition', $condition);
-                    });
-            }
-        ])
-            ->where('is_bestseller', 'Yes')
-            ->where('status', 1)
-            ->whereHas('product', function ($query) use ($condition) {
-                $query->where('status', 1)
-                    ->when($condition !== 'all', function ($q) use ($condition) {
-                        $q->where('condition', $condition);
-                    });
-            })
-            ->inRandomOrder()
-            ->get()
-            ->toArray();
-
-        // Discounted Products - now from ProductsAttribute table
-        $discountedProducts = ProductsAttribute::with([
-            'product.authors',
-            'ratings:id,product_attribute_id,rating'
-        ])
-            ->where('status', 1)
-            ->where('product_discount', '>=', 20)
-            ->whereHas('product', function ($query) {
-                $query->where('status', 1);
-            })
-            ->orderBy('product_discount', 'desc')
             ->get();
 
-
-        // Featured Products - now from ProductsAttribute table
-        $featuredProducts = ProductsAttribute::with([
-            'product.authors',
-            'ratings:id,product_attribute_id,rating'
-        ])
-            ->where('is_featured', 'Yes')
+        // Best Sellers
+        $bestSellers = Product::whereHas('attributes', function($q) {
+                $q->where('status', 1);
+            })
+            ->when($condition !== 'all', function ($q) use ($condition) {
+                $q->where('condition', $condition);
+            })
             ->where('status', 1)
-            ->whereHas('product', function ($query) use ($condition) {
-                $query->where('status', 1)
-                    ->when($condition !== 'all', function ($q) use ($condition) {
-                        $q->where('condition', $condition);
-                    })
-                    ->when(session('language') && session('language') !== 'all', function ($q) {
-                        $q->where('language_id', session('language'));
-                    });
+            ->inRandomOrder()
+            ->get();
+
+        // Discounted Products
+        $discountedProducts = Product::with(['authors'])
+            ->whereHas('attributes', function($q) {
+                $q->where('status', 1)->where('product_discount', '>=', 20);
+            })
+            ->where('status', 1)
+            ->when($condition !== 'all', function ($q) use ($condition) {
+                $q->where('condition', $condition);
+            })
+            ->get();
+
+        // Featured Products
+        $featuredProducts = Product::with(['authors'])
+            ->whereHas('attributes', function($q) {
+                $q->where('status', 1);
+            })
+            ->where('status', 1)
+            ->when($condition !== 'all', function ($q) use ($condition) {
+                $q->where('condition', $condition);
+            })
+            ->when(session('language') && session('language') !== 'all', function ($q) {
+                $q->where('language_id', session('language'));
             })
             ->limit(10)
             ->get();
@@ -390,15 +362,17 @@ class IndexController extends Controller
         $userLat = session('user_latitude');
         $userLng = session('user_longitude');
 
-        $results = ProductsAttribute::with([
-            'product',
-            'vendor:id,user_id,location',
-            'vendor.vendorbusinessdetails:vendor_id,shop_name,shop_address',
-        ])
+        $results = Product::with([
+                'publisher',
+                'authors',
+                'category',
+                'attributes.vendor.vendorbusinessdetails',
+            ])
             ->where('status', 1)
-            ->whereHas('product', function ($q) use ($query, $request) {
+            ->whereHas('attributes', function($q) {
                 $q->where('status', 1);
-                
+            })
+            ->where(function ($q) use ($query, $request) {
                 if ($request->filled('section_id')) $q->where('section_id', $request->section_id);
                 if ($request->filled('category_id')) $q->where('category_id', $request->category_id);
                 if ($request->filled('subcategory_id')) $q->where('subcategory_id', $request->subcategory_id);
@@ -414,9 +388,21 @@ class IndexController extends Controller
             ->limit(8)
             ->get();
 
-        $formatted = $results->map(function ($attr) use ($userLat, $userLng) {
-            $product = $attr->product;
-            $vendor  = $attr->vendor;
+        $formatted = $results->map(function ($product) use ($userLat, $userLng) {
+            // Get best seller (winner) for this product
+            $bestAttr = ProductsAttribute::where('product_id', $product->id)
+                ->where('status', 1)
+                ->where('stock', '>', 0)
+                ->buyBox()
+                ->first();
+
+            if (!$bestAttr) {
+                $bestAttr = ProductsAttribute::where('product_id', $product->id)
+                    ->where('status', 1)
+                    ->first();
+            }
+
+            $vendor = $bestAttr ? $bestAttr->vendor : null;
 
             // Calculate distance
             $distance = null;
@@ -431,23 +417,23 @@ class IndexController extends Controller
                 }
             }
 
-            $finalPrice = Product::getDiscountPrice($attr->product_id, $attr->vendor_id);
-            $shopName   = optional($vendor?->vendorbusinessdetails)->shop_name ?? 'Unknown Vendor';
+            $finalPrice = Product::getDiscountPrice($product->id);
+            $shopName   = optional($vendor?->vendorbusinessdetails)->shop_name ?? 'Individual Seller';
             $address    = optional($vendor?->vendorbusinessdetails)->shop_address ?? '';
 
             return [
-                'id'          => $attr->id,
-                'product_id'  => $product?->id,
-                'name'        => $product?->product_name ?? 'Unknown',
-                'isbn'        => $product?->product_isbn,
-                'image'       => $product?->product_image
+                'id'          => $bestAttr ? $bestAttr->id : null,
+                'product_id'  => $product->id,
+                'name'        => $product->product_name,
+                'isbn'        => $product->product_isbn,
+                'image'       => $product->product_image
                     ? asset('front/images/product_images/large/' . $product->product_image)
                     : null,
                 'price'       => '₹' . number_format($finalPrice, 0),
                 'shop'        => $shopName,
                 'address'     => $address,
                 'distance'    => $distance !== null ? $distance . ' km away' : null,
-                'url'         => route('front.products.detail', $attr->id),
+                'url'         => $bestAttr ? route('front.products.detail', $bestAttr->id) : url('product/' . $product->id),
             ];
         });
 
@@ -504,49 +490,37 @@ class IndexController extends Controller
     {
         $condition = session('condition', 'new');
 
-        $query = ProductsAttribute::with([
-            'product.publisher',
-            'product.authors',
-            'product.category',
-            'vendor.vendorbusinessdetails',
-        ])
-            ->where('status', 1)
-            ->whereHas('product', fn($q) => $q->where('status', 1));
+        $query = Product::with([
+                'publisher',
+                'authors',
+                'category',
+                'attributes.vendor.vendorbusinessdetails',
+            ])
+            ->whereHas('attributes', function($q) {
+                $q->where('status', 1);
+            })
+            ->where('status', 1);
 
         /* CONDITION */
         if ($request->filled('condition')) {
-            $query->whereHas(
-                'product',
-                fn($q) =>
-                $q->where('condition', $request->condition)
-            );
+            if ($request->condition !== 'all') {
+                $query->where('condition', $request->condition);
+            }
         } elseif ($condition !== 'all') {
-            $query->whereHas(
-                'product',
-                fn($q) =>
-                $q->where('condition', $condition)
-            );
+            $query->where('condition', $condition);
         }
 
         /* LANGUAGE */
         if ($request->filled('language_id') && $request->language_id !== 'all') {
-            $query->whereHas(
-                'product',
-                fn($q) =>
-                $q->where('language_id', $request->language_id)
-            );
+            $query->where('language_id', $request->language_id);
         } elseif (session('language') && session('language') !== 'all') {
-            $query->whereHas(
-                'product',
-                fn($q) =>
-                $q->where('language_id', session('language'))
-            );
+            $query->where('language_id', session('language'));
         }
 
         /* SEARCH */
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('product', function ($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('product_name', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%")
                     ->orWhere('product_isbn', 'like', "%{$search}%")
@@ -560,38 +534,33 @@ class IndexController extends Controller
 
         /* SECTION */
         if ($request->filled('section_id')) {
-            $query->whereHas(
-                'product',
-                fn($q) =>
-                $q->where('section_id', $request->section_id)
-            );
+            $query->where('section_id', $request->section_id);
         }
 
         /* CATEGORY */
         if ($request->filled('category_id')) {
-            $query->whereHas(
-                'product',
-                fn($q) =>
-                $q->where('category_id', $request->category_id)
-            );
+            $query->where('category_id', $request->category_id);
         }
 
         /* SUBCATEGORY (CLASS) */
         if ($request->filled('subcategory_id')) {
-            $query->whereHas(
-                'product',
-                fn($q) =>
-                $q->where('subcategory_id', $request->subcategory_id)
-            );
+            $query->where('subcategory_id', $request->subcategory_id);
         }
 
         /* SUBJECT */
         if ($request->filled('subject_id')) {
-            $query->whereHas(
-                'product',
-                fn($q) =>
-                $q->where('subject_id', $request->subject_id)
-            );
+            $query->where('subject_id', $request->subject_id);
+        }
+
+        /* DISTANCE RANGE */
+        $userLat = session('user_latitude');
+        $userLng = session('user_longitude');
+        $distance = session('distance', 10);
+        if ($userLat && $userLng && $distance < 100) {
+            $query->whereHas('attributes.vendor', function ($q) use ($userLat, $userLng, $distance) {
+                $q->whereNotNull('location')
+                    ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);
+            });
         }
 
         /* FETCH */
@@ -599,12 +568,12 @@ class IndexController extends Controller
 
         /* PRICE FILTER (VENDOR DISCOUNT SAFE) */
         if ($request->filled('min_price') || $request->filled('max_price')) {
-            $minPrice = (float) ($request->min_price ?? 0);
-            $maxPrice = (float) ($request->max_price ?? PHP_FLOAT_MAX);
+            $minPriceVal = (float) ($request->min_price ?? 0);
+            $maxPriceVal = (float) ($request->max_price ?? PHP_FLOAT_MAX);
 
-            $products = $products->filter(function ($attr) use ($minPrice, $maxPrice) {
-                $price = Product::getDiscountPrice($attr->product_id, $attr->vendor_id);
-                return $price >= $minPrice && $price <= $maxPrice;
+            $products = $products->filter(function ($product) use ($minPriceVal, $maxPriceVal) {
+                $price = Product::getDiscountPrice($product->id);
+                return $price >= $minPriceVal && $price <= $maxPriceVal;
             });
         }
 

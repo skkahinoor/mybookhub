@@ -1491,7 +1491,7 @@
         <div class="context-left">
             <span>Showing books for:</span>
             <strong id="currentSelectionInfo">
-                {{ $currentSectionId ? $sections->find($currentSectionId)?->name ?? 'All Categories' : 'All Categories' }}
+                {{ $currentSectionId ? collect($sections)->where('id', $currentSectionId)->first()?->name ?? 'All Categories' : 'All Categories' }}
                 @if (isset($currentSubCategoryId) && $currentSubCategoryId)
                     > {{ \App\Models\Category::find($currentSubCategoryId)?->category_name }}
                 @endif
@@ -1687,11 +1687,11 @@
                                 title="Detect my location"></i>
                         </div>
                         <span id="rangeValue"
-                            style="color: var(--primary-orange); font-weight: 700; font-size: 13px;">Within 100 km+</span>
+                            style="color: var(--primary-orange); font-weight: 700; font-size: 13px;">Within {{ session('distance', 10) >= 100 ? '100 km+' : session('distance', 10) . ' km' }}</span>
                     </div>
                     <div class="range-container">
                         <input type="range" class="range-slider" id="distanceRange" min="1" max="100"
-                            value="100">
+                            value="{{ session('distance', 10) }}">
                         <div class="range-labels">
                             <span>1 km</span>
                             <span>25 km</span>
@@ -1878,8 +1878,8 @@
             subcategorySelect.innerHTML = '<option value="">Select Class</option>';
 
             // Reset slider
-            rangeSlider.value = 100;
-            rangeValue.innerText = 'Within 100 km+';
+            rangeSlider.value = 10;
+            rangeValue.innerText = 'Within 10 km';
 
             // Reset checkboxes
             document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
