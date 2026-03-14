@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Cart;
 use App\Models\HeaderLogo;
@@ -152,6 +153,18 @@ class RazorpayController extends Controller
 
                 // Update Order Status
                 $order->update(['order_status' => 'Paid']);
+
+                // Notify user: payment successful
+                if ($order->user_id) {
+                    Notification::create([
+                        'type' => 'order_paid',
+                        'title' => 'Payment successful',
+                        'message' => 'Your payment for order #' . $order->id . ' (₹' . number_format((float) $order->grand_total, 2) . ') was successful. Order is now confirmed.',
+                        'related_id' => (int) $order->user_id,
+                        'related_type' => User::class,
+                        'is_read' => false,
+                    ]);
+                }
 
                 // Wallet Credit Logic
                 \App\Models\WalletTransaction::checkAndCreditWallet($order->id);

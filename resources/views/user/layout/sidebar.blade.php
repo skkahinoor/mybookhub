@@ -187,6 +187,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
     <nav class="sidebar sidebar-offcanvas" id="sidebar">
+        @php
+            $sidebarAvatar = optional(Auth::user())->profile_image ?: 'user/images/faces/face28.jpg';
+            $sidebarAvatarSrc = str_contains($sidebarAvatar, 'http') ? $sidebarAvatar : asset($sidebarAvatar);
+        @endphp
+        <div class="sidebar-profile">
+            <div class="d-flex align-items-center sidebar-profile-row" style="gap:10px;">
+                <img src="{{ $sidebarAvatarSrc }}" alt="profile">
+                <div class="flex-grow-1">
+                    <div class="name">{{ Auth::user()->name ?? 'Student' }}</div>
+                    <div class="meta">Welcome back</div>
+                </div>
+            </div>
+        </div>
         <ul class="nav">
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('student.index') }}">

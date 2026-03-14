@@ -12,6 +12,7 @@ use App\Models\HeaderLogo;
 use App\Models\Language;
 use App\Models\Order;
 use App\Models\OrdersProduct;
+use App\Models\Notification;
 use App\Models\Product;
 use App\Models\ProductsAttribute;
 use App\Models\ProductsFilter;
@@ -1600,6 +1601,15 @@ class ProductsController extends Controller
                     'type' => 'debit',
                     'description' => 'Used for orders: ' . implode(', ', $order_ids),
                 ]);
+
+                Notification::create([
+                    'type' => 'wallet_debit',
+                    'title' => 'Wallet used',
+                    'message' => '₹' . number_format((float) $total_wallet_amount, 2) . ' was used from your wallet for order #' . $order_ids[0] . '.',
+                    'related_id' => (int) $user->id,
+                    'related_type' => User::class,
+                    'is_read' => false,
+                ]);
             }
 
             Session::put('order_ids', $order_ids);
@@ -1607,6 +1617,22 @@ class ProductsController extends Controller
             Session::put('grand_total', $total_price + $total_shipping_charges - $total_coupon_amount - $total_wallet_amount);
 
             DB::commit();
+
+            // Student notification: order placed (success for COD, pending payment for Prepaid)
+            if (Auth::check()) {
+                $isPrepaid = $data['payment_gateway'] !== 'COD';
+                Notification::create([
+                    'type' => $isPrepaid ? 'order_pending_payment' : 'order_placed',
+                    'title' => $isPrepaid ? 'Order placed (pending payment)' : 'Order placed successfully',
+                    'message' => $isPrepaid
+                        ? 'Your order #' . $order_ids[0] . ' is placed. Total: ₹' . number_format((float) Session::get('grand_total'), 2) . '. Complete payment to confirm.'
+                        : 'Your order #' . $order_ids[0] . ' has been placed. Total: ₹' . number_format((float) Session::get('grand_total'), 2),
+                    'related_id' => (int) Auth::id(),
+                    'related_type' => User::class,
+                    'is_read' => false,
+                ]);
+            }
+
             $orderDetails = Order::with('orders_products')->whereIn('id', $order_ids)->get()->toArray();
 
             if ($data['payment_gateway'] == 'COD') {

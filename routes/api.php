@@ -177,6 +177,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('vendor/book-requests/{id}/reply', [CatalogueController::class, 'replyBookRequest']);
 
     Route::get('vendor/book-type', [CatalogueController::class, 'getType']);
+    Route::get('vendor/book-conditions', [BookController::class, 'getOldBookConditions']);
 
     Route::get('/vendor/products', [BookController::class, 'getproduct']);
     Route::patch('/vendor/products/{id}/status', [BookController::class, 'updateProductStatus']);

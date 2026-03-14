@@ -34,6 +34,11 @@ class Cart extends Model
         return $this->belongsTo(ProductsAttribute::class, 'product_attribute_id');
     }
 
+    public function attribute()
+    {
+        return $this->belongsTo(ProductsAttribute::class, 'product_attribute_id');
+    }
+
     // Get the Cart Items of a cerain user (using their `user_id` if they're authenticated/logged in or their `session_id` if they're not authenticated/not logged in (guest))
     public static function getCartItems()
     { // this method is called (used) in cart() method in Front/ProductsController.php

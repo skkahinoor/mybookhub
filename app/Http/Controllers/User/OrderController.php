@@ -4,7 +4,9 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
+use App\Models\Notification;
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -135,6 +137,16 @@ class OrderController extends Controller
 
         // Revert Wallet
         \App\Models\WalletTransaction::revertWallet($id);
+
+        // Notify user
+        Notification::create([
+            'type' => 'order_cancelled',
+            'title' => 'Order cancelled',
+            'message' => 'Your order #' . $id . ' has been cancelled. Wallet balance (if used) has been reverted.',
+            'related_id' => (int) Auth::id(),
+            'related_type' => User::class,
+            'is_read' => false,
+        ]);
 
         return redirect()->back()->with('success_message', 'Order has been cancelled and wallet balance (if any) has been reverted.');
     }

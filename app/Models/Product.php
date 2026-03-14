@@ -122,10 +122,13 @@ class Product extends Model
     }
 
     // Relationship of a Product `products` table with Vendor `vendors` table (every product belongs to a vendor)
+    // Deprecated: vendor_id does not exist on products table. Use ProductsAttribute relationship instead.
+    /*
     public function vendor()
     {
         return $this->belongsTo('App\Models\Vendor', 'vendor_id')->with('vendorbusinessdetails'); // 'vendor_id' is the Foreign Key of the Relationship
     }
+    */
 
     // A static method (to be able to be called directly without instantiating an object in index.blade.php) to determine the final price of a product because a product can have a discount from TWO things: either a `CATEGORY` discount or `PRODUCT` discount
     public static function getDiscountPrice($product_id, $vendor_id = null)
@@ -225,11 +228,14 @@ class Product extends Model
         ];
     }
 
-    public static function getDiscountPriceDetailsByAttribute($attribute_id)
+    public static function getDiscountPriceDetailsByAttribute($attribute_id, $attributeModel = null)
     {
-        $attribute = ProductsAttribute::with(['product', 'condition'])
-            ->where('id', $attribute_id)
-            ->first();
+        $attribute = $attributeModel;
+        if (!$attribute) {
+            $attribute = ProductsAttribute::with(['product', 'condition'])
+                ->where('id', $attribute_id)
+                ->first();
+        }
 
         if (!$attribute || !$attribute->product) {
             return [
@@ -271,9 +277,9 @@ class Product extends Model
         $totalDiscountAmount = max(0, $originalPrice - $finalPrice);
 
         return [
-            'product_price' => round($originalPrice, 2), // Strike-through price
-            'final_price'   => round($finalPrice, 2),    // Paying price
-            'discount'      => round($totalDiscountAmount, 2),
+            'product_price' => round($originalPrice), // Strike-through price
+            'final_price'   => round($finalPrice),    // Paying price
+            'discount'      => round($totalDiscountAmount),
         ];
     }
 

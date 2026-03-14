@@ -26,55 +26,69 @@
                 <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
                     data-toggle="dropdown">
                     <i class="icon-bell mx-0"></i>
-                    <span class="count"></span>
+                    @php
+                        $unread = (int) ($navUnreadCount ?? 0);
+                    @endphp
+                    @if($unread > 0)
+                      <span class="count">{{ $unread }}</span>
+                    @endif
                 </a>
                 <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list"
-                    aria-labelledby="notificationDropdown">
-                    <p class="mb-0 font-weight-normal float-left dropdown-header">Notifications</p>
-                    <a class="dropdown-item preview-item">
+                     aria-labelledby="notificationDropdown" style="min-width:320px; max-width:380px;">
+                    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                        <p class="mb-0 font-weight-normal">Notifications</p>
+                        @if(($unread ?? 0) > 0)
+                            <span class="badge badge-primary badge-pill">{{ $unread }} new</span>
+                        @endif
+                    </div>
+                    <div style="max-height:320px; overflow-y:auto;">
+                    @forelse(($navNotifications ?? []) as $n)
+                      @php
+                        $isUnread = !((bool) ($n->is_read ?? false));
+                        $iconBg = $isUnread ? 'bg-primary' : 'bg-light';
+                        $iconClass = $isUnread ? 'ti-bell' : 'ti-check';
+                      @endphp
+                      <a href="#" class="dropdown-item preview-item js-student-notification"
+                         data-id="{{ $n->id }}"
+                         data-read="{{ (int) ((bool) ($n->is_read ?? false)) }}"
+                         style="white-space: normal;">
                         <div class="preview-thumbnail">
-                            <div class="preview-icon bg-success">
-                                <i class="ti-info-alt mx-0"></i>
-                            </div>
+                          <div class="preview-icon {{ $iconBg }}">
+                            <i class="{{ $iconClass }} mx-0"></i>
+                          </div>
                         </div>
                         <div class="preview-item-content">
-                            <h6 class="preview-subject font-weight-normal">Application Error</h6>
-                            <p class="font-weight-light small-text mb-0 text-muted">
-                                Just now
-                            </p>
+                          <h6 class="preview-subject font-weight-normal mb-1">
+                              {{ $n->title }}
+                              @if($isUnread)
+                                  <span class="badge badge-pill badge-primary ml-1">New</span>
+                              @endif
+                          </h6>
+                          <p class="font-weight-light small-text mb-0 text-muted" style="white-space: normal;">
+                              {{ \Illuminate\Support\Str::limit($n->message, 60) }}
+                          </p>
+                          <small class="text-muted d-block mt-1">
+                              {{ $n->created_at?->diffForHumans() }}
+                          </small>
                         </div>
-                    </a>
-                    <a class="dropdown-item preview-item">
-                        <div class="preview-thumbnail">
-                            <div class="preview-icon bg-warning">
-                                <i class="ti-settings mx-0"></i>
-                            </div>
-                        </div>
+                      </a>
+                    @empty
+                      <div class="dropdown-item preview-item" style="white-space: normal;">
                         <div class="preview-item-content">
-                            <h6 class="preview-subject font-weight-normal">Settings</h6>
-                            <p class="font-weight-light small-text mb-0 text-muted">
-                                Private message
-                            </p>
+                          <p class="mb-0 text-muted">No notifications yet.</p>
                         </div>
-                    </a>
-                    <a class="dropdown-item preview-item">
-                        <div class="preview-thumbnail">
-                            <div class="preview-icon bg-info">
-                                <i class="ti-user mx-0"></i>
-                            </div>
-                        </div>
-                        <div class="preview-item-content">
-                            <h6 class="preview-subject font-weight-normal">New user registration</h6>
-                            <p class="font-weight-light small-text mb-0 text-muted">
-                                2 days ago
-                            </p>
-                        </div>
-                    </a>
+                      </div>
+                    @endforelse
+                    </div>
+                    <div class="border-top text-center py-2">
+                        <a href="{{ route('student.notifications.index') }}" class="text-primary font-weight-bold" style="font-size: 0.85rem;">
+                            See all notifications &rarr;
+                        </a>
+                    </div>
                 </div>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="{{ route('student.wallet') }}"
-                    style="display: flex; align-items: center; gap: 8px; color: #ff9900; font-weight: 700; background: #fff5e6; padding: 8px 16px; border-radius: 20px; border: 1px solid #ffe3b3;">
+                <a class="nav-link wallet-pill" href="{{ route('student.wallet') }}">
                     <i class="ti-wallet" style="font-size: 1.1rem;"></i>
                     <span>₹{{ Auth::user()->wallet_balance }}</span>
                 </a>
@@ -180,6 +194,41 @@
                 e.target.value = '';
                 filterSidebarMenu('');
             }
+        });
+    })();
+
+    // Student notifications: mark as read when clicked
+    (function () {
+        var items = document.querySelectorAll('.js-student-notification');
+        if (!items.length) return;
+
+        items.forEach(function (el) {
+            el.addEventListener('click', function (e) {
+                e.preventDefault();
+                var id = el.getAttribute('data-id');
+                var isRead = el.getAttribute('data-read') === '1';
+                if (isRead || !id) return;
+
+                fetch("{{ url('/student/notifications') }}/" + id + "/read", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                        "Accept": "application/json"
+                    }
+                }).then(function () {
+                    // Simple UI update: hide New badge & decrement count if present
+                    var badge = el.querySelector('.badge.badge-primary');
+                    if (badge) badge.remove();
+                    el.setAttribute('data-read', '1');
+                    var countEl = document.querySelector('#notificationDropdown .count');
+                    if (countEl) {
+                        var n = parseInt(countEl.textContent || '0', 10);
+                        n = isNaN(n) ? 0 : Math.max(0, n - 1);
+                        if (n === 0) countEl.remove();
+                        else countEl.textContent = String(n);
+                    }
+                }).catch(function () {});
+            });
         });
     })();
 </script>

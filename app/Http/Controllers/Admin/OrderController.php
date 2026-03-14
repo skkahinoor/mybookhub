@@ -17,6 +17,7 @@ use App\Models\OrderItemStatus;
 use App\Models\Product;
 use App\Models\ProductsAttribute;
 use App\Models\Coupon;
+use App\Models\Notification;
 use Illuminate\Support\Facades\DB;
 
 
@@ -197,6 +198,19 @@ class OrderController extends Controller
 
             // Update Order Status in `orders` table
             Order::where('id', $data['order_id'])->update(['order_status' => $data['order_status']]);
+
+            // Student notification: order status updated
+            $orderForNotify = Order::select('id', 'user_id')->where('id', $data['order_id'])->first();
+            if ($orderForNotify && !empty($orderForNotify->user_id)) {
+                Notification::create([
+                    'type' => 'order_status_updated',
+                    'title' => 'Order status updated',
+                    'message' => 'Your order #' . $orderForNotify->id . ' status changed to: ' . $data['order_status'],
+                    'related_id' => (int) $orderForNotify->user_id,
+                    'related_type' => User::class,
+                    'is_read' => false,
+                ]);
+            }
 
             if ($data['order_status'] == 'Delivered') {
                 \App\Models\WalletTransaction::checkAndCreditWallet($data['order_id']);

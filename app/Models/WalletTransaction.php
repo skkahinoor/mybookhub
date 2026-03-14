@@ -81,6 +81,15 @@ class WalletTransaction extends Model
                 'type'        => 'credit',
                 'description' => 'Testpaper purchase bonus',
             ]);
+
+            \App\Models\Notification::create([
+                'type' => 'wallet_credit',
+                'title' => 'Wallet credited',
+                'message' => '₹100 has been added to your wallet as Testpaper purchase bonus (Order #' . $order->id . ').',
+                'related_id' => (int) $user->id,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
         }
     }
     public static function revertWallet($orderId)
@@ -112,6 +121,15 @@ class WalletTransaction extends Model
                 'type'        => 'debit',
                 'description' => 'Reversal of bonus for cancelled order #' . $order->id,
             ]);
+
+            \App\Models\Notification::create([
+                'type' => 'wallet_debit',
+                'title' => 'Wallet adjusted',
+                'message' => 'Bonus amount ₹' . $creditTransaction->amount . ' has been reversed for cancelled order #' . $order->id . '.',
+                'related_id' => (int) $user->id,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
         }
 
         // 2. Revert Used Amount (Debit Reversal)
@@ -126,6 +144,15 @@ class WalletTransaction extends Model
                 'amount'      => $debitTransaction->amount,
                 'type'        => 'credit',
                 'description' => 'Refund of wallet amount for cancelled order #' . $order->id,
+            ]);
+
+            \App\Models\Notification::create([
+                'type' => 'wallet_credit',
+                'title' => 'Wallet refund',
+                'message' => '₹' . $debitTransaction->amount . ' has been refunded to your wallet for cancelled order #' . $order->id . '.',
+                'related_id' => (int) $user->id,
+                'related_type' => User::class,
+                'is_read' => false,
             ]);
         }
     }
