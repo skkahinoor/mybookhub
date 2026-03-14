@@ -289,6 +289,25 @@ class ProductController extends Controller
             ], 404);
         }
 
+        $lat = $request->lat;
+        $lng = $request->lng;
+        $distance = null;
+
+        if ($lat && $lng && $attribute->vendor && $attribute->vendor->location) {
+            $vendorLoc = explode(',', $attribute->vendor->location);
+            if (count($vendorLoc) == 2) {
+                $vLat = (float)trim($vendorLoc[0]);
+                $vLng = (float)trim($vendorLoc[1]);
+
+                $theta = $lng - $vLng;
+                $dist = sin(deg2rad($lat)) * sin(deg2rad($vLat)) + cos(deg2rad($lat)) * cos(deg2rad($vLat)) * cos(deg2rad($theta));
+                $dist = acos($dist);
+                $dist = rad2deg($dist);
+                $miles = $dist * 60 * 1.1515;
+                $distance = round($miles * 1.609344, 2);
+            }
+        }
+
         $product = Product::with([
             'section',
             'category',
@@ -366,8 +385,8 @@ class ProductController extends Controller
 
                     'authors' => $product->authors->map(function ($author) {
                         return [
-                            'id' => $author->id,
-                            'name' => $author->name,
+                            'id' => is_array($author) ? ($author['id'] ?? null) : ($author->id ?? null),
+                            'name' => is_array($author) ? ($author['name'] ?? null) : ($author->name ?? null),
                         ];
                     })
                 ],
@@ -404,7 +423,8 @@ class ProductController extends Controller
                             'mobile' => $attribute->vendor->user->mobile ?? null,
                             'image' => $attribute->vendor->user->image ?? null,
                             'created_at' => $attribute->vendor->user->created_at ?? null,
-                        ]
+                        ],
+                        'distance' => $distance
                     ]
                 ],
 
