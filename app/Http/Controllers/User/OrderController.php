@@ -133,6 +133,23 @@ class OrderController extends Controller
         $order->order_status = 'Cancelled';
         $order->save();
 
+        // Also cancel all order items and notify vendors
+        $items = \App\Models\OrdersProduct::where('order_id', $id)->get();
+        \App\Models\OrdersProduct::where('order_id', $id)->update(['item_status' => 'Cancelled']);
+
+        $vendorIds = $items->pluck('vendor_id')->filter()->unique();
+        foreach ($vendorIds as $vendorId) {
+            \App\Models\Notification::create([
+                'type'         => 'order_cancelled',
+                'title'        => 'Order Cancelled',
+                'message'      => 'Order #' . $order->id . ' containing your products was cancelled by the customer.',
+                'related_id'   => $order->id,
+                'related_type' => \App\Models\Order::class,
+                'vendor_id'    => $vendorId,
+                'is_read'      => false,
+            ]);
+        }
+
         // Revert Wallet
         \App\Models\WalletTransaction::revertWallet($id);
 

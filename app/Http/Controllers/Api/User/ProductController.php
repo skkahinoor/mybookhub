@@ -24,6 +24,7 @@ use App\Models\Category;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\OrdersLog;
+use App\Models\Notification;
 use Razorpay\Api\Api;
 
 class ProductController extends Controller
@@ -1175,6 +1176,18 @@ class ProductController extends Controller
                     'item_status' => $order_status,
                     'commission' => $commission
                 ]);
+
+                if (($attribute->vendor_id ?? 0) > 0) {
+                    Notification::create([
+                        'type'         => 'order_placed',
+                        'title'        => 'New Order Received',
+                        'message'      => 'A customer placed an order containing your product: ' . ($attribute->product->product_name ?? 'Product') . '.',
+                        'related_id'   => $order->id,
+                        'related_type' => 'App\Models\Order',
+                        'vendor_id'    => $attribute->vendor_id,
+                        'is_read'      => false,
+                    ]);
+                }
             }
 
             if ($wallet_amount > 0) {
@@ -1504,6 +1517,19 @@ class ProductController extends Controller
 
                 $productItem->update(['item_status' => 'Cancelled']);
 
+                // Notify vendor about cancelled item
+                if (($productItem->vendor_id ?? 0) > 0) {
+                    Notification::create([
+                        'type'         => 'order_cancelled',
+                        'title'        => 'Order Item Cancelled',
+                        'message'      => 'An item "' . ($productItem->product_name ?? 'Product') . '" in order #' . $order->id . ' was cancelled by the customer.',
+                        'related_id'   => $order->id,
+                        'related_type' => 'App\Models\Order',
+                        'vendor_id'    => $productItem->vendor_id,
+                        'is_read'      => false,
+                    ]);
+                }
+
                 // Check if ALL items are now cancelled
                 $activeItemsCount = OrdersProduct::where('order_id', $id)
                     ->where('item_status', '!=', 'Cancelled')
@@ -1518,8 +1544,24 @@ class ProductController extends Controller
             } else {
                 // FULL CANCELLATION: Mark everything as cancelled
                 $order->update(['order_status' => 'Cancelled']);
+                $orderItems = OrdersProduct::where('order_id', $id)->get();
                 OrdersProduct::where('order_id', $id)->update(['item_status' => 'Cancelled']);
                 WalletTransaction::revertWallet($id);
+
+                // Notify all vendors involved in this order (unique vendor_ids)
+                $vendorIds = $orderItems->pluck('vendor_id')->filter()->unique();
+                foreach ($vendorIds as $vendorId) {
+                    Notification::create([
+                        'type'         => 'order_cancelled',
+                        'title'        => 'Order Cancelled',
+                        'message'      => 'Order #' . $order->id . ' containing your products was cancelled by the customer.',
+                        'related_id'   => $order->id,
+                        'related_type' => 'App\Models\Order',
+                        'vendor_id'    => $vendorId,
+                        'is_read'      => false,
+                    ]);
+                }
+
                 $message = 'Entire order #' . $id . ' has been cancelled successfully.';
             }
 

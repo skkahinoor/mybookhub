@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Wishlist;
 use App\Models\WalletTransaction;
+use App\Models\Notification;
 
 use App\Models\BookType;
 use Illuminate\Http\Request;
@@ -1359,6 +1360,19 @@ class ProductsController extends Controller
                 $cartItem->item_status = "New";
                 $cartItem->product_attribute_id = $item['product_attribute_id'];
                 $cartItem->save();
+
+                // Notify vendor when their product is ordered (so it shows in vendor notifications)
+                if (($cartItem->vendor_id ?? 0) > 0) {
+                    Notification::create([
+                        'type'         => 'order_placed',
+                        'title'        => 'New Order Received',
+                        'message'      => 'A customer placed an order containing your product: ' . ($cartItem->product_name ?? 'Product') . '.',
+                        'related_id'   => $order->id,
+                        'related_type' => 'App\Models\Order',
+                        'vendor_id'    => $cartItem->vendor_id,
+                        'is_read'      => false,
+                    ]);
+                }
 
                 // Reduce stock for COD orders immediately
                 if ($data['payment_gateway'] == 'COD') {
