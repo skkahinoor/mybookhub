@@ -84,7 +84,7 @@ class ProductController extends Controller
     {
         $user = auth('sanctum')->user();
 
-        $query = Product::with(['category', 'subcategory', 'section', 'subject', 'bookType', 'language', 'authors'])
+        $query = Product::with(['category', 'subcategory', 'section', 'subject', 'bookType', 'language', 'authors', 'attributes.product', 'attributes.condition'])
             ->where('status', 1)
             ->whereHas('attributes', function ($q) {
                 $q->where('status', 1)->where('stock', '>', 0);
@@ -195,10 +195,14 @@ class ProductController extends Controller
                 $basePath = url('front/images/product_images');
 
                 // Aggregate price range and offer count from associated attributes
-                $activeAttributes = $product->attributes()->where('status', 1)->where('stock', '>', 0)->get();
-                $prices = $activeAttributes->map(function($attr) {
-                    return Product::getDiscountPriceDetailsByAttribute($attr->id)['final_price'];
-                });
+                $prices = $product->attributes
+                    ->filter(function($attr) {
+                        return $attr->status == 1 && $attr->stock > 0;
+                    })
+                    ->map(function($attr) {
+                        $pDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
+                        return $pDetails['final_price'];
+                    });
 
                 return [
                     'id'              => $product->id,
@@ -275,7 +279,7 @@ class ProductController extends Controller
         }
 
         // Fetch all active vendor offers for this product with specific sorting
-        $attributesQuery = ProductsAttribute::with(['vendor.user', 'condition'])
+        $attributesQuery = ProductsAttribute::with(['vendor.user', 'condition', 'product'])
             ->join('vendors as v', 'products_attributes.vendor_id', '=', 'v.id')
             ->join('products as p', 'products_attributes.product_id', '=', 'p.id')
             ->select('products_attributes.*')
@@ -324,7 +328,7 @@ class ProductController extends Controller
                 }
             }
 
-            $priceDetails = Product::getDiscountPriceDetailsByAttribute($attr->id);
+            $priceDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
 
             $inCart = false;
             $cartQty = 0;
@@ -586,7 +590,7 @@ class ProductController extends Controller
 
         $cartItems = Cart::with(['product' => function ($q) {
             $q->select('id', 'category_id', 'product_name', 'product_image')->with('authors');
-        }])
+        }, 'attribute'])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
                     $q->where('user_id', $user_id);
@@ -603,7 +607,7 @@ class ProductController extends Controller
 
         foreach ($cartItems as $item) {
 
-            $price = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
+            $price = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id, $item->attribute);
 
             $item->product_price = round($price['product_price'] ?? 0);
             $item->final_price = round($price['final_price'] ?? 0);
@@ -621,13 +625,13 @@ class ProductController extends Controller
                     'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
 
-                $authorString = $item->product->authors->pluck('author_name')->join(', ');
+                $authorString = $item->product->authors->pluck('name')->join(', ');
                 $item->product->author_name = $authorString;
 
                 $item->product->authors = $item->product->authors->map(function ($author) {
                     return [
                         'id' => $author->id,
-                        'name' => $author->author_name,
+                        'name' => $author->name,
                     ];
                 });
 
@@ -817,6 +821,8 @@ class ProductController extends Controller
 
         $wishlists = Wishlist::with([
             'attribute.vendor',
+            'attribute.product',
+            'attribute.condition',
             'product' => function ($q) {
                 $q->select(
                     'id',
@@ -852,7 +858,7 @@ class ProductController extends Controller
 
         foreach ($wishlists as $item) {
 
-            $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
+            $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id, $item->attribute);
 
             $item->product_price = round($priceDetails['product_price'] ?? 0);
             $item->final_price = round($priceDetails['final_price'] ?? 0);

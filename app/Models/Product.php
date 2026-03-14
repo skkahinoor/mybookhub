@@ -228,11 +228,14 @@ class Product extends Model
         ];
     }
 
-    public static function getDiscountPriceDetailsByAttribute($attribute_id)
+    public static function getDiscountPriceDetailsByAttribute($attribute_id, $attributeModel = null)
     {
-        $attribute = ProductsAttribute::with(['product', 'condition'])
-            ->where('id', $attribute_id)
-            ->first();
+        $attribute = $attributeModel;
+        if (!$attribute) {
+            $attribute = ProductsAttribute::with(['product', 'condition'])
+                ->where('id', $attribute_id)
+                ->first();
+        }
 
         if (!$attribute || !$attribute->product) {
             return [
