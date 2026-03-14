@@ -3,10 +3,13 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use App\Http\Controllers\Front\ProductsController;
 use App\Models\Section;
 use App\Models\FilterClassSubject;
+use App\Models\Notification;
+use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -77,6 +80,38 @@ class AppServiceProvider extends ServiceProvider
                 })->filter()->values();
 
             $view->with('navFilterData', $navFilterData);
+        });
+
+        // Share student notifications with user navbar
+        View::composer('user.layout.navbar', function ($view) {
+            if (!Auth::check()) {
+                return;
+            }
+
+            $userId = Auth::id();
+
+            $navNotificationsQuery = Notification::query()
+                ->where(function ($q) use ($userId) {
+                    $q->where(function ($q2) use ($userId) {
+                        $q2->where('related_type', User::class)
+                            ->where('related_id', $userId);
+                    })->orWhere(function ($q2) {
+                        $q2->whereNull('related_type')
+                            ->whereNull('related_id');
+                    });
+                });
+
+            $navUnreadCount = (clone $navNotificationsQuery)
+                ->where('is_read', false)
+                ->count();
+
+            $navNotifications = (clone $navNotificationsQuery)
+                ->latest()
+                ->limit(5)
+                ->get();
+
+            $view->with('navUnreadCount', $navUnreadCount);
+            $view->with('navNotifications', $navNotifications);
         });
     }
 }

@@ -9,6 +9,7 @@ Route::post('/user/register', [ProfileController::class,'register']);
 Route::post('/user/verify-otp', [ProfileController::class,'verifyOtp']);
 Route::get('/user/home', [HomeController::class, 'home']);
 Route::get('/user/products', [ProductController::class, 'index']);
+Route::get('/user/vendor-product/{product_id}', [ProductController::class, 'vendorsproduct']);
 Route::get('/user/product-details/{attribute_id}', [ProductController::class, 'productDetails']);
 Route::get('/user/search-suggestions', [ProductController::class, 'suggestions']);
 Route::get('/user/education-level', [HomeController::class, 'getSections']);

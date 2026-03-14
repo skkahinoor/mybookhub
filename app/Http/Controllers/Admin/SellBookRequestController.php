@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ProductsAttribute;
-use App\Models\Product;
 use App\Models\HeaderLogo;
+use App\Models\Notification;
+use App\Models\Product;
+use App\Models\ProductsAttribute;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
@@ -43,8 +45,8 @@ class SellBookRequestController extends Controller
 
     public function approve(Request $request, $id)
     {
-        $attribute = ProductsAttribute::findOrFail($id);
-        
+        $attribute = ProductsAttribute::with('product')->findOrFail($id);
+
         // Approve the attribute
         $attribute->admin_approved = 1;
         $attribute->status = 1;
@@ -57,13 +59,41 @@ class SellBookRequestController extends Controller
             $product->save();
         }
 
+        // Notify student/user who submitted the sell request
+        if (!empty($attribute->user_id)) {
+            $productName = $attribute->product->product_name ?? 'your book';
+            Notification::create([
+                'type' => 'sell_book_approved',
+                'title' => 'Sell request approved',
+                'message' => "Your listing for '{$productName}' has been approved and is now live.",
+                'related_id' => (int) $attribute->user_id,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
+        }
+
         return redirect()->route('admin.sell-book-requests.index')->with('success_message', 'Old book listing approved successfully!');
     }
 
     public function reject($id)
     {
-        $attribute = ProductsAttribute::findOrFail($id);
-        $attribute->delete(); // Or update status to rejected
+        $attribute = ProductsAttribute::with('product')->findOrFail($id);
+        $userId = $attribute->user_id;
+        $productName = $attribute->product->product_name ?? 'your book';
+
+        $attribute->delete();
+
+        // Notify student/user who submitted the sell request
+        if (!empty($userId)) {
+            Notification::create([
+                'type' => 'sell_book_rejected',
+                'title' => 'Sell request not approved',
+                'message' => "Your listing for '{$productName}' could not be approved. Please check our guidelines or contact support.",
+                'related_id' => (int) $userId,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
+        }
 
         return redirect()->route('admin.sell-book-requests.index')->with('success_message', 'Sell request rejected and removed.');
     }

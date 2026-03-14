@@ -670,6 +670,9 @@
                 }
             }
 
+            // expose globally so other scripts (ISBN fetch) can call it
+            window.updatePriceByCondition = updatePriceByCondition;
+
             $('#old_book_condition_id').on('change', function() {
                 updatePriceByCondition();
             });
@@ -687,10 +690,10 @@
 
     <script>
         // Cascading selects REMOVED as per user request for "simple dropdowns"
-                                        $(document).ready(function() {
+        $(document).ready(function() {
                                             // Optional: You can still add small filters here if needed, 
                                             // but for now we just allow direct selection.
-                                        });
+         });
     </script>
 
     <script>
@@ -698,7 +701,7 @@
 
         function setReadonly(state) {
             globalStateReadOnly = state;
-            $("#product_name, #product_price, #description, #searchInput")
+            $("#product_isbn, #product_name, #product_price, #description, #searchInput")
                 .prop("readonly", state);
 
             $("#section_id, #category_id, #subcategory_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id")

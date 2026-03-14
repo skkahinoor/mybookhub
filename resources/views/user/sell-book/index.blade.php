@@ -45,6 +45,7 @@
                                                 <th>Condition</th>
                                                 <th>Category</th>
                                                 <th>Price</th>
+                                                <th>Selling Price</th>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>
@@ -71,6 +72,13 @@
                                                     </td>
                                                     <td>
                                                         {{ $product->product_price ? '₹'.number_format($product->product_price, 2) : 'N/A' }}
+                                                    </td>
+                                                    <td>
+                                                        @if(isset($product->attributes[0]))
+                                                            ₹{{ number_format($product->attributes[0]->user_product_price, 2) }}
+                                                        @else
+                                                            N/A
+                                                        @endif
                                                     </td>
                                                     <td>
                                                         @if(isset($product->attributes[0]))

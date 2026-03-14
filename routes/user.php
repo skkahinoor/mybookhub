@@ -5,6 +5,7 @@ use App\Http\Controllers\User\AccountController;
 use App\Http\Controllers\User\AuthController;
 use App\Http\Controllers\User\BookRequestController;
 use App\Http\Controllers\User\DashboardController;
+use App\Http\Controllers\User\NotificationController;
 use App\Http\Controllers\User\OrderController;
 use App\Http\Controllers\User\SellBookController;
 use App\Http\Controllers\User\WalletController;
@@ -43,6 +44,11 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('student.orders.show');
         Route::get('/orders/cancel/{id}', [OrderController::class, 'cancelOrder'])->name('student.orders.cancel');
         Route::get('/orders/pay-now/{id}', [OrderController::class, 'payNow'])->name('student.orders.payNow');
+
+        // Notifications (Student)
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('student.notifications.index');
+        Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('student.notifications.read');
+        Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('student.notifications.mark_all_read');
 
         // Sell Old Book routes
         Route::get('/sell-book', [SellBookController::class, 'index'])->name('student.sell-book.index');

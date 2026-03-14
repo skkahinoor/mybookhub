@@ -24,7 +24,6 @@ use App\Models\Category;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\OrdersLog;
-use App\Models\Notification;
 use Razorpay\Api\Api;
 
 class ProductController extends Controller
@@ -83,33 +82,29 @@ class ProductController extends Controller
 
     private function sqlSearch($request, $limit, $page, $lat, $lng)
     {
-        $user = auth('sanctum')->user();
+        $query = Product::with(['category', 'subcategory', 'section', 'subject', 'bookType', 'language', 'authors'])
+            ->select('products.*')
+            ->join('products_attributes as pa', 'pa.product_id', '=', 'products.id')
+            ->leftJoin('old_book_conditions as obc', 'pa.old_book_condition_id', '=', 'obc.id')
+            ->join('vendors as v', 'pa.vendor_id', '=', 'v.id')
+            ->join('users as u', 'v.user_id', '=', 'u.id')
+            ->addSelect(
+                'pa.id as attribute_id',
+                'pa.stock',
+                'pa.product_discount',
+                'pa.old_book_condition_id',
+                'obc.name as condition_name',
+                'obc.percentage as condition_percentage',
+                'v.id as vendor_id',
+                'u.name as vendor_name',
+                'v.plan as vendor_plan',
+                'v.location'
+            )
+            ->where('pa.status', 1)
+            ->where('products.status', 1)
+            ->where('pa.stock', '>', 0);
 
-        $query = Product::with(['category', 'subcategory', 'section', 'subject', 'bookType', 'language', 'authors', 'attributes.product', 'attributes.condition'])
-            ->where('status', 1)
-            ->whereHas('attributes', function ($q) {
-                $q->where('status', 1)->where('stock', '>', 0);
-            });
 
-        // Personalization logic for students
-        if ($user && $user->hasRole('student')) {
-            $user->load(['institution', 'institutionClass']);
-
-            // Auto-apply Section (type) if not provided
-            if (!$request->section_id && $user->institution && $user->institution->type) {
-                $query->where('section_id', $user->institution->type);
-            }
-            // Auto-apply Category (board) if not provided
-            if (!$request->category_id && $user->institution && $user->institution->board) {
-                $query->where('category_id', $user->institution->board);
-            }
-            // Auto-apply Subcategory (class) if not provided
-            if (!$request->subcategory_id && $user->institutionClass && $user->institutionClass->sub_category_id) {
-                $query->where('subcategory_id', $user->institutionClass->sub_category_id);
-            }
-        }
-
-        // Apply regular filters
         if ($request->search) {
             $searchTerm = trim($request->search);
             $words = explode(' ', $searchTerm);
@@ -122,9 +117,9 @@ class ProductController extends Controller
             }
 
             $query->where(function ($q) use ($searchTerm, $booleanSearch) {
-                $q->where('product_isbn', $searchTerm)
+                $q->where('products.product_isbn', $searchTerm)
                     ->orWhereRaw(
-                        "MATCH(product_name, meta_title, meta_keywords)
+                        "MATCH(products.product_name, products.meta_title, products.meta_keywords)
                          AGAINST(? IN BOOLEAN MODE)",
                         [trim($booleanSearch)]
                     );
@@ -132,59 +127,79 @@ class ProductController extends Controller
         }
 
         if ($request->isbn) {
-            $query->where('product_isbn', $request->isbn);
+            $query->where('products.product_isbn', $request->isbn);
         }
 
         if ($request->section_id) {
-            $query->where('section_id', $request->section_id);
+            $query->where('products.section_id', $request->section_id);
         }
 
         if ($request->category_id) {
-            $query->where('category_id', $request->category_id);
+            $query->where('products.category_id', $request->category_id);
         }
 
         if ($request->subcategory_id) {
-            $query->where('subcategory_id', $request->subcategory_id);
+            $query->where('products.subcategory_id', $request->subcategory_id);
         }
 
         if ($request->subject_id) {
             if (is_array($request->subject_id)) {
-                $query->whereIn('subject_id', $request->subject_id);
+                $query->whereIn('products.subject_id', $request->subject_id);
             } else {
-                $query->where('subject_id', $request->subject_id);
+                $query->where('products.subject_id', $request->subject_id);
             }
         }
 
         if ($request->min_price) {
-            $query->where('product_price', '>=', $request->min_price);
+            $query->where('products.product_price', '>=', $request->min_price);
         }
 
         if ($request->max_price) {
-            $query->where('product_price', '<=', $request->max_price);
+            $query->where('products.product_price', '<=', $request->max_price);
         }
 
         if ($request->book_type_id) {
             if (is_array($request->book_type_id)) {
-                $query->whereIn('book_type_id', $request->book_type_id);
+                $query->whereIn('products.book_type_id', $request->book_type_id);
             } else {
-                $query->where('book_type_id', $request->book_type_id);
+                $query->where('products.book_type_id', $request->book_type_id);
             }
         }
 
         if ($request->language_id) {
             if (is_array($request->language_id)) {
-                $query->whereIn('language_id', $request->language_id);
+                $query->whereIn('products.language_id', $request->language_id);
             } else {
-                $query->where('language_id', $request->language_id);
+                $query->where('products.language_id', $request->language_id);
             }
         }
 
-        if ($request->condition) {
-             $query->where('condition', $request->condition);
+
+        if ($lat && $lng) {
+
+            $query->addSelect(DB::raw("
+                (6371 * acos(
+                    cos(radians($lat)) *
+                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6)))) *
+                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', -1) AS DECIMAL(10,6))) - radians($lng)) +
+                    sin(radians($lat)) *
+                    sin(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6))))
+                )) AS distance
+            "));
         }
 
-        // Default sorting for product listing
-        $query->orderBy('id', 'desc');
+        if ($lat && $lng) {
+            $query->orderBy('distance', 'asc');
+        }
+
+        $query->orderByRaw("CASE WHEN v.plan='pro' THEN 1 ELSE 2 END ASC");
+
+        $query->orderBy('pa.product_discount', 'desc');
+
+        $query->orderBy('pa.stock', 'desc');
+
+        $query->orderBy('products.product_price', 'asc');
+
 
         $results = $query->paginate($limit, ['*'], 'page', $page);
 
@@ -193,26 +208,14 @@ class ProductController extends Controller
             'current_page' => $results->currentPage(),
             'last_page'    => $results->lastPage(),
             'products'     => $results->through(function ($product) {
-                $basePath = url('front/images/product_images');
 
-                // Aggregate price range and offer count from associated attributes
-                $prices = $product->attributes
-                    ->filter(function($attr) {
-                        return $attr->status == 1 && $attr->stock > 0;
-                    })
-                    ->map(function($attr) {
-                        $pDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
-                        return $pDetails['final_price'];
-                    });
+                $basePath = url('front/images/product_images');
 
                 return [
                     'id'              => $product->id,
                     'product_name'    => $product->product_name,
                     'product_isbn'    => $product->product_isbn,
-                    'product_price'   => round($product->product_price),
-                    'min_final_price' => $prices->isNotEmpty() ? round($prices->min()) : null,
-                    'max_final_price' => $prices->isNotEmpty() ? round($prices->max()) : null,
-                    'offer_count'     => $prices->count(),
+                    'product_price'   => $product->product_price,
                     'image_urls'       => [
                         'large'  => $product->product_image
                             ? $basePath . '/large/' . $product->product_image
@@ -226,11 +229,28 @@ class ProductController extends Controller
                     ],
                     'description'     => $product->description,
                     'condition'       => $product->condition,
+                    'old_book_condition' => $product->old_book_condition_id ? [
+                        'id' => $product->old_book_condition_id,
+                        'name' => $product->condition_name,
+                        'percentage' => $product->condition_percentage,
+                    ] : null,
+                    'stock'           => $product->stock,
+                    'attribute_id'    => $product->attribute_id,
+                    'product_discount' => $product->product_discount,
+                    'distance'        => isset($product->distance)
+                        ? round($product->distance, 2)
+                        : null,
+                    'vendor' => [
+                        'id'   => $product->vendor_id,
+                        'name' => $product->vendor_name,
+                        'plan' => $product->vendor_plan
+                    ],
                     'book_type' => $product->bookType ? [
                         'id'   => $product->bookType->id,
                         'name' => $product->bookType->book_type,
                         'icon' => $product->bookType->book_type_icon,
                     ] : null,
+
                     'language' => $product->language ? [
                         'id'   => $product->language->id,
                         'name' => $product->language->name,
@@ -240,6 +260,7 @@ class ProductController extends Controller
                     'section'     => $product->section,
                     'subject'     => $product->subject,
                     'author_name' => $product->authors->pluck('name')->join(', '),
+
                     'authors' => $product->authors->map(function ($author) {
                         return [
                             'id'   => $author->id,
@@ -249,164 +270,6 @@ class ProductController extends Controller
                 ];
             })->items()
         ];
-    }
-
-    public function vendorsproduct(Request $request, $product_id)
-    {
-        $user = auth('sanctum')->user();
-        $lat = $request->lat;
-        $lng = $request->lng;
-
-        $product = Product::with([
-            'section',
-            'category',
-            'subcategory',
-            'publisher',
-            'subject',
-            'bookType',
-            'language',
-            'edition',
-            'authors'
-        ])
-            ->where('id', $product_id)
-            ->where('status', 1)
-            ->first();
-
-        if (!$product) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Product not available'
-            ], 404);
-        }
-
-        // Fetch all active vendor offers for this product with specific sorting
-        $attributesQuery = ProductsAttribute::with(['vendor.user', 'condition', 'product'])
-            ->join('vendors as v', 'products_attributes.vendor_id', '=', 'v.id')
-            ->join('products as p', 'products_attributes.product_id', '=', 'p.id')
-            ->select('products_attributes.*')
-            ->where('products_attributes.product_id', $product_id)
-            ->where('products_attributes.status', 1)
-            ->where('products_attributes.stock', '>', 0);
-
-        // Apply remaining sorting priorities
-        $attributesQuery->orderByRaw("CASE WHEN v.plan='pro' THEN 1 ELSE 2 END ASC");
-        $attributesQuery->orderBy('products_attributes.product_discount', 'desc');
-        $attributesQuery->orderBy('p.product_price', 'asc');
-        $attributesQuery->orderBy('products_attributes.stock', 'desc');
-
-        if ($lat && $lng) {
-            $attributesQuery->addSelect(DB::raw("
-                (6371 * acos(
-                    cos(radians($lat)) *
-                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6)))) *
-                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', -1) AS DECIMAL(10,6))) - radians($lng)) +
-                    sin(radians($lat)) *
-                    sin(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6))))
-                )) AS distance
-            "));
-            $attributesQuery->orderBy('distance', 'asc');
-        }
-
-        $attributes = $attributesQuery->get();
-
-        $vendorOffers = $attributes->map(function ($attr) use ($lat, $lng, $user) {
-            $distance = isset($attr->distance) ? round($attr->distance, 2) : null;
-
-            // Fallback for manual distance calculation if needed for any reason,
-            // but we use the SQL result now for consistency and performance.
-            if ($distance === null && $lat && $lng && $attr->vendor && $attr->vendor->location) {
-                $vendorLoc = explode(',', $attr->vendor->location);
-                if (count($vendorLoc) == 2) {
-                    $vLat = (float)trim($vendorLoc[0]);
-                    $vLng = (float)trim($vendorLoc[1]);
-
-                    $theta = $lng - $vLng;
-                    $dist = sin(deg2rad($lat)) * sin(deg2rad($vLat)) + cos(deg2rad($lat)) * cos(deg2rad($vLat)) * cos(deg2rad($theta));
-                    $dist = acos($dist);
-                    $dist = rad2deg($dist);
-                    $miles = $dist * 60 * 1.1515;
-                    $distance = round($miles * 1.609344, 2);
-                }
-            }
-
-            $priceDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
-
-            $inCart = false;
-            $cartQty = 0;
-            if ($user) {
-                $cartItem = Cart::where('user_id', $user->id)
-                    ->where('product_attribute_id', $attr->id)
-                    ->first();
-                if ($cartItem) {
-                    $inCart = true;
-                    $cartQty = $cartItem->quantity;
-                }
-            }
-
-            return [
-                'attribute_id' => $attr->id,
-                'stock' => $attr->stock,
-                'sku' => $attr->sku,
-                'price_details' => $priceDetails,
-                'old_book_condition' => $attr->condition ? [
-                    'id' => $attr->condition->id,
-                    'name' => $attr->condition->name,
-                    'percentage' => $attr->condition->percentage,
-                ] : null,
-                'vendor' => [
-                    'vendor_id' => $attr->vendor->id ?? null,
-                    'name' => $attr->vendor->user->name ?? 'Verified Seller',
-                    'shop_name' => $attr->vendor->shop_name ?? null,
-                    'location' => $attr->vendor->location ?? null,
-                    'distance' => $distance,
-                    'plan' => $attr->vendor->plan ?? null
-                ],
-                'cart_status' => [
-                    'in_cart' => $inCart,
-                    'quantity' => $cartQty
-                ]
-            ];
-        });
-
-        $authorNames = $product->authors->pluck('name')->join(', ');
-        $basePath = url('front/images/product_images');
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Product details and vendor offers fetched successfully',
-            'best_price' => $vendorOffers->isNotEmpty() ? $vendorOffers->first()['price_details']['final_price'] : null,
-            'data' => [
-                'product' => [
-                    'id' => $product->id,
-                    'name' => $product->product_name,
-                    'isbn' => $product->product_isbn,
-                    'price' => round($product->product_price),
-                    'image_urls' => [
-                        'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-                        'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                        'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
-                    ],
-                    'description' => $product->description,
-                    'condition' => $product->condition,
-                    'section' => $product->section,
-                    'category' => $product->category,
-                    'subcategory' => $product->subcategory,
-                    'publisher' => $product->publisher,
-                    'subject' => $product->subject,
-                    'book_type' => $product->bookType,
-                    'language' => $product->language,
-                    'edition' => $product->edition,
-                    'author_name' => $authorNames,
-                    'authors' => $product->authors->map(function ($author) {
-                        return [
-                            'id' => is_array($author) ? ($author['id'] ?? null) : ($author->id ?? null),
-                            'name' => is_array($author) ? ($author['name'] ?? null) : ($author->name ?? null),
-                        ];
-                    })
-                ],
-                'vendor_offers' => $vendorOffers
-            ]
-        ]);
     }
 
     public function productDetails(Request $request, $attribute_id)
@@ -592,7 +455,7 @@ class ProductController extends Controller
 
         $cartItems = Cart::with(['product' => function ($q) {
             $q->select('id', 'category_id', 'product_name', 'product_image')->with('authors');
-        }, 'attribute'])
+        }])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
                     $q->where('user_id', $user_id);
@@ -609,7 +472,7 @@ class ProductController extends Controller
 
         foreach ($cartItems as $item) {
 
-            $price = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id, $item->attribute);
+            $price = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
 
             $item->product_price = round($price['product_price'] ?? 0);
             $item->final_price = round($price['final_price'] ?? 0);
@@ -627,13 +490,13 @@ class ProductController extends Controller
                     'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
 
-                $authorString = $item->product->authors->pluck('name')->join(', ');
+                $authorString = $item->product->authors->pluck('author_name')->join(', ');
                 $item->product->author_name = $authorString;
 
                 $item->product->authors = $item->product->authors->map(function ($author) {
                     return [
                         'id' => $author->id,
-                        'name' => $author->name,
+                        'name' => $author->author_name,
                     ];
                 });
 
@@ -823,8 +686,6 @@ class ProductController extends Controller
 
         $wishlists = Wishlist::with([
             'attribute.vendor',
-            'attribute.product',
-            'attribute.condition',
             'product' => function ($q) {
                 $q->select(
                     'id',
@@ -860,7 +721,7 @@ class ProductController extends Controller
 
         foreach ($wishlists as $item) {
 
-            $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id, $item->attribute);
+            $priceDetails = Product::getDiscountPriceDetailsByAttribute($item->product_attribute_id);
 
             $item->product_price = round($priceDetails['product_price'] ?? 0);
             $item->final_price = round($priceDetails['final_price'] ?? 0);
@@ -1341,18 +1202,6 @@ class ProductController extends Controller
                     'item_status' => $order_status,
                     'commission' => $commission
                 ]);
-
-                if (($attribute->vendor_id ?? 0) > 0) {
-                    Notification::create([
-                        'type'         => 'order_placed',
-                        'title'        => 'New Order Received',
-                        'message'      => 'A customer placed an order containing your product: ' . ($attribute->product->product_name ?? 'Product') . '.',
-                        'related_id'   => $order->id,
-                        'related_type' => 'App\Models\Order',
-                        'vendor_id'    => $attribute->vendor_id,
-                        'is_read'      => false,
-                    ]);
-                }
             }
 
             if ($wallet_amount > 0) {
@@ -1682,19 +1531,6 @@ class ProductController extends Controller
 
                 $productItem->update(['item_status' => 'Cancelled']);
 
-                // Notify vendor about cancelled item
-                if (($productItem->vendor_id ?? 0) > 0) {
-                    Notification::create([
-                        'type'         => 'order_cancelled',
-                        'title'        => 'Order Item Cancelled',
-                        'message'      => 'An item "' . ($productItem->product_name ?? 'Product') . '" in order #' . $order->id . ' was cancelled by the customer.',
-                        'related_id'   => $order->id,
-                        'related_type' => 'App\Models\Order',
-                        'vendor_id'    => $productItem->vendor_id,
-                        'is_read'      => false,
-                    ]);
-                }
-
                 // Check if ALL items are now cancelled
                 $activeItemsCount = OrdersProduct::where('order_id', $id)
                     ->where('item_status', '!=', 'Cancelled')
@@ -1709,24 +1545,8 @@ class ProductController extends Controller
             } else {
                 // FULL CANCELLATION: Mark everything as cancelled
                 $order->update(['order_status' => 'Cancelled']);
-                $orderItems = OrdersProduct::where('order_id', $id)->get();
                 OrdersProduct::where('order_id', $id)->update(['item_status' => 'Cancelled']);
                 WalletTransaction::revertWallet($id);
-
-                // Notify all vendors involved in this order (unique vendor_ids)
-                $vendorIds = $orderItems->pluck('vendor_id')->filter()->unique();
-                foreach ($vendorIds as $vendorId) {
-                    Notification::create([
-                        'type'         => 'order_cancelled',
-                        'title'        => 'Order Cancelled',
-                        'message'      => 'Order #' . $order->id . ' containing your products was cancelled by the customer.',
-                        'related_id'   => $order->id,
-                        'related_type' => 'App\Models\Order',
-                        'vendor_id'    => $vendorId,
-                        'is_read'      => false,
-                    ]);
-                }
-
                 $message = 'Entire order #' . $id . ' has been cancelled successfully.';
             }
 

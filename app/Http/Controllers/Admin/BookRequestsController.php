@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\BookRequest;
 use App\Models\BookRequestReply;
 use App\Models\HeaderLogo;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -69,6 +71,18 @@ class BookRequestsController extends Controller
                     'reply_by' => 'admin',
                     'message' => $data['admin_reply'],
                 ]);
+
+                // Notify the student who raised the request
+                if (! empty($bookRequest->requested_by_user)) {
+                    Notification::create([
+                        'type' => 'book_request_reply',
+                        'title' => 'Book request update',
+                        'message' => 'Admin replied to your book request: ' . ($bookRequest->book_title ?? 'your request'),
+                        'related_id' => (int) $bookRequest->requested_by_user,
+                        'related_type' => User::class,
+                        'is_read' => false,
+                    ]);
+                }
             }
 
             if ($data['status'] == 'resolved') {
