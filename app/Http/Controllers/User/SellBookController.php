@@ -207,8 +207,9 @@ class SellBookController extends Controller
                 $product->publisher_id = $data['publisher_id'] ?? null;
 
                 // Image handling
-                if ($request->hasFile('product_image')) {
-                    $image_tmp = $request->file('product_image');
+                // If a new product is being created and user uploads their old book image, we can use it as the master product image as well
+                if ($request->hasFile('user_old_book_image')) {
+                    $image_tmp = $request->file('user_old_book_image');
                     if ($image_tmp->isValid()) {
                         $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
                         $extension = $image_tmp->getClientOriginalExtension();
@@ -262,6 +263,22 @@ class SellBookController extends Controller
             $attribute->product_discount = 0;
             $attribute->admin_approved = 0; // Requires verification
             $attribute->status = 0; // Hidden until approved
+
+            if ($request->hasFile('user_old_book_image')) {
+                $image_tmp = $request->file('user_old_book_image');
+                if ($image_tmp->isValid()) {
+                    $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
+                    $extension = $image_tmp->getClientOriginalExtension();
+                    $imageName = $image_name.'-'.rand(111, 99999).'.'.$extension;
+                    $largeImagePath = public_path('front/images/product_images/large/'.$imageName);
+                    $mediumImagePath = public_path('front/images/product_images/medium/'.$imageName);
+                    $smallImagePath = public_path('front/images/product_images/small/'.$imageName);
+                    Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);
+                    Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
+                    Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
+                    $attribute->user_old_book_image = $imageName;
+                }
+            }
 
             // Calculate Price based on condition percentage
             if (! empty($data['old_book_condition_id'])) {

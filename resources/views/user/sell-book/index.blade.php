@@ -54,8 +54,8 @@
                                                 <tr>
                                                     <td>{{ $key + 1 }}</td>
                                                     <td>
-                                                        @if(!empty($product->product_image))
-                                                            <img src="{{ asset('front/images/product_images/small/'.$product->product_image) }}" alt="image" style="width:50px; height:50px; object-fit: cover; border-radius: 4px;">
+                                                        @if(!empty($product->attributes[0]->user_old_book_image))
+                                                            <img src="{{ asset('front/images/product_images/small/'.$product->attributes[0]->user_old_book_image) }}" alt="image" style="width:50px; height:50px; object-fit: cover; border-radius: 4px;">
                                                         @else
                                                             <img src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="image" style="width:50px; height:50px; object-fit: cover; border-radius: 4px;">
                                                         @endif
