@@ -441,17 +441,15 @@ class ProductsController extends Controller
                 ])
                 ->get();
         } else {
-
-            $products = ProductsAttribute::orderBy('id', 'desc')
+            // Admin/Superadmin: Fetch from Product table instead of ProductsAttribute
+            $products = Product::orderBy('id', 'desc')
                 ->with([
-                    'product:id,product_name,product_isbn,product_image,category_id,section_id,condition,publisher_id,edition_id,language_id,product_price,status',
-                    'product.category:id,category_name',
-                    'product.section:id,name',
-                    'product.publisher:id,name',
-                    'product.edition:id,edition',
-                    'product.language:id,name',
-                    'condition:id,name,percentage',
-                    'vendor:id,user_id',
+                    'category:id,category_name',
+                    'section:id,name',
+                    'publisher:id,name',
+                    'edition:id,edition',
+                    'language:id,name',
+                    'attributes'
                 ])
                 ->get();
         }
