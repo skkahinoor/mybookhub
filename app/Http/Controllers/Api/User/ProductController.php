@@ -180,7 +180,7 @@ class ProductController extends Controller
         }
 
         if ($request->condition) {
-             $query->where('condition', $request->condition);
+            $query->where('condition', $request->condition);
         }
 
         // Default sorting for product listing
@@ -197,10 +197,10 @@ class ProductController extends Controller
 
                 // Aggregate price range and offer count from associated attributes
                 $prices = $product->attributes
-                    ->filter(function($attr) {
+                    ->filter(function ($attr) {
                         return $attr->status == 1 && $attr->stock > 0;
                     })
-                    ->map(function($attr) {
+                    ->map(function ($attr) {
                         $pDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
                         return $pDetails['final_price'];
                     });
@@ -591,7 +591,7 @@ class ProductController extends Controller
         }
 
         $cartItems = Cart::with(['product' => function ($q) {
-            $q->select('id', 'category_id', 'product_name', 'product_image')->with('authors');
+            $q->select('id', 'category_id', 'product_name', 'product_image');
         }, 'attribute'])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
@@ -626,24 +626,6 @@ class ProductController extends Controller
                     'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
                     'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
-
-                $authorString = $item->product->authors->pluck('name')->join(', ');
-                $item->product->author_name = $authorString;
-
-                $item->product->authors = $item->product->authors->map(function ($author) {
-                    return [
-                        'id' => $author->id,
-                        'name' => $author->name,
-                    ];
-                });
-
-                if ($authorString) {
-                    if (is_array($item->product->vendor) || is_object($item->product->vendor)) {
-                        $item->product->vendor['name'] = $authorString;
-                    } else {
-                        $item->product->vendor = ['name' => $authorString];
-                    }
-                }
             }
 
             $qty = $item->quantity ?? 1;
