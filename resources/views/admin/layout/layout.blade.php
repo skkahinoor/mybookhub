@@ -194,6 +194,10 @@
                 var $ = jQuery;
 
                 $(document).ready(function() {
+                    var isVendorPage = {{ request()->is('vendor/*') ? 'true' : 'false' }};
+                    var notificationsGetUrl = isVendorPage ? "{{ url('vendor/notifications/get') }}" : "{{ url('admin/notifications/get') }}";
+                    var notificationsReadUrlBase = isVendorPage ? "{{ url('vendor/notifications') }}" : "{{ url('admin/notifications') }}";
+
                     // Load notifications on page load
                     loadNotifications();
 
@@ -202,7 +206,7 @@
 
                     function loadNotifications() {
                         $.ajax({
-                            url: '{{ url('admin/notifications/get') }}',
+                            url: notificationsGetUrl,
                             type: 'GET',
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -247,29 +251,47 @@
                                             notification.related_id) {
                                             iconClass = 'ti-money';
                                             iconBg = 'bg-info';
-                                            linkUrl = 'withdrawals/' + notification
-                                                .related_id;
+                                            linkUrl = isVendorPage
+                                                ? "{{ url('vendor/withdrawals') }}/" + notification.related_id
+                                                : "{{ url('admin/withdrawals') }}/" + notification.related_id;
                                         } else if (notification.type ===
                                             'sales_executive_registration' && notification
                                             .related_id) {
                                             iconClass = 'ti-user';
                                             iconBg = 'bg-success';
-                                            linkUrl = 'add-edit-sales-executive/' +
-                                                notification.related_id;
+                                            linkUrl = isVendorPage
+                                                ? "{{ url('vendor/add-edit-sales-executive') }}/" + notification.related_id
+                                                : "{{ url('admin/add-edit-sales-executive') }}/" + notification.related_id;
                                         } else if (notification.type ===
                                             'institution_added' && notification.related_id
                                             ) {
                                             iconClass = 'ti-bookmark-alt';
                                             iconBg = 'bg-warning';
-                                            linkUrl = 'notifications?view-inst=' +
-                                                notification.related_id + '&notif=' +
-                                                notification.id;
+                                            linkUrl = (isVendorPage
+                                                    ? "{{ url('vendor/notifications') }}"
+                                                    : "{{ url('admin/notifications') }}")
+                                                + "?view-inst=" + notification.related_id + "&notif=" + notification.id;
                                         } else if (notification.type === 'product_added' &&
                                             notification.related_id) {
                                             iconClass = 'ti-package';
                                             iconBg = 'bg-primary';
-                                            linkUrl = 'add-edit-product/' + notification
-                                                .related_id;
+                                            linkUrl = isVendorPage
+                                                ? "{{ url('vendor/add-edit-product') }}/" + notification.related_id
+                                                : "{{ url('admin/add-edit-product') }}/" + notification.related_id;
+                                        } else if (notification.type === 'order_placed' &&
+                                            notification.related_id) {
+                                            iconClass = 'ti-shopping-cart';
+                                            iconBg = 'bg-info';
+                                            linkUrl = isVendorPage
+                                                ? "{{ url('vendor/orders') }}/" + notification.related_id
+                                                : "{{ url('admin/orders') }}/" + notification.related_id;
+                                        } else if (notification.type === 'order_cancelled' &&
+                                            notification.related_id) {
+                                            iconClass = 'ti-close';
+                                            iconBg = 'bg-danger';
+                                            linkUrl = isVendorPage
+                                                ? "{{ url('vendor/orders') }}/" + notification.related_id
+                                                : "{{ url('admin/orders') }}/" + notification.related_id;
                                         }
 
                                         notificationsHtml += `
@@ -363,7 +385,7 @@
 
                     function markAsRead(notificationId, reloadNotifications = true) {
                         $.ajax({
-                            url: '{{ url('admin/notifications') }}/' + notificationId + '/read',
+                            url: notificationsReadUrlBase + '/' + notificationId + '/read',
                             type: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

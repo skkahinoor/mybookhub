@@ -14,6 +14,16 @@ use Yajra\DataTables\DataTables;
 class NotificationController extends Controller
 {
     /**
+     * Check if the current user is a vendor (by type or role_id) and has vendor_id set.
+     */
+    private function isVendorUser($admin): bool
+    {
+        $isVendor = ($admin->type ?? null) === 'vendor' || $admin->role_id == RoleHelper::vendorId();
+
+        return $isVendor && $admin->vendor_id !== null;
+    }
+
+    /**
      * Get notifications for dropdown (AJAX)
      */
     public function getNotifications()
@@ -23,14 +33,10 @@ class NotificationController extends Controller
         // Build query based on admin type
         $query = Notification::orderBy('created_at', 'desc');
         
-        // Filter notifications based on role
-        if ($admin->role_id == RoleHelper::vendorId()) {
+        // Filter notifications based on role (use type for vendor - consistent with rest of app)
+        if ($this->isVendorUser($admin)) {
             // Vendor sees ONLY their own notifications (vendor_id matches their vendor profile ID)
             $query->where('vendor_id', $admin->vendor_id);
-        } elseif ($admin->role_id == RoleHelper::adminId()) {
-            // Superadmin sees all
-        } else {
-            // Other admins see all (or you can add more specific filtering)
         }
         
         $notifications = $query->limit(5)
@@ -52,8 +58,7 @@ class NotificationController extends Controller
 
         // Count unread notifications with same filter
         $unreadQuery = Notification::where('is_read', false);
-        if ($admin->role_id == RoleHelper::vendorId()) {
-            // Vendor sees ONLY their own unread notifications
+        if ($this->isVendorUser($admin)) {
             $unreadQuery->where('vendor_id', $admin->vendor_id);
         }
         $unreadCount = $unreadQuery->count();
@@ -72,9 +77,8 @@ class NotificationController extends Controller
         $admin = Auth::guard('admin')->user();
         $notification = Notification::findOrFail($id);
         
-        // Check if vendor can access this notification
-        if ($admin->role_id == RoleHelper::vendorId()) {
-            if ($notification->vendor_id !== null && $notification->vendor_id != $admin->vendor_id) {
+        if ($this->isVendorUser($admin)) {
+            if ($notification->vendor_id !== (int) $admin->vendor_id) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
         }
@@ -93,9 +97,7 @@ class NotificationController extends Controller
         
         $query = Notification::where('is_read', false);
         
-        // Filter based on admin type
-        if ($admin->role_id == RoleHelper::vendorId()) {
-            // Vendor can only mark their own notifications as read
+        if ($this->isVendorUser($admin)) {
             $query->where('vendor_id', $admin->vendor_id);
         }
         
@@ -118,12 +120,9 @@ class NotificationController extends Controller
         $admin = Auth::guard('admin')->user();
         
         if ($request->ajax()) {
-            // Build query based on admin type
             $query = Notification::latest();
             
-            // Filter notifications based on role
-            if ($admin->role_id == RoleHelper::vendorId()) {
-                // Vendor sees ONLY their own notifications
+            if ($this->isVendorUser($admin)) {
                 $query->where('vendor_id', $admin->vendor_id);
             }
 
@@ -151,7 +150,7 @@ class NotificationController extends Controller
                 })
 
             // 🔥 ACTION COLUMN
-                ->addColumn('action', function ($n) {
+                ->addColumn('action', function ($n) use ($admin) {
 
                     $html = '<div class="d-flex align-items-center" style="gap:10px;">';
 
@@ -163,6 +162,8 @@ class NotificationController extends Controller
                            <i class="mdi mdi-check-circle text-success" style="font-size:20px"></i>
                         </a>';
                     }
+
+                    $prefix = $this->isVendorUser($admin) ? 'vendor' : 'admin';
 
                     // Sales Executive
                     if ($n->related_type === 'App\Models\SalesExecutive' && $n->related_id) {
@@ -177,8 +178,9 @@ class NotificationController extends Controller
 
                     // Withdrawal
                     if ($n->related_type === 'App\Models\Withdrawal' && $n->related_id) {
+                        $routeName = ($prefix == 'vendor') ? 'vendor.withdrawals.show' : 'admin.withdrawals.show';
                         $html .= '
-                        <a href="' . route('admin.withdrawals.show', $n->related_id) . '"
+                        <a href="' . route($routeName, $n->related_id) . '"
                            title="View Withdrawal Request">
                            <i class="mdi mdi-cash-multiple text-info" style="font-size:20px"></i>
                         </a>';
@@ -208,10 +210,25 @@ class NotificationController extends Controller
 
                     // Product added
                     if ($n->related_type === 'App\Models\Product' && $n->related_id) {
+                        $productUrl = ($prefix == 'vendor') 
+                            ? url('vendor/add-edit-product/' . $n->related_id)
+                            : url('admin/add-edit-product/' . $n->related_id);
                         $html .= '
-                        <a href="' . url('admin/add-edit-product/' . $n->related_id) . '"
+                        <a href="' . $productUrl . '"
                            title="View Product">
                            <i class="mdi mdi-eye text-primary" style="font-size:20px"></i>
+                        </a>';
+                    }
+
+                    // Order placed (vendor sees "View Order" in notifications)
+                    if ($n->related_type === 'App\Models\Order' && $n->related_id) {
+                        $orderUrl = ($prefix == 'vendor')
+                            ? url('vendor/orders/' . $n->related_id)
+                            : url('admin/orders/' . $n->related_id);
+                        $html .= '
+                        <a href="' . $orderUrl . '"
+                           title="View Order">
+                           <i class="mdi mdi-cart text-info" style="font-size:20px"></i>
                         </a>';
                     }
 

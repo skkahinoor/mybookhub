@@ -425,13 +425,13 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="product_image">Book Image <small class="text-muted">(Rec: 1000x1000)</small></label>
-                                            <input type="file" class="form-control" id="product_image" name="product_image">
+                                            <label for="user_old_book_image">Book Image <small class="text-muted">(Rec: 1000x1000)</small></label>
+                                            <input type="file" class="form-control" id="user_old_book_image" name="user_old_book_image">
                                             <div id="isbnImagePreview" class="mt-2 text-center"></div>
-                                            @if (!empty($product['product_image']))
+                                            @if (!empty($product->firstAttribute->user_old_book_image))
                                                 <div class="mt-2">
                                                     <a target="_blank" class="text-primary font-weight-bold"
-                                                        href="{{ url('front/images/product_images/large/' . $product['product_image']) }}">
+                                                        href="{{ url('front/images/product_images/large/' . $product->firstAttribute->user_old_book_image) }}">
                                                         <i class="mdi mdi-eye"></i> View Current Image
                                                     </a>
                                                 </div>
@@ -670,6 +670,9 @@
                 }
             }
 
+            // expose globally so other scripts (ISBN fetch) can call it
+            window.updatePriceByCondition = updatePriceByCondition;
+
             $('#old_book_condition_id').on('change', function() {
                 updatePriceByCondition();
             });
@@ -687,10 +690,10 @@
 
     <script>
         // Cascading selects REMOVED as per user request for "simple dropdowns"
-                                        $(document).ready(function() {
+        $(document).ready(function() {
                                             // Optional: You can still add small filters here if needed, 
                                             // but for now we just allow direct selection.
-                                        });
+         });
     </script>
 
     <script>
@@ -698,7 +701,7 @@
 
         function setReadonly(state) {
             globalStateReadOnly = state;
-            $("#product_name, #product_price, #description, #searchInput")
+            $("#product_isbn, #product_name, #product_price, #description, #searchInput")
                 .prop("readonly", state);
 
             $("#section_id, #category_id, #subcategory_id, #language_id, #publisher_id, #subject_id, #edition_id, #book_type_id")
@@ -769,17 +772,8 @@
                     }
 
                     // image
-                    if (d.image) {
-                        $("#isbnImagePreview").html(
-                            `<img src="{{ asset('front/images/product_images/small') }}/${d.image}" width="150">`
-                        );
-                    } else if (d.image_url) {
-                        $("#isbnImagePreview").html(
-                            `<img src="${d.image_url}" width="150">`
-                        );
-                    } else {
-                        $("#isbnImagePreview").html('');
-                    }
+                    // We don't fetch and populate the image because the user uploads their own old book image.
+                    $("#isbnImagePreview").html('');
 
                     // Save original price for condition calculation
                     if (d.product_price) {

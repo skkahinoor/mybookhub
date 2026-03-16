@@ -798,11 +798,12 @@ class ProductsController extends Controller
             // For new products, return JSON to show modal for stock/discount
             if ($id == null) {
                 // Create notification when a new product is added
-                $vendorId = null; // Always null so notification is visible to admin only
+                $notificationVendorId = null;
                 $notificationMessage = '';
 
                 if ($user->type === 'vendor') {
-                    // Keep vendor_id as null so only admin sees this notification
+                    // Set vendor_id so this notification also appears in the vendor's notifications page
+                    $notificationVendorId = $user->vendor_id ?? null;
                     $vendorName = $user->name;
                     $notificationMessage = "Vendor '{$vendorName}' added a new product '{$product->product_name}' (ISBN: {$product->product_isbn}).";
                 } else {
@@ -816,7 +817,7 @@ class ProductsController extends Controller
                     'message' => $notificationMessage,
                     'related_id' => $product->id,
                     'related_type' => 'App\Models\Product',
-                    'vendor_id' => $vendorId, // null so only admin can see vendor-added product notifications
+                    'vendor_id' => $notificationVendorId,
                     'is_read' => false,
                 ]);
 
