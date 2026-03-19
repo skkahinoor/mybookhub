@@ -4,9 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\User\HomeController;
 use App\Http\Controllers\Api\User\ProductController;
 use App\Http\Controllers\Api\User\ProfileController;
+use App\Http\Controllers\Api\User\SellBookController;
 
-Route::post('/user/register', [ProfileController::class,'register']);
-Route::post('/user/verify-otp', [ProfileController::class,'verifyOtp']);
+Route::post('/user/register', [ProfileController::class, 'register']);
+Route::post('/user/verify-otp', [ProfileController::class, 'verifyOtp']);
 Route::get('/user/home', [HomeController::class, 'home']);
 Route::get('/user/products', [ProductController::class, 'index']);
 Route::get('/user/vendor-product/{product_id}', [ProductController::class, 'vendorsproduct']);
@@ -50,4 +51,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/order-status/{id}', [ProductController::class, 'orderStatus']);
     Route::post('/user/orders/{id}/cancel', [ProductController::class, 'cancelOrder']);
     Route::get('/user/wallet/transactions', [HomeController::class, 'getWalletTransactions']);
+
+    // Sell Book Routes
+    Route::get('/user/sell-books', [SellBookController::class, 'index']);
+    Route::get('/user/sell-books/form-data', [SellBookController::class, 'formData']);
+    Route::post('/user/sell-books/isbn-lookup', [SellBookController::class, 'getBookByIsbn']);
+    Route::get('/user/sell-books/name-suggestions', [SellBookController::class, 'nameSuggestions']);
+    Route::post('/user/sell-books/add-publisher', [SellBookController::class, 'addPublisher']);
+    Route::post('/user/sell-books', [SellBookController::class, 'store']);
+    Route::get('/user/sell-books/{id}', [SellBookController::class, 'show']);
+    Route::post('/user/sell-books/{id}', [SellBookController::class, 'update']);
+    Route::delete('/user/sell-books/{id}', [SellBookController::class, 'destroy']);
 });
