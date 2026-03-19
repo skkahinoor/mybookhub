@@ -128,7 +128,7 @@
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">{{ $product->product_name }}</h6>
                                         <p class="mb-1" style="font-size: 11px;">
-                                            <span class="text-muted">Vendor:</span> 
+                                            <span class="text-muted">Vendor:</span>
                                             @php
                                                 $vendor = \App\Models\Vendor::where('id', $product->vendor_id)->first();
                                                 $shopName = $vendor ? $vendor->shop_name : 'Admin';
