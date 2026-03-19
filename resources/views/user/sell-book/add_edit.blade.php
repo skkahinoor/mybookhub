@@ -425,13 +425,13 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="product_image">Book Image <small class="text-muted">(Rec: 1000x1000)</small></label>
-                                            <input type="file" class="form-control" id="product_image" name="product_image">
+                                            <label for="user_old_book_image">Book Image <small class="text-muted">(Rec: 1000x1000)</small></label>
+                                            <input type="file" class="form-control" id="user_old_book_image" name="user_old_book_image">
                                             <div id="isbnImagePreview" class="mt-2 text-center"></div>
-                                            @if (!empty($product['product_image']))
+                                            @if (!empty($product->firstAttribute->user_old_book_image))
                                                 <div class="mt-2">
                                                     <a target="_blank" class="text-primary font-weight-bold"
-                                                        href="{{ url('front/images/product_images/large/' . $product['product_image']) }}">
+                                                        href="{{ url('front/images/product_images/large/' . $product->firstAttribute->user_old_book_image) }}">
                                                         <i class="mdi mdi-eye"></i> View Current Image
                                                     </a>
                                                 </div>
@@ -772,17 +772,8 @@
                     }
 
                     // image
-                    if (d.image) {
-                        $("#isbnImagePreview").html(
-                            `<img src="{{ asset('front/images/product_images/small') }}/${d.image}" width="150">`
-                        );
-                    } else if (d.image_url) {
-                        $("#isbnImagePreview").html(
-                            `<img src="${d.image_url}" width="150">`
-                        );
-                    } else {
-                        $("#isbnImagePreview").html('');
-                    }
+                    // We don't fetch and populate the image because the user uploads their own old book image.
+                    $("#isbnImagePreview").html('');
 
                     // Save original price for condition calculation
                     if (d.product_price) {

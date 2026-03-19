@@ -137,11 +137,11 @@
                                 </div>
                             </div>
 
-                            @if($requestData->product && $requestData->product->product_image)
+                            @if($requestData->user_old_book_image && $requestData->user_old_book_image)
                                 <div class="row mt-4">
                                     <div class="col-12">
                                         <h5>Book Image</h5>
-                                        <img src="{{ asset('front/images/product_images/medium/' . $requestData->product->product_image) }}" class="img-thumbnail" style="max-width: 300px;">
+                                        <img src="{{ asset('front/images/product_images/medium/' . $requestData->user_old_book_image) }}" class="img-thumbnail" style="max-width: 300px;">
                                     </div>
                                 </div>
                             @endif

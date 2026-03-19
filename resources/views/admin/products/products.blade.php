@@ -118,60 +118,38 @@
                                                     <td>{{ $product->product->language->name ?? 'N/A' }}</td>
                                                     <td>{{ $product->stock ?? 'N/A' }}</td>
                                                 @else
-                                                    {{-- Admin/Superadmin: Display from ProductsAttribute (same structure as vendor) --}}
-                                                    <td>ISBN-{{ $product->product->product_isbn ?? 'N/A' }}
-                                                        <span class="text-muted">({{ ucfirst($product->product->condition ?? 'N/A') }})</span>
+                                                    {{-- Admin/Superadmin: Display from Product model directly --}}
+                                                    <td>ISBN-{{ $product->product_isbn ?? 'N/A' }}
+                                                        <span class="text-muted">({{ ucfirst($product->condition ?? 'N/A') }})</span>
                                                     </td>
                                                     <td>
-                                                        @if (!empty($product->product->product_image))
+                                                        @if (!empty($product->product_image))
                                                             <img style="width:120px; height:100px"
-                                                                src="{{ asset('front/images/product_images/small/' . $product->product->product_image) }}">
+                                                                 src="{{ asset('front/images/product_images/small/' . $product->product_image) }}">
                                                         @else
                                                             <img style="width:120px; height:100px"
-                                                                src="{{ asset('front/images/product_images/small/no-image.png') }}">
+                                                                 src="{{ asset('front/images/product_images/small/no-image.png') }}">
                                                         @endif
                                                     </td>
-                                                    <td>{{ $product->product->product_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->product_name ?? 'N/A' }}</td>
                                                     <td>
-                                                        @php
-                                                            $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($product->id);
-                                                        @endphp
-                                                        @if ($discountDetails['discount'] > 0)
-                                                            <span style="text-decoration: line-through;">₹{{ $discountDetails['product_price'] }}</span><br>
-                                                            <span class="text-danger">₹{{ $discountDetails['final_price'] }}</span>
-                                                        @else
-                                                            ₹{{ $discountDetails['product_price'] }}
-                                                        @endif
+                                                        ₹{{ $product->product_price }} (MRP)
                                                     </td>
                                                     <td>
-                                                        @if($product->condition)
-                                                            <span class="badge badge-info">{{ $product->condition->name }} ({{ $product->condition->percentage }}%)</span>
-                                                        @else
-                                                            {{ ucfirst($product->product->condition ?? 'N/A') }}
-                                                        @endif
+                                                        <span class="badge badge-info">{{ ucfirst($product->condition ?? 'N/A') }}</span>
                                                     </td>
-                                                    <td>{{ $product->product->section->name ?? 'N/A' }}</td>
-                                                    <td>{{ $product->product->category->category_name ?? 'N/A' }}</td>
-                                                    <td>{{ $product->product->edition->edition ?? 'N/A' }}</td>
-                                                    <td>{{ $product->product->publisher->name ?? 'N/A' }}</td>
-                                                    <td>{{ $product->product->language->name ?? 'N/A' }}</td>
-                                                    <td><span class="badge badge-secondary">{{ $product->stock ?? 0 }}</span></td>
+                                                    <td>{{ $product->section->name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->category->category_name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->edition->edition ?? 'N/A' }}</td>
+                                                    <td>{{ $product->publisher->name ?? 'N/A' }}</td>
+                                                    <td>{{ $product->language->name ?? 'N/A' }}</td>
+                                                    <td><span class="badge badge-secondary">{{ $product->attributes->sum('stock') }}</span></td>
                                                 @endif
 
                                                 {{-- Seller column: only for admin --}}
                                                 @if ($adminType !== 'vendor')
                                                     <td>
-                                                        @if($product->admin_type === 'vendor' && $product->vendor)
-                                                            <span class="badge badge-warning">Vendor</span>
-                                                            <small class="d-block text-muted">ID: {{ $product->vendor_id }}</small>
-                                                        @elseif($product->admin_type === 'user' || $product->user_id)
-                                                            <span class="badge badge-info">User</span>
-                                                            <small class="d-block text-muted">ID: {{ $product->user_id }}</small>
-                                                        @elseif($product->admin_id)
-                                                            <span class="badge badge-secondary">Admin</span>
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
+                                                        <span class="badge badge-info">{{ $product->attributes->count() }} Seller(s)</span>
                                                     </td>
                                                 @endif
                                                 <td>
@@ -196,17 +174,17 @@
                                                         @endif
                                                     @else
                                                         {{-- Admin: Toggle product status (from product table) --}}
-                                                        @if (($product->product->status ?? 0) == 1)
-                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
-                                                                product_id="{{ $product->product_id }}"
+                                                        @if (($product->status ?? 0) == 1)
+                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
+                                                                product_id="{{ $product->id }}"
                                                                 data-url="{{ route('admin.updateproductstatus') }}"
                                                                 href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-check"
                                                                     status="Active"></i>
                                                             </a>
                                                         @else
-                                                            <a class="updateProductStatus" id="product-{{ $product->product_id }}"
-                                                                product_id="{{ $product->product_id }}"
+                                                            <a class="updateProductStatus" id="product-{{ $product->id }}"
+                                                                product_id="{{ $product->id }}"
                                                                 data-url="{{ route('admin.updateproductstatus') }}"
                                                                 href="javascript:void(0)">
                                                                 <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
@@ -240,15 +218,15 @@
                                                             <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                         </a>
                                                     @else
-                                                        {{-- Admin/Superadmin: Edit the product, delete attribute --}}
+                                                        {{-- Admin/Superadmin: Edit the product, delete product --}}
                                                         <a title="Edit Book"
-                                                            href="{{ url($prefix . '/add-edit-product/' . $product->product_id) }}">
+                                                            href="{{ url($prefix . '/add-edit-product/' . $product->id) }}">
                                                             <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                         </a>
 
-                                                        <a href="{{ url('admin/delete-product-attribute/' . $product->id) }}"
-                                                            onclick="return confirm('Are you sure you want to delete this entry?')"
-                                                            title="Delete Entry">
+                                                        <a href="{{ url('admin/delete-product/' . $product->id) }}"
+                                                            onclick="return confirm('Are you sure you want to delete this book? This will also delete all associated seller entries.')"
+                                                            title="Delete Book">
                                                             <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                         </a>
                                                     @endif
