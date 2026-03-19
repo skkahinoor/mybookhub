@@ -56,26 +56,26 @@ class ProductsController extends Controller
 
                 $categoryProducts = Product::with(['publisher', 'authors', 'category'])
                     ->whereIn('category_id', $categoryDetails['catIds'])
-                    ->whereHas('attributes', function($q) {
+                    ->whereHas('attributes', function ($q) {
                         $q->where('status', 1);
                     })
                     ->where('status', 1);
 
                 $productFilters = ProductsFilter::productFilters(); // Get all the (enabled/active) Filters    // (Another way to go is using an AJAX call to get the $productFilters!)
                 foreach ($productFilters as $key => $filter) {
-                    if (isset($filter['filter_column']) && isset($data[$filter['filter_column']]) && ! empty($filter['filter_column']) && ! empty($data[$filter['filter_column']])) {
+                    if (isset($filter['filter_column']) && isset($data[$filter['filter_column']]) && !empty($filter['filter_column']) && !empty($data[$filter['filter_column']])) {
                         // If filter column is in products table, query directly, otherwise query via attributes
                         if (in_array($filter['filter_column'], ['product_name', 'product_isbn', 'product_price'])) {
                             $categoryProducts->whereIn($filter['filter_column'], $data[$filter['filter_column']]);
                         } else {
-                            $categoryProducts->whereHas('attributes', function($q) use ($filter, $data) {
+                            $categoryProducts->whereHas('attributes', function ($q) use ($filter, $data) {
                                 $q->whereIn($filter['filter_column'], $data[$filter['filter_column']]);
                             });
                         }
                     }
                 }
 
-                if (isset($_GET['sort']) && ! empty($_GET['sort'])) { // if the URL query string parameters contain '&sort=someValue'    // 'sort' is the 'name' HTML attribute of the <select> box
+                if (isset($_GET['sort']) && !empty($_GET['sort'])) { // if the URL query string parameters contain '&sort=someValue'    // 'sort' is the 'name' HTML attribute of the <select> box
                     if ($_GET['sort'] == 'product_latest') {
                         $categoryProducts->orderBy('products.id', 'Desc');
                     } elseif ($_GET['sort'] == 'price_lowest') {
@@ -89,26 +89,26 @@ class ProductsController extends Controller
                     }
                 }
 
-                if (isset($data['size']) && ! empty($data['size'])) {                                                                   // coming from the AJAX call in front/js/custom.js    // example:    $data['size'] = 'Large'
-                    $categoryProducts->whereHas('attributes', function($q) use ($data) {
+                if (isset($data['size']) && !empty($data['size'])) {                                                                   // coming from the AJAX call in front/js/custom.js    // example:    $data['size'] = 'Large'
+                    $categoryProducts->whereHas('attributes', function ($q) use ($data) {
                         $q->whereIn('size', $data['size']);
                     });
                 }
 
                 $productIds = [];
 
-                if (isset($data['price']) && ! empty($data['price'])) {
+                if (isset($data['price']) && !empty($data['price'])) {
                     foreach ($data['price'] as $key => $price) {
                         $priceArr = explode('-', $price);
                         if (isset($priceArr[0]) && isset($priceArr[1])) {
-                             $categoryProducts->whereBetween('product_price', [$priceArr[0], $priceArr[1]]);
+                            $categoryProducts->whereBetween('product_price', [$priceArr[0], $priceArr[1]]);
                         }
                     }
                 }
 
                 // Size, price, color, publisher, … are also Dynamic Filters, but won't be managed like the other Dynamic Filters, but we will manage every filter of them from the suitable respective database table, like the 'size' Filter from the `products_attributes` database table, 'color' Filter and `price` Filter from `products` table, 'publisher' Filter from `publishers` table
                 // Fourth: the 'publisher' filter (from `products` and `publishers` database table)
-                if (isset($data['publisher']) && ! empty($data['publisher'])) {                                            // coming from the AJAX call in front/js/custom.js    // example:    $data['publisher'] = 'Large'
+                if (isset($data['publisher']) && !empty($data['publisher'])) {                                            // coming from the AJAX call in front/js/custom.js    // example:    $data['publisher'] = 'Large'
                     $categoryProducts->whereIn('publisher_id', $data['publisher']);
                 }
 
@@ -127,7 +127,7 @@ class ProductsController extends Controller
         } else { // Sorting Filter WITHOUT AJAX (using the HTML <form> and jQuery) Or handling the website Search Form (in front/layout/header.blade.php) BOTH in front/products/listing.blade.php
 
             // Website Search Form (to search for all website products). Check the HTML Form in front/layout/header.blade.php
-            if (isset($_REQUEST['search']) && ! empty($_REQUEST['search'])) { // If the Search Form is used, handle the Search Form submission
+            if (isset($_REQUEST['search']) && !empty($_REQUEST['search'])) { // If the Search Form is used, handle the Search Form submission
                 // New Arrivals    // Check front/layout/header.blade.php
                 if ($_REQUEST['search'] == 'new-arrivals') {
                     $search_product = $_REQUEST['search'];
@@ -153,11 +153,11 @@ class ProductsController extends Controller
                         'products.product_image',
                         'products.description'
                     )->with('publisher')->join( // Joins: Inner Join Clause: https://laravel.com/docs/9.x/queries#inner-join-clause    // moving the paginate() method after checking for the sorting filter <form>    // Paginating Eloquent Results: https://laravel.com/docs/9.x/pagination#paginating-eloquent-results    // Displaying Pagination Results Using Bootstrap: https://laravel.com/docs/9.x/pagination#using-bootstrap        // https://laravel.com/docs/9.x/queries#additional-where-clauses    // using the publisher() relationship method in Product.php model    // Eager Loading (using with() method): https://laravel.com/docs/9.x/eloquent-relationships#eager-loading    // 'publisher' is the relationship method name in Product.php model
-                        'categories',               // `categories` table
-                        'categories.id',
-                        '=',
-                        'products.category_id'                                 // JOIN both `products` and `categories` tables at    `categories`.`id` = `products`.`category_id`
-                    )->where('products.status', 1)->orderBy('id', 'Desc'); // Show from the latest to the earliest (NEW ARRIVALS!)
+                            'categories',               // `categories` table
+                            'categories.id',
+                            '=',
+                            'products.category_id'                                 // JOIN both `products` and `categories` tables at    `categories`.`id` = `products`.`category_id`
+                        )->where('products.status', 1)->orderBy('id', 'Desc'); // Show from the latest to the earliest (NEW ARRIVALS!)
                     // dd($categoryProducts);
 
                     // Best Sellers    // Check front/layout/header.blade.php
@@ -180,11 +180,11 @@ class ProductsController extends Controller
                         'products.product_image',
                         'products.description'
                     )->with('publisher')->join(
-                        'categories',
-                        'categories.id',
-                        '=',
-                        'products.category_id'
-                    )->where('products.status', 1)->where('products.is_bestseller', 'Yes');
+                            'categories',
+                            'categories.id',
+                            '=',
+                            'products.category_id'
+                        )->where('products.status', 1)->where('products.is_bestseller', 'Yes');
                     // dd($categoryProducts);
 
                     // Featured    // Check front/layout/header.blade.php
@@ -206,11 +206,11 @@ class ProductsController extends Controller
                         'products.product_image',
                         'products.description'
                     )->with('publisher')->join(
-                        'categories', // `categories` table
-                        'categories.id',
-                        '=',
-                        'products.category_id' // JOIN both `products` and `categories` tables at    `categories`.`id` = `products`.`category_id`
-                    )->where('products.status', 1)->where('products.is_featured', 'Yes');
+                            'categories', // `categories` table
+                            'categories.id',
+                            '=',
+                            'products.category_id' // JOIN both `products` and `categories` tables at    `categories`.`id` = `products`.`category_id`
+                        )->where('products.status', 1)->where('products.is_featured', 'Yes');
                     // dd($categoryProducts);
 
                     // Discount    // Check front/layout/header.blade.php
@@ -233,11 +233,11 @@ class ProductsController extends Controller
                         'products.product_image',
                         'products.description'
                     )->with('publisher')->join(
-                        'categories', // `categories` table
-                        'categories.id',
-                        '=',
-                        'products.category_id'
-                    )->where('products.status', 1)->where('products.product_discount', '>', 0);
+                            'categories', // `categories` table
+                            'categories.id',
+                            '=',
+                            'products.category_id'
+                        )->where('products.status', 1)->where('products.product_discount', '>', 0);
                 } else { // The Search Bar
                     $search_product = $_REQUEST['search'];
 
@@ -257,20 +257,20 @@ class ProductsController extends Controller
                         'products.product_image',
                         'products.description'
                     )->with('publisher')->join(
-                        'categories', // `categories` table
-                        'categories.id',
-                        '=',
-                        'products.category_id'
-                    )->where(function ($query) use ($search_product) {
+                            'categories', // `categories` table
+                            'categories.id',
+                            '=',
+                            'products.category_id'
+                        )->where(function ($query) use ($search_product) {
 
-                        $query->where('products.product_name', 'like', '%' . $search_product . '%')
-                            ->orWhere('products.description', 'like', '%' . $search_product . '%')
-                            ->orWhere('categories.category_name', 'like', '%' . $search_product . '%');
-                    })->where('products.status', 1);
+                            $query->where('products.product_name', 'like', '%' . $search_product . '%')
+                                ->orWhere('products.description', 'like', '%' . $search_product . '%')
+                                ->orWhere('categories.category_name', 'like', '%' . $search_product . '%');
+                        })->where('products.status', 1);
                     // dd($categoryProducts);
                 }
 
-                if (isset($_REQUEST['section_id']) && ! empty($_REQUEST['section_id'])) {
+                if (isset($_REQUEST['section_id']) && !empty($_REQUEST['section_id'])) {
                     $categoryProducts = $categoryProducts->where('products.section_id', $_REQUEST['section_id']);
                 }
 
@@ -301,7 +301,7 @@ class ProductsController extends Controller
                     $categoryProducts = Product::with('publisher')->whereIn('category_id', $categoryDetails['catIds'])->where('status', 1); // moving the paginate() method after checking for the sorting filter <form>    // Paginating Eloquent Results: https://laravel.com/docs/9.x/pagination#paginating-eloquent-results    // Displaying Pagination Results Using Bootstrap: https://laravel.com/docs/9.x/pagination#using-bootstrap        // https://laravel.com/docs/9.x/queries#additional-where-clauses    // using the publisher() relationship method in Product.php
 
                     // Sorting Filter WITHOUT AJAX (using HTML <form> and jQuery) in front/products/listing.blade.php
-                    if (isset($_GET['sort']) && ! empty($_GET['sort'])) { // if the URL query string parameters contain '&sort=someValue'    // 'sort' is the 'name' HTML attribute of the <select> box
+                    if (isset($_GET['sort']) && !empty($_GET['sort'])) { // if the URL query string parameters contain '&sort=someValue'    // 'sort' is the 'name' HTML attribute of the <select> box
                         if ($_GET['sort'] == 'product_latest') {
                             $categoryProducts->orderBy('products.id', 'Desc');
                         } elseif ($_GET['sort'] == 'price_lowest') {
@@ -361,7 +361,7 @@ class ProductsController extends Controller
                 // Get products for this category and its subcategories
                 $products = Product::with(['publisher', 'authors', 'category'])
                     ->whereIn('category_id', $categoryIds)
-                    ->whereHas('attributes', function($q) {
+                    ->whereHas('attributes', function ($q) {
                         $q->where('status', 1);
                     })
                     ->where('status', 1);
@@ -369,7 +369,7 @@ class ProductsController extends Controller
         } else {
             // If no category_id provided, show all products
             $products = Product::with(['publisher', 'authors', 'category'])
-                ->whereHas('attributes', function($q) {
+                ->whereHas('attributes', function ($q) {
                     $q->where('status', 1);
                 })
                 ->where('status', 1);
@@ -400,7 +400,7 @@ class ProductsController extends Controller
             }
 
             // Section filter (for when no specific category is selected)
-            if (! $category_id && $request->filled('section_id')) {
+            if (!$category_id && $request->filled('section_id')) {
                 $products->where('section_id', $request->section_id);
             }
 
@@ -510,15 +510,15 @@ class ProductsController extends Controller
             'subject',
             'bookType'
         ])
-        ->where('id', $id)
-        ->where('status', 1)
-        ->firstOrFail();
+            ->where('id', $id)
+            ->where('status', 1)
+            ->firstOrFail();
 
         $productId = $product->id;
 
         // Persist distance in session if provided
         if ($request->filled('distance')) {
-            session(['distance' => (int)$request->distance]);
+            session(['distance' => (int) $request->distance]);
         }
         $userLat = session('user_latitude');
         $userLng = session('user_longitude');
@@ -572,8 +572,8 @@ class ProductsController extends Controller
             $productDetails['stock'] = 0;
         } else {
             // Apply sorting to all sellers to determine the order (Main Buy Box logic)
-            $userLat = (float)session('user_latitude');
-            $userLng = (float)session('user_longitude');
+            $userLat = (float) session('user_latitude');
+            $userLng = (float) session('user_longitude');
 
             $sort = request('sort', 'buybox');
 
@@ -581,19 +581,23 @@ class ProductsController extends Controller
                 if ($sort === 'price') {
                     $aPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $a->id)['final_price'] ?? 999999;
                     $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
-                    if ($aPrice != $bPrice) return $aPrice <=> $bPrice;
+                    if ($aPrice != $bPrice)
+                        return $aPrice <=> $bPrice;
                 }
 
                 if ($sort === 'distance' && $userLat && $userLng) {
                     $getDist = function ($loc) use ($userLat, $userLng) {
-                        if (!$loc) return 999999;
+                        if (!$loc)
+                            return 999999;
                         $parts = explode(',', $loc);
-                        if (count($parts) != 2) return 999999;
-                        return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float)$parts[0])) * cos(deg2rad((float)$parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float)$parts[0]))));
+                        if (count($parts) != 2)
+                            return 999999;
+                        return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float) $parts[0])) * cos(deg2rad((float) $parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float) $parts[0]))));
                     };
                     $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
                     $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
-                    if ($aDist != $bDist) return $aDist <=> $bDist;
+                    if ($aDist != $bDist)
+                        return $aDist <=> $bDist;
                 }
 
                 // Default / Buy Box Priority
@@ -601,23 +605,28 @@ class ProductsController extends Controller
                 $planOrder = ['pro' => 1, 'free' => 2];
                 $aPlan = isset($a->vendor->plan) ? ($planOrder[$a->vendor->plan] ?? 3) : 3;
                 $bPlan = isset($b->vendor->plan) ? ($planOrder[$b->vendor->plan] ?? 3) : 3;
-                if ($aPlan != $bPlan) return $aPlan <=> $bPlan;
+                if ($aPlan != $bPlan)
+                    return $aPlan <=> $bPlan;
 
                 // Priority 2: Distance (as fallback if not explicitly sorting)
                 if ($userLat && $userLng && $sort !== 'distance') {
                     $getDist = function ($loc) use ($userLat, $userLng) {
-                        if (!$loc) return 999999;
+                        if (!$loc)
+                            return 999999;
                         $parts = explode(',', $loc);
-                        if (count($parts) != 2) return 999999;
-                        return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float)$parts[0])) * cos(deg2rad((float)$parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float)$parts[0]))));
+                        if (count($parts) != 2)
+                            return 999999;
+                        return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float) $parts[0])) * cos(deg2rad((float) $parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float) $parts[0]))));
                     };
                     $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
                     $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
-                    if ($aDist != $bDist) return $aDist <=> $bDist;
+                    if ($aDist != $bDist)
+                        return $aDist <=> $bDist;
                 }
 
                 // Priority 3: Stock
-                if ($a->stock != $b->stock) return $b->stock <=> $a->stock;
+                if ($a->stock != $b->stock)
+                    return $b->stock <=> $a->stock;
 
                 // Priority 4: Price (as fallback)
                 if ($sort !== 'price') {
@@ -656,7 +665,7 @@ class ProductsController extends Controller
         }
 
 
-        if (! $product->category) {
+        if (!$product->category) {
             abort(404, 'Product category not found');
         }
 
@@ -732,15 +741,15 @@ class ProductsController extends Controller
             'subject',
             'bookType'
         ])
-        ->where('id', $id)
-        ->where('status', 1)
-        ->firstOrFail();
+            ->where('id', $id)
+            ->where('status', 1)
+            ->firstOrFail();
 
         $productId = $product->id;
 
         // Persist distance in session if provided
         if (request()->filled('distance')) {
-            session(['distance' => (int)request()->distance]);
+            session(['distance' => (int) request()->distance]);
         }
         $userLat = session('user_latitude');
         $userLng = session('user_longitude');
@@ -767,48 +776,57 @@ class ProductsController extends Controller
             return redirect()->back()->with('error_message', 'No active sellers found for this product.');
         }
 
-        $userLat = (float)session('user_latitude');
-        $userLng = (float)session('user_longitude');
+        $userLat = (float) session('user_latitude');
+        $userLng = (float) session('user_longitude');
         $sort = request('sort', 'buybox');
 
         $sortedSellers = $allSellers->sort(function ($a, $b) use ($productId, $userLat, $userLng, $sort) {
             if ($sort === 'price') {
                 $aPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $a->id)['final_price'] ?? 999999;
                 $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
-                if ($aPrice != $bPrice) return $aPrice <=> $bPrice;
+                if ($aPrice != $bPrice)
+                    return $aPrice <=> $bPrice;
             }
 
             if ($sort === 'distance' && $userLat && $userLng) {
                 $getDist = function ($loc) use ($userLat, $userLng) {
-                    if (!$loc) return 999999;
+                    if (!$loc)
+                        return 999999;
                     $parts = explode(',', $loc);
-                    if (count($parts) != 2) return 999999;
-                    return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float)$parts[0])) * cos(deg2rad((float)$parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float)$parts[0]))));
+                    if (count($parts) != 2)
+                        return 999999;
+                    return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float) $parts[0])) * cos(deg2rad((float) $parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float) $parts[0]))));
                 };
                 $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
                 $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
-                if ($aDist != $bDist) return $aDist <=> $bDist;
+                if ($aDist != $bDist)
+                    return $aDist <=> $bDist;
             }
 
             // Buy Box Priorities
             $planOrder = ['pro' => 1, 'free' => 2];
             $aPlan = isset($a->vendor->plan) ? ($planOrder[$a->vendor->plan] ?? 3) : 3;
             $bPlan = isset($b->vendor->plan) ? ($planOrder[$b->vendor->plan] ?? 3) : 3;
-            if ($aPlan != $bPlan) return $aPlan <=> $bPlan;
+            if ($aPlan != $bPlan)
+                return $aPlan <=> $bPlan;
 
             if ($userLat && $userLng && $sort !== 'distance') {
                 $getDist = function ($loc) use ($userLat, $userLng) {
-                    if (!$loc) return 999999;
+                    if (!$loc)
+                        return 999999;
                     $parts = explode(',', $loc);
-                    if (count($parts) != 2) return 999999;
-                    return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float)$parts[0])) * cos(deg2rad((float)$parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float)$parts[0]))));
+                    if (count($parts) != 2)
+                        return 999999;
+                    return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float) $parts[0])) * cos(deg2rad((float) $parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float) $parts[0]))));
                 };
                 $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
                 $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
-                if ($aDist != $bDist) return $aDist <=> $bDist;
+                if ($aDist != $bDist)
+                    return $aDist <=> $bDist;
             }
 
-            if ($a->stock != $b->stock) return $b->stock <=> $a->stock;
+            if ($a->stock != $b->stock)
+                return $b->stock <=> $a->stock;
 
             if ($sort !== 'price') {
                 $aPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $a->id)['final_price'] ?? 999999;
@@ -840,7 +858,7 @@ class ProductsController extends Controller
     { // Required Parameters: https://laravel.com/docs/9.x/routing#required-parameters
         // Get vendor shop name
         $condition = $request->query('condition');
-        if (! in_array($condition, ['new', 'old'])) {
+        if (!in_array($condition, ['new', 'old'])) {
             $condition = 'new';
         }
 
@@ -859,7 +877,7 @@ class ProductsController extends Controller
     {
         $condition = $request->query('condition', 'new');
 
-        if (! $request->isMethod('post')) {
+        if (!$request->isMethod('post')) {
             return back();
         }
 
@@ -871,7 +889,7 @@ class ProductsController extends Controller
             ->where('status', 1)
             ->first();
 
-        if (! $attribute) {
+        if (!$attribute) {
             return back()->with('error_message', 'Invalid product.');
         }
 
@@ -965,14 +983,14 @@ class ProductsController extends Controller
             Session::forget('couponCode');
 
             $cartDetails = Cart::find($data['cartid']);
-            if (! $cartDetails) {
+            if (!$cartDetails) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Cart item not found',
                 ]);
             }
 
-            if (! isset($data['qty']) || $data['qty'] < 1) {
+            if (!isset($data['qty']) || $data['qty'] < 1) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Invalid quantity',
@@ -1021,7 +1039,7 @@ class ProductsController extends Controller
     public function cartDelete(Request $request)
     {
         $condition = $request->query('condition');
-        if (! in_array($condition, ['new', 'old'])) {
+        if (!in_array($condition, ['new', 'old'])) {
             $condition = 'new';
         }
         if ($request->ajax()) {
@@ -1050,12 +1068,12 @@ class ProductsController extends Controller
         $language = Language::get();
 
         $condition = $request->query('condition');
-        if (! in_array($condition, ['new', 'old'])) {
+        if (!in_array($condition, ['new', 'old'])) {
             $condition = 'new';
         }
 
         $session_id = Session::get('session_id');
-        if (! $session_id) {
+        if (!$session_id) {
             $session_id = Session::getId();
             Session::put('session_id', $session_id);
         }
@@ -1065,7 +1083,7 @@ class ProductsController extends Controller
         $total_price = 0;
 
         foreach ($getWishlistItems as $item) {
-            if (! isset($item['product_attribute_id'])) {
+            if (!isset($item['product_attribute_id'])) {
                 continue;
             }
 
@@ -1106,7 +1124,7 @@ class ProductsController extends Controller
         $qty = max((int) ($request->quantity ?? 1), 1);
 
         // Validate attribute
-        if (! $request->product_attribute_id) {
+        if (!$request->product_attribute_id) {
             return back()->with('error_message', 'Invalid product.');
         }
 
@@ -1115,13 +1133,13 @@ class ProductsController extends Controller
             ->where('status', 1)
             ->first();
 
-        if (! $attribute) {
+        if (!$attribute) {
             return back()->with('error_message', 'Invalid product.');
         }
 
         // Session for guest
         $session_id = Session::get('session_id');
-        if (! $session_id) {
+        if (!$session_id) {
             $session_id = Session::getId();
             Session::put('session_id', $session_id);
         }
@@ -1245,7 +1263,7 @@ class ProductsController extends Controller
                 $total_amount = 0;
 
                 foreach ($getCartItems as $key => $item) {
-                    if (! in_array($item['product']['category_id'], $catArr)) { // if the category of one of the products in the Cart doesn't belong to the Coupon's categories (the categories of the coupon selected by 'vendor' or 'admin' in the Admin Panel for the coupon)
+                    if (!in_array($item['product']['category_id'], $catArr)) { // if the category of one of the products in the Cart doesn't belong to the Coupon's categories (the categories of the coupon selected by 'vendor' or 'admin' in the Admin Panel for the coupon)
                         $message = 'This coupon code selected categories is not for one of the selected products category!';
                     }
 
@@ -1255,7 +1273,7 @@ class ProductsController extends Controller
 
                 // Check if the coupon code submitted by user is not available for that user (in case the coupon is already selected for certain specific users selected by 'admin' or 'vendor' in the Coupons tab in Admin Panel, and it's not available for all users)
                 // Get the coupon's selected users
-                if (isset($couponDetails->users) && ! empty($couponDetails->users)) {
+                if (isset($couponDetails->users) && !empty($couponDetails->users)) {
                     $usersArr = explode(',', $couponDetails->users);
                     // Check if the submitted coupon code is available ONLY for some specific users (from the Coupons tab in Admin Panel in 'Select User (by email):') and check if the coupon is available or not for the user submitting the coupon code
                     if (count($usersArr)) { // if there's at least a one specific selected user for the coupon
@@ -1266,7 +1284,7 @@ class ProductsController extends Controller
                         }
 
                         foreach ($getCartItems as $item) {
-                            if (! in_array($item['user_id'], $usersId)) { // if the user id of one of the products in the Cart doesn't belong to the Coupon's specifically selected users (to check if the submitted coupon code is available to the user submitting it or not)
+                            if (!in_array($item['user_id'], $usersId)) { // if the user id of one of the products in the Cart doesn't belong to the Coupon's specifically selected users (to check if the submitted coupon code is available to the user submitting it or not)
                                 $message = 'This coupon code is not available for you! Try again with a valid coupon code! (The coupon code is available only for certain selected users!)';
                             }
                         }
@@ -1280,7 +1298,7 @@ class ProductsController extends Controller
                     $productIds = Product::select('id')->where('vendor_id', $couponDetails->vendor_id)->pluck('id')->toArray();
 
                     foreach ($getCartItems as $item) {
-                        if (! in_array($item['product']['id'], $productIds)) { // if the user id of one of the products in the Cart doesn't belong to the products ids of that vendor (to check if the submitted coupon code pertains to that specific/very vendor or not)
+                        if (!in_array($item['product']['id'], $productIds)) { // if the user id of one of the products in the Cart doesn't belong to the products ids of that vendor (to check if the submitted coupon code pertains to that specific/very vendor or not)
                             $message = 'This coupon code is not available for you! Try again with a valid coupon code! (vendor validation)!. The coupon code exists but one of the products in the Cart doesn\'t belong to that specific vendor who created/owns that Coupon!';
                         }
                     }
@@ -1338,7 +1356,7 @@ class ProductsController extends Controller
         $sections = Section::all();
         $language = Language::get();
         $condition = $request->query('condition');
-        if (! in_array($condition, ['new', 'old'])) {
+        if (!in_array($condition, ['new', 'old'])) {
             $condition = 'new';
         }
         // Fetch all of the world countries from the database table `countries`
@@ -1418,7 +1436,7 @@ class ProductsController extends Controller
                     ->where('id', $item['product_attribute_id'])
                     ->first();
 
-                if (! $attribute || ! $attribute->product) {
+                if (!$attribute || !$attribute->product) {
                     $message = 'One of the products in your cart is no longer available. Please remove it and try again.';
 
                     return redirect('/cart')->with('error_message', $message);
@@ -1592,13 +1610,13 @@ class ProductsController extends Controller
                 // Notify vendor when their product is ordered (so it shows in vendor notifications)
                 if (($cartItem->vendor_id ?? 0) > 0) {
                     Notification::create([
-                        'type'         => 'order_placed',
-                        'title'        => 'New Order Received',
-                        'message'      => 'A customer placed an order containing your product: ' . ($cartItem->product_name ?? 'Product') . '.',
-                        'related_id'   => $order->id,
+                        'type' => 'order_placed',
+                        'title' => 'New Order Received',
+                        'message' => 'A customer placed an order containing your product: ' . ($cartItem->product_name ?? 'Product') . '.',
+                        'related_id' => $order->id,
                         'related_type' => 'App\Models\Order',
-                        'vendor_id'    => $cartItem->vendor_id,
-                        'is_read'      => false,
+                        'vendor_id' => $cartItem->vendor_id,
+                        'is_read' => false,
                     ]);
                 }
 
@@ -1833,7 +1851,7 @@ class ProductsController extends Controller
         $sellBookRequests = ProductsAttribute::with(['product.authors', 'user'])
             ->where('admin_type', 'user')
             ->where('admin_approved', 1)
-            ->whereHas('product', function($q) {
+            ->whereHas('product', function ($q) {
                 $q->where('condition', 'old');
             })
             ->orderBy('id', 'desc')

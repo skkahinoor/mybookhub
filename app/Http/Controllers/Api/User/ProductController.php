@@ -39,7 +39,7 @@ class ProductController extends Controller
             'section_id' => 'nullable|integer',
             'category_id' => 'nullable|integer',
             'book_type_id' => 'nullable',
-            'language_id'  => 'nullable',
+            'language_id' => 'nullable',
             'subcategory_id' => 'nullable|integer',
             'subject_id' => 'nullable',
             'min_price' => 'nullable|numeric|min:0',
@@ -55,11 +55,11 @@ class ProductController extends Controller
             ], 422);
         }
 
-        $user  = auth('sanctum')->user();
+        $user = auth('sanctum')->user();
         $limit = $request->limit ?? 20;
-        $page  = $request->page ?? 1;
-        $lat   = $request->lat;
-        $lng   = $request->lng;
+        $page = $request->page ?? 1;
+        $lat = $request->lat;
+        $lng = $request->lng;
 
 
         $cacheVersion = Cache::rememberForever('products_cache_version', function () {
@@ -75,9 +75,9 @@ class ProductController extends Controller
         });
 
         return response()->json([
-            'status'  => true,
+            'status' => true,
             'message' => 'Products fetched successfully',
-            'data'    => $data
+            'data' => $data
         ]);
     }
 
@@ -189,60 +189,60 @@ class ProductController extends Controller
         $results = $query->paginate($limit, ['*'], 'page', $page);
 
         return [
-            'total'        => $results->total(),
+            'total' => $results->total(),
             'current_page' => $results->currentPage(),
-            'last_page'    => $results->lastPage(),
-            'products'     => $results->through(function ($product) {
+            'last_page' => $results->lastPage(),
+            'products' => $results->through(function ($product) {
                 $basePath = url('front/images/product_images');
 
                 // Aggregate price range and offer count from associated attributes
                 $prices = $product->attributes
                     ->filter(function ($attr) {
-                        return $attr->status == 1 && $attr->stock > 0;
-                    })
+                    return $attr->status == 1 && $attr->stock > 0;
+                })
                     ->map(function ($attr) {
-                        $pDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
-                        return $pDetails['final_price'];
-                    });
+                    $pDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
+                    return $pDetails['final_price'];
+                });
 
                 return [
-                    'id'              => $product->id,
-                    'product_name'    => $product->product_name,
-                    'product_isbn'    => $product->product_isbn,
-                    'product_price'   => round($product->product_price),
+                    'id' => $product->id,
+                    'product_name' => $product->product_name,
+                    'product_isbn' => $product->product_isbn,
+                    'product_price' => round($product->product_price),
                     'min_final_price' => $prices->isNotEmpty() ? round($prices->min()) : null,
                     'max_final_price' => $prices->isNotEmpty() ? round($prices->max()) : null,
-                    'offer_count'     => $prices->count(),
-                    'image_urls'       => [
-                         'large'  => $product->product_image
+                    'offer_count' => $prices->count(),
+                    'image_urls' => [
+                        'large' => $product->product_image
                             ? $basePath . '/large/' . $product->product_image
                             : null,
                         'medium' => $product->product_image
                             ? $basePath . '/medium/' . $product->product_image
                             : null,
-                        'small'  => $product->product_image
+                        'small' => $product->product_image
                             ? $basePath . '/small/' . $product->product_image
                             : null,
                     ],
-                    'description'     => $product->description,
-                    'condition'       => $product->condition,
+                    'description' => $product->description,
+                    'condition' => $product->condition,
                     'book_type' => $product->bookType ? [
-                        'id'   => $product->bookType->id,
+                        'id' => $product->bookType->id,
                         'name' => $product->bookType->book_type,
                         'icon' => $product->bookType->book_type_icon,
                     ] : null,
                     'language' => $product->language ? [
-                        'id'   => $product->language->id,
+                        'id' => $product->language->id,
                         'name' => $product->language->name,
                     ] : null,
-                    'category'    => $product->category,
+                    'category' => $product->category,
                     'subcategory' => $product->subcategory,
-                    'section'     => $product->section,
-                    'subject'     => $product->subject,
+                    'section' => $product->section,
+                    'subject' => $product->subject,
                     'author_name' => $product->authors->pluck('name')->join(', '),
                     'authors' => $product->authors->map(function ($author) {
                         return [
-                            'id'   => $author->id,
+                            'id' => $author->id,
                             'name' => $author->name,
                         ];
                     }),
@@ -317,8 +317,8 @@ class ProductController extends Controller
             if ($distance === null && $lat && $lng && $attr->vendor && $attr->vendor->location) {
                 $vendorLoc = explode(',', $attr->vendor->location);
                 if (count($vendorLoc) == 2) {
-                    $vLat = (float)trim($vendorLoc[0]);
-                    $vLng = (float)trim($vendorLoc[1]);
+                    $vLat = (float) trim($vendorLoc[0]);
+                    $vLng = (float) trim($vendorLoc[1]);
 
                     $theta = $lng - $vLng;
                     $dist = sin(deg2rad($lat)) * sin(deg2rad($vLat)) + cos(deg2rad($lat)) * cos(deg2rad($vLat)) * cos(deg2rad($theta));
@@ -382,9 +382,9 @@ class ProductController extends Controller
                     'isbn' => $product->product_isbn,
                     'price' => round($product->product_price),
                     'image_urls' => [
-                        'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
+                        'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
                         'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                        'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                        'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
                     ],
                     'description' => $product->description,
                     'condition' => $product->condition,
@@ -433,8 +433,8 @@ class ProductController extends Controller
         if ($lat && $lng && $attribute->vendor && $attribute->vendor->location) {
             $vendorLoc = explode(',', $attribute->vendor->location);
             if (count($vendorLoc) == 2) {
-                $vLat = (float)trim($vendorLoc[0]);
-                $vLng = (float)trim($vendorLoc[1]);
+                $vLat = (float) trim($vendorLoc[0]);
+                $vLng = (float) trim($vendorLoc[1]);
 
                 $theta = $lng - $vLng;
                 $dist = sin(deg2rad($lat)) * sin(deg2rad($vLat)) + cos(deg2rad($lat)) * cos(deg2rad($vLat)) * cos(deg2rad($theta));
@@ -502,9 +502,9 @@ class ProductController extends Controller
                     'condition' => $product->condition,
 
                     'image_urls' => [
-                        'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
+                        'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
                         'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                        'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                        'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
                     ],
 
                     'description' => $product->description,
@@ -590,9 +590,12 @@ class ProductController extends Controller
             ]);
         }
 
-        $cartItems = Cart::with(['product' => function ($q) {
-            $q->select('id', 'category_id', 'product_name', 'product_image');
-        }, 'attribute'])
+        $cartItems = Cart::with([
+            'product' => function ($q) {
+                $q->select('id', 'category_id', 'product_name', 'product_image');
+            },
+            'attribute'
+        ])
             ->where(function ($q) use ($user_id, $session_id) {
                 if ($user_id > 0) {
                     $q->where('user_id', $user_id);
@@ -622,9 +625,9 @@ class ProductController extends Controller
 
             if ($item->product) {
                 $item->product->image_urls = [
-                    'large'  => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
+                    'large' => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
                     'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
-                    'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
+                    'small' => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
             }
 
@@ -819,11 +822,11 @@ class ProductController extends Controller
                     'language_id',
                     'book_type_id'
                 )->with([
-                    'subcategory',
-                    'subject',
-                    'language',
-                    'bookType'
-                ]);
+                            'subcategory',
+                            'subject',
+                            'language',
+                            'bookType'
+                        ]);
             }
         ])
             ->where(function ($q) use ($user_id, $session_id) {
@@ -855,9 +858,9 @@ class ProductController extends Controller
 
             if ($item->product) {
                 $item->product->image_urls = [
-                    'large'  => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
+                    'large' => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
                     'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
-                    'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
+                    'small' => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
                 ];
             }
 
@@ -1028,7 +1031,8 @@ class ProductController extends Controller
                 ->where('id', $item['product_attribute_id'])
                 ->first();
 
-            if (!$attribute) continue;
+            if (!$attribute)
+                continue;
 
             $product = $attribute->product;
 
@@ -1204,7 +1208,9 @@ class ProductController extends Controller
         }
 
         $shippingCountry = $user->country ? $user->country->name : 'India';
-        $shipping_charges = ShippingCharge::getShippingCharges(0, $shippingCountry);
+        $shipping_charges = ($request->payment_gateway == 'PICKUP')
+            ? 0
+            : ShippingCharge::getShippingCharges(0, $shippingCountry);
 
         // SECURE COUPON CALCULATION (Don't trust $request->coupon_amount)
         $coupon_amount = 0;
@@ -1231,8 +1237,16 @@ class ProductController extends Controller
             $grand_total -= $wallet_amount;
         }
 
-        $payment_method = $request->payment_gateway == 'COD' ? 'COD' : 'Prepaid';
-        $order_status = $request->payment_gateway == 'COD' ? 'New' : 'Pending';
+        if ($request->payment_gateway == 'COD') {
+            $payment_method = 'COD';
+            $order_status = 'New';
+        } elseif ($request->payment_gateway == 'PICKUP') {
+            $payment_method = 'Pickup from store';
+            $order_status = 'Pending';
+        } else {
+            $payment_method = 'Prepaid';
+            $order_status = 'Pending';
+        }
 
         DB::beginTransaction();
 
@@ -1242,7 +1256,8 @@ class ProductController extends Controller
             if ($coupon) {
                 foreach ($cartItems as $item) {
                     $attribute = ProductsAttribute::with('product')->find($item->product_attribute_id);
-                    if (!$attribute) continue;
+                    if (!$attribute)
+                        continue;
                     $product = $attribute->product;
 
                     $isEligible = true;
@@ -1326,13 +1341,13 @@ class ProductController extends Controller
 
                 if (($attribute->vendor_id ?? 0) > 0) {
                     Notification::create([
-                        'type'         => 'order_placed',
-                        'title'        => 'New Order Received',
-                        'message'      => 'A customer placed an order containing your product: ' . ($attribute->product->product_name ?? 'Product') . '.',
-                        'related_id'   => $order->id,
+                        'type' => 'order_placed',
+                        'title' => 'New Order Received',
+                        'message' => 'A customer placed an order containing your product: ' . ($attribute->product->product_name ?? 'Product') . '.',
+                        'related_id' => $order->id,
                         'related_type' => 'App\Models\Order',
-                        'vendor_id'    => $attribute->vendor_id,
-                        'is_read'      => false,
+                        'vendor_id' => $attribute->vendor_id,
+                        'is_read' => false,
                     ]);
                 }
             }
@@ -1352,6 +1367,18 @@ class ProductController extends Controller
 
             if ($request->payment_gateway == 'COD') {
 
+                // Reduce stock for COD orders immediately
+                foreach ($cartItems as $item) {
+                    ProductsAttribute::where('id', $item->product_attribute_id)
+                        ->decrement('stock', $item->quantity);
+                }
+
+                // Cashback to wallet
+                $total_cashback = 0;
+                foreach ($order_ids as $id) {
+                    $total_cashback += WalletTransaction::checkAndCreditWallet($id);
+                }
+
                 Cart::where('user_id', $user->id)->delete();
 
                 DB::commit();
@@ -1361,7 +1388,36 @@ class ProductController extends Controller
                     'message' => 'Order placed successfully',
                     'order_id' => $order_ids[0],
                     'order_ids' => $order_ids,
-                    'grand_total' => $total_price + $shipping_charges - $coupon_amount - $wallet_amount
+                    'grand_total' => $total_price + $shipping_charges - $coupon_amount - $wallet_amount,
+                    'cashback_amount' => $total_cashback,
+                ]);
+            }
+
+            if ($request->payment_gateway == 'PICKUP') {
+
+                // Reduce stock for PICKUP orders immediately
+                foreach ($cartItems as $item) {
+                    ProductsAttribute::where('id', $item->product_attribute_id)
+                        ->decrement('stock', $item->quantity);
+                }
+
+                // Cashback to wallet
+                $total_cashback = 0;
+                foreach ($order_ids as $id) {
+                    $total_cashback += WalletTransaction::checkAndCreditWallet($id);
+                }
+
+                Cart::where('user_id', $user->id)->delete();
+
+                DB::commit();
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Pickup order placed successfully. Visit the store to collect your order.',
+                    'order_id' => $order_ids[0],
+                    'order_ids' => $order_ids,
+                    'grand_total' => $grand_total,
+                    'cashback_amount' => $total_cashback,
                 ]);
             }
 
@@ -1504,10 +1560,12 @@ class ProductController extends Controller
             ], 401);
         }
 
-        $orders = Order::with(['orders_products' => function ($query) {
-            // Load the associated product attribute and product to get images/details if needed
-            // The orders_products table already has product_name, product_price, product_qty, etc.
-        }])
+        $orders = Order::with([
+            'orders_products' => function ($query) {
+                // Load the associated product attribute and product to get images/details if needed
+                // The orders_products table already has product_name, product_price, product_qty, etc.
+            }
+        ])
             ->where('user_id', $user->id)
             ->orderBy('id', 'desc')
             ->paginate(10); // Paginate the results, 10 orders per page
@@ -1587,9 +1645,11 @@ class ProductController extends Controller
             ], 401);
         }
 
-        $order = Order::with(['logs' => function ($query) {
-            $query->orderBy('id', 'asc');
-        }])->where('id', $id)->where('user_id', $user->id)->first();
+        $order = Order::with([
+            'logs' => function ($query) {
+                $query->orderBy('id', 'asc');
+            }
+        ])->where('id', $id)->where('user_id', $user->id)->first();
 
         if (!$order) {
             return response()->json([
@@ -1667,13 +1727,13 @@ class ProductController extends Controller
                 // Notify vendor about cancelled item
                 if (($productItem->vendor_id ?? 0) > 0) {
                     Notification::create([
-                        'type'         => 'order_cancelled',
-                        'title'        => 'Order Item Cancelled',
-                        'message'      => 'An item "' . ($productItem->product_name ?? 'Product') . '" in order #' . $order->id . ' was cancelled by the customer.',
-                        'related_id'   => $order->id,
+                        'type' => 'order_cancelled',
+                        'title' => 'Order Item Cancelled',
+                        'message' => 'An item "' . ($productItem->product_name ?? 'Product') . '" in order #' . $order->id . ' was cancelled by the customer.',
+                        'related_id' => $order->id,
                         'related_type' => 'App\Models\Order',
-                        'vendor_id'    => $productItem->vendor_id,
-                        'is_read'      => false,
+                        'vendor_id' => $productItem->vendor_id,
+                        'is_read' => false,
                     ]);
                 }
 
@@ -1699,13 +1759,13 @@ class ProductController extends Controller
                 $vendorIds = $orderItems->pluck('vendor_id')->filter()->unique();
                 foreach ($vendorIds as $vendorId) {
                     Notification::create([
-                        'type'         => 'order_cancelled',
-                        'title'        => 'Order Cancelled',
-                        'message'      => 'Order #' . $order->id . ' containing your products was cancelled by the customer.',
-                        'related_id'   => $order->id,
+                        'type' => 'order_cancelled',
+                        'title' => 'Order Cancelled',
+                        'message' => 'Order #' . $order->id . ' containing your products was cancelled by the customer.',
+                        'related_id' => $order->id,
                         'related_type' => 'App\Models\Order',
-                        'vendor_id'    => $vendorId,
-                        'is_read'      => false,
+                        'vendor_id' => $vendorId,
+                        'is_read' => false,
                     ]);
                 }
 
