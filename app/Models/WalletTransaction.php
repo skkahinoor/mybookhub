@@ -109,16 +109,23 @@ class WalletTransaction extends Model
         $groupOrders = $groupOrdersQuery->get();
         $totalCartAmount = $groupOrders->sum('grand_total');
 
-        // Only credit cashback if this is the "Primary" order of the group (first ID)
-        // to avoid duplicate cashback for every item in the cart.
-        $primaryOrder = $groupOrders->sortBy('id')->first();
+        // Identify orders in the group that have a status eligible for cashback
+        $eligibleGroupOrders = $groupOrders->filter(function($o) {
+            return in_array($o->order_status, ['Paid', 'Delivered']);
+        });
+
+        // The oldest (smallest ID) eligible order in the group becomes the "Claimant"
+        // This ensures the cashback is only credited ONCE per checkout session,
+        // and it works regardless of which item in the cart is processed first.
+        $claimantOrder = $eligibleGroupOrders->sortBy('id')->first();
         
-        if ($order->id == $primaryOrder->id) {
+        if ($claimantOrder && $order->id == $claimantOrder->id) {
             // Now find the highest MOV threshold reached by the TOTAL cart amount
             $mov = \App\Models\Mov::where('price', '<=', $totalCartAmount)->orderBy('price', 'desc')->first();
             
             if ($mov) {
                 // Check if MOV cashback already credited for ANY order in this group
+                // We check all order IDs in the group for ANY existing MOV cashback transaction
                 $alreadyCredited = self::whereIn('order_id', $groupOrders->pluck('id'))
                     ->where('description', 'LIKE', 'MOV cashback%')
                     ->exists();
