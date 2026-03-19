@@ -625,7 +625,7 @@ class ProductsController extends Controller
                     $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
                     return $aPrice <=> $bPrice;
                 }
-                
+
                 return 0;
             })->values();
 
@@ -1722,9 +1722,13 @@ class ProductsController extends Controller
         if (Session::has('order_ids') || Session::has('order_id')) {
             $order_ids = Session::has('order_ids') ? Session::get('order_ids') : [Session::get('order_id')];
 
+            $total_cashback = 0;
             foreach ($order_ids as $id) {
-                // Wallet Credit Logic (only happens once per user because of model guards)
-                \App\Models\WalletTransaction::checkAndCreditWallet($id);
+                // Wallet Credit Logic
+                $total_cashback += WalletTransaction::checkAndCreditWallet($id);
+            }
+            if ($total_cashback > 0) {
+                Session::flash('cashback_amount', $total_cashback);
             }
 
             // We empty the Cart after placing the order
