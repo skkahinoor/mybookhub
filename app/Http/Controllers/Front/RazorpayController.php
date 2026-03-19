@@ -167,7 +167,10 @@ class RazorpayController extends Controller
                 }
 
                 // Wallet Credit Logic
-                \App\Models\WalletTransaction::checkAndCreditWallet($order->id);
+                $cashback = WalletTransaction::checkAndCreditWallet($order->id);
+                if ($cashback > 0) {
+                    Session::flash('cashback_amount', (Session::get('cashback_amount') ?? 0) + $cashback);
+                }
 
                 // Reduce Stock
                 foreach ($order->orders_products as $item) {

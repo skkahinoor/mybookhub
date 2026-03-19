@@ -14,10 +14,39 @@
                             <p class="text-muted mb-0">Placed on {{ $orderDetails->created_at->format('F d, Y h:i A') }}
                             </p>
                         </div>
-                        <a href="{{ route('student.orders.index') }}" class="btn btn-secondary"
-                            style="background-color: rgb(63, 61, 61); color: white;">
-                            <i class="fas fa-arrow-circle-left me-2"></i> Back to Orders
-                        </a>
+                        <div class="d-flex align-items-center" style="gap: 10px;">
+                            @php
+                                $firstVendorId = collect($orderDetails->orders_products ?? [])
+                                    ->pluck('vendor_id')
+                                    ->filter(fn($v) => (int) $v > 0)
+                                    ->first();
+                                $vendorDetails = $firstVendorId
+                                    ? \App\Models\VendorsBusinessDetail::where('vendor_id', $firstVendorId)->first()
+                                    : null;
+                                $mapsQuery = null;
+                                if ($vendorDetails) {
+                                    $mapsQuery = trim(implode(', ', array_filter([
+                                        $vendorDetails->shop_name,
+                                        $vendorDetails->shop_address,
+                                        $vendorDetails->shop_city,
+                                        $vendorDetails->shop_state,
+                                        $vendorDetails->shop_country,
+                                        $vendorDetails->shop_pincode,
+                                    ])));
+                                }
+                            @endphp
+                            @if ($orderDetails->payment_gateway === 'PICKUP' && $mapsQuery)
+                                <a class="btn btn-outline-primary"
+                                    href="https://www.google.com/maps/search/?api=1&query={{ urlencode($mapsQuery) }}"
+                                    target="_blank" rel="noopener noreferrer">
+                                    <i class="fas fa-location-arrow me-2"></i> Directions
+                                </a>
+                            @endif
+                            <a href="{{ route('student.orders.index') }}" class="btn btn-secondary"
+                                style="background-color: rgb(63, 61, 61); color: white;">
+                                <i class="fas fa-arrow-circle-left me-2"></i> Back to Orders
+                            </a>
+                        </div>
 
                     </div>
                 </div>
@@ -128,7 +157,7 @@
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">{{ $product->product_name }}</h6>
                                         <p class="mb-1" style="font-size: 11px;">
-                                            <span class="text-muted">Vendor:</span> 
+                                            <span class="text-muted">Vendor:</span>
                                             @php
                                                 $vendor = \App\Models\Vendor::where('id', $product->vendor_id)->first();
                                                 $shopName = $vendor ? $vendor->shop_name : 'Admin';
@@ -231,10 +260,10 @@
                                     </a>
                                 @endif
 
-                                @if ($orderDetails->order_status == 'Pending' && $orderDetails->payment_gateway == 'Razorpay')
+                                @if ($orderDetails->order_status == 'Pending' && in_array($orderDetails->payment_gateway, ['Razorpay', 'PICKUP']))
                                     <a href="{{ route('student.orders.payNow', $orderDetails->id) }}"
                                         class="btn btn-success w-100">
-                                        Pay Now
+                                        Pay Online
                                     </a>
                                 @endif
                             </div>

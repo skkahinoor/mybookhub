@@ -26,3 +26,20 @@
         </div>
     </div>
 @endsection
+
+@section('scripts')
+    @if (Session::has('cashback_amount'))
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    title: 'Congratulations!',
+                    html: 'You earned <b style="color: #28a745;">₹{{ number_format(Session::get('cashback_amount'), 2) }}</b> cashback in your wallet!',
+                    icon: 'success',
+                    confirmButtonText: 'Great!',
+                    confirmButtonColor: '#28a745'
+                });
+            });
+        </script>
+    @endif
+@endsection

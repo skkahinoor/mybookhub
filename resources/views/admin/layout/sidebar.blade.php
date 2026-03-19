@@ -314,6 +314,9 @@
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'sellBookRequests') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ route('admin.sell-book-requests.index') }}">Sell Old Book Requests</a></li>
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'movs') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ url('admin/movs') }}">MOV Cashback</a></li>
                     </ul>
                 </div>
             </li>
