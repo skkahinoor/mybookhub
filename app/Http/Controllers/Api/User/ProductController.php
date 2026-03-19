@@ -81,6 +81,75 @@ class ProductController extends Controller
         ]);
     }
 
+    public function payNow(Request $request, $id)
+    {
+        $user = auth('sanctum')->user();
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        // Support both single ID (from URL) and multiple IDs (from body 'order_ids')
+        $order_ids = $request->input('order_ids', [$id]);
+
+        $orders = Order::whereIn('id', $order_ids)
+            ->where('user_id', $user->id)
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        // Verify all provided orders are Pending or New
+        foreach ($orders as $order) {
+            if (!in_array($order->order_status, ['Pending', 'New'])) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Order #' . $order->id . ' is already paid or cannot be paid at this stage.'
+                ], 400);
+            }
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+
+            $total_grand_total = $orders->sum('grand_total');
+
+            // Format receipt string
+            $receipt_id = 'order_paynow_' . implode('_', $order_ids);
+            if (strlen($receipt_id) > 40) {
+                $receipt_id = substr($receipt_id, 0, 40); // Razorpay max length
+            }
+
+            $razorpayOrder = $api->order->create([
+                'receipt' => $receipt_id,
+                'amount' => round($total_grand_total * 100), // in paise
+                'currency' => 'INR'
+            ]);
+
+            Order::whereIn('id', $order_ids)->update(['razorpay_order_id' => $razorpayOrder['id']]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Razorpay order created successfully',
+                'order_id' => $order_ids[0],
+                'order_ids' => $order_ids,
+                'razorpay_order_id' => $razorpayOrder['id'],
+                'amount' => $total_grand_total
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to initialize payment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     private function sqlSearch($request, $limit, $page, $lat, $lng)
     {
         $user = auth('sanctum')->user();

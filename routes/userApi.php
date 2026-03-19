@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/orders', [ProductController::class, 'orders']);
     Route::get('/user/order-status/{id}', [ProductController::class, 'orderStatus']);
     Route::post('/user/orders/{id}/cancel', [ProductController::class, 'cancelOrder']);
+    Route::post('/user/orders/{id}/pay', [ProductController::class, 'payNow']);
     Route::get('/user/wallet/transactions', [HomeController::class, 'getWalletTransactions']);
 
     // Sell Book Routes
