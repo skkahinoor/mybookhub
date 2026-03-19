@@ -625,7 +625,7 @@ class ProductsController extends Controller
                     $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
                     return $aPrice <=> $bPrice;
                 }
-                
+
                 return 0;
             })->values();
 
@@ -1490,6 +1490,9 @@ class ProductsController extends Controller
             if ($data['payment_gateway'] == 'COD') {
                 $payment_method = 'COD';
                 $order_status = 'New';
+            } elseif ($data['payment_gateway'] == 'PICKUP') {
+                $payment_method = 'Pickup from store';
+                $order_status = 'Pending';
             } else {
                 $payment_method = 'Prepaid';
                 $order_status = 'Pending';
@@ -1508,7 +1511,9 @@ class ProductsController extends Controller
                 $total_price += ($getDiscountAttributePrice['final_price'] * $item['quantity']);
             }
 
-            $total_shipping_charges = ShippingCharge::getShippingCharges($total_weight, $deliveryAddress['country']);
+            $total_shipping_charges = ($data['payment_gateway'] == 'PICKUP')
+                ? 0
+                : ShippingCharge::getShippingCharges($total_weight, $deliveryAddress['country']);
             $total_coupon_amount = Session::get('couponAmount') ?? 0;
             $total_wallet_amount = 0;
             if (isset($data['use_wallet']) && $data['use_wallet'] == 1 && Auth::user()->wallet_balance > 0) {
@@ -1528,7 +1533,9 @@ class ProductsController extends Controller
                 // Calculate proportions
                 $proportion = ($total_price > 0) ? ($item_price / $total_price) : 0;
 
-                $item_shipping = round($total_shipping_charges * $proportion, 2);
+                $item_shipping = ($data['payment_gateway'] == 'PICKUP')
+                    ? 0
+                    : round($total_shipping_charges * $proportion, 2);
                 $item_coupon = round($total_coupon_amount * $proportion, 2);
                 $item_wallet = round($total_wallet_amount * $proportion, 2);
 
@@ -1595,8 +1602,8 @@ class ProductsController extends Controller
                     ]);
                 }
 
-                // Reduce stock for COD orders immediately
-                if ($data['payment_gateway'] == 'COD') {
+                // Reduce stock for COD / Pickup orders immediately
+                if (in_array($data['payment_gateway'], ['COD', 'PICKUP'])) {
                     $attribute->decrement('stock', $item['quantity']);
                 }
             }
@@ -1666,6 +1673,15 @@ class ProductsController extends Controller
                 } catch (\Throwable $e) {
                     Log::warning('Order email failed to send: ' . $e->getMessage());
                 }
+            } elseif ($data['payment_gateway'] == 'PICKUP') {
+                // Pickup order: clear cart and redirect directly to order details page
+                foreach ($order_ids as $id) {
+                    \App\Models\WalletTransaction::checkAndCreditWallet($id);
+                }
+                Cart::where('user_id', Auth::user()->id)->delete();
+
+                return redirect()->route('student.orders.show', $order_ids[0])
+                    ->with('success_message', 'Pickup order placed. You can navigate to the store and pay online from the order page.');
             } elseif ($data['payment_gateway'] == 'Paypal') {
                 // redirect the user to the PayPalController.php (after saving the order details in `orders` and `orders_products` tables)
                 return redirect('/paypal');
@@ -1706,9 +1722,13 @@ class ProductsController extends Controller
         if (Session::has('order_ids') || Session::has('order_id')) {
             $order_ids = Session::has('order_ids') ? Session::get('order_ids') : [Session::get('order_id')];
 
+            $total_cashback = 0;
             foreach ($order_ids as $id) {
-                // Wallet Credit Logic (only happens once per user because of model guards)
-                \App\Models\WalletTransaction::checkAndCreditWallet($id);
+                // Wallet Credit Logic
+                $total_cashback += WalletTransaction::checkAndCreditWallet($id);
+            }
+            if ($total_cashback > 0) {
+                Session::flash('cashback_amount', $total_cashback);
             }
 
             // We empty the Cart after placing the order

@@ -463,6 +463,23 @@
                                                 </label>
                                             </div>
 
+                                            <div class="payment-item-modern pickupMethod">
+                                                <input type="radio" name="payment_gateway" id="pickup-from-store"
+                                                    value="PICKUP">
+                                                <label for="pickup-from-store" class="payment-box-modern">
+                                                    <div class="payment-label-modern">
+                                                        <i class="fas fa-store"></i>
+                                                        <div>
+                                                            <div>Pickup from Store</div>
+                                                            <small class="text-muted d-block"
+                                                                style="font-weight: 400; font-size: 12px;">Pickup yourself
+                                                                and pay online</small>
+                                                        </div>
+                                                    </div>
+                                                    <span class="payment-status-badge">Pickup</span>
+                                                </label>
+                                            </div>
+
                                             <div class="payment-item-modern razorpayMethod">
                                                 <input type="radio" name="payment_gateway" id="razorpay"
                                                     value="Razorpay">
@@ -691,6 +708,11 @@
 
                 var paymentMethod = $('input[name="payment_gateway"]:checked').val();
 
+                // Pickup from store: no shipping charges
+                if (paymentMethod == 'PICKUP') {
+                    shipping = 0;
+                }
+
                 // Update Place Order button with premium style
                 var btnText = 'Complete Order';
                 var icon = 'fa-arrow-right';
@@ -701,6 +723,9 @@
                 } else if (paymentMethod == 'COD') {
                     btnText = 'Confirm Order';
                     icon = 'fa-check-circle';
+                } else if (paymentMethod == 'PICKUP') {
+                    btnText = 'Place Pickup Order';
+                    icon = 'fa-store';
                 }
 
                 $('#placeOrderBtn').html('<span>' + btnText + ' - ₹' + finalTotal + '</span><i class="fas ' + icon +
@@ -714,6 +739,8 @@
                     else $('.codMethod').hide();
                     if (prepaid > 0) $('.razorpayMethod').show();
                     else $('.razorpayMethod').hide();
+                    // Pickup is always available (doesn't depend on delivery pincodes)
+                    $('.pickupMethod').show();
                 }
             }
 
