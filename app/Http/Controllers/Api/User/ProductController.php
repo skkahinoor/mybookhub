@@ -214,7 +214,7 @@ class ProductController extends Controller
                     'max_final_price' => $prices->isNotEmpty() ? round($prices->max()) : null,
                     'offer_count'     => $prices->count(),
                     'image_urls'       => [
-                        'large'  => $product->product_image
+                         'large'  => $product->product_image
                             ? $basePath . '/large/' . $product->product_image
                             : null,
                         'medium' => $product->product_image
