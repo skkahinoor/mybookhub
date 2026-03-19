@@ -144,6 +144,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-category/{id}', 'CategoryController@deleteCategory')->name('admin.delete_category');                        // Delete a category in categories.blade.php
         Route::get('delete-category-image/{id}', 'CategoryController@deleteCategoryImage')->name('admin.delete_category_image');             // Delete a category image in add_edit_category.blade.php from BOTH SERVER (FILESYSTEM) & DATABASE
 
+        // MOV (Minimum Order Value) Cashback
+        Route::get('movs', 'MovController@movs')->name('admin.movs');
+        Route::match(['get', 'post'], 'add-edit-mov/{id?}', 'MovController@addEditMov')->name('admin.add_edit_mov');
+        Route::get('delete-mov/{id}', 'MovController@deleteMov')->name('admin.delete_mov');
+
         // Subcategories
         Route::get('subcategories', 'SubcategoryController@subcategories')->name('admin.subcategories');
         Route::post('update-subcategory-status', 'SubcategoryController@updateSubcategoryStatus')->name('admin.updatesubcategorystatus');

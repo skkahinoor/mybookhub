@@ -29,8 +29,8 @@ class WalletTransaction extends Model
     public static function checkAndCreditWallet($orderId)
     {
         $order = Order::with('orders_products.product.bookType')->find($orderId);
-        if (! $order) {
-            return;
+        if (!$order) {
+            return 0;
         }
 
         // Allow crediting if the order is 'Paid' (Online) or 'Delivered' (COD)
@@ -38,59 +38,119 @@ class WalletTransaction extends Model
         $isAnyItemDelivered = $order->orders_products->contains('item_status', 'Delivered');
 
         if (!in_array($order->order_status, ['Paid', 'Delivered']) && !$isAnyItemDelivered) {
-            return;
+            return 0;
         }
 
         $user = User::find($order->user_id);
-        if (! $user || $user->is_wallet_credited == 1) {
-            return;
+        if (!$user) {
+            return 0;
         }
 
-        // Check if any product in the order belongs to the 'testpaper' category (case-insensitive)
-        // Check if any product in the order belongs to the 'testpaper' category (case-insensitive)
-        $hasTestPaper = false;
-        foreach ($order->orders_products as $orderProduct) {
-            $categoryName = $orderProduct->product->bookType->book_type ?? '';
+        $totalCashback = 0;
 
-            // Normalize: remove spaces and lowercase
-            $normalized = strtolower(str_replace(' ', '', $categoryName));
+        // --- TestPaper Bonus Logic (One-time) ---
+        if ($user->is_wallet_credited != 1) {
+            $hasTestPaper = false;
+            foreach ($order->orders_products as $orderProduct) {
+                $categoryName = $orderProduct->product->bookType->book_type ?? '';
+                $normalized = strtolower(str_replace(' ', '', $categoryName));
 
-            if (in_array($normalized, [
-                'testpaper',
-                'testpapers',
-                'testpaperbook',
-                'testpaperbooks',
-                'testbook',
-                'testbooks',
-            ], true)) {
-                $hasTestPaper = true;
-                break;
+                if (in_array($normalized, [
+                    'testpaper', 'testpapers', 'testpaperbook', 'testpaperbooks', 'testbook', 'testbooks',
+                ], true)) {
+                    $hasTestPaper = true;
+                    break;
+                }
+            }
+
+            if ($hasTestPaper) {
+                $user->wallet_balance += 100;
+                $user->is_wallet_credited = 1;
+                $user->save();
+
+                $totalCashback += 100;
+
+                self::create([
+                    'user_id'     => $user->id,
+                    'order_id'    => $order->id,
+                    'amount'      => 100,
+                    'type'        => 'credit',
+                    'description' => 'Testpaper purchase bonus',
+                ]);
+
+                \App\Models\Notification::create([
+                    'type' => 'wallet_credit',
+                    'title' => 'Wallet credited',
+                    'message' => '₹100 has been added to your wallet as Testpaper purchase bonus (Order #' . $order->id . ').',
+                    'related_id' => (int) $user->id,
+                    'related_type' => User::class,
+                    'is_read' => false,
+                ]);
             }
         }
 
-        if ($hasTestPaper) {
-            // Credit 100 Rs
-            $user->wallet_balance     += 100;
-            $user->is_wallet_credited  = 1;
-            $user->save();
+        // --- MOV Cashback Logic (Per Checkout Group) ---
+        // Since the system creates a separate Order record for each item in the cart,
+        // we need to sum up all related orders placed in this checkout session.
+        
+        $groupOrdersQuery = Order::where('user_id', $order->user_id)
+            ->where('payment_gateway', $order->payment_gateway);
 
-            self::create([
-                'user_id'     => $user->id,
-                'order_id'    => $order->id,
-                'amount'      => 100,
-                'type'        => 'credit',
-                'description' => 'Testpaper purchase bonus',
-            ]);
-
-            \App\Models\Notification::create([
-                'type' => 'wallet_credit',
-                'title' => 'Wallet credited',
-                'message' => '₹100 has been added to your wallet as Testpaper purchase bonus (Order #' . $order->id . ').',
-                'related_id' => (int) $user->id,
-                'related_type' => User::class,
-                'is_read' => false,
-            ]);
+        if ($order->razorpay_order_id) {
+            // Online: group by razorpay_order_id
+            $groupOrdersQuery->where('razorpay_order_id', $order->razorpay_order_id);
+        } else {
+            // COD: group by same address and same minute of creation (heuristic)
+            $groupOrdersQuery->where('address', $order->address)
+                ->where('created_at', '>=', $order->created_at->subMinutes(1))
+                ->where('created_at', '<=', $order->created_at->addMinutes(1));
         }
+
+        $groupOrders = $groupOrdersQuery->get();
+        $totalCartAmount = $groupOrders->sum('grand_total');
+
+        // Only credit cashback if this is the "Primary" order of the group (first ID)
+        // to avoid duplicate cashback for every item in the cart.
+        $primaryOrder = $groupOrders->sortBy('id')->first();
+        
+        if ($order->id == $primaryOrder->id) {
+            // Now find the highest MOV threshold reached by the TOTAL cart amount
+            $mov = \App\Models\Mov::where('price', '<=', $totalCartAmount)->orderBy('price', 'desc')->first();
+            
+            if ($mov) {
+                // Check if MOV cashback already credited for ANY order in this group
+                $alreadyCredited = self::whereIn('order_id', $groupOrders->pluck('id'))
+                    ->where('description', 'LIKE', 'MOV cashback%')
+                    ->exists();
+
+                if (!$alreadyCredited) {
+                    $cashback_amount = ($totalCartAmount * $mov->cashback_percentage) / 100;
+                    $user->wallet_balance += $cashback_amount;
+                    $user->save();
+
+                    $totalCashback += $cashback_amount;
+
+                    self::create([
+                        'user_id'     => $user->id,
+                        'order_id'    => $order->id,
+                        'amount'      => $cashback_amount,
+                        'type'        => 'credit',
+                        'description' => 'MOV cashback for checkout totaling ₹' . number_format($totalCartAmount, 2),
+                    ]);
+
+                    \App\Models\Notification::create([
+                        'type' => 'wallet_credit',
+                        'title' => 'Cashback Credited',
+                        'message' => '₹' . number_format($cashback_amount, 2) . ' cashback has been credited to your wallet for your checkout totaling ₹' . number_format($totalCartAmount, 2) . '.',
+                        'related_id' => (int) $user->id,
+                        'related_type' => User::class,
+                        'is_read' => false,
+                    ]);
+                }
+            }
+        }
+
+        return $totalCashback;
     }
     public static function revertWallet($orderId)
     {
