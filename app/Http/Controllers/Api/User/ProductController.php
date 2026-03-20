@@ -25,6 +25,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Models\OrdersLog;
 use App\Models\Notification;
+use App\Models\DeliverySetting;
 use Razorpay\Api\Api;
 
 class ProductController extends Controller
@@ -140,7 +141,6 @@ class ProductController extends Controller
                 'razorpay_order_id' => $razorpayOrder['id'],
                 'amount' => $total_grand_total
             ]);
-
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -267,12 +267,12 @@ class ProductController extends Controller
                 // Aggregate price range and offer count from associated attributes
                 $prices = $product->attributes
                     ->filter(function ($attr) {
-                    return $attr->status == 1 && $attr->stock > 0;
-                })
+                        return $attr->status == 1 && $attr->stock > 0;
+                    })
                     ->map(function ($attr) {
-                    $pDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
-                    return $pDetails['final_price'];
-                });
+                        $pDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
+                        return $pDetails['final_price'];
+                    });
 
                 return [
                     'id' => $product->id,
@@ -719,17 +719,16 @@ class ProductController extends Controller
 
     public function getDeliverySettings()
     {
-        $setting = \App\Models\DeliverySetting::first();
-        if (!$setting) {
-            $setting = (object) ['min_order_amount' => 499, 'delivery_charge' => 20];
-        }
+        $setting = DeliverySetting::first();
 
         return response()->json([
             'status' => true,
             'message' => 'Delivery settings fetched successfully',
             'data' => [
                 'min_order_amount' => $setting->min_order_amount,
-                'delivery_charge' => $setting->delivery_charge
+                'delivery_charge' => $setting->delivery_charge,
+                'is_free_delivery' => $setting->is_free_delivery,
+                'status' => $setting->status,
             ]
         ]);
     }
@@ -739,19 +738,36 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'min_order_amount' => 'required|numeric|min:0',
             'delivery_charge' => 'required|numeric|min:0',
+            'is_free_delivery' => 'nullable|boolean',
+            'status' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        $setting = \App\Models\DeliverySetting::updateOrCreate(
-            ['id' => 1], // Always update the first record
-            [
+        $setting = DeliverySetting::first();
+
+        if (!$setting) {
+            // Create new if not exists
+            $setting = DeliverySetting::create([
                 'min_order_amount' => $request->min_order_amount,
                 'delivery_charge' => $request->delivery_charge,
-            ]
-        );
+                'is_free_delivery' => $request->is_free_delivery ?? false,
+                'status' => $request->status ?? true,
+            ]);
+        } else {
+            // Update existing
+            $setting->update([
+                'min_order_amount' => $request->min_order_amount,
+                'delivery_charge' => $request->delivery_charge,
+                'is_free_delivery' => $request->is_free_delivery ?? $setting->is_free_delivery,
+                'status' => $request->status ?? $setting->status,
+            ]);
+        }
 
         return response()->json([
             'status' => true,
@@ -934,11 +950,11 @@ class ProductController extends Controller
                     'language_id',
                     'book_type_id'
                 )->with([
-                            'subcategory',
-                            'subject',
-                            'language',
-                            'bookType'
-                        ]);
+                    'subcategory',
+                    'subject',
+                    'language',
+                    'bookType'
+                ]);
             }
         ])
             ->where(function ($q) use ($user_id, $session_id) {
