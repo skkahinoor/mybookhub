@@ -709,4 +709,26 @@ class SellBookController extends Controller
         ]);
     }
 
+    public function calculateCashback(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'product_price' => 'required|numeric|min:0',
+            'old_book_condition_id' => 'required|exists:old_book_conditions,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $condition = OldBookCondition::find($request->old_book_condition_id);
+        $cashback = ($request->product_price * $condition->percentage) / 100;
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Cashback calculated successfully',
+            'data' => [
+                'cashback_amount' => round($cashback)
+            ]
+        ]);
+    }
 }

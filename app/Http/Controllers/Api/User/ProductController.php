@@ -717,6 +717,23 @@ class ProductController extends Controller
         ]);
     }
 
+    public function getDeliverySettings()
+    {
+        $setting = \App\Models\DeliverySetting::first();
+        if (!$setting) {
+            $setting = (object) ['min_order_amount' => 499, 'delivery_charge' => 20];
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Delivery settings fetched successfully',
+            'data' => [
+                'min_order_amount' => $setting->min_order_amount,
+                'delivery_charge' => $setting->delivery_charge
+            ]
+        ]);
+    }
+
     public function cartAdd(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -1276,10 +1293,18 @@ class ProductController extends Controller
             }
         }
 
-        $shippingCountry = $user->country ? $user->country->name : 'India';
-        $shipping_charges = ($request->payment_gateway == 'PICKUP')
-            ? 0
-            : ShippingCharge::getShippingCharges(0, $shippingCountry);
+        $deliverySetting = \App\Models\DeliverySetting::first();
+        $min_order_amount = $deliverySetting ? $deliverySetting->min_order_amount : 499;
+        $delivery_fee = $deliverySetting ? $deliverySetting->delivery_charge : 20;
+
+        $shipping_charges = 0;
+        if ($request->payment_gateway != 'PICKUP') {
+            if ($total_price >= $min_order_amount) {
+                $shipping_charges = 0;
+            } else {
+                $shipping_charges = $delivery_fee;
+            }
+        }
 
         // SECURE COUPON CALCULATION (Don't trust $request->coupon_amount)
         $coupon_amount = 0;

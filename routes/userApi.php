@@ -22,6 +22,9 @@ Route::get('/user/subjects/{id}', [HomeController::class, 'getSubjects']);
 Route::get('/user/book-type', [HomeController::class, 'getBookTypes']);
 Route::get('/user/language', [HomeController::class, 'getLanguages']);
 
+// Configuration Routes
+Route::get('/user/delivery-settings', [ProductController::class, 'getDeliverySettings']);
+
 // Cart Routes
 Route::get('/user/cart', [ProductController::class, 'getCart']);
 Route::post('/user/cart/add', [ProductController::class, 'cartAdd']);
@@ -59,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/sell-books/isbn-lookup', [SellBookController::class, 'getBookByIsbn']);
     Route::get('/user/sell-books/name-suggestions', [SellBookController::class, 'nameSuggestions']);
     Route::post('/user/sell-books/add-publisher', [SellBookController::class, 'addPublisher']);
+    Route::post('/user/sell-books/calculate-cashback', [SellBookController::class, 'calculateCashback']);
     Route::post('/user/sell-books', [SellBookController::class, 'store']);
     Route::get('/user/sell-books/{id}', [SellBookController::class, 'show']);
     Route::post('/user/sell-books/{id}', [SellBookController::class, 'update']);
