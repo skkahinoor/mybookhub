@@ -8,4 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class Mov extends Model
 {
     use HasFactory;
+    protected $fillable = ['price', 'cashback_percentage'];
 }

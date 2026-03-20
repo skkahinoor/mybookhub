@@ -10,6 +10,7 @@ use App\Models\Edition;
 use App\Models\Language;
 use App\Models\Notification;
 use App\Models\OldBookCondition;
+use App\Models\Mov;
 use App\Models\Product;
 use App\Models\ProductsAttribute;
 use App\Models\Publisher;
@@ -713,21 +714,33 @@ class SellBookController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'product_price' => 'required|numeric|min:0',
-            'old_book_condition_id' => 'required|exists:old_book_conditions,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $condition = OldBookCondition::find($request->old_book_condition_id);
-        $cashback = ($request->product_price * $condition->percentage) / 100;
+        $product_price = $request->product_price;
+        $mov = Mov::where('price', '<=', $product_price)->orderBy('price', 'desc')->first();
+
+        if ($mov) {
+            $cashback = ($product_price * $mov->cashback_percentage) / 100;
+            return response()->json([
+                'status' => true,
+                'message' => 'Cashback calculated successfully',
+                'data' => [
+                    'cashback_amount' => round($cashback),
+                    'cashback_percentage' => $mov->cashback_percentage,
+                    'applied_threshold' => $mov->price
+                ]
+            ]);
+        }
 
         return response()->json([
             'status' => true,
-            'message' => 'Cashback calculated successfully',
+            'message' => 'Cashback not eligible for this price.',
             'data' => [
-                'cashback_amount' => round($cashback)
+                'cashback_amount' => 0
             ]
         ]);
     }
