@@ -1667,12 +1667,19 @@ class ProductController extends Controller
             }
 
             Cart::where('user_id', $orders->first()->user_id)->delete();
+            
+            $total_cashback = 0;
+            foreach ($order_ids as $id) {
+                // Since checkAndCreditWallet might return the added amount
+                $total_cashback += WalletTransaction::checkAndCreditWallet($id);
+            }
 
             DB::commit();
 
             return response()->json([
                 'status' => true,
-                'message' => 'Payment verified successfully'
+                'message' => 'Payment verified successfully',
+                'cashback_amount' => $total_cashback
             ]);
         } catch (\Exception $e) {
 
