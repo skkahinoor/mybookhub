@@ -24,6 +24,7 @@ Route::get('/user/language', [HomeController::class, 'getLanguages']);
 
 // Configuration Routes
 Route::get('/user/delivery-settings', [ProductController::class, 'getDeliverySettings']);
+Route::post('/user/update-delivery-settings', [ProductController::class, 'updateDeliverySettings']);
 
 // Cart Routes
 Route::get('/user/cart', [ProductController::class, 'getCart']);

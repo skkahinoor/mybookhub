@@ -734,6 +734,32 @@ class ProductController extends Controller
         ]);
     }
 
+    public function updateDeliverySettings(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'min_order_amount' => 'required|numeric|min:0',
+            'delivery_charge' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $setting = \App\Models\DeliverySetting::updateOrCreate(
+            ['id' => 1], // Always update the first record
+            [
+                'min_order_amount' => $request->min_order_amount,
+                'delivery_charge' => $request->delivery_charge,
+            ]
+        );
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Delivery settings updated successfully',
+            'data' => $setting
+        ]);
+    }
+
     public function cartAdd(Request $request)
     {
         $validator = Validator::make($request->all(), [
