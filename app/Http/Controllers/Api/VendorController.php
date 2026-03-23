@@ -35,7 +35,7 @@ class VendorController extends Controller
                 "recipients" => [
                     [
                         "mobiles" => $to,
-                        "OTP" => $otp
+                        "numeric" => $otp
                     ]
                 ]
             ];

@@ -288,8 +288,9 @@ class SellBookController extends Controller
 
                 $product->save();
 
-                if (!empty($request->author_id)) {
-                    $product->authors()->sync($request->author_id);
+                $authorIds = $request->authors ?? $request->author_id;
+                if (!empty($authorIds)) {
+                    $product->authors()->sync((array) $authorIds);
                 }
             }
 
@@ -459,8 +460,9 @@ class SellBookController extends Controller
 
             $product->save();
 
-            if (!empty($request->author_id)) {
-                $product->authors()->sync($request->author_id);
+            $authorIds = $request->authors ?? $request->author_id;
+            if (!empty($authorIds)) {
+                $product->authors()->sync((array) $authorIds);
             }
 
             // Update attribute

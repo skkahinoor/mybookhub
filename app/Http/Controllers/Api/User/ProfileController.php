@@ -29,7 +29,7 @@ class ProfileController extends Controller
                 "recipients" => [
                     [
                         "mobiles" => $to,
-                        "OTP" => $otp
+                        "numeric" => $otp
                     ]
                 ]
             ];
@@ -45,7 +45,8 @@ class ProfileController extends Controller
 
             return true;
 
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
 
             Log::error("MSG91 ERROR: " . $e->getMessage());
             return false;
@@ -78,8 +79,8 @@ class ProfileController extends Controller
         $otp = rand(100000, 999999);
 
         DB::table('otps')->updateOrInsert(
-            ['phone' => $request->phone],
-            ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+        ['phone' => $request->phone],
+        ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
         );
 
         $sendStatus = $this->sendSMS($request->phone, $otp);
