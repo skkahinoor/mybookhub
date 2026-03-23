@@ -29,7 +29,7 @@ class ProfileController extends Controller
                 "recipients" => [
                     [
                         "mobiles" => $to,
-                        "numeric" => $otp
+                        "var1"    => $otp
                     ]
                 ]
             ];
