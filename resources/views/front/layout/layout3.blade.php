@@ -911,10 +911,7 @@
                         <div class="notification-dropdown" id="notificationDropdownMain">
                             <div class="notification-header">
                                 <h6 class="notification-title">Notifications</h6>
-                                @if (($navUnreadCount ?? 0) > 0)
-                                    <span class="badge bg-primary text-white"
-                                        style="font-size: 10px;">{{ $navUnreadCount }} New</span>
-                                @endif
+                               
                             </div>
                             <div class="notification-list">
                                 @forelse(($navNotifications ?? []) as $n)
