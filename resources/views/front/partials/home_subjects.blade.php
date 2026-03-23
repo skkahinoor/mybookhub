@@ -2,7 +2,7 @@
     @foreach ($homeSubjects as $sub)
         <a href="javascript:void(0)" class="subject-tablet subject-filter-btn" data-subject-id="{{ $sub->id }}"
             onclick="filterBySubject({{ $sub->id }})">
-            {{ $sub->name }}
+            <i class="fas fa-grip-vertical me-2" style="font-size: 10px; opacity: 0.5;"></i>{{ $sub->name }}
         </a>
     @endforeach
 @else

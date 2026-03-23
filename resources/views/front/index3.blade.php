@@ -363,6 +363,12 @@
             scrollbar-width: none;
             -ms-overflow-style: none;
             margin-bottom: 20px;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .filter-nav-bar:active {
+            cursor: grabbing;
         }
 
         .filter-nav-bar::-webkit-scrollbar {
@@ -399,7 +405,7 @@
             font-size: 14px;
             font-weight: 600;
             color: #475569;
-            cursor: pointer;
+            cursor: inherit;
             white-space: nowrap;
             transition: .2s;
             text-decoration: none !important;
@@ -1446,6 +1452,53 @@
             background: linear-gradient(to left, #ffffff, rgba(255, 255, 255, 0));
             z-index: 2;
         }
+        /* Welcome Modal Styles */
+        .welcome-service-card {
+            background: #f0f7ff;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 8px;
+            transition: transform 0.3s ease;
+        }
+        .welcome-service-card:hover {
+            transform: translateY(-5px);
+            background: #e6f0fa;
+        }
+        .welcome-service-icon {
+            font-size: 24px;
+            color: #3b82f6;
+        }
+        .welcome-btn-primary {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white !important;
+            border-radius: 12px;
+            font-weight: 700;
+            padding: 12px;
+            border: none;
+            transition: opacity 0.2s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+        .welcome-btn-primary:hover {
+            opacity: 0.9;
+        }
+        .welcome-btn-outline {
+            border-radius: 12px;
+            font-weight: 700;
+            padding: 12px;
+            border: 2px solid #3b82f6;
+            color: #3b82f6 !important;
+            background: transparent;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            width: 100%;
+        }
+        .welcome-btn-outline:hover {
+            background: #f0f7ff;
+        }
     </style>
     <!-- Hero Section -->
     <section class="hero">
@@ -1528,7 +1581,9 @@
         </button>
 
         <a href="javascript:void(0)" class="subject-tablet active subject-filter-btn" data-subject-id="all"
-            onclick="filterBySubject('all')">All</a>
+            onclick="filterBySubject('all')">
+            <i class="fas fa-grip-vertical me-2" style="font-size: 10px; opacity: 0.5;"></i>All
+        </a>
 
         <div id="homeSubjectsContainer" style="display: contents;">
             @include('front.partials.home_subjects')
@@ -2132,9 +2187,101 @@
                 });
             }
         });
+
+        // Drag-to-scroll for Filter Nav Bar
+        const filterNav = document.querySelector('.filter-nav-bar');
+        if (filterNav) {
+            let isDown = false;
+            let moved = false;
+            let startX;
+            let scrollLeft;
+
+            filterNav.addEventListener('mousedown', (e) => {
+                isDown = true;
+                moved = false;
+                startX = e.pageX - filterNav.offsetLeft;
+                scrollLeft = filterNav.scrollLeft;
+            });
+
+            filterNav.addEventListener('mouseleave', () => {
+                isDown = false;
+            });
+
+            filterNav.addEventListener('mouseup', () => {
+                isDown = false;
+            });
+
+            filterNav.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                const x = e.pageX - filterNav.offsetLeft;
+                const walk = (x - startX) * 2; // scroll-fastness
+                if (Math.abs(walk) > 5) {
+                    moved = true;
+                }
+                if (moved) {
+                    e.preventDefault();
+                    filterNav.scrollLeft = scrollLeft - walk;
+                }
+            });
+
+            filterNav.addEventListener('click', (e) => {
+                if (moved) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, true);
+        }
     </script>
 
     @if (!Auth::check() && !session()->has('bookgenie_shown'))
+        <!-- Welcome Modal (First Step) -->
+        <div class="modal fade" id="welcomeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius:24px; border:none; overflow:hidden;">
+                    <div style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 25px; text-align: center; color: white;">
+                        <h4 style="font-weight: 800; color: white; margin-bottom: 5px;">Experience our mobile app!</h4>
+                    </div>
+                    <div class="modal-body" style="padding: 30px;">
+                        <p style="color: #666; font-size: 14px; text-align: center; margin-bottom: 25px;">
+                            Our mobile app provides a faster, more convenient and personalised experience.
+                            Continue using <strong>mybookhub</strong> for these specific services.
+                        </p>
+                        
+                        <div class="row g-3 mb-4">
+                            <div class="col-4 text-center">
+                                <div class="welcome-service-card">
+                                    <i class="fas fa-search welcome-service-icon"></i>
+                                </div>
+                                <span style="font-size: 11px; font-weight: 700; color: #444; display: block;">Search Books</span>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="welcome-service-card">
+                                    <i class="fas fa-hand-holding-dollar welcome-service-icon"></i>
+                                </div>
+                                <span style="font-size: 11px; font-weight: 700; color: #444; display: block;">Sell Old Books</span>
+                            </div>
+                            <div class="col-4 text-center">
+                                <div class="welcome-service-card">
+                                    <i class="fas fa-truck-fast welcome-service-icon"></i>
+                                </div>
+                                <span style="font-size: 11px; font-weight: 700; color: #444; display: block;">Track Orders</span>
+                            </div>
+                        </div>
+
+                        <p style="color: #666; font-size: 13px; text-align: center; margin-bottom: 25px;">
+                            For all other services, we invite you to use our mobile app.
+                        </p>
+
+                        <div class="d-flex flex-column gap-2 mt-4">
+                            <button type="button" class="welcome-btn-outline" id="continueToWebBtn">Continue to Web</button>
+                            <a href="{{ asset('app/mybookhub.apk') }}" class="welcome-btn-primary" id="downloadAppBtn">Use mybookhub App</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Personalization Modal (Second Step) -->
         <div class="modal fade" id="bookGenieModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content" style="border-radius:24px; border:none; overflow:hidden;">
@@ -2187,9 +2334,60 @@
 
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                // Show modal automatically
-                var bookGenieModal = new bootstrap.Modal(document.getElementById('bookGenieModal'));
-                bookGenieModal.show();
+                var welcomeModalEl = document.getElementById('welcomeModal');
+                var bookGenieModalEl = document.getElementById('bookGenieModal');
+                
+                var welcomeModal = welcomeModalEl ? new bootstrap.Modal(welcomeModalEl) : null;
+                var bookGenieModal = bookGenieModalEl ? new bootstrap.Modal(bookGenieModalEl) : null;
+
+                const welcomeShown = localStorage.getItem('welcome_shown');
+                const bookGenieShown = {{ session()->has('bookgenie_shown') ? 'true' : 'false' }};
+
+                if (!welcomeShown) {
+                    if (welcomeModal) welcomeModal.show();
+                } else if (!bookGenieShown) {
+                    if (bookGenieModal) bookGenieModal.show();
+                }
+
+                // Welcome Modal Handlers
+                const continueBtn = document.getElementById('continueToWebBtn');
+                if (continueBtn) {
+                    continueBtn.addEventListener('click', function() {
+                        localStorage.setItem('welcome_shown', 'true');
+                        // Set session flag too for reliability
+                        fetch(`{{ url('/set-welcome-session') }}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ welcome_shown: true })
+                        });
+
+                        if (welcomeModal) welcomeModal.hide();
+                        if (bookGenieModal && !bookGenieShown) {
+                            setTimeout(() => {
+                                bookGenieModal.show();
+                            }, 500);
+                        }
+                    });
+                }
+
+                const downloadBtn = document.getElementById('downloadAppBtn');
+                if (downloadBtn) {
+                    downloadBtn.addEventListener('click', function() {
+                        localStorage.setItem('welcome_shown', 'true');
+                         fetch(`{{ url('/set-welcome-session') }}`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ welcome_shown: true })
+                        });
+                        // Web flow continues after download click
+                    });
+                }
 
                 // Cascading selects for BookGenie
                 const bgSection = document.getElementById('bgSectionSelect');

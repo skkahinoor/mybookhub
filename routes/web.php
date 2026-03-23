@@ -493,6 +493,7 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     }
 
     Route::post('/set-bookgenie-session', [IndexController::class, 'setBookgenieSession']);
+    Route::post('/set-welcome-session', [IndexController::class, 'setWelcomeSession']);
     Route::get('/bookgenie-search', [IndexController::class, 'bookgenieSearch']);
 
 
