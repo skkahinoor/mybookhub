@@ -82,8 +82,8 @@ class AppServiceProvider extends ServiceProvider
             $view->with('navFilterData', $navFilterData);
         });
 
-        // Share student notifications with user navbar
-        View::composer('user.layout.navbar', function ($view) {
+        // Share student notifications with user navbar, front header, and layout3 header
+        View::composer(['user.layout.navbar', 'front.layout.header', 'front.layout.layout3'], function ($view) {
             if (!Auth::check()) {
                 return;
             }

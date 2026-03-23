@@ -42,7 +42,7 @@ class WalletTransaction extends Model
         }
 
         $user = User::find($order->user_id);
-        if (!$user) {
+        if (!$user) { 
             return 0;
         }
 

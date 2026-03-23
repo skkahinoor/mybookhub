@@ -35,6 +35,78 @@ $sections = \App\Models\Section::sections();
                                 ₹{{ \Illuminate\Support\Facades\Auth::user()->wallet_balance }}
                             </a>
                         </li>
+                        <li class="nav-item dropdown" style="position: relative;">
+                            <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdownFront" href="#"
+                                data-toggle="dropdown" style="padding: 0 15px; color: #444; position: relative;">
+                                <i class="far fa-bell" style="font-size: 1.1rem;"></i>
+                                @if (($navUnreadCount ?? 0) > 0)
+                                    <span class="count"
+                                        style="position: absolute; top: 0; right: 5px; background: #ff9900; color: #fff; border-radius: 50%; padding: 1px 4px; font-size: 8px; line-height: 1;">{{ $navUnreadCount }}</span>
+                                @endif
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list"
+                                aria-labelledby="notificationDropdownFront"
+                                style="min-width:320px; max-width:380px; position: absolute; right: 0; margin-top: 10px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); border: 0; z-index: 1000;">
+                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                                    <p class="mb-0 font-weight-normal" style="font-size: 14px; font-weight: 700;">
+                                        Notifications</p>
+                                    @if (($navUnreadCount ?? 0) > 0)
+                                        <span class="badge badge-primary badge-pill"
+                                            style="background: #ff9900; color: #fff; border-radius: 99px;">{{ $navUnreadCount }}
+                                            new</span>
+                                    @endif
+                                </div>
+                                <div style="max-height:320px; overflow-y:auto;">
+                                    @forelse(($navNotifications ?? []) as $n)
+                                        @php
+                                            $isUnread = !((bool) ($n->is_read ?? false));
+                                            $iconBg = $isUnread ? 'bg-primary' : 'bg-light';
+                                            $iconClass = $isUnread ? 'fas fa-bell' : 'fas fa-check';
+                                        @endphp
+                                        <a href="#" class="dropdown-item preview-item js-front-notification-v2"
+                                            data-id="{{ $n->id }}"
+                                            data-read="{{ (int) ((bool) ($n->is_read ?? false)) }}"
+                                            style="white-space: normal; padding: 12px 15px; display: flex; align-items: flex-start; gap: 12px; border-bottom: 1px solid #f0f0f0;">
+                                            <div class="preview-thumbnail"
+                                                style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: {{ $isUnread ? '#ff9900' : '#f0f0f0' }}; color: {{ $isUnread ? '#fff' : '#666' }}; flex-shrink: 0;">
+                                                <i class="{{ $iconClass }}" style="font-size: 13px;"></i>
+                                            </div>
+                                            <div class="preview-item-content" style="flex: 1;">
+                                                <h6 class="preview-subject font-weight-normal mb-1"
+                                                    style="font-size: 13px; margin: 0; font-weight: 600 !important; color: #1a1a1a;">
+                                                    {{ $n->title }}
+                                                    @if ($isUnread)
+                                                        <span class="badge badge-pill badge-primary ml-1"
+                                                            style="font-size: 9px; background: #ff9900; border-radius: 99px;">New</span>
+                                                    @endif
+                                                </h6>
+                                                <p class="font-weight-light small-text mb-0 text-muted"
+                                                    style="white-space: normal; font-size: 12px; margin-top: 2px; line-height: 1.4;">
+                                                    {{ \Illuminate\Support\Str::limit($n->message, 60) }}
+                                                </p>
+                                                <small class="text-muted d-block mt-1" style="font-size: 11px;">
+                                                    {{ $n->created_at?->diffForHumans() }}
+                                                </small>
+                                            </div>
+                                        </a>
+                                    @empty
+                                        <div class="dropdown-item preview-item"
+                                            style="white-space: normal; padding: 25px; text-align: center;">
+                                            <div class="preview-item-content">
+                                                <p class="mb-0 text-muted" style="font-size: 13px;">No notifications yet.</p>
+                                            </div>
+                                        </div>
+                                    @endforelse
+                                </div>
+                                <div class="border-top text-center py-2">
+                                    <a href="{{ route('student.notifications.index') }}"
+                                        class="text-primary font-weight-bold"
+                                        style="font-size: 12px; color: #ff9900 !important; text-decoration: none;">
+                                        See all notifications &rarr;
+                                    </a>
+                                </div>
+                            </div>
+                        </li>
                     @endif
                     <li>
 

@@ -845,4 +845,46 @@ $(document).ready(function () {
 
         e.preventDefault(); // Prevent form submission
     });
+
+    // Mark front-end notification as read
+    $(document).on('click', '.js-front-notification-v2', function(e) {
+        e.preventDefault();
+        var el = $(this);
+        var id = el.data('id');
+        var isRead = el.data('read') == 1;
+        if (isRead || !id) return;
+
+        $.ajax({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            url: "/student/notifications/" + id + "/read",
+            type: "post",
+            success: function() {
+                el.find('.badge-primary').remove();
+                el.find('.preview-thumbnail').css({
+                    'background': '#f0f0f0',
+                    'color': '#666'
+                }).find('i').attr('class', 'fas fa-check');
+                el.data('read', 1);
+
+                var countIndicator = $('#notificationDropdownFront .count');
+                if (countIndicator.length) {
+                    var n = parseInt(countIndicator.text() || '0', 10);
+                    n = isNaN(n) ? 0 : Math.max(0, n - 1);
+                    if (n === 0) countIndicator.remove();
+                    else countIndicator.text(n);
+                }
+
+                var badgePill = $('#notificationDropdownFront').next('.dropdown-menu').find(
+                    '.badge-pill');
+                if (badgePill.length) {
+                    var n = parseInt(badgePill.text() || '0', 10);
+                    n = isNaN(n) ? 0 : Math.max(0, n - 1);
+                    if (n === 0) badgePill.remove();
+                    else badgePill.text(n + ' new');
+                }
+            }
+        });
+    });
 });
