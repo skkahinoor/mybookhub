@@ -348,6 +348,14 @@ class IndexController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function setWelcomeSession(Request $request)
+    {
+        if ($request->has('welcome_shown')) {
+            session(['welcome_shown' => true]);
+        }
+        return response()->json(['success' => true]);
+    }
+
     public function bookgenieSearch(Request $request)
     {
         $query = trim($request->get('q', ''));
