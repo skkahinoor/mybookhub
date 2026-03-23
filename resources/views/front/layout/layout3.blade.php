@@ -654,6 +654,103 @@
             /* border-bottom: 1px solid rgb(212, 211, 211); */
         }
 
+        /* Notification Dropdown Custom Styles */
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 320px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 3001;
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 0;
+            margin-top: 10px;
+        }
+        .notification-dropdown.active {
+            display: block;
+            animation: megaFadeIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .notification-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .notification-title {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .notification-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .notification-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f8f8f8;
+            display: flex;
+            gap: 12px;
+            text-decoration: none !important;
+            transition: background 0.2s;
+        }
+        .notification-item:hover {
+            background: #f9f9f9;
+        }
+        .notification-item.unread {
+            background: #f0f7ff;
+        }
+        .notification-icon-wrap {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #eef5fd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .notification-icon-wrap.unread {
+            background: #2979ff;
+            color: #fff;
+        }
+        .notification-content {
+            flex: 1;
+        }
+        .notification-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 2px;
+            display: block;
+        }
+        .notification-item-msg {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+            display: block;
+        }
+        .notification-item-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+            display: block;
+        }
+        .notification-footer {
+            padding: 10px;
+            text-align: center;
+            border-top: 1px solid #eee;
+        }
+        .notification-footer a {
+            font-size: 12px;
+            font-weight: 600;
+            color: #2979ff;
+            text-decoration: none;
+        }
+
         .submenu li a {
             padding-inline: 10px;
         }
@@ -802,10 +899,49 @@
                         class="icon-badge-num totalCartItems">{{ isset($headerCartItems) ? count($headerCartItems) : 0 }}</span>
                 </a>
                 @auth
-                    <a href="#" class="icon-btn">
-                        <i class="far fa-bell"></i>
-                        <span class="badge-dot"></span>
-                    </a>
+                    <div class="icon-btn" style="position: relative;">
+                        <a href="javascript:void(0);" id="notificationToggleBtn"
+                            style="color: inherit; text-decoration: none; display: flex; align-items: center; justify-content: center;">
+                            <i class="far fa-bell"></i>
+                            @if (($navUnreadCount ?? 0) > 0)
+                                <span class="icon-badge-num">{{ $navUnreadCount }}</span>
+                            @endif
+                        </a>
+
+                        <div class="notification-dropdown" id="notificationDropdownMain">
+                            <div class="notification-header">
+                                <h6 class="notification-title">Notifications</h6>
+                               
+                            </div>
+                            <div class="notification-list">
+                                @forelse(($navNotifications ?? []) as $n)
+                                    @php
+                                        $isUnread = !((bool) ($n->is_read ?? false));
+                                    @endphp
+                                    <a href="#"
+                                        class="notification-item js-front-notification {{ $isUnread ? 'unread' : '' }}"
+                                        data-id="{{ $n->id }}" data-read="{{ $isUnread ? '0' : '1' }}">
+                                        <div class="notification-icon-wrap {{ $isUnread ? 'unread' : '' }}">
+                                            <i class="fas {{ $isUnread ? 'fa-bell' : 'fa-check' }}"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <span class="notification-item-title">{{ $n->title }}</span>
+                                            <span
+                                                class="notification-item-msg">{{ \Illuminate\Support\Str::limit($n->message, 50) }}</span>
+                                            <span class="notification-item-time">{{ $n->created_at?->diffForHumans() }}</span>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <div class="p-4 text-center text-muted" style="font-size: 13px;">
+                                        No notifications yet.
+                                    </div>
+                                @endforelse
+                            </div>
+                            <div class="notification-footer">
+                                <a href="{{ route('student.notifications.index') }}">View All Notifications</a>
+                            </div>
+                        </div>
+                    </div>
                     <a href="{{ route('student.account') }}"
                         style="display: flex; align-items: center; text-decoration: none;">
                         <img src="{{ asset(Auth::user()->profile_image ?? 'assets/images/avatar.png') }}"
@@ -2345,6 +2481,78 @@
                     filters: filters
                 });
             });
+        })();
+
+        // Notification Toggle
+        (function() {
+            const notificationToggleBtn = document.getElementById('notificationToggleBtn');
+            const notificationDropdownMain = document.getElementById('notificationDropdownMain');
+            const categoryMenu = document.getElementById('categoryMenu');
+
+            if (notificationToggleBtn && notificationDropdownMain) {
+                notificationToggleBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    notificationDropdownMain.classList.toggle('active');
+                    // Hide other dropdowns if any
+                    if (categoryMenu) categoryMenu.classList.remove('active');
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!notificationDropdownMain.contains(e.target) && e.target !== notificationToggleBtn) {
+                        notificationDropdownMain.classList.remove('active');
+                    }
+                });
+            }
+
+            // Mark as read front-end
+            var items = document.querySelectorAll('.js-front-notification');
+            if (items.length) {
+                items.forEach(function(el) {
+                    el.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        var id = el.getAttribute('data-id');
+                        var isRead = el.getAttribute('data-read') === '1';
+                        if (isRead || !id) return;
+
+                        fetch("{{ url('/student/notifications') }}/" + id + "/read", {
+                            method: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')
+                                    .getAttribute('content'),
+                                "Accept": "application/json"
+                            }
+                        }).then(function() {
+                            el.classList.remove('unread');
+                            var iconWrap = el.querySelector('.notification-icon-wrap');
+                            if (iconWrap) {
+                                iconWrap.classList.remove('unread');
+                                var icon = iconWrap.querySelector('i');
+                                if (icon) icon.className = 'fas fa-check';
+                            }
+                            el.setAttribute('data-read', '1');
+
+                            var badge = document.querySelector(
+                                '#notificationToggleBtn .icon-badge-num');
+                            if (badge) {
+                                var n = parseInt(badge.textContent || '0', 10);
+                                n = isNaN(n) ? 0 : Math.max(0, n - 1);
+                                if (n === 0) badge.remove();
+                                else badge.textContent = String(n);
+                            }
+
+                            var headerBadge = document.querySelector(
+                                '.notification-header .badge');
+                            if (headerBadge) {
+                                var n = parseInt(headerBadge.textContent || '0', 10);
+                                n = isNaN(n) ? 0 : Math.max(0, n - 1);
+                                if (n === 0) headerBadge.remove();
+                                else headerBadge.textContent = n + ' New';
+                            }
+                        }).catch(function() {});
+                    });
+                });
+            }
         })();
     </script>
 
