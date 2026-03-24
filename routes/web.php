@@ -135,6 +135,14 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             [App\Http\Controllers\Admin\OldBookConditionController::class, 'destroy']
         )->name('admin.old_book_conditions.destroy.get');
 
+        // Old Book Commissions
+        Route::get('old-book-commissions', [App\Http\Controllers\Admin\OldBookCommissionController::class, 'index'])->name('admin.old_book_commissions.index');
+        Route::get('old-book-commissions/create', [App\Http\Controllers\Admin\OldBookCommissionController::class, 'create'])->name('admin.old_book_commissions.create');
+        Route::post('old-book-commissions', [App\Http\Controllers\Admin\OldBookCommissionController::class, 'store'])->name('admin.old_book_commissions.store');
+        Route::get('old-book-commissions/{id}/edit', [App\Http\Controllers\Admin\OldBookCommissionController::class, 'edit'])->name('admin.old_book_commissions.edit');
+        Route::put('old-book-commissions/{id}', [App\Http\Controllers\Admin\OldBookCommissionController::class, 'update'])->name('admin.old_book_commissions.update');
+        Route::get('old-book-commissions/{id}/delete', [App\Http\Controllers\Admin\OldBookCommissionController::class, 'destroy'])->name('admin.old_book_commissions.destroy');
+
 
         // Categories
         Route::get('categories', 'CategoryController@categories')->name('admin.categories');                                      // Categories in Catalogue Management in Admin Panel
