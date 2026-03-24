@@ -25,6 +25,7 @@ use App\Models\Wishlist;
 use App\Models\WalletTransaction;
 
 
+use App\Models\DeliverySetting;
 use App\Models\BookType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -962,9 +963,21 @@ class ProductsController extends Controller
             $total_price += $price['final_price'] * $item['quantity'];
         }
 
+        $deliverySetting = DeliverySetting::where('status', 1)->first();
+        $shipping_charge = 0;
+        if ($deliverySetting) {
+            if (!$deliverySetting->is_free_delivery) {
+                if ($total_price > $deliverySetting->min_order_amount) {
+                    $shipping_charge = $deliverySetting->delivery_charge;
+                }
+            }
+        }
+
         return view('front.products.cart', compact(
             'getCartItems',
             'total_price',
+            'shipping_charge',
+            'deliverySetting',
             'condition',
             'logos',
             'sections',
@@ -1019,6 +1032,16 @@ class ProductsController extends Controller
                 $subtotal += $priceDetails['final_price'] * $item['quantity'];
             }
 
+            $deliverySetting = DeliverySetting::where('status', 1)->first();
+            $shipping_charge = 0;
+            if ($deliverySetting) {
+                if (!$deliverySetting->is_free_delivery) {
+                    if ($subtotal > $deliverySetting->min_order_amount) {
+                        $shipping_charge = $deliverySetting->delivery_charge;
+                    }
+                }
+            }
+
             return response()->json([
                 'status' => true,
                 'totalCartItems' => Cart::totalCartItems(),
@@ -1030,7 +1053,8 @@ class ProductsController extends Controller
                     ->with(compact('getCartItems')),
 
                 'subtotal' => number_format($subtotal, 2),
-                'grandTotal' => number_format($subtotal, 2), // coupon later adjusts this
+                'shipping_charge' => number_format($shipping_charge, 2),
+                'grandTotal' => number_format($subtotal + $shipping_charge, 2), // coupon later adjusts this
             ]);
         }
     }
@@ -1051,9 +1075,28 @@ class ProductsController extends Controller
             $getCartItems = Cart::getCartItems();
             $totalCartItems = Cart::totalCartItems();
 
+            $subtotal = 0;
+            foreach ($getCartItems as $item) {
+                $priceDetails = Product::getDiscountPriceDetailsByAttribute($item['product_attribute_id']);
+                $subtotal += $priceDetails['final_price'] * $item['quantity'];
+            }
+
+            $deliverySetting = DeliverySetting::where('status', 1)->first();
+            $shipping_charge = 0;
+            if ($deliverySetting) {
+                if (!$deliverySetting->is_free_delivery) {
+                    if ($subtotal > $deliverySetting->min_order_amount) {
+                        $shipping_charge = $deliverySetting->delivery_charge;
+                    }
+                }
+            }
+
             return response()->json([
                 'status' => true,
                 'totalCartItems' => $totalCartItems,
+                'subtotal' => number_format($subtotal, 2),
+                'shipping_charge' => number_format($shipping_charge, 2),
+                'grandTotal' => number_format($subtotal + $shipping_charge, 2),
                 'view' => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')),
                 'headerview' => (string) \Illuminate\Support\Facades\View::make('front.layout.header_cart_items')->with(compact('getCartItems', 'condition')),
             ]);
@@ -1324,7 +1367,17 @@ class ProductsController extends Controller
                         $couponAmount = $total_amount * ($couponDetails->amount / 100);
                     }
 
-                    $grand_total = $total_amount - $couponAmount;
+                    $deliverySetting = DeliverySetting::where('status', 1)->first();
+                    $shipping_charge = 0;
+                    if ($deliverySetting) {
+                        if (!$deliverySetting->is_free_delivery) {
+                            if ($total_amount > $deliverySetting->min_order_amount) {
+                                $shipping_charge = $deliverySetting->delivery_charge;
+                            }
+                        }
+                    }
+
+                    $grand_total = $total_amount + $shipping_charge - $couponAmount;
 
                     // Assign the Coupon Code and $couponAmount to Session Variables
                     Session::put('couponAmount', $couponAmount);
@@ -1337,7 +1390,9 @@ class ProductsController extends Controller
                         'status' => true,
                         'totalCartItems' => $totalCartItems, // totalCartItems() function is in our custom Helpers/Helper.php file that we have registered in 'composer.json' file    // We created the CSS class 'totalCartItems' in front/layout/header.blade.php to use it in front/js/custom.js to update the total cart items via AJAX, because in pages that we originally use AJAX to update the cart items (such as when we delete a cart item in http://127.0.0.1:8000/cart using AJAX), the number doesn't change in the header automatically because AJAX is already used and no page reload/refresh has occurred
                         'couponAmount' => $couponAmount,
+                        'shipping_charge' => $shipping_charge,
                         'grand_total' => $grand_total,
+                        'subtotal' => $total_amount,
                         'message' => $message,
                         // We'll use that array key 'view' as a JavaScript 'response' property to render the view (    $('#appendCartItems').html(resp.view);    ). Check front/js/custom.js
                         'view' => (string) \Illuminate\Support\Facades\View::make('front.products.cart_items')->with(compact('getCartItems')),                   // View Responses: https://laravel.com/docs/9.x/responses#view-responses    // Creating & Rendering Views: https://laravel.com/docs/9.x/views#creating-and-rendering-views    // Passing Data To Views: https://laravel.com/docs/9.x/views#passing-data-to-views
@@ -1419,6 +1474,22 @@ class ProductsController extends Controller
 
         // Calculating the Shipping Charges (depending on the 'country' of the user's Profile Address)
         $shippingCharges = ShippingCharge::getShippingCharges($total_weight, $userAddress['country']);
+
+        // Delivery Setting Override
+        $deliverySetting = \App\Models\DeliverySetting::where('status', 1)->first();
+        if ($deliverySetting) {
+            if ($deliverySetting->is_free_delivery) {
+                $shippingCharges = 0;
+            } else {
+                // If cart value is greater than Min Order Amount -> delivery charges apply, otherwise free
+                if ($total_price > $deliverySetting->min_order_amount) {
+                    $shippingCharges = $deliverySetting->delivery_charge;
+                } else {
+                    $shippingCharges = 0;
+                }
+            }
+        }
+
         $userAddress['shipping_charges'] = $shippingCharges;
 
         // Checking PIN code availability
@@ -1532,6 +1603,20 @@ class ProductsController extends Controller
             $total_shipping_charges = ($data['payment_gateway'] == 'PICKUP')
                 ? 0
                 : ShippingCharge::getShippingCharges($total_weight, $deliveryAddress['country']);
+
+            // Delivery Setting Override
+            $deliverySetting = \App\Models\DeliverySetting::where('status', 1)->first();
+            if ($deliverySetting && $data['payment_gateway'] != 'PICKUP') {
+                if ($deliverySetting->is_free_delivery) {
+                    $total_shipping_charges = 0;
+                } else {
+                    if ($total_price > $deliverySetting->min_order_amount) {
+                        $total_shipping_charges = $deliverySetting->delivery_charge;
+                    } else {
+                        $total_shipping_charges = 0;
+                    }
+                }
+            }
             $total_coupon_amount = Session::get('couponAmount') ?? 0;
             $total_wallet_amount = 0;
             if (isset($data['use_wallet']) && $data['use_wallet'] == 1 && Auth::user()->wallet_balance > 0) {
@@ -1724,7 +1809,7 @@ class ProductsController extends Controller
             ->get()
             ->toArray();
 
-        return view('front.products.checkout')->with(compact('deliveryAddresses', 'countries', 'getCartItems', 'total_price', 'condition', 'footerProducts', 'logos', 'sections', 'language'));
+        return view('front.products.checkout')->with(compact('deliveryAddresses', 'countries', 'getCartItems', 'total_price', 'condition', 'footerProducts', 'logos', 'sections', 'language', 'shippingCharges', 'deliverySetting'));
     }
 
     // Rendering Thanks page (after placing an order)
