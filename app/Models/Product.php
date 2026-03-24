@@ -302,6 +302,16 @@ class Product extends Model
             }
         }
 
+        // 3. Apply Old Book Commission (Only for Old Books)
+        // Check if product is old or has an old book attribute
+        if ($attribute->product->condition === 'old' || $attribute->old_book_condition_id) {
+            $commission = \App\Models\OldBookCommission::first();
+            if ($commission && $commission->percentage > 0) {
+                $commissionAmount = ($originalPrice * $commission->percentage) / 100;
+                $finalPrice += $commissionAmount;
+            }
+        }
+
         // Total savings (original price - what you pay)
         $totalDiscountAmount = max(0, $originalPrice - $finalPrice);
         $discountPercent = $originalPrice > 0 ? round(($totalDiscountAmount / $originalPrice) * 100) : 0;

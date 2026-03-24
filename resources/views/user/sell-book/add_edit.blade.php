@@ -648,23 +648,9 @@
 
                 if (percentage && basePrice > 0) {
                     let finalPrice = (basePrice * parseFloat(percentage)) / 100;
-                    $msg.html(`
-                        <div class="alert alert-info mt-2 mb-0 shadow-sm border-0" style="background: #e1f5fe; color: #01579b; border-radius: 10px;">
-                            <div class="d-flex align-items-center">
-                                <i class="mdi mdi-information-outline mr-2" style="font-size: 1.2rem;"></i>
-                                <div>
-                                    <div class="small font-weight-bold text-uppercase">Final Selling Price</div>
-                                    <div class="h5 mb-0">₹${finalPrice.toFixed(2)} <span class="small font-weight-normal">(${percentage}% of Original Price)</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    `);
+                    $msg.html(`<span class="small font-weight-bold" style="color: green;">Calculated Selling Price: ₹${finalPrice.toFixed(2)} (${percentage}% of Original Price)</span>`);
                 } else if (basePrice > 0) {
-                    $msg.html(`
-                        <div class="alert alert-light mt-2 mb-0 border" style="border-radius: 10px;">
-                            <span class="small text-muted">Select condition to calculate selling price. Original Price: ₹${basePrice.toFixed(2)}</span>
-                        </div>
-                    `);
+                    $msg.html(`<span class="small text-muted">Select condition for selling price calculation.</span>`);
                 } else {
                     $msg.empty();
                 }

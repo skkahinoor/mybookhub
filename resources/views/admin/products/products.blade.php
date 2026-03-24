@@ -100,8 +100,14 @@
                                                             <br>
                                                             <span
                                                                 class="text-danger">₹{{ $discountDetails['final_price'] }}</span>
+                                                            @if ($product->product->condition === 'old')
+                                                                <br><small class="text-success" style="font-weight: bold;">(You will get this amount)</small>
+                                                            @endif
                                                         @else
                                                             ₹{{ $discountDetails['product_price'] }}
+                                                            @if ($product->product->condition === 'old')
+                                                                <br><small class="text-success" style="font-weight: bold;">(You will get this amount)</small>
+                                                            @endif
                                                         @endif
                                                     </td>
                                                     <td>
