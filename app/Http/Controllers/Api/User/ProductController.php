@@ -88,7 +88,7 @@ class ProductController extends Controller
 
         // Use whereIn with subquery instead of whereHas for better performance at scale
         $activeProductIds = ProductsAttribute::where('status', 1)
-            ->where('stock', '>', 0)
+            ->where('stock', '>=', 0)
             ->distinct()
             ->pluck('product_id');
 
@@ -217,7 +217,7 @@ class ProductController extends Controller
                 // Aggregate price range and offer count from associated attributes
                 $prices = $product->attributes
                     ->filter(function ($attr) {
-                    return $attr->status == 1 && $attr->stock > 0;
+                    return $attr->status == 1 && $attr->stock >= 0;
                 })
                     ->map(function ($attr) {
                     $pDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
@@ -373,7 +373,7 @@ class ProductController extends Controller
             ->select('products_attributes.*')
             ->where('products_attributes.product_id', $product_id)
             ->where('products_attributes.status', 1)
-            ->where('products_attributes.stock', '>', 0);
+            ->where('products_attributes.stock', '>=', 0);
 
         // Apply remaining sorting priorities
         $attributesQuery->orderByRaw("CASE WHEN v.plan='pro' THEN 1 ELSE 2 END ASC");
