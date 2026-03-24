@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class DeliverySetting extends Model
+class OldBookCommission extends Model
 {
     use HasFactory;
-    
-    protected $fillable = ['min_order_amount', 'delivery_charge', 'is_free_delivery', 'status'];
+
+    protected $fillable = ['percentage'];
 }

@@ -236,6 +236,7 @@
                         Session::get('page') == 'class_subjects' ||
                         Session::get('page') == 'requestedbooks' ||
                         Session::get('page') == 'sellBookRequests' ||
+                        Session::get('page') == 'delivery_settings' ||
                         Session::get('page') == 'coupons') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-catalogue" aria-expanded="false"
                     aria-controls="ui-catalogue">
@@ -311,12 +312,18 @@
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'old_book_conditions') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ route('admin.old_book_conditions.index') }}">Old Book Conditions</a></li>
+                         <li class="nav-item"> <a
+                                 @if (Session::get('page') == 'sellBookRequests') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                 class="nav-link" href="{{ route('admin.sell-book-requests.index') }}">Sell Old Book Requests</a></li>
                         <li class="nav-item"> <a
-                                @if (Session::get('page') == 'sellBookRequests') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                class="nav-link" href="{{ route('admin.sell-book-requests.index') }}">Sell Old Book Requests</a></li>
+                                @if (Session::get('page') == 'old_book_commissions_crud') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.old_book_commissions.index') }}">Old Book Commission</a></li>
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'movs') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('admin/movs') }}">MOV Cashback</a></li>
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'delivery_settings') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ url('admin/delivery-settings') }}">Delivery Settings</a></li>
                     </ul>
                 </div>
             </li>

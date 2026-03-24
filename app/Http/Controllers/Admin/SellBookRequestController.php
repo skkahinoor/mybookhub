@@ -19,13 +19,10 @@ class SellBookRequestController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 
-        // Fetch attributes added by users OR vendors listing old books (must have condition)
+        // Fetch attributes added by users listing old books (must have condition)
         $requests = ProductsAttribute::with(['product', 'user', 'condition', 'vendor'])
             ->whereNotNull('old_book_condition_id')
-            ->where(function ($q) {
-                $q->whereNotNull('user_id')             // student/user sell requests
-                  ->orWhere('admin_type', 'vendor');    // vendor old book listings
-            })
+            ->whereNotNull('user_id')             // student/user sell requests ONLY
             ->orderBy('created_at', 'desc')
             ->get();
 

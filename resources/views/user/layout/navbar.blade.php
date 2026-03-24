@@ -30,7 +30,7 @@
                         $unread = (int) ($navUnreadCount ?? 0);
                     @endphp
                     @if($unread > 0)
-                      <span class="count">{{ $unread }}</span>
+                      <span class="count"></span>
                     @endif
                 </a>
                 <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list"

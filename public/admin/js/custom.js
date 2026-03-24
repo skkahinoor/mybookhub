@@ -16,6 +16,7 @@ $(document).ready(function () {
     $("#subcategories").DataTable(); // in admin/subcategories/subcategories.blade.php
     $("#subscribers").DataTable(); // in admin/subscribers/subscribers.blade.php
     $("#ratings").DataTable(); // in admin/ratings/ratings.blade.php
+    $("#delivery_settings").DataTable(); // in admin/delivery_settings/index.blade.php
 
     // Correcting issues in the Skydash Admin Panel Sidebar
     $(".nav-item").removeClass("active");
@@ -729,6 +730,35 @@ $(document).ready(function () {
                     );
                 } else if (resp.status == 1) {
                     $("#shipping-" + shipping_id).html(
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
+                    );
+                }
+            },
+            error: function () {
+                alert("Error");
+            },
+        });
+    });
+
+    // Update Delivery Setting Status (active/inactive) via AJAX
+    $(document).on("click", ".updateDeliverySettingStatus", function () {
+        var status = $(this).children("i").attr("status");
+        var delivery_id = $(this).attr("delivery_id");
+
+        $.ajax({
+            headers: {
+                "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
+            },
+            type: "post",
+            url: "/admin/update-delivery-setting-status",
+            data: { status: status, delivery_id: delivery_id },
+            success: function (resp) {
+                if (resp.status == 0) {
+                    $("#delivery-" + delivery_id).html(
+                        '<i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>',
+                    );
+                } else if (resp.status == 1) {
+                    $("#delivery-" + delivery_id).html(
                         '<i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>',
                     );
                 }

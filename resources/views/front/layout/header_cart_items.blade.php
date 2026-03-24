@@ -17,8 +17,6 @@
             @php
                 $getCartItems = \App\Models\Cart::getCartItems();
             @endphp
-
-
             @foreach ($getCartItems as $item)
                 {{-- $getCartItems is passed in from cart() method in Front/ProductsController.php --}}
                 @php

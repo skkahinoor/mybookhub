@@ -71,11 +71,12 @@ class BookAttributeController extends Controller
                 $existingAttribute->vendor_id = $user->vendor_id;
                 $existingAttribute->admin_id = null;
             } else {
+                // For admin users, ensure admin_type is correctly set
                 $existingAttribute->admin_type = in_array($user->type, ['superadmin', 'admin']) ? $user->type : 'admin';
                 $existingAttribute->admin_id = $user->id;
                 $existingAttribute->vendor_id = null;
             }
-            
+            $existingAttribute->admin_approved = 1;
             $existingAttribute->save();
         } else {
             // Create new attribute
@@ -96,7 +97,7 @@ class BookAttributeController extends Controller
                 $attribute->admin_id = $user->id;
                 $attribute->vendor_id = null;
             }
-
+            $attribute->admin_approved = 1;
             $attribute->save();
         }
 
