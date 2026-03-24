@@ -71,7 +71,7 @@ class ProductController extends Controller
             ($user ? 'user_' . $user->id : 'guest') .
             '_' . md5(json_encode($request->all()));
 
-        $data = Cache::remember($cacheKey, 3600, function () use ($request, $user, $limit, $page, $lat, $lng) {
+        $data = Cache::remember($cacheKey, 300, function () use ($request, $user, $limit, $page, $lat, $lng) {
             return $this->sqlSearch($request, $limit, $page, $lat, $lng);
         });
 
@@ -86,11 +86,29 @@ class ProductController extends Controller
     {
         $user = auth('sanctum')->user();
 
-        $query = Product::with(['category', 'subcategory', 'section', 'subject', 'bookType', 'language', 'authors', 'attributes.product', 'attributes.condition'])
+        // Use whereIn with subquery instead of whereHas for better performance at scale
+        $activeProductIds = ProductsAttribute::where('status', 1)
+            ->where('stock', '>', 0)
+            ->distinct()
+            ->pluck('product_id');
+
+        $query = Product::with([
+            'category',
+            'subcategory',
+            'section',
+            'subject',
+            'bookType',
+            'language',
+            'authors',
+            'attributes' => function ($q) {
+                $q->where('status', 1)
+                    ->select('id', 'product_id', 'user_product_price', 'product_discount', 'status', 'stock', 'old_book_condition_id');
+            },
+            'attributes.product:id,product_price',
+            'attributes.condition'
+        ])
             ->where('status', 1)
-            ->whereHas('attributes', function ($q) {
-                $q->where('status', 1)->where('stock', '>', 0);
-            });
+            ->whereIn('id', $activeProductIds);
 
         // Personalization logic for students
         if ($user && $user->hasRole('student')) {
@@ -376,13 +394,22 @@ class ProductController extends Controller
             $attributesQuery->orderBy('distance', 'asc');
         }
 
-        $attributes = $attributesQuery->get();
+        $attributes = $attributesQuery->limit(100)->get();
 
-        $vendorOffers = $attributes->map(function ($attr) use ($lat, $lng, $user) {
+        // Pre-load all cart items for this user in a single query (fixes N+1)
+        $cartItems = collect();
+        if ($user) {
+            $allAttrIds = $attributes->pluck('id');
+            $cartItems = Cart::where('user_id', $user->id)
+                ->whereIn('product_attribute_id', $allAttrIds)
+                ->get()
+                ->keyBy('product_attribute_id');
+        }
+
+        $vendorOffers = $attributes->map(function ($attr) use ($lat, $lng, $user, $cartItems) {
             $distance = isset($attr->distance) ? round($attr->distance, 2) : null;
 
-            // Fallback for manual distance calculation if needed for any reason,
-            // but we use the SQL result now for consistency and performance.
+            // Fallback for manual distance calculation if needed
             if ($distance === null && $lat && $lng && $attr->vendor && $attr->vendor->location) {
                 $vendorLoc = explode(',', $attr->vendor->location);
                 if (count($vendorLoc) == 2) {
@@ -400,17 +427,10 @@ class ProductController extends Controller
 
             $priceDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
 
-            $inCart = false;
-            $cartQty = 0;
-            if ($user) {
-                $cartItem = Cart::where('user_id', $user->id)
-                    ->where('product_attribute_id', $attr->id)
-                    ->first();
-                if ($cartItem) {
-                    $inCart = true;
-                    $cartQty = $cartItem->quantity;
-                }
-            }
+            // Use pre-loaded cart data instead of querying per-attribute
+            $cartItem = $cartItems->get($attr->id);
+            $inCart = $cartItem ? true : false;
+            $cartQty = $cartItem ? $cartItem->quantity : 0;
 
             return [
                 'attribute_id' => $attr->id,
@@ -422,6 +442,7 @@ class ProductController extends Controller
                     'name' => $attr->condition->name,
                     'percentage' => $attr->condition->percentage,
                 ] : null,
+                'seller_type' => 'vendor',
                 'vendor' => [
                     'vendor_id' => $attr->vendor->id ?? null,
                     'name' => $attr->vendor->user->name ?? 'Verified Seller',
@@ -430,12 +451,69 @@ class ProductController extends Controller
                     'distance' => $distance,
                     'plan' => $attr->vendor->plan ?? null
                 ],
+                'user' => null,
                 'cart_status' => [
                     'in_cart' => $inCart,
                     'quantity' => $cartQty
                 ]
             ];
         });
+
+        // Also fetch user-listed old book sellers (students who sold books, vendor_id is NULL)
+        $userAttributes = ProductsAttribute::with(['user', 'condition', 'product'])
+            ->where('product_id', $product_id)
+            ->where('status', 1)
+            ->whereNull('vendor_id')
+            ->whereNotNull('user_id')
+            ->orderBy('stock', 'desc')
+            ->limit(100)
+            ->get();
+
+        // Pre-load cart items for user offers in a single query
+        $userCartItems = collect();
+        if ($user && $userAttributes->isNotEmpty()) {
+            $userCartItems = Cart::where('user_id', $user->id)
+                ->whereIn('product_attribute_id', $userAttributes->pluck('id'))
+                ->get()
+                ->keyBy('product_attribute_id');
+        }
+
+        $userOffers = $userAttributes->map(function ($attr) use ($user, $userCartItems) {
+            $priceDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
+
+            // Use pre-loaded cart data
+            $cartItem = $userCartItems->get($attr->id);
+            $inCart = $cartItem ? true : false;
+            $cartQty = $cartItem ? $cartItem->quantity : 0;
+
+            return [
+                'attribute_id' => $attr->id,
+                'stock' => $attr->stock,
+                'sku' => $attr->sku,
+                'price_details' => $priceDetails,
+                'old_book_condition' => $attr->condition ? [
+                    'id' => $attr->condition->id,
+                    'name' => $attr->condition->name,
+                    'percentage' => $attr->condition->percentage,
+                ] : null,
+                'seller_type' => 'user',
+                'vendor' => null,
+                'user' => [
+                    'user_id' => $attr->user->id ?? null,
+                    'name' => $attr->user->name ?? 'Verified Seller',
+                    'email' => $attr->user->email ?? null,
+                    'mobile' => $attr->user->mobile ?? null,
+                    'image' => $attr->user->image ?? null,
+                ],
+                'cart_status' => [
+                    'in_cart' => $inCart,
+                    'quantity' => $cartQty
+                ]
+            ];
+        });
+
+        // Merge vendor offers and user offers together
+        $vendorOffers = $vendorOffers->values()->concat($userOffers->values());
 
         $authorNames = $product->authors->pluck('name')->join(', ');
         $basePath = url('front/images/product_images');
@@ -482,10 +560,9 @@ class ProductController extends Controller
     {
         $user = auth('sanctum')->user();
 
-        $attribute = ProductsAttribute::with(['vendor.user', 'condition'])
+        $attribute = ProductsAttribute::with(['vendor.user', 'user', 'condition'])
             ->where('id', $attribute_id)
             ->where('status', 1)
-            ->where('stock', '>', 0)
             ->first();
 
         if (!$attribute) {
@@ -597,7 +674,8 @@ class ProductController extends Controller
                     })
                 ],
 
-                'vendor_offer' => [
+                'seller_type' => $attribute->vendor_id ? 'vendor' : ($attribute->user_id ? 'user' : 'unknown'),
+                'vendor_offer' => $attribute->vendor_id ? [
                     'attribute_id' => $attribute->id,
                     'stock' => $attribute->stock,
                     'discount' => $attribute->product_discount,
@@ -610,9 +688,7 @@ class ProductController extends Controller
 
                     'vendor' => [
                         'vendor_id' => $attribute->vendor->id ?? null,
-
                         'name' => $attribute->vendor->user->name ?? 'Verified Seller',
-
                         'shop_name' => $attribute->vendor->shop_name ?? null,
                         'address' => $attribute->vendor->address ?? null,
                         'city' => $attribute->vendor->city ?? null,
@@ -632,7 +708,27 @@ class ProductController extends Controller
                         ],
                         'distance' => $distance
                     ]
-                ],
+                ] : null,
+
+                'user_offer' => $attribute->user_id && !$attribute->vendor_id ? [
+                    'attribute_id' => $attribute->id,
+                    'stock' => $attribute->stock,
+                    'discount' => $attribute->product_discount,
+                    'sku' => $attribute->sku,
+                    'old_book_condition' => $attribute->condition ? [
+                        'id' => $attribute->condition->id,
+                        'name' => $attribute->condition->name,
+                        'percentage' => $attribute->condition->percentage,
+                    ] : null,
+                    'user' => [
+                        'user_id' => $attribute->user->id ?? null,
+                        'name' => $attribute->user->name ?? 'Verified Seller',
+                        'email' => $attribute->user->email ?? null,
+                        'mobile' => $attribute->user->mobile ?? null,
+                        'image' => $attribute->user->image ?? null,
+                        'created_at' => $attribute->user->created_at ?? null,
+                    ],
+                ] : null,
 
                 'cart_status' => [
                     'in_cart' => $inCart,
