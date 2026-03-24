@@ -584,7 +584,13 @@
                                                 </div>
                                                 <div class="total-row-modern">
                                                     <span>Shipping</span>
-                                                    <span class="shipping_charges">₹0.00</span>
+                                                    <span class="shipping_charges">
+                                                        @if($shippingCharges > 0)
+                                                            ₹{{ number_format($shippingCharges, 2) }}
+                                                        @else
+                                                            Free Shipping
+                                                        @endif
+                                                    </span>
                                                 </div>
                                                 <div class="total-row-modern" id="walletRow" style="display: none;">
                                                     <span class="text-success">Wallet Credit</span>
@@ -600,7 +606,7 @@
                                                 <div class="total-row-modern grand-total">
                                                     <span>Payable Amount</span>
                                                     <span id="grandTotalDisplay"
-                                                        class="grand_total">₹{{ number_format($total_price - Session::get('couponAmount', 0), 2) }}</span>
+                                                        class="grand_total">₹{{ number_format($total_price + $shippingCharges - Session::get('couponAmount', 0), 2) }}</span>
                                                 </div>
                                             </div>
 
@@ -697,7 +703,18 @@
                     $('#walletRow').hide();
                 }
 
-                $('.shipping_charges').html('₹' + shipping.toFixed(2));
+                var paymentMethod = $('input[name="payment_gateway"]:checked').val();
+
+                // Pickup from store: no shipping charges
+                if (paymentMethod === 'PICKUP') {
+                    shipping = 0;
+                }
+
+                if (shipping > 0) {
+                    $('.shipping_charges').html('₹' + shipping.toFixed(2));
+                } else {
+                    $('.shipping_charges').html('Free Shipping');
+                }
 
                 var grand = total + shipping - coupon - walletDiscount;
                 if (grand < 0) grand = 0;
@@ -705,13 +722,6 @@
                 var finalTotal = grand.toFixed(2);
                 $('#grandTotalDisplay').html('₹' + finalTotal);
                 $('.grand_total').html('₹' + finalTotal);
-
-                var paymentMethod = $('input[name="payment_gateway"]:checked').val();
-
-                // Pickup from store: no shipping charges
-                if (paymentMethod == 'PICKUP') {
-                    shipping = 0;
-                }
 
                 // Update Place Order button with premium style
                 var btnText = 'Complete Order';

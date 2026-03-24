@@ -155,6 +155,9 @@ $(document).ready(function () {
                 $("#appendCartItems").html(resp.view); // 'view' is sent as a PHP array key (in the HTTP response from the server (backend)) from inside the cartUpdate() method in Front/ProductsController.php
 
                 $("#appendHeaderCartItems").html(resp.headerview); // 'headerview' is sent as a PHP array key (in the HTTP response from the server (backend)) from inside the cartUpdate() method in Front/ProductsController.php
+
+                // Fire event so cart summary updates shipping charge + totals dynamically
+                $(document).trigger('cartTotalsUpdated', [resp]);
             },
             error: function () {
                 alert("Error");
@@ -184,6 +187,9 @@ $(document).ready(function () {
                     $(".totalCartItems").html(resp.totalCartItems); // totalCartItems() function is in our custom Helpers/Helper.php file that we have registered in 'composer.json' file    // We created the CSS class 'totalCartItems' in front/layout/header.blade.php to use it in front/js/custom.js to update the total cart items via AJAX, because in pages that we originally use AJAX to update the cart items (such as when we delete a cart item in http://127.0.0.1:8000/cart using AJAX), the number doesn't change in the header automatically because AJAX is already used and no page reload/refresh has occurred
                     $("#appendCartItems").html(resp.view); // 'view' is sent as a PHP array key (in the HTTP response from the server (backend)) from inside the cartUpdate() method in Front/ProductsController.php
                     $("#appendHeaderCartItems").html(resp.headerview); // 'headerview' is sent as a PHP array key (in the HTTP response from the server (backend)) from inside the cartUpdate() method in Front/ProductsController.php
+
+                    // Fire event so cart summary updates shipping charge + totals dynamically
+                    $(document).trigger('cartTotalsUpdated', [resp]);
                 },
                 error: function () {
                     alert("Error");

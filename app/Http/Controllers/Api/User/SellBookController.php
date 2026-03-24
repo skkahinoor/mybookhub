@@ -230,13 +230,21 @@ class SellBookController extends Controller
             }
 
             // Deduplication: Check if product already exists
-            $existingProduct = null;
+            $existingProducts = collect();
             if (!empty($cleanIsbn)) {
-                $existingProduct = Product::whereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanIsbn])->first();
+                $existingProducts = Product::whereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanIsbn])->get();
             }
 
-            if ($existingProduct) {
-                $product = $existingProduct;
+            $existingOldProduct = $existingProducts->firstWhere('condition', 'old');
+            $existingNewProduct = $existingProducts->firstWhere('condition', 'new');
+
+            // Business Logic:
+            // 1. If ISBN exists and condition is "old" -> Reuse existing product (can not insert here only insert attribut table)
+            // 2. If ISBN exists and condition is "new" -> Insert new row in product table
+            // 3. If ISBN does not exist -> Insert new row in product table
+
+            if ($existingOldProduct) {
+                $product = $existingOldProduct;
                 $message = 'Old book added successfully from existing records!';
 
                 $userHasIt = ProductsAttribute::where('product_id', $product->id)
