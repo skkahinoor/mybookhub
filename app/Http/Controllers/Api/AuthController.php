@@ -117,7 +117,7 @@ class AuthController extends Controller
                 "recipients" => [
                     [
                         "mobiles" => $to,
-                        "numeric" => $otp // This MUST match your template variable
+                        "var1"    => $otp
                     ]
                 ]
             ];

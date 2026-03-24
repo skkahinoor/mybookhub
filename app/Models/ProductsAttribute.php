@@ -38,7 +38,8 @@ class ProductsAttribute extends Model
 
         // Flags
         'is_featured',
-        'is_bestseller'
+        'is_bestseller',
+        'video_upload'
     ];
 
     /**
@@ -122,8 +123,8 @@ class ProductsAttribute extends Model
         // Distance formula fragment (in km)
         $distanceSql = "999999"; // default large distance if no user location is available
         if ($userLat && $userLng) {
-            $userLat = (float)$userLat;
-            $userLng = (float)$userLng;
+            $userLat = (float) $userLat;
+            $userLng = (float) $userLng;
             // Haversine formula
             $distanceSql = "(6371 * acos(
                 cos(radians($userLat)) * cos(radians(SUBSTRING_INDEX(COALESCE(pa_v.location, '0,0'), ',', 1))) * 
@@ -168,44 +169,44 @@ class ProductsAttribute extends Model
     }
 
     public static function getDiscountPriceDetails($product_id)
-{
-    $product = Product::select('id', 'product_price')
-        ->where('id', $product_id)
-        ->first();
+    {
+        $product = Product::select('id', 'product_price')
+            ->where('id', $product_id)
+            ->first();
 
-    if (!$product || $product->product_price <= 0) {
+        if (!$product || $product->product_price <= 0) {
+            return [
+                'product_price' => 0,
+                'final_price' => 0,
+                'discount' => 0,
+                'discount_percent' => 0,
+            ];
+        }
+
+        // Base price always from Product table
+        $original_price = (float) $product->product_price;
+
+        /**
+         * Get highest discount from active product attributes
+         */
+        $discount_percent = self::where('product_id', $product_id)
+            ->where('status', 1)
+            ->max('product_discount');
+
+        // Safety checks
+        $discount_percent = (float) ($discount_percent ?? 0);
+        $discount_percent = min(max($discount_percent, 0), 100);
+
+        // Calculate discount
+        $discount_amount = ($original_price * $discount_percent) / 100;
+        $final_price = $original_price - $discount_amount;
+
         return [
-            'product_price' => 0,
-            'final_price'   => 0,
-            'discount'      => 0,
-            'discount_percent' => 0,
+            'product_price' => round($original_price, 2),
+            'final_price' => round($final_price, 2),
+            'discount' => round($discount_amount, 2),
+            'discount_percent' => round($discount_percent, 2),
         ];
     }
-
-    // Base price always from Product table
-    $original_price = (float) $product->product_price;
-
-    /**
-     * Get highest discount from active product attributes
-     */
-    $discount_percent = self::where('product_id', $product_id)
-        ->where('status', 1)
-        ->max('product_discount');
-
-    // Safety checks
-    $discount_percent = (float) ($discount_percent ?? 0);
-    $discount_percent = min(max($discount_percent, 0), 100);
-
-    // Calculate discount
-    $discount_amount = ($original_price * $discount_percent) / 100;
-    $final_price = $original_price - $discount_amount;
-
-    return [
-        'product_price'    => round($original_price, 2),
-        'final_price'      => round($final_price, 2),
-        'discount'         => round($discount_amount, 2),
-        'discount_percent' => round($discount_percent, 2),
-    ];
-}
 
 }
