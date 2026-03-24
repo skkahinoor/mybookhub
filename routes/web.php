@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\SchoolController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SellBookRequestController;
 use App\Http\Controllers\Admin\SubjectController;
+use App\Http\Controllers\Admin\DeliverySettingController;
 use App\Http\Controllers\Front\IndexController;
 use App\Http\Controllers\Front\ProductsController;
 use App\Http\Controllers\User\BookRequestController;
@@ -148,6 +149,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('movs', 'MovController@movs')->name('admin.movs');
         Route::match(['get', 'post'], 'add-edit-mov/{id?}', 'MovController@addEditMov')->name('admin.add_edit_mov');
         Route::get('delete-mov/{id}', 'MovController@deleteMov')->name('admin.delete_mov');
+
+        // Delivery Settings
+        Route::get('delivery-settings', [DeliverySettingController::class, 'index'])->name('admin.delivery_settings');
+        Route::match(['get', 'post'], 'add-edit-delivery-setting/{id?}', [DeliverySettingController::class, 'addEdit'])->name('admin.add_edit_delivery_setting');
+        Route::get('delete-delivery-setting/{id}', [DeliverySettingController::class, 'delete'])->name('admin.delete_delivery_setting');
+        Route::post('update-delivery-setting-status', [DeliverySettingController::class, 'updateStatus'])->name('admin.update_delivery_setting_status');
 
         // Subcategories
         Route::get('subcategories', 'SubcategoryController@subcategories')->name('admin.subcategories');
