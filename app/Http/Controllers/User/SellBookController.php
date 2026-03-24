@@ -172,7 +172,9 @@ class SellBookController extends Controller
             // ==========================================
             $existingProduct = null;
             if (! empty($cleanIsbn) && empty($id)) {
-                $existingProduct = Product::whereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanIsbn])->first();
+                $existingProduct = Product::whereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanIsbn])
+                    ->where('condition', 'old')
+                    ->first();
             }
 
             if ($existingProduct && empty($id)) {
@@ -376,10 +378,12 @@ class SellBookController extends Controller
 
         $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
             ->where('product_isbn', $isbn)
+            ->where('condition', 'old')
             ->first();
 
         if (! $product && strlen($cleanSearch) > 0) {
             $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
+                ->where('condition', 'old')
                 ->where(function ($query) use ($isbn, $cleanSearch) {
                     $query->where('product_isbn', 'like', "%{$isbn}%")
                         ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
@@ -478,7 +482,8 @@ class SellBookController extends Controller
             return response()->json(['status' => true, 'data' => []]);
         }
 
-        $books = Product::where('product_name', 'LIKE', '%'.$query.'%')
+        $books = Product::where('condition', 'old')
+            ->where('product_name', 'LIKE', '%'.$query.'%')
             ->limit(10)
             ->get(['id', 'product_name', 'product_isbn']);
 

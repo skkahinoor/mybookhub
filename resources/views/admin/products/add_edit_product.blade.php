@@ -474,7 +474,7 @@
                                             </option>
                                         @endforeach
                                     </select>
-                                    <small class="text-muted">Price will be auto-calculated based on selected condition percentage.</small>
+                                    <small id="calculatedPriceMsg" style="color: green; font-weight: bold;"></small>
                                 </div>
 
                                 <div class="form-group">
@@ -685,15 +685,15 @@
                 if (condition === 'old') {
                     $wrapper.show();
                     let percentage = $('#old_book_condition_id option:selected').data('percentage');
-                    if (percentage) {
-                        let newPrice = (originalPrice * parseFloat(percentage)) / 100;
-                        $priceInput.val(newPrice.toFixed(2));
+                    if (percentage && originalPrice > 0) {
+                        let calculatedPrice = (originalPrice * parseFloat(percentage)) / 100;
+                        $('#calculatedPriceMsg').text('Calculated Selling Price: ₹' + calculatedPrice.toFixed(2) + ' (' + percentage + '% of Original Price)');
+                    } else {
+                        $('#calculatedPriceMsg').text('');
                     }
                 } else {
                     $wrapper.hide();
-                    if ($priceInput.data('original-price')) {
-                        $priceInput.val($priceInput.data('original-price'));
-                    }
+                    $('#calculatedPriceMsg').text('');
                 }
             }
 
