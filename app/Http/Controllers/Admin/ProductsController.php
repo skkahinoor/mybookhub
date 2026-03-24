@@ -987,6 +987,7 @@ class ProductsController extends Controller
             if ($oldBookConditionId) {
                 $existingAttribute->old_book_condition_id = $oldBookConditionId;
             }
+            $existingAttribute->admin_approved = 1;
             $existingAttribute->save();
         } else {
             // Create new attribute
@@ -1003,10 +1004,12 @@ class ProductsController extends Controller
                 $attribute->admin_type = 'vendor';
                 $attribute->vendor_id  = $user->vendor_id;
                 $attribute->admin_id   = null;
+                $attribute->admin_approved = 1;
             } else {
                 $attribute->admin_type = 'admin';
                 $attribute->admin_id   = $user->id;
                 $attribute->vendor_id  = null;
+                $attribute->admin_approved = 1;
             }
 
             $attribute->save();
