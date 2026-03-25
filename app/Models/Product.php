@@ -188,14 +188,13 @@ class Product extends Model
             $finalPrice = $originalPrice;
         }
 
-        $totalDiscountAmount = max(0, $originalPrice - $finalPrice);
-        $discountPercent = $originalPrice > 0 ? round(($totalDiscountAmount / $originalPrice) * 100) : 0;
+        $discountAmount = max(0, $originalPrice - $finalPrice);
+        $discountPercent = $originalPrice > 0 ? round(($discountAmount / $originalPrice) * 100) : 0;
 
         return [
             'product_price'    => round($originalPrice),
             'final_price'      => round($finalPrice),
-            'discount'         => round($totalDiscountAmount),
-            'discount_amount'  => round($totalDiscountAmount),
+            'discount'         => round($discountAmount),
             'discount_percent' => $discountPercent,
         ];
     }
@@ -230,7 +229,6 @@ class Product extends Model
             'product_price'    => $details['product_price'] ?? 0,
             'final_price'      => $details['final_price'] ?? 0,
             'discount'         => $details['discount'] ?? 0,
-            'discount_amount'  => $details['discount_amount'] ?? 0,
             'discount_percent' => $details['discount_percent'] ?? 0,
         ];
     }
@@ -246,11 +244,9 @@ class Product extends Model
 
         if (!$attribute || !$attribute->product) {
             return [
-                'product_price'    => 0,
-                'final_price'      => 0,
-                'discount'         => 0,
-                'discount_amount'  => 0,
-                'discount_percent' => 0,
+                'product_price' => 0,
+                'final_price'   => 0,
+                'discount'      => 0,
             ];
         }
 
@@ -267,26 +263,6 @@ class Product extends Model
             } else {
                 $finalPrice = $originalPrice;
             }
-
-            // Add Old Book Commission ONLY for OLD books
-            if ($attribute->old_book_condition_id) {
-                static $commissionPercentage = null;
-                if ($commissionPercentage === null) {
-                    $commission = \Illuminate\Support\Facades\Cache::remember(
-                        'old_book_commission_percentage',
-                        3600,
-                        function () {
-                            return \App\Models\OldBookCommission::value('percentage');
-                        }
-                    );
-                    $commissionPercentage = $commission ? (float) $commission : 0;
-                }
-
-                if ($commissionPercentage > 0) {
-                    $commissionAmount = ($originalPrice * $commissionPercentage) / 100;
-                    $finalPrice += $commissionAmount;
-                }
-            }
         } else {
             // Vendor/Admin entry: Differ calculation between old and new books
             $discountValue = (float) ($attribute->product_discount ?? 0);
@@ -302,25 +278,29 @@ class Product extends Model
             }
         }
 
-        // 3. Apply Old Book Commission (Only for Old Books)
-        // Check if product is old or has an old book attribute
-        if ($attribute->product->condition === 'old' || $attribute->old_book_condition_id) {
-            $commission = \App\Models\OldBookCommission::first();
-            if ($commission && $commission->percentage > 0) {
-                $commissionAmount = ($originalPrice * $commission->percentage) / 100;
+        // If it's an old book, add the platform commission on top of the seller's final price
+        if ($attribute->old_book_condition_id) {
+            $commissionPercentage = \Illuminate\Support\Facades\Cache::remember('old_book_commission_percentage', 3600, function () {
+                $commission = \App\Models\OldBookCommission::first();
+                return $commission ? (float) $commission->percentage : 0;
+            });
+            
+            if ($commissionPercentage > 0) {
+                // Commission is calculated from the original MRP
+                $commissionAmount = ($originalPrice * $commissionPercentage) / 100;
                 $finalPrice += $commissionAmount;
             }
         }
 
         // Total savings (original price - what you pay)
         $totalDiscountAmount = max(0, $originalPrice - $finalPrice);
+
         $discountPercent = $originalPrice > 0 ? round(($totalDiscountAmount / $originalPrice) * 100) : 0;
 
         return [
             'product_price'    => round($originalPrice), // Strike-through price
             'final_price'      => round($finalPrice),    // Paying price
-            'discount'         => round($totalDiscountAmount), // Keep for backward compatibility
-            'discount_amount'  => round($totalDiscountAmount),
+            'discount'         => round($totalDiscountAmount),
             'discount_percent' => $discountPercent,
         ];
     }

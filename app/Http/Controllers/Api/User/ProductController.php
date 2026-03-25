@@ -102,7 +102,7 @@ class ProductController extends Controller
             'authors',
             'attributes' => function ($q) {
                 $q->where('status', 1)
-                    ->select('id', 'product_id', 'user_product_price', 'product_discount', 'status', 'stock', 'old_book_condition_id');
+                    ->select('id', 'product_id', 'user_id', 'vendor_id', 'user_product_price', 'product_discount', 'status', 'stock', 'old_book_condition_id');
             },
             'attributes.product:id,product_price',
             'attributes.condition'
