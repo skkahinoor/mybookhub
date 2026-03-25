@@ -62,9 +62,12 @@ class ProductController extends Controller
         $lat = $request->lat;
         $lng = $request->lng;
 
-
-        $cacheVersion = Cache::rememberForever('products_cache_version', function () {
-            return time();
+        // Dynamic versioning: Use the latest updated_at from the database to ensure cache freshness
+        // This checks every 6 seconds if anything has changed. If not, it uses the high-performance cache.
+        $cacheVersion = Cache::remember('products_sync_version', 6, function () {
+            $lastAttr = DB::table('products_attributes')->max('updated_at');
+            $lastProd = DB::table('products')->max('updated_at');
+            return md5($lastAttr . '_' . $lastProd);
         });
 
         $cacheKey = 'products_v' . $cacheVersion . '_' .

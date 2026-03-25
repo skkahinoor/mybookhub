@@ -13,12 +13,12 @@ class ProductsAttribute extends Model
 
     protected static function booted()
     {
-        static::saved(function ($attribute) {
-            Cache::put('products_cache_version', time());
+        static::saved(function () {
+            Cache::forget('products_sync_version');
         });
 
-        static::deleted(function ($attribute) {
-            Cache::put('products_cache_version', time());
+        static::deleted(function () {
+            Cache::forget('products_sync_version');
         });
     }
 
