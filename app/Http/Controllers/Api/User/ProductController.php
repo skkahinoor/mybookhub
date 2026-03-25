@@ -508,6 +508,7 @@ class ProductController extends Controller
                     'mobile' => $attr->user->mobile ?? null,
                     'image' => $attr->user->image ?? null,
                 ],
+                'user_old_book_video' => $attr->video_upload ? url('front/videos/product_videos/' . $attr->video_upload) : null,
                 'cart_status' => [
                     'in_cart' => $inCart,
                     'quantity' => $cartQty
@@ -731,6 +732,7 @@ class ProductController extends Controller
                         'image' => $attribute->user->image ?? null,
                         'created_at' => $attribute->user->created_at ?? null,
                     ],
+                    'user_old_book_video' => $attribute->video_upload ? url('front/videos/product_videos/' . $attribute->video_upload) : null,
                 ] : null,
 
                 'cart_status' => [

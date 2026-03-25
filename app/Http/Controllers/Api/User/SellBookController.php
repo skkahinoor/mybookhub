@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\User;
 
+use App\Helpers\Helper;
 use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\BookType;
@@ -66,6 +67,9 @@ class SellBookController extends Controller
                 ],
                 'user_old_book_image' => $attribute && $attribute->user_old_book_image
                     ? $basePath . '/large/' . $attribute->user_old_book_image
+                    : null,
+                'user_old_book_video' => $attribute && $attribute->video_upload
+                    ? url('front/videos/product_videos/' . $attribute->video_upload)
                     : null,
                 'category' => $product->category ? [
                     'id' => $product->category->id,
@@ -185,6 +189,9 @@ class SellBookController extends Controller
                     'user_old_book_image' => $attribute->user_old_book_image
                         ? $basePath . '/large/' . $attribute->user_old_book_image
                         : null,
+                    'user_old_book_video' => $attribute->video_upload
+                        ? url('front/videos/product_videos/' . $attribute->video_upload)
+                        : null,
                     'old_book_condition' => $attribute->condition ? [
                         'id' => $attribute->condition->id,
                         'name' => $attribute->condition->name,
@@ -209,6 +216,7 @@ class SellBookController extends Controller
                 'old_book_condition_id' => 'required|exists:old_book_conditions,id',
                 'language_id' => 'required|exists:languages,id',
                 'user_old_book_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'video_upload' => 'nullable|mimes:mp4,mov,avi,wmv|max:5120',
             ]);
 
             if ($validator->fails()) {
@@ -237,11 +245,6 @@ class SellBookController extends Controller
 
             $existingOldProduct = $existingProducts->firstWhere('condition', 'old');
             $existingNewProduct = $existingProducts->firstWhere('condition', 'new');
-
-            // Business Logic:
-            // 1. If ISBN exists and condition is "old" -> Reuse existing product (can not insert here only insert attribut table)
-            // 2. If ISBN exists and condition is "new" -> Insert new row in product table
-            // 3. If ISBN does not exist -> Insert new row in product table
 
             if ($existingOldProduct) {
                 $product = $existingOldProduct;
@@ -337,6 +340,28 @@ class SellBookController extends Controller
                 }
             }
 
+            // Video Upload handling
+            if ($request->hasFile('video_upload')) {
+                $video_tmp = $request->file('video_upload');
+                if ($video_tmp->isValid()) {
+                    $video_name = pathinfo($video_tmp->getClientOriginalName(), PATHINFO_FILENAME);
+                    $extension = $video_tmp->getClientOriginalExtension();
+                    $videoName = $video_name . '-' . rand(111, 99999) . '.' . $extension;
+                    $videoPath = public_path('front/videos/product_videos/');
+                    if (!file_exists($videoPath)) {
+                        mkdir($videoPath, 0755, true);
+                    }
+                    $tempPath = $video_tmp->getPathname();
+                    $destinationPath = $videoPath . $videoName;
+
+                    // Attempt compression, fallback to simple move if it fails (e.g. ffmpeg not found)
+                    if (!Helper::compressVideo($tempPath, $destinationPath)) {
+                        $video_tmp->move($videoPath, $videoName);
+                    }
+                    $attribute->video_upload = $videoName;
+                }
+            }
+
             // Calculate price based on condition
             if (!empty($data['old_book_condition_id'])) {
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
@@ -413,6 +438,7 @@ class SellBookController extends Controller
                 'old_book_condition_id' => 'required|exists:old_book_conditions,id',
                 'language_id' => 'required|exists:languages,id',
                 'user_old_book_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+                'video_upload' => 'nullable|mimes:mp4,mov,avi,wmv|max:5120',
             ]);
 
             if ($validator->fails()) {
@@ -491,6 +517,28 @@ class SellBookController extends Controller
                     Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
                     Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
                     $attribute->user_old_book_image = $imageName;
+                }
+            }
+
+            // Video Upload handling
+            if ($request->hasFile('video_upload')) {
+                $video_tmp = $request->file('video_upload');
+                if ($video_tmp->isValid()) {
+                    $video_name = pathinfo($video_tmp->getClientOriginalName(), PATHINFO_FILENAME);
+                    $extension = $video_tmp->getClientOriginalExtension();
+                    $videoName = $video_name . '-' . rand(111, 99999) . '.' . $extension;
+                    $videoPath = public_path('front/videos/product_videos/');
+                    if (!file_exists($videoPath)) {
+                        mkdir($videoPath, 0755, true);
+                    }
+                    $tempPath = $video_tmp->getPathname();
+                    $destinationPath = $videoPath . $videoName;
+
+                    // Attempt compression, fallback to simple move if it fails (e.g. ffmpeg not found)
+                    if (!Helper::compressVideo($tempPath, $destinationPath)) {
+                        $video_tmp->move($videoPath, $videoName);
+                    }
+                    $attribute->video_upload = $videoName;
                 }
             }
 
