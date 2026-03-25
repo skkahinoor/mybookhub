@@ -790,11 +790,14 @@
         }
 
         .condition.new {
-            background: #10b981;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
+        .condition.old,
         .condition.used {
-            background: #f59e0b;
+            background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         /* GRID */
@@ -1557,7 +1560,7 @@
             <select class="sort-select-premium" id="homeSortBy">
                 <option value="all">All Books</option>
                 <option value="new">New Books</option>
-                <option value="used">Old Books</option>
+                <option value="old">Old Books</option>
             </select>
         </div>
     </div>
