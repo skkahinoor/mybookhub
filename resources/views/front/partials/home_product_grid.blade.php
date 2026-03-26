@@ -9,8 +9,8 @@
         
         $condition = strtolower(trim($product->condition ?? 'new'));
         $isNew = $condition == 'new';
-        $conditionClass = $isNew ? 'new' : 'used';
-        $conditionText = $isNew ? 'NEW' : 'USED';
+        $conditionClass = $isNew ? 'new' : 'old';
+        $conditionText = $isNew ? 'NEW' : 'OLD';
     @endphp
     <div class="book-item">
         <div class="cover">
