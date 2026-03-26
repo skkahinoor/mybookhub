@@ -68,32 +68,33 @@
                                         <td>₹<span id="orderSubtotal">{{ $total_price ?? 0 }}</span></td>
                                     </tr>
                                     <tr>
-                                         <td>Shipping</td>
-                                         <td id="shippingChargeCell">
+                                        <td>Shipping</td>
+                                        <td id="shippingChargeCell">
                                              @if($shipping_charge > 0)
                                                  ₹{{ number_format($shipping_charge, 2) }}
                                              @else
                                                  Free Shipping
                                              @endif
-                                         </td>
-                                     </tr>
-                                     <tr>
-                                         <td>Coupon Discount</td>
-                                         <td>₹<span id="couponDiscount">{{ number_format((float) \Illuminate\Support\Facades\Session::get('couponAmount', 0), 2) }}</span>
-                                             <script>
-                                                 (function(){
-                                                     const fmt2 = n => (Number(n) || 0).toFixed(2);
-                                                     const el = document.getElementById('couponDiscount');
-                                                     if (el && el.textContent) {
-                                                         el.textContent = fmt2(el.textContent);
-                                                     }
-                                                 })();
-                                             </script></td>
-                                     </tr>
-                                     <tr>
-                                         <td><strong>Total</strong></td>
-                                         <td><strong>₹<span id="grandTotal">{{ number_format((($total_price ?? 0) + ($shipping_charge ?? 0) - \Illuminate\Support\Facades\Session::get('couponAmount', 0)), 2) }}</span></strong></td>
-                                     </tr>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Coupon Discount</td>
+                                        <td>₹<span id="couponDiscount">{{ number_format((float) \Illuminate\Support\Facades\Session::get('couponAmount', 0), 2) }}</span>
+                                            <script>
+                                                (function(){
+                                                    const fmt2 = n => (Number(n) || 0).toFixed(2);
+                                                    const el = document.getElementById('couponDiscount');
+                                                    if (el && el.textContent) {
+                                                        el.textContent = fmt2(el.textContent);
+                                                    }
+                                                })();
+                                            </script>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Total</strong></td>
+                                        <td><strong>₹<span id="grandTotal">{{ number_format((($total_price ?? 0) + ($shipping_charge ?? 0) - \Illuminate\Support\Facades\Session::get('couponAmount', 0)), 2) }}</span></strong></td>
+                                    </tr>
                                 </tbody>
                             </table>
                             <div class="form-group m-b25">

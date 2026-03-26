@@ -580,7 +580,8 @@
                                                 <div class="total-row-modern">
                                                     <span>Subtotal</span>
                                                     <span id="subtotalValue"
-                                                        data-subtotal="{{ $total_price }}">₹{{ number_format($total_price, 2) }}</span>
+                                                        data-subtotal="{{ $total_price }}">₹{{ number_format($total_price, 2) }}
+                                                    </span>
                                                 </div>
                                                 <div class="total-row-modern">
                                                     <span>Shipping</span>

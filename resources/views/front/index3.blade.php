@@ -174,11 +174,11 @@
         }
 
         .hero-right img {
-            max-width: 450px;
-            height: auto;
-            width: 450px;
-            animation: float2 6s ease-in-out infinite;
-        }
+    width: 100%;              /* makes it responsive */
+    max-width: 450px;         /* keeps your design limit */
+    height: auto;
+    animation: float2 6s ease-in-out infinite;
+}
 
         @keyframes float2 {
             0% {
@@ -790,14 +790,11 @@
         }
 
         .condition.new {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #10b981;
         }
 
-        .condition.old,
         .condition.used {
-            background: linear-gradient(135deg, #facc15 0%, #f59e0b 100%);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #f59e0b;
         }
 
         /* GRID */
