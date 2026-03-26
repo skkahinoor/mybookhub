@@ -107,6 +107,7 @@ class HomeController extends Controller
             ->get()
             ->pluck('category')
             ->unique('id')
+            ->sortBy('category_name')
             ->values();
 
         return response()->json([
@@ -123,6 +124,7 @@ class HomeController extends Controller
             ->get()
             ->pluck('subcategory')
             ->unique('id')
+            ->sortBy('subcategory_name')
             ->values();
 
         return response()->json([
