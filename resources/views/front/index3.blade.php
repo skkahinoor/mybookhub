@@ -1557,7 +1557,7 @@
             <select class="sort-select-premium" id="homeSortBy">
                 <option value="all">All Books</option>
                 <option value="new">New Books</option>
-                <option value="used">Old Books</option>
+                <option value="old">Old Books</option>
             </select>
         </div>
     </div>
