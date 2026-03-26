@@ -35,52 +35,52 @@ class SellBookController extends Controller
         $userProducts = Product::whereHas('attributes', function ($q) use ($user) {
             $q->where('user_id', $user->id);
         })->with([
-                    'attributes' => function ($q) use ($user) {
-                        $q->where('user_id', $user->id)->with('condition');
-                    },
-                    'category',
-                    'subcategory',
-                    'authors'
-                ])->orderBy('created_at', 'desc')->get();
+            'attributes' => function ($q) use ($user) {
+            $q->where('user_id', $user->id)->with('condition');
+        },
+            'category',
+            'subcategory',
+            'authors'
+        ])->orderBy('created_at', 'desc')->get();
 
         $products = $userProducts->map(function ($product) use ($basePath) {
             $attribute = $product->attributes->first();
             return [
-                'id' => $product->id,
-                'product_name' => $product->product_name,
-                'product_isbn' => $product->product_isbn,
-                'product_price' => round($product->product_price),
-                'user_product_price' => $attribute ? round($attribute->user_product_price) : null,
-                'condition' => $product->condition,
-                'old_book_condition' => $attribute && $attribute->condition ? [
-                    'id' => $attribute->condition->id,
-                    'name' => $attribute->condition->name,
-                    'percentage' => $attribute->condition->percentage,
-                ] : null,
-                'status' => $attribute ? $attribute->status : 0,
-                'admin_approved' => $attribute ? $attribute->admin_approved : 0,
-                'stock' => $attribute ? $attribute->stock : 0,
-                'image_urls' => [
-                    'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-                    'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                    'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
-                ],
-                'user_old_book_image' => $attribute && $attribute->user_old_book_image
-                    ? $basePath . '/large/' . $attribute->user_old_book_image
-                    : null,
-                'user_old_book_video' => $attribute && $attribute->video_upload
-                    ? url('front/videos/product_videos/' . $attribute->video_upload)
-                    : null,
-                'category' => $product->category ? [
-                    'id' => $product->category->id,
-                    'name' => $product->category->category_name,
-                ] : null,
-                'subcategory' => $product->subcategory ? [
-                    'id' => $product->subcategory->id,
-                    'name' => $product->subcategory->subcategory_name,
-                ] : null,
-                'authors' => $product->authors->map(fn($a) => ['id' => $a->id, 'name' => $a->name]),
-                'created_at' => $product->created_at,
+            'id' => $product->id,
+            'product_name' => $product->product_name,
+            'product_isbn' => $product->product_isbn,
+            'product_price' => round($product->product_price),
+            'user_product_price' => $attribute ? round($attribute->user_product_price) : null,
+            'condition' => $product->condition,
+            'old_book_condition' => $attribute && $attribute->condition ? [
+            'id' => $attribute->condition->id,
+            'name' => $attribute->condition->name,
+            'percentage' => $attribute->condition->percentage,
+            ] : null,
+            'status' => $attribute ? $attribute->status : 0,
+            'admin_approved' => $attribute ? $attribute->admin_approved : 0,
+            'stock' => $attribute ? $attribute->stock : 0,
+            'image_urls' => [
+            'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
+            'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
+            'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+            ],
+            'user_old_book_image' => $attribute && $attribute->user_old_book_image
+            ? $basePath . '/large/' . $attribute->user_old_book_image
+            : null,
+            'user_old_book_video' => $attribute && $attribute->video_upload
+            ? url('front/videos/product_videos/' . $attribute->video_upload)
+            : null,
+            'category' => $product->category ? [
+            'id' => $product->category->id,
+            'name' => $product->category->category_name,
+            ] : null,
+            'subcategory' => $product->subcategory ? [
+            'id' => $product->subcategory->id,
+            'name' => $product->subcategory->subcategory_name,
+            ] : null,
+            'authors' => $product->authors->map(fn($a) => ['id' => $a->id, 'name' => $a->name]),
+            'created_at' => $product->created_at,
             ];
         });
 
@@ -187,11 +187,11 @@ class SellBookController extends Controller
                     'status' => $attribute->status,
                     'admin_approved' => $attribute->admin_approved,
                     'user_old_book_image' => $attribute->user_old_book_image
-                        ? $basePath . '/large/' . $attribute->user_old_book_image
-                        : null,
+                    ? $basePath . '/large/' . $attribute->user_old_book_image
+                    : null,
                     'user_old_book_video' => $attribute->video_upload
-                        ? url('front/videos/product_videos/' . $attribute->video_upload)
-                        : null,
+                    ? url('front/videos/product_videos/' . $attribute->video_upload)
+                    : null,
                     'old_book_condition' => $attribute->condition ? [
                         'id' => $attribute->condition->id,
                         'name' => $attribute->condition->name,
@@ -257,7 +257,8 @@ class SellBookController extends Controller
                 if ($userHasIt) {
                     return response()->json(['status' => false, 'message' => 'You have already added this old book.'], 422);
                 }
-            } else {
+            }
+            else {
                 $product = new Product;
                 $message = 'Product added successfully!';
 
@@ -301,7 +302,7 @@ class SellBookController extends Controller
 
                 $authorIds = $request->authors ?? $request->author_id;
                 if (!empty($authorIds)) {
-                    $product->authors()->sync((array) $authorIds);
+                    $product->authors()->sync((array)$authorIds);
                 }
             }
 
@@ -320,7 +321,7 @@ class SellBookController extends Controller
 
             $attribute->old_book_condition_id = $data['old_book_condition_id'] ?? null;
             $attribute->stock = 1;
-            $attribute->product_discount = 0;
+            $attribute->product_discount = 0; // Default, will be updated below if condition exists
             $attribute->admin_approved = 0;
             $attribute->status = 0;
 
@@ -365,13 +366,23 @@ class SellBookController extends Controller
             // Calculate price based on condition
             if (!empty($data['old_book_condition_id'])) {
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
-                if ($condition && $product->product_price > 0) {
-                    $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
-                } else {
-                    $attribute->user_product_price = $product->product_price;
+                if ($condition) {
+                    $attribute->product_discount = $condition->percentage;
+                    if ($product->product_price > 0) {
+                        $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
+                    }
+                    else {
+                        $attribute->user_product_price = $product->product_price;
+                    }
                 }
-            } else {
+                else {
+                    $attribute->user_product_price = $product->product_price;
+                    $attribute->product_discount = 0;
+                }
+            }
+            else {
                 $attribute->user_product_price = $product->product_price;
+                $attribute->product_discount = 0;
             }
 
             $attribute->save();
@@ -391,8 +402,8 @@ class SellBookController extends Controller
                 'type' => 'sell_book_submitted',
                 'title' => 'Sell request submitted',
                 'message' => "Your listing for '{$product->product_name}' has been submitted and is under review. We will notify you once it is approved.",
-                'related_id' => (int) $user->id,
-                'related_type' => \App\Models\User::class,
+                'related_id' => (int)$user->id,
+                'related_type' => \App\Models\User::class ,
                 'is_read' => false,
             ]);
 
@@ -405,7 +416,8 @@ class SellBookController extends Controller
                 ],
             ]);
 
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -496,7 +508,7 @@ class SellBookController extends Controller
 
             $authorIds = $request->authors ?? $request->author_id;
             if (!empty($authorIds)) {
-                $product->authors()->sync((array) $authorIds);
+                $product->authors()->sync((array)$authorIds);
             }
 
             // Update attribute
@@ -545,13 +557,23 @@ class SellBookController extends Controller
             // Recalculate price based on condition
             if (!empty($data['old_book_condition_id'])) {
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
-                if ($condition && $product->product_price > 0) {
-                    $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
-                } else {
-                    $attribute->user_product_price = $product->product_price;
+                if ($condition) {
+                    $attribute->product_discount = $condition->percentage;
+                    if ($product->product_price > 0) {
+                        $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
+                    }
+                    else {
+                        $attribute->user_product_price = $product->product_price;
+                    }
                 }
-            } else {
+                else {
+                    $attribute->user_product_price = $product->product_price;
+                    $attribute->product_discount = 0;
+                }
+            }
+            else {
                 $attribute->user_product_price = $product->product_price;
+                $attribute->product_discount = 0;
             }
 
             $attribute->save();
@@ -565,7 +587,8 @@ class SellBookController extends Controller
                 ],
             ]);
 
-        } catch (\Exception $e) {
+        }
+        catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -640,10 +663,10 @@ class SellBookController extends Controller
         if (!$product && strlen($cleanSearch) > 0) {
             $product = Product::with($relations)
                 ->where(function ($query) use ($isbn, $cleanSearch) {
-                    $query->where('product_isbn', 'like', "%{$isbn}%")
-                        ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
-                        ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
-                })
+                $query->where('product_isbn', 'like', "%{$isbn}%")
+                    ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
+                    ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
+            })
                 ->first();
         }
 
@@ -744,8 +767,9 @@ class SellBookController extends Controller
                     ],
                 ]);
             }
-        } catch (\Exception $e) {
-            // Log or ignore
+        }
+        catch (\Exception $e) {
+        // Log or ignore
         }
 
         return response()->json(['status' => false, 'message' => 'Book not found. Please enter details manually.']);
