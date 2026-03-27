@@ -61,6 +61,12 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
         Route::get('/sell-book/subjects', [SellBookController::class, 'getSubjects'])->name('student.sell-book.subjects');
 
         Route::post('/sell-book', [SellBookController::class, 'store'])->name('student.sell-book.store');
+        
+        Route::post('/sell-book/toggle-sell-faster', [SellBookController::class, 'toggleSellFaster'])->name('student.sell-book.toggle-sell-faster');
+        Route::post('/sell-book/razorpay/create-order', [SellBookController::class, 'createRazorpayOrder'])->name('student.sell-book.razorpay.create-order');
+        Route::post('/sell-book/razorpay/verify-payment', [SellBookController::class, 'verifyPlatformChargePayment'])->name('student.sell-book.razorpay.verify-payment');
+        Route::post('/sell-book/mark-as-sold', [SellBookController::class, 'markAsSold'])->name('student.sell-book.mark-as-sold');
+
         Route::post('/sell-book/{id}', [SellBookController::class, 'store'])->name('student.sell-book.update');
     });
 });

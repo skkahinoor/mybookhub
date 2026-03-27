@@ -8,7 +8,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h4 class="card-title mb-0">Old Book Commission Percentages</h4>
+                            <h4 class="card-title mb-0">Platform Charges For Old Book Sell</h4>
                             @if ($commissionCount < 1)
                                 <a href="{{ route('admin.old_book_commissions.create') }}"
                                    class="btn btn-primary btn-sm">

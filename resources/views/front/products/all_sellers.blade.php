@@ -338,7 +338,7 @@
                                     </div>
                                 </td>
                                 <td class="price-bold">₹{{ number_format($sellerPrice['final_price'], 0) }}</td>
-                                <td>{{ $seller->condition->condition_name ?? 'New' }}</td>
+                                <td>{{ $seller->condition->name ?? 'New' }}</td>
                                 <td class="text-secondary">
                                     @if($distance !== null)
                                         <div style="display: flex; align-items: center; gap: 8px;">

@@ -467,23 +467,31 @@
                                                         @php
                                                             $sellerDisplayName = 'Individual Seller';
                                                             if ($seller->vendor) {
-                                                                // Prioritize personal name over shop name as requested
                                                                 $sellerDisplayName = $seller->vendor->user->name ?? $seller->vendor->vendorbusinessdetails->shop_name ?? 'Vendor';
                                                             } elseif ($seller->user) {
                                                                 $sellerDisplayName = $seller->user->name;
                                                             }
                                                         @endphp
                                                         {{ $sellerDisplayName }}
+
+                                                        @if($seller->contact_details_paid == 1 && $seller->user)
+                                                            <div class="mt-2" style="font-size: 12px; font-weight: normal; color: #4a5568;">
+                                                                <div><i class="fas fa-map-marker-alt"></i> {{ $seller->user->address }}, {{ $seller->user->district->name ?? '' }}, {{ $seller->user->state->name ?? '' }} - {{ $seller->user->pincode }}</div>
+                                                                <div><i class="fas fa-phone"></i> {{ $seller->user->phone }}</div>
+                                                                <div><i class="fas fa-envelope"></i> {{ $seller->user->email }}</div>
+                                                                <div class="mt-1 text-primary"><i class="fas fa-info-circle"></i> Buy Offline directly from seller</div>
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </td>
                                             <td class="price-bold">₹{{ number_format($sellerPrice['final_price'], 0) }}</td>
-                                            <td>{{ $seller->condition->condition_name ?? 'New' }}</td>
+                                            <td>{{ $seller->condition->name ?? 'New' }}</td>
                                             <td class="text-secondary">
                                                 @if($distance !== null)
                                                     <div style="display: flex; align-items: center; gap: 8px;">
                                                         <span>{{ $distance < 1 ? round($distance * 1000) . ' m' : round($distance, 1) . ' km' }}</span>
-                                                        <a href="https://www.google.com/maps/dir/?api=1&origin={{ $userLat }},{{ $userLng }}&destination={{ $seller->vendor->location }}" target="_blank" class="btn-directions" title="Get Directions">
+                                                        <a href="https://www.google.com/maps/dir/?api=1&origin={{ $userLat }},{{ $userLng }}&destination={{ $seller->vendor->location ?? ($seller->user->latitude . ',' . $seller->user->longitude) }}" target="_blank" class="btn-directions" title="Get Directions">
                                                             <i class="fas fa-directions"></i>
                                                         </a>
                                                     </div>
@@ -492,12 +500,16 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <form action="{{ url('cart/add') }}" method="POST">
-                                                    @csrf
-                                                    <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
-                                                    <input type="hidden" name="quantity" value="1">
-                                                    <button type="submit" class="btn-buy-now">Buy Now</button>
-                                                </form>
+                                                @if($seller->contact_details_paid == 1)
+                                                    <button class="btn btn-primary btn-sm w-100" style="font-size: 13px; font-weight: 700;" disabled>Contact Above</button>
+                                                @else
+                                                    <form action="{{ url('cart/add') }}" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
+                                                        <input type="hidden" name="quantity" value="1">
+                                                        <button type="submit" class="btn-buy-now">Buy Now</button>
+                                                    </form>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty

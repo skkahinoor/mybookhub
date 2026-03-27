@@ -10,6 +10,7 @@ use App\Models\Edition;
 use App\Models\HeaderLogo;
 use App\Models\Language;
 use App\Models\Notification;
+use App\Models\OldBookCommission;
 use App\Models\OldBookCondition;
 use App\Models\Product;
 use App\Models\ProductsAttribute;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\View;
 use Intervention\Image\Facades\Image;
+use Razorpay\Api\Api;
 
 class SellBookController extends Controller
 {
@@ -35,12 +37,11 @@ class SellBookController extends Controller
         $headerLogo = HeaderLogo::first();
         $user_id = Auth::id();
 
-        // Fetch products that this user has added attributes for
-        $userProducts = Product::whereHas('attributes', function ($q) use ($user_id) {
-            $q->where('user_id', $user_id);
-        })->with(['attributes' => function ($q) use ($user_id) {
-            $q->where('user_id', $user_id);
-        }, 'category'])->orderBy('created_at', 'desc')->get();
+        // Fetch all listings (attributes) for this user separately
+        $userProducts = ProductsAttribute::with(['product', 'product.category'])
+            ->where('user_id', $user_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         // Assuming user.sell-book.index can handle this $userProducts variable, or we update the view too.
         return view('user.sell-book.index', compact('userProducts', 'logos', 'headerLogo'));
@@ -184,17 +185,18 @@ class SellBookController extends Controller
                 $product = $existingProduct;
                 $message = 'Old book added successfully from existing records!';
 
-                // Check if user already added this product
+                // Check if user already added this product AND it's not yet sold
                 $userHasIt = ProductsAttribute::where('product_id', $product->id)
                     ->where('user_id', $user->id)
+                    ->where('is_sold', 0) // Only block if they have an active/unsold listing
                     ->first();
 
                 if ($userHasIt) {
                     if ($request->ajax()) {
-                        return response()->json(['status' => false, 'message' => 'You have already added this old book.'], 422);
+                        return response()->json(['status' => false, 'message' => 'You have already added this old book and it is currently listed for sale.'], 422);
                     }
 
-                    return redirect()->back()->with('error_message', 'You have already added this old book.');
+                    return redirect()->back()->with('error_message', 'You have already added this old book and it is currently listed for sale.');
                 }
             } else {
                 // ==========================================
@@ -250,6 +252,7 @@ class SellBookController extends Controller
             // ==========================================
             $attribute = ProductsAttribute::where('product_id', $product->id)
                 ->where('user_id', $user->id)
+                ->where('is_sold', 0) // Only update if there is an active (unsold) listing
                 ->first();
 
             if (! $attribute) {
@@ -561,4 +564,146 @@ class SellBookController extends Controller
 
         return response()->json($subjects);
     }
+
+    /**
+     * AJAX: Toggle "Sell Faster" (show contact details)
+     */
+    public function toggleSellFaster(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = $request->all();
+            $attributeId = $data['attribute_id'];
+            $showContact = $data['show_contact'];
+
+            $attribute = ProductsAttribute::where('user_id', Auth::id())->find($attributeId);
+            if (! $attribute) {
+                return response()->json(['status' => false, 'message' => 'Attribute not found.']);
+            }
+
+            $attribute->show_contact = $showContact;
+
+            // Calculate platform charge if enabling and not yet paid
+            if ($showContact == 1 && $attribute->contact_details_paid == 0) {
+                $commission = \App\Models\OldBookCommission::first();
+                $percentage = $commission ? $commission->percentage : 0;
+                $originalPrice = $attribute->product->product_price ?? 0;
+                $attribute->platform_charge = ($originalPrice * $percentage) / 100;
+            }
+
+            $attribute->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => $showContact == 1 ? 'Sell faster option enabled. Please pay the platform charge.' : 'Sell faster option disabled.',
+                'platform_charge' => number_format($attribute->platform_charge, 2),
+            ]);
+        }
+    }
+
+    /**
+     * AJAX: Create Razorpay Order for Platform Charge
+     */
+    public function createRazorpayOrder(Request $request)
+    {
+        if ($request->ajax()) {
+            $attributeId = $request->attribute_id;
+            $attribute = ProductsAttribute::with('product')->where('user_id', Auth::id())->find($attributeId);
+
+            if (!$attribute) {
+                return response()->json(['status' => false, 'message' => 'Attribute not found.']);
+            }
+
+            if ($attribute->platform_charge <= 0) {
+                return response()->json(['status' => false, 'message' => 'Invalid platform charge amount.']);
+            }
+
+            try {
+                $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+
+                $razorpayOrder = $api->order->create([
+                    'receipt' => 'platform_charge_' . $attribute->id,
+                    'amount' => round($attribute->platform_charge * 100), // in paise
+                    'currency' => 'INR'
+                ]);
+
+                // Save Order ID
+                $attribute->razorpay_order_id = $razorpayOrder['id'];
+                $attribute->save();
+
+                return response()->json([
+                    'status' => true,
+                    'order_id' => $razorpayOrder['id'],
+                    'amount' => $attribute->platform_charge,
+                    'key' => env('RAZORPAY_KEY_ID'),
+                    'name' => Auth::user()->name,
+                    'email' => Auth::user()->email,
+                    'phone' => Auth::user()->phone,
+                    'description' => "Platform Charge for " . $attribute->product->product_name
+                ]);
+            } catch (\Exception $e) {
+                return response()->json(['status' => false, 'message' => 'Razorpay Error: ' . $e->getMessage()]);
+            }
+        }
+    }
+
+    /**
+     * AJAX: Verify Razorpay Payment for Platform Charge
+     */
+    public function verifyPlatformChargePayment(Request $request)
+    {
+        if ($request->ajax()) {
+            $attributeId = $request->attribute_id;
+            $razorpay_payment_id = $request->razorpay_payment_id;
+            $razorpay_order_id = $request->razorpay_order_id;
+            $razorpay_signature = $request->razorpay_signature;
+
+            $attribute = ProductsAttribute::where('user_id', Auth::id())->find($attributeId);
+
+            if (!$attribute) {
+                return response()->json(['status' => false, 'message' => 'Attribute not found.']);
+            }
+
+            // Verify Signature
+            try {
+                $api = new Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+                $attributes = [
+                    'razorpay_order_id' => $razorpay_order_id,
+                    'razorpay_payment_id' => $razorpay_payment_id,
+                    'razorpay_signature' => $razorpay_signature
+                ];
+                $api->utility->verifyPaymentSignature($attributes);
+
+                // Payment verified successfully
+                $attribute->contact_details_paid = 1;
+                $attribute->razorpay_payment_id = $razorpay_payment_id;
+                $attribute->save();
+
+                return response()->json(['status' => true, 'message' => 'Payment verified and platform charge paid successfully!']);
+            } catch (\Exception $e) {
+                return response()->json(['status' => false, 'message' => 'Payment verification failed: ' . $e->getMessage()]);
+            }
+        }
+    }
+
+    /**
+     * AJAX: Mark book as sold
+     */
+    public function markAsSold(Request $request)
+    {
+        if ($request->ajax()) {
+            $attributeId = $request->attribute_id;
+            $attribute = ProductsAttribute::where('user_id', Auth::id())->find($attributeId);
+
+            if (! $attribute) {
+                return response()->json(['status' => false, 'message' => 'Attribute not found.']);
+            }
+
+            $attribute->is_sold = 1;
+            $attribute->status = 0; // Hide from frontend after sold
+            $attribute->save();
+
+            return response()->json(['status' => true, 'message' => 'Book marked as sold!']);
+        }
+    }
 }
+

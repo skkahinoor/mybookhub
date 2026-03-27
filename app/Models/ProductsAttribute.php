@@ -39,7 +39,13 @@ class ProductsAttribute extends Model
         // Flags
         'is_featured',
         'is_bestseller',
-        'video_upload'
+        'video_upload',
+
+        // Sell Faster Additions
+        'show_contact',
+        'contact_details_paid',
+        'platform_charge',
+        'is_sold'
     ];
 
     /**
