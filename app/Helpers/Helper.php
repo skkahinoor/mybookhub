@@ -30,6 +30,12 @@ class Helper
             // Check if ffmpeg is likely to be available
             $ffmpegPath = env('FFMPEG_PATH', 'ffmpeg');
 
+            // Check if exec() is available (disabled on most shared hosting)
+            if (!function_exists('exec') || in_array('exec', array_map('trim', explode(',', ini_get('disable_functions'))))) {
+                \Log::warning("exec() is disabled on this server. Video compression unavailable.");
+                return false;
+            }
+
             // Basic check for Windows/Linux
             $command = (PHP_OS_FAMILY === 'Windows') ? "where $ffmpegPath" : "which $ffmpegPath";
             exec($command, $output, $returnVar);

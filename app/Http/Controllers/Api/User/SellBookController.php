@@ -216,7 +216,7 @@ class SellBookController extends Controller
                 'old_book_condition_id' => 'required|exists:old_book_conditions,id',
                 'language_id' => 'required|exists:languages,id',
                 'user_old_book_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-                'video_upload' => 'nullable|mimes:mp4,mov,avi,wmv|max:5120',
+                'video_upload' => 'nullable|mimes:mp4,mov,avi,wmv|max:51200',
             ]);
 
             if ($validator->fails()) {
