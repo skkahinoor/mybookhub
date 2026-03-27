@@ -60,6 +60,10 @@ class SellBookController extends Controller
             'status' => $attribute ? $attribute->status : 0,
             'admin_approved' => $attribute ? $attribute->admin_approved : 0,
             'stock' => $attribute ? $attribute->stock : 0,
+            'show_contact' => $attribute ? $attribute->show_contact : 0,
+            'contact_details_paid' => $attribute ? $attribute->contact_details_paid : 0,
+            'platform_charge' => $attribute ? $attribute->platform_charge : 0,
+            'is_sold' => $attribute ? $attribute->is_sold : 0,
             'image_urls' => [
             'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
             'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
@@ -186,6 +190,10 @@ class SellBookController extends Controller
                     'stock' => $attribute->stock,
                     'status' => $attribute->status,
                     'admin_approved' => $attribute->admin_approved,
+                    'show_contact' => $attribute->show_contact,
+                    'contact_details_paid' => $attribute->contact_details_paid,
+                    'platform_charge' => $attribute->platform_charge,
+                    'is_sold' => $attribute->is_sold,
                     'user_old_book_image' => $attribute->user_old_book_image
                     ? $basePath . '/large/' . $attribute->user_old_book_image
                     : null,
@@ -825,5 +833,163 @@ class SellBookController extends Controller
                 'cashback_amount' => 0
             ]
         ]);
+    }
+
+    public function toggleSellFaster(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'attribute_id' => 'required|exists:products_attributes,id',
+            'show_contact' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $attributeId = $request->attribute_id;
+        $showContact = $request->show_contact;
+
+        $attribute = ProductsAttribute::where('user_id', Auth::id())->find($attributeId);
+        if (!$attribute) {
+            return response()->json(['status' => false, 'message' => 'Attribute not found.'], 404);
+        }
+
+        $attribute->show_contact = $showContact;
+
+        // Calculate platform charge if enabling and not yet paid
+        if ($showContact == 1 && $attribute->contact_details_paid == 0) {
+            $commission = \App\Models\OldBookCommission::first();
+            $percentage = $commission ? $commission->percentage : 0;
+            $originalPrice = $attribute->product->product_price ?? 0;
+            $attribute->platform_charge = ($originalPrice * $percentage) / 100;
+        }
+
+        $attribute->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => $showContact == 1 ? 'Sell faster option enabled. Please pay the platform charge.' : 'Sell faster option disabled.',
+            'platform_charge' => number_format($attribute->platform_charge, 2),
+        ]);
+    }
+
+    public function createRazorpayOrder(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'attribute_id' => 'required|exists:products_attributes,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $attributeId = $request->attribute_id;
+        $attribute = ProductsAttribute::with('product')->where('user_id', Auth::id())->find($attributeId);
+
+        if (!$attribute) {
+            return response()->json(['status' => false, 'message' => 'Attribute not found.'], 404);
+        }
+
+        if ($attribute->platform_charge <= 0) {
+            return response()->json(['status' => false, 'message' => 'Invalid platform charge amount.'], 400);
+        }
+
+        try {
+            $api = new \Razorpay\Api\Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+
+            $razorpayOrder = $api->order->create([
+                'receipt' => 'platform_charge_' . $attribute->id,
+                'amount' => round($attribute->platform_charge * 100), // in paise
+                'currency' => 'INR'
+            ]);
+
+            // Save Order ID
+            $attribute->razorpay_order_id = $razorpayOrder['id'];
+            $attribute->save();
+
+            return response()->json([
+                'status' => true,
+                'order_id' => $razorpayOrder['id'],
+                'amount' => $attribute->platform_charge,
+                'key' => env('RAZORPAY_KEY_ID'),
+                'name' => Auth::user()->name,
+                'email' => Auth::user()->email,
+                'phone' => Auth::user()->phone,
+                'description' => "Platform Charge for " . $attribute->product->product_name
+            ]);
+        }
+        catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => 'Razorpay Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function verifyPlatformChargePayment(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'attribute_id' => 'required|exists:products_attributes,id',
+            'razorpay_payment_id' => 'required|string',
+            'razorpay_order_id' => 'required|string',
+            'razorpay_signature' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $attributeId = $request->attribute_id;
+        $razorpay_payment_id = $request->razorpay_payment_id;
+        $razorpay_order_id = $request->razorpay_order_id;
+        $razorpay_signature = $request->razorpay_signature;
+
+        $attribute = ProductsAttribute::where('user_id', Auth::id())->find($attributeId);
+
+        if (!$attribute) {
+            return response()->json(['status' => false, 'message' => 'Attribute not found.'], 404);
+        }
+
+        // Verify Signature
+        try {
+            $api = new \Razorpay\Api\Api(env('RAZORPAY_KEY_ID'), env('RAZORPAY_KEY_SECRET'));
+            $attributes = [
+                'razorpay_order_id' => $razorpay_order_id,
+                'razorpay_payment_id' => $razorpay_payment_id,
+                'razorpay_signature' => $razorpay_signature
+            ];
+            $api->utility->verifyPaymentSignature($attributes);
+
+            // Payment verified successfully
+            $attribute->contact_details_paid = 1;
+            $attribute->razorpay_payment_id = $razorpay_payment_id;
+            $attribute->save();
+
+            return response()->json(['status' => true, 'message' => 'Payment verified and platform charge paid successfully!']);
+        }
+        catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => 'Payment verification failed: ' . $e->getMessage()], 400);
+        }
+    }
+
+    public function markAsSold(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'attribute_id' => 'required|exists:products_attributes,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $attributeId = $request->attribute_id;
+        $attribute = ProductsAttribute::where('user_id', Auth::id())->find($attributeId);
+
+        if (!$attribute) {
+            return response()->json(['status' => false, 'message' => 'Attribute not found.'], 404);
+        }
+
+        $attribute->is_sold = 1;
+        $attribute->status = 0; // Hide from frontend after sold
+        $attribute->save();
+
+        return response()->json(['status' => true, 'message' => 'Book marked as sold!']);
     }
 }

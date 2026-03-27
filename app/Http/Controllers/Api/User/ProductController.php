@@ -493,6 +493,10 @@ class ProductController extends Controller
                 'attribute_id' => $attr->id,
                 'stock' => $attr->stock,
                 'sku' => $attr->sku,
+                'show_contact' => $attr->show_contact,
+                'contact_details_paid' => $attr->contact_details_paid,
+                'platform_charge' => $attr->platform_charge,
+                'is_sold' => $attr->is_sold,
                 'price_details' => $priceDetails,
                 'old_book_condition' => $attr->condition ? [
                     'id' => $attr->condition->id,
@@ -719,6 +723,10 @@ class ProductController extends Controller
                     'stock' => $attribute->stock,
                     'discount' => $attribute->product_discount,
                     'sku' => $attribute->sku,
+                    'show_contact' => $attribute->show_contact,
+                    'contact_details_paid' => $attribute->contact_details_paid,
+                    'platform_charge' => $attribute->platform_charge,
+                    'is_sold' => $attribute->is_sold,
                     'old_book_condition' => $attribute->condition ? [
                         'id' => $attribute->condition->id,
                         'name' => $attribute->condition->name,
