@@ -70,7 +70,7 @@ class HomeController extends Controller
 
         return response()->json([
             'status' => true,
-            'data'   => $sections
+            'data' => $sections
         ]);
     }
 
@@ -82,7 +82,7 @@ class HomeController extends Controller
 
         return response()->json([
             'status' => true,
-            'data'   => $institutions
+            'data' => $institutions
         ]);
     }
 
@@ -90,11 +90,12 @@ class HomeController extends Controller
     {
         $institutionClasses = InstitutionClass::with('subcategory')
             ->where('institution_id', $institution_id)
+            ->orderBy('subcategory_name', 'asc')
             ->get();
 
         return response()->json([
             'status' => true,
-            'data'   => $institutionClasses
+            'data' => $institutionClasses
         ]);
     }
 
@@ -106,6 +107,7 @@ class HomeController extends Controller
             ->get()
             ->pluck('category')
             ->unique('id')
+            ->sortBy('category_name')
             ->values();
 
         return response()->json([
@@ -122,6 +124,7 @@ class HomeController extends Controller
             ->get()
             ->pluck('subcategory')
             ->unique('id')
+            ->sortBy('subcategory_name')
             ->values();
 
         return response()->json([
@@ -154,7 +157,7 @@ class HomeController extends Controller
 
         return response()->json([
             'status' => true,
-            'data'   => $booktype
+            'data' => $booktype
         ]);
     }
 
@@ -166,7 +169,7 @@ class HomeController extends Controller
 
         return response()->json([
             'status' => true,
-            'data'   => $language
+            'data' => $language
         ]);
     }
 
