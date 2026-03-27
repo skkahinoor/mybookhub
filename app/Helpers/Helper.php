@@ -56,11 +56,11 @@ class Helper
             $video = $ffmpeg->open($inputPath);
             $format = new \FFMpeg\Format\Video\X264();
             $format->setVideoCodec('libx264')
-                ->setKiloBitrate(1200) // Compressed bitrate for ~5MB for 30s
+                ->setKiloBitrate(8000) // High quality bitrate for ~15MB for 15s (max 50MB allowed)
                 ->setAudioCodec('aac');
 
-            // Resize to max 480p width to save size while keeping quality decent for proof
-            $video->filters()->resize(new \FFMpeg\Coordinate\Dimension(854, 480))->synchronize();
+            // Resize to 240p to keep file size small
+            $video->filters()->resize(new \FFMpeg\Coordinate\Dimension(426, 240))->synchronize();
 
             $video->save($format, $outputPath);
             return true;
