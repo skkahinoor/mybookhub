@@ -29,7 +29,7 @@ class ProfileController extends Controller
                 "recipients" => [
                     [
                         "mobiles" => $to,
-                        "var1"    => $otp
+                        "var1" => $otp
                     ]
                 ]
             ];
@@ -45,8 +45,7 @@ class ProfileController extends Controller
 
             return true;
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
 
             Log::error("MSG91 ERROR: " . $e->getMessage());
             return false;
@@ -79,8 +78,8 @@ class ProfileController extends Controller
         $otp = rand(100000, 999999);
 
         DB::table('otps')->updateOrInsert(
-        ['phone' => $request->phone],
-        ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+            ['phone' => $request->phone],
+            ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
         );
 
         $sendStatus = $this->sendSMS($request->phone, $otp);
@@ -419,4 +418,49 @@ class ProfileController extends Controller
         ], 200);
     }
 
+    public function updateBankInfo(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not authenticated',
+            ], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'bank_name' => 'nullable|string|max:255',
+            'account_holder_name' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:255',
+            'ifsc_code' => 'nullable|string|max:255',
+            'upi_id' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $userToUpdate = User::find($user->id);
+
+        $fields = ['bank_name', 'account_holder_name', 'account_number', 'ifsc_code', 'upi_id'];
+
+        foreach ($fields as $field) {
+            if ($request->has($field)) {
+                $userToUpdate->$field = $request->input($field);
+            }
+        }
+
+        $userToUpdate->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Bank details updated successfully',
+            'data' => clone $this->getUpdatedUser($user->id)
+        ], 200);
+    }
 }
