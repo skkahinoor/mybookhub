@@ -986,6 +986,15 @@ class SellBookController extends Controller
             return response()->json(['status' => false, 'message' => 'Attribute not found.'], 404);
         }
 
+        // Delete video file if exists
+        if (!empty($attribute->video_upload)) {
+            $videoPath = public_path('front/videos/product_videos/' . $attribute->video_upload);
+            if (file_exists($videoPath)) {
+                unlink($videoPath);
+            }
+            $attribute->video_upload = null;
+        }
+
         $attribute->is_sold = 1;
         $attribute->status = 0; // Hide from frontend after sold
         $attribute->save();
