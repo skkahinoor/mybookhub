@@ -118,6 +118,11 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-link" data-toggle="tab" href="#tab-bank" role="tab">
+                                        <i class="mdi mdi-bank-outline mr-1"></i> Bank details
+                                    </a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-link" data-toggle="tab" href="#tab-password" role="tab">
                                         <i class="mdi mdi-lock-outline mr-1"></i> Change password
                                     </a>
@@ -252,7 +257,50 @@
                                             information.
                                         </div>
                                     </div>
-                                    {{-- Change password tab (same form) --}}
+                                    {{-- Bank info tab --}}
+                                    <div class="tab-pane fade" id="tab-bank" role="tabpanel">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label for="bank-name">Bank Name</label>
+                                                <input type="text" class="form-control" id="bank-name"
+                                                    name="bank_name" placeholder="e.g. State Bank of India"
+                                                    value="{{ Auth::user()->bank_name ?? '' }}">
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label for="account-holder">Account Holder Name</label>
+                                                <input type="text" class="form-control" id="account-holder"
+                                                    name="account_holder_name" placeholder="Name as per bank records"
+                                                    value="{{ Auth::user()->account_holder_name ?? '' }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label for="account-number">Account Number</label>
+                                                <input type="text" class="form-control" id="account-number"
+                                                    name="account_number" placeholder="Enter account number"
+                                                    value="{{ Auth::user()->account_number ?? '' }}">
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label for="ifsc-code">IFSC Code</label>
+                                                <input type="text" class="form-control" id="ifsc-code"
+                                                    name="ifsc_code" placeholder="e.g. SBIN0001234"
+                                                    value="{{ Auth::user()->ifsc_code ?? '' }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="upi-id">UPI ID (VPA)</label>
+                                            <input type="text" class="form-control" id="upi-id"
+                                                name="upi_id" placeholder="e.g. username@okaxis"
+                                                value="{{ Auth::user()->upi_id ?? '' }}">
+                                        </div>
+
+                                        <div class="alert alert-info small mt-3 mb-0">
+                                            <i class="mdi mdi-information-outline mr-1"></i>
+                                            Your bank details are securely stored and used only for wallet withdrawals or refunds.
+                                        </div>
+                                    </div>
                                     <div class="tab-pane fade" id="tab-password" role="tabpanel">
                                         <p class="text-muted small mb-3">
                                             Ensure your new password is at least 8 characters and uses a mix of letters,

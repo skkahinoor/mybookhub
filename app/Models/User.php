@@ -45,7 +45,12 @@ class User extends Authenticatable
         'role_id',
         'wallet_balance',
         'is_wallet_credited',
-        'institution_classes_id'
+        'institution_classes_id',
+        'bank_name',
+        'account_holder_name',
+        'account_number',
+        'ifsc_code',
+        'upi_id'
     ];
 
     /**
