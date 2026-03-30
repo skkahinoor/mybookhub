@@ -68,4 +68,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/sell-books/{id}', [SellBookController::class, 'show']);
     Route::post('/user/sell-books/{id}', [SellBookController::class, 'update']);
     Route::delete('/user/sell-books/{id}', [SellBookController::class, 'destroy']);
+    
+    // Sell Faster / Platform Charge APIs
+    Route::post('/user/sell-books-faster/toggle', [SellBookController::class, 'toggleSellFaster']);
+    Route::post('/user/sell-books-faster/create-order', [SellBookController::class, 'createRazorpayOrder']);
+    Route::post('/user/sell-books-faster/verify-payment', [SellBookController::class, 'verifyPlatformChargePayment']);
+    Route::post('/user/sell-books-faster/mark-sold', [SellBookController::class, 'markAsSold']);
 });
