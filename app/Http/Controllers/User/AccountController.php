@@ -41,6 +41,8 @@ class AccountController extends Controller
             'state_id'    => $user->state_id ?? null,
             'district_id' => $user->district_id ?? null,
             'block_id'    => $user->block_id ?? null,
+            'bank_name'   => $user->bank_name ?? null,
+            'upi_id'      => $user->upi_id ?? null,
         ];
 
         $totalFields  = count($completionFields);
@@ -69,6 +71,11 @@ class AccountController extends Controller
                     'institution_id' => 'nullable|exists:institution_managements,id',
                     'board_id'       => 'nullable|exists:categories,id',
                     'institution_classes_id' => 'nullable|exists:institution_classes,id',
+                    'bank_name'      => 'nullable|string|max:100',
+                    'account_holder_name' => 'nullable|string|max:100',
+                    'account_number' => 'nullable|string|max:30',
+                    'ifsc_code'      => 'nullable|string|max:20',
+                    'upi_id'         => 'nullable|string|max:100',
                 ]);
 
                 $user = User::where('id', Auth::id())->first();
@@ -84,6 +91,11 @@ class AccountController extends Controller
                     'address'     => $validated['address'] ?? null,
                     'institution_id' => $validated['institution_id'] ?? $user->institution_id,
                     'institution_classes_id' => $validated['institution_classes_id'] ?? $user->institution_classes_id,
+                    'bank_name'   => $validated['bank_name'] ?? null,
+                    'account_holder_name' => $validated['account_holder_name'] ?? null,
+                    'account_number' => $validated['account_number'] ?? null,
+                    'ifsc_code'   => $validated['ifsc_code'] ?? null,
+                    'upi_id'      => $validated['upi_id'] ?? null,
                 ]);
 
                 // Sync academic profile if institution or class changed
@@ -122,6 +134,8 @@ class AccountController extends Controller
                     'state_id'    => $user->state_id ?? null,
                     'district_id' => $user->district_id ?? null,
                     'block_id'    => $user->block_id ?? null,
+                    'bank_name'   => $user->bank_name ?? null,
+                    'upi_id'      => $user->upi_id ?? null,
                 ];
 
                 $totalFields  = count($completionFields);

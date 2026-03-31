@@ -47,6 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/profile/basic-info', [ProfileController::class, 'updateBasicInfo']);
     Route::post('/user/profile/academic-info', [ProfileController::class, 'updateAcademicInfo']);
     Route::post('/user/profile/address', [ProfileController::class, 'updateAddress']);
+    Route::post('/user/profile/bank-info', [ProfileController::class, 'updateBankInfo']);
     Route::post('/user/change-password', [ProfileController::class, 'changePassword']);
 
     Route::post('/user/checkout', [ProductController::class, 'checkout']);

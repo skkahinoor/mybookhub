@@ -35,56 +35,58 @@ class SellBookController extends Controller
         $userProducts = Product::whereHas('attributes', function ($q) use ($user) {
             $q->where('user_id', $user->id);
         })->with([
-            'attributes' => function ($q) use ($user) {
-            $q->where('user_id', $user->id)->with('condition');
-        },
-            'category',
-            'subcategory',
-            'authors'
-        ])->orderBy('created_at', 'desc')->get();
+                    'attributes' => function ($q) use ($user) {
+                        $q->where('user_id', $user->id)->with('condition');
+                    },
+                    'category',
+                    'subcategory',
+                    'authors'
+                ])->orderBy('created_at', 'desc')->get();
 
         $products = $userProducts->map(function ($product) use ($basePath) {
             $attribute = $product->attributes->first();
+            $priceDetails = $attribute ? Product::getDiscountPriceDetailsByAttribute($attribute->id) : null;
+
             return [
-            'id' => $product->id,
-            'product_name' => $product->product_name,
-            'product_isbn' => $product->product_isbn,
-            'product_price' => round($product->product_price),
-            'user_product_price' => $attribute ? round($attribute->user_product_price) : null,
-            'condition' => $product->condition,
-            'old_book_condition' => $attribute && $attribute->condition ? [
-            'id' => $attribute->condition->id,
-            'name' => $attribute->condition->name,
-            'percentage' => $attribute->condition->percentage,
-            ] : null,
-            'status' => $attribute ? $attribute->status : 0,
-            'admin_approved' => $attribute ? $attribute->admin_approved : 0,
-            'stock' => $attribute ? $attribute->stock : 0,
-            'show_contact' => $attribute ? $attribute->show_contact : 0,
-            'contact_details_paid' => $attribute ? $attribute->contact_details_paid : 0,
-            'platform_charge' => $attribute ? $attribute->platform_charge : 0,
-            'is_sold' => $attribute ? $attribute->is_sold : 0,
-            'image_urls' => [
-            'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-            'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-            'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
-            ],
-            'user_old_book_image' => $attribute && $attribute->user_old_book_image
-            ? $basePath . '/large/' . $attribute->user_old_book_image
-            : null,
-            'user_old_book_video' => $attribute && $attribute->video_upload
-            ? url('front/videos/product_videos/' . $attribute->video_upload)
-            : null,
-            'category' => $product->category ? [
-            'id' => $product->category->id,
-            'name' => $product->category->category_name,
-            ] : null,
-            'subcategory' => $product->subcategory ? [
-            'id' => $product->subcategory->id,
-            'name' => $product->subcategory->subcategory_name,
-            ] : null,
-            'authors' => $product->authors->map(fn($a) => ['id' => $a->id, 'name' => $a->name]),
-            'created_at' => $product->created_at,
+                'id' => $product->id,
+                'product_name' => $product->product_name,
+                'product_isbn' => $product->product_isbn,
+                'product_price' => $priceDetails ? $priceDetails['product_price'] : round($product->product_price),
+                'user_product_price' => $priceDetails ? $priceDetails['final_price'] : ($attribute ? round($attribute->user_product_price) : null),
+                'condition' => $product->condition,
+                'old_book_condition' => $attribute && $attribute->condition ? [
+                    'id' => $attribute->condition->id,
+                    'name' => $attribute->condition->name,
+                    'percentage' => $attribute->condition->percentage,
+                ] : null,
+                'status' => $attribute ? $attribute->status : 0,
+                'admin_approved' => $attribute ? $attribute->admin_approved : 0,
+                'stock' => $attribute ? $attribute->stock : 0,
+                'show_contact' => $attribute ? $attribute->show_contact : 0,
+                'contact_details_paid' => $attribute ? $attribute->contact_details_paid : 0,
+                'platform_charge' => $attribute ? $attribute->platform_charge : 0,
+                'is_sold' => $attribute ? $attribute->is_sold : 0,
+                'image_urls' => [
+                    'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
+                    'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
+                    'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                ],
+                'user_old_book_image' => $attribute && $attribute->user_old_book_image
+                    ? $basePath . '/large/' . $attribute->user_old_book_image
+                    : null,
+                'user_old_book_video' => $attribute && $attribute->video_upload
+                    ? url('front/videos/product_videos/' . $attribute->video_upload)
+                    : null,
+                'category' => $product->category ? [
+                    'id' => $product->category->id,
+                    'name' => $product->category->category_name,
+                ] : null,
+                'subcategory' => $product->subcategory ? [
+                    'id' => $product->subcategory->id,
+                    'name' => $product->subcategory->subcategory_name,
+                ] : null,
+                'authors' => $product->authors->map(fn($a) => ['id' => $a->id, 'name' => $a->name]),
+                'created_at' => $product->created_at,
             ];
         });
 
@@ -195,16 +197,17 @@ class SellBookController extends Controller
                     'platform_charge' => $attribute->platform_charge,
                     'is_sold' => $attribute->is_sold,
                     'user_old_book_image' => $attribute->user_old_book_image
-                    ? $basePath . '/large/' . $attribute->user_old_book_image
-                    : null,
+                        ? $basePath . '/large/' . $attribute->user_old_book_image
+                        : null,
                     'user_old_book_video' => $attribute->video_upload
-                    ? url('front/videos/product_videos/' . $attribute->video_upload)
-                    : null,
+                        ? url('front/videos/product_videos/' . $attribute->video_upload)
+                        : null,
                     'old_book_condition' => $attribute->condition ? [
                         'id' => $attribute->condition->id,
                         'name' => $attribute->condition->name,
                         'percentage' => $attribute->condition->percentage,
                     ] : null,
+                    'price_details' => Product::getDiscountPriceDetailsByAttribute($attribute->id),
                 ],
             ],
         ]);
@@ -258,6 +261,12 @@ class SellBookController extends Controller
                 $product = $existingOldProduct;
                 $message = 'Old book added successfully from existing records!';
 
+                // Update base price with current user input to ensure correct calculation
+                if (isset($data['product_price'])) {
+                    $product->product_price = $data['product_price'];
+                    $product->save();
+                }
+
                 $userHasIt = ProductsAttribute::where('product_id', $product->id)
                     ->where('user_id', $user->id)
                     ->first();
@@ -265,8 +274,7 @@ class SellBookController extends Controller
                 if ($userHasIt) {
                     return response()->json(['status' => false, 'message' => 'You have already added this old book.'], 422);
                 }
-            }
-            else {
+            } else {
                 $product = new Product;
                 $message = 'Product added successfully!';
 
@@ -310,7 +318,7 @@ class SellBookController extends Controller
 
                 $authorIds = $request->authors ?? $request->author_id;
                 if (!empty($authorIds)) {
-                    $product->authors()->sync((array)$authorIds);
+                    $product->authors()->sync((array) $authorIds);
                 }
             }
 
@@ -378,17 +386,14 @@ class SellBookController extends Controller
                     $attribute->product_discount = $condition->percentage;
                     if ($product->product_price > 0) {
                         $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
-                    }
-                    else {
+                    } else {
                         $attribute->user_product_price = $product->product_price;
                     }
-                }
-                else {
+                } else {
                     $attribute->user_product_price = $product->product_price;
                     $attribute->product_discount = 0;
                 }
-            }
-            else {
+            } else {
                 $attribute->user_product_price = $product->product_price;
                 $attribute->product_discount = 0;
             }
@@ -410,8 +415,8 @@ class SellBookController extends Controller
                 'type' => 'sell_book_submitted',
                 'title' => 'Sell request submitted',
                 'message' => "Your listing for '{$product->product_name}' has been submitted and is under review. We will notify you once it is approved.",
-                'related_id' => (int)$user->id,
-                'related_type' => \App\Models\User::class ,
+                'related_id' => (int) $user->id,
+                'related_type' => \App\Models\User::class,
                 'is_read' => false,
             ]);
 
@@ -424,8 +429,7 @@ class SellBookController extends Controller
                 ],
             ]);
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -516,7 +520,7 @@ class SellBookController extends Controller
 
             $authorIds = $request->authors ?? $request->author_id;
             if (!empty($authorIds)) {
-                $product->authors()->sync((array)$authorIds);
+                $product->authors()->sync((array) $authorIds);
             }
 
             // Update attribute
@@ -569,17 +573,14 @@ class SellBookController extends Controller
                     $attribute->product_discount = $condition->percentage;
                     if ($product->product_price > 0) {
                         $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
-                    }
-                    else {
+                    } else {
                         $attribute->user_product_price = $product->product_price;
                     }
-                }
-                else {
+                } else {
                     $attribute->user_product_price = $product->product_price;
                     $attribute->product_discount = 0;
                 }
-            }
-            else {
+            } else {
                 $attribute->user_product_price = $product->product_price;
                 $attribute->product_discount = 0;
             }
@@ -595,8 +596,7 @@ class SellBookController extends Controller
                 ],
             ]);
 
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -671,10 +671,10 @@ class SellBookController extends Controller
         if (!$product && strlen($cleanSearch) > 0) {
             $product = Product::with($relations)
                 ->where(function ($query) use ($isbn, $cleanSearch) {
-                $query->where('product_isbn', 'like', "%{$isbn}%")
-                    ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
-                    ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
-            })
+                    $query->where('product_isbn', 'like', "%{$isbn}%")
+                        ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
+                        ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
+                })
                 ->first();
         }
 
@@ -775,9 +775,8 @@ class SellBookController extends Controller
                     ],
                 ]);
             }
-        }
-        catch (\Exception $e) {
-        // Log or ignore
+        } catch (\Exception $e) {
+            // Log or ignore
         }
 
         return response()->json(['status' => false, 'message' => 'Book not found. Please enter details manually.']);
@@ -917,8 +916,7 @@ class SellBookController extends Controller
                 'phone' => Auth::user()->phone,
                 'description' => "Platform Charge for " . $attribute->product->product_name
             ]);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => 'Razorpay Error: ' . $e->getMessage()], 500);
         }
     }
@@ -963,8 +961,7 @@ class SellBookController extends Controller
             $attribute->save();
 
             return response()->json(['status' => true, 'message' => 'Payment verified and platform charge paid successfully!']);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => 'Payment verification failed: ' . $e->getMessage()], 400);
         }
     }
@@ -984,6 +981,15 @@ class SellBookController extends Controller
 
         if (!$attribute) {
             return response()->json(['status' => false, 'message' => 'Attribute not found.'], 404);
+        }
+
+        // Delete video file if exists
+        if (!empty($attribute->video_upload)) {
+            $videoPath = public_path('front/videos/product_videos/' . $attribute->video_upload);
+            if (file_exists($videoPath)) {
+                unlink($videoPath);
+            }
+            $attribute->video_upload = null;
         }
 
         $attribute->is_sold = 1;

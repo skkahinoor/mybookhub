@@ -511,6 +511,7 @@ class ProductController extends Controller
                     'email' => $attr->user->email ?? null,
                     'mobile' => $attr->user->mobile ?? null,
                     'image' => $attr->user->image ?? null,
+                    'address' => $attr->user->address ?? null,
                 ],
                 'user_old_book_video' => $attr->video_upload ? url('front/videos/product_videos/' . $attr->video_upload) : null,
                 'cart_status' => [
@@ -687,6 +688,7 @@ class ProductController extends Controller
                     'attribute_id' => $attribute->id,
                     'stock' => $attribute->stock,
                     'discount' => $attribute->product_discount,
+                    'price_details' => Product::getDiscountPriceDetailsByAttribute($attribute->id, $attribute),
                     'sku' => $attribute->sku,
                     'old_book_condition' => $attribute->condition ? [
                         'id' => $attribute->condition->id,
@@ -722,6 +724,7 @@ class ProductController extends Controller
                     'attribute_id' => $attribute->id,
                     'stock' => $attribute->stock,
                     'discount' => $attribute->product_discount,
+                    'price_details' => Product::getDiscountPriceDetailsByAttribute($attribute->id, $attribute),
                     'sku' => $attribute->sku,
                     'show_contact' => $attribute->show_contact,
                     'contact_details_paid' => $attribute->contact_details_paid,
@@ -738,6 +741,7 @@ class ProductController extends Controller
                         'email' => $attribute->user->email ?? null,
                         'mobile' => $attribute->user->mobile ?? null,
                         'image' => $attribute->user->image ?? null,
+                        'address' => $attribute->user->address ?? null,
                         'created_at' => $attribute->user->created_at ?? null,
                     ],
                     'user_old_book_video' => $attribute->video_upload ? url('front/videos/product_videos/' . $attribute->video_upload) : null,
