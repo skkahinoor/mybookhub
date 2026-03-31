@@ -688,6 +688,7 @@ class ProductController extends Controller
                     'attribute_id' => $attribute->id,
                     'stock' => $attribute->stock,
                     'discount' => $attribute->product_discount,
+                    'price_details' => Product::getDiscountPriceDetailsByAttribute($attribute->id, $attribute),
                     'sku' => $attribute->sku,
                     'old_book_condition' => $attribute->condition ? [
                         'id' => $attribute->condition->id,
@@ -723,6 +724,7 @@ class ProductController extends Controller
                     'attribute_id' => $attribute->id,
                     'stock' => $attribute->stock,
                     'discount' => $attribute->product_discount,
+                    'price_details' => Product::getDiscountPriceDetailsByAttribute($attribute->id, $attribute),
                     'sku' => $attribute->sku,
                     'show_contact' => $attribute->show_contact,
                     'contact_details_paid' => $attribute->contact_details_paid,

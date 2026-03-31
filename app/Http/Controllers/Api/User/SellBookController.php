@@ -45,12 +45,14 @@ class SellBookController extends Controller
 
         $products = $userProducts->map(function ($product) use ($basePath) {
             $attribute = $product->attributes->first();
+            $priceDetails = $attribute ? Product::getDiscountPriceDetailsByAttribute($attribute->id) : null;
+
             return [
                 'id' => $product->id,
                 'product_name' => $product->product_name,
                 'product_isbn' => $product->product_isbn,
-                'product_price' => round($product->product_price),
-                'user_product_price' => $attribute ? round($attribute->user_product_price) : null,
+                'product_price' => $priceDetails ? $priceDetails['product_price'] : round($product->product_price),
+                'user_product_price' => $priceDetails ? $priceDetails['final_price'] : ($attribute ? round($attribute->user_product_price) : null),
                 'condition' => $product->condition,
                 'old_book_condition' => $attribute && $attribute->condition ? [
                     'id' => $attribute->condition->id,
@@ -205,6 +207,7 @@ class SellBookController extends Controller
                         'name' => $attribute->condition->name,
                         'percentage' => $attribute->condition->percentage,
                     ] : null,
+                    'price_details' => Product::getDiscountPriceDetailsByAttribute($attribute->id),
                 ],
             ],
         ]);
