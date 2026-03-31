@@ -793,7 +793,7 @@
             background: #10b981;
         }
 
-        .condition.used {
+        .condition.old {
             background: #f59e0b;
         }
 
