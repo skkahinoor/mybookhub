@@ -223,6 +223,7 @@ class SellBookController extends Controller
                 'subcategory_id' => 'required|integer|exists:subcategories,id',
                 'product_name' => 'required|string|max:255',
                 'product_price' => 'required|numeric|min:0',
+                'user_product_price' => 'nullable|numeric|min:0',
                 'old_book_condition_id' => 'required|exists:old_book_conditions,id',
                 'language_id' => 'required|exists:languages,id',
                 'user_old_book_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
@@ -260,10 +261,13 @@ class SellBookController extends Controller
                 $product = $existingOldProduct;
                 $message = 'Old book added successfully from existing records!';
 
-                // Update base price with current user input to ensure correct calculation
+                // Ensure MRP is not downgraded. Only update if current is 0 or incoming is higher.
                 if (isset($data['product_price'])) {
-                    $product->product_price = $data['product_price'];
-                    $product->save();
+                    $newPrice = (float) $data['product_price'];
+                    if ($product->product_price <= 0 || $newPrice > $product->product_price) {
+                        $product->product_price = $newPrice;
+                        $product->save();
+                    }
                 }
 
                 $userHasIt = ProductsAttribute::where('product_id', $product->id)
@@ -304,8 +308,9 @@ class SellBookController extends Controller
                 $product->condition = 'old';
                 $product->product_name = $data['product_name'];
                 $product->product_isbn = $data['product_isbn'] ?? null;
-                // Save product_price as provided (MRP) directly
-                $product->product_price = $data['product_price'];
+                // Initialise MRP. If the incoming price is suspected to be a discounted one (e.g. 300), 
+                // the user should correct it later.
+                $product->product_price = (float) ($data['product_price'] ?? 0);
                 $product->edition_id = $data['edition_id'] ?? null;
                 $product->description = $data['description'] ?? null;
                 $product->meta_title = $data['meta_title'] ?? null;
@@ -384,18 +389,25 @@ class SellBookController extends Controller
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
                 if ($condition) {
                     $attribute->product_discount = $condition->percentage; // Store condition percentage
-                    if ($product->product_price > 0) {
-                        // Calculate selling price: MRP * Selling Percentage
-                        $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
+                    
+                    // Priority: Use the price provided by the frontend if available, else calculate it
+                    if (isset($data['user_product_price'])) {
+                        $attribute->user_product_price = round((float) $data['user_product_price']);
                     } else {
-                        $attribute->user_product_price = 0;
+                        // Crucial: Use the HIGHEST known MRP to avoid "double calculation" (600 -> 300 -> 150)
+                        $mrp = max((float)$product->product_price, (float)($data['product_price'] ?? 0));
+                        if ($mrp > 0) {
+                            $attribute->user_product_price = round(($mrp * $condition->percentage) / 100);
+                        } else {
+                            $attribute->user_product_price = 0;
+                        }
                     }
                 } else {
-                    $attribute->user_product_price = $product->product_price;
+                    $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
                     $attribute->product_discount = 100; // Default to 100% of MRP if condition not found
                 }
             } else {
-                $attribute->user_product_price = $product->product_price;
+                $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
                 $attribute->product_discount = 100;
             }
 
@@ -460,6 +472,7 @@ class SellBookController extends Controller
                 'subcategory_id' => 'required|integer|exists:subcategories,id',
                 'product_name' => 'required|string|max:255',
                 'product_price' => 'required|numeric|min:0',
+                'user_product_price' => 'nullable|numeric|min:0',
                 'old_book_condition_id' => 'required|exists:old_book_conditions,id',
                 'language_id' => 'required|exists:languages,id',
                 'user_old_book_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
@@ -492,7 +505,11 @@ class SellBookController extends Controller
             $product->publisher_id = $data['publisher_id'] ?? null;
             $product->product_name = $data['product_name'];
             $product->product_isbn = $data['product_isbn'] ?? null;
-            $product->product_price = $data['product_price']; // Save MRP directly
+            // Only update MRP if the new value is higher than the existing one (prevents 600 -> 300)
+            $newPrice = (float) $data['product_price'];
+            if ($product->product_price <= 0 || $newPrice > $product->product_price) {
+                $product->product_price = $newPrice;
+            }
             $product->edition_id = $data['edition_id'] ?? null;
             $product->description = $data['description'] ?? null;
             $product->meta_title = $data['meta_title'] ?? null;
@@ -567,23 +584,30 @@ class SellBookController extends Controller
                 }
             }
 
-            // Explicitly calculate selling price (user_product_price) based on condition
+            // Explicitly calculate final selling price (user_product_price) based on condition
             if (!empty($data['old_book_condition_id'])) {
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
                 if ($condition) {
                     $attribute->product_discount = $condition->percentage; // Store condition percentage
-                    if ($product->product_price > 0) {
-                        // Calculate selling price: MRP * Selling Percentage
-                        $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
+                    
+                    // Priority: Use provided selling price if available
+                    if (isset($data['user_product_price'])) {
+                        $attribute->user_product_price = round((float) $data['user_product_price']);
                     } else {
-                        $attribute->user_product_price = 0;
+                        // Use the most accurate MRP available for fallback calculation
+                        $mrp = max((float)$product->product_price, (float)($data['product_price'] ?? 0));
+                        if ($mrp > 0) {
+                            $attribute->user_product_price = round(($mrp * $condition->percentage) / 100);
+                        } else {
+                            $attribute->user_product_price = 0;
+                        }
                     }
                 } else {
-                    $attribute->user_product_price = $product->product_price;
+                    $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
                     $attribute->product_discount = 100; // Default to 100% if condition not found
                 }
             } else {
-                $attribute->user_product_price = $product->product_price;
+                $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
                 $attribute->product_discount = 100;
             }
 
