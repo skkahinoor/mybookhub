@@ -304,6 +304,7 @@ class SellBookController extends Controller
                 $product->condition = 'old';
                 $product->product_name = $data['product_name'];
                 $product->product_isbn = $data['product_isbn'] ?? null;
+                // Save product_price as provided (MRP) directly
                 $product->product_price = $data['product_price'];
                 $product->edition_id = $data['edition_id'] ?? null;
                 $product->description = $data['description'] ?? null;
@@ -378,23 +379,24 @@ class SellBookController extends Controller
                 }
             }
 
-            // Calculate price based on condition
+            // Explicitly calculate selling price (user_product_price) based on condition
             if (!empty($data['old_book_condition_id'])) {
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
                 if ($condition) {
-                    $attribute->product_discount = $condition->percentage;
+                    $attribute->product_discount = $condition->percentage; // Store condition percentage
                     if ($product->product_price > 0) {
+                        // Calculate selling price: MRP * Selling Percentage
                         $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
                     } else {
-                        $attribute->user_product_price = $product->product_price;
+                        $attribute->user_product_price = 0;
                     }
                 } else {
                     $attribute->user_product_price = $product->product_price;
-                    $attribute->product_discount = 0;
+                    $attribute->product_discount = 100; // Default to 100% of MRP if condition not found
                 }
             } else {
                 $attribute->user_product_price = $product->product_price;
-                $attribute->product_discount = 0;
+                $attribute->product_discount = 100;
             }
 
             $attribute->save();
@@ -490,7 +492,7 @@ class SellBookController extends Controller
             $product->publisher_id = $data['publisher_id'] ?? null;
             $product->product_name = $data['product_name'];
             $product->product_isbn = $data['product_isbn'] ?? null;
-            $product->product_price = $data['product_price'];
+            $product->product_price = $data['product_price']; // Save MRP directly
             $product->edition_id = $data['edition_id'] ?? null;
             $product->description = $data['description'] ?? null;
             $product->meta_title = $data['meta_title'] ?? null;
@@ -565,23 +567,24 @@ class SellBookController extends Controller
                 }
             }
 
-            // Recalculate price based on condition
+            // Explicitly calculate selling price (user_product_price) based on condition
             if (!empty($data['old_book_condition_id'])) {
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
                 if ($condition) {
-                    $attribute->product_discount = $condition->percentage;
+                    $attribute->product_discount = $condition->percentage; // Store condition percentage
                     if ($product->product_price > 0) {
+                        // Calculate selling price: MRP * Selling Percentage
                         $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
                     } else {
-                        $attribute->user_product_price = $product->product_price;
+                        $attribute->user_product_price = 0;
                     }
                 } else {
                     $attribute->user_product_price = $product->product_price;
-                    $attribute->product_discount = 0;
+                    $attribute->product_discount = 100; // Default to 100% if condition not found
                 }
             } else {
                 $attribute->user_product_price = $product->product_price;
-                $attribute->product_discount = 0;
+                $attribute->product_discount = 100;
             }
 
             $attribute->save();
