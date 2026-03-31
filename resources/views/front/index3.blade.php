@@ -1689,8 +1689,6 @@
         </div>
     </section>
 
-
-
     <!-- Filter Drawer (Left Sidebar) -->
     <div class="drawer-overlay" id="modalOverlay"></div>
     <div class="filter-drawer" id="filterSheet">
@@ -1710,7 +1708,8 @@
                         <option value="">Select Category</option>
                         @foreach ($sections as $sec)
                             <option value="{{ $sec->id }}" {{ $currentSectionId == $sec->id ? 'selected' : '' }}>
-                                {{ $sec->name }}</option>
+                                {{ $sec->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -2325,7 +2324,8 @@
                                 style="border-radius: 12px; font-weight: 700; padding: 12px;">Skip</button>
                             <button type="button" class="btn text-white w-50" id="applyBookGenie"
                                 style="background: var(--primary-orange); border-radius: 12px; font-weight: 700; padding: 12px;">Personalize
-                                <i class="fas fa-magic ms-1"></i></button>
+                                <i class="fas fa-magic ms-1"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
