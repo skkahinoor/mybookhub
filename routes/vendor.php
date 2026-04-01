@@ -393,10 +393,12 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
         Route::post('book-attribute', [BookAttributeController::class, 'store']);
 
 
-        // Contact Us Queries
-        Route::get('contact-queries', 'AdminController@contactQueries');
-        Route::post('update-contact-status', 'AdminController@updateContactStatus');
-        Route::match(['get', 'post'], 'contact-queries/reply/{id}', 'AdminController@updateContactReply');
         Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery');
+
+        // Order Queries (Tickets)
+        Route::get('order-queries', 'OrderQueryController@index')->name('vendor.order_queries.index');
+        Route::post('update-order-query-status', 'OrderQueryController@updateStatus')->name('vendor.order_queries.update_status');
+        Route::match(['get', 'post'], 'order-query/reply/{id}', 'OrderQueryController@reply')->name('vendor.order_queries.reply');
+        Route::get('delete-order-query/{id}', 'OrderQueryController@delete')->name('vendor.order_queries.delete');
     });
 });

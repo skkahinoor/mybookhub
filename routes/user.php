@@ -41,9 +41,11 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
         Route::post('/book-request/{id}/reply', [BookRequestController::class, 'replyToQuery'])->name('student.book.reply');
         Route::get('/queries', [BookRequestController::class, 'indexqueries'])->name('student.query.index');
         Route::get('/orders', [OrderController::class, 'index'])->name('student.orders.index');
+        Route::get('/orders/queries', [OrderController::class, 'orderQueries'])->name('student.orders.queries');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('student.orders.show');
         Route::get('/orders/cancel/{id}', [OrderController::class, 'cancelOrder'])->name('student.orders.cancel');
         Route::get('/orders/pay-now/{id}', [OrderController::class, 'payNow'])->name('student.orders.payNow');
+        Route::post('/orders/raise-query', [OrderController::class, 'raiseQuery'])->name('student.orders.raise-query');
 
         // Notifications (Student)
         Route::get('/notifications', [NotificationController::class, 'index'])->name('student.notifications.index');
