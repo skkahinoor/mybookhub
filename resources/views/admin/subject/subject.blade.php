@@ -51,7 +51,7 @@
                                                 <td>{{ __($key + 1) }}</td>
                                                 <td>
                                                     @if (!empty($subject['subject_icon']))
-                                                        <img src="{{ asset('admin/images/subject_icons/' . $subject['subject_icon']) }}"
+                                                        <img src="{{ asset($subject['subject_icon']) }}"
                                                             style="width: 50px; height: 50px;">
                                                     @else
                                                         No Icon
