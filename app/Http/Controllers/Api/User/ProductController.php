@@ -26,7 +26,10 @@ use App\Models\Vendor;
 use App\Models\OrdersLog;
 use App\Models\Notification;
 use App\Models\DeliverySetting;
+use App\Models\OrderQuery;
+use App\Models\OrderQueryMessage;
 use Razorpay\Api\Api;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -1904,7 +1907,8 @@ class ProductController extends Controller
         $order = Order::with([
             'logs' => function ($query) {
                 $query->orderBy('id', 'asc');
-            }
+            },
+            'orders_products'
         ])->where('id', $id)->where('user_id', $user->id)->first();
 
         if (!$order) {
@@ -1922,6 +1926,15 @@ class ProductController extends Controller
                 'current_status' => $order->order_status,
                 'tracking_number' => $order->tracking_number,
                 'courier_name' => $order->courier_name,
+                'delivered_at' => $order->delivered_at,
+                'return_status' => $order->return_status,
+                'return_reason' => $order->return_reason,
+                'products' => $order->orders_products->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'product_name' => $item->product_name
+                    ];
+                }),
                 'logs' => $order->logs->map(function ($log) {
                     return [
                         'status' => $log->order_status,
@@ -2050,5 +2063,130 @@ class ProductController extends Controller
                 'message' => 'Failed to cancel: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function returnOrder(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'return_reason' => 'required|string',
+            'return_comment' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = auth('sanctum')->user();
+        $order = Order::where('id', $id)->where('user_id', $user->id)->first();
+
+        if (!$order) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order not found.'
+            ], 404);
+        }
+
+        // Check if order is eligible for return
+        if ($order->order_status != 'Delivered' || !$order->delivered_at) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order must be delivered before initiating a return.'
+            ], 400);
+        }
+
+        $deliveredDate = \Carbon\Carbon::parse($order->delivered_at);
+        if ($deliveredDate->addDays(7)->isPast()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Return period (7 days) has expired for this order.'
+            ], 400);
+        }
+
+        // Update Return Status
+        $order->return_status = 'Return Requested';
+        $order->return_reason = $request->return_reason;
+        $order->save();
+
+        // Notify Admin
+        $notificationMessage = "Customer '" . $user->name . "' has requested a return for Order #" . $id . ". Reason: " . $request->return_reason;
+        if ($request->return_comment) {
+            $notificationMessage .= ". Comment: " . $request->return_comment;
+        }
+
+        Notification::create([
+            'type' => 'order_return_requested',
+            'title' => 'Order Return Requested',
+            'message' => $notificationMessage,
+            'related_id' => $id,
+            'related_type' => Order::class,
+            'is_read' => false,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Return request has been submitted successfully. Our team will review it and get back to you.'
+        ]);
+    }
+
+    public function raiseQuery(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+            'order_product_id' => 'required|exists:orders_products,id',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = auth('sanctum')->user();
+        $order = Order::find($request->order_id);
+
+        if ($order->user_id != $user->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized access.'
+            ], 403);
+        }
+
+        $product = OrdersProduct::find($request->order_product_id);
+
+        // Generate Ticket ID
+        $ticket_id = 'TKT-' . strtoupper(Str::random(6));
+
+        OrderQuery::create([
+            'ticket_id' => $ticket_id,
+            'order_id' => $request->order_id,
+            'order_product_id' => $request->order_product_id,
+            'user_id' => $user->id,
+            'vendor_id' => $product->vendor_id,
+            'subject' => $request->subject,
+            'message' => $request->message,
+            'status' => 'pending',
+        ]);
+
+        // Notify Admin
+        Notification::create([
+            'type' => 'order_query',
+            'title' => 'New Order Query Raised',
+            'message' => "Customer '" . $user->name . "' raised a query for Order #" . $request->order_id . " regarding '" . $product->product_name . "'. Ticket ID: " . $ticket_id,
+            'related_id' => $request->order_id,
+            'related_type' => Order::class,
+            'is_read' => false,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Query raised successfully. Your Ticket ID is ' . $ticket_id . '. Our team will get back to you soon.',
+            'ticket_id' => $ticket_id
+        ]);
     }
 }

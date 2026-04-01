@@ -95,7 +95,8 @@
                                     <div>
                                         <strong>Order Placed</strong>
                                         <p class="text-muted mb-0 small">
-                                            {{ $orderDetails->created_at->format('M d, Y h:i A') }}</p>
+                                            {{ $orderDetails->created_at->format('M d, Y h:i A') }}
+                                        </p>
                                     </div>
                                 </div>
                                 @if (strpos($status, 'shipped') !== false || strpos($status, 'delivered') !== false)
@@ -106,7 +107,8 @@
                                         <div>
                                             <strong>Shipped</strong>
                                             <p class="text-muted mb-0 small">
-                                                {{ $orderDetails->updated_at->format('M d, Y h:i A') }}</p>
+                                                {{ $orderDetails->updated_at->format('M d, Y h:i A') }}
+                                            </p>
                                         </div>
                                     </div>
                                 @endif
@@ -118,7 +120,8 @@
                                         <div>
                                             <strong>Delivered</strong>
                                             <p class="text-muted mb-0 small">
-                                                {{ $orderDetails->updated_at->format('M d, Y h:i A') }}</p>
+                                                {{ $orderDetails->updated_at->format('M d, Y h:i A') }}
+                                            </p>
                                         </div>
                                     </div>
                                 @else
@@ -141,8 +144,7 @@
                         <div class="card-body">
                             <h5 class="card-title mb-4">Order Items</h5>
                             @foreach ($orderDetails->orders_products as $product)
-                                <div class="d-flex align-items-center mb-4 pb-4"
-                                    style="border-bottom: 1px solid #e5e5e5;">
+                                <div class="d-flex align-items-center mb-4 pb-4" style="border-bottom: 1px solid #e5e5e5;">
                                     @php
                                         $productImage = \App\Models\Product::getProductImage($product->product_id);
                                     @endphp
@@ -150,7 +152,8 @@
                                         <img src="{{ asset('front/images/product_images/small/' . $productImage) }}"
                                             alt="{{ $product->product_name }}"
                                             style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 20px;">
-                                        <span class="badge badge-primary" style="position: absolute; top: -10px; left: 0; font-size: 10px;">
+                                        <span class="badge badge-primary"
+                                            style="position: absolute; top: -10px; left: 0; font-size: 10px;">
                                             {{ $product->item_status ?? 'Ordered' }}
                                         </span>
                                     </div>
@@ -164,12 +167,14 @@
                                             @endphp
                                             <span class="badge badge-light text-dark border">{{ $shopName }}</span>
                                         </p>
-                                        <p class="text-muted mb-1" style="font-size: 13px;">Quantity: {{ $product->product_qty }}</p>
+                                        <p class="text-muted mb-1" style="font-size: 13px;">Quantity:
+                                            {{ $product->product_qty }}</p>
                                         <p class="text-muted mb-0" style="font-size: 13px;">Price:
                                             ₹{{ number_format($product->product_price, 2) }}</p>
                                         @if ($product->courier_name)
                                             <p class="text-info mb-0 mt-2">
-                                                <small><i class="fas fa-truck me-1"></i> {{ $product->courier_name }} | Tracking:
+                                                <small><i class="fas fa-truck me-1"></i> {{ $product->courier_name }} |
+                                                    Tracking:
                                                     {{ $product->tracking_number }}</small>
                                             </p>
                                         @endif
@@ -179,9 +184,8 @@
                                             ₹{{ number_format($product->product_price * $product->product_qty, 2) }}
                                         </h5>
                                         @if (strpos(strtolower($orderDetails->order_status), 'cancel') === false)
-                                            <button type="button" class="btn btn-sm btn-outline-warning mt-2 raise-query-btn" 
-                                                data-order-id="{{ $orderDetails->id }}" 
-                                                data-product-id="{{ $product->id }}"
+                                            <button type="button" class="btn btn-sm btn-outline-warning mt-2 raise-query-btn"
+                                                data-order-id="{{ $orderDetails->id }}" data-product-id="{{ $product->id }}"
                                                 data-product-name="{{ $product->product_name }}">
                                                 Raise a Query
                                             </button>
@@ -227,8 +231,7 @@
                             @if ($orderDetails->wallet_amount > 0)
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>Wallet Deduction:</span>
-                                    <span
-                                        class="text-success">-₹{{ number_format($orderDetails->wallet_amount, 2) }}</span>
+                                    <span class="text-success">-₹{{ number_format($orderDetails->wallet_amount, 2) }}</span>
                                 </div>
                             @endif
                             <div class="d-flex justify-content-between mb-2">
@@ -277,7 +280,8 @@
                                         Cancel Order
                                     </a>
                                 @elseif($showReturn)
-                                    <button type="button" class="btn btn-warning w-100 mb-2" data-toggle="modal" data-target="#returnModal">
+                                    <button type="button" class="btn btn-warning w-100 mb-2" data-toggle="modal"
+                                        data-target="#returnModal">
                                         Return Order
                                     </button>
                                 @endif
@@ -299,23 +303,27 @@
                     </div>
 
                     <!-- Return Order Modal -->
-                    <div class="modal fade" id="returnModal" tabindex="-1" role="dialog" aria-labelledby="returnModalLabel" aria-hidden="true">
+                    <div class="modal fade" id="returnModal" tabindex="-1" role="dialog"
+                        aria-labelledby="returnModalLabel" aria-hidden="true">
                         <div class="modal-dialog" role="document">
                             <div class="modal-content">
                                 <form action="{{ route('student.orders.return', $orderDetails->id) }}" method="POST">
                                     @csrf
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="returnModalLabel">Return Order #{{ $orderDetails->id }}</h5>
+                                        <h5 class="modal-title" id="returnModalLabel">Return Order
+                                            #{{ $orderDetails->id }}</h5>
                                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                             <span aria-hidden="true">&times;</span>
                                         </button>
                                     </div>
                                     <div class="modal-body">
                                         <div class="alert alert-warning small">
-                                            <i class="fas fa-info-circle mr-1"></i> You can return this item within 7 days of delivery.
+                                            <i class="fas fa-info-circle mr-1"></i> You can return this item within 7
+                                            days of delivery.
                                         </div>
                                         <div class="form-group mb-3">
-                                            <label for="return_reason">Reason for Return <span class="text-danger">*</span></label>
+                                            <label for="return_reason">Reason for Return <span
+                                                    class="text-danger">*</span></label>
                                             <select name="return_reason" class="form-control" required>
                                                 <option value="">Select Reason</option>
                                                 <option value="Damaged Product">Damaged Product</option>
@@ -327,47 +335,50 @@
                                         </div>
                                         <div class="form-group">
                                             <label for="return_comment">Comments (Optional)</label>
-                                            <textarea name="return_comment" class="form-control" rows="3" placeholder="Additional details..."></textarea>
+                                            <textarea name="return_comment" class="form-control" rows="3"
+                                                placeholder="Additional details..."></textarea>
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-secondary"
+                                            data-dismiss="modal">Close</button>
                                         <button type="submit" class="btn btn-primary">Submit Return Request</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
-                        </div>
-                    </div>
-
-                    {{-- <!-- Spending Chart Card -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title mb-4">Monthly Spending</h5>
-                            <div style="position: relative; height: 250px;">
-                                <canvas id="spendingChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Order Status Pie Chart -->
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title mb-4">Order Statistics</h5>
-                            <div style="position: relative; height: 250px;">
-                                <canvas id="orderStatusChart"></canvas>
-                            </div>
-                        </div>
-                    </div> --}}
                 </div>
             </div>
+
+            {{-- <!-- Spending Chart Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Monthly Spending</h5>
+                    <div style="position: relative; height: 250px;">
+                        <canvas id="spendingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Status Pie Chart -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Order Statistics</h5>
+                    <div style="position: relative; height: 250px;">
+                        <canvas id="orderStatusChart"></canvas>
+                    </div>
+                </div>
+            </div> --}}
         </div>
     </div>
 </div>
+</div>
+</div>
 
 <!-- Raise Query Modal -->
-<div class="modal fade" id="queryModal" tabindex="-1" role="dialog" aria-labelledby="queryModalLabel" aria-hidden="true">
+<div class="modal fade" id="queryModal" tabindex="-1" role="dialog" aria-labelledby="queryModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <form action="{{ route('student.orders.raise-query') }}" method="POST">
@@ -381,7 +392,7 @@
                 <div class="modal-body">
                     <input type="hidden" name="order_id" id="query_order_id">
                     <input type="hidden" name="order_product_id" id="query_product_id">
-                    
+
                     <div class="form-group mb-3">
                         <label>Product</label>
                         <input type="text" id="query_product_name" class="form-control" readonly>
@@ -403,7 +414,8 @@
 
                     <div class="form-group">
                         <label for="message">Message <span class="text-danger">*</span></label>
-                        <textarea name="message" class="form-control" rows="4" placeholder="Describe your issue in detail..." required></textarea>
+                        <textarea name="message" class="form-control" rows="4"
+                            placeholder="Describe your issue in detail..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -416,36 +428,36 @@
 </div>
 
 @include('user.layout.footer')
-    </div>
-    <!-- plugins:js -->
-    <script src="{{ asset('user/vendors/js/vendor.bundle.base.js') }}"></script>
-    <!-- endinject -->
-    <!-- Plugin js for this page -->
-    <script src="{{ asset('user/vendors/datatables.net/jquery.dataTables.js') }}"></script>
-    <script src="{{ asset('user/vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
-    <!-- End plugin js for this page -->
-    <!-- inject:js -->
-    <script src="{{ asset('user/js/off-canvas.js') }}"></script>
-    <script src="{{ asset('user/js/hoverable-collapse.js') }}"></script>
-    <script src="{{ asset('user/js/template.js') }}"></script>
-    <script src="{{ asset('user/js/settings.js') }}"></script>
-    <script src="{{ asset('user/js/todolist.js') }}"></script>
-    <!-- endinject -->
+</div>
+<!-- plugins:js -->
+<script src="{{ asset('user/vendors/js/vendor.bundle.base.js') }}"></script>
+<!-- endinject -->
+<!-- Plugin js for this page -->
+<script src="{{ asset('user/vendors/datatables.net/jquery.dataTables.js') }}"></script>
+<script src="{{ asset('user/vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
+<!-- End plugin js for this page -->
+<!-- inject:js -->
+<script src="{{ asset('user/js/off-canvas.js') }}"></script>
+<script src="{{ asset('user/js/hoverable-collapse.js') }}"></script>
+<script src="{{ asset('user/js/template.js') }}"></script>
+<script src="{{ asset('user/js/settings.js') }}"></script>
+<script src="{{ asset('user/js/todolist.js') }}"></script>
+<!-- endinject -->
 
 <script>
-$(document).ready(function() {
-    $('.raise-query-btn').on('click', function() {
-        const orderId = $(this).data('order-id');
-        const productId = $(this).data('product-id');
-        const productName = $(this).data('product-name');
+    $(document).ready(function () {
+        $('.raise-query-btn').on('click', function () {
+            const orderId = $(this).data('order-id');
+            const productId = $(this).data('product-id');
+            const productName = $(this).data('product-name');
 
-        $('#query_order_id').val(orderId);
-        $('#query_product_id').val(productId);
-        $('#query_product_name').val(productName);
-        
-        $('#queryModal').modal('show');
+            $('#query_order_id').val(orderId);
+            $('#query_product_id').val(productId);
+            $('#query_product_name').val(productName);
+
+            $('#queryModal').modal('show');
+        });
     });
-});
 </script>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -453,41 +465,42 @@ $(document).ready(function() {
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 
-{{-- <script>
+{{--
+<script>
     // Monthly Spending Line Chart
     const spendingCtx = document.getElementById('spendingChart').getContext('2d');
     const spendingChart = new Chart(spendingCtx, {
         type: 'line',
         data: {
-            labels: {!! json_encode(array_column($monthlyData, 'month')) !!},
-            datasets: [{
-                label: 'Spending (₹)',
-                data: {!! json_encode(array_column($monthlyData, 'amount')) !!},
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                tension: 0.4,
-                fill: true
+            labels: {!! json_encode(array_column($monthlyData, 'month'))!!},
+    datasets: [{
+        label: 'Spending (₹)',
+        data: {!! json_encode(array_column($monthlyData, 'amount')) !!},
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        tension: 0.4,
+        fill: true
             }]
         },
-        options: {
-            responsive: true,
+    options: {
+        responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
+                plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
                     ticks: {
-                        callback: function(value) {
-                            return '₹' + value.toLocaleString();
-                        }
+                    callback: function(value) {
+                        return '₹' + value.toLocaleString();
                     }
                 }
             }
         }
+    }
     });
 
     // Order Status Pie Chart
@@ -498,28 +511,28 @@ $(document).ready(function() {
             labels: ['Pending', 'Delivered', 'Other'],
             datasets: [{
                 data: [{{ $pendingOrders }}, {{ $deliveredOrders }}, {{ $totalOrders - $pendingOrders - $deliveredOrders }}],
-                backgroundColor: [
-                    'rgba(255, 206, 86, 0.8)',
-                    'rgba(75, 192, 192, 0.8)',
-                    'rgba(153, 102, 255, 0.8)'
-                ],
-                borderColor: [
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)'
-                ],
-                borderWidth: 2
+    backgroundColor: [
+        'rgba(255, 206, 86, 0.8)',
+        'rgba(75, 192, 192, 0.8)',
+        'rgba(153, 102, 255, 0.8)'
+    ],
+        borderColor: [
+            'rgba(255, 206, 86, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(153, 102, 255, 1)'
+        ],
+            borderWidth: 2
             }]
         },
-        options: {
-            responsive: true,
+    options: {
+        responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
+                plugins: {
+            legend: {
+                position: 'bottom'
             }
         }
+    }
     });
 </script> --}}
 
