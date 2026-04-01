@@ -1992,7 +1992,7 @@ class ProductsController extends Controller
             'footerProducts',
             'category',
             'language',
-            'logos',
+            'logos',  
             'meta_title',
             'meta_description',
             'meta_keywords',
