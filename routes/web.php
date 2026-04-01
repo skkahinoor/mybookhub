@@ -312,9 +312,6 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('institution-categories', [InstitutionManagementController::class, 'getCategories'])->name('admin.institution.categories');
         Route::get('institution-classes', [InstitutionManagementController::class, 'getClasses'])->name('admin.institution.classes');
 
-        // AJAX route for getting location data based on pincode (outside admin middleware for AJAX access)
-        Route::get('institution-location-data', [App\Http\Controllers\Admin\InstitutionManagementController::class, 'getLocationData'])->name('institution_location_data');
-
         // Products (with vendor plan check middleware)
         Route::middleware(['vendor.plan'])->group(function () {
             Route::get('products/getauthors', [AdminProductsController::class, 'getAuthor']);
@@ -377,6 +374,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Orders
         // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel
         Route::get('orders', 'OrderController@orders');
+        Route::get('returns', 'OrderController@returns');
 
         // Render admin/orders/order_details.blade.php (View Order Details page) when clicking on the View Order Details icon in admin/orders/orders.blade.php (Orders tab under Orders Management section in Admin Panel)
         Route::get('orders/{id}', 'OrderController@orderDetails');

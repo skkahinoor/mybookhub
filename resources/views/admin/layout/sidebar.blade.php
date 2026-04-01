@@ -121,6 +121,9 @@
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'orders') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('vendor/orders') }}">Orders</a></li>
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'returns') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('vendor/returns') }}">Returns</a></li>
                         @endif
                         @if (Auth::guard('admin')->user()->can('view_sales_concept'))
                             <li class="nav-item"> <a
@@ -345,6 +348,9 @@
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'orders') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/orders') }}">Orders</a></li>
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'returns') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/returns') }}">Returns</a></li>
                         @endcan
                         @can('view_sales_concept')
                             <li class="nav-item"> <a

@@ -191,12 +191,30 @@ class OrderController extends Controller
         }
 
         // Update Return Status
+        $order->order_status = 'Return Requested';
         $order->return_status = 'Return Requested';
         $order->return_reason = $request->return_reason;
         $order->save();
 
+        // Also update all order items and notify vendors
+        $items = \App\Models\OrdersProduct::where('order_id', $id)->get();
+        \App\Models\OrdersProduct::where('order_id', $id)->update(['item_status' => 'Return Requested']);
+
+        $vendorIds = $items->pluck('vendor_id')->filter()->unique();
+        foreach ($vendorIds as $vendorId) {
+            \App\Models\Notification::create([
+                'type'         => 'order_return_requested',
+                'title'        => 'Order Return Requested',
+                'message'      => "Customer '" . Auth::user()->name . "' has requested a return for Order #" . $id . ". Reason: " . $request->return_reason,
+                'related_id'   => $id,
+                'related_type' => \App\Models\Order::class,
+                'vendor_id'    => $vendorId,
+                'is_read'      => false,
+            ]);
+        }
+
         // Notify Admin
-        Notification::create([
+        \App\Models\Notification::create([
             'type' => 'order_return_requested',
             'title' => 'Order Return Requested',
             'message' => "Customer '" . Auth::user()->name . "' has requested a return for Order #" . $id . ". Reason: " . $request->return_reason,

@@ -71,6 +71,46 @@ class OrderController extends Controller
         return view('admin.orders.orders')->with(compact('orders', 'logos', 'headerLogo', 'adminType'));
     }
 
+    public function returns()
+    {
+        if (!Auth::guard('admin')->user()->can('view_orders')) {
+            abort(403, 'Unauthorized action.');
+        }
+        $user = Auth::guard('admin')->user();
+        $headerLogo = HeaderLogo::first();
+        $logos = HeaderLogo::first();
+
+        Session::put('page', 'returns');
+
+        $isVendor = $user->hasRole('vendor');
+        $isAdmin = $user->hasRole('admin');
+
+        if ($isVendor) {
+            $vendorId = $user->vendor_id;
+            // Only orders where return_status is not null AND contains vendor's products
+            $orders = Order::whereNotNull('return_status')
+                ->with(['orders_products' => function ($query) use ($vendorId) {
+                    $query->where('vendor_id', $vendorId);
+                }])
+                ->whereHas('orders_products', function ($query) use ($vendorId) {
+                    $query->where('vendor_id', $vendorId);
+                })
+                ->orderBy('id', 'Desc')
+                ->get()
+                ->toArray();
+        } else {
+            $orders = Order::whereNotNull('return_status')
+                ->with('orders_products')
+                ->orderBy('id', 'Desc')
+                ->get()
+                ->toArray();
+        }
+
+        $adminType = $isVendor ? 'vendor' : ($isAdmin ? 'admin' : 'user');
+
+        return view('admin.orders.returns')->with(compact('orders', 'logos', 'headerLogo', 'adminType'));
+    }
+
     // demo code
     public function orderDetails($id)
     {
@@ -217,6 +257,10 @@ class OrderController extends Controller
                 \App\Models\WalletTransaction::checkAndCreditWallet($data['order_id']);
             }
 
+            if ($data['order_status'] == 'Returned') {
+                \App\Models\WalletTransaction::revertWallet($data['order_id']);
+            }
+
             if (!empty($data['courier_name']) && !empty($data['tracking_number'])) {
                 Order::where('id', $data['order_id'])->update([
                     'courier_name'    => $data['courier_name'],
@@ -291,6 +335,13 @@ class OrderController extends Controller
                 $itemRec = OrdersProduct::select('order_id')->where('id', $data['order_item_id'])->first();
                 if ($itemRec) {
                     \App\Models\WalletTransaction::checkAndCreditWallet($itemRec->order_id);
+                }
+            }
+
+            if ($data['order_item_status'] == 'Returned') {
+                $itemRec = OrdersProduct::select('order_id')->where('id', $data['order_item_id'])->first();
+                if ($itemRec) {
+                    \App\Models\WalletTransaction::revertWallet($itemRec->order_id);
                 }
             }
 
