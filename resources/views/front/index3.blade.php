@@ -2424,7 +2424,7 @@
                         bgSubcategory.innerHTML = '<option value="">Loading...</option>';
                         bgSubcategory.disabled = true;
                         fetch(
-                                `{{ url('get-filter-subcategories') }}?category_id=${categoryId}&section_id=${sectionId}`
+                            `{{ url('get-filter-subcategories') }}?category_id=${categoryId}&section_id=${sectionId}`
                             )
                             .then(res => res.json())
                             .then(data => {
@@ -2482,7 +2482,6 @@
                     if (typeof updateHomeGrid === 'function') {
                         updateHomeGrid(null, null, true);
                     }
-
                     dismissBookGenie(true);
                 });
             });
