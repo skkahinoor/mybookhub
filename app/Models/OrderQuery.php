@@ -40,4 +40,9 @@ class OrderQuery extends Model
     {
         return $this->belongsTo(Vendor::class, 'vendor_id');
     }
+
+    public function messages()
+    {
+        return $this->hasMany(OrderQueryMessage::class, 'order_query_id')->orderBy('created_at', 'asc');
+    }
 }

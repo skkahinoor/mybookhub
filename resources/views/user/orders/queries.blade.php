@@ -77,35 +77,41 @@
 </div>
 
 @include('user.layout.footer')
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<!-- DataTables -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+    </div>
+    <!-- plugins:js -->
+    <script src="{{ asset('user/vendors/js/vendor.bundle.base.js') }}"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <script src="{{ asset('user/vendors/datatables.net/jquery.dataTables.js') }}"></script>
+    <script src="{{ asset('user/vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="{{ asset('user/js/off-canvas.js') }}"></script>
+    <script src="{{ asset('user/js/hoverable-collapse.js') }}"></script>
+    <script src="{{ asset('user/js/template.js') }}"></script>
+    <script src="{{ asset('user/js/settings.js') }}"></script>
+    <script src="{{ asset('user/js/todolist.js') }}"></script>
+    <!-- endinject -->
 
 <script>
 $(document).ready(function() {
-    var table = $('#queries_table').DataTable({
+    $('#queries_table').DataTable({
         processing: true,
         serverSide: true,
         ajax: "{{ route('student.orders.queries') }}",
         columns: [
-            {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
-            {data: 'date', name: 'date'},
+            {data: 'DT_RowIndex', name: 'id', orderable: false, searchable: false},
+            {data: 'ticket_id', name: 'ticket_id'},
+            {data: 'date', name: 'created_at'},
             {data: 'order_id', name: 'order_id'},
-            {data: 'product_name', name: 'product_name'},
+            {data: 'product_name', name: 'order_product_id'},
             {data: 'subject', name: 'subject'},
             {data: 'status', name: 'status'},
             {data: 'action', name: 'action', orderable: false, searchable: false}
         ],
-        order: [[1, 'desc']],
-        language: {
-            paginate: {
-                previous: "<i class='fas fa-chevron-left'></i>",
-                next: "<i class='fas fa-chevron-right'></i>"
-            }
-        }
+        order: [[2, 'desc']],
+        pageLength: 10,
+        responsive: true
     });
 
     $(document).on('click', '.view-query', function() {

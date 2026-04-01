@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\Order;
 use App\Models\OrdersProduct;
 use App\Models\OrderQuery;
+use App\Models\OrderQueryMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -256,12 +257,67 @@ class OrderController extends Controller
                     return $q->created_at->format('M d, Y');
                 })
                 ->addColumn('action', function($q) {
-                    return '<button type="button" class="btn btn-sm btn-info view-query" data-message="'.$q->message.'" data-reply="'.$q->admin_reply.'">View Detail</button>';
+                    return '<a href="' . route('student.orders.query.details', $q->id) . '" class="btn btn-sm btn-info">View Thread</a>';
                 })
                 ->rawColumns(['ticket_id', 'status', 'action'])
                 ->make(true);
         }
 
         return view('user.orders.queries', compact('logos', 'headerLogo'));
+    }
+
+    public function queryDetails($id)
+    {
+        $logos = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
+
+        $query = OrderQuery::with(['order', 'orderProduct', 'messages.user'])
+            ->where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        return view('user.orders.query_details', compact('query', 'logos', 'headerLogo'));
+    }
+
+    public function postQueryReply(Request $request, $id)
+    {
+        $request->validate([
+            'message' => 'required|string',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,mp4,mov,avi,pdf|max:10240', // 10MB limit
+        ]);
+
+        $query = OrderQuery::where('user_id', Auth::id())->where('id', $id)->firstOrFail();
+
+        if ($query->status == 'closed') {
+            return redirect()->back()->with('error_message', 'This ticket is closed and cannot be replied to.');
+        }
+
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('attachments/order_queries'), $filename);
+            $attachmentPath = 'attachments/order_queries/' . $filename;
+        }
+
+        OrderQueryMessage::create([
+            'order_query_id' => $id,
+            'user_id' => Auth::id(),
+            'message' => $request->message,
+            'attachment' => $attachmentPath,
+            'sender_type' => 'student',
+        ]);
+
+        // Optional: Notify Admin/Vendor
+        Notification::create([
+            'type' => 'order_query',
+            'title' => 'New Reply for Ticket #' . $query->ticket_id,
+            'message' => "Customer '" . Auth::user()->name . "' replied to Ticket #" . $query->ticket_id,
+            'related_id' => $query->order_id,
+            'related_type' => Order::class,
+            'is_read' => false,
+        ]);
+
+        return redirect()->back()->with('success_message', 'Reply sent successfully.');
     }
 }

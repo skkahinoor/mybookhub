@@ -48,21 +48,50 @@ class OrderQueryController extends Controller
         if ($isVendor) {
             $queryObj->where('vendor_id', $admin->vendor_id);
         }
-        $query = $queryObj->with(['order', 'orderProduct', 'user'])->firstOrFail();
+        $query = $queryObj->with(['order', 'orderProduct', 'user', 'messages.user'])->firstOrFail();
 
         if ($request->isMethod('post')) {
             $request->validate([
                 'admin_reply' => 'required',
-                'status' => 'required'
+                'status' => 'required',
+                'attachment' => 'nullable|file|mimes:jpg,jpeg,png,mp4,mov,avi,pdf|max:10240',
             ]);
 
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $file = $request->file('attachment');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('attachments/order_queries'), $filename);
+                $attachmentPath = 'attachments/order_queries/' . $filename;
+            }
+
+            // Save new message
+            \App\Models\OrderQueryMessage::create([
+                'order_query_id' => $id,
+                'user_id' => $admin->id,
+                'message' => $request->admin_reply,
+                'attachment' => $attachmentPath,
+                'sender_type' => $isVendor ? 'vendor' : 'admin'
+            ]);
+
+            // Update main query status
             OrderQuery::where('id', $id)->update([
-                'admin_reply' => $request->admin_reply,
                 'status' => $request->status
             ]);
 
+            // Notify User
+            \App\Models\Notification::create([
+                'type' => 'order_query_reply',
+                'title' => 'New Reply for Ticket #' . $query->ticket_id,
+                'message' => "Support has replied to your query regarding '" . ($query->orderProduct->product_name ?? 'Product') . "'.",
+                'related_id' => $query->order_id,
+                'related_type' => \App\Models\Order::class,
+                'user_id' => $query->user_id, // Ensure this points to the student
+                'is_read' => false,
+            ]);
+
             $redirectUrl = $isVendor ? 'vendor/order-queries' : 'admin/order-queries';
-            return redirect($redirectUrl)->with('success_message', 'Reply updated successfully.');
+            return redirect($redirectUrl)->with('success_message', 'Reply sent successfully.');
         }
 
         return view('admin.order_queries.reply', compact('query'));
