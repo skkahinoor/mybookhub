@@ -1,4 +1,12 @@
 @extends('admin.layout.layout')
+<style>
+    .close-btn {
+    background: transparent;
+    border: none;
+    font-size: 25px;
+    color: #fff;
+}
+</style>
 @section('content')
     <div class="main-panel">
         <div class="content-wrapper">
@@ -137,18 +145,73 @@
                                 </div>
                             </div>
 
-                            @if($requestData->user_old_book_image && $requestData->user_old_book_image)
-                                <div class="row mt-4">
-                                    <div class="col-12">
-                                        <h5>Book Image</h5>
-                                        <img src="{{ asset('front/images/product_images/medium/' . $requestData->user_old_book_image) }}" class="img-thumbnail" style="max-width: 300px;">
-                                    </div>
-                                </div>
-                            @endif
+                                @if($requestData->user_old_book_image || $requestData->video_upload)
+                                 <div class="row mt-4">
+                                     @if($requestData->user_old_book_image)
+                                         <div class="col-md-6 text-center">
+                                             <h5>Book Image</h5>
+                                             <img src="{{ asset('front/images/product_images/medium/' . $requestData->user_old_book_image) }}" class="img-thumbnail" style="max-width: 300px;">
+                                         </div>
+                                     @endif
+                                     
+                                     @if($requestData->video_upload)
+                                         <div class="col-md-6 text-center d-flex flex-column justify-content-center">
+                                             <h5>Book Video</h5>
+                                             <div class="mt-2">
+                                                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#videoModal">
+                                                     <i class="mdi mdi-play-circle"></i> Watch Video Glance
+                                                 </button>
+                                             </div>
+                                         </div>
+
+                                         <!-- Video Modal -->
+                                         <div class="modal fade" id="videoModal" tabindex="-1" role="dialog" aria-labelledby="videoModalLabel" aria-hidden="true">
+                                             <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                                                 <div class="modal-content" style="background: #000; border: none; border-radius: 8px; overflow: hidden;">
+                                                     <div class="modal-header" style="border: none; position: absolute; right: 10px; z-index: 1055;">
+                                                         <button type="button" class="close-btn" data-dismiss="modal">
+    <i class="fa fa-times"></i>
+</button>
+                                                     </div>
+                                                     <div class="modal-body p-0">
+                                                         <video width="100%" height="auto" controls style="display: block; max-height: 80vh;">
+                                                             <source src="{{ asset('front/videos/product_videos/' . $requestData->video_upload) }}" type="video/{{ pathinfo($requestData->video_upload, PATHINFO_EXTENSION) }}">
+                                                             Your browser does not support the video tag.
+                                                         </video>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     @endif
+                                 </div>
+                                @endif
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        $('#videoModal').on('shown.bs.modal', function () {
+            var videoPlayer = $(this).find('video')[0];
+            if (videoPlayer) {
+                videoPlayer.play().catch(function(error) {
+                    console.log("Video autoplay prevented by browser:", error);
+                });
+            }
+        });
+        
+        $('#videoModal').on('hidden.bs.modal', function () {
+            var videoPlayer = $(this).find('video')[0];
+            if (videoPlayer) {
+                videoPlayer.pause();
+                videoPlayer.currentTime = 0;
+            }
+        });
+    });
+</script>
 @endsection
