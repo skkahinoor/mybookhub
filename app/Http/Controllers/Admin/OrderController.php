@@ -260,9 +260,9 @@ class OrderController extends Controller
                     'order_status' => $data['order_status']
                 ];
 
-                \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) {
-                    $message->to($email)->subject('Order Status Updated - MultiVendorEcommerceApplication.com.eg');
-                });
+                // \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) {
+                //     $message->to($email)->subject('Order Status Updated - MultiVendorEcommerceApplication.com.eg');
+                // });
             }
 
             $message = 'Order Status has been updated successfully!';
