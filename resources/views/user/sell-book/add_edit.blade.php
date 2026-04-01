@@ -438,6 +438,20 @@
                                             @endif
                                         </div>
                                     </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="video_upload">Book Video <small class="text-muted">(Max: 50MB, mp4, avi, mov)</small></label>
+                                            <input type="file" class="form-control" id="video_upload" name="video_upload" accept="video/*">
+                                            @if (!empty($product->firstAttribute->video_upload))
+                                                <div class="mt-2">
+                                                    <a target="_blank" class="text-primary font-weight-bold"
+                                                        href="{{ url('front/videos/product_videos/' . $product->firstAttribute->video_upload) }}">
+                                                        <i class="mdi mdi-play-circle"></i> View Current Video
+                                                    </a>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="form-group">

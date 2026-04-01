@@ -389,13 +389,13 @@ class SellBookController extends Controller
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
                 if ($condition) {
                     $attribute->product_discount = $condition->percentage; // Store condition percentage
-                    
+
                     // Priority: Use the price provided by the frontend if available, else calculate it
                     if (isset($data['user_product_price'])) {
                         $attribute->user_product_price = round((float) $data['user_product_price']);
                     } else {
                         // Crucial: Use the HIGHEST known MRP to avoid "double calculation" (600 -> 300 -> 150)
-                        $mrp = max((float)$product->product_price, (float)($data['product_price'] ?? 0));
+                        $mrp = max((float) $product->product_price, (float) ($data['product_price'] ?? 0));
                         if ($mrp > 0) {
                             $attribute->user_product_price = round(($mrp * $condition->percentage) / 100);
                         } else {
@@ -589,13 +589,13 @@ class SellBookController extends Controller
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
                 if ($condition) {
                     $attribute->product_discount = $condition->percentage; // Store condition percentage
-                    
+
                     // Priority: Use provided selling price if available
                     if (isset($data['user_product_price'])) {
                         $attribute->user_product_price = round((float) $data['user_product_price']);
                     } else {
                         // Use the most accurate MRP available for fallback calculation
-                        $mrp = max((float)$product->product_price, (float)($data['product_price'] ?? 0));
+                        $mrp = max((float) $product->product_price, (float) ($data['product_price'] ?? 0));
                         if ($mrp > 0) {
                             $attribute->user_product_price = round(($mrp * $condition->percentage) / 100);
                         } else {

@@ -143,6 +143,7 @@ class SellBookController extends Controller
                 'product_price' => 'required|numeric|min:0',
                 'old_book_condition_id' => 'required|exists:old_book_conditions,id',
                 'language_id' => 'required|exists:languages,id',
+                'video_upload' => 'nullable|mimes:mp4,ogv,webm,avi,mov|max:51200',
             ]);
 
             $data = $request->all();
@@ -282,6 +283,19 @@ class SellBookController extends Controller
                     Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
                     Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
                     $attribute->user_old_book_image = $imageName;
+                }
+            }
+
+            // Video handling
+            if ($request->hasFile('video_upload')) {
+                $video_tmp = $request->file('video_upload');
+                if ($video_tmp->isValid()) {
+                    $video_name = $video_tmp->getClientOriginalName();
+                    $extension = $video_tmp->getClientOriginalExtension();
+                    $videoName = $video_name.'-'.rand(111, 99999).'.'.$extension;
+                    $videoPath = public_path('front/videos/product_videos/');
+                    $video_tmp->move($videoPath, $videoName);
+                    $attribute->video_upload = $videoName;
                 }
             }
 

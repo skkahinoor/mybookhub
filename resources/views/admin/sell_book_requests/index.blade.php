@@ -96,23 +96,24 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <a title="View Details" href="{{ route('admin.sell-book-requests.show', $request->id) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-document"></i>
-                                                    </a>
-                                                    @if($request->admin_approved == 0)
+                                                     <a href="{{ route('admin.sell-book-requests.show', $request->id) }}" 
+                                                      class="btn btn-sm btn-outline-primary">
+                                                            View
+                                                      </a>
+                                                    {{-- @if($request->admin_approved == 0)
                                                         <form action="{{ route('admin.sell-book-requests.approve', $request->id) }}" method="POST" style="display:inline;">
                                                             @csrf
                                                             <button type="submit" class="btn btn-link p-0" title="Approve" onclick="return confirm('Approve this listing?')">
                                                                 <i style="font-size: 25px" class="mdi mdi-check-circle text-success"></i>
                                                             </button>
                                                         </form>
-                                                    @endif
+                                                    @endif --}}
                                                     <form action="{{ route('admin.sell-book-requests.reject', $request->id) }}" method="POST" style="display:inline;">
-                                                        @csrf
-                                                        <button type="submit" class="btn btn-link p-0" title="Reject/Delete" onclick="return confirm('Reject and delete this request?')">
-                                                            <i style="font-size: 25px" class="mdi mdi-close-circle text-danger"></i>
-                                                        </button>
-                                                    </form>
+                                                     @csrf
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Reject and delete this request?')">
+                                                     Reject
+                                                    </button>
+                                                     </form>
                                                 </td>
                                             </tr>
                                         @endforeach
