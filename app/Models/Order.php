@@ -33,6 +33,9 @@ class Order extends Model
         'courier_name',
         'tracking_number',
         'is_pushed',
+        'delivered_at',
+        'return_reason',
+        'return_status',
     ];
 
     protected $casts = [

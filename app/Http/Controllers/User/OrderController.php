@@ -129,8 +129,8 @@ class OrderController extends Controller
     {
         $order = Order::where('id', $id)->where('user_id', Auth::user()->id)->firstOrFail();
 
-        // Check if order can be cancelled (e.g. only if Status is New or Pending)
-        $allowedStatus = ['New', 'Pending'];
+        // Check if order can be cancelled (e.g. only if Status is New, Pending, or Paid)
+        $allowedStatus = ['New', 'Pending', 'Paid'];
         if (!in_array($order->order_status, $allowedStatus)) {
             return redirect()->back()->with('error_message', 'Order cannot be cancelled at this stage.');
         }
@@ -170,6 +170,42 @@ class OrderController extends Controller
         ]);
 
         return redirect()->back()->with('success_message', 'Order has been cancelled and wallet balance (if any) has been reverted.');
+    }
+
+    public function returnOrder(Request $request, $id)
+    {
+        $request->validate([
+            'return_reason' => 'required|string',
+        ]);
+
+        $order = Order::where('id', $id)->where('user_id', Auth::user()->id)->firstOrFail();
+
+        // Check if order is eligible for return
+        if ($order->order_status != 'Delivered' || !$order->delivered_at) {
+            return redirect()->back()->with('error_message', 'Order must be delivered before initiating a return.');
+        }
+
+        $deliveredDate = \Carbon\Carbon::parse($order->delivered_at);
+        if ($deliveredDate->addDays(7)->isPast()) {
+            return redirect()->back()->with('error_message', 'Return period (7 days) has expired for this order.');
+        }
+
+        // Update Return Status
+        $order->return_status = 'Return Requested';
+        $order->return_reason = $request->return_reason;
+        $order->save();
+
+        // Notify Admin
+        Notification::create([
+            'type' => 'order_return_requested',
+            'title' => 'Order Return Requested',
+            'message' => "Customer '" . Auth::user()->name . "' has requested a return for Order #" . $id . ". Reason: " . $request->return_reason,
+            'related_id' => $id,
+            'related_type' => Order::class,
+            'is_read' => false,
+        ]);
+
+        return redirect()->back()->with('success_message', 'Return request has been submitted successfully. Our team will review it and get back to you.');
     }
     public function payNow($id)
     {

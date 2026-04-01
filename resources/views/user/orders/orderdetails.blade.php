@@ -260,12 +260,32 @@
                             @endif
 
                             <div class="mt-4">
-                                @if (in_array($orderDetails->order_status, ['New', 'Pending']))
+                                @php
+                                    $showReturn = false;
+                                    if ($orderDetails->order_status == 'Delivered' && $orderDetails->delivered_at) {
+                                        $deliveredAt = \Carbon\Carbon::parse($orderDetails->delivered_at);
+                                        if (!$deliveredAt->addDays(7)->isPast() && empty($orderDetails->return_status)) {
+                                            $showReturn = true;
+                                        }
+                                    }
+                                @endphp
+
+                                @if (in_array($orderDetails->order_status, ['New', 'Pending', 'Paid']) && empty($orderDetails->return_status))
                                     <a href="{{ route('student.orders.cancel', $orderDetails->id) }}"
                                         class="btn btn-danger w-100 mb-2"
                                         onclick="return confirm('Are you sure you want to cancel this order?')">
                                         Cancel Order
                                     </a>
+                                @elseif($showReturn)
+                                    <button type="button" class="btn btn-warning w-100 mb-2" data-toggle="modal" data-target="#returnModal">
+                                        Return Order
+                                    </button>
+                                @endif
+
+                                @if (!empty($orderDetails->return_status))
+                                    <div class="alert alert-info py-2 px-3 mb-2" style="font-size: 13px;">
+                                        <strong>Return Status:</strong> {{ $orderDetails->return_status }}
+                                    </div>
                                 @endif
 
                                 @if ($orderDetails->order_status == 'Pending' && in_array($orderDetails->payment_gateway, ['Razorpay', 'PICKUP']))
@@ -275,6 +295,49 @@
                                     </a>
                                 @endif
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Return Order Modal -->
+                    <div class="modal fade" id="returnModal" tabindex="-1" role="dialog" aria-labelledby="returnModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <form action="{{ route('student.orders.return', $orderDetails->id) }}" method="POST">
+                                    @csrf
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="returnModalLabel">Return Order #{{ $orderDetails->id }}</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="alert alert-warning small">
+                                            <i class="fas fa-info-circle mr-1"></i> You can return this item within 7 days of delivery.
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="return_reason">Reason for Return <span class="text-danger">*</span></label>
+                                            <select name="return_reason" class="form-control" required>
+                                                <option value="">Select Reason</option>
+                                                <option value="Damaged Product">Damaged Product</option>
+                                                <option value="Wrong Product Delivered">Wrong Product Delivered</option>
+                                                <option value="Quality Issue">Quality Issue</option>
+                                                <option value="Not as described">Not as described</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="return_comment">Comments (Optional)</label>
+                                            <textarea name="return_comment" class="form-control" rows="3" placeholder="Additional details..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary">Submit Return Request</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                         </div>
                     </div>
 

@@ -213,6 +213,7 @@ class OrderController extends Controller
             }
 
             if ($data['order_status'] == 'Delivered') {
+                Order::where('id', $data['order_id'])->update(['delivered_at' => now()]);
                 \App\Models\WalletTransaction::checkAndCreditWallet($data['order_id']);
             }
 

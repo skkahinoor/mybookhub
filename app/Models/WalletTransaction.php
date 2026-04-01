@@ -199,6 +199,33 @@ class WalletTransaction extends Model
             ]);
         }
 
+        // 1b. Revert MOV Cashback (Credit Reversal)
+        $movTransaction = self::where('order_id', $orderId)
+            ->where('type', 'credit')
+            ->where('description', 'LIKE', 'MOV cashback%')
+            ->first();
+        if ($movTransaction) {
+            $user->wallet_balance -= $movTransaction->amount;
+            $user->save();
+
+            self::create([
+                'user_id'     => $user->id,
+                'order_id'    => $order->id,
+                'amount'      => $movTransaction->amount,
+                'type'        => 'debit',
+                'description' => 'Reversal of MOV cashback for cancelled order #' . $order->id,
+            ]);
+
+            \App\Models\Notification::create([
+                'type' => 'wallet_debit',
+                'title' => 'Wallet adjusted',
+                'message' => 'Cashback amount ₹' . number_format($movTransaction->amount, 2) . ' has been reversed for cancelled order #' . $order->id . '.',
+                'related_id' => (int) $user->id,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
+        }
+
         // 2. Revert Used Amount (Debit Reversal)
         $debitTransaction = self::where('order_id', $orderId)->where('type', 'debit')->where('description', 'NOT LIKE', '%Reversal%')->first();
         if ($debitTransaction) {
