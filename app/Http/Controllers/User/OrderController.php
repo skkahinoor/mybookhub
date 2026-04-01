@@ -207,6 +207,7 @@ class OrderController extends Controller
 
         return redirect()->back()->with('success_message', 'Return request has been submitted successfully. Our team will review it and get back to you.');
     }
+    
     public function payNow($id)
     {
         $order = Order::where('id', $id)->where('user_id', Auth::user()->id)->firstOrFail();

@@ -102,7 +102,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/sales/withdrawal-dashboard', [WithdrawalApiController::class, 'dashboard']);
     Route::post('/sales/withdraw-request', [WithdrawalApiController::class, 'requestWithdraw']);
     Route::get('/sales/transactions', [WithdrawalApiController::class, 'transactions']);
-   
+
 });
 
 // Vendor Profile Management
