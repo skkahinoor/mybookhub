@@ -178,6 +178,14 @@
                                         <h5 class="mb-0">
                                             ₹{{ number_format($product->product_price * $product->product_qty, 2) }}
                                         </h5>
+                                        @if (strpos(strtolower($orderDetails->order_status), 'cancel') === false)
+                                            <button type="button" class="btn btn-sm btn-outline-warning mt-2 raise-query-btn" 
+                                                data-order-id="{{ $orderDetails->id }}" 
+                                                data-product-id="{{ $product->id }}"
+                                                data-product-name="{{ $product->product_name }}">
+                                                Raise a Query
+                                            </button>
+                                        @endif
                                     </div>
                                 </div>
                             @endforeach
@@ -295,7 +303,87 @@
     </div>
 </div>
 
+<!-- Raise Query Modal -->
+<div class="modal fade" id="queryModal" tabindex="-1" role="dialog" aria-labelledby="queryModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="{{ route('student.orders.raise-query') }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="queryModalLabel">Raise a Query</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="order_id" id="query_order_id">
+                    <input type="hidden" name="order_product_id" id="query_product_id">
+                    
+                    <div class="form-group mb-3">
+                        <label>Product</label>
+                        <input type="text" id="query_product_name" class="form-control" readonly>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="subject">Subject <span class="text-danger">*</span></label>
+                        <select name="subject" class="form-control" required>
+                            <option value="">Select Subject</option>
+                            <option value="Damaged Product">Damaged Product</option>
+                            <option value="Wrong Product Delivered">Wrong Product Delivered</option>
+                            <option value="Missing Item">Missing Item</option>
+                            <option value="Quality Issue">Quality Issue</option>
+                            <option value="Delay in Delivery">Delay in Delivery</option>
+                            <option value="Payment Issue">Payment Issue</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="message">Message <span class="text-danger">*</span></label>
+                        <textarea name="message" class="form-control" rows="4" placeholder="Describe your issue in detail..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Submit Query</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @include('user.layout.footer')
+    </div>
+    <!-- plugins:js -->
+    <script src="{{ asset('user/vendors/js/vendor.bundle.base.js') }}"></script>
+    <!-- endinject -->
+    <!-- Plugin js for this page -->
+    <script src="{{ asset('user/vendors/datatables.net/jquery.dataTables.js') }}"></script>
+    <script src="{{ asset('user/vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
+    <!-- End plugin js for this page -->
+    <!-- inject:js -->
+    <script src="{{ asset('user/js/off-canvas.js') }}"></script>
+    <script src="{{ asset('user/js/hoverable-collapse.js') }}"></script>
+    <script src="{{ asset('user/js/template.js') }}"></script>
+    <script src="{{ asset('user/js/settings.js') }}"></script>
+    <script src="{{ asset('user/js/todolist.js') }}"></script>
+    <!-- endinject -->
+
+<script>
+$(document).ready(function() {
+    $('.raise-query-btn').on('click', function() {
+        const orderId = $(this).data('order-id');
+        const productId = $(this).data('product-id');
+        const productName = $(this).data('product-name');
+
+        $('#query_order_id').val(orderId);
+        $('#query_product_id').val(productId);
+        $('#query_product_name').val(productName);
+        
+        $('#queryModal').modal('show');
+    });
+});
+</script>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 

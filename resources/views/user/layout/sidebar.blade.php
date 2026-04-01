@@ -237,6 +237,12 @@
                         <span class="menu-title">My Orders</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('student.orders.queries') }}">
+                        <i class="icon-paper menu-icon"></i>
+                        <span class="menu-title">My Order Queries</span>
+                    </a>
+                </li>
             @endif
             @if (Auth::user()->can('view_sell_old_books') ||
                     optional(Auth::user()->assignedRole)->hasPermissionTo('view_sell_old_books'))

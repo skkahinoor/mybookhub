@@ -393,16 +393,24 @@ class SellBookController extends Controller
         }
         $cleanSearch = preg_replace('/[^0-9X]/i', '', $isbn);
 
+        // 1. Try to find "new" products first
         $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
-            ->where('product_isbn', $isbn)
-            ->where('condition', 'old')
+            ->where('condition', 'new')
+            ->where(function ($query) use ($isbn, $cleanSearch) {
+                $query->where('product_isbn', $isbn)
+                    ->orWhere('product_isbn', 'like', "%{$isbn}%")
+                    ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
+                    ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
+            })
             ->first();
 
-        if (! $product && strlen($cleanSearch) > 0) {
+        // 2. Fallback to "old" products if no "new" ones found
+        if (! $product) {
             $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
                 ->where('condition', 'old')
                 ->where(function ($query) use ($isbn, $cleanSearch) {
-                    $query->where('product_isbn', 'like', "%{$isbn}%")
+                    $query->where('product_isbn', $isbn)
+                        ->orWhere('product_isbn', 'like', "%{$isbn}%")
                         ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
                         ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
                 })
@@ -499,10 +507,14 @@ class SellBookController extends Controller
             return response()->json(['status' => true, 'data' => []]);
         }
 
-        $books = Product::where('condition', 'old')
-            ->where('product_name', 'LIKE', '%'.$query.'%')
-            ->limit(10)
-            ->get(['id', 'product_name', 'product_isbn']);
+        $books = Product::where('product_name', 'LIKE', '%'.$query.'%')
+            ->orderByRaw("FIELD(`condition`, 'new', 'old')")
+            ->get(['id', 'product_name', 'product_isbn', 'condition'])
+            ->unique(function ($item) {
+                return $item->product_name . '-' . $item->product_isbn;
+            })
+            ->take(10)
+            ->values();
 
         return response()->json([
             'status' => true,

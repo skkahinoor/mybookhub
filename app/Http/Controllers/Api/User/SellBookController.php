@@ -886,7 +886,7 @@ class SellBookController extends Controller
             $commission = \App\Models\OldBookCommission::first();
             $percentage = $commission ? $commission->percentage : 0;
             $originalPrice = $attribute->product->product_price ?? 0;
-            $attribute->platform_charge = ($originalPrice * $percentage) / 100;
+            $attribute->platform_charge = round(($originalPrice * $percentage) / 100);
         }
 
         $attribute->save();

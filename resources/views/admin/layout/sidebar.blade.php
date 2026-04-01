@@ -127,6 +127,9 @@
                                     @if (Session::get('page') == 'sales_concept') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('vendor/sales-concept') }}">Sales Concept</a></li>
                         @endif
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'order_queries') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ url('vendor/order-queries') }}">Order Queries</a></li>
                     </ul>
                 </div>
             </li>
@@ -348,6 +351,9 @@
                                     @if (Session::get('page') == 'sales_concept') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/sales-concept') }}">Sales Concept</a></li>
                         @endcan
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'order_queries') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ url('admin/order-queries') }}">Order Queries</a></li>
                     </ul>
                 </div>
             </li>

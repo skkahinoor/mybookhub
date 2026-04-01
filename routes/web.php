@@ -470,6 +470,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-contact-status', 'AdminController@updateContactStatus');
         Route::match(['get', 'post'], 'contact-queries/reply/{id}', 'AdminController@updateContactReply');
         Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery')->name('admin.delete.contact.query');
+
+        // Order Queries (Tickets)
+        Route::get('order-queries', 'OrderQueryController@index')->name('admin.order_queries.index');
+        Route::post('update-order-query-status', 'OrderQueryController@updateStatus')->name('admin.order_queries.update_status');
+        Route::match(['get', 'post'], 'order-query/reply/{id}', 'OrderQueryController@reply')->name('admin.order_queries.reply');
+        Route::get('delete-order-query/{id}', 'OrderQueryController@delete')->name('admin.order_queries.delete');
     });
     // AJAX routes for cascading location dropdowns (outside admin middleware for AJAX access)
     Route::get('institution-countries', [InstitutionManagementController::class, 'getCountries'])->name('admin.institution.countries');
