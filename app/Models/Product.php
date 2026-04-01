@@ -256,12 +256,12 @@ class Product extends Model
         if ($attribute->user_id !== null) {
             // Student/User entry: Use manual user_product_price if set, else calculate from condition
             if ($attribute->user_product_price !== null && $attribute->user_product_price > 0) {
-                $finalPrice = (float) $attribute->user_product_price;
+                $finalPrice = round((float) $attribute->user_product_price);
             } elseif ($attribute->old_book_condition_id && $attribute->condition) {
                 // Fallback for students if manual price missing: MRP * condition %
-                $finalPrice = ($originalPrice * $attribute->condition->percentage) / 100;
+                $finalPrice = round(($originalPrice * $attribute->condition->percentage) / 100);
             } else {
-                $finalPrice = $originalPrice;
+                $finalPrice = round($originalPrice);
             }
         } else {
             // Vendor/Admin entry: Differ calculation between old and new books
@@ -270,11 +270,11 @@ class Product extends Model
             if ($attribute->old_book_condition_id && $attribute->condition) {
                 // OLD BOOK: The 'product_discount' column stores the condition percentage (e.g. 60)
                 // Final Price = Base Price * Percentage
-                $finalPrice = ($originalPrice * $discountValue) / 100;
+                $finalPrice = round(($originalPrice * $discountValue) / 100);
             } else {
                 // NEW BOOK: The 'product_discount' column stores a literal discount
                 // Final Price = Base Price - (Base Price * Discount)
-                $finalPrice = $originalPrice - ($originalPrice * $discountValue / 100);
+                $finalPrice = round($originalPrice - ($originalPrice * $discountValue / 100));
             }
         }
 
@@ -287,8 +287,8 @@ class Product extends Model
             
             if ($commissionPercentage > 0) {
                 // Commission is calculated from the original MRP
-                $commissionAmount = ($originalPrice * $commissionPercentage) / 100;
-                $finalPrice += $commissionAmount;
+                $commissionAmount = round(($originalPrice * $commissionPercentage) / 100);
+                $finalPrice = round($finalPrice + $commissionAmount);
             }
         }
 
