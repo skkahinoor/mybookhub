@@ -6,10 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\HeaderLogo;
 use App\Models\Notification;
 use App\Models\Order;
+use App\Models\OrdersProduct;
+use App\Models\OrderQuery;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 
 class OrderController extends Controller
@@ -176,5 +179,89 @@ class OrderController extends Controller
 
         Session::put('order_id', $id);
         return redirect('/razorpay');
+    }
+
+    public function raiseQuery(Request $request)
+    {
+        $request->validate([
+            'order_id' => 'required|exists:orders,id',
+            'order_product_id' => 'required|exists:orders_products,id',
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        $order = Order::find($request->order_id);
+        if ($order->user_id != Auth::id()) {
+            return redirect()->back()->with('error_message', 'Unauthorized access.');
+        }
+
+        $product = OrdersProduct::find($request->order_product_id);
+
+        // Generate Ticket ID
+        $ticket_id = 'TKT-' . strtoupper(Str::random(6));
+
+        OrderQuery::create([
+            'ticket_id' => $ticket_id,
+            'order_id' => $request->order_id,
+            'order_product_id' => $request->order_product_id,
+            'user_id' => Auth::id(),
+            'vendor_id' => $product->vendor_id,
+            'subject' => $request->subject,
+            'message' => $request->message,
+            'status' => 'pending',
+        ]);
+
+        // Notify Admin
+        Notification::create([
+            'type' => 'order_query',
+            'title' => 'New Order Query Raised',
+            'message' => "Customer '" . Auth::user()->name . "' raised a query for Order #" . $request->order_id . " regarding '" . $product->product_name . "'. Ticket ID: " . $ticket_id,
+            'related_id' => $request->order_id,
+            'related_type' => Order::class,
+            'is_read' => false,
+        ]);
+
+        return redirect()->back()->with('success_message', 'Query raised successfully. Your Ticket ID is ' . $ticket_id . '. Our team will get back to you soon.');
+    }
+
+    public function orderQueries(Request $request)
+    {
+        $logos = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
+
+        $queries = OrderQuery::with(['order', 'orderProduct'])
+            ->where('user_id', Auth::id())
+            ->orderBy('created_at', 'desc');
+
+        if ($request->ajax()) {
+            return DataTables::of($queries)
+                ->addIndexColumn()
+                ->addColumn('ticket_id', function($q) {
+                    return '<strong>' . $q->ticket_id . '</strong>';
+                })
+                ->addColumn('order_id', function($q) {
+                    return '#' . $q->order_id;
+                })
+                ->addColumn('product_name', function($q) {
+                    return $q->orderProduct->product_name ?? 'N/A';
+                })
+                ->addColumn('status', function($q) {
+                    $class = 'badge-warning';
+                    if($q->status == 'resolved') $class = 'badge-success';
+                    elseif($q->status == 'ongoing') $class = 'badge-info';
+                    elseif($q->status == 'closed') $class = 'badge-secondary';
+                    return '<span class="badge ' . $class . '">' . ucfirst($q->status) . '</span>';
+                })
+                ->addColumn('date', function($q) {
+                    return $q->created_at->format('M d, Y');
+                })
+                ->addColumn('action', function($q) {
+                    return '<button type="button" class="btn btn-sm btn-info view-query" data-message="'.$q->message.'" data-reply="'.$q->admin_reply.'">View Detail</button>';
+                })
+                ->rawColumns(['ticket_id', 'status', 'action'])
+                ->make(true);
+        }
+
+        return view('user.orders.queries', compact('logos', 'headerLogo'));
     }
 }

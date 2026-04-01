@@ -344,6 +344,24 @@
             transform: scale(1.1);
         }
     </style>
+      <div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg modal-dialog-centered">
+                                    <div class="modal-content" style="background: #000; border: none; border-radius: 12px; overflow: hidden;">
+                                        <div class="modal-header" style="border: none; position: absolute; top: 10px; right: 10px; z-index: 9999; padding: 0;">
+                                            <button type="button" class="close text-white shadow-none" aria-label="Close" onclick="$('#videoModal').modal('hide');" style="background: rgba(0,0,0,0.6); border: none; font-size: 28px; width: 40px; height: 40px; border-radius: 50%; opacity: 1; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body p-0">
+                                            <video id="bookVideoPlayer" width="100%" height="auto" controls style="display: block; max-height: 80vh;">
+                                                <source src="{{ asset('front/videos/product_videos/' . $productAttribute->video_upload) }}" type="video/{{ pathinfo($productAttribute->video_upload, PATHINFO_EXTENSION) }}">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        </div>
+                                    </div>
+                                </div>
+            </div>
+        </div>
 
     <section class="content-inner-1" style="background: #efeff4; padding-top: 40px;">
         <div class="container">
@@ -367,6 +385,16 @@
                             <img src="{{ asset('front/images/product_images/large/' . $productDetails['product_image']) }}" alt="{{ $productDetails['product_name'] }}">
                         </div>
 
+                        @if(!empty($productAttribute->video_upload))
+                            <div class="product-video-box mt-4 text-center">
+                                <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#videoModal" style="border-radius: 8px; font-weight: 600; padding: 12px;">
+                                    <i class="fas fa-play-circle me-2"></i> Watch Book Video Glance
+                                </button>
+                            </div>
+
+                            <!-- Video Modal -->
+                          
+                        @endif
                     </div>
 
                     <!-- Right: Details -->
@@ -528,6 +556,20 @@
                                 <a href="{{ url('product/'.$productDetails['id'].'/all-sellers') }}" class="view-all-sellers" style="display: block; margin-top: 10px; color: #4a5568; font-weight: 600; text-decoration: none;">View All {{ $otherSellers->count() }} Sellers ></a>
                             @endif
 
+                            @if(isset($productDetails['condition']) && strtolower($productDetails['condition']) == 'old')
+                            <!-- Disclaimer Card -->
+                            <div class="disclaimer-card mt-4 p-3" style="background: #fff5f5; border: 1px solid #feb2b2; border-radius: 12px; box-shadow: 0 2px 8px rgba(229, 62, 62, 0.05);">
+                                <h5 class="text-danger mb-2" style="font-size: 15px; font-weight: 700;">
+                                    <i class="fas fa-exclamation-triangle me-2"></i> Safety Disclaimer
+                                </h5>
+                                <p class="mb-0" style="font-size: 13px; font-weight: 500; line-height: 1.5; color: #742a2a;">
+                                    Please view the video and explore book details carefully before payment. 
+                                    If any problem occurs with the product or transaction, <strong>BookHub is not responsible.</strong> 
+                                    Buying from individual sellers is at your own risk.
+                                </p>
+                            </div>
+                            @endif
+
                             <div class="extra-details" style="margin-top: 30px; background: #fff; border: 1px solid #edf2f7; box-shadow: none;">
                                 <h4 style="font-size: 16px; margin-bottom: 15px; border-bottom: 1px solid #edf2f7; padding-bottom: 10px;">Book Details</h4>
                                 <div class="extra-details-row">
@@ -580,5 +622,27 @@
                 rangeValue.innerText = `Within ${val} km`;
             }
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var videoModal = document.getElementById('videoModal');
+            if(videoModal) {
+                var videoPlayer = document.getElementById('bookVideoPlayer');
+                
+                videoModal.addEventListener('shown.bs.modal', function () {
+                    if (videoPlayer) {
+                        videoPlayer.play().catch(function(error) {
+                            console.log("Video autoplay prevented by browser:", error);
+                        });
+                    }
+                });
+                
+                videoModal.addEventListener('hidden.bs.modal', function () {
+                    if (videoPlayer) {
+                        videoPlayer.pause();
+                        videoPlayer.currentTime = 0;
+                    }
+                });
+            }
+        });
     </script>
 @endsection

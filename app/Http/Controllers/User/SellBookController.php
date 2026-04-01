@@ -143,6 +143,7 @@ class SellBookController extends Controller
                 'product_price' => 'required|numeric|min:0',
                 'old_book_condition_id' => 'required|exists:old_book_conditions,id',
                 'language_id' => 'required|exists:languages,id',
+                'video_upload' => 'nullable|mimes:mp4,ogv,webm,avi,mov|max:51200',
             ]);
 
             $data = $request->all();
@@ -285,6 +286,19 @@ class SellBookController extends Controller
                 }
             }
 
+            // Video handling
+            if ($request->hasFile('video_upload')) {
+                $video_tmp = $request->file('video_upload');
+                if ($video_tmp->isValid()) {
+                    $video_name = $video_tmp->getClientOriginalName();
+                    $extension = $video_tmp->getClientOriginalExtension();
+                    $videoName = $video_name.'-'.rand(111, 99999).'.'.$extension;
+                    $videoPath = public_path('front/videos/product_videos/');
+                    $video_tmp->move($videoPath, $videoName);
+                    $attribute->video_upload = $videoName;
+                }
+            }
+
             // Calculate Price based on condition percentage
             if (! empty($data['old_book_condition_id'])) {
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
@@ -379,16 +393,24 @@ class SellBookController extends Controller
         }
         $cleanSearch = preg_replace('/[^0-9X]/i', '', $isbn);
 
+        // 1. Try to find "new" products first
         $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
-            ->where('product_isbn', $isbn)
-            ->where('condition', 'old')
+            ->where('condition', 'new')
+            ->where(function ($query) use ($isbn, $cleanSearch) {
+                $query->where('product_isbn', $isbn)
+                    ->orWhere('product_isbn', 'like', "%{$isbn}%")
+                    ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
+                    ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
+            })
             ->first();
 
-        if (! $product && strlen($cleanSearch) > 0) {
+        // 2. Fallback to "old" products if no "new" ones found
+        if (! $product) {
             $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
                 ->where('condition', 'old')
                 ->where(function ($query) use ($isbn, $cleanSearch) {
-                    $query->where('product_isbn', 'like', "%{$isbn}%")
+                    $query->where('product_isbn', $isbn)
+                        ->orWhere('product_isbn', 'like', "%{$isbn}%")
                         ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
                         ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
                 })
@@ -485,10 +507,14 @@ class SellBookController extends Controller
             return response()->json(['status' => true, 'data' => []]);
         }
 
-        $books = Product::where('condition', 'old')
-            ->where('product_name', 'LIKE', '%'.$query.'%')
-            ->limit(10)
-            ->get(['id', 'product_name', 'product_isbn']);
+        $books = Product::where('product_name', 'LIKE', '%'.$query.'%')
+            ->orderByRaw("FIELD(`condition`, 'new', 'old')")
+            ->get(['id', 'product_name', 'product_isbn', 'condition'])
+            ->unique(function ($item) {
+                return $item->product_name . '-' . $item->product_isbn;
+            })
+            ->take(10)
+            ->values();
 
         return response()->json([
             'status' => true,

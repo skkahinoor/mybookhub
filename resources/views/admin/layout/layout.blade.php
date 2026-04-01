@@ -285,6 +285,13 @@
                                             linkUrl = isVendorPage
                                                 ? "{{ url('vendor/orders') }}/" + notification.related_id
                                                 : "{{ url('admin/orders') }}/" + notification.related_id;
+                                        } else if (notification.type === 'order_query_raised' &&
+                                            notification.related_id) {
+                                            iconClass = 'ti-help-alt';
+                                            iconBg = 'bg-warning';
+                                            linkUrl = isVendorPage
+                                                ? "{{ url('vendor/order-queries') }}"
+                                                : "{{ url('admin/order-queries') }}";
                                         } else if (notification.type === 'order_cancelled' &&
                                             notification.related_id) {
                                             iconClass = 'ti-close';
