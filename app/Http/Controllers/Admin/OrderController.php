@@ -967,4 +967,61 @@ class OrderController extends Controller
             return back()->with('error_message', $e->getMessage());
         }
     }
+
+    public function initiateReturnPayment(Request $request)
+    {
+        $request->validate([
+            'order_item_id' => 'required|exists:orders_products,id',
+            'return_payment_note' => 'nullable|string|max:500',
+        ]);
+
+        $item = OrdersProduct::findOrFail($request->order_item_id);
+
+        // Only allow for returned items
+        if ($item->return_status !== 'Returned') {
+            return redirect()->back()->with('error_message', 'Payment can only be initiated for returned items.');
+        }
+
+        // Vendor authorization check
+        $admin = Auth::guard('admin')->user();
+        if ($admin->hasRole('vendor') && $item->vendor_id != $admin->vendor_id) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
+        $item->update([
+            'return_payment_status' => 'Payment Initiated',
+            'return_payment_note' => $request->return_payment_note,
+        ]);
+
+        // Notify the user
+        $user = User::find($item->user_id);
+        if ($user) {
+            Notification::create([
+                'type' => 'return_payment_initiated',
+                'title' => 'Refund Payment Initiated',
+                'message' => 'Refund payment has been initiated for "' . $item->product_name . '" from Order #' . $item->order_id . '.',
+                'related_id' => $user->id,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
+        }
+
+        return redirect()->back()->with('success_message', 'Return payment initiated successfully for "' . $item->product_name . '".');
+    }
+
+    public function getUserBankDetails(Request $request)
+    {
+        $userId = $request->input('user_id');
+        $user = User::select('id', 'name', 'email', 'bank_name', 'account_holder_name', 'account_number', 'ifsc_code', 'upi_id')->find($userId);
+
+        if ($user) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $user->toArray()
+            ]);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'User not found']);
+    }
 }
+

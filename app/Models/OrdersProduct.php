@@ -25,6 +25,8 @@ class OrdersProduct extends Model
         'return_reason',
         'return_status',
         'return_comments',
+        'return_payment_status',
+        'return_payment_note',
         'item_delivered_at',
     ];
 

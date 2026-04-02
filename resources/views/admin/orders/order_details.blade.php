@@ -484,6 +484,28 @@
                                                         <strong>Reason:</strong> {{ $product['return_reason'] }}<br>
                                                         <strong>Comm:</strong> {{ $product['return_comments'] }}
                                                     </div>
+
+                                                    {{-- Payment Status Badge --}}
+                                                    @if (!empty($product['return_payment_status']))
+                                                        <span class="badge badge-{{ $product['return_payment_status'] == 'Payment Initiated' ? 'info' : 'success' }} mt-1">
+                                                            {{ $product['return_payment_status'] }}
+                                                        </span>
+                                                        @if (!empty($product['return_payment_note']))
+                                                            <br><small class="text-muted mt-1">Note: {{ $product['return_payment_note'] }}</small>
+                                                        @endif
+                                                    @endif
+
+                                                    {{-- Initiate Payment Button (only for Returned items without payment) --}}
+                                                    @if ($product['return_status'] == 'Returned' && empty($product['return_payment_status']))
+                                                        <button type="button" class="btn btn-success btn-sm mt-2 initiate-payment-btn"
+                                                            data-item-id="{{ $product['id'] }}"
+                                                            data-product-name="{{ $product['product_name'] }}"
+                                                            data-product-price="{{ $product['product_price'] }}"
+                                                            data-user-id="{{ $product['user_id'] }}"
+                                                            data-toggle="modal" data-target="#initiatePaymentModal">
+                                                            <i class="mdi mdi-cash-refund"></i> Initiate Payment
+                                                        </button>
+                                                    @endif
                                                 @else
                                                     No return request
                                                 @endif
@@ -538,4 +560,88 @@
         @include('admin.layout.footer')
         <!-- partial -->
     </div>
+
+    {{-- Initiate Return Payment Modal --}}
+    <div class="modal fade" id="initiatePaymentModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="mdi mdi-cash-refund"></i> Initiate Return Payment</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form action="{{ url($adminType . '/initiate-return-payment') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="order_item_id" id="payment_item_id">
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6><strong>Product:</strong> <span id="payment_product_name"></span></h6>
+                                <h6><strong>Refund Amount:</strong> ₹<span id="payment_amount"></span></h6>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary"><strong>User Bank Details</strong></h6>
+                                <div id="user_bank_details">
+                                    <p class="text-muted">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="form-group">
+                            <label for="return_payment_note"><strong>Payment Note / Transaction Reference</strong></label>
+                            <textarea class="form-control" name="return_payment_note" id="return_payment_note" rows="3"
+                                placeholder="Enter transaction ID, payment method details, or any notes..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="mdi mdi-check-circle"></i> Confirm Payment Initiated
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script>
+        $(document).on('click', '.initiate-payment-btn', function() {
+            var itemId = $(this).data('item-id');
+            var productName = $(this).data('product-name');
+            var productPrice = $(this).data('product-price');
+            var userId = $(this).data('user-id');
+
+            $('#payment_item_id').val(itemId);
+            $('#payment_product_name').text(productName);
+            $('#payment_amount').text(productPrice);
+            $('#return_payment_note').val('');
+
+            // Fetch user bank details via AJAX
+            $('#user_bank_details').html('<p class="text-muted">Loading...</p>');
+            $.ajax({
+                url: '{{ url($adminType . "/get-user-bank-details") }}',
+                type: 'GET',
+                data: { user_id: userId },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        var d = response.data;
+                        var html = '<table class="table table-sm table-bordered mb-0">';
+                        html += '<tr><td><strong>Name</strong></td><td>' + (d.account_holder_name || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>Bank</strong></td><td>' + (d.bank_name || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>Account No</strong></td><td>' + (d.account_number || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>IFSC</strong></td><td>' + (d.ifsc_code || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>UPI</strong></td><td>' + (d.upi_id || 'N/A') + '</td></tr>';
+                        html += '</table>';
+                        $('#user_bank_details').html(html);
+                    } else {
+                        $('#user_bank_details').html('<p class="text-danger">Bank details not available.</p>');
+                    }
+                },
+                error: function() {
+                    $('#user_bank_details').html('<p class="text-danger">Failed to load bank details.</p>');
+                }
+            });
+        });
+    </script>
+    @endpush
 @endsection

@@ -223,6 +223,18 @@
                                             <div class="mt-2 text-info small font-weight-bold">
                                                 Return: {{ $product->return_status }}
                                             </div>
+                                            @if(!empty($product->return_payment_status))
+                                                <div class="mt-1 small">
+                                                    <span class="badge badge-{{ $product->return_payment_status == 'Payment Initiated' ? 'info' : 'success' }} px-2 py-1">
+                                                        {{ $product->return_payment_status }}
+                                                    </span>
+                                                    @if(!empty($product->return_payment_note))
+                                                        <div class="mt-1 text-muted" style="font-size: 11px;">
+                                                            <strong>Note:</strong> {{ $product->return_payment_note }}
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
                                         @endif
                                     </div>
                                 </div>
