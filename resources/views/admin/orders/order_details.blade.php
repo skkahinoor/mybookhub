@@ -393,16 +393,16 @@
                                         <th>Name</th>
                                         <th>Original MRP</th>
                                         <th>Product Discount</th>
-                                        <th>Unit Price (after product discount)</th>
-                                        <th>Product Qty</th>
-                                        <th>Total Price</th>
+                                        <th>Unit Price</th>
+                                        <th>Qty</th>
                                         @if (\Illuminate\Support\Facades\Auth::guard('admin')->user()->type != 'vendor')
                                             <th>Product by</th>
                                         @endif
-                                        <th>Coupon/Extra Discount (Distributed)</th>
-                                        <th>Total Price</th>
-                                        {{-- <th>Commission</th> --}}
+                                        <th>Distributed Discount</th>
+                                        <th>Item Total</th>
+                                        <th>Commission</th>
                                         <th>Final Amount</th>
+                                        <th>Return Info</th>
                                         <th>Item Status</th>
                                     </tr>
 
@@ -410,31 +410,17 @@
                                         <tr>
                                             <td>
                                                 @php
-                                                    $getProductImage = \App\Models\Product::getProductImage(
-                                                        $product['product_id'],
-                                                    );
+                                                    $getProductImage = \App\Models\Product::getProductImage($product['product_id']);
                                                 @endphp
-
                                                 <a target="_blank" href="{{ url('product/' . $product['product_id']) }}">
-                                                    <img
-                                                        src="{{ asset('front/images/product_images/small/' . $getProductImage) }}">
+                                                    <img src="{{ asset('front/images/product_images/small/' . $getProductImage) }}">
                                                 </a>
                                             </td>
-                                            {{-- <td>{{ $product['product_code'] }}</td> --}}
                                             <td>{{ $product['product_name'] }}</td>
-                                            {{-- Original MSRP and Discount --}}
-                                            <td>
-                                                @if (isset($product['product']['product_price']))
-                                                    ₹{{ $product['product']['product_price'] }}
-                                                @else
-                                                    N/A
-                                                @endif
-                                            </td>
+                                            <td>₹{{ $product['product']['product_price'] ?? 'N/A' }}</td>
                                             <td>
                                                 @php
-                                                    $prodAttr = collect($product['product']['attributes'] ?? [])
-                                                        ->where('vendor_id', $product['vendor_id'])
-                                                        ->first();
+                                                    $prodAttr = collect($product['product']['attributes'] ?? [])->where('vendor_id', $product['vendor_id'])->first();
                                                     $prodDiscount = $prodAttr['product_discount'] ?? 0;
                                                 @endphp
                                                 @if ($prodDiscount > 0)
@@ -443,65 +429,48 @@
                                                     0%
                                                 @endif
                                             </td>
-
                                             <td>₹{{ $product['product_price'] }}</td>
                                             <td>{{ $product['product_qty'] }}</td>
 
                                             @if (\Illuminate\Support\Facades\Auth::guard('admin')->user()->type != 'vendor')
-                                                @if ($product['vendor_id'] > 0)
-                                                    {{-- if the product belongs to a 'vendor' --}}
-                                                    <td>
-                                                        <a href="/admin/view-vendor-details/{{ $product['admin_id'] }}"
-                                                            target="_blank">Vendor</a>
-                                                    </td>
-                                                @else
-                                                    <td>Admin</td>
-                                                @endif
+                                                <td>
+                                                    @if ($product['vendor_id'] > 0)
+                                                        <a href="/admin/view-vendor-details/{{ $product['admin_id'] }}" target="_blank">Vendor</a>
+                                                    @else
+                                                        Admin
+                                                    @endif
+                                                </td>
                                             @endif
 
                                             @php
-                                                $originalTotalPrice =
-                                                    $product['product_price'] * $product['product_qty'];
+                                                $originalTotalPrice = $product['product_price'] * $product['product_qty'];
+                                                $appliedDistributedDiscount = 0;
+                                                $hasCoupon = !empty($orderDetails['coupon_amount']) && $orderDetails['coupon_amount'] > 0;
+                                                $hasExtraDiscount = !empty($orderDetails['extra_discount']) && $orderDetails['extra_discount'] > 0;
+
+                                                if ($product['vendor_id'] > 0) {
+                                                    if ($hasCoupon || $hasExtraDiscount) {
+                                                        if ($hasCoupon) {
+                                                            if (\App\Models\Coupon::couponDetails($orderDetails['coupon_code'])['vendor_id'] > 0) {
+                                                                $appliedDistributedDiscount = $item_discount;
+                                                            } elseif ($hasExtraDiscount) {
+                                                                $appliedDistributedDiscount = $orderDetails['extra_discount'] / ($total_items ?: 1);
+                                                            }
+                                                        } elseif ($hasExtraDiscount) {
+                                                            $appliedDistributedDiscount = $item_discount;
+                                                        }
+                                                    }
+                                                } else {
+                                                    $appliedDistributedDiscount = $item_discount;
+                                                }
+                                                $total_price = $originalTotalPrice - $appliedDistributedDiscount;
                                             @endphp
-
-                                            <td>
-                                                @if ($product['vendor_id'] > 0)
-                                                    {{-- if the product belongs to a 'vendor', not 'admin' --}}
-                                                    @php
-                                                        $hasCoupon =
-                                                            !empty($orderDetails['coupon_amount']) &&
-                                                            $orderDetails['coupon_amount'] > 0;
-                                                        $hasExtraDiscount =
-                                                            !empty($orderDetails['extra_discount']) &&
-                                                            $orderDetails['extra_discount'] > 0;
-                                                        $appliedDistributedDiscount = 0;
-                                                    @endphp
-
-                                                    @if ($hasCoupon || $hasExtraDiscount)
-                                                        @if ($hasCoupon)
-                                                            @if (\App\Models\Coupon::couponDetails($orderDetails['coupon_code'])['vendor_id'] > 0)
-                                                                @php $appliedDistributedDiscount = $item_discount; @endphp
-                                                            @elseif ($hasExtraDiscount)
-                                                                @php $appliedDistributedDiscount = $orderDetails['extra_discount'] / ($total_items ?: 1); @endphp
-                                                            @endif
-                                                        @elseif ($hasExtraDiscount)
-                                                            @php $appliedDistributedDiscount = $item_discount; @endphp
-                                                        @endif
-                                                    @endif
-                                                    ₹{{ round($appliedDistributedDiscount, 2) }}
-                                                    @php $total_price = $originalTotalPrice - $appliedDistributedDiscount; @endphp
-                                                @else
-                                                    {{-- if the product belongs to an 'admin', not 'vendor' --}}
-                                                    ₹{{ round($item_discount, 2) }}
-                                                    @php $total_price = $originalTotalPrice - $item_discount; @endphp
-                                                @endif
-                                            </td>
-
+                                            <td>₹{{ round($appliedDistributedDiscount, 2) }}</td>
                                             <td>₹{{ round($total_price, 2) }}</td>
 
                                             @if ($product['vendor_id'] > 0)
-                                                <td>₹{{ $commission = round(($total_price * $product['commission']) / 100, 2) }}
-                                                </td>
+                                                @php $commission = round(($total_price * $product['commission']) / 100, 2); @endphp
+                                                <td>₹{{ $commission }}</td>
                                                 <td>₹{{ round($total_price - $commission, 2) }}</td>
                                             @else
                                                 <td>₹0</td>
@@ -509,6 +478,18 @@
                                             @endif
 
                                             <td>
+                                                @if (!empty($product['return_status']))
+                                                    <div class="alert alert-warning p-1" style="font-size: 11px;">
+                                                        <strong>Status:</strong> {{ $product['return_status'] }}<br>
+                                                        <strong>Reason:</strong> {{ $product['return_reason'] }}<br>
+                                                        <strong>Comm:</strong> {{ $product['return_comments'] }}
+                                                    </div>
+                                                @else
+                                                    No return request
+                                                @endif
+                                            </td>
+
+                                            <td>                      <td>
                                                 @if (Auth::guard('admin')->user()->can('update_order_item_status'))
                                                     <form action="{{ url('admin/update-order-item-status') }}"
                                                         method="post">

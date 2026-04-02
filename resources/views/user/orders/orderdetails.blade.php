@@ -183,12 +183,46 @@
                                         <h5 class="mb-0">
                                             ₹{{ number_format($product->product_price * $product->product_qty, 2) }}
                                         </h5>
+                                        @php
+                                            $showItemReturn = false;
+                                            $deliveryDate = $product->item_delivered_at ?? $orderDetails->delivered_at;
+                                            
+                                            // Handle cases where item is delivered but date might be missing (legacy or just updated)
+                                            if (strtolower($product->item_status) == 'delivered' && empty($product->return_status)) {
+                                                if ($deliveryDate) {
+                                                    $deliveredAt = \Carbon\Carbon::parse($deliveryDate);
+                                                    if (!$deliveredAt->addDays(7)->isPast()) {
+                                                        $showItemReturn = true;
+                                                    }
+                                                } else {
+                                                    // Status is Delivered but no date? Show button for safety, 
+                                                    // but ideally this shouldn't happen anymore
+                                                    $showItemReturn = true;
+                                                }
+                                            }
+                                        @endphp
+
                                         @if (strpos(strtolower($orderDetails->order_status), 'cancel') === false)
-                                            <button type="button" class="btn btn-sm btn-outline-warning mt-2 raise-query-btn"
-                                                data-order-id="{{ $orderDetails->id }}" data-product-id="{{ $product->id }}"
-                                                data-product-name="{{ $product->product_name }}">
-                                                Raise a Query
-                                            </button>
+                                            <div class="btn-group-vertical mt-2">
+                                                <button type="button" class="btn btn-sm btn-outline-warning raise-query-btn"
+                                                    data-order-id="{{ $orderDetails->id }}" data-product-id="{{ $product->id }}"
+                                                    data-product-name="{{ $product->product_name }}">
+                                                    Raise a Query
+                                                </button>
+                                                @if($showItemReturn)
+                                                    <button type="button" class="btn btn-sm btn-warning mt-1 return-item-btn"
+                                                        data-item-id="{{ $product->id }}"
+                                                        data-product-name="{{ $product->product_name }}">
+                                                        Return Item
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        @endif
+
+                                        @if (!empty($product->return_status))
+                                            <div class="mt-2 text-info small font-weight-bold">
+                                                Return: {{ $product->return_status }}
+                                            </div>
                                         @endif
                                     </div>
                                 </div>
@@ -273,17 +307,12 @@
                                     }
                                 @endphp
 
-                                @if (in_array($orderDetails->order_status, ['New', 'Pending', 'Paid']) && empty($orderDetails->return_status))
+                                @if (in_array($orderDetails->order_status, ['New', 'Pending', 'Paid']))
                                     <a href="{{ route('student.orders.cancel', $orderDetails->id) }}"
                                         class="btn btn-danger w-100 mb-2"
                                         onclick="return confirm('Are you sure you want to cancel this order?')">
                                         Cancel Order
                                     </a>
-                                @elseif($showReturn)
-                                    <button type="button" class="btn btn-warning w-100 mb-2" data-toggle="modal"
-                                        data-target="#returnModal">
-                                        Return Order
-                                    </button>
                                 @endif
 
                                 @if (!empty($orderDetails->return_status))
@@ -307,20 +336,24 @@
                         aria-labelledby="returnModalLabel" aria-hidden="true">
                         <div class="modal-dialog" role="document">
                             <div class="modal-content">
-                                <form action="{{ route('student.orders.return', $orderDetails->id) }}" method="POST">
+                                <form id="returnForm" action="" method="POST">
                                     @csrf
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="returnModalLabel">Return Order
-                                            #{{ $orderDetails->id }}</h5>
+                                        <h5 class="modal-title" id="returnModalLabel">Return Item</h5>
                                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                             <span aria-hidden="true">&times;</span>
                                         </button>
                                     </div>
                                     <div class="modal-body">
                                         <div class="alert alert-warning small">
-                                            <i class="fas fa-info-circle mr-1"></i> You can return this item within 7
-                                            days of delivery.
+                                            <i class="fas fa-info-circle mr-1"></i> Return window is 7 days from delivery.
                                         </div>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label>Returning Product</label>
+                                            <div id="return_product_display" class="font-weight-bold p-2 bg-light rounded"></div>
+                                        </div>
+
                                         <div class="form-group mb-3">
                                             <label for="return_reason">Reason for Return <span
                                                     class="text-danger">*</span></label>
@@ -334,8 +367,8 @@
                                             </select>
                                         </div>
                                         <div class="form-group">
-                                            <label for="return_comment">Comments (Optional)</label>
-                                            <textarea name="return_comment" class="form-control" rows="3"
+                                            <label for="return_comments">Comments (Optional)</label>
+                                            <textarea name="return_comments" class="form-control" rows="3"
                                                 placeholder="Additional details..."></textarea>
                                         </div>
                                     </div>
@@ -456,6 +489,16 @@
             $('#query_product_name').val(productName);
 
             $('#queryModal').modal('show');
+        });
+
+        $('.return-item-btn').on('click', function () {
+            const itemId = $(this).data('item-id');
+            const productName = $(this).data('product-name');
+            const returnUrl = "{{ route('student.orders.return_item', ':id') }}".replace(':id', itemId);
+
+            $('#returnForm').attr('action', returnUrl);
+            $('#return_product_display').text(productName);
+            $('#returnModal').modal('show');
         });
     });
 </script>
