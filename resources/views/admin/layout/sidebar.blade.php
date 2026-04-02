@@ -408,6 +408,9 @@
                                     @if (Session::get('page') == 'contact_queries') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/contact-queries') }}">Contact Queries</a></li>
                         @endcan
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'push_notifications') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.push-notifications.create') }}">Push Notifications</a></li>
                     </ul>
                 </div>
             </li>

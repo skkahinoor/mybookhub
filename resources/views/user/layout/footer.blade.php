@@ -8,4 +8,10 @@
     </div>
   </footer>
 
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-messaging.js"></script>
+<!-- FCM JS handler -->
+<script src="{{ asset('user/js/fcm.js') }}"></script>
+
 

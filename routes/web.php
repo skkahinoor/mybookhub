@@ -92,6 +92,10 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('notifications/{id}/read', 'NotificationController@markAsRead')->name('notifications.read');
         Route::post('notifications/mark-all-read', 'NotificationController@markAllAsRead')->name('notifications.mark_all_read');
 
+        // Push Notifications
+        Route::get('push-notifications', 'PushNotificationController@create')->name('admin.push-notifications.create');
+        Route::post('push-notifications/send', 'PushNotificationController@send')->name('admin.push-notifications.send');
+
         Route::get('admins/{type?}', 'AdminController@admins');                                // In case the authenticated user (logged-in user) is superadmin, admin, subadmin, vendor these are the three Admin Management URLs depending on the slug. The slug is the `type` column in `admins` table which can only be: superadmin, admin, subadmin, or vendor    // Used an Optional Route Parameters (or Optional Route Parameters) using a '?' question mark sign, for in case that there's no any {type} passed, the page will show ALL superadmins, admins, subadmins and vendors at the same page
         Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
         Route::post('delete-admin/{id}', [AdminController::class, 'deleteAdmin'])

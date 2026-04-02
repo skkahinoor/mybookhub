@@ -54,6 +54,7 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
         Route::get('/notifications', [NotificationController::class, 'index'])->name('student.notifications.index');
         Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('student.notifications.read');
         Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('student.notifications.mark_all_read');
+        Route::post('/notifications/register-token', [NotificationController::class, 'registerFcmToken'])->name('student.notifications.register_token');
 
         // Sell Old Book routes
         Route::get('/sell-book', [SellBookController::class, 'index'])->name('student.sell-book.index');

@@ -181,6 +181,11 @@ class User extends Authenticatable
         return $this->vendorPersonal ? $this->vendorPersonal->id : 0;
     }
 
+    public function fcm_tokens()
+    {
+        return $this->hasMany(UserFcmToken::class, 'user_id');
+    }
+
     public function wallet_transactions()
     {
         return $this->hasMany(WalletTransaction::class, 'user_id');

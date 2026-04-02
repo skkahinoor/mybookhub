@@ -100,5 +100,25 @@ class NotificationController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function registerFcmToken(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+            'device_type' => 'nullable|string',
+        ]);
+
+        $userId = Auth::id();
+        if (!$userId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        \App\Models\UserFcmToken::updateOrCreate(
+            ['user_id' => $userId, 'fcm_token' => $request->token],
+            ['device_type' => $request->device_type, 'last_used_at' => now()]
+        );
+
+        return response()->json(['message' => 'Token stored successfully']);
+    }
 }
 
