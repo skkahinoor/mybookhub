@@ -105,6 +105,46 @@ class InstitutionController extends Controller
         return null;
     }
 
+    /**
+     * Resolves sub_category_id from class_name which can be an ID or a string/number.
+     */
+    private function resolveSubcategoryId($className)
+    {
+        // 1. Check if it's already a valid ID
+        if (is_numeric($className) && Subcategory::where('id', $className)->exists()) {
+            return $className;
+        }
+
+        // 2. Prepare search names
+        $namesToTry = [];
+        if (is_numeric($className)) {
+            $namesToTry[] = "Class " . $className;
+            $namesToTry[] = $className;
+        } else {
+            $namesToTry[] = $className;
+            if (stripos($className, 'Class') === false) {
+                $namesToTry[] = "Class " . $className;
+            }
+        }
+
+        // 3. Search and return if found
+        foreach ($namesToTry as $name) {
+            $sub = Subcategory::where('subcategory_name', $name)->first();
+            if ($sub) {
+                return $sub->id;
+            }
+        }
+
+        // 4. If not found, create new subcategory (optional but helpful for flexibility)
+        $newName = is_numeric($className) ? "Class " . $className : $className;
+        $sub = Subcategory::create([
+            'subcategory_name' => $newName,
+            'status' => 1
+        ]);
+
+        return $sub->id;
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -171,7 +211,7 @@ class InstitutionController extends Controller
 
             // classes = subcategories
             'classes' => 'required|array|min:1',
-            'classes.*.class_name' => 'required|integer|exists:subcategories,id',
+            'classes.*.class_name' => 'required',
             'classes.*.strength' => 'required|integer|min:1',
         ];
 
@@ -195,8 +235,9 @@ class InstitutionController extends Controller
 
         // Save subcategories into institution_classes
         foreach ($request->classes as $class) {
+            $subCategoryId = $this->resolveSubcategoryId($class['class_name']);
             $institution->institutionClasses()->create([
-                'sub_category_id' => $class['class_name'], // subcategory_id
+                'sub_category_id' => $subCategoryId, // resolved subcategory_id
                 'total_strength' => $class['strength'],
             ]);
         }
@@ -231,7 +272,7 @@ class InstitutionController extends Controller
             'block_id' => 'nullable|integer',
             'pincode' => 'required|string|max:10',
             'classes' => 'required|array|min:1',
-            'classes.*.class_name' => 'required|integer|exists:subcategories,id',
+            'classes.*.class_name' => 'required',
             'classes.*.strength' => 'required|integer|min:1',
         ];
 
@@ -254,8 +295,9 @@ class InstitutionController extends Controller
         $institution->institutionClasses()->delete();
 
         foreach ($request->classes as $class) {
+            $subCategoryId = $this->resolveSubcategoryId($class['class_name']);
             $institution->institutionClasses()->create([
-                'sub_category_id' => $class['class_name'],
+                'sub_category_id' => $subCategoryId,
                 'total_strength' => $class['strength'],
             ]);
         }

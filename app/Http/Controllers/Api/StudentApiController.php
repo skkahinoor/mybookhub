@@ -366,6 +366,8 @@ class StudentApiController extends Controller
 
         if ($request->filled('institution_classes_id')) {
             $query->where('institution_classes_id', $request->institution_classes_id);
+        } elseif ($request->filled('class')) {
+            $query->where('institution_classes_id', $request->class);
         }
 
         if ($request->filled('name')) {
