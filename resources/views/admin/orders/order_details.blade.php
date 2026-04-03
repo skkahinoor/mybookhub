@@ -83,217 +83,117 @@
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Order Details</h4>
-                            <div class="form-group" style="height: 15px">
-                                <label style="font-weight: 550">Order ID: </label>
-                                <label>#{{ $orderDetails['id'] }}</label>
-                            </div>
-                            <div class="form-group" style="height: 15px">
-                                <label style="font-weight: 550">Order Date: </label>
-                                <label>{{ date('Y-m-d h:i:s', strtotime($orderDetails['created_at'])) }}</label>
-                            </div>
-                            <div class="form-group" style="height: 15px">
-                                <label style="font-weight: 550">Order Status: </label>
-                                <label>{{ $orderDetails['order_status'] }}</label>
-                            </div>
-                            <div class="form-group" style="height: 15px">
-                                <label style="font-weight: 550">Order Total: </label>
-                                <label>₹{{ $orderDetails['grand_total'] }}</label>
-                            </div>
-                            <div class="form-group" style="height: 15px">
-                                <label style="font-weight: 550">Shipping Charges: </label>
-                                <label>₹{{ $orderDetails['shipping_charges'] }}</label>
-                            </div>
-                            @if (!empty($orderDetails['coupon_code']))
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Coupon Code: </label>
-                                    <label>{{ $orderDetails['coupon_code'] }}</label>
-                                </div>
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Coupon Amount: </label>
-                                    <label>₹{{ $orderDetails['coupon_amount'] }}</label>
-                                </div>
-                            @endif
-
-                            @if (!empty($orderDetails['extra_discount']) && $orderDetails['extra_discount'] > 0)
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Extra Discount: </label>
-                                    <label>₹{{ $orderDetails['extra_discount'] }}</label>
-                                </div>
-                            @endif
-
-                            <div class="form-group" style="height: 15px">
-                                <label style="font-weight: 550">Payment Method: </label>
-                                <label>{{ $orderDetails['payment_method'] }}</label>
-                            </div>
-                            <div class="form-group" style="height: 15px">
-                                <label style="font-weight: 550">Payment Gateway: </label>
-                                <label>{{ $orderDetails['payment_gateway'] }}</label>
+                            <h4 class="card-title mb-4">Order Details</h4>
+                            <div class="table-responsive">
+                                <table class="table table-borderless table-sm">
+                                    <tbody>
+                                        <tr>
+                                            <td class="font-weight-bold" style="width: 40%">Order ID</td>
+                                            <td>#{{ $orderDetails['id'] }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Order Date</td>
+                                            <td>{{ date('d M Y, h:i A', strtotime($orderDetails['created_at'])) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Order Status</td>
+                                            <td><span class="badge badge-primary">{{ $orderDetails['order_status'] }}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Order Total</td>
+                                            <td>₹{{ $orderDetails['grand_total'] }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Shipping Charges</td>
+                                            <td>₹{{ $orderDetails['shipping_charges'] }}</td>
+                                        </tr>
+                                        @if (!empty($orderDetails['coupon_code']))
+                                            <tr>
+                                                <td class="font-weight-bold">Coupon Code</td>
+                                                <td><span class="badge badge-success">{{ $orderDetails['coupon_code'] }}</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="font-weight-bold">Coupon Amount</td>
+                                                <td>₹{{ $orderDetails['coupon_amount'] }}</td>
+                                            </tr>
+                                        @endif
+                                        @if (!empty($orderDetails['extra_discount']) && $orderDetails['extra_discount'] > 0)
+                                            <tr>
+                                                <td class="font-weight-bold">Extra Discount</td>
+                                                <td>₹{{ $orderDetails['extra_discount'] }}</td>
+                                            </tr>
+                                        @endif
+                                        <tr>
+                                            <td class="font-weight-bold">Payment Method</td>
+                                            <td>{{ $orderDetails['payment_method'] }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="font-weight-bold">Payment Gateway</td>
+                                            <td>{{ $orderDetails['payment_gateway'] }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                 </div>
-                @if ($orderDetails['user_id'] == 0)
                     <div class="col-md-6 grid-margin stretch-card">
                         <div class="card">
                             <div class="card-body">
-                                <h4 class="card-title">Customer Details</h4>
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Name: </label>
-                                    <label>{{ $userDetails['name'] }}</label>
-                                </div>
-
-                                @if (!empty($userDetails['address']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">Address: </label>
-                                        <label>{{ $userDetails['address'] }}</label>
-                                    </div>
-                                @endif
-
-                                @if (!empty($userDetails['city']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">City: </label>
-                                        <label>{{ $userDetails['city'] }}</label>
-                                    </div>
-                                @endif
-
-                                @if (!empty($userDetails['state']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">State: </label>
-                                        <label>{{ $userDetails['state'] }}</label>
-                                    </div>
-                                @endif
-
-                                @if (!empty($userDetails['country']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">Country: </label>
-                                        <label>{{ $userDetails['country'] }}</label>
-                                    </div>
-                                @endif
-
-                                @if (!empty($userDetails['pincode']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">Pincode: </label>
-                                        <label>{{ $userDetails['pincode'] }}</label>
-                                    </div>
-                                @endif
-
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Mobile: </label>
-                                    <label>{{ $userDetails['mobile'] }}</label>
-                                </div>
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Email: </label>
-                                    <label>{{ $userDetails['email'] }}</label>
+                                <h4 class="card-title mb-4">Customer Details</h4>
+                                <div class="table-responsive">
+                                    <table class="table table-borderless table-sm">
+                                        <tbody>
+                                            <tr><td class="font-weight-bold" style="width: 40%">Name</td><td>{{ $userDetails['name'] }}</td></tr>
+                                            @if (!empty($userDetails['address']))
+                                                <tr><td class="font-weight-bold">Address</td><td>{{ $userDetails['address'] }}</td></tr>
+                                            @endif
+                                            @if (!empty($userDetails['city']))
+                                                <tr><td class="font-weight-bold">City</td><td>{{ $userDetails['city'] }}</td></tr>
+                                            @endif
+                                            @if (!empty($userDetails['state']))
+                                                <tr><td class="font-weight-bold">State</td><td>{{ $userDetails['state'] }}</td></tr>
+                                            @endif
+                                            @if (!empty($userDetails['country']))
+                                                <tr><td class="font-weight-bold">Country</td><td>{{ $userDetails['country'] }}</td></tr>
+                                            @endif
+                                            @if (!empty($userDetails['pincode']))
+                                                <tr><td class="font-weight-bold">Pincode</td><td>{{ $userDetails['pincode'] }}</td></tr>
+                                            @endif
+                                            <tr><td class="font-weight-bold">Mobile</td><td>{{ $orderDetails['user_id'] == 0 ? $userDetails['mobile'] : $userDetails['phone'] }}</td></tr>
+                                            <tr><td class="font-weight-bold">Email</td><td>{{ $userDetails['email'] }}</td></tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
-                @else
-                    <div class="col-md-6 grid-margin stretch-card">
-                        <div class="card">
-                            <div class="card-body">
-                                <h4 class="card-title">Customer Details</h4>
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Name: </label>
-                                    <label>{{ $userDetails['name'] }}</label>
-                                </div>
-
-                                @if (!empty($userDetails['address']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">Address: </label>
-                                        <label>{{ $userDetails['address'] }}</label>
-                                    </div>
-                                @endif
-
-                                @if (!empty($userDetails['city']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">City: </label>
-                                        <label>{{ $userDetails['city'] }}</label>
-                                    </div>
-                                @endif
-
-                                @if (!empty($userDetails['state']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">State: </label>
-                                        <label>{{ $userDetails['state'] }}</label>
-                                    </div>
-                                @endif
-
-                                @if (!empty($userDetails['country']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">Country: </label>
-                                        <label>{{ $userDetails['country'] }}</label>
-                                    </div>
-                                @endif
-
-                                @if (!empty($userDetails['pincode']))
-                                    <div class="form-group" style="height: 15px">
-                                        <label style="font-weight: 550">Pincode: </label>
-                                        <label>{{ $userDetails['pincode'] }}</label>
-                                    </div>
-                                @endif
-
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Mobile: </label>
-                                    <label>{{ $userDetails['phone'] }}</label>
-                                </div>
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Email: </label>
-                                    <label>{{ $userDetails['email'] }}</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Delivery Address</h4>
-                            <div class="form-group" style="height: 15px">
-                                <label style="font-weight: 550">Name: </label>
-                                <label>{{ $orderDetails['name'] }}</label>
-                            </div>
-
-                            @if (!empty($orderDetails['address']))
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Address: </label>
-                                    <label>{{ $orderDetails['address'] }}</label>
-                                </div>
-                            @endif
-
-                            @if (!empty($orderDetails['city']))
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">City: </label>
-                                    <label>{{ $orderDetails['city'] }}</label>
-                                </div>
-                            @endif
-
-                            @if (!empty($orderDetails['state']))
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">State: </label>
-                                    <label>{{ $orderDetails['state'] }}</label>
-                                </div>
-                            @endif
-
-                            @if (!empty($orderDetails['country']))
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Country: </label>
-                                    <label>{{ $orderDetails['country'] }}</label>
-                                </div>
-                            @endif
-
-                            @if (!empty($orderDetails['pincode']))
-                                <div class="form-group" style="height: 15px">
-                                    <label style="font-weight: 550">Pincode: </label>
-                                    <label>{{ $orderDetails['pincode'] }}</label>
-                                </div>
-                            @endif
-
-                            <div class="form-group" style="height: 15px">
-                                <label style="font-weight: 550">Mobile: </label>
-                                <label>{{ $orderDetails['mobile'] }}</label>
+                            <h4 class="card-title mb-4">Delivery Address</h4>
+                            <div class="table-responsive">
+                                <table class="table table-borderless table-sm">
+                                    <tbody>
+                                        <tr><td class="font-weight-bold" style="width: 40%">Name</td><td>{{ $orderDetails['name'] }}</td></tr>
+                                        @if (!empty($orderDetails['address']))
+                                            <tr><td class="font-weight-bold">Address</td><td>{{ $orderDetails['address'] }}</td></tr>
+                                        @endif
+                                        @if (!empty($orderDetails['city']))
+                                            <tr><td class="font-weight-bold">City</td><td>{{ $orderDetails['city'] }}</td></tr>
+                                        @endif
+                                        @if (!empty($orderDetails['state']))
+                                            <tr><td class="font-weight-bold">State</td><td>{{ $orderDetails['state'] }}</td></tr>
+                                        @endif
+                                        @if (!empty($orderDetails['country']))
+                                            <tr><td class="font-weight-bold">Country</td><td>{{ $orderDetails['country'] }}</td></tr>
+                                        @endif
+                                        @if (!empty($orderDetails['pincode']))
+                                            <tr><td class="font-weight-bold">Pincode</td><td>{{ $orderDetails['pincode'] }}</td></tr>
+                                        @endif
+                                        <tr><td class="font-weight-bold">Mobile</td><td>{{ $orderDetails['mobile'] }}</td></tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -301,79 +201,72 @@
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Update Order Status</h4> {{-- determined by 'admin'-s ONLY, not 'vendor'-s --}}
+                            <h4 class="card-title mb-4">Update Order Status</h4>
 
                             @if (Auth::guard('admin')->user()->can('update_order_status'))
-                                <form action="{{ url('admin/update-order-status') }}" method="post">
+                                <form action="{{ url('admin/update-order-status') }}" method="post" class="forms-sample">
                                     @csrf
-
                                     <input type="hidden" name="order_id" value="{{ $orderDetails['id'] }}">
-
-                                    <select name="order_status" id="order_status" required>
-                                        <option value="" selected>Select</option>
-                                        @foreach ($orderStatuses as $status)
-                                            <option value="{{ $status['name'] }}"
-                                                @if (!empty($orderDetails['order_status']) && $orderDetails['order_status'] == $status['name']) selected @endif>{{ $status['name'] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-
-
-                                    <input type="text" name="courier_name" id="courier_name"
-                                        placeholder="Courier Name"> {{-- This input field will only show up when 'Shipped' <option> is selected. Check admin/js/custom.js --}}
-                                    <input type="text" name="tracking_number" id="tracking_number"
-                                        placeholder="Tracking Number"> {{-- This input field will only show up when 'Shipped' <option> is selected. Check admin/js/custom.js --}}
-
-                                    <button type="submit">Update</button>
+                                    
+                                    <div class="form-group row">
+                                        <label for="order_status" class="col-sm-3 col-form-label font-weight-bold">Status</label>
+                                        <div class="col-sm-9">
+                                            <select name="order_status" id="order_status" class="form-control form-control-sm" required>
+                                                <option value="" selected>Select</option>
+                                                @foreach ($orderStatuses as $status)
+                                                    <option value="{{ $status['name'] }}"
+                                                        @if (!empty($orderDetails['order_status']) && $orderDetails['order_status'] == $status['name']) selected @endif>{{ $status['name'] }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group row">
+                                        <div class="col-sm-12">
+                                            <input type="text" name="courier_name" id="courier_name"
+                                                class="form-control form-control-sm mb-2" placeholder="Courier Name">
+                                            <input type="text" name="tracking_number" id="tracking_number"
+                                                class="form-control form-control-sm" placeholder="Tracking Number">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-sm mb-4">Update Status</button>
                                 </form>
-                                <br>
 
-                                {{-- Show the "Update Order Status" History/Log in admin/orders/order_details.blade.php     --}}
-                                @foreach ($orderLog as $key => $log)
-                                    @php
-                                        // echo '<pre>', var_dump($log), '</pre>';
-                                        // echo '<pre>', var_dump($log['orders_products']), '</pre>';
-                                        // echo '<pre>', var_dump($key), '</pre>';
-                                        // echo '<pre>', var_dump($log['orders_products'][$key]), '</pre>';
-                                        // echo '<pre>', var_dump($log['orders_products'][$key]['product_code']), '</pre>';
-                                    @endphp
-
-                                    <strong>{{ $log['order_status'] }}</strong>
-
-                                    {{-- Shiprocket API integration --}}
-                                    @if ($orderDetails['is_pushed'] == 1)
-                                        {{-- If the Order has been pushed to Shiprocket, state this --}}
-                                        <span style="color: #cf8938;">(Order Pushed to Shiprocket)</span>
-                                    @endif
-
-
-                                    @if (isset($log['order_item_id']) && $log['order_item_id'] > 0)
-                                        @php
-                                            $getItemDetails = \App\Models\OrdersLog::getItemDetails(
-                                                $log['order_item_id'],
-                                            );
-                                        @endphp
-                                        {{-- - for item {{ $getItemDetails['product_code'] }} --}}
-
-                                        @if (!empty($getItemDetails['courier_name']))
-                                            <br>
-                                            <span>Courier Name: {{ $getItemDetails['courier_name'] }}</span>
-                                        @endif
-
-                                        @if (!empty($getItemDetails['tracking_number']))
-                                            <br>
-                                            <span>Tracking Number: {{ $getItemDetails['tracking_number'] }}</span>
-                                        @endif
-                                    @endif
-
-                                    <br>
-                                    {{ date('Y-m-d h:i:s', strtotime($log['created_at'])) }}
-                                    <br>
-                                    <hr>
-                                @endforeach
+                                <hr>
+                                <h5 class="mb-3">Order History Log</h5>
+                                <div class="mt-3">
+                                    @foreach ($orderLog as $key => $log)
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="mr-3">
+                                                <div class="icon-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                                    <i class="mdi mdi-check"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 font-weight-bold">{{ $log['order_status'] }}</h6>
+                                                <small class="text-muted">{{ date('d M Y, h:i A', strtotime($log['created_at'])) }}</small>
+                                                
+                                                @if ($orderDetails['is_pushed'] == 1)
+                                                    <br><small class="text-warning font-weight-bold">(Order Pushed to Shiprocket)</small>
+                                                @endif
+                                                
+                                                @if (isset($log['order_item_id']) && $log['order_item_id'] > 0)
+                                                    @php $getItemDetails = \App\Models\OrdersLog::getItemDetails($log['order_item_id']); @endphp
+                                                    @if (!empty($getItemDetails['courier_name']))
+                                                        <br><small><strong>Courier:</strong> {{ $getItemDetails['courier_name'] }}</small>
+                                                    @endif
+                                                    @if (!empty($getItemDetails['tracking_number']))
+                                                        <br><small><strong>Tracking:</strong> {{ $getItemDetails['tracking_number'] }}</small>
+                                                    @endif
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
                             @else
-                                {{-- If the authenticated/logged-in user is 'vendor', restrict the "Update Order Status" feature --}}
-                                This feature is restricted.
+                                <div class="alert alert-warning">
+                                    This feature is restricted for vendors.
+                                </div>
                             @endif
 
                         </div>
@@ -534,16 +427,16 @@
                                                 @endif
                                             </td>
 
-                                            <td>                      <td>
+                                            <td>
                                                 @if (Auth::guard('admin')->user()->can('update_order_item_status'))
                                                     <form action="{{ url('admin/update-order-item-status') }}"
-                                                        method="post">
+                                                        method="post" class="d-flex align-items-center">
                                                         @csrf
 
                                                         <input type="hidden" name="order_item_id"
                                                             value="{{ $product['id'] }}">
 
-                                                        <select id="order_item_status" name="order_item_status" required>
+                                                        <select id="order_item_status" name="order_item_status" class="form-control form-control-sm mr-2" style="width: 130px;" required>
                                                             <option value="">Select</option>
                                                             @foreach ($orderItemStatuses as $status)
                                                                 <option value="{{ $status['name'] }}"
@@ -551,13 +444,6 @@
                                                                     {{ $status['name'] }}</option>
                                                             @endforeach
                                                         </select>
-                                                        {{-- <input style="width: 110px" type="text" name="item_courier_name"
-                                                            id="item_courier_name" placeholder="Item Courier Name"
-                                                            @if (!empty($product['courier_name'])) value="{{ $product['courier_name'] }}" @endif>
-                                                        <input style="width: 110px" type="text"
-                                                            name="item_tracking_number" id="item_tracking_number"
-                                                            placeholder="Item Tracking Number"
-                                                            @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif> --}}
                                                         <button type="submit"
                                                             class="btn btn-primary btn-sm">Update</button>
                                                     </form>
