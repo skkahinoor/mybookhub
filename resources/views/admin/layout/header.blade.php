@@ -1,13 +1,31 @@
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <style>
+    /* Mazer-inspired Navbar Design */
+    .navbar {
+        font-family: 'Nunito', sans-serif;
+        background-color: #ffffff !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+        border-bottom: 1px solid #f2f7ff;
+    }
+    
+    .navbar-brand-wrapper {
+        background-color: #ffffff !important;
+        border-right: none !important;
+    }
+
+    .navbar .navbar-menu-wrapper {
+        background-color: #ffffff !important;
+    }
+
     .count-indicator {
         position: relative;
     }
 
     .count {
         position: absolute;
-        top: -5px;
-        right: -5px;
-        background: #ff0000;
+        top: 6px;
+        right: 0px;
+        background: #ef4444; /* Clean Red */
         color: white;
         border-radius: 50%;
         width: 18px;
@@ -16,20 +34,43 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
+        font-weight: 700;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
     }
 
     .count:empty {
         display: none;
     }
 
+    /* Dropdown UI improvements */
+    .navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-menu {
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        overflow: hidden;
+        padding: 0;
+        min-width: 280px;
+    }
+
+    .dropdown-header {
+        padding: 15px 20px;
+        font-weight: 700;
+        color: #25396f;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #edf2f9;
+        font-size: 0.95rem;
+    }
+
     .preview-item {
-        padding: 10px 15px;
-        border-bottom: 1px solid #f0f0f0;
+        padding: 12px 20px;
+        border-bottom: 1px solid #edf2f9;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
     }
 
     .preview-item:hover {
-        background-color: #f5f5f5;
+        background-color: #f2f7ff;
     }
 
     .preview-item:last-child {
@@ -37,43 +78,96 @@
     }
 
     .preview-thumbnail {
-        width: 40px;
-        height: 40px;
-        display: inline-block;
-        margin-right: 10px;
+        width: 45px;
+        height: 45px;
+        flex-shrink: 0;
+        margin-right: 15px;
     }
 
     .preview-icon {
         width: 100%;
         height: 100%;
-        border-radius: 50%;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
+        color: #fff;
+        font-size: 1.2rem;
     }
+    
+    .bg-info { background-color: #55c6e8 !important; }
 
     .preview-item-content {
-        display: inline-block;
-        vertical-align: top;
-        width: calc(100% - 60px);
+        flex-grow: 1;
+        overflow: hidden;
     }
 
     .preview-subject {
-        margin: 0;
+        margin: 0 0 3px 0;
         font-size: 14px;
-        color: #333;
+        font-weight: 600;
+        color: #25396f;
     }
 
     .small-text {
         font-size: 12px;
+        color: #7e8299;
     }
 
-    .dropdown-header {
-        padding: 10px 15px;
+    .dropdown-item-text {
+        padding: 15px 20px;
+        color: #25396f;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #edf2f9;
+    }
+
+    .dropdown-item-text strong {
+        font-size: 1.1rem;
+    }
+
+    .navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-item {
+        padding: 12px 20px;
         font-weight: 600;
-        color: #333;
-        border-bottom: 1px solid #f0f0f0;
+        color: #4b5563;
+        transition: all 0.2s;
+    }
+    
+    .navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-item i {
+        margin-right: 10px;
+        font-size: 1.1rem;
+        vertical-align: middle;
+    }
+
+    .navbar .navbar-menu-wrapper .navbar-nav .nav-item.dropdown .dropdown-item:hover {
+        background-color: #f2f7ff;
+        color: #435ebe;
+    }
+    
+    /* Search Bar */
+    .nav-search .input-group {
+        background: #f2f7ff;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .nav-search .input-group-prepend .input-group-text {
+        background: transparent;
+        border: none;
+        color: #435ebe;
+    }
+    
+    .nav-search .form-control {
+        background: transparent;
+        border: none;
+        color: #25396f;
+        font-weight: 600;
+    }
+    
+    .nav-profile img {
+        border-radius: 50%;
+        border: 2px solid #e2e8f0;
+        padding: 2px;
+        object-fit: cover;
     }
 </style>
 

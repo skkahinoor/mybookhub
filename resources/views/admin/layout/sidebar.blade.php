@@ -1,4 +1,83 @@
 <!-- partial:partials/_sidebar.html -->
+<style>
+    /* Professional Sidebar Styling Override (Mazer Theme) */
+    .sidebar {
+        background: #ffffff !important;
+        font-family: 'Nunito', sans-serif;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
+    }
+    .sidebar .nav {
+        padding-top: 15px;
+    }
+    .sidebar .nav .nav-item {
+        margin-bottom: 5px;
+    }
+    .sidebar .nav .nav-item .nav-link {
+        color: #5a6a85 !important;
+        font-weight: 600;
+        border-radius: 8px !important;
+        margin: 0 15px;
+        padding: 12px 15px !important;
+        transition: all 0.3s ease;
+    }
+    .sidebar .nav .nav-item .nav-link:hover {
+        background: #90b7f5 !important;
+        color: #435ebe !important;
+    }
+    .sidebar .menu-icon {
+        color: #798bff !important;
+        font-size: 1.25rem !important;
+        margin-right: 15px !important;
+    }
+    
+    /* Override old dark blue active main menus */
+    .sidebar .nav .nav-item > a[style*="052CA3" i] {
+        background: #435ebe !important;
+        color: #ffffff !important;
+        box-shadow: 0 3px 8px rgba(67, 94, 190, 0.25) !important;
+    }
+    .sidebar .nav .nav-item > a[style*="052CA3" i] .menu-icon {
+        color: #ffffff !important;
+    }
+
+    /* Sub-menu background override */
+    .sidebar .nav.sub-menu[style*="fff" i],
+    .sidebar .nav.sub-menu {
+        background: transparent !important;
+        padding: 0 0 0 15px !important;
+        border: none !important;
+    }
+
+    .sidebar .nav.sub-menu .nav-item .nav-link {
+        margin: 4px 15px;
+        padding: 10px 15px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Override old inactive sub-menus */
+    .sidebar .nav.sub-menu .nav-item > a[style*="fff" i] {
+        background: transparent !important;
+        color: #4b5563 !important;
+    }
+    .sidebar .nav.sub-menu .nav-item > a[style*="fff" i]:hover {
+        background: #f2f7ff !important;
+        color: #435ebe !important;
+    }
+    
+    /* Override old active sub-menus */
+    .sidebar .nav.sub-menu .nav-item > a[style*="052CA3" i] {
+        background: #f2f7ff !important;
+        color: #435ebe !important;
+        box-shadow: none !important;
+    }
+
+    .sidebar .menu-title {
+        font-size: 1rem;
+        letter-spacing: 0.3px;
+    }
+</style>
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
     <ul class="nav">
 

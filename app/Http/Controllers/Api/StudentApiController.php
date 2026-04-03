@@ -4,46 +4,46 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Student;
-use App\Models\Admin;
 use App\Models\User;
-use App\Models\SalesExecutive;
-use Illuminate\Support\Facades\Auth;
 use App\Models\InstitutionManagement;
 use App\Models\Notification;
 use App\Models\InstitutionClass;
-use Illuminate\Validation\ValidationException;
+use App\Models\FilterClassSubject;
+use App\Models\Category;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Storage;
-
 
 class StudentApiController extends Controller
 {
 
     public function getBoards($institution_id)
     {
-        $classes = InstitutionClass::with('subcategory.category')
-            ->where('institution_id', $institution_id)
-            ->get();
+        // Get unique sub_category_ids from InstitutionClass for this institution
+        $subCategoryIds = InstitutionClass::where('institution_id', $institution_id)
+            ->distinct()
+            ->pluck('sub_category_id')
+            ->filter();
 
-        $boards = collect();
-
-        foreach ($classes as $class) {
-            if ($class->subcategory && $class->subcategory->category) {
-
-                if (!$boards->contains('id', $class->subcategory->category->id)) {
-                    $boards->push([
-                        'id' => $class->subcategory->category->id,
-                        'name' => $class->subcategory->category->category_name
-                    ]);
-                }
-            }
-        }
+        // Map those classes to their unique Boards (Categories) via FilterClassSubject
+        $boards = FilterClassSubject::whereIn('sub_category_id', $subCategoryIds)
+            ->with('category:id,category_name')
+            ->get()
+            ->pluck('category')
+            ->filter()
+            ->unique('id')
+            ->sortBy('category_name')
+            ->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->category_name
+                ];
+            })
+            ->values();
 
         return response()->json([
             'status' => true,
-            'data' => $boards->values()
+            'data' => $boards
         ]);
     }
 
@@ -52,11 +52,14 @@ class StudentApiController extends Controller
         $institution_id = $request->institution_id;
         $board_id = $request->board_id;
 
+        // Find all classes (sub_category_id) that are mapped to the selected Board (Category)
+        $mappedSubCategoryIds = FilterClassSubject::where('category_id', $board_id)
+            ->distinct()
+            ->pluck('sub_category_id');
+
         $classes = InstitutionClass::with('subcategory')
             ->where('institution_id', $institution_id)
-            ->whereHas('subcategory', function ($q) use ($board_id) {
-                $q->where('category_id', $board_id);
-            })
+            ->whereIn('sub_category_id', $mappedSubCategoryIds)
             ->get()
             ->map(function ($item) {
                 return [
@@ -72,52 +75,27 @@ class StudentApiController extends Controller
         ]);
     }
 
-    private function detectUserType($user)
-    {
-        if (!$user) {
-            return null;
-        }
-
-        // Fetch role using role_id → roles table
-        $role = \Spatie\Permission\Models\Role::find($user->role_id);
-
-        if (!$role) {
-            return null;
-        }
-
-        // Preserve old behavior
-        if ($role->name === 'admin') {
-            return 'admin';
-        }
-
-        if ($role->name === 'sales') {
-            return 'sales';
-        }
-
-        return null;
-    }
 
 
     public function index(Request $request)
     {
         $user = $request->user();
-        $type = $this->detectUserType($user);
+        $type = $user->type;
 
         if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! Only admin or Sales can view students.'
+                'message' => 'Access denied! Only Admin or Sales can view students.'
             ], 403);
         }
 
-        if ($type === 'admin') {
-            $students = User::with('institution', 'institutionClass')->orderBy('id', 'desc')->get();
-        } else {
-            $students = User::with('institution', 'institutionClass')
-                ->where('added_by', $user->id)
-                ->orderBy('id', 'desc')
-                ->get();
+        $query = User::role('student')->with(['institution', 'institutionClass.subcategory']);
+
+        if ($type === 'sales') {
+            $query->where('added_by', $user->id);
         }
+
+        $students = $query->orderBy('id', 'desc')->paginate(15);
 
         return response()->json([
             'status' => true,
@@ -129,7 +107,7 @@ class StudentApiController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        $type = strtolower(trim($this->detectUserType($user)));
+        $type = $user->type;
 
         if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
@@ -154,15 +132,15 @@ class StudentApiController extends Controller
                 Rule::unique('users')
                     ->where('institution_id', $request->institution_id)
             ],
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
-        // Check institution active
+        // Check if institution is active
         $institution = InstitutionManagement::find($validated['institution_id']);
-
         if (!$institution || $institution->status == 0) {
             return response()->json([
                 'status' => false,
-                'message' => 'Institution inactive.'
+                'message' => 'Selected institution is inactive or not found.'
             ], 403);
         }
 
@@ -174,47 +152,66 @@ class StudentApiController extends Controller
         if (!$classExists) {
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid class selection.'
+                'message' => 'The selected class does not belong to the selected institution.'
             ], 422);
         }
 
-        $role = \Spatie\Permission\Models\Role::where('name', 'student')->first();
+        DB::beginTransaction();
+        try {
+            // IMAGE UPLOAD
+            if ($request->hasFile('profile_image')) {
+                $file = $request->file('profile_image');
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('assets/sales/profile_pictures'), $filename);
+                $validated['profile_image'] = $filename;
+            }
 
-        if (!$role) {
+            // 🔹 Fetch student role (Spatie)
+            $role = \Spatie\Permission\Models\Role::where([
+                'name' => 'student'
+            ])->first();
+
+            if (!$role) {
+                throw new \Exception('Student role not found');
+            }
+
+            $validated['role_id'] = $role->id;
+            $validated['status'] = ($type === 'admin') ? 1 : 0;
+            $validated['added_by'] = $user->id;
+            $validated['password'] = Hash::make('123456');
+
+            $student = User::create($validated);
+            $student->assignRole($role);
+
+            Notification::create([
+                'type' => 'student_added',
+                'title' => 'New Student Added',
+                'message' => "User '{$user->name}' added student '{$student->name}'.",
+                'related_id' => $student->id,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Student added successfully.',
+                'data' => $student->load(['institution', 'institutionClass.subcategory'])
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'status' => false,
-                'message' => 'Student role not found.'
+                'message' => 'Failed to add student: ' . $e->getMessage()
             ], 500);
         }
-
-        $validated['role_id'] = $role->id;
-        $validated['status'] = ($type === 'admin') ? 1 : 0;
-        $validated['added_by'] = $user->id;
-        $validated['password'] = Hash::make('123456');
-
-        $student = User::create($validated);
-        $student->assignRole($role);
-
-        Notification::create([
-            'type' => 'student_added',
-            'title' => 'New Student Added',
-            'message' => "User '{$user->name}' added student '{$student->name}'.",
-            'related_id' => $student->id,
-            'related_type' => User::class,
-            'is_read' => false,
-        ]);
-
-        return response()->json([
-            'status' => true,
-            'message' => ucfirst($type) . ' added student successfully.',
-            'data' => $student->load(['institution', 'institutionClass'])
-        ], 201);
     }
 
     public function update(Request $request, $id)
     {
         $user = $request->user();
-        $type = strtolower($this->detectUserType($user));
+        $type = $user->type;
 
         if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
@@ -223,7 +220,7 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        $student = User::find($id);
+        $student = User::role('student')->find($id);
 
         if (!$student) {
             return response()->json([
@@ -235,7 +232,7 @@ class StudentApiController extends Controller
         if ($type === 'sales' && $student->added_by !== $user->id) {
             return response()->json([
                 'status' => false,
-                'message' => 'You can update only your students.'
+                'message' => 'You can update only students added by you.'
             ], 403);
         }
 
@@ -269,81 +266,86 @@ class StudentApiController extends Controller
         if (!$classExists) {
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid class selection.'
+                'message' => 'The selected class does not belong to the selected institution.'
             ], 422);
         }
 
-        // IMAGE UPLOAD
-        if ($request->hasFile('profile_image')) {
+        DB::beginTransaction();
+        try {
+            // IMAGE UPLOAD
+            if ($request->hasFile('profile_image')) {
+                $oldPath = public_path('assets/sales/profile_pictures/' . $student->profile_image);
+                if ($student->profile_image && file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
 
-            $oldPath = public_path('assets/sales/profile_pictures/' . $student->profile_image);
-
-            if ($student->profile_image && file_exists($oldPath)) {
-                unlink($oldPath);
+                $file = $request->file('profile_image');
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('assets/sales/profile_pictures'), $filename);
+                $validated['profile_image'] = $filename;
             }
 
-            $file = $request->file('profile_image');
-            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('assets/sales/profile_pictures'), $filename);
+            if ($type !== 'admin') {
+                unset($validated['status']);
+            }
 
-            $validated['profile_image'] = $filename;
+            $student->update($validated);
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Student updated successfully.',
+                'data' => $student->load(['institution', 'institutionClass.subcategory'])
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to update student: ' . $e->getMessage()
+            ], 500);
         }
-
-        if ($type !== 'admin') {
-            unset($validated['status']);
-        }
-
-        $student->update($validated);
-
-        return response()->json([
-            'status' => true,
-            'message' => ucfirst($type) . ' updated student successfully.',
-            'data' => $student->load(['institution', 'institutionClass'])
-        ]);
     }
 
     public function destroy(Request $request, $id)
     {
         $user = $request->user();
-        $type = $this->detectUserType($user);
-
+        $type = $user->type;
 
         if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
                 'status' => false,
-                'message' => 'Access denied! Only admin or Sales can delete students.'
+                'message' => 'Access denied! Only Admin or Sales can delete students.'
             ], 403);
         }
 
-        $users = User::find($id);
+        $student = User::role('student')->find($id);
 
-        if (!$users) {
+        if (!$student) {
             return response()->json([
                 'status' => false,
                 'message' => 'Student not found.'
             ], 404);
         }
 
-
-        if ($type === 'sales' && $users->added_by !== $user->id) {
+        if ($type === 'sales' && $student->added_by !== $user->id) {
             return response()->json([
                 'status' => false,
                 'message' => 'Access denied! You can only delete students added by you.'
             ], 403);
         }
 
-        $users->delete();
+        $student->delete();
 
         return response()->json([
             'status' => true,
-            'message' => ucfirst($type) . ' deleted student successfully.'
+            'message' => 'Student deleted successfully.'
         ], 200);
     }
 
     public function getStudentByClass(Request $request)
     {
         $user = $request->user();
-        $type = $this->detectUserType($user);
+        $type = $user->type;
 
         if (!in_array($type, ['admin', 'sales'])) {
             return response()->json([
@@ -352,7 +354,7 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        $query = User::with(['institution', 'institutionClass.subcategory']);
+        $query = User::role('student')->with(['institution', 'institutionClass.subcategory']);
 
         if ($type === 'sales') {
             $query->where('added_by', $user->id);
@@ -374,11 +376,10 @@ class StudentApiController extends Controller
             $query->where('roll_number', $request->roll_number);
         }
 
-        $students = $query->orderBy('id', 'desc')->get();
+        $students = $query->orderBy('id', 'desc')->paginate(15);
 
         return response()->json([
             'status' => true,
-            'count' => $students->count(),
             'data' => $students
         ]);
     }
