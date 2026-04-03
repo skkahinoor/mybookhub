@@ -27,6 +27,8 @@ class OrdersProduct extends Model
         'return_comments',
         'return_payment_status',
         'return_payment_note',
+        'vendor_payout_status',
+        'vendor_payout_note',
         'item_delivered_at',
     ];
 
