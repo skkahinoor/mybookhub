@@ -40,13 +40,13 @@ class AdminController extends Controller
         $adminType = $admin->type;
         $vendorId = $admin->vendor_id;
 
-        $vendorrole = Role::where('name', 'vendor')->first();
-        $studentrole = Role::where('name', 'student')->first();
-        $salesrole = Role::where('name', 'sales')->first();
+        $vendorrole = \Spatie\Permission\Models\Role::where('name', 'vendor')->first();
+        $studentrole = \Spatie\Permission\Models\Role::where('name', 'student')->first();
+        $salesrole = \Spatie\Permission\Models\Role::where('name', 'sales')->first();
         // Default (Admin counts)
-        $vendorsCount = User::where('role_id', $vendorrole->id)->count();
-        $studentsCount = User::where('role_id', $studentrole->id)->count();
-        $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
+        $vendorsCount = User::where('role_id', $vendorrole->id ?? 0)->count();
+        $studentsCount = User::where('role_id', $studentrole->id ?? 0)->count();
+        $salesExecutivesCount = User::where('role_id', $salesrole->id ?? 0)->count();
         $productsCount = Product::where('status', 1)->count();
         $ordersCount = Order::count();
         $couponsCount = Coupon::where('status', 1)->count();
@@ -76,9 +76,31 @@ class AdminController extends Controller
                 ->count();
 
             // Users & sales executives usually remain global
-            $usersCount = User::where('role_id', $studentrole->id)->count();
-            $salesExecutivesCount = User::where('role_id', $salesrole->id)->count();
+            $usersCount = User::where('role_id', $studentrole->id ?? 0)->count();
+            $salesExecutivesCount = User::where('role_id', $salesrole->id ?? 0)->count();
         }
+
+        // Monthly orders data for the chart
+        $ordersPerMonth = [];
+        $currentYear = date('Y');
+        for ($i = 1; $i <= 12; $i++) {
+            $monthlyQuery = Order::whereMonth('created_at', $i)->whereYear('created_at', $currentYear);
+            if ($adminType === 'vendor' && $vendorId) {
+                $monthlyQuery = $monthlyQuery->whereHas('order_items', function ($q) use ($vendorId) {
+                    $q->where('vendor_id', $vendorId);
+                });
+            }
+            $ordersPerMonth[] = $monthlyQuery->count();
+        }
+
+        // Recent Orders for the sidebar
+        $recentOrdersQuery = Order::with('user')->orderBy('id', 'desc')->take(4);
+        if ($adminType === 'vendor' && $vendorId) {
+            $recentOrdersQuery->whereHas('order_items', function ($q) use ($vendorId) {
+                $q->where('vendor_id', $vendorId);
+            });
+        }
+        $recentOrders = $recentOrdersQuery->get();
 
         // Vendor plan info
         $vendor = null;
@@ -95,7 +117,9 @@ class AdminController extends Controller
             'salesExecutivesCount',
             'logos',
             'headerLogo',
-            'vendor'
+            'vendor',
+            'ordersPerMonth',
+            'recentOrders'
         ));
     }
 
