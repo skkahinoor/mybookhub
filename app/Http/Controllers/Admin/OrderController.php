@@ -85,30 +85,18 @@ class OrderController extends Controller
         $isVendor = $user->hasRole('vendor');
         $isAdmin = $user->hasRole('admin');
 
+        $query = OrdersProduct::with(['order'])
+            ->whereNotNull('return_status')
+            ->orderBy('id', 'Desc');
+
         if ($isVendor) {
-            $vendorId = $user->vendor_id;
-            // Only orders where return_status is not null AND contains vendor's products
-            $orders = Order::whereNotNull('return_status')
-                ->with(['orders_products' => function ($query) use ($vendorId) {
-                    $query->where('vendor_id', $vendorId);
-                }])
-                ->whereHas('orders_products', function ($query) use ($vendorId) {
-                    $query->where('vendor_id', $vendorId);
-                })
-                ->orderBy('id', 'Desc')
-                ->get()
-                ->toArray();
-        } else {
-            $orders = Order::whereNotNull('return_status')
-                ->with('orders_products')
-                ->orderBy('id', 'Desc')
-                ->get()
-                ->toArray();
+            $query->where('vendor_id', $user->vendor_id);
         }
 
+        $returnItems = $query->get()->toArray();
         $adminType = $isVendor ? 'vendor' : ($isAdmin ? 'admin' : 'user');
 
-        return view('admin.orders.returns')->with(compact('orders', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.orders.returns')->with(compact('returnItems', 'logos', 'headerLogo', 'adminType'));
     }
 
     // demo code
@@ -253,11 +241,14 @@ class OrderController extends Controller
             }
 
             if ($data['order_status'] == 'Delivered') {
-                Order::where('id', $data['order_id'])->update(['delivered_at' => now()]);
+                $now = now();
+                Order::where('id', $data['order_id'])->update(['delivered_at' => $now]);
+                OrdersProduct::where('order_id', $data['order_id'])->update(['item_status' => 'Delivered', 'item_delivered_at' => $now]);
                 \App\Models\WalletTransaction::checkAndCreditWallet($data['order_id']);
             }
 
             if ($data['order_status'] == 'Returned') {
+                OrdersProduct::where('order_id', $data['order_id'])->update(['item_status' => 'Returned', 'return_status' => 'Returned']);
                 \App\Models\WalletTransaction::revertWallet($data['order_id']);
             }
 
@@ -329,20 +320,41 @@ class OrderController extends Controller
             // dd($data);
 
             // Update Order Item Status in `orders_products` table
-            OrdersProduct::where('id', $data['order_item_id'])->update(['item_status' => $data['order_item_status']]);
+            $updateData = ['item_status' => $data['order_item_status']];
 
-            if ($data['order_item_status'] == 'Delivered') {
-                $itemRec = OrdersProduct::select('order_id')->where('id', $data['order_item_id'])->first();
-                if ($itemRec) {
-                    \App\Models\WalletTransaction::checkAndCreditWallet($itemRec->order_id);
+            // Sync return_status if it's return-related
+            if (in_array($data['order_item_status'], ['Return Approved', 'Return Rejected', 'Returned'])) {
+                $updateData['return_status'] = str_replace('Return ', '', $data['order_item_status']); // Approved, Rejected, Returned
+                if ($data['order_item_status'] == 'Returned') {
+                    $updateData['return_status'] = 'Returned';
                 }
             }
 
+            if ($data['order_item_status'] == 'Delivered') {
+                $updateData['item_delivered_at'] = now();
+            }
+
+            OrdersProduct::where('id', $data['order_item_id'])->update($updateData);
+
+            $orderId = OrdersProduct::where('id', $data['order_item_id'])->value('order_id');
+            $totalItems = OrdersProduct::where('order_id', $orderId)->count();
+            $deliveredItems = OrdersProduct::where('order_id', $orderId)->where('item_status', 'Delivered')->count();
+            $returnedItems = OrdersProduct::where('order_id', $orderId)->where('item_status', 'Returned')->count();
+            
+            if ($totalItems == $deliveredItems) {
+                Order::where('id', $orderId)->update(['order_status' => 'Delivered', 'delivered_at' => now()]);
+            } elseif ($deliveredItems > 0 && ($deliveredItems + $returnedItems) < $totalItems) {
+                Order::where('id', $orderId)->update(['order_status' => 'Partially Delivered']);
+            } elseif ($totalItems == $returnedItems) {
+                Order::where('id', $orderId)->update(['order_status' => 'Returned']);
+            }
+
+            if ($data['order_item_status'] == 'Delivered') {
+                \App\Models\WalletTransaction::checkAndCreditWallet($orderId);
+            }
+
             if ($data['order_item_status'] == 'Returned') {
-                $itemRec = OrdersProduct::select('order_id')->where('id', $data['order_item_id'])->first();
-                if ($itemRec) {
-                    \App\Models\WalletTransaction::revertWallet($itemRec->order_id);
-                }
+                \App\Models\WalletTransaction::revertWallet($orderId);
             }
 
             if (!empty($data['item_courier_name']) && !empty($data['item_tracking_number'])) { // if a 'vendor' or 'admin' updates the order Item Status to 'Shipped' in admin/orders/order_details.blade.php, and submits both Courier Name and Tracking Number HTML input fields
@@ -353,23 +365,20 @@ class OrderController extends Controller
             }
 
 
-            // Get the `order_id` column (which is the foreign key to the `id` column in `orders` table) value from `orders_products` table
-            $getOrderId = OrdersProduct::select('order_id')->where('id', $data['order_item_id'])->first()->toArray();
-
             $log = new OrdersLog;
-            $log->order_id      = $getOrderId['order_id'];
+            $log->order_id      = $orderId;
             $log->order_item_id = $data['order_item_id'];
             $log->order_status  = $data['order_item_status'];
             $log->save();
 
-            $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $getOrderId['order_id'])->first()->toArray();
+            $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $orderId)->first()->toArray();
 
             $order_item_id = $data['order_item_id'];
             $orderDetails  = Order::with([
                 'orders_products' => function ($query) use ($order_item_id) {
                     $query->where('id', $order_item_id); // `id` column in `orders_products` table
                 }
-            ])->where('id', $getOrderId['order_id'])->first()->toArray();
+            ])->where('id', $orderId)->first()->toArray();
 
             if (!empty($data['item_courier_name']) && !empty($data['item_tracking_number'])) {
                 $email = $deliveryDetails['email'];
@@ -378,7 +387,7 @@ class OrderController extends Controller
                 $messageData = [
                     'email'           => $email,
                     'name'            => $deliveryDetails['name'],
-                    'order_id'        => $getOrderId['order_id'],
+                    'order_id'        => $orderId,
                     'orderDetails'    => $orderDetails,
                     'order_status'    => $data['order_item_status'],
                     'courier_name'    => $data['item_courier_name'],
@@ -395,7 +404,7 @@ class OrderController extends Controller
                 $messageData = [
                     'email'        => $email,
                     'name'         => $deliveryDetails['name'],
-                    'order_id'     => $getOrderId['order_id'],
+                    'order_id'     => $orderId,
                     'orderDetails' => $orderDetails,
                     'order_status' => $data['order_item_status']
                 ];
@@ -958,4 +967,61 @@ class OrderController extends Controller
             return back()->with('error_message', $e->getMessage());
         }
     }
+
+    public function initiateReturnPayment(Request $request)
+    {
+        $request->validate([
+            'order_item_id' => 'required|exists:orders_products,id',
+            'return_payment_note' => 'nullable|string|max:500',
+        ]);
+
+        $item = OrdersProduct::findOrFail($request->order_item_id);
+
+        // Only allow for returned items
+        if ($item->return_status !== 'Returned') {
+            return redirect()->back()->with('error_message', 'Payment can only be initiated for returned items.');
+        }
+
+        // Vendor authorization check
+        $admin = Auth::guard('admin')->user();
+        if ($admin->hasRole('vendor') && $item->vendor_id != $admin->vendor_id) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
+        $item->update([
+            'return_payment_status' => 'Payment Initiated',
+            'return_payment_note' => $request->return_payment_note,
+        ]);
+
+        // Notify the user
+        $user = User::find($item->user_id);
+        if ($user) {
+            Notification::create([
+                'type' => 'return_payment_initiated',
+                'title' => 'Refund Payment Initiated',
+                'message' => 'Refund payment has been initiated for "' . $item->product_name . '" from Order #' . $item->order_id . '.',
+                'related_id' => $user->id,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
+        }
+
+        return redirect()->back()->with('success_message', 'Return payment initiated successfully for "' . $item->product_name . '".');
+    }
+
+    public function getUserBankDetails(Request $request)
+    {
+        $userId = $request->input('user_id');
+        $user = User::select('id', 'name', 'email', 'bank_name', 'account_holder_name', 'account_number', 'ifsc_code', 'upi_id')->find($userId);
+
+        if ($user) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $user->toArray()
+            ]);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'User not found']);
+    }
 }
+

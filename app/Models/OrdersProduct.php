@@ -21,7 +21,13 @@ class OrdersProduct extends Model
         'item_status',
         'courier_name',
         'tracking_number',
-        'commission'
+        'commission',
+        'return_reason',
+        'return_status',
+        'return_comments',
+        'return_payment_status',
+        'return_payment_note',
+        'item_delivered_at',
     ];
 
     protected $casts = [

@@ -172,43 +172,51 @@ class OrderController extends Controller
         return redirect()->back()->with('success_message', 'Order has been cancelled and wallet balance (if any) has been reverted.');
     }
 
-    public function returnOrder(Request $request, $id)
+    public function returnItem(Request $request, $id)
     {
         $request->validate([
             'return_reason' => 'required|string',
+            'return_comments' => 'nullable|string',
         ]);
 
-        $order = Order::where('id', $id)->where('user_id', Auth::user()->id)->firstOrFail();
+        $item = OrdersProduct::where('id', $id)->where('user_id', Auth::user()->id)->firstOrFail();
+        $order = Order::find($item->order_id);
 
-        // Check if order is eligible for return
-        if ($order->order_status != 'Delivered' || !$order->delivered_at) {
-            return redirect()->back()->with('error_message', 'Order must be delivered before initiating a return.');
+        // Check if order/item is eligible for return (Delivered)
+        $deliveryDate = $item->item_delivered_at ?? $order->delivered_at;
+        if ($item->item_status != 'Delivered' || !$deliveryDate) {
+            return redirect()->back()->with('error_message', 'This product must be delivered before initiating a return.');
         }
 
-        $deliveredDate = \Carbon\Carbon::parse($order->delivered_at);
+        $deliveredDate = \Carbon\Carbon::parse($deliveryDate);
         if ($deliveredDate->addDays(7)->isPast()) {
-            return redirect()->back()->with('error_message', 'Return period (7 days) has expired for this order.');
+            return redirect()->back()->with('error_message', 'Return period (7 days) has expired for this item.');
         }
 
-        // Update Return Status
-        $order->order_status = 'Return Requested';
-        $order->return_status = 'Return Requested';
-        $order->return_reason = $request->return_reason;
-        $order->save();
+        // Update Item Return Status
+        $item->item_status = 'Return Requested';
+        $item->return_status = 'Return Requested';
+        $item->return_reason = $request->return_reason;
+        $item->return_comments = $request->return_comments;
+        $item->save();
 
-        // Also update all order items and notify vendors
-        $items = \App\Models\OrdersProduct::where('order_id', $id)->get();
-        \App\Models\OrdersProduct::where('order_id', $id)->update(['item_status' => 'Return Requested']);
+        // Update order status if all items are return requested
+        $totalItems = OrdersProduct::where('order_id', $order->id)->count();
+        $returnedItems = OrdersProduct::where('order_id', $order->id)->where('item_status', 'Return Requested')->count();
+        if ($totalItems == $returnedItems) {
+            $order->order_status = 'Return Requested';
+            $order->save();
+        }
 
-        $vendorIds = $items->pluck('vendor_id')->filter()->unique();
-        foreach ($vendorIds as $vendorId) {
+        // Notify Vendor
+        if (!empty($item->vendor_id)) {
             \App\Models\Notification::create([
                 'type'         => 'order_return_requested',
-                'title'        => 'Order Return Requested',
-                'message'      => "Customer '" . Auth::user()->name . "' has requested a return for Order #" . $id . ". Reason: " . $request->return_reason,
-                'related_id'   => $id,
+                'title'        => 'Item Return Requested',
+                'message'      => "Customer '" . Auth::user()->name . "' requested a return for '" . $item->product_name . "' (Order #" . $order->id . "). Reason: " . $request->return_reason,
+                'related_id'   => $order->id,
                 'related_type' => \App\Models\Order::class,
-                'vendor_id'    => $vendorId,
+                'vendor_id'    => $item->vendor_id,
                 'is_read'      => false,
             ]);
         }
@@ -216,14 +224,14 @@ class OrderController extends Controller
         // Notify Admin
         \App\Models\Notification::create([
             'type' => 'order_return_requested',
-            'title' => 'Order Return Requested',
-            'message' => "Customer '" . Auth::user()->name . "' has requested a return for Order #" . $id . ". Reason: " . $request->return_reason,
-            'related_id' => $id,
+            'title' => 'Item Return Requested',
+            'message' => "Customer '" . Auth::user()->name . "' requested a return for '" . $item->product_name . "' (Order #" . $order->id . "). Reason: " . $request->return_reason,
+            'related_id' => $order->id,
             'related_type' => Order::class,
             'is_read' => false,
         ]);
 
-        return redirect()->back()->with('success_message', 'Return request has been submitted successfully. Our team will review it and get back to you.');
+        return redirect()->back()->with('success_message', 'Return request for "' . $item->product_name . '" has been submitted successfully.');
     }
     
     public function payNow($id)

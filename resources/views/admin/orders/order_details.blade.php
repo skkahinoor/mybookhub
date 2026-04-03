@@ -393,16 +393,16 @@
                                         <th>Name</th>
                                         <th>Original MRP</th>
                                         <th>Product Discount</th>
-                                        <th>Unit Price (after product discount)</th>
-                                        <th>Product Qty</th>
-                                        <th>Total Price</th>
+                                        <th>Unit Price</th>
+                                        <th>Qty</th>
                                         @if (\Illuminate\Support\Facades\Auth::guard('admin')->user()->type != 'vendor')
                                             <th>Product by</th>
                                         @endif
-                                        <th>Coupon/Extra Discount (Distributed)</th>
-                                        <th>Total Price</th>
-                                        {{-- <th>Commission</th> --}}
+                                        <th>Distributed Discount</th>
+                                        <th>Item Total</th>
+                                        <th>Commission</th>
                                         <th>Final Amount</th>
+                                        <th>Return Info</th>
                                         <th>Item Status</th>
                                     </tr>
 
@@ -410,31 +410,17 @@
                                         <tr>
                                             <td>
                                                 @php
-                                                    $getProductImage = \App\Models\Product::getProductImage(
-                                                        $product['product_id'],
-                                                    );
+                                                    $getProductImage = \App\Models\Product::getProductImage($product['product_id']);
                                                 @endphp
-
                                                 <a target="_blank" href="{{ url('product/' . $product['product_id']) }}">
-                                                    <img
-                                                        src="{{ asset('front/images/product_images/small/' . $getProductImage) }}">
+                                                    <img src="{{ asset('front/images/product_images/small/' . $getProductImage) }}">
                                                 </a>
                                             </td>
-                                            {{-- <td>{{ $product['product_code'] }}</td> --}}
                                             <td>{{ $product['product_name'] }}</td>
-                                            {{-- Original MSRP and Discount --}}
-                                            <td>
-                                                @if (isset($product['product']['product_price']))
-                                                    ₹{{ $product['product']['product_price'] }}
-                                                @else
-                                                    N/A
-                                                @endif
-                                            </td>
+                                            <td>₹{{ $product['product']['product_price'] ?? 'N/A' }}</td>
                                             <td>
                                                 @php
-                                                    $prodAttr = collect($product['product']['attributes'] ?? [])
-                                                        ->where('vendor_id', $product['vendor_id'])
-                                                        ->first();
+                                                    $prodAttr = collect($product['product']['attributes'] ?? [])->where('vendor_id', $product['vendor_id'])->first();
                                                     $prodDiscount = $prodAttr['product_discount'] ?? 0;
                                                 @endphp
                                                 @if ($prodDiscount > 0)
@@ -443,65 +429,48 @@
                                                     0%
                                                 @endif
                                             </td>
-
                                             <td>₹{{ $product['product_price'] }}</td>
                                             <td>{{ $product['product_qty'] }}</td>
 
                                             @if (\Illuminate\Support\Facades\Auth::guard('admin')->user()->type != 'vendor')
-                                                @if ($product['vendor_id'] > 0)
-                                                    {{-- if the product belongs to a 'vendor' --}}
-                                                    <td>
-                                                        <a href="/admin/view-vendor-details/{{ $product['admin_id'] }}"
-                                                            target="_blank">Vendor</a>
-                                                    </td>
-                                                @else
-                                                    <td>Admin</td>
-                                                @endif
+                                                <td>
+                                                    @if ($product['vendor_id'] > 0)
+                                                        <a href="/admin/view-vendor-details/{{ $product['admin_id'] }}" target="_blank">Vendor</a>
+                                                    @else
+                                                        Admin
+                                                    @endif
+                                                </td>
                                             @endif
 
                                             @php
-                                                $originalTotalPrice =
-                                                    $product['product_price'] * $product['product_qty'];
+                                                $originalTotalPrice = $product['product_price'] * $product['product_qty'];
+                                                $appliedDistributedDiscount = 0;
+                                                $hasCoupon = !empty($orderDetails['coupon_amount']) && $orderDetails['coupon_amount'] > 0;
+                                                $hasExtraDiscount = !empty($orderDetails['extra_discount']) && $orderDetails['extra_discount'] > 0;
+
+                                                if ($product['vendor_id'] > 0) {
+                                                    if ($hasCoupon || $hasExtraDiscount) {
+                                                        if ($hasCoupon) {
+                                                            if (\App\Models\Coupon::couponDetails($orderDetails['coupon_code'])['vendor_id'] > 0) {
+                                                                $appliedDistributedDiscount = $item_discount;
+                                                            } elseif ($hasExtraDiscount) {
+                                                                $appliedDistributedDiscount = $orderDetails['extra_discount'] / ($total_items ?: 1);
+                                                            }
+                                                        } elseif ($hasExtraDiscount) {
+                                                            $appliedDistributedDiscount = $item_discount;
+                                                        }
+                                                    }
+                                                } else {
+                                                    $appliedDistributedDiscount = $item_discount;
+                                                }
+                                                $total_price = $originalTotalPrice - $appliedDistributedDiscount;
                                             @endphp
-
-                                            <td>
-                                                @if ($product['vendor_id'] > 0)
-                                                    {{-- if the product belongs to a 'vendor', not 'admin' --}}
-                                                    @php
-                                                        $hasCoupon =
-                                                            !empty($orderDetails['coupon_amount']) &&
-                                                            $orderDetails['coupon_amount'] > 0;
-                                                        $hasExtraDiscount =
-                                                            !empty($orderDetails['extra_discount']) &&
-                                                            $orderDetails['extra_discount'] > 0;
-                                                        $appliedDistributedDiscount = 0;
-                                                    @endphp
-
-                                                    @if ($hasCoupon || $hasExtraDiscount)
-                                                        @if ($hasCoupon)
-                                                            @if (\App\Models\Coupon::couponDetails($orderDetails['coupon_code'])['vendor_id'] > 0)
-                                                                @php $appliedDistributedDiscount = $item_discount; @endphp
-                                                            @elseif ($hasExtraDiscount)
-                                                                @php $appliedDistributedDiscount = $orderDetails['extra_discount'] / ($total_items ?: 1); @endphp
-                                                            @endif
-                                                        @elseif ($hasExtraDiscount)
-                                                            @php $appliedDistributedDiscount = $item_discount; @endphp
-                                                        @endif
-                                                    @endif
-                                                    ₹{{ round($appliedDistributedDiscount, 2) }}
-                                                    @php $total_price = $originalTotalPrice - $appliedDistributedDiscount; @endphp
-                                                @else
-                                                    {{-- if the product belongs to an 'admin', not 'vendor' --}}
-                                                    ₹{{ round($item_discount, 2) }}
-                                                    @php $total_price = $originalTotalPrice - $item_discount; @endphp
-                                                @endif
-                                            </td>
-
+                                            <td>₹{{ round($appliedDistributedDiscount, 2) }}</td>
                                             <td>₹{{ round($total_price, 2) }}</td>
 
                                             @if ($product['vendor_id'] > 0)
-                                                <td>₹{{ $commission = round(($total_price * $product['commission']) / 100, 2) }}
-                                                </td>
+                                                @php $commission = round(($total_price * $product['commission']) / 100, 2); @endphp
+                                                <td>₹{{ $commission }}</td>
                                                 <td>₹{{ round($total_price - $commission, 2) }}</td>
                                             @else
                                                 <td>₹0</td>
@@ -509,6 +478,40 @@
                                             @endif
 
                                             <td>
+                                                @if (!empty($product['return_status']))
+                                                    <div class="alert alert-warning p-1" style="font-size: 11px;">
+                                                        <strong>Status:</strong> {{ $product['return_status'] }}<br>
+                                                        <strong>Reason:</strong> {{ $product['return_reason'] }}<br>
+                                                        <strong>Comm:</strong> {{ $product['return_comments'] }}
+                                                    </div>
+
+                                                    {{-- Payment Status Badge --}}
+                                                    @if (!empty($product['return_payment_status']))
+                                                        <span class="badge badge-{{ $product['return_payment_status'] == 'Payment Initiated' ? 'info' : 'success' }} mt-1">
+                                                            {{ $product['return_payment_status'] }}
+                                                        </span>
+                                                        @if (!empty($product['return_payment_note']))
+                                                            <br><small class="text-muted mt-1">Note: {{ $product['return_payment_note'] }}</small>
+                                                        @endif
+                                                    @endif
+
+                                                    {{-- Initiate Payment Button (only for Returned items without payment) --}}
+                                                    @if ($product['return_status'] == 'Returned' && empty($product['return_payment_status']))
+                                                        <button type="button" class="btn btn-success btn-sm mt-2 initiate-payment-btn"
+                                                            data-item-id="{{ $product['id'] }}"
+                                                            data-product-name="{{ $product['product_name'] }}"
+                                                            data-product-price="{{ $product['product_price'] }}"
+                                                            data-user-id="{{ $product['user_id'] }}"
+                                                            data-toggle="modal" data-target="#initiatePaymentModal">
+                                                            <i class="mdi mdi-cash-refund"></i> Initiate Payment
+                                                        </button>
+                                                    @endif
+                                                @else
+                                                    No return request
+                                                @endif
+                                            </td>
+
+                                            <td>                      <td>
                                                 @if (Auth::guard('admin')->user()->can('update_order_item_status'))
                                                     <form action="{{ url('admin/update-order-item-status') }}"
                                                         method="post">
@@ -557,4 +560,88 @@
         @include('admin.layout.footer')
         <!-- partial -->
     </div>
+
+    {{-- Initiate Return Payment Modal --}}
+    <div class="modal fade" id="initiatePaymentModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="mdi mdi-cash-refund"></i> Initiate Return Payment</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form action="{{ url($adminType . '/initiate-return-payment') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="order_item_id" id="payment_item_id">
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6><strong>Product:</strong> <span id="payment_product_name"></span></h6>
+                                <h6><strong>Refund Amount:</strong> ₹<span id="payment_amount"></span></h6>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary"><strong>User Bank Details</strong></h6>
+                                <div id="user_bank_details">
+                                    <p class="text-muted">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="form-group">
+                            <label for="return_payment_note"><strong>Payment Note / Transaction Reference</strong></label>
+                            <textarea class="form-control" name="return_payment_note" id="return_payment_note" rows="3"
+                                placeholder="Enter transaction ID, payment method details, or any notes..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="mdi mdi-check-circle"></i> Confirm Payment Initiated
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+    <script>
+        $(document).on('click', '.initiate-payment-btn', function() {
+            var itemId = $(this).data('item-id');
+            var productName = $(this).data('product-name');
+            var productPrice = $(this).data('product-price');
+            var userId = $(this).data('user-id');
+
+            $('#payment_item_id').val(itemId);
+            $('#payment_product_name').text(productName);
+            $('#payment_amount').text(productPrice);
+            $('#return_payment_note').val('');
+
+            // Fetch user bank details via AJAX
+            $('#user_bank_details').html('<p class="text-muted">Loading...</p>');
+            $.ajax({
+                url: '{{ url($adminType . "/get-user-bank-details") }}',
+                type: 'GET',
+                data: { user_id: userId },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        var d = response.data;
+                        var html = '<table class="table table-sm table-bordered mb-0">';
+                        html += '<tr><td><strong>Name</strong></td><td>' + (d.account_holder_name || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>Bank</strong></td><td>' + (d.bank_name || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>Account No</strong></td><td>' + (d.account_number || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>IFSC</strong></td><td>' + (d.ifsc_code || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>UPI</strong></td><td>' + (d.upi_id || 'N/A') + '</td></tr>';
+                        html += '</table>';
+                        $('#user_bank_details').html(html);
+                    } else {
+                        $('#user_bank_details').html('<p class="text-danger">Bank details not available.</p>');
+                    }
+                },
+                error: function() {
+                    $('#user_bank_details').html('<p class="text-danger">Failed to load bank details.</p>');
+                }
+            });
+        });
+    </script>
+    @endpush
 @endsection

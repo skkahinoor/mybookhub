@@ -46,7 +46,7 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
         Route::post('/orders/query-reply/{id}', [OrderController::class, 'postQueryReply'])->name('student.orders.query.reply');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('student.orders.show');
         Route::get('/orders/cancel/{id}', [OrderController::class, 'cancelOrder'])->name('student.orders.cancel');
-        Route::post('/orders/return/{id}', [OrderController::class, 'returnOrder'])->name('student.orders.return');
+        Route::post('/orders/item/return/{id}', [OrderController::class, 'returnItem'])->name('student.orders.return_item');
         Route::get('/orders/pay-now/{id}', [OrderController::class, 'payNow'])->name('student.orders.payNow');
         Route::post('/orders/raise-query', [OrderController::class, 'raiseQuery'])->name('student.orders.raise-query');
 

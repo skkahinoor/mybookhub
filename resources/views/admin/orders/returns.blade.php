@@ -24,38 +24,39 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($orders as $key => $order)
-                                            @if ($order['orders_products'])
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>#{{ $order['id'] }}</td>
-                                                    <td>{{ date('Y-m-d', strtotime($order['created_at'])) }}</td>
-                                                    <td>{{ $order['name'] }}</td>
-                                                    <td>
-                                                        @foreach ($order['orders_products'] as $product)
-                                                            {{ $product['product_name'] }}({{ $product['product_qty'] }}) status: <b>{{ $product['item_status'] }}</b>
-                                                            <br>
-                                                        @endforeach
-                                                    </td>
-                                                    <td class="text-danger">{{ $order['return_reason'] }}</td>
-                                                    <td>
-                                                        <span class="badge badge-warning">{{ $order['return_status'] }}</span>
-                                                    </td>
-                                                    <td>
-                                                        @if ($adminType == 'vendor')
-                                                            <a title="View Order Details"
-                                                                href="{{ url('vendor/orders/' . $order['id']) }}">
-                                                                <i style="font-size: 25px" class="mdi mdi-file-document"></i>
-                                                            </a>
-                                                        @else
-                                                            <a title="View Order Details"
-                                                                href="{{ url('admin/orders/' . $order['id']) }}">
-                                                                <i style="font-size: 25px" class="mdi mdi-file-document"></i>
-                                                            </a>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endif
+                                        @foreach ($returnItems as $item)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>#{{ $item['order_id'] }}</td>
+                                                <td>{{ date('Y-m-d', strtotime($item['created_at'])) }}</td>
+                                                <td>{{ $item['order']['name'] ?? 'N/A' }}</td>
+                                                <td>
+                                                    {{ $item['product_name'] }} ({{ $item['product_qty'] }})
+                                                </td>
+                                                <td>
+                                                    <b class="text-danger">{{ $item['return_reason'] }}</b>
+                                                    <br>
+                                                    <small>{{ $item['return_comments'] }}</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge badge-warning">{{ $item['return_status'] }}</span>
+                                                    <br>
+                                                    Item Status: {{ $item['item_status'] }}
+                                                </td>
+                                                <td>
+                                                    @if ($adminType == 'vendor')
+                                                        <a title="View Order Details"
+                                                            href="{{ url('vendor/orders/' . $item['order_id']) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-file-document"></i>
+                                                        </a>
+                                                    @else
+                                                        <a title="View Order Details"
+                                                            href="{{ url('admin/orders/' . $item['order_id']) }}">
+                                                            <i style="font-size: 25px" class="mdi mdi-file-document"></i>
+                                                        </a>
+                                                    @endif
+                                                </td>
+                                            </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
