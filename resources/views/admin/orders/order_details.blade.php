@@ -402,6 +402,7 @@
                                         <th>Item Total</th>
                                         <th>Commission</th>
                                         <th>Final Amount</th>
+                                        <th>Payout Status</th>
                                         <th>Return Info</th>
                                         <th>Item Status</th>
                                     </tr>
@@ -472,9 +473,31 @@
                                                 @php $commission = round(($total_price * $product['commission']) / 100, 2); @endphp
                                                 <td>₹{{ $commission }}</td>
                                                 <td>₹{{ round($total_price - $commission, 2) }}</td>
+                                                <td>
+                                                    @if (!empty($product['vendor_payout_status']) && $product['vendor_payout_status'] == 'Released')
+                                                        <span class="badge badge-success">Released</span>
+                                                        @if (!empty($product['vendor_payout_note']))
+                                                            <br><small class="text-muted mt-1">Note/Payment Id: {{ $product['vendor_payout_note'] }}</small>
+                                                        @endif
+                                                    @else
+                                                        <span class="badge badge-warning">Pending</span>
+                                                        @if ($product['item_status'] == 'Delivered' && Auth::guard('admin')->user()->type != 'vendor')
+                                                            <br>
+                                                            <button type="button" class="btn btn-primary btn-sm mt-2 release-payout-btn"
+                                                                data-item-id="{{ $product['id'] }}"
+                                                                data-product-name="{{ $product['product_name'] }}"
+                                                                data-vendor-id="{{ $product['vendor_id'] }}"
+                                                                data-vendor-amount="{{ round($total_price - $commission, 2) }}"
+                                                                data-toggle="modal" data-target="#releasePayoutModal">
+                                                                <i class="mdi mdi-cash"></i> Release
+                                                            </button>
+                                                        @endif
+                                                    @endif
+                                                </td>
                                             @else
                                                 <td>₹0</td>
                                                 <td>₹{{ round($total_price, 2) }}</td>
+                                                <td>N/A</td>
                                             @endif
 
                                             <td>
@@ -603,6 +626,48 @@
         </div>
     </div>
 
+    {{-- Release Vendor Payout Modal --}}
+    <div class="modal fade" id="releasePayoutModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="mdi mdi-cash"></i> Release Vendor Payout</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <form action="{{ url('admin/release-vendor-payout') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="order_item_id" id="payout_item_id">
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <h6><strong>Product:</strong> <span id="payout_product_name"></span></h6>
+                                <h6><strong>Amount to Vendor:</strong> ₹<span id="payout_amount"></span></h6>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-primary"><strong>Vendor Bank Details</strong></h6>
+                                <div id="vendor_bank_details">
+                                    <p class="text-muted">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="form-group">
+                            <label for="vendor_payout_note"><strong>Payment Reference / Note</strong></label>
+                            <textarea class="form-control" name="vendor_payout_note" id="vendor_payout_note" rows="3"
+                                placeholder="Enter transaction ID, reference number, or any notes..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="mdi mdi-check-circle"></i> Mark as Released
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
         $(document).on('click', '.initiate-payment-btn', function() {
@@ -639,6 +704,42 @@
                 },
                 error: function() {
                     $('#user_bank_details').html('<p class="text-danger">Failed to load bank details.</p>');
+                }
+            });
+        });
+        $(document).on('click', '.release-payout-btn', function() {
+            var itemId = $(this).data('item-id');
+            var productName = $(this).data('product-name');
+            var vendorAmount = $(this).data('vendor-amount');
+            var vendorId = $(this).data('vendor-id');
+
+            $('#payout_item_id').val(itemId);
+            $('#payout_product_name').text(productName);
+            $('#payout_amount').text(vendorAmount);
+            $('#vendor_payout_note').val('');
+
+            // Fetch vendor bank details via AJAX
+            $('#vendor_bank_details').html('<p class="text-muted">Loading...</p>');
+            $.ajax({
+                url: '{{ url("admin/get-vendor-bank-details") }}',
+                type: 'GET',
+                data: { vendor_id: vendorId },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        var d = response.data;
+                        var html = '<table class="table table-sm table-bordered mb-0">';
+                        html += '<tr><td><strong>Name</strong></td><td>' + (d.account_holder_name || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>Bank</strong></td><td>' + (d.bank_name || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>Account No</strong></td><td>' + (d.account_number || 'N/A') + '</td></tr>';
+                        html += '<tr><td><strong>IFSC</strong></td><td>' + (d.bank_ifsc_code || 'N/A') + '</td></tr>';
+                        html += '</table>';
+                        $('#vendor_bank_details').html(html);
+                    } else {
+                        $('#vendor_bank_details').html('<p class="text-danger">Bank details not available.</p>');
+                    }
+                },
+                error: function() {
+                    $('#vendor_bank_details').html('<p class="text-danger">Failed to load bank details.</p>');
                 }
             });
         });

@@ -1023,5 +1023,59 @@ class OrderController extends Controller
 
         return response()->json(['status' => 'error', 'message' => 'User not found']);
     }
-}
+    public function releaseVendorPayout(Request $request)
+    {
+        $request->validate([
+            'order_item_id' => 'required|exists:orders_products,id',
+            'vendor_payout_note' => 'nullable|string|max:500',
+        ]);
 
+        $item = OrdersProduct::findOrFail($request->order_item_id);
+
+        // Only allow if item is Delivered
+        if ($item->item_status !== 'Delivered') {
+            return redirect()->back()->with('error_message', 'Payout can only be released for delivered items.');
+        }
+
+        // Vendor authorization check - only admins can perform this
+        $admin = Auth::guard('admin')->user();
+        if ($admin->hasRole('vendor')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action. Only admins can release payouts.');
+        }
+
+        $item->update([
+            'vendor_payout_status' => 'Released',
+            'vendor_payout_note' => $request->vendor_payout_note,
+        ]);
+
+        // Notify the vendor
+        $vendorUser = User::where('vendor_id', $item->vendor_id)->where('type', 'vendor')->first();
+        if ($vendorUser) {
+            Notification::create([
+                'type' => 'vendor_payout_released',
+                'title' => 'Payout Released',
+                'message' => 'Payout has been released for "' . $item->product_name . '" from Order #' . $item->order_id . '.',
+                'related_id' => $vendorUser->id,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
+        }
+
+        return redirect()->back()->with('success_message', 'Vendor payout released successfully for "' . $item->product_name . '".');
+    }
+
+    public function getVendorBankDetails(Request $request)
+    {
+        $vendorId = $request->input('vendor_id');
+        $vendorBank = \App\Models\VendorsBankDetail::where('vendor_id', $vendorId)->first();
+
+        if ($vendorBank) {
+            return response()->json([
+                'status' => 'success',
+                'data' => $vendorBank->toArray()
+            ]);
+        }
+
+        return response()->json(['status' => 'error', 'message' => 'Vendor bank details not found']);
+    }
+}

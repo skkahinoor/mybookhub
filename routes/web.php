@@ -395,6 +395,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-order-item-status', 'OrderController@updateOrderItemStatus');
         Route::post('initiate-return-payment', 'OrderController@initiateReturnPayment');
         Route::get('get-user-bank-details', 'OrderController@getUserBankDetails');
+        
+        Route::post('release-vendor-payout', 'OrderController@releaseVendorPayout');
+        Route::get('get-vendor-bank-details', 'OrderController@getVendorBankDetails');
 
         // Orders Invoices
         // Render order invoice page (HTML) in order_invoice.blade.php
