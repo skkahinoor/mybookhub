@@ -56,8 +56,8 @@
         padding: 15px 20px;
         font-weight: 700;
         color: #25396f;
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #edf2f9;
+        background-color: #fff;
+        /* border-bottom: 1px solid #edf2f9; */
         font-size: 0.95rem;
     }
 
@@ -145,7 +145,7 @@
     
     /* Search Bar */
     .nav-search .input-group {
-        background: #f2f7ff;
+        background: #fff;
         border-radius: 10px;
         overflow: hidden;
     }
