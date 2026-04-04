@@ -295,9 +295,228 @@
                     </div>
                 @endif
             </div>
-
-            {{-- Charts & Activity Row --}}
+             @if ($userType == 'superadmin' || $userType == 'admin')
+            {{-- Sell Old Book Requests Row --}}
             <div class="row mt-4">
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden; font-family: 'Nunito', sans-serif;">
+                        <div class="card-header border-0 d-flex justify-content-between align-items-center" style="background: linear-gradient(to right, #f8faff, #ffffff); padding: 1.5rem;">
+                            <div class="d-flex align-items-center">
+                                <div class="d-flex justify-content-center align-items-center shadow-sm" style="width: 48px; height: 48px; min-width: 48px; border-radius: 12px; background: linear-gradient(135deg, #435ebe, #5974d6); color: white; margin-right: 15px;">
+                                    <i class="fas fa-hand-holding-usd" style="font-size: 1.2rem;"></i>
+                                </div>
+                                <div>
+                                    <h4 class="card-title m-0" style="font-weight: 800; color: #25396f; font-size: 1.25rem;">Sell Old Book Requests</h4>
+                                    <p class="text-muted mt-1 mb-0" style="font-size: 0.85rem; font-weight: 600;">Review & manage book listings from your marketplace.</p>
+                                </div>
+                            </div>
+                            <a href="{{ url('admin/sell-book-requests') }}" class="btn btn-sm" style="background-color: #f2f7ff; color: #435ebe; border: none; font-weight: 700; padding: 8px 16px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(67, 94, 190, 0.1);">
+                                View All <i class="fas fa-arrow-right ml-1" style="font-size: 0.75rem;"></i>
+                            </a>
+                        </div>
+                        <div class="card-body px-0 py-0">
+                            <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                                <table class="table align-middle mb-0" style="border-collapse: separate; border-spacing: 0;">
+                                    <thead style="position: sticky; top: 0; background: #fbfdff; z-index: 10;">
+                                        <tr>
+                                            <th class="border-0 px-4 py-3 text-uppercase text-muted" style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">#</th>
+                                            <th class="border-0 py-3 text-uppercase text-muted" style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">Type / Seller</th>
+                                            <th class="border-0 py-3 text-uppercase text-muted" style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">Book Details</th>
+                                            <th class="border-0 py-3 text-uppercase text-muted" style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">Pricing</th>
+                                            <th class="border-0 py-3 text-uppercase text-muted" style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">Status</th>
+                                            <th class="border-0 px-4 py-3 text-center text-uppercase text-muted" style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($sellBookRequests as $key => $request)
+                                            <tr style="transition: all 0.2s;" onmouseover="this.style.backgroundColor='#fcfdff';" onmouseout="this.style.backgroundColor='';">
+                                                <td class="px-4 py-3" style="border-bottom: 1px solid #edf2f9; font-weight: 600; color: #a1a5b7;">{{ $key + 1 }}</td>
+                                                <td class="py-3" style="border-bottom: 1px solid #edf2f9;">
+                                                    <div class="d-flex flex-column">
+                                                        <span style="font-weight: 700; color: #25396f; font-size: 0.95rem;">
+                                                            @if($request->admin_type === 'vendor')
+                                                                {{ $request->vendor->user->name ?? 'Vendor #'.$request->vendor_id }}
+                                                            @else
+                                                                {{ $request->user->name ?? 'Unknown User' }}
+                                                            @endif
+                                                        </span>
+                                                        <span class="mt-1">
+                                                            @if($request->admin_type === 'vendor')
+                                                                <span class="badge" style="background:#fff3cd; color:#856404; font-size: 0.65rem; padding: 4px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">VENDOR</span>
+                                                            @else
+                                                                <span class="badge" style="background:#e8eaff; color:#435ebe; font-size: 0.65rem; padding: 4px 8px; border-radius: 6px; font-weight: 800; letter-spacing: 0.5px;">STUDENT</span>
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3" style="border-bottom: 1px solid #edf2f9; max-width: 250px;">
+                                                    <div class="d-flex flex-column">
+                                                        <span style="font-weight: 700; color: #435ebe; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ $request->product->product_name ?? 'N/A' }}</span>
+                                                        <span class="mt-1">
+                                                            @if($request->condition)
+                                                                <span style="font-size: 0.75rem; font-weight: 700; color: #6c757d; background: #f8f9fa; padding: 3px 8px; border-radius: 4px; border: 1px solid #edf2f9;"><i class="fas fa-layer-group text-muted mr-1" style="font-size: 0.65rem;"></i>{{ $request->condition->name }}</span>
+                                                            @else
+                                                                <span class="text-muted" style="font-size: 0.75rem;">N/A</span>
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3" style="border-bottom: 1px solid #edf2f9;">
+                                                    @php
+                                                        $finalPrice = $request->price;
+                                                        if (!$finalPrice && $request->product && $request->product->product_price > 0) {
+                                                            if ($request->condition) {
+                                                                $finalPrice = ($request->product->product_price * $request->condition->percentage) / 100;
+                                                            } else {
+                                                                $finalPrice = $request->product->product_price;
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    <div class="d-flex flex-column">
+                                                        <span style="font-weight: 800; color: #25396f; font-size: 1.05rem;">&#8377;{{ $finalPrice ?? 'N/A' }}</span>
+                                                        <span style="font-size: 0.75rem; font-weight: 700; color: #a1a5b7; text-decoration: line-through;">&#8377;{{ $request->product->product_price ?? '0' }} Base</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-3" style="border-bottom: 1px solid #edf2f9;">
+                                                    @if($request->admin_approved == 1)
+                                                        <span style="background: rgba(40, 167, 69, 0.1); color: #28a745; font-size: 0.8rem; font-weight: 800; padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(40, 167, 69, 0.2); display: inline-flex; align-items: center;"><i class="fas fa-check-circle mr-1" style="font-size:0.75rem;"></i>Approved</span>
+                                                    @else
+                                                        <span style="background: rgba(255, 193, 7, 0.1); color: #d39e00; font-size: 0.8rem; font-weight: 800; padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255, 193, 7, 0.2); display: inline-flex; align-items: center;"><i class="fas fa-clock mr-1" style="font-size:0.75rem;"></i>Pending</span>
+                                                    @endif
+                                                </td>
+                                                <td class="px-4 py-3 text-center" style="border-bottom: 1px solid #edf2f9;">
+                                                    @php
+                                                        // Prep data for modal
+                                                        $sellerName = $request->admin_type === 'vendor' ? ($request->vendor->user->name ?? 'Vendor') : ($request->user->name ?? 'N/A');
+                                                        $sellerEmail = $request->admin_type === 'vendor' ? ($request->vendor->user->email ?? 'N/A') : ($request->user->email ?? 'N/A');
+                                                        $sellerPhone = $request->admin_type === 'vendor' ? ($request->vendor->user->mobile ?? 'N/A') : ($request->user->mobile ?? 'N/A');
+                                                        $bookImg = $request->user_old_book_image ? asset('front/images/product_images/medium/'.$request->user_old_book_image) : '';
+                                                        $bookVid = $request->video_upload ? asset('front/videos/product_videos/'.$request->video_upload) : '';
+                                                        
+                                                        $reqData = [
+                                                            'id' => $request->id,
+                                                            'bookName' => $request->product->product_name ?? 'N/A',
+                                                            'isbn' => $request->product->product_isbn ?? 'N/A',
+                                                            'basePrice' => $request->product->product_price ?? 'N/A',
+                                                            'sellPrice' => $finalPrice ?? 'N/A',
+                                                            'condition' => $request->condition->name ?? 'N/A',
+                                                            'type' => $request->admin_type === 'vendor' ? 'Vendor' : 'User (Student)',
+                                                            'sellerName' => $sellerName,
+                                                            'sellerEmail' => $sellerEmail,
+                                                            'sellerPhone' => $sellerPhone,
+                                                            'requestedOn' => $request->created_at ? $request->created_at->format('d M Y, h:i A') : 'N/A',
+                                                            'status' => $request->admin_approved == 1 ? 'Approved' : 'Pending',
+                                                            'img' => $bookImg,
+                                                            'vid' => $bookVid,
+                                                            'isApproved' => $request->admin_approved == 1
+                                                        ];
+                                                    @endphp
+                                                    <button type="button" class="btn btn-sm shadow-sm" style="font-weight: 800; color: white; border-radius: 8px; padding: 6px 14px; background: linear-gradient(135deg, #435ebe, #5a75ce); border: none; font-size: 0.8rem; letter-spacing: 0.3px; transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.95)';" onmouseup="this.style.transform='scale(1)';" onclick='openSellRequestModal(@json($reqData))'>
+                                                        @if($request->admin_approved == 1)
+                                                            View <i class="fas fa-eye ml-1" style="font-size: 0.75rem;"></i>
+                                                        @else
+                                                            Review <i class="fas fa-clipboard-check ml-1" style="font-size: 0.75rem;"></i>
+                                                        @endif
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="text-center py-5">
+                                                    <div class="d-flex flex-column align-items-center justify-content-center">
+                                                        <div style="width: 64px; height: 64px; background: #f2f7ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; box-shadow: inset 0 0 0 1px rgba(67, 94, 190, 0.1);">
+                                                            <i class="fas fa-inbox text-muted" style="font-size: 1.5rem; color:#435ebe !important;"></i>
+                                                        </div>
+                                                        <h6 style="color: #25396f; font-weight: 800; font-size: 1.15rem; margin-bottom: 5px;">No requests found</h6>
+                                                        <p class="text-muted" style="font-size: 0.9rem; font-weight: 600;">There are no sell old book requests at the moment.</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sell Request Modal -->
+            <div class="modal fade" id="sellRequestModal" tabindex="-1" role="dialog" aria-hidden="true" style="font-family: 'Nunito', sans-serif;">
+                <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                    <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.1);">
+                        <div class="modal-header border-0 pb-0 px-4 pt-4">
+                            <h5 class="modal-title" style="font-weight: 800; color: #25396f; font-size: 1.25rem;">Book Listing Details</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" style="outline: none;">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body px-4 pb-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <h6 style="color: #6c757d; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Book Information</h6>
+                                    <table class="table table-sm table-borderless m-0" style="table-layout: fixed; width: 100%; word-wrap: break-word;">
+                                        <tr><th class="px-0 py-1" style="width: 30%; color: #4b5563;">Name:</th><td class="px-0 py-1" style="font-weight: 600; color: #25396f; white-space: normal;" id="m-bookName"></td></tr>
+                                        <tr><th class="px-0 py-1" style="color: #4b5563;">ISBN:</th><td class="px-0 py-1" style="white-space: normal;" id="m-isbn"></td></tr>
+                                        <tr><th class="px-0 py-1" style="color: #4b5563;">Base Price:</th><td class="px-0 py-1" style="white-space: normal;">₹<span id="m-basePrice"></span></td></tr>
+                                        <tr><th class="px-0 py-1" style="color: #4b5563;">Selling Price:</th><td class="px-0 py-1" style="color: #435ebe; font-weight: 700; white-space: normal;">₹<span id="m-sellPrice"></span></td></tr>
+                                        <tr><th class="px-0 py-1" style="color: #4b5563;">Condition:</th><td class="px-0 py-1" style="white-space: normal;"><span class="badge badge-info" id="m-condition"></span></td></tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 style="color: #6c757d; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Seller Information</h6>
+                                    <table class="table table-sm table-borderless m-0" style="table-layout: fixed; width: 100%; word-wrap: break-word;">
+                                        <tr><th class="px-0 py-1" style="width: 35%; color: #4b5563;">Type:</th><td class="px-0 py-1" style="white-space: normal;"><span class="badge badge-secondary" id="m-type"></span></td></tr>
+                                        <tr><th class="px-0 py-1" style="color: #4b5563;">Name:</th><td class="px-0 py-1" style="font-weight: 600; color: #25396f; white-space: normal;" id="m-sellerName"></td></tr>
+                                        <tr><th class="px-0 py-1" style="color: #4b5563;">Email:</th><td class="px-0 py-1" style="white-space: normal; word-break: break-all;" id="m-sellerEmail"></td></tr>
+                                        <tr><th class="px-0 py-1" style="color: #4b5563;">Phone:</th><td class="px-0 py-1" style="white-space: normal;" id="m-sellerPhone"></td></tr>
+                                        <tr><th class="px-0 py-1" style="color: #4b5563;">Requested On:</th><td class="px-0 py-1" style="white-space: normal;" id="m-requestedOn"></td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <hr style="border-top: 1px dashed #e2e8f0; margin: 15px 0;">
+
+                            <div class="row align-items-center">
+                                <div class="col-md-6 text-center mb-3">
+                                    <h6 style="color: #6c757d; font-weight: 700; margin-bottom: 12px; font-size: 0.9rem;">Book Image</h6>
+                                    <div id="m-img-container" style="min-height: 120px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0;">
+                                        <img id="m-img" src="" style="max-height: 150px; border-radius: 6px; display: none;">
+                                        <span id="m-img-txt" class="text-muted" style="font-size: 0.85rem;">No Image Provided</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 text-center mb-3">
+                                    <h6 style="color: #6c757d; font-weight: 700; margin-bottom: 12px; font-size: 0.9rem;">Book Video</h6>
+                                    <div id="m-vid-container" style="min-height: 120px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0;">
+                                        <div id="m-vid-player-wrapper" style="width: 100%; display: none;">
+                                            <video id="m-video" controls style="width: 100%; max-height: 150px; border-radius: 6px;">
+                                                <source id="m-vid-src" src="" type="video/mp4">
+                                            </video>
+                                        </div>
+                                        <span id="m-vid-txt" class="text-muted" style="font-size: 0.85rem;">No Video Provided</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3" id="m-actions" style="display: none;">
+                                <div class="col-12 d-flex justify-content-end">
+                                    <form id="m-approve-form" method="POST" action="" style="display:inline;" class="mr-2">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success" style="border-radius: 8px; font-weight: 600; padding: 10px 20px;"><i class="fas fa-check-circle mr-1"></i> Approve Listing</button>
+                                    </form>
+                                    <form id="m-reject-form" method="POST" action="" style="display:inline;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-danger" style="border-radius: 8px; font-weight: 600; padding: 10px 20px;" onclick="return confirm('Reject and delete this request?')"><i class="fas fa-times-circle mr-1"></i> Reject</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+            {{-- Charts & Activity Row --}}
+            <div class="row">
                 <div class="col-12 col-lg-9 mb-4">
                     <div class="card shadow-sm border-0" style="border-radius: 12px; height: 100%;">
                         <div class="card-header bg-white border-0 pt-4 pb-0">
@@ -343,6 +562,8 @@
                     </div>
                 </div>
             </div>
+
+           
 
             <!-- content-wrapper ends -->
             @include('admin.layout.footer')
@@ -436,6 +657,75 @@
                     var chart = new ApexCharts(document.querySelector("#profile-visit-chart"), options);
                     chart.render();
                 }
+            });
+
+            function openSellRequestModal(data) {
+                // Populate text fields
+                document.getElementById('m-bookName').innerText = data.bookName;
+                document.getElementById('m-isbn').innerText = data.isbn;
+                document.getElementById('m-basePrice').innerText = data.basePrice;
+                document.getElementById('m-sellPrice').innerText = data.sellPrice;
+                document.getElementById('m-condition').innerText = data.condition;
+                document.getElementById('m-type').innerText = data.type;
+                document.getElementById('m-sellerName').innerText = data.sellerName;
+                document.getElementById('m-sellerEmail').innerText = data.sellerEmail;
+                document.getElementById('m-sellerPhone').innerText = data.sellerPhone;
+                document.getElementById('m-requestedOn').innerText = data.requestedOn;
+                
+                // Image
+                var img = document.getElementById('m-img');
+                var imgTxt = document.getElementById('m-img-txt');
+                if(data.img) {
+                    img.src = data.img;
+                    img.style.display = 'block';
+                    imgTxt.style.display = 'none';
+                } else {
+                    img.src = '';
+                    img.style.display = 'none';
+                    imgTxt.style.display = 'block';
+                }
+
+                // Video
+                var vidWrapper = document.getElementById('m-vid-player-wrapper');
+                var vidTxt = document.getElementById('m-vid-txt');
+                var video = document.getElementById('m-video');
+                var vidSrc = document.getElementById('m-vid-src');
+                if(data.vid) {
+                    vidSrc.src = data.vid;
+                    video.load();
+                    vidWrapper.style.display = 'block';
+                    vidTxt.style.display = 'none';
+                } else {
+                    vidSrc.src = '';
+                    video.load();
+                    vidWrapper.style.display = 'none';
+                    vidTxt.style.display = 'block';
+                }
+
+                // Actions display & form routing
+                var actionsDiv = document.getElementById('m-actions');
+                if(!data.isApproved) {
+                    actionsDiv.style.display = 'flex';
+                    // The URLs for approve/reject match routes logic
+                    document.getElementById('m-approve-form').action = "{{ url('admin/sell-book-requests') }}/" + data.id + "/approve";
+                    document.getElementById('m-reject-form').action = "{{ url('admin/sell-book-requests') }}/" + data.id + "/reject";
+                } else {
+                    actionsDiv.style.display = 'none';
+                }
+
+                // Open Modal
+                $('#sellRequestModal').modal('show');
+            }
+
+            // Stop video on modal close
+            document.addEventListener('DOMContentLoaded', function() {
+                $('#sellRequestModal').on('hidden.bs.modal', function () {
+                    var videoPlayer = document.getElementById('m-video');
+                    if (videoPlayer) {
+                        videoPlayer.pause();
+                        videoPlayer.currentTime = 0;
+                    }
+                });
             });
         </script>
     @endsection
