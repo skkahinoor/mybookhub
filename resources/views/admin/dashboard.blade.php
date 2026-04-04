@@ -8,19 +8,6 @@
 
     {{-- Styles for professional metric cards (Mazer Style) --}}
     <style>
-        .page-body-wrapper {
-            padding-top: 1px !important; /* Fix global navbar gap */
-        }
-        .main-panel {
-            font-family: 'Nunito', sans-serif;
-            background: #f2f7ff !important;
-            padding-top: 0 !important;
-        }
-        .content-wrapper {
-            background-color: #f2f7ff !important;
-            padding: 1.5rem 2.5rem 2.5rem 2.5rem !important;
-            margin-top: 0 !important;
-        }
 
         .metric-grid {
             display: grid;
@@ -315,7 +302,7 @@
                     <div class="card shadow-sm border-0" style="border-radius: 12px; height: 100%;">
                         <div class="card-header bg-white border-0 pt-4 pb-0">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="card-title m-0" style="font-weight: 700; color: #25396f; font-family: 'Nunito', sans-serif;">Order Profile Visit</h4>
+                                <h4 class="card-title m-0" style="font-weight: 700; color: #25396f; font-family: 'Nunito', sans-serif;">Order Performance Overview</h4>
                                 <i class="fas fa-bars text-muted" style="cursor: pointer;"></i>
                             </div>
                         </div>

@@ -8,6 +8,21 @@
         border-bottom: 1px solid #f2f7ff;
     }
     
+    /* Fix global gaps for all pages matching dashboard */
+    .page-body-wrapper {
+        padding-top: 0px !important; /* Fix global navbar gap */
+    }
+    .main-panel {
+        font-family: 'Nunito', sans-serif;
+        background: #f2f7ff !important;
+        padding-top: 0 !important;
+    }
+    .content-wrapper {
+        background-color: #f2f7ff !important;
+        padding: 1.5rem 2.5rem 2.5rem 2.5rem !important;
+        margin-top: 0 !important;
+    }
+
     .navbar-brand-wrapper {
         background-color: #ffffff !important;
         border-right: none !important;
@@ -169,6 +184,23 @@
         padding: 2px;
         object-fit: cover;
     }
+    .logo-img {
+    max-height: 50px;
+    width: auto;
+    object-fit: contain;
+   }
+
+/* Mobile fix */
+       @media (max-width: 768px) {
+       .navbar-brand-wrapper {
+        justify-content: flex-start !important;
+        padding-left: 10px;
+       }
+
+       .logo-img {
+        max-height: 35px;
+      }
+    }
 </style>
 
 @if (Auth::guard('admin')->user()->type == 'superadmin' || Auth::guard('admin')->user()->type == 'admin')
@@ -176,8 +208,7 @@
     <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
         <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
             @if (!empty($logos))
-                <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub" height="50"
-                    width="150">
+                <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub" class="logo-img">
             @endif
 
         </div>
