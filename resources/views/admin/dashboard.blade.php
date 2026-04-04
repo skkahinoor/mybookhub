@@ -516,7 +516,7 @@
             </div>
             @endif
             {{-- Charts & Activity Row --}}
-            <div class="row">
+            <div class="row mt-4">
                 <div class="col-12 col-lg-9 mb-4">
                     <div class="card shadow-sm border-0" style="border-radius: 12px; height: 100%;">
                         <div class="card-header bg-white border-0 pt-4 pb-0">
