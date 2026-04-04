@@ -9,6 +9,13 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(\App\Services\FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
+
     /**
      * Register FCM token from the Mobile App (React Native)
      */
@@ -30,9 +37,12 @@ class NotificationController extends Controller
             ['device_type' => $request->device_type ?? 'android', 'last_used_at' => now()]
         );
 
+        // Subscribe the token to the 'all_users' topic for broadcast notifications
+        $this->firebaseService->subscribeToTopic($request->token, 'all_users');
+
         return response()->json([
             'status' => 'success',
-            'message' => 'FCM Token registered successfully'
+            'message' => 'FCM Token registered and subscribed successfully'
         ]);
     }
 }

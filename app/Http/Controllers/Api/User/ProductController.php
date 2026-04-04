@@ -1973,9 +1973,10 @@ class ProductController extends Controller
         $items = $order->orders_products->map(function ($item) {
             $originalPrice = $item->product->product_price ?? $item->product_price;
             
-            // Collect Vendor details
+            // Collect Vendor details with robust fallback
             $vendorDetail = $item->vendor_details->vendorbusinessdetails ?? null;
             $vendorInfo = null;
+
             if ($vendorDetail) {
                 $vendorInfo = [
                     'shop_name' => $vendorDetail->shop_name,
@@ -1986,13 +1987,33 @@ class ProductController extends Controller
                     'mobile' => $vendorDetail->shop_mobile,
                     'email' => $vendorDetail->shop_email,
                 ];
-            } else if ($item->admin_id > 0) {
+            } else {
+                // Check if we can find vendor info from the vendor User relationship
+                $vendorUser = $item->vendor; // Points to User model
+                if ($vendorUser && $vendorUser->vendor && $vendorUser->vendor->vendorbusinessdetails) {
+                    $vDetail = $vendorUser->vendor->vendorbusinessdetails;
+                    $vendorInfo = [
+                        'shop_name' => $vDetail->shop_name,
+                        'address' => $vDetail->shop_address,
+                        'city' => $vDetail->shop_city,
+                        'state' => $vDetail->shop_state,
+                        'pincode' => $vDetail->shop_pincode,
+                        'mobile' => $vDetail->shop_mobile,
+                        'email' => $vDetail->shop_email,
+                    ];
+                }
+            }
+
+            // Final Fallback: If still no vendor info found, use Admin Store
+            if (!$vendorInfo) {
                 $vendorInfo = [
-                    'shop_name' => 'BookHub Admin Store',
-                    'address' => 'Official Admin Address',
-                    'city' => 'Kolkata',
-                    'state' => 'West Bengal',
-                    'pincode' => '700001',
+                    'shop_name' => 'BookHub Official Store',
+                    'address' => 'Rairangpur, Mayurbhanj',
+                    'city' => 'Mayurbhanj',
+                    'state' => 'Odisha',
+                    'pincode' => '757043',
+                    'mobile' => '7008101416',
+                    'email' => 'support@mybookhub.in',
                 ];
             }
 
