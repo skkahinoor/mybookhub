@@ -13,6 +13,13 @@ use Kreait\Firebase\Messaging\Notification;
 
 class PushNotificationController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(\App\Services\FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
+
     public function create()
     {
         Session::put('page', 'push_notifications');
@@ -34,34 +41,25 @@ class PushNotificationController extends Controller
             'image_url' => 'nullable|url',
         ]);
 
-        $messaging = app('firebase.messaging');
         $title = $request->title;
         $body = $request->body;
-        $imageUrl = $request->image_url;
-
-        $notification = Notification::create($title, $body, $imageUrl);
+        $data = [
+            'type' => 'promotional',
+            'image_url' => $request->image_url,
+        ];
 
         if ($request->has('user_ids') && !empty($request->user_ids)) {
-            $tokens = UserFcmToken::whereIn('user_id', $request->user_ids)->pluck('fcm_token')->toArray();
+            // Send to specific users
+            $success = $this->firebaseService->sendToUsers($request->user_ids, $title, $body, $data);
         } else {
-            $tokens = UserFcmToken::pluck('fcm_token')->toArray();
+            // Send to all using 'all_users' topic
+            $success = $this->firebaseService->sendToAll($title, $body, $data);
         }
 
-        if (empty($tokens)) {
-            return redirect()->back()->with('error_message', 'No registered devices found.');
+        if ($success) {
+            return redirect()->back()->with('success_message', "Notification has been sent successfully!");
+        } else {
+            return redirect()->back()->with('error_message', "Failed to send notification. Please check logs.");
         }
-
-        // Send to chunks of 500 tokens (Firebase limit for multicast)
-        $chunks = array_chunk($tokens, 500);
-        $totalSent = 0; $totalFailed = 0;
-
-        foreach ($chunks as $chunk) {
-            $message = CloudMessage::new()->withNotification($notification);
-            $report = $messaging->sendMulticast($message, $chunk);
-            $totalSent += $report->successes()->count();
-            $totalFailed += $report->failures()->count();
-        }
-
-        return redirect()->back()->with('success_message', "Notification sent! Success: $totalSent, Failed: $totalFailed");
     }
 }
