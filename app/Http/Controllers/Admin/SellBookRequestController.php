@@ -69,7 +69,7 @@ class SellBookRequestController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.sell-book-requests.index')->with('success_message', 'Old book listing approved successfully!');
+        return redirect()->back()->with('success_message', 'Old book listing approved successfully!');
     }
 
     public function reject($id)
@@ -92,6 +92,6 @@ class SellBookRequestController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.sell-book-requests.index')->with('success_message', 'Sell request rejected and removed.');
+        return redirect()->back()->with('success_message', 'Sell request rejected and removed.');
     }
 }

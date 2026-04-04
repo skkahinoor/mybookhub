@@ -102,6 +102,16 @@ class AdminController extends Controller
         }
         $recentOrders = $recentOrdersQuery->get();
 
+        // Sell Book Requests for Admin Dashboard
+        $sellBookRequests = collect();
+        if ($adminType === 'superadmin' || $adminType === 'admin') {
+            $sellBookRequests = ProductsAttribute::with(['product', 'user', 'condition', 'vendor'])
+                ->whereNotNull('old_book_condition_id')
+                ->whereNotNull('user_id')
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+
         // Vendor plan info
         $vendor = null;
         if ($adminType === 'vendor' && $vendorId) {
@@ -119,7 +129,8 @@ class AdminController extends Controller
             'headerLogo',
             'vendor',
             'ordersPerMonth',
-            'recentOrders'
+            'recentOrders',
+            'sellBookRequests'
         ));
     }
 
