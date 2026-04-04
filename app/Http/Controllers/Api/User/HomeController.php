@@ -89,8 +89,10 @@ class HomeController extends Controller
     public function getInstitutionclass($institution_id)
     {
         $institutionClasses = InstitutionClass::with('subcategory')
-            ->where('institution_id', $institution_id)
-            ->orderBy('subcategory_name', 'asc')
+            ->join('subcategories', 'institution_classes.sub_category_id', '=', 'subcategories.id')
+            ->where('institution_classes.institution_id', $institution_id)
+            ->orderBy('subcategories.subcategory_name', 'asc')
+            ->select('institution_classes.*')
             ->get();
 
         return response()->json([
