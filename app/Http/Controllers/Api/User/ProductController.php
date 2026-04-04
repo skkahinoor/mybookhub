@@ -1945,6 +1945,103 @@ class ProductController extends Controller
         ]);
     }
 
+    public function orderReceipt(Request $request, $id)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User must be logged in to view order receipt'
+            ], 401);
+        }
+
+        // Fetch order with all needed relationships for a receipt
+        $order = Order::with([
+            'orders_products.product',
+            'orders_products.vendor_details.vendorbusinessdetails'
+        ])->where('id', $id)->where('user_id', $user->id)->first();
+
+        if (!$order) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        // Format itemized items with original price and vendor info
+        $items = $order->orders_products->map(function ($item) {
+            $originalPrice = $item->product->product_price ?? $item->product_price;
+            
+            // Collect Vendor details
+            $vendorDetail = $item->vendor_details->vendorbusinessdetails ?? null;
+            $vendorInfo = null;
+            if ($vendorDetail) {
+                $vendorInfo = [
+                    'shop_name' => $vendorDetail->shop_name,
+                    'address' => $vendorDetail->shop_address,
+                    'city' => $vendorDetail->shop_city,
+                    'state' => $vendorDetail->shop_state,
+                    'pincode' => $vendorDetail->shop_pincode,
+                    'mobile' => $vendorDetail->shop_mobile,
+                    'email' => $vendorDetail->shop_email,
+                ];
+            } else if ($item->admin_id > 0) {
+                $vendorInfo = [
+                    'shop_name' => 'BookHub Admin Store',
+                    'address' => 'Official Admin Address',
+                    'city' => 'Kolkata',
+                    'state' => 'West Bengal',
+                    'pincode' => '700001',
+                ];
+            }
+
+            return [
+                'id' => $item->id,
+                'product_name' => $item->product_name,
+                'original_price' => round($originalPrice),
+                'selling_price' => round($item->product_price),
+                'quantity' => $item->product_qty,
+                'total_item_amount' => round($item->product_price * $item->product_qty),
+                'vendor' => $vendorInfo
+            ];
+        });
+
+        // Calculate Subtotal (sum of selling prices * qty)
+        $subtotal = $items->sum('total_item_amount');
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Order receipt details fetched successfully',
+            'data' => [
+                'order_details' => [
+                    'order_id' => $order->id,
+                    'order_date' => $order->created_at->format('Y-m-d H:i:s'),
+                    'order_status' => $order->order_status,
+                    'payment_method' => $order->payment_method,
+                ],
+                'customer_details' => [
+                    'name' => $order->name,
+                    'address' => $order->address,
+                    'city' => $order->city,
+                    'state' => $order->state,
+                    'country' => $order->country,
+                    'pincode' => $order->pincode,
+                    'mobile' => $order->mobile,
+                    'email' => $order->email,
+                ],
+                'items' => $items,
+                'billing_summary' => [
+                    'total_item_cost' => round($subtotal),
+                    'coupon_discount' => round($order->coupon_amount ?? 0),
+                    'wallet_discount' => round($order->wallet_amount ?? 0),
+                    'delivery_charges' => round($order->shipping_charges ?? 0),
+                    'total_amount' => round($order->grand_total),
+                ]
+            ]
+        ]);
+    }
+
     public function cancelOrder(Request $request, $id)
     {
         $user = auth('sanctum')->user();

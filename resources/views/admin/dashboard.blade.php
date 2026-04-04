@@ -302,7 +302,7 @@
                     <div class="card shadow-sm border-0" style="border-radius: 12px; height: 100%;">
                         <div class="card-header bg-white border-0 pt-4 pb-0">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="card-title m-0" style="font-weight: 700; color: #25396f; font-family: 'Nunito', sans-serif;">Order Performance Overview</h4>
+                                <h4 class="card-title m-0" style="font-weight: 700; color: #25396f; font-family: 'Nunito', sans-serif;">Order Profile Visit</h4>
                                 <i class="fas fa-bars text-muted" style="cursor: pointer;"></i>
                             </div>
                         </div>

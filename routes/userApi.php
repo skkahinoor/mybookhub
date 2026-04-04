@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/verify', [ProductController::class, 'verifyRazorpayPayment']);
     Route::get('/user/orders', [ProductController::class, 'orders']);
     Route::get('/user/order-status/{id}', [ProductController::class, 'orderStatus']);
+    Route::get('/user/orders/{id}/receipt', [ProductController::class, 'orderReceipt']);
     Route::post('/user/orders/{id}/cancel', [ProductController::class, 'cancelOrder']);
     Route::post('/user/orders/{id}/pay', [ProductController::class, 'payNow']);
     Route::post('/user/orders/{id}/return', [ProductController::class, 'returnOrder']);
