@@ -58,6 +58,11 @@ class OrdersProduct extends Model
         return $this->belongsTo(User::class, 'vendor_id');
     }
 
+    public function vendor_details()
+    {
+        return $this->belongsTo(Vendor::class, 'vendor_id');
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class, 'product_id');
