@@ -97,54 +97,6 @@ class VendorController extends Controller
         }
     }
 
-    /**
-     * Send SMS using MSG91 (same pattern as Sales OTP)
-     */
-    public function sendSMS($phone, $otp)
-    {
-        // Normalize to Indian format with country code 91 (same as sales)
-        $to = '91' . preg_replace('/[^0-9]/', '', $phone);
-
-        try {
-            $client = new Client();
-
-            $payload = [
-                "template_id" => config('services.msg91.template_id'),
-                "recipients"  => [
-                    [
-                        "mobiles" => $to,
-                        "var1"    => $otp
-                    ],
-                ],
-            ];
-
-            Log::info("Vendor MSG91 Payload:", $payload);
-
-            $response = $client->post("https://control.msg91.com/api/v5/flow/", [
-                'json' => $payload,
-                'headers' => [
-                    'accept' => 'application/json',
-                    'authkey' => config('services.msg91.key'),
-                    'content-type' => 'application/json',
-                ],
-            ]);
-
-            $body = json_decode($response->getBody()->getContents(), true);
-            Log::info("Vendor MSG91 Response:", [
-                'status' => $response->getStatusCode(),
-                'body'   => $body,
-            ]);
-
-            if (isset($body['type']) && $body['type'] === 'error') {
-                return false;
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error("Vendor MSG91 ERROR: " . $e->getMessage());
-            return false;
-        }
-    }
 
     /**
      * AJAX: Send OTP for vendor registration (like sales.register)
@@ -186,7 +138,7 @@ class VendorController extends Controller
             'vendor_reg_location' => $request->location,
         ]);
 
-        $sent = $this->sendSMS($request->mobile, $otp);
+        $sent = \App\Models\Sms::sendSms($request->mobile, $otp);
 
         if (!$sent) {
             return response()->json([

@@ -17,6 +17,8 @@ use App\Models\Language;
 use App\Models\Product;
 use App\Models\Section;
 use App\Models\User;
+use App\Models\Otp;
+use App\Models\Sms;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -52,12 +54,11 @@ class UserController extends Controller
     public function userRegister(Request $request)
     {
         $data = $request->all();
-        // dd($request->all());
 
         // Validation
         $validator = Validator::make($data, [
             'name'     => 'required|string|max:100',
-            'phone'   => 'required|numeric|digits:10',
+            'phone'   => 'required|numeric|digits:10|unique:users,phone',
             'email'    => 'required|email|max:150|unique:users,email',
             'password' => 'required|min:6',
         ], [
@@ -65,7 +66,7 @@ class UserController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
+            return response()->json(['type' => 'error', 'errors' => $validator->messages()]);
         }
 
         // Save the user
@@ -75,8 +76,9 @@ class UserController extends Controller
         $user->role_id  = $roleId;
         $user->name     = $data['name'];
         $user->phone   = $data['phone'];
+        $user->email    = $data['email'];
         $user->password = bcrypt($data['password']);
-        $user->status   = 0; // inactive until email confirmed
+        $user->status   = 0; // inactive until OTP confirmed
         $user->save();
 
         // Sync Spatie role assignment with role_id
@@ -93,19 +95,99 @@ class UserController extends Controller
             }
         }
 
-        // Send confirmation email
-        $email       = $data['email'];
-        $messageData = [
-            'name'  => $data['name'],
-            'phone' => $data['mobile'],
-            'code'  => base64_encode($data['email']),
-        ];
+        // Generate and Send OTP
+        $otp = rand(100000, 999999);
+        Otp::updateOrCreate(
+            ['phone' => $data['phone']],
+            ['otp' => $otp, 'updated_at' => now()]
+        );
 
-        // Mail::send('emails.confirmation', $messageData, function ($message) use ($email) {
-        //     $message->to($email)->subject('Confirm your Multi-vendor E-commerce Application Account');
-        // });
+        // Send OTP via SMS
+        Sms::sendSms($data['phone'], $otp);
 
-        return redirect(url()->previous())->with('success_message', 'Registration successfully!!');
+        // Store phone in session for verification
+        Session::put('registration_phone', $data['phone']);
+
+        return response()->json([
+            'type' => 'success',
+            'message' => 'OTP sent to your mobile number. Please verify.',
+            'url' => url('user/verify-otp')
+        ]);
+    }
+
+    // Show OTP Verification page
+    public function showVerifyOtp()
+    {
+        if (!Session::has('registration_phone')) {
+            return redirect('user/login-register')->with('error_message', 'Please register first.');
+        }
+
+        $condition = session('condition', 'new');
+        $sections  = Section::all();
+        $logos     = HeaderLogo::all();
+        $language  = Language::get();
+
+        $footerProducts = Product::orderBy('id', 'Desc')
+            ->where('condition', $condition)
+            ->where('status', 1)
+            ->take(3)
+            ->get()
+            ->toArray();
+        $category = Category::limit(10)->get();
+
+        return view('front.users.verify_otp', compact('condition', 'footerProducts', 'category', 'sections', 'language', 'logos'));
+    }
+
+    // Verify OTP
+    public function verifyOtp(Request $request)
+    {
+        if ($request->isMethod('post')) {
+            $data = $request->all();
+            $phone = Session::get('registration_phone');
+
+            if (!$phone) {
+                return redirect('user/login-register')->with('error_message', 'Session expired. Please register again.');
+            }
+
+            $otpCount = Otp::where(['phone' => $phone, 'otp' => $data['otp']])->count();
+            if ($otpCount > 0) {
+                // Activate User
+                User::where('phone', $phone)->update(['status' => 1]);
+
+                // Clear OTP
+                Otp::where('phone', $phone)->delete();
+
+                // Login the user
+                $user = User::where('phone', $phone)->first();
+                Auth::login($user);
+
+                // Clear session
+                Session::forget('registration_phone');
+
+                return redirect('/')->with('success_message', 'Registration confirmed! Welcome to MyBookHub.');
+            } else {
+                return redirect()->back()->with('error_message', 'Incorrect OTP. Please try again.');
+            }
+        }
+    }
+
+    // Resend OTP
+    public function resendOtp()
+    {
+        $phone = Session::get('registration_phone');
+        if (!$phone) {
+            return redirect('user/login-register')->with('error_message', 'Session expired. Please register again.');
+        }
+
+        $otp = rand(100000, 999999);
+        Otp::updateOrCreate(
+            ['phone' => $phone],
+            ['otp' => $otp, 'updated_at' => now()]
+        );
+
+        Sms::sendSms($phone, $otp);
+
+        return redirect()->back()->with('success_message', 'New OTP has been sent to your mobile number.');
     }
 
     // User Login (in front/users/login_register.blade.php) <form> submission using an AJAX request. Check front/js/custom.js

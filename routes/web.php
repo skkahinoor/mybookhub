@@ -582,6 +582,9 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
 
     Route::match(['get', 'post'], 'user/forgot-password', 'UserController@forgotPassword');
     Route::get('user/confirm/{code}', 'UserController@confirmAccount');
+    Route::match(['get', 'post'], 'user/verify-otp', 'UserController@verifyOtp')->name('user.verify-otp');
+    Route::get('user/verify-otp', 'UserController@showVerifyOtp')->name('user.verify-otp.show');
+    Route::get('user/resend-otp', 'UserController@resendOtp')->name('user.resend-otp');
 
     // Website Search Form (to search for all website products). Check the HTML Form in front/layout/header.blade.php
     Route::get('search-products', 'ProductsController@listing');

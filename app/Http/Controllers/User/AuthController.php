@@ -9,7 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Otp;
+use App\Models\Sms;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
@@ -73,7 +76,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
-            'phone' => 'required|numeric|digits:10',
+            'phone' => 'required|numeric|digits:10|unique:users,phone',
         ]);
 
         // Determine intended role id (priority: request, then helpers, then role names)
@@ -100,7 +103,7 @@ class AuthController extends Controller
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'role_id' => $roleId,
-            'status' => 1,
+            'status' => 0, // Inactive until OTP verified
         ]);
         if ($role) {
             $user->assignRole($role);
@@ -111,7 +114,21 @@ class AuthController extends Controller
                 ]);
             }
         }
-        return redirect()->route('student.login')->with('success', 'Account created successfully');
+
+        // Generate and Send OTP
+        $otp = rand(100000, 999999);
+        Otp::updateOrCreate(
+            ['phone' => $request->phone],
+            ['otp' => $otp, 'updated_at' => now()]
+        );
+
+        // Send OTP via SMS
+        Sms::sendSms($request->phone, $otp);
+
+        // Store phone in session for verification
+        Session::put('registration_phone', $request->phone);
+
+        return redirect()->route('user.verify-otp.show')->with('success_message', 'OTP sent to your mobile number. Please verify.');
     }
     public function logout(Request $request)
     {

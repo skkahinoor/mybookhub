@@ -252,8 +252,12 @@ $(document).ready(function () {
                     // Hide our Preloader/Loader/Loading Page/Preloading Screen when the response is 'success'
                     $(".loader").hide();
 
-                    $("#register-success").attr("style", "color: green"); // I already did this in the HTML page in the <p> tags in the HTML in front/users/login_register.blade.php (    <p id="login-name" style="color: red"></p>    )    // This is the same as:    $('#login-' + i).css('color', 'green');    // Change the CSS color of the <p> tags
-                    $("#register-success").html(resp.message); // replace the <p> tags that we created inside the user registration <form> in front/users/login_register.blade.php depending on x in their 'id' HTML attributes 'login-x' (e.g. login-mobile, login-email, ...)
+                    if (resp.url) {
+                        window.location.href = resp.url;
+                    } else {
+                        $("#register-success").attr("style", "color: green"); // I already did this in the HTML page in the <p> tags in the HTML in front/users/login_register.blade.php (    <p id="login-name" style="color: red"></p>    )    // This is the same as:    $('#login-' + i).css('color', 'green');    // Change the CSS color of the <p> tags
+                        $("#register-success").html(resp.message); // replace the <p> tags that we created inside the user registration <form> in front/users/login_register.blade.php depending on x in their 'id' HTML attributes 'login-x' (e.g. login-mobile, login-email, ...)
+                    }
                 }
             },
             error: function () {
