@@ -106,6 +106,20 @@
                                         <div class="mb-3">
                                             <label
                                                 style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
+                                                Publisher Name
+                                            </label>
+                                            <input type="text" name="publisher_name" class="form-control"
+                                                style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px;"
+                                                placeholder="Enter publisher name (optional)"
+                                                value="{{ old('publisher_name') }}">
+                                            @error('publisher_name')
+                                                <small
+                                                    style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
+                                            @enderror
+                                        </div>
+                                        <div class="mb-3">
+                                            <label
+                                                style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
                                                 Your Message <span class="required" style="color: #e74c3c;">*</span>
                                             </label>
                                             <textarea name="message" rows="5" class="form-control"
@@ -221,6 +235,9 @@
                                                             <strong>Book Title:</strong> {{ $query->book_title }}<br>
                                                             @if ($query->author_name)
                                                                 <strong>Author:</strong> {{ $query->author_name }}<br>
+                                                            @endif
+                                                            @if ($query->publisher_name)
+                                                                <strong>Publisher:</strong> {{ $query->publisher_name }}<br>
                                                             @endif
                                                             @if ($query->message)
                                                                 <strong>Message:</strong> {{ $query->message }}

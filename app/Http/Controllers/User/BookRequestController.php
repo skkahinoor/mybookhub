@@ -46,14 +46,16 @@ class BookRequestController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'book_title'  => 'required|string|max:255',
-            'author_name' => 'nullable|string|max:255',
-            'message'     => 'nullable|string|max:1000',
+            'book_title'     => 'required|string|max:255',
+            'author_name'    => 'nullable|string|max:255',
+            'publisher_name' => 'nullable|string|max:255',
+            'message'        => 'nullable|string|max:1000',
         ]);
 
         BookRequest::create([
             'book_title'        => $request->book_title,
             'author_name'       => $request->author_name,
+            'publisher_name'    => $request->publisher_name,
             'message'           => $request->message,
             'requested_by_user' => Auth::id(),
         ]);

@@ -11,6 +11,7 @@ class BookRequest extends Model
     protected $fillable = [
         'book_title',
         'author_name',
+        'publisher_name',
         'message',
         'admin_reply',
         'requested_by_user',
