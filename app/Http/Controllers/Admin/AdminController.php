@@ -108,6 +108,7 @@ class AdminController extends Controller
             $sellBookRequests = ProductsAttribute::with(['product', 'user', 'condition', 'vendor'])
                 ->whereNotNull('old_book_condition_id')
                 ->whereNotNull('user_id')
+                ->where('admin_approved', 0)
                 ->orderBy('created_at', 'desc')
                 ->get();
         }
