@@ -34,6 +34,7 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
 
         // Wallet
         Route::get('/wallet', [WalletController::class, 'index'])->name('student.wallet');
+        Route::get('/referrals', [WalletController::class, 'referrals'])->name('student.referrals');
 
         // Book Request
         Route::post('/book-request', [BookRequestController::class, 'store'])->name('student.book.request.store');

@@ -50,8 +50,50 @@ class User extends Authenticatable
         'account_holder_name',
         'account_number',
         'ifsc_code',
-        'upi_id'
+        'upi_id',
+        'referral_code',
+        'referred_by'
     ];
+
+    /**
+     * The built-in boot method for the model.
+     * Generates a unique referral code for new users.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($user) {
+            if (empty($user->referral_code)) {
+                $user->referral_code = static::generateUniqueReferralCode();
+            }
+
+            // Capture referral relationship if present in cookie
+            if (empty($user->referred_by)) {
+                $referralCode = null;
+                try {
+                    $referralCode = request()->cookie('referral_code') ?? \Illuminate\Support\Facades\Cookie::get('referral_code');
+                } catch (\Exception $e) {
+                    // Silently fail if request() is not available (e.g. CLI)
+                }
+
+                if ($referralCode) {
+                    $referrer = static::where('referral_code', $referralCode)->first();
+                    if ($referrer) {
+                        $user->referred_by = $referrer->id;
+                    }
+                }
+            }
+        });
+    }
+
+    private static function generateUniqueReferralCode()
+    {
+        do {
+            $code = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+        } while (static::where('referral_code', $code)->exists());
+
+        return $code;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

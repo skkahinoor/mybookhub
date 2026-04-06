@@ -157,6 +157,42 @@ class WalletTransaction extends Model
             }
         }
 
+        // --- Referral Commission Logic (First valid purchase) ---
+        // ONLY credit referral commission when at least one item is DELIVERED
+        if (!empty($user->referred_by) && ($order->order_status == 'Delivered' || $isAnyItemDelivered)) {
+            $referrer = User::find($user->referred_by);
+            if ($referrer) {
+                // Check if referral commission already credited for this referral relationship
+                // We typically only give referral commission once per referred user to prevent abuse.
+                $alreadyReferred = self::where('user_id', $referrer->id)
+                    ->where('description', 'LIKE', 'Referral commission for user ID: ' . $user->id . '%')
+                    ->exists();
+
+                if (!$alreadyReferred) {
+                    $referralCommission = 50;
+                    $referrer->wallet_balance += $referralCommission;
+                    $referrer->save();
+
+                    self::create([
+                        'user_id'     => $referrer->id,
+                        'order_id'    => $order->id,
+                        'amount'      => $referralCommission,
+                        'type'        => 'credit',
+                        'description' => 'Referral commission for user ID: ' . $user->id . ' (Order #' . $order->id . ')',
+                    ]);
+
+                    \App\Models\Notification::create([
+                        'type' => 'wallet_credit',
+                        'title' => 'Referral Commission!',
+                        'message' => '₹50 referral commission has been credited to your wallet for ' . $user->name . '\'s purchase (Order #' . $order->id . ').',
+                        'related_id' => (int) $referrer->id,
+                        'related_type' => User::class,
+                        'is_read' => false,
+                    ]);
+                }
+            }
+        }
+
         return $totalCashback;
     }
     public static function revertWallet($orderId)

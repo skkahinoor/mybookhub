@@ -74,7 +74,7 @@ class UserController extends Controller
         $roleId = \App\Helpers\RoleHelper::studentId() ?? \App\Helpers\RoleHelper::userId();
         $user->role_id  = $roleId;
         $user->name     = $data['name'];
-        $user->phone   = $data['mobile'];
+        $user->phone   = $data['phone'];
         $user->password = bcrypt($data['password']);
         $user->status   = 0; // inactive until email confirmed
         $user->save();

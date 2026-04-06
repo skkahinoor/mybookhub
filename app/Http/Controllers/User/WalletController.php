@@ -39,4 +39,33 @@ class WalletController extends Controller
             'totalDebits'
         ));
     }
+
+    public function referrals()
+    {
+        $user = Auth::user();
+        $logos = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
+
+        // Get users referred by this user
+        $referrals = \App\Models\User::where('referred_by', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        // Calculate total earnings from referrals (sum of credit transactions with 'Referral commission' in description)
+        $totalReferralEarnings = WalletTransaction::where('user_id', $user->id)
+            ->where('type', 'credit')
+            ->where('description', 'LIKE', 'Referral commission%')
+            ->sum('amount');
+
+        $referralCount = \App\Models\User::where('referred_by', $user->id)->count();
+
+        return view('user.referrals.index', compact(
+            'logos',
+            'headerLogo',
+            'user',
+            'referrals',
+            'referralCount',
+            'totalReferralEarnings'
+        ));
+    }
 }

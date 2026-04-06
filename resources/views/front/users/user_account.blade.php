@@ -469,11 +469,6 @@
                                     <a href="#orders" class="nav-orders nav-link" id="orders-tab" data-bs-toggle="tab"
                                         role="tab" aria-controls="orders" aria-selected="false">My Book Requests</a>
                                 </li>
-                                <li class="nav-item" role="presentation">
-                                    <a href="#my-queries" class="nav-my-queries nav-link" id="my-queries-tab"
-                                        data-bs-toggle="tab" role="tab" aria-controls="my-queries"
-                                        aria-selected="false">My Queries</a>
-                                </li>
 
                                 <!-- Logout link -->
                                 <li class="nav-item" role="presentation">
@@ -763,32 +758,8 @@
                                     @endif
                                 </div>
 
+
                                 <!-- My Queries Tab -->
-                                <div class="tab-pane fade" id="my-queries" role="tabpanel"
-                                    aria-labelledby="my-queries-tab">
-                                    <div class="woocommerce-account-header">
-                                        <h1>My Contact Queries</h1>
-                                        <p>View the status and replies for all your contact form submissions.</p>
-                                    </div>
-
-                                    @if (session('success_message'))
-                                        <div class="woocommerce-message">{{ session('success_message') }}</div>
-                                    @endif
-
-                                    @if (session('error_message'))
-                                        <div class="woocommerce-error">{{ session('error_message') }}</div>
-                                    @endif
-
-                                    @if ($contactQueries->isEmpty())
-                                        <div class="empty-state">
-                                            <div class="empty-state-icon">💬</div>
-                                            <h3>No queries yet</h3>
-                                            <p>You haven't submitted any contact queries yet.</p>
-                                            <a href="{{ url('/contact') }}" class="woocommerce-Button">Contact Us</a>
-                                        </div>
-                                    @else
-                                        <!-- Accordion Style Query Display -->
-                                        <div class="accordion" id="queriesAccordion" style="margin-top: 20px;">
                                             @foreach ($contactQueries as $key => $query)
                                                 @php
                                                     $collapseId = 'collapse' . $query->id;
@@ -1152,5 +1123,6 @@
                 loadUserStates(currentCountryId);
             }
         });
+
     </script>
 @endsection
