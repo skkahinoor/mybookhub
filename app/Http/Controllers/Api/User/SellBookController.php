@@ -32,22 +32,21 @@ class SellBookController extends Controller
         $user = Auth::user();
         $basePath = url('front/images/product_images');
 
-        $userProducts = Product::whereHas('attributes', function ($q) use ($user) {
-            $q->where('user_id', $user->id);
-        })->with([
-                    'attributes' => function ($q) use ($user) {
-                        $q->where('user_id', $user->id)->with('condition');
-                    },
-                    'category',
-                    'subcategory',
-                    'authors'
-                ])->orderBy('created_at', 'desc')->get();
+        $userAttributes = ProductsAttribute::where('user_id', $user->id)
+            ->with([
+                'product.category',
+                'product.subcategory',
+                'product.authors',
+                'condition'
+            ])->orderBy('created_at', 'desc')->get();
 
-        $products = $userProducts->map(function ($product) use ($basePath) {
-            $attribute = $product->attributes->first();
+        $products = $userAttributes->map(function ($attribute) use ($basePath) {
+            $product = $attribute->product;
+            if (!$product) return null;
 
             return [
-                'id' => $product->id,
+                'id' => $attribute->id,
+                'product_id' => $product->id,
                 'product_name' => $product->product_name,
                 'product_isbn' => $product->product_isbn,
                 'product_price' => round($product->product_price),
@@ -121,20 +120,28 @@ class SellBookController extends Controller
         $user = Auth::user();
         $basePath = url('front/images/product_images');
 
-        $product = Product::with(['authors', 'category', 'subcategory', 'subject', 'publisher', 'edition', 'section', 'bookType', 'language'])->find($id);
+        // Try to find the specific listing by ID (attribute_id)
+        $attribute = ProductsAttribute::with('condition')->find($id);
 
-        if (!$product) {
-            return response()->json(['status' => false, 'message' => 'Product not found.'], 404);
+        if (!$attribute || $attribute->user_id != $user->id) {
+            // Fallback: Check if it's a product_id and pick the active (unsold) listing
+            $attribute = ProductsAttribute::where('product_id', $id)
+                ->where('user_id', $user->id)
+                ->where('is_sold', 0)
+                ->with('condition')
+                ->first();
         }
-
-        $attribute = ProductsAttribute::where('product_id', $id)
-            ->where('user_id', $user->id)
-            ->with('condition')
-            ->first();
 
         if (!$attribute) {
-            return response()->json(['status' => false, 'message' => 'You do not have permission to view this product.'], 403);
+            return response()->json(['status' => false, 'message' => 'Listing not found or permission denied.'], 403);
         }
+
+        $product = Product::with(['authors', 'category', 'subcategory', 'subject', 'publisher', 'edition', 'section', 'bookType', 'language'])->find($attribute->product_id);
+
+        if (!$product) {
+            return response()->json(['status' => false, 'message' => 'Product details not found.'], 404);
+        }
+
 
         return response()->json([
             'status' => true,
@@ -270,12 +277,13 @@ class SellBookController extends Controller
                     }
                 }
 
-                $userHasIt = ProductsAttribute::where('product_id', $product->id)
+                $userHasItUnsold = ProductsAttribute::where('product_id', $product->id)
                     ->where('user_id', $user->id)
+                    ->where('is_sold', 0)
                     ->first();
 
-                if ($userHasIt) {
-                    return response()->json(['status' => false, 'message' => 'You have already added this old book.'], 422);
+                if ($userHasItUnsold) {
+                    return response()->json(['status' => false, 'message' => 'You already have an active (unsold) listing for this book.'], 422);
                 }
             } else {
                 $product = new Product;
@@ -328,8 +336,10 @@ class SellBookController extends Controller
             }
 
             // Create/Update Product Attribute for user
+            // We only update if there is an UNSOLD one. If it's sold, we create a NEW one.
             $attribute = ProductsAttribute::where('product_id', $product->id)
                 ->where('user_id', $user->id)
+                ->where('is_sold', 0)
                 ->first();
 
             if (!$attribute) {
@@ -337,7 +347,11 @@ class SellBookController extends Controller
                 $attribute->product_id = $product->id;
                 $attribute->user_id = $user->id;
                 $attribute->admin_type = 'user';
-                $attribute->sku = 'BH-P' . $product->id . '-U' . $user->id;
+                $attribute->is_sold = 0;
+                
+                // Ensure unique SKU by appending a sequence number or listing ID
+                $count = ProductsAttribute::where('product_id', $product->id)->where('user_id', $user->id)->count();
+                $attribute->sku = 'BH-P' . $product->id . '-U' . $user->id . '-L' . ($count + 1);
             }
 
             $attribute->old_book_condition_id = $data['old_book_condition_id'] ?? null;
@@ -453,17 +467,23 @@ class SellBookController extends Controller
         try {
             $user = Auth::user();
 
-            $product = Product::find($id);
-            if (!$product) {
-                return response()->json(['status' => false, 'message' => 'Product not found.'], 404);
+            // Attempt to find specific listing by ID, fallback to active product listing
+            $attribute = ProductsAttribute::where('id', $id)->where('user_id', $user->id)->first();
+            
+            if (!$attribute) {
+                $attribute = ProductsAttribute::where('product_id', $id)
+                    ->where('user_id', $user->id)
+                    ->where('is_sold', 0)
+                    ->first();
             }
 
-            $attribute = ProductsAttribute::where('product_id', $id)
-                ->where('user_id', $user->id)
-                ->first();
-
             if (!$attribute) {
-                return response()->json(['status' => false, 'message' => 'You do not have permission to edit this product.'], 403);
+                return response()->json(['status' => false, 'message' => 'Listing not found or permission denied.'], 403);
+            }
+
+            $product = Product::find($attribute->product_id);
+            if (!$product) {
+                return response()->json(['status' => false, 'message' => 'Product details not found.'], 404);
             }
 
             $validator = Validator::make($request->all(), [
@@ -631,12 +651,17 @@ class SellBookController extends Controller
     {
         $user = Auth::user();
 
-        $attribute = ProductsAttribute::where('product_id', $id)
-            ->where('user_id', $user->id)
-            ->first();
+        $attribute = ProductsAttribute::where('id', $id)->where('user_id', $user->id)->first();
 
         if (!$attribute) {
-            return response()->json(['status' => false, 'message' => 'Product not found or you do not have permission.'], 404);
+            $attribute = ProductsAttribute::where('product_id', $id)
+                ->where('user_id', $user->id)
+                ->where('is_sold', 0)
+                ->first();
+        }
+
+        if (!$attribute) {
+            return response()->json(['status' => false, 'message' => 'Listing not found or you do not have permission.'], 404);
         }
 
         $attribute->delete();

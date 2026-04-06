@@ -1,0 +1,11 @@
+Testing for User ID: 1 and Product ID: 103
+Cleaned up existing attributes.
+First addition status: 200
+Message: Old book added successfully from existing records! Awaiting admin verification.
+Second addition (duplicate) status: 422
+Message: You already have an active (unsold) listing for this book.
+Marked first listing as sold.
+Third addition (after sold) status: 200
+Message: Old book added successfully from existing records! Awaiting admin verification.
+Total attributes for this user/product: 2 (Expected 2)
+SKUs: BH-P103-U1-L1, BH-P103-U1-L2
