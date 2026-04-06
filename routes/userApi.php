@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\User\SellBookController;
 
 Route::post('/user/register', [ProfileController::class, 'register']);
 Route::post('/user/verify-otp', [ProfileController::class, 'verifyOtp']);
+Route::post('/user/resend-otp', [ProfileController::class, 'resendOtp']);
 Route::get('/user/home', [HomeController::class, 'home']);
 Route::get('/user/products', [ProductController::class, 'index']);
 Route::get('/user/vendor-product/{product_id}', [ProductController::class, 'vendorsproduct']);
@@ -73,7 +74,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/sell-books/{id}', [SellBookController::class, 'show']);
     Route::post('/user/sell-books/{id}', [SellBookController::class, 'update']);
     Route::delete('/user/sell-books/{id}', [SellBookController::class, 'destroy']);
-    
+
     // Sell Faster / Platform Charge APIs
     Route::post('/user/sell-books-faster/toggle', [SellBookController::class, 'toggleSellFaster']);
     Route::post('/user/sell-books-faster/create-order', [SellBookController::class, 'createRazorpayOrder']);

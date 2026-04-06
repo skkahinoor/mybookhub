@@ -1,0 +1,9 @@
+Testing Resend OTP for Phone: 1234567890
+Setup registration session in cache.
+Cleared existing OTP from database.
+Resend OTP status: 200
+Message: OTP resent successfully
+Found OTP in DB: 737221 (Created at: 2026-04-06 11:09:22)
+Resend OTP (Expired Session) status: 400
+Message: Registration session expired or not found. Please register again.
+Cleaned up.

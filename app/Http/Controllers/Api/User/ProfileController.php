@@ -172,6 +172,44 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function resendOtp(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required'
+        ]);
+
+        $phone = $request->phone;
+
+        // Check if registration session exists in cache
+        if (!Cache::has('student_reg_name_' . $phone)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Registration session expired or not found. Please register again.'
+            ], 400);
+        }
+
+        $otp = rand(100000, 999999);
+
+        DB::table('otps')->updateOrInsert(
+            ['phone' => $phone],
+            ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+        );
+
+        $sendStatus = $this->sendSMS($phone, $otp);
+
+        if (!$sendStatus) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to resend OTP'
+            ], 500);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP resent successfully'
+        ]);
+    }
+
     public function getProfile(Request $request)
     {
         $user = $request->user();
