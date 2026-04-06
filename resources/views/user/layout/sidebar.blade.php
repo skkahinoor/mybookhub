@@ -201,19 +201,19 @@
             </div>
         </div>
         <ul class="nav">
-            <li class="nav-item">
+            <li class="nav-item {{ request()->routeIs('student.index') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('student.index') }}">
                     <i class="icon-grid menu-icon"></i>
                     <span class="menu-title">Dashboard</span>
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item {{ request()->routeIs('student.wallet') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('student.wallet') }}">
                     <i class="ti-wallet menu-icon"></i>
                     <span class="menu-title">My Wallet</span>
                 </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item {{ request()->routeIs('student.referrals') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('student.referrals') }}">
                     <i class="ti-gift menu-icon"></i>
                     <span class="menu-title">My Referral</span>
@@ -229,7 +229,7 @@
 
             @if (Auth::user()->can('view_requested_books') ||
                     optional(Auth::user()->assignedRole)->hasPermissionTo('view_requested_books'))
-                <li class="nav-item">
+                <li class="nav-item {{ request()->routeIs('student.book.indexrequest') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('student.book.indexrequest') }}">
                         <i class="icon-paper menu-icon"></i>
                         <span class="menu-title">Book Request Queries</span>
@@ -237,13 +237,13 @@
                 </li>
             @endif
             @if (Auth::user()->can('view_orders') || optional(Auth::user()->assignedRole)->hasPermissionTo('view_orders'))
-                <li class="nav-item">
+                <li class="nav-item {{ request()->routeIs('student.orders.index') || request()->routeIs('student.orders.show') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('student.orders.index') }}">
                         <i class="icon-paper menu-icon"></i>
                         <span class="menu-title">My Orders</span>
                     </a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item {{ request()->routeIs('student.orders.queries') || request()->routeIs('student.orders.query.details') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('student.orders.queries') }}">
                         <i class="icon-paper menu-icon"></i>
                         <span class="menu-title">My Order Queries</span>
@@ -252,7 +252,7 @@
             @endif
             @if (Auth::user()->can('view_sell_old_books') ||
                     optional(Auth::user()->assignedRole)->hasPermissionTo('view_sell_old_books'))
-                <li class="nav-item">
+                <li class="nav-item {{ request()->routeIs('student.sell-book.*') ? 'active' : '' }}">
                     <a class="nav-link" href="{{ route('student.sell-book.index') }}">
                         <i class="icon-paper menu-icon"></i>
                         <span class="menu-title">Sell Old Book</span>
