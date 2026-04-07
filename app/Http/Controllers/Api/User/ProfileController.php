@@ -233,10 +233,10 @@ class ProfileController extends Controller
     private function getUpdatedUser($userId)
     {
         return User::with([
-            'institution.section',
-            'institution.category',
-            'institutionClass.subcategory',
-            'academicProfile',
+            'institution:id,name',
+            'academicProfile.educationLevel',
+            'academicProfile.board',
+            'academicProfile.subcategory',
             'country',
             'state',
             'district',
@@ -333,8 +333,10 @@ class ProfileController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
+            'education_level_id' => 'required|integer|exists:sections,id',
+            'board_id' => 'required|integer|exists:categories,id',
+            'class_id' => 'required|integer|exists:subcategories,id',
             'institution_id' => 'nullable|integer|exists:institution_managements,id',
-            'institution_classes_id' => 'nullable|integer|exists:institution_classes,id',
             'roll_number' => 'nullable|string|max:255',
         ]);
 
@@ -346,9 +348,18 @@ class ProfileController extends Controller
             ], 422);
         }
 
+        \App\Models\AcademicProfile::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'education_level_id' => $request->education_level_id,
+                'board_id' => $request->board_id,
+                'class_id' => $request->class_id,
+            ]
+        );
+
         $userToUpdate = User::find($user->id);
 
-        $fields = ['institution_id', 'institution_classes_id', 'roll_number'];
+        $fields = ['institution_id', 'roll_number'];
 
         foreach ($fields as $field) {
             if ($request->has($field)) {
