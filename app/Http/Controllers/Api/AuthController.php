@@ -53,11 +53,10 @@ class AuthController extends Controller
         if ($role === 'student') {
             $user->load([
                 'roles',
-                'institution',
-                'institution.section',
-                'institution.category',
-                'institutionClass',
-                'institutionClass.subCategory'
+                'institution:id,name',
+                'academicProfile.educationLevel',
+                'academicProfile.board',
+                'academicProfile.subcategory'
             ]);
         }
 
