@@ -39,5 +39,10 @@ class AcademicProfile extends Model
     {
         return $this->belongsTo(InstitutionClass::class, 'class_id');
     }
+
+    public function subcategory()
+    {
+        return $this->belongsTo(Subcategory::class, 'class_id');
+    }
 }
 

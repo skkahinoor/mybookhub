@@ -553,6 +553,36 @@ Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->gro
     Route::get('/product/{id}', 'ProductsController@detail')->name('front.products.detail');
     Route::get('/product/{id}/all-sellers', 'ProductsController@allSellers')->name('front.products.all-sellers');
 
+    // App Sharing Deep Link Fallback (Forces App Open if installed, else Play Store)
+    Route::get('/product-details/{id}', function($id) {
+        $intentUrl = "intent://mybookhub.in/product-details/{$id}#Intent;scheme=https;package=com.bookhub.user;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.bookhub.user;end;";
+        $html = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Opening BookHub...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #fff; }
+        .btn { display: inline-block; padding: 12px 24px; background: #FF6B00; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;}
+    </style>
+</head>
+<body>
+    <h2>Opening BookHub...</h2>
+    <p>Please wait while we redirect you to the app.</p>
+    <a href="{$intentUrl}" class="btn">Click Here to Open App</a>
+    <script>
+        // Force the intent launch when the browser visits this page
+        window.onload = function() {
+            window.location.href = "{$intentUrl}";
+        };
+    </script>
+</body>
+</html>
+HTML;
+        return response($html);
+    });
+
     Route::post('get-product-price', 'ProductsController@getProductPrice');
 
     // Show all Vendor products in front/products/vendor_listing.blade.php    // This route is accessed from the <a> HTML element in front/products/vendor_listing.blade.php
