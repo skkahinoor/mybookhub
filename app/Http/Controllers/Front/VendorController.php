@@ -108,6 +108,7 @@ class VendorController extends Controller
             'name'   => 'required|string|max:150|regex:/^[\pL\s\-&.,\'()\/]+$/u',
             'email'  => 'required|email|unique:users,email',
             'mobile' => 'required|digits:10|unique:users,phone',
+            'pincode' => 'required|digits:6',
             'location' => 'required',
         ]);
 
@@ -135,6 +136,7 @@ class VendorController extends Controller
             'vendor_reg_name'   => $request->name,
             'vendor_reg_email'  => $request->email,
             'vendor_reg_mobile' => $request->mobile,
+            'vendor_reg_pincode' => $request->pincode,
             'vendor_reg_location' => $request->location,
         ]);
 
@@ -194,6 +196,7 @@ class VendorController extends Controller
                 'name'   => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
                 'email'  => 'required|email|unique:users,email,' . ($adminId ?? '') . ',id',
                 'mobile' => 'required|numeric',
+                'pincode' => 'required|numeric|digits:6',
                 'location' => ['required', 'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/']
             ];
 
@@ -236,6 +239,7 @@ class VendorController extends Controller
                 'name'   => $data['name'],
                 'email'  => $data['email'],
                 'phone'  => $data['mobile'],
+                'pincode' => $data['pincode'] ?? null,
             ];
 
             if (empty($id)) {
@@ -275,6 +279,7 @@ class VendorController extends Controller
                     'name'     => $data['name'],
                     'email'    => $data['email'],
                     'phone'    => $data['mobile'],
+                    'pincode'  => $data['pincode'] ?? null,
                     'password' => Hash::make($data['password']),
                     'role_id'  => $role->id,
                     'status'   => isset($data['status']) ? 1 : 0,
@@ -292,7 +297,7 @@ class VendorController extends Controller
 
                 // Clear OTP and session after successful registration
                 DB::table('otps')->where('phone', $data['mobile'])->delete();
-                session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile', 'vendor_reg_location',]);
+                session()->forget(['vendor_reg_name', 'vendor_reg_email', 'vendor_reg_mobile', 'vendor_reg_pincode', 'vendor_reg_location',]);
 
                 $wasTrialProPlan = ($giveNewUsersProPlan || $isInvitePro) && $selectedPlan === 'pro';
 

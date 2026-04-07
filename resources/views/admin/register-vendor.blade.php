@@ -96,12 +96,20 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <div class="form-group mb-3">
-                                    <input type="number" name="mobile" class="form-control"
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                            <input type="number" name="mobile" class="form-control"
                                         placeholder="Mobile Number" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group mb-3">
+                                             <input type="number" name="pincode" class="form-control"
+                                        placeholder="Pin Code" required>
+                                        </div>
+                                    </div>
                                 </div>
-
                                 {{-- OTP Input - Hidden initially --}}
                                 <div class="form-group mb-3 d-none" id="otpSection">
                                     <input type="text" name="otp" class="form-control" placeholder="Enter OTP">
@@ -325,6 +333,7 @@
                 name: $("input[name='name']").val(),
                 email: $("input[name='email']").val(),
                 mobile: $("input[name='mobile']").val(),
+                pincode: $("input[name='pincode']").val(),
                 location: $("#location").val(),
                 _token: "{{ csrf_token() }}"
             };

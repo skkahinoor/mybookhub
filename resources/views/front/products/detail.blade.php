@@ -528,17 +528,27 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($seller->contact_details_paid == 1)
-                                                    <button class="btn btn-primary btn-sm w-100" style="font-size: 13px; font-weight: 700;" disabled>Contact Above</button>
-                                                @else
-                                                    <form action="{{ url('cart/add') }}" method="POST">
-                                                        @csrf
-                                                        <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
-                                                        <input type="hidden" name="quantity" value="1">
-                                                        <button type="submit" class="btn-buy-now">Buy Now</button>
-                                                    </form>
-                                                @endif
-                                            </td>
+                                                 @if($seller->contact_details_paid == 1)
+                                                     <button class="btn btn-primary btn-sm w-100" style="font-size: 13px; font-weight: 700;" disabled>Contact Above</button>
+                                                 @else
+                                                     <div class="d-flex gap-2">
+                                                         <form action="{{ url('cart/add') }}" method="POST" style="flex: 1;">
+                                                             @csrf
+                                                             <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
+                                                             <input type="hidden" name="quantity" value="1">
+                                                             <button type="submit" class="btn-buy-now">Buy Now</button>
+                                                         </form>
+                                                         <form action="{{ url('wishlist/add') }}" method="POST">
+                                                             @csrf
+                                                             <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
+                                                             <input type="hidden" name="quantity" value="1">
+                                                             <button type="submit" class="btn btn-sm bg-danger text-white h-100 px-3" style="border-radius: 6px;" title="Add to Wishlist">
+                                                                 <i class="fas fa-heart"></i>
+                                                             </button>
+                                                         </form>
+                                                     </div>
+                                                 @endif
+                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
