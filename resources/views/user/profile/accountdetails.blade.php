@@ -163,14 +163,6 @@
                                                     name="mobile" placeholder="Enter mobile number"
                                                     value="{{ Auth::user()->phone ?? '' }}" required>
                                             </div>
-
-                                            <div class="form-group col-md-6">
-                                                <label for="user-pincode">Pincode <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="user-pincode"
-                                                    name="pincode" placeholder="e.g. 110001"
-                                                    value="{{ Auth::user()->pincode ?? '' }}" required>
-                                            </div>
                                         </div>
                                     </div>
 
@@ -248,6 +240,13 @@
                                                 <select class="form-control" id="user-block-id" name="block_id">
                                                     <option value="">Select block</option>
                                                 </select>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label for="user-pincode">Pincode <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="user-pincode"
+                                                    name="pincode" placeholder="e.g. 110001"
+                                                    value="{{ Auth::user()->pincode ?? '' }}" required>
                                             </div>
                                         </div>
 
