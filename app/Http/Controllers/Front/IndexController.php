@@ -20,6 +20,7 @@ use App\Models\Subject;
 use App\Models\BookType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class IndexController extends Controller
 {
@@ -29,15 +30,34 @@ class IndexController extends Controller
         $fixBanners     = Banner::where('type', 'Fix')->where('status', 1)->get()->toArray();
         $condition      = session('condition', 'all');
 
-        $sessionSectionId = session('bg_section_id');
-        $sessionCategoryId = session('bg_category_id');
-        $sessionSubcategoryId = session('bg_subcategory_id');
-        $sessionSubjectId = session('bg_subject_id');
+        $sessionSectionId = $request->cookie('bg_section_id') ?? session('bg_section_id');
+        $sessionCategoryId = $request->cookie('bg_category_id') ?? session('bg_category_id');
+        $sessionSubcategoryId = $request->cookie('bg_subcategory_id') ?? session('bg_subcategory_id');
+        $sessionSubjectId = $request->cookie('bg_subject_id') ?? session('bg_subject_id');
 
+        // Defaults from session or request
         $currentSectionId = $request->filled('section_id') ? $request->section_id : $sessionSectionId;
         $currentCategoryId = $request->filled('category_id') ? $request->category_id : $sessionCategoryId;
         $currentSubcategoryId = $request->filled('subcategory_id') ? $request->subcategory_id : $sessionSubcategoryId;
         $currentSubjectId = $request->filled('subject_id') ? $request->subject_id : $sessionSubjectId;
+
+        // Overlay with Academic Profile for registered users if not explicitly specified by current request or session
+        if (Auth::check() && !$request->filled('section_id') && !$sessionSectionId) {
+            $profile = \App\Models\AcademicProfile::where('user_id', Auth::id())->first();
+            if ($profile) {
+                // Pre-fill only the fields that are currently empty in session/request
+                if (!$currentSectionId) {
+                    $currentSectionId = $profile->education_level_id;
+                    // Update session too if we want to reflect it
+                }
+                if (!$currentCategoryId) {
+                    $currentCategoryId = $profile->board_id;
+                }
+                if (!$currentSubcategoryId) {
+                    $currentSubcategoryId = $profile->class_id;
+                }
+            }
+        }
 
         // Persist distance in session
         if ($request->filled('distance')) {
@@ -328,21 +348,28 @@ class IndexController extends Controller
 
     public function setBookgenieSession(Request $request)
     {
+        $minutes = 525600 * 5; // 5 years
+
         if ($request->has('bookgenie_shown')) {
             session(['bookgenie_shown' => true]);
+            \Illuminate\Support\Facades\Cookie::queue('bookgenie_shown', 'true', $minutes);
         }
 
         if ($request->filled('section_id')) {
             session(['bg_section_id' => $request->section_id]);
+            \Illuminate\Support\Facades\Cookie::queue('bg_section_id', (string)$request->section_id, $minutes);
         }
         if ($request->filled('category_id')) {
             session(['bg_category_id' => $request->category_id]);
+            \Illuminate\Support\Facades\Cookie::queue('bg_category_id', (string)$request->category_id, $minutes);
         }
         if ($request->filled('subcategory_id')) {
             session(['bg_subcategory_id' => $request->subcategory_id]);
+            \Illuminate\Support\Facades\Cookie::queue('bg_subcategory_id', (string)$request->subcategory_id, $minutes);
         }
         if ($request->filled('subject_id')) {
             session(['bg_subject_id' => $request->subject_id]);
+            \Illuminate\Support\Facades\Cookie::queue('bg_subject_id', (string)$request->subject_id, $minutes);
         }
 
         return response()->json(['success' => true]);

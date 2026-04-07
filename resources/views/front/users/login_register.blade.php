@@ -72,14 +72,14 @@
                         <form action="{{ route('user.login') }}" method="post">
                             @csrf
 
-                            <div class="form-group mb-4">
+                            {{-- <div class="form-group mb-4">
                                 <label for="user-email" class="font-weight-bold">
                                     <i class="fas fa-envelope mr-2 text-muted"></i>Email
                                 </label>
                                 <input type="email" name="email" id="users-email" class="form-control"
                                     placeholder="Enter your email">
                                 <p id="login-email" class="text-danger small mt-1"></p>
-                            </div>
+                            </div> --}}
                             <div class="form-group mb-4">
                                 <label for="user-password" class="font-weight-bold">
                                     <i class="fas fa-lock mr-2 text-muted"></i>Password
@@ -146,7 +146,7 @@
                             </div>
                             <div class="form-group mb-4">
                                 <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" id="accept" name="accept">
+                                    <input type="checkbox" class="custom-control-input" id="accept" name="accept" required>
                                     <label class="custom-control-label" for="accept">I've read and accept the
                                         <a href="terms-and-conditions.html"
                                             class="text-primary text-decoration-none">terms & conditions</a>

@@ -1544,10 +1544,23 @@
         <div class="context-left">
             <span>Showing books for:</span>
             <strong id="currentSelectionInfo">
-                {{ $currentSectionId ? collect($sections)->where('id', $currentSectionId)->first()?->name ?? 'All Categories' : 'All Categories' }}
-                @if (isset($currentSubCategoryId) && $currentSubCategoryId)
-                    > {{ \App\Models\Category::find($currentSubCategoryId)?->category_name }}
-                @endif
+                @php
+                    $displayText = 'All Categories';
+                    $parts = [];
+                    if ($currentSectionId) {
+                        $parts[] = collect($sections)->where('id', $currentSectionId)->first()?->name;
+                    }
+                    if (isset($currentCategoryId) && $currentCategoryId) {
+                        $parts[] = \App\Models\Category::find($currentCategoryId)?->category_name;
+                    }
+                    if (isset($currentSubcategoryId) && $currentSubcategoryId) {
+                        $parts[] = \App\Models\Subcategory::find($currentSubcategoryId)?->subcategory_name;
+                    }
+                    if (!empty($parts)) {
+                        $displayText = implode(' > ', array_filter($parts));
+                    }
+                @endphp
+                {{ $displayText }}
             </strong>
             <a href="javascript:void(0)" class="change-link" id="openFilter"> (Change)</a>
         </div>
@@ -2232,7 +2245,7 @@
         }
     </script>
 
-    @if (!Auth::check() && !session()->has('bookgenie_shown'))
+    @if (!Auth::check() && !request()->cookie('bookgenie_shown') && !session()->has('bookgenie_shown'))
         <!-- Welcome Modal (First Step) -->
         <div class="modal fade" id="welcomeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered">
@@ -2341,7 +2354,7 @@
                 var bookGenieModal = bookGenieModalEl ? new bootstrap.Modal(bookGenieModalEl) : null;
 
                 const welcomeShown = localStorage.getItem('welcome_shown');
-                const bookGenieShown = {{ session()->has('bookgenie_shown') ? 'true' : 'false' }};
+                const bookGenieShown = {{ (request()->cookie('bookgenie_shown') || session()->has('bookgenie_shown')) ? 'true' : 'false' }};
 
                 if (!welcomeShown) {
                     if (welcomeModal) welcomeModal.show();

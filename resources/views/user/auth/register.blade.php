@@ -44,10 +44,10 @@
                                     <input type="text" class="form-control form-control-lg"
                                         id="exampleInputUsername1" name="name" placeholder="Username">
                                 </div>
-                                <div class="form-group">
+                                {{-- <div class="form-group">
                                     <input type="email" class="form-control form-control-lg" id="exampleInputEmail1" name="email"
                                         placeholder="Email">
-                                </div>
+                                </div> --}}
                                 <div class="form-group">
                                     <input type="number" class="form-control form-control-lg" id="exampleInputPhone1" name="phone"
                                         placeholder="Mobile Number">
@@ -60,7 +60,7 @@
                                 <div class="mb-4">
                                     <div class="form-check">
                                         <label class="form-check-label text-muted">
-                                            <input type="checkbox" class="form-check-input">
+                                            <input type="checkbox" class="form-check-input" required>
                                             I agree to all Terms & Conditions
                                         </label>
                                     </div>

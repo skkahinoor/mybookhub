@@ -169,14 +169,13 @@
                                         {{-- Academic info tab --}}
                                         <div class="tab-pane fade" id="tab-academic" role="tabpanel">
                                             <div class="form-group">
-                                                <label for="academic-institution">Institution</label>
-                                                <select id="academic-institution" name="institution_id"
-                                                        class="form-control">
-                                                    <option value="">Select Institution</option>
-                                                    @foreach ($institutions as $institution)
-                                                        <option value="{{ $institution->id }}"
-                                                            {{ optional($user)->institution_id == $institution->id ? 'selected' : '' }}>
-                                                            {{ $institution->name }}
+                                                <label for="academic-education-level">Education Level</label>
+                                                <select id="academic-education-level" name="education_level_id" class="form-control">
+                                                    <option value="">Select Education Level</option>
+                                                    @foreach ($sections as $sec)
+                                                        <option value="{{ $sec->id }}"
+                                                            {{ optional($user->academicProfile)->education_level_id == $sec->id ? 'selected' : '' }}>
+                                                            {{ $sec->name }}
                                                         </option>
                                                     @endforeach
                                                 </select>
@@ -189,9 +188,21 @@
                                             </div>
                                             <div class="form-group">
                                                 <label for="academic-class">Class</label>
-                                                <select id="academic-class" name="institution_classes_id"
-                                                        class="form-control">
+                                                <select id="academic-class" name="class_id" class="form-control">
                                                     <option value="">Select Class</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="academic-institution">Institution (Optional)</label>
+                                                <select id="academic-institution" name="institution_id"
+                                                        class="form-control">
+                                                    <option value="">Select Institution</option>
+                                                    @foreach ($institutions as $institution)
+                                                        <option value="{{ $institution->id }}"
+                                                            {{ optional($user)->institution_id == $institution->id ? 'selected' : '' }}>
+                                                            {{ $institution->name }}
+                                                        </option>
+                                                    @endforeach
                                                 </select>
                                             </div>
                                         </div>
@@ -478,63 +489,58 @@
 </script>
 
 <script>
-    // Academic info cascading dropdowns (Institution -> Board -> Class)
+    // Academic info cascading dropdowns (Education Level -> Board -> Class)
     jQuery(document).ready(function($) {
-        var academicInstitutionSelect = $('#academic-institution');
+        var educationLevelSelect = $('#academic-education-level');
         var academicBoardSelect = $('#academic-board');
         var academicClassSelect = $('#academic-class');
 
-        var currentInstitutionId = @json(optional($user)->institution_id);
-        var currentBoardId = @json(optional(optional($user->academicProfile))->board_id);
-        var currentClassId = @json(optional($user)->institution_classes_id);
+        var currentEducationLevelId = @json(optional($user->academicProfile)->education_level_id);
+        var currentBoardId = @json(optional($user->academicProfile)->board_id);
+        var currentClassId = @json(optional($user->academicProfile)->class_id);
 
-        function loadBoards(institutionId, selectedBoardId) {
+        function loadAcademicBoards(sectionId, selectedBoardId) {
             academicBoardSelect.empty().append('<option value="">Select Board</option>');
-            if (!institutionId) {
-                return;
-            }
+            academicClassSelect.empty().append('<option value="">Select Class</option>');
+            if (!sectionId) return;
+
             $.ajax({
-                url: '{{ route('student.academic.boards') }}',
+                url: '{{ route('get.filter.categories') }}',
                 type: 'GET',
-                data: { institution_id: institutionId },
+                data: { section_id: sectionId },
                 dataType: 'json',
-                success: function (boards) {
-                    $.each(boards, function (index, board) {
+                success: function(response) {
+                    $.each(response, function(key, category) {
                         var option = $('<option></option>')
-                            .val(board.id)
-                            .text(board.name);
-                        if (selectedBoardId && parseInt(selectedBoardId) === parseInt(board.id)) {
+                            .val(category.id)
+                            .text(category.category_name);
+                        if (selectedBoardId && parseInt(selectedBoardId) === parseInt(category.id)) {
                             option.attr('selected', 'selected');
                         }
                         academicBoardSelect.append(option);
                     });
+                    if (selectedBoardId) {
+                        loadAcademicClasses(selectedBoardId, sectionId, currentClassId);
+                    }
                 }
             });
         }
 
-        function loadClasses(institutionId, boardId, selectedClassId) {
+        function loadAcademicClasses(categoryId, sectionId, selectedClassId) {
             academicClassSelect.empty().append('<option value="">Select Class</option>');
-            if (!institutionId) {
-                return;
-            }
+            if (!categoryId || !sectionId) return;
+
             $.ajax({
-                url: '{{ route('student.academic.classes') }}',
+                url: '{{ route('get.filter.subcategories') }}',
                 type: 'GET',
-                data: {
-                    institution_id: institutionId,
-                    board_id: boardId
-                },
+                data: { category_id: categoryId, section_id: sectionId },
                 dataType: 'json',
-                success: function (classes) {
-                    $.each(classes, function (index, cls) {
-                        var text = cls.name || 'Class';
-                        if (cls.strength) {
-                            text += ' (Strength: ' + cls.strength + ')';
-                        }
+                success: function(response) {
+                    $.each(response, function(key, subcat) {
                         var option = $('<option></option>')
-                            .val(cls.id)
-                            .text(text);
-                        if (selectedClassId && parseInt(selectedClassId) === parseInt(cls.id)) {
+                            .val(subcat.id)
+                            .text(subcat.category_name);
+                        if (selectedClassId && parseInt(selectedClassId) === parseInt(subcat.id)) {
                             option.attr('selected', 'selected');
                         }
                         academicClassSelect.append(option);
@@ -543,28 +549,17 @@
             });
         }
 
-        academicInstitutionSelect.on('change', function () {
-            var institutionId = $(this).val();
-            academicBoardSelect.empty().append('<option value="">Select Board</option>');
-            academicClassSelect.empty().append('<option value="">Select Class</option>');
-            if (institutionId) {
-                loadBoards(institutionId, null);
-            }
+        educationLevelSelect.on('change', function() {
+            loadAcademicBoards($(this).val(), null);
         });
 
-        academicBoardSelect.on('change', function () {
-            var institutionId = academicInstitutionSelect.val();
-            var boardId = $(this).val();
-            academicClassSelect.empty().append('<option value="">Select Class</option>');
-            if (institutionId) {
-                loadClasses(institutionId, boardId, null);
-            }
+        academicBoardSelect.on('change', function() {
+            loadAcademicClasses($(this).val(), educationLevelSelect.val(), null);
         });
 
         // Initial populate if user already has data
-        if (currentInstitutionId) {
-            loadBoards(currentInstitutionId, currentBoardId);
-            loadClasses(currentInstitutionId, currentBoardId, currentClassId);
+        if (currentEducationLevelId) {
+            loadAcademicBoards(currentEducationLevelId, currentBoardId);
         }
     });
 </script>
