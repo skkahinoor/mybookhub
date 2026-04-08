@@ -357,7 +357,8 @@ class UserController extends Controller
         $requestedBooks = BookRequest::where('requested_by_user', Auth::id())->orderBy('created_at', 'desc')->get();
         $contactQueries = ContactUs::with('replies')->where('email', Auth::user()->email)->orderBy('created_at', 'desc')->get();
         $countries = Country::where('status', true)->get();
-        $user = User::with(['country', 'state', 'district', 'block'])->find(Auth::id());
+        $user = User::with(['country', 'state', 'district', 'block', 'addresses.country', 'addresses.state', 'addresses.district', 'addresses.block'])->find(Auth::id());
+        $addresses = $user->addresses;
 
         // ----- THIS HANDLES POST from the FORM -----
         if ($request->isMethod('post')) {
@@ -394,7 +395,7 @@ class UserController extends Controller
 
         // For GET request: Show the form
         return view('front.users.user_account')->with(compact(
-            'user', 'countries', 'condition', 'footerProducts', 'category', 'logos', 'sections', 'language', 'requestedBooks', 'contactQueries'
+            'user', 'countries', 'condition', 'footerProducts', 'category', 'logos', 'sections', 'language', 'requestedBooks', 'contactQueries', 'addresses'
         ));
     }
 
@@ -538,4 +539,71 @@ class UserController extends Controller
         return response()->json($blocks);
     }
 
+    public function saveAddress(Request $request)
+    {
+        if ($request->isMethod('post')) {
+            $data = $request->all();
+
+            $rules = [
+                'name' => 'required',
+                'mobile' => 'required|numeric|digits:10',
+                'address' => 'required',
+                'pincode' => 'required|numeric|digits:6',
+                'country_id' => 'required',
+                'state_id' => 'required',
+                'district_id' => 'required',
+            ];
+
+            $validator = Validator::make($data, $rules);
+            if ($validator->fails()) {
+                return response()->json(['type' => 'error', 'errors' => $validator->errors()]);
+            }
+
+            if (!empty($data['address_id'])) {
+                $address = \App\Models\UserAddress::find($data['address_id']);
+                $message = "Address updated successfully!";
+            } else {
+                $address = new \App\Models\UserAddress;
+                $address->user_id = Auth::user()->id;
+                $message = "Address added successfully!";
+            }
+
+            $address->name = $data['name'];
+            $address->mobile = $data['mobile'];
+            $address->address = $data['address'];
+            $address->pincode = $data['pincode'];
+            $address->country_id = $data['country_id'];
+            $address->state_id = $data['state_id'];
+            $address->district_id = $data['district_id'];
+            $address->block_id = $data['block_id'] ?? null;
+            $address->save();
+
+            // If it's the first address, set it as default
+            if (\App\Models\UserAddress::where('user_id', Auth::user()->id)->count() == 1) {
+                $address->is_default = 1;
+                $address->save();
+            }
+
+            return response()->json(['type' => 'success', 'message' => $message]);
+        }
+    }
+
+    public function deleteAddress(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = $request->all();
+            \App\Models\UserAddress::where('id', $data['address_id'])->delete();
+            return response()->json(['type' => 'success', 'message' => 'Address deleted successfully!']);
+        }
+    }
+
+    public function setDefaultAddress(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = $request->all();
+            \App\Models\UserAddress::where('user_id', Auth::id())->update(['is_default' => 0]);
+            \App\Models\UserAddress::where('id', $data['address_id'])->update(['is_default' => 1]);
+            return response()->json(['type' => 'success', 'message' => 'Default address updated!']);
+        }
+    }
 }

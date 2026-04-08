@@ -466,6 +466,11 @@
                                         aria-selected="false">Change Password</a>
                                 </li>
                                 <li class="nav-item" role="presentation">
+                                    <a href="#addresses" class="nav-edit-address nav-link" id="addresses-tab"
+                                        data-bs-toggle="tab" role="tab" aria-controls="addresses"
+                                        aria-selected="false">Addresses</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
                                     <a href="#orders" class="nav-orders nav-link" id="orders-tab" data-bs-toggle="tab"
                                         role="tab" aria-controls="orders" aria-selected="false">My Book Requests</a>
                                 </li>
@@ -933,12 +938,150 @@
                                                 </div>
                                             @endforeach
                                         </div>
+                                    {{-- @endif --}}
+                                </div>
+                                <!-- Addresses Tab -->
+                                <div class="tab-pane fade" id="addresses" role="tabpanel" aria-labelledby="addresses-tab">
+                                    <div class="woocommerce-account-header">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <h1>My Addresses</h1>
+                                                <p>Manage your shipping and billing addresses.</p>
+                                            </div>
+                                            <button type="button" class="woocommerce-Button" data-bs-toggle="modal"
+                                                data-bs-target="#addressModal" onclick="clearAddressForm()">
+                                                Add New Address
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="row" id="addressList">
+                                        @foreach ($addresses as $address)
+                                            <div class="col-md-6 mb-4">
+                                                <div class="card {{ $address->is_default ? 'border-primary' : '' }}"
+                                                    style="position: relative; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 100%;">
+                                                    @if ($address->is_default)
+                                                        <span class="badge bg-primary"
+                                                            style="position: absolute; top: 10px; right: 10px;">Default</span>
+                                                    @endif
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">{{ $address->name }}</h5>
+                                                        <p class="card-text mb-1">
+                                                            {{ $address->address }}<br>
+                                                            {{ optional($address->block)->name ? $address->block->name . ', ' : '' }}
+                                                            {{ optional($address->district)->name ? $address->district->name . ', ' : '' }}
+                                                            {{ optional($address->state)->name ? $address->state->name : '' }}
+                                                            - {{ $address->pincode }}<br>
+                                                            {{ optional($address->country)->name }}
+                                                        </p>
+                                                        <p class="card-text"><strong>Mobile:</strong>
+                                                            {{ $address->mobile }}</p>
+
+                                                        <div class="mt-3">
+                                                            <button class="btn btn-sm btn-outline-secondary"
+                                                                onclick="editAddress({{ json_encode($address) }})">Edit</button>
+                                                            <button class="btn btn-sm btn-outline-danger"
+                                                                onclick="deleteAddress({{ $address->id }})">Delete</button>
+                                                            @if (!$address->is_default)
+                                                                <button class="btn btn-sm btn-outline-primary"
+                                                                    onclick="setDefaultAddress({{ $address->id }})">Set
+                                                                    Default</button>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    @if ($addresses->isEmpty())
+                                        <div class="empty-state">
+                                            <div class="empty-state-icon">📍</div>
+                                            <h3>No addresses saved</h3>
+                                            <p>You haven't saved any addresses yet.</p>
+                                        </div>
                                     @endif
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address Modal -->
+    <div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addressModalLabel">Add New Address</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="addressForm">
+                    @csrf
+                    <input type="hidden" name="address_id" id="address_id">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" id="addr_name" class="form-control"
+                                    style="padding: 12px; border: 2px solid #e5e5e5;" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                                <input type="text" name="mobile" id="addr_mobile" class="form-control"
+                                    style="padding: 12px; border: 2px solid #e5e5e5;" required>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Address <span class="text-danger">*</span></label>
+                                <textarea name="address" id="addr_address" class="form-control" rows="3"
+                                    style="padding: 12px; border: 2px solid #e5e5e5;" required></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Country <span class="text-danger">*</span></label>
+                                <select name="country_id" id="addr_country_id" class="form-select"
+                                    style="padding: 12px; border: 2px solid #e5e5e5;" required>
+                                    <option value="">Select Country</option>
+                                    @foreach ($countries as $country)
+                                        <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">State <span class="text-danger">*</span></label>
+                                <select name="state_id" id="addr_state_id" class="form-select"
+                                    style="padding: 12px; border: 2px solid #e5e5e5;" required>
+                                    <option value="">Select State</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">District <span class="text-danger">*</span></label>
+                                <select name="district_id" id="addr_district_id" class="form-select"
+                                    style="padding: 12px; border: 2px solid #e5e5e5;" required>
+                                    <option value="">Select District</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Block</label>
+                                <select name="block_id" id="addr_block_id" class="form-select"
+                                    style="padding: 12px; border: 2px solid #e5e5e5;">
+                                    <option value="">Select Block</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pincode <span class="text-danger">*</span></label>
+                                <input type="text" name="pincode" id="addr_pincode" class="form-control"
+                                    style="padding: 12px; border: 2px solid #e5e5e5;" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="saveAddressBtn"
+                            style="background: #0073aa; border: none; padding: 10px 20px;">Save Address</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1124,5 +1267,156 @@
             }
         });
 
+        // Address Management Functions
+        function clearAddressForm() {
+            $('#address_id').val('');
+            $('#addressForm')[0].reset();
+            $('#addr_state_id').empty().append('<option value="">Select State</option>');
+            $('#addr_district_id').empty().append('<option value="">Select District</option>');
+            $('#addr_block_id').empty().append('<option value="">Select Block</option>');
+            $('#addressModalLabel').text('Add New Address');
+        }
+
+        function editAddress(address) {
+            clearAddressForm();
+            $('#address_id').val(address.id);
+            $('#addr_name').val(address.name);
+            $('#addr_mobile').val(address.mobile);
+            $('#addr_address').val(address.address);
+            $('#addr_pincode').val(address.pincode);
+            $('#addr_country_id').val(address.country_id);
+            $('#addressModalLabel').text('Edit Address');
+
+            // Load states and then set value, then load districts...
+            loadModalStates(address.country_id, address.state_id)
+                .then(() => loadModalDistricts(address.state_id, address.district_id))
+                .then(() => loadModalBlocks(address.district_id, address.block_id));
+
+            $('#addressModal').modal('show');
+        }
+
+        function loadModalStates(countryId, stateId = null) {
+            return new Promise((resolve) => {
+                $.ajax({
+                    url: '{{ route('user_states') }}',
+                    data: {
+                        country: countryId
+                    },
+                    success: function(response) {
+                        let options = '<option value="">Select State</option>';
+                        $.each(response, function(id, name) {
+                            options += `<option value="${id}">${name}</option>`;
+                        });
+                        $('#addr_state_id').html(options);
+                        if (stateId) $('#addr_state_id').val(stateId);
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        function loadModalDistricts(stateId, districtId = null) {
+            return new Promise((resolve) => {
+                if (!stateId) return resolve();
+                $.ajax({
+                    url: '{{ route('user_districts') }}',
+                    data: {
+                        state: stateId
+                    },
+                    success: function(response) {
+                        let options = '<option value="">Select District</option>';
+                        $.each(response, function(id, name) {
+                            options += `<option value="${id}">${name}</option>`;
+                        });
+                        $('#addr_district_id').html(options);
+                        if (districtId) $('#addr_district_id').val(districtId);
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        function loadModalBlocks(districtId, blockId = null) {
+            return new Promise((resolve) => {
+                if (!districtId) return resolve();
+                $.ajax({
+                    url: '{{ route('user_blocks') }}',
+                    data: {
+                        district: districtId
+                    },
+                    success: function(response) {
+                        let options = '<option value="">Select Block</option>';
+                        $.each(response, function(id, name) {
+                            options += `<option value="${id}">${name}</option>`;
+                        });
+                        $('#addr_block_id').html(options);
+                        if (blockId) $('#addr_block_id').val(blockId);
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        // Dropdown change handlers for modal
+        $('#addr_country_id').on('change', function() {
+            loadModalStates($(this).val());
+        });
+        $('#addr_state_id').on('change', function() {
+            loadModalDistricts($(this).val());
+        });
+        $('#addr_district_id').on('change', function() {
+            loadModalBlocks($(this).val());
+        });
+
+        // Save Address
+        $('#addressForm').on('submit', function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: '{{ route('saveAddress') }}',
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.type == 'success') {
+                        location.reload();
+                    } else {
+                        alert('Something went wrong. Please check your inputs.');
+                    }
+                }
+            });
+        });
+
+        function deleteAddress(addressId) {
+            if (confirm('Are you sure you want to delete this address?')) {
+                $.ajax({
+                    url: '{{ route('deleteAddress') }}',
+                    type: 'POST',
+                    data: {
+                        address_id: addressId,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (response.type == 'success') {
+                            location.reload();
+                        }
+                    }
+                });
+            }
+        }
+
+        function setDefaultAddress(addressId) {
+            $.ajax({
+                url: '{{ route('setDefaultAddress') }}',
+                type: 'POST',
+                data: {
+                    address_id: addressId,
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.type == 'success') {
+                        location.reload();
+                    }
+                }
+            });
+        }
     </script>
 @endsection
