@@ -24,6 +24,7 @@ use App\Models\Category;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\OrdersLog;
+use App\Models\UserAddress;
 use App\Models\Notification;
 use App\Models\DeliverySetting;
 use App\Models\OrderQuery;
@@ -1401,6 +1402,7 @@ class ProductController extends Controller
             'coupon_code' => 'nullable|string',
             'coupon_amount' => 'nullable|numeric|min:0',
             'use_wallet' => 'nullable|boolean',
+            'address_id' => 'nullable|integer',
         ]);
 
         if ($validator->fails()) {
@@ -1416,13 +1418,45 @@ class ProductController extends Controller
             ], 401);
         }
 
-        $user->load(['country', 'state', 'district']);
+        if ($request->address_id) {
+            $selectedAddress = UserAddress::with(['country', 'state', 'district', 'block'])
+                ->where('id', $request->address_id)
+                ->where('user_id', $user->id)
+                ->first();
 
-        if (empty($user->address) || empty($user->district_id) || empty($user->state_id) || empty($user->country_id) || empty($user->pincode) || empty($user->phone)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Please update your address before checkout'
-            ], 400);
+            if (!$selectedAddress) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Selected address not found'
+                ], 404);
+            }
+
+            $orderName = $selectedAddress->name;
+            $orderAddress = $selectedAddress->address;
+            $orderCity = $selectedAddress->district->name ?? '';
+            $orderState = $selectedAddress->state->name ?? '';
+            $orderCountry = $selectedAddress->country->name ?? '';
+            $orderPincode = $selectedAddress->pincode;
+            $orderMobile = $selectedAddress->mobile;
+            $orderEmail = $user->email;
+        } else {
+            $user->load(['country', 'state', 'district']);
+
+            if (empty($user->address) || empty($user->district_id) || empty($user->state_id) || empty($user->country_id) || empty($user->pincode) || empty($user->phone)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Please update your address before checkout'
+                ], 400);
+            }
+
+            $orderName = $user->name;
+            $orderAddress = $user->address;
+            $orderCity = $user->district->name ?? '';
+            $orderState = $user->state->name ?? '';
+            $orderCountry = $user->country->name ?? '';
+            $orderPincode = $user->pincode;
+            $orderMobile = $user->phone;
+            $orderEmail = $user->email;
         }
 
         $cartItems = Cart::where('user_id', $user->id)->get();
@@ -1600,14 +1634,14 @@ class ProductController extends Controller
 
                 $order = Order::create([
                     'user_id' => $user->id,
-                    'name' => $user->name,
-                    'address' => $user->address,
-                    'city' => $user->district->name ?? '',
-                    'state' => $user->state->name ?? '',
-                    'country' => $user->country->name ?? '',
-                    'pincode' => $user->pincode,
-                    'mobile' => $user->phone,
-                    'email' => $user->email,
+                    'name' => $orderName,
+                    'address' => $orderAddress,
+                    'city' => $orderCity,
+                    'state' => $orderState,
+                    'country' => $orderCountry,
+                    'pincode' => $orderPincode,
+                    'mobile' => $orderMobile,
+                    'email' => $orderEmail,
                     'shipping_charges' => $item_shipping,
                     'coupon_code' => ($item_coupon > 0) ? $request->coupon_code : null,
                     'coupon_amount' => $item_coupon,
