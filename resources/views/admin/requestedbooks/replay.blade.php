@@ -1,13 +1,47 @@
 @extends('admin.layout.layout')
 
 @section('content')
+<style>
+    .request-reply-page .card {
+        border: 1px solid #e8edf5;
+        border-radius: 14px;
+        box-shadow: 0 6px 20px rgba(21, 38, 67, 0.06);
+    }
+    .request-reply-page .info-box {
+        border: 1px solid #e8edf5;
+        border-radius: 10px;
+        background: #f8fbff;
+        padding: 12px;
+        margin-bottom: 14px;
+    }
+    .request-reply-page .info-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #64748b;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+    }
+    .request-reply-page .info-value {
+        color: #1e293b;
+        font-weight: 600;
+    }
+    .request-reply-page .thread-wrap {
+        background: #f8fafc;
+        border: 1px solid #e8edf5;
+        padding: 15px;
+        border-radius: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
 <div class="main-panel">
-    <div class="content-wrapper">
+    <div class="content-wrapper request-reply-page">
         <div class="row">
             <div class="col-lg-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="card-title">Reply to Query</h4>
+                        <h4 class="card-title mb-1">Reply to Book Query</h4>
+                        <p class="text-muted mb-4">Review request details and continue the conversation.</p>
 
                         @if(Session::has('success_message'))
                             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -31,35 +65,35 @@
 
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Customer Name:</label>
-                                    <input type="text" class="form-control" value="{{ $bookRequest->user->name ?? 'N/A' }}" readonly>
+                                <div class="info-box">
+                                    <div class="info-label">Customer Name</div>
+                                    <div class="info-value">{{ $bookRequest->user->name ?? 'N/A' }}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Customer Email:</label>
-                                    <input type="text" class="form-control" value="{{ $bookRequest->user->email ?? 'N/A' }}" readonly>
+                                <div class="info-box">
+                                    <div class="info-label">Customer Email</div>
+                                    <div class="info-value">{{ $bookRequest->user->email ?? 'N/A' }}</div>
                                 </div>
                             </div>
                             <div class="col-md-12">
-                                <div class="form-group">
-                                    <label>Book Title:</label>
-                                    <input type="text" class="form-control" value="{{ $bookRequest->book_title }}" readonly>
+                                <div class="info-box">
+                                    <div class="info-label">Book Title</div>
+                                    <div class="info-value">{{ $bookRequest->book_title }}</div>
                                 </div>
                             </div>
                             @if($bookRequest->author_name)
                             <div class="col-md-12">
-                                <div class="form-group">
-                                    <label>Author Name:</label>
-                                    <input type="text" class="form-control" value="{{ $bookRequest->author_name }}" readonly>
+                                <div class="info-box">
+                                    <div class="info-label">Author Name</div>
+                                    <div class="info-value">{{ $bookRequest->author_name }}</div>
                                 </div>
                             </div>
                             @endif
                             <div class="col-md-12">
-                                <div class="form-group">
-                                    <label>Original Message:</label>
-                                    <textarea class="form-control" rows="5" readonly>{{ $bookRequest->message ?? 'No message provided' }}</textarea>
+                                <div class="info-box">
+                                    <div class="info-label">Original Message</div>
+                                    <div class="info-value">{{ $bookRequest->message ?? 'No message provided' }}</div>
                                 </div>
                             </div>
                         </div>
@@ -69,7 +103,7 @@
                             <div class="row" style="margin-top: 20px;">
                                 <div class="col-md-12">
                                     <h5>Conversation Thread</h5>
-                                    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; max-height: 400px; overflow-y: auto;">
+                                    <div class="thread-wrap">
                                         @foreach($query['replies'] as $reply)
                                             @if($reply['reply_by'] == 'admin')
                                                 <div style="background: #e8f5e9; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #28a745;">
