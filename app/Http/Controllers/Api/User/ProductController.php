@@ -2551,17 +2551,29 @@ class ProductController extends Controller
 
             $attachmentPath = null;
             if ($request->hasFile('attachment')) {
-                $file = $request->file('attachment');
-                $filename = time() . '_' . $file->getClientOriginalName();
-                $destinationPath = public_path('attachments/order_queries');
-                
-                // Ensure directory exists
-                if (!File::isDirectory($destinationPath)) {
-                    File::makeDirectory($destinationPath, 0777, true, true);
-                }
+                try {
+                    $file = $request->file('attachment');
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $destinationPath = public_path('attachments/order_queries');
+                    
+                    // Log the path to help debug if it fails
+                    // Log::info('Uploading to: ' . $destinationPath);
 
-                $file->move($destinationPath, $filename);
-                $attachmentPath = 'attachments/order_queries/' . $filename;
+                    // Ensure directory exists
+                    if (!File::isDirectory($destinationPath)) {
+                        File::makeDirectory($destinationPath, 0777, true, true);
+                    }
+
+                    $file->move($destinationPath, $filename);
+                    $attachmentPath = 'attachments/order_queries/' . $filename;
+                } catch (\Exception $fe) {
+                    Log::error('Ticket Attachment Error: ' . $fe->getMessage());
+                    return response()->json([
+                        'status' => false, 
+                        'message' => 'Failed to process attachment. Please try a different image or check server permissions.',
+                        'debug' => config('app.debug') ? $fe->getMessage() : null
+                    ], 500);
+                }
             }
 
             $newMessage = OrderQueryMessage::create([
@@ -2572,15 +2584,19 @@ class ProductController extends Controller
                 'sender_type' => 'student',
             ]);
 
-            // Optional: Notify Admin/Vendor
-            Notification::create([
-                'type' => 'order_query',
-                'title' => 'New Reply for Ticket #' . $query->ticket_id,
-                'message' => "Customer '" . $user->name . "' replied to Ticket #" . $query->ticket_id,
-                'related_id' => $query->order_id,
-                'related_type' => Order::class,
-                'is_read' => false,
-            ]);
+            // Optional: Notify Admin/Vendor - Wrapped in try-catch to avoid breaking the reply if notification table varies on live
+            try {
+                Notification::create([
+                    'type' => 'order_query',
+                    'title' => 'New Reply for Ticket #' . $query->ticket_id,
+                    'message' => "Customer '" . $user->name . "' replied to Ticket #" . $query->ticket_id,
+                    'related_id' => $query->order_id,
+                    'related_type' => Order::class,
+                    'is_read' => false,
+                ]);
+            } catch (\Exception $ne) {
+                Log::warning('Ticket Notification Failed: ' . $ne->getMessage());
+            }
 
             $fullAttachmentUrl = $attachmentPath ? url($attachmentPath) : null;
 
