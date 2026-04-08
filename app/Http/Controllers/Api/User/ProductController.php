@@ -1995,7 +1995,7 @@ class ProductController extends Controller
         // Format itemized items with original price and vendor info
         $items = $order->orders_products->map(function ($item) {
             $originalPrice = $item->product->product_price ?? $item->product_price;
-            
+
             // Collect Vendor details with robust fallback
             $vendorDetail = $item->vendor_details->vendorbusinessdetails ?? null;
             $vendorInfo = null;
@@ -2340,6 +2340,169 @@ class ProductController extends Controller
             'status' => true,
             'message' => 'Query raised successfully. Your Ticket ID is ' . $ticket_id . '. Our team will get back to you soon.',
             'ticket_id' => $ticket_id
+        ]);
+    }
+
+    public function orderQueries(Request $request)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized access.'
+            ], 401);
+        }
+
+        $queries = OrderQuery::with(['order', 'orderProduct', 'messages'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        $formattedQueries = $queries->through(function ($query) {
+            return [
+                'id' => $query->id,
+                'ticket_id' => $query->ticket_id,
+                'order_id' => $query->order_id,
+                'product_name' => $query->orderProduct->product_name ?? 'N/A',
+                'subject' => $query->subject,
+                'status' => strtolower($query->status),
+                'date' => $query->created_at->format('M d, Y h:i A'),
+                'messages_count' => $query->messages->count(),
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Order queries fetched successfully',
+            'data' => [
+                'total' => $queries->total(),
+                'current_page' => $queries->currentPage(),
+                'last_page' => $queries->lastPage(),
+                'queries' => $formattedQueries
+            ]
+        ]);
+    }
+
+    public function queryDetails($id)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $query = OrderQuery::with(['order', 'orderProduct', 'messages.user', 'messages' => function($q) {
+            $q->orderBy('created_at', 'asc');
+        }])
+            ->where('user_id', $user->id)
+            ->where('id', $id)
+            ->first();
+
+        if (!$query) {
+            return response()->json(['status' => false, 'message' => 'Query not found.'], 404);
+        }
+
+        $messages = $query->messages->map(function ($msg) {
+            $attachmentUrl = null;
+            if ($msg->attachment) {
+                // Determine if it already has full URL or just relative path
+                $attachmentUrl = str_starts_with($msg->attachment, 'http') ? $msg->attachment : url($msg->attachment);
+            }
+
+            return [
+                'id' => $msg->id,
+                'message' => $msg->message,
+                'sender_type' => $msg->sender_type,
+                'attachment' => $attachmentUrl,
+                'created_at' => $msg->created_at->format('d M Y, h:i A'),
+                'user_name' => $msg->user ? $msg->user->name : 'Support Team',
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Query details fetched successfully',
+            'data' => [
+                'id' => $query->id,
+                'ticket_id' => $query->ticket_id,
+                'order_id' => $query->order_id,
+                'product_name' => $query->orderProduct->product_name ?? 'N/A',
+                'subject' => $query->subject,
+                'message' => $query->message,
+                'status' => strtolower($query->status),
+                'date' => $query->created_at->format('d M Y, h:i A'),
+                'messages' => $messages
+            ]
+        ]);
+    }
+
+    public function postQueryReply(Request $request, $id)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'message' => 'required|string',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,mp4,mov,avi,pdf|max:10240', // 10MB
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $query = OrderQuery::where('user_id', $user->id)->where('id', $id)->first();
+
+        if (!$query) {
+            return response()->json(['status' => false, 'message' => 'Query not found.'], 404);
+        }
+
+        if (strtolower($query->status) == 'closed') {
+            return response()->json(['status' => false, 'message' => 'This ticket is closed and cannot be replied to.'], 400);
+        }
+
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('attachments/order_queries'), $filename);
+            $attachmentPath = 'attachments/order_queries/' . $filename;
+        }
+
+        $newMessage = OrderQueryMessage::create([
+            'order_query_id' => $id,
+            'user_id' => $user->id,
+            'message' => $request->message,
+            'attachment' => $attachmentPath,
+            'sender_type' => 'student',
+        ]);
+
+        // Optional: Notify Admin/Vendor
+        Notification::create([
+            'type' => 'order_query',
+            'title' => 'New Reply for Ticket #' . $query->ticket_id,
+            'message' => "Customer '" . $user->name . "' replied to Ticket #" . $query->ticket_id,
+            'related_id' => $query->order_id,
+            'related_type' => Order::class,
+            'is_read' => false,
+        ]);
+
+        $fullAttachmentUrl = $attachmentPath ? url($attachmentPath) : null;
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Reply sent successfully.',
+            'data' => [
+                'id' => $newMessage->id,
+                'message' => $newMessage->message,
+                'sender_type' => $newMessage->sender_type,
+                'attachment' => $fullAttachmentUrl,
+                'created_at' => $newMessage->created_at->format('d M Y, h:i A'),
+                'user_name' => $user->name,
+            ]
         ]);
     }
 }

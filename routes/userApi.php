@@ -61,6 +61,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/orders/{id}/pay', [ProductController::class, 'payNow']);
     Route::post('/user/orders/{id}/return', [ProductController::class, 'returnOrder']);
     Route::post('/user/orders/raise-query', [ProductController::class, 'raiseQuery']);
+    Route::get('/user/order-queries', [ProductController::class, 'orderQueries']);
+    Route::get('/user/order-queries/{id}', [ProductController::class, 'queryDetails']);
+    Route::post('/user/order-queries/{id}/reply', [ProductController::class, 'postQueryReply']);
     Route::get('/user/wallet/transactions', [HomeController::class, 'getWalletTransactions']);
 
     // Sell Book Routes
