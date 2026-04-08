@@ -136,12 +136,18 @@ class ProductController extends Controller
                 $query->whereExists(function ($q) use ($minLat, $maxLat, $minLng, $maxLng) {
                     $q->select(DB::raw(1))
                         ->from('products_attributes as pa_bb')
-                        ->join('vendors as v_bb', 'pa_bb.vendor_id', '=', 'v_bb.id')
+                        ->leftJoin('vendors as v_bb', 'pa_bb.vendor_id', '=', 'v_bb.id')
                         ->whereRaw('pa_bb.product_id = products.id')
                         ->where('pa_bb.status', 1)
                         ->where('pa_bb.stock', '>=', 0)
-                        ->whereBetween(DB::raw("CAST(SUBSTRING_INDEX(v_bb.location, ',', 1) AS DECIMAL(10,6))"), [$minLat, $maxLat])
-                        ->whereBetween(DB::raw("CAST(SUBSTRING_INDEX(v_bb.location, ',', -1) AS DECIMAL(10,6))"), [$minLng, $maxLng]);
+                        ->where(function ($sub) use ($minLat, $maxLat, $minLng, $maxLng) {
+                            $sub->where(function ($locSub) use ($minLat, $maxLat, $minLng, $maxLng) {
+                                $locSub->whereNotNull('pa_bb.vendor_id')
+                                    ->whereBetween(DB::raw("CAST(SUBSTRING_INDEX(v_bb.location, ',', 1) AS DECIMAL(10,6))"), [$minLat, $maxLat])
+                                    ->whereBetween(DB::raw("CAST(SUBSTRING_INDEX(v_bb.location, ',', -1) AS DECIMAL(10,6))"), [$minLng, $maxLng]);
+                            })
+                            ->orWhereNull('pa_bb.vendor_id'); // Also include products listed by regular users
+                        });
                 });
             }
 
@@ -154,14 +160,14 @@ class ProductController extends Controller
                     sin(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6))))
                 ))
                 FROM products_attributes pa
-                INNER JOIN vendors v ON pa.vendor_id = v.id
+                LEFT JOIN vendors v ON pa.vendor_id = v.id
                 WHERE pa.product_id = products.id
                 AND pa.status = 1
                 AND pa.stock >= 0
             ) AS distance", [$lat, $lng, $lat]);
 
             if ($location_limit && $location_limit < 1000) {
-                $query->having('distance', '<=', $location_limit);
+                $query->havingRaw('(distance <= ? OR distance IS NULL)', [$location_limit]);
                 $query->orderBy('distance', 'asc');
             }
         }
