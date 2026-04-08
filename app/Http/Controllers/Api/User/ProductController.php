@@ -50,6 +50,7 @@ class ProductController extends Controller
             'max_price' => 'nullable|numeric|min:0',
             'search' => 'nullable|string|max:255',
             'isbn' => 'nullable|string|max:20',
+            'location_limit' => 'nullable|integer|min:1|max:1000',
         ]);
 
         if ($validator->fails()) {
@@ -78,7 +79,7 @@ class ProductController extends Controller
             '_' . md5(json_encode($request->all()));
 
         $data = Cache::remember($cacheKey, 300, function () use ($request, $user, $limit, $page, $lat, $lng) {
-            return $this->sqlSearch($request, $limit, $page, $lat, $lng);
+            return $this->sqlSearch($request, $limit, $page, $lat, $lng, $request->location_limit);
         });
 
         return response()->json([
@@ -88,33 +89,80 @@ class ProductController extends Controller
         ]);
     }
 
-    private function sqlSearch($request, $limit, $page, $lat, $lng)
+    private function sqlSearch($request, $limit, $page, $lat, $lng, $location_limit = null)
     {
         $user = auth('sanctum')->user();
 
-        // Use whereIn with subquery instead of whereHas for better performance at scale
-        $activeProductIds = ProductsAttribute::where('status', 1)
-            ->where('stock', '>=', 0)
-            ->distinct()
-            ->pluck('product_id');
-
         $query = Product::with([
-            'category',
-            'subcategory',
-            'section',
-            'subject',
-            'bookType',
-            'language',
-            'authors',
+            'category:id,category_name',
+            'subcategory:id,subcategory_name',
+            'section:id,name',
+            'subject:id,name',
+            'bookType:id,book_type,book_type_icon',
+            'language:id,name',
+            'authors:id,name',
             'attributes' => function ($q) {
                 $q->where('status', 1)
-                    ->select('id', 'product_id', 'user_id', 'vendor_id', 'user_product_price', 'product_discount', 'status', 'stock', 'old_book_condition_id');
+                    ->select('id', 'product_id', 'status', 'stock', 'old_book_condition_id', 'user_product_price', 'product_discount');
             },
-            'attributes.product:id,product_price',
-            'attributes.condition'
+            'attributes.condition:id,name,percentage'
         ])
             ->where('status', 1)
-            ->whereIn('id', $activeProductIds);
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('products_attributes')
+                    ->whereRaw('products_attributes.product_id = products.id')
+                    ->where('products_attributes.status', 1)
+                    ->where('products_attributes.stock', '>=', 0);
+            });
+
+        if ($lat && $lng) {
+            $query->select('products.*');
+
+            // --- SCALE-HARDENING: Bounding Box Pre-filter ---
+            // Instead of running Haversine on 1M rows, we discard anything outside a square first.
+            // 1 degree of latitude is ~111km.
+            if ($location_limit && $location_limit < 1000) {
+                $latDelta = $location_limit / 111.045;
+                $lngDelta = $location_limit / (111.045 * cos(deg2rad($lat)));
+
+                $minLat = $lat - $latDelta;
+                $maxLat = $lat + $latDelta;
+                $minLng = $lng - $lngDelta;
+                $maxLng = $lng + $lngDelta;
+
+                $query->whereExists(function ($q) use ($minLat, $maxLat, $minLng, $maxLng) {
+                    $q->select(DB::raw(1))
+                        ->from('products_attributes as pa_bb')
+                        ->join('vendors as v_bb', 'pa_bb.vendor_id', '=', 'v_bb.id')
+                        ->whereRaw('pa_bb.product_id = products.id')
+                        ->where('pa_bb.status', 1)
+                        ->where('pa_bb.stock', '>=', 0)
+                        ->whereBetween(DB::raw("CAST(SUBSTRING_INDEX(v_bb.location, ',', 1) AS DECIMAL(10,6))"), [$minLat, $maxLat])
+                        ->whereBetween(DB::raw("CAST(SUBSTRING_INDEX(v_bb.location, ',', -1) AS DECIMAL(10,6))"), [$minLng, $maxLng]);
+                });
+            }
+
+            $query->selectRaw("(
+                SELECT MIN(6371 * acos(
+                    cos(radians(?)) *
+                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6)))) *
+                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', -1) AS DECIMAL(10,6))) - radians(?)) +
+                    sin(radians(?)) *
+                    sin(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6))))
+                ))
+                FROM products_attributes pa
+                INNER JOIN vendors v ON pa.vendor_id = v.id
+                WHERE pa.product_id = products.id
+                AND pa.status = 1
+                AND pa.stock >= 0
+            ) AS distance", [$lat, $lng, $lat]);
+
+            if ($location_limit && $location_limit < 1000) {
+                $query->having('distance', '<=', $location_limit);
+                $query->orderBy('distance', 'asc');
+            }
+        }
 
         // Personalization logic for students
         if ($user && $user->hasRole('student')) {
@@ -232,6 +280,7 @@ class ProductController extends Controller
 
                 return [
                     'id' => $product->id,
+                    'distance' => isset($product->distance) ? round($product->distance, 1) : null,
                     'product_name' => $product->product_name,
                     'product_isbn' => $product->product_isbn,
                     'product_price' => round($product->product_price),
