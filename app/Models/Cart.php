@@ -17,7 +17,6 @@ class Cart extends Model
         'user_id',
         'product_attribute_id',
         'product_id',
-        'size',
         'quantity',
     ];
 

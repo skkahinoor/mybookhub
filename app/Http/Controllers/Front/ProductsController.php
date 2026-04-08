@@ -90,11 +90,7 @@ class ProductsController extends Controller
                     }
                 }
 
-                if (isset($data['size']) && !empty($data['size'])) {                                                                   // coming from the AJAX call in front/js/custom.js    // example:    $data['size'] = 'Large'
-                    $categoryProducts->whereHas('attributes', function ($q) use ($data) {
-                        $q->whereIn('size', $data['size']);
-                    });
-                }
+                // size filter removed as per request
 
                 $productIds = [];
 
@@ -1310,7 +1306,7 @@ class ProductsController extends Controller
                         $message = 'This coupon code selected categories is not for one of the selected products category!';
                     }
 
-                    $attrPrice = Product::getDiscountAttributePrice($item['product_id'], $item['size']);
+                    $attrPrice = Product::getDiscountAttributePrice($item['product_id'], null, $item['product_attribute_id']);
                     $total_amount = $total_amount + ($attrPrice['final_price'] * $item['quantity']);
                 }
 
@@ -1433,7 +1429,7 @@ class ProductsController extends Controller
         $total_weight = 0;
 
         foreach ($getCartItems as $item) {
-            $attrPrice = Product::getDiscountAttributePrice($item['product_id'], $item['size'], $item['product_attribute_id']);
+            $attrPrice = Product::getDiscountAttributePrice($item['product_id'], null, $item['product_attribute_id']);
             $total_price = $total_price + ($attrPrice['final_price'] * $item['quantity']);
         }
 
@@ -1565,7 +1561,7 @@ class ProductsController extends Controller
                 // Use attribute-based pricing (per size) from ProductsAttribute table
                 $getDiscountAttributePrice = Product::getDiscountAttributePrice(
                     $item['product_id'],
-                    $item['size'] ?? null,
+                    null,
                     $item['product_attribute_id']
                 );
                 $total_price += ($getDiscountAttributePrice['final_price'] * $item['quantity']);
@@ -1599,7 +1595,7 @@ class ProductsController extends Controller
                 // Get item price
                 $getDiscountAttributePrice = Product::getDiscountAttributePrice(
                     $item['product_id'],
-                    $item['size'] ?? null,
+                    null,
                     $item['product_attribute_id']
                 );
                 $item_price = ($getDiscountAttributePrice['final_price'] * $item['quantity']);

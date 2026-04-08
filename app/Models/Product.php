@@ -216,8 +216,6 @@ class Product extends Model
 
         if (!empty($attribute_id)) {
             $attribute = ProductsAttribute::where('id', $attribute_id)->where('status', 1)->first();
-        } elseif (!empty($size)) {
-            $attribute = ProductsAttribute::where(['product_id' => $product_id, 'size' => $size])->where('status', 1)->first();
         }
 
         if ($attribute) {
