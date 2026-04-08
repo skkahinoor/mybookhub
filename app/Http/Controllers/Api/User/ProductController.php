@@ -1908,7 +1908,7 @@ class ProductController extends Controller
             'logs' => function ($query) {
                 $query->orderBy('id', 'asc');
             },
-            'orders_products'
+            'orders_products.product'
         ])->where('id', $id)->where('user_id', $user->id)->first();
 
         if (!$order) {
@@ -1918,21 +1918,44 @@ class ProductController extends Controller
             ], 404);
         }
 
+        $basePath = url('front/images/product_images');
+
         return response()->json([
             'status' => true,
             'message' => 'Order status fetched successfully',
             'data' => [
                 'order_id' => $order->id,
+                'date' => $order->created_at->format('d M Y, h:i A'),
+                'grand_total' => $order->grand_total,
+                'shipping_charges' => $order->shipping_charges,
+                'wallet_amount' => $order->wallet_amount,
+                'coupon_amount' => $order->coupon_amount,
+                'payment_method' => $order->payment_method,
+                'payment_status' => $order->payment_status,
+                'payment_gateway' => $order->payment_gateway,
+                'name' => $order->name,
+                'address' => $order->address,
+                'city' => $order->city,
+                'state' => $order->state,
+                'pincode' => $order->pincode,
+                'mobile' => $order->mobile,
                 'current_status' => $order->order_status,
                 'tracking_number' => $order->tracking_number,
                 'courier_name' => $order->courier_name,
                 'delivered_at' => $order->delivered_at,
                 'return_status' => $order->return_status,
                 'return_reason' => $order->return_reason,
-                'products' => $order->orders_products->map(function ($item) {
+                'products' => $order->orders_products->map(function ($item) use ($basePath) {
+                    $imageUrl = null;
+                    if ($item->product && $item->product->product_image) {
+                        $imageUrl = $basePath . '/small/' . $item->product->product_image;
+                    }
                     return [
                         'id' => $item->id,
-                        'product_name' => $item->product_name
+                        'product_name' => $item->product_name,
+                        'product_image' => $imageUrl,
+                        'product_price' => $item->product_price,
+                        'product_qty' => $item->product_qty
                     ];
                 }),
                 'logs' => $order->logs->map(function ($log) {
