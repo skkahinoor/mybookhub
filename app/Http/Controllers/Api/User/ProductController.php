@@ -2476,9 +2476,14 @@ class ProductController extends Controller
             return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
         }
 
-        $query = OrderQuery::with(['order', 'orderProduct', 'messages.user', 'messages' => function($q) {
-            $q->orderBy('created_at', 'asc');
-        }])
+        $query = OrderQuery::with([
+            'order',
+            'orderProduct',
+            'messages.user',
+            'messages' => function ($q) {
+                $q->orderBy('created_at', 'asc');
+            }
+        ])
             ->where('user_id', $user->id)
             ->where('id', $id)
             ->first();
@@ -2554,14 +2559,10 @@ class ProductController extends Controller
                 try {
                     $file = $request->file('attachment');
                     $filename = time() . '_' . $file->getClientOriginalName();
-                    $destinationPath = public_path('attachments/order_queries');
+                    $destinationPath = public_path('attachments/order_queries/');
                     
-                    // Log the path to help debug if it fails
-                    // Log::info('Uploading to: ' . $destinationPath);
-
-                    // Ensure directory exists
-                    if (!File::isDirectory($destinationPath)) {
-                        File::makeDirectory($destinationPath, 0777, true, true);
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
                     }
 
                     $file->move($destinationPath, $filename);
@@ -2570,8 +2571,8 @@ class ProductController extends Controller
                     Log::error('Ticket Attachment Error: ' . $fe->getMessage());
                     return response()->json([
                         'status' => false, 
-                        'message' => 'Failed to process attachment. Please try a different image or check server permissions.',
-                        'debug' => config('app.debug') ? $fe->getMessage() : null
+                        'message' => 'Failed to process attachment. ' . $fe->getMessage(),
+                        'debug' => $fe->getMessage()
                     ], 500);
                 }
             }
@@ -2617,7 +2618,7 @@ class ProductController extends Controller
                 'trace' => $e->getTraceAsString(),
                 'user_id' => auth('sanctum')->id()
             ]);
-            
+
             return response()->json([
                 'status' => false,
                 'message' => 'An error occurred while sending your reply. Please try again later.',
