@@ -363,7 +363,6 @@
             scrollbar-width: none;
             -ms-overflow-style: none;
             margin-bottom: 20px;
-            cursor: grab;
             user-select: none;
         }
 
@@ -1423,34 +1422,103 @@
             text-decoration: underline;
         }
 
-        .subjects-wrapper {
+        .subjects-outer-wrapper {
             position: relative;
+            margin-bottom: 20px;
         }
 
-        /* left fade */
-        .subjects-wrapper::before {
+        .filter-nav-bar {
+            padding: 10px 8% !important; /* Kept original padding for internal alignment */
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            user-select: none;
+            scroll-behavior: smooth;
+            width: 100%;
+        }
+
+        .filter-nav-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scroller-btn {
+            position: fixed; /* Use fixed or absolute based on container */
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            background: #fff;
+            border: 1px solid #E2E8F0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            color: #1e293b;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .subjects-outer-wrapper:hover .scroller-btn {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .scroller-btn:hover {
+            background: #1b66c9;
+            color: #fff;
+            border-color: #1b66c9;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .scroller-btn.left {
+            left: 5%;
+        }
+
+        .scroller-btn.right {
+            right: 5%;
+        }
+
+        @media (max-width: 768px) {
+            .scroller-btn {
+                display: none; /* Hide on mobile to rely on touch scroll */
+            }
+        }
+
+        .scroller-btn.disabled {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none;
+        }
+
+        /* Gradient Fades for depth */
+        .subjects-outer-wrapper::before,
+        .subjects-outer-wrapper::after {
             content: "";
             position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 12%;
+            z-index: 5;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .subjects-outer-wrapper::before {
             left: 0;
-            top: 0;
-            height: 100%;
-            width: 40px;
-            pointer-events: none;
-            background: linear-gradient(to right, #ffffff, rgba(255, 255, 255, 0));
-            z-index: 2;
+            background: linear-gradient(to right, #F8FAFC 40%, rgba(248, 250, 252, 0));
         }
 
-        /* right fade */
-        .subjects-wrapper::after {
-            content: "";
-            position: absolute;
+        .subjects-outer-wrapper::after {
             right: 0;
-            top: 0;
-            height: 100%;
-            width: 40px;
-            pointer-events: none;
-            background: linear-gradient(to left, #ffffff, rgba(255, 255, 255, 0));
-            z-index: 2;
+            background: linear-gradient(to left, #F8FAFC 40%, rgba(248, 250, 252, 0));
         }
         /* Welcome Modal Styles */
         .welcome-service-card {
@@ -1544,10 +1612,23 @@
         <div class="context-left">
             <span>Showing books for:</span>
             <strong id="currentSelectionInfo">
-                {{ $currentSectionId ? collect($sections)->where('id', $currentSectionId)->first()?->name ?? 'All Categories' : 'All Categories' }}
-                @if (isset($currentSubCategoryId) && $currentSubCategoryId)
-                    > {{ \App\Models\Category::find($currentSubCategoryId)?->category_name }}
-                @endif
+                @php
+                    $displayText = 'All Categories';
+                    $parts = [];
+                    if ($currentSectionId) {
+                        $parts[] = collect($sections)->where('id', $currentSectionId)->first()?->name;
+                    }
+                    if (isset($currentCategoryId) && $currentCategoryId) {
+                        $parts[] = \App\Models\Category::find($currentCategoryId)?->category_name;
+                    }
+                    if (isset($currentSubcategoryId) && $currentSubcategoryId) {
+                        $parts[] = \App\Models\Subcategory::find($currentSubcategoryId)?->subcategory_name;
+                    }
+                    if (!empty($parts)) {
+                        $displayText = implode(' > ', array_filter($parts));
+                    }
+                @endphp
+                {{ $displayText }}
             </strong>
             <a href="javascript:void(0)" class="change-link" id="openFilter"> (Change)</a>
         </div>
@@ -1562,32 +1643,42 @@
         </div>
     </div>
 
-    <!-- Filter Nav Bar -->
-    <div class="filter-nav-bar">
-        <button class="filter-btn-trigger" id="openFilterChip">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <line x1="4" y1="21" x2="4" y2="14"></line>
-                <line x1="4" y1="10" x2="4" y2="3"></line>
-                <line x1="12" y1="21" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12" y2="3"></line>
-                <line x1="20" y1="21" x2="20" y2="16"></line>
-                <line x1="20" y1="12" x2="20" y2="3"></line>
-                <line x1="1" y1="14" x2="7" y2="14"></line>
-                <line x1="9" y1="8" x2="15" y2="8"></line>
-                <line x1="17" y1="16" x2="23" y2="16"></line>
-            </svg>
-            Filter
+    <!-- Filter Nav Bar Wrapper -->
+    <div class="subjects-outer-wrapper">
+        <button class="scroller-btn left disabled" id="scrollLeft">
+            <i class="fas fa-chevron-left"></i>
         </button>
 
-        <a href="javascript:void(0)" class="subject-tablet active subject-filter-btn" data-subject-id="all"
-            onclick="filterBySubject('all')">
-            <i class="fas fa-grip-vertical me-2" style="font-size: 10px; opacity: 0.5;"></i>All
-        </a>
+        <div class="filter-nav-bar">
+            <button class="filter-btn-trigger" id="openFilterChip">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="21" x2="4" y2="14"></line>
+                    <line x1="4" y1="10" x2="4" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12" y2="3"></line>
+                    <line x1="20" y1="21" x2="20" y2="16"></line>
+                    <line x1="20" y1="12" x2="20" y2="3"></line>
+                    <line x1="1" y1="14" x2="7" y2="14"></line>
+                    <line x1="9" y1="8" x2="15" y2="8"></line>
+                    <line x1="17" y1="16" x2="23" y2="16"></line>
+                </svg>
+                Filter
+            </button>
 
-        <div id="homeSubjectsContainer" style="display: contents;">
-            @include('front.partials.home_subjects')
+            <a href="javascript:void(0)" class="subject-tablet active subject-filter-btn" data-subject-id="all"
+                onclick="filterBySubject('all')">
+                <i class="fas fa-grip-vertical me-2" style="font-size: 10px; opacity: 0.5;"></i>All
+            </a>
+
+            <div id="homeSubjectsContainer" style="display: contents;">
+                @include('front.partials.home_subjects')
+            </div>
         </div>
+
+        <button class="scroller-btn right" id="scrollRight">
+            <i class="fas fa-chevron-right"></i>
+        </button>
     </div>
 
     <!-- Product Grid -->
@@ -2111,16 +2202,29 @@
 
         function filterBySubject(subjectId) {
             let activeSubjectName = '';
+            let activeBtn = null;
             // Highlight active subject
             document.querySelectorAll('.subject-tablet').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.dataset.subjectId == subjectId) {
                     btn.classList.add('active');
                     activeSubjectName = btn.innerText;
+                    activeBtn = btn;
                 } else if (subjectId === 'all' && btn.dataset.subjectId === 'all') {
                     btn.classList.add('active');
+                    activeBtn = btn;
                 }
             });
+
+            if (activeBtn && filterNav) {
+                const navRect = filterNav.getBoundingClientRect();
+                const btnRect = activeBtn.getBoundingClientRect();
+                
+                if (btnRect.left < navRect.left || btnRect.right > navRect.right) {
+                    activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
+            }
+
             updateHomeGrid(subjectId === 'all' ? null : subjectId, activeSubjectName);
         }
         sectionSelect.addEventListener('change', function() {
@@ -2187,9 +2291,45 @@
             }
         });
 
-        // Drag-to-scroll for Filter Nav Bar
+        // Drag-to-scroll and Scroll Button Logic for Filter Nav Bar
         const filterNav = document.querySelector('.filter-nav-bar');
+        const scrollLeftBtn = document.getElementById('scrollLeft');
+        const scrollRightBtn = document.getElementById('scrollRight');
+
+        function updateScrollButtons() {
+            if (!filterNav) return;
+            
+            const isAtStart = filterNav.scrollLeft <= 5;
+            const isAtEnd = filterNav.scrollLeft + filterNav.clientWidth >= filterNav.scrollWidth - 5;
+            
+            if (isAtStart) {
+                scrollLeftBtn.classList.add('disabled');
+            } else {
+                scrollLeftBtn.classList.remove('disabled');
+            }
+            
+            if (isAtEnd) {
+                scrollRightBtn.classList.add('disabled');
+            } else {
+                scrollRightBtn.classList.remove('disabled');
+            }
+        }
+
         if (filterNav) {
+            scrollLeftBtn.addEventListener('click', () => {
+                filterNav.scrollBy({ left: -300, behavior: 'smooth' });
+            });
+
+            scrollRightBtn.addEventListener('click', () => {
+                filterNav.scrollBy({ left: 300, behavior: 'smooth' });
+            });
+
+            filterNav.addEventListener('scroll', updateScrollButtons);
+            window.addEventListener('resize', updateScrollButtons);
+            
+            // Initial check
+            setTimeout(updateScrollButtons, 500);
+
             let isDown = false;
             let moved = false;
             let startX;
@@ -2232,7 +2372,7 @@
         }
     </script>
 
-    @if (!Auth::check() && !session()->has('bookgenie_shown'))
+    @if (!Auth::check() && !request()->cookie('bookgenie_shown') && !session()->has('bookgenie_shown'))
         <!-- Welcome Modal (First Step) -->
         <div class="modal fade" id="welcomeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered">
@@ -2341,7 +2481,7 @@
                 var bookGenieModal = bookGenieModalEl ? new bootstrap.Modal(bookGenieModalEl) : null;
 
                 const welcomeShown = localStorage.getItem('welcome_shown');
-                const bookGenieShown = {{ session()->has('bookgenie_shown') ? 'true' : 'false' }};
+                const bookGenieShown = {{ (request()->cookie('bookgenie_shown') || session()->has('bookgenie_shown')) ? 'true' : 'false' }};
 
                 if (!welcomeShown) {
                     if (welcomeModal) welcomeModal.show();

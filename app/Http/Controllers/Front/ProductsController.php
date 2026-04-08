@@ -1437,143 +1437,114 @@ class ProductsController extends Controller
             $total_price = $total_price + ($attrPrice['final_price'] * $item['quantity']);
         }
 
-        // Fetch the user with location relations and prepare address data for checkout
+        // Fetch the user
         $user = User::with(['country', 'state', 'district', 'block'])->find(Auth::id());
 
-        // Prepare a single "address" object for the view based on User Profile
-        $userAddress = [
-            'id' => $user->id,
-            'name' => $user->name,
-            'address' => $user->address,
-            'city' => $user->district->name ?? '',
-            'state' => $user->state->name ?? '',
-            'country' => $user->country->name ?? '',
-            'pincode' => $user->pincode,
-            'mobile' => $user->phone,
-            'country_id' => $user->country_id,
-            'state_id' => $user->state_id,
-            'district_id' => $user->district_id,
-            'block_id' => $user->block_id,
-        ];
+        // Fetch all user addresses from user_addresses table
+        $deliveryAddresses = \App\Models\UserAddress::with(['country', 'state', 'district', 'block'])
+            ->where('user_id', Auth::id())
+            ->where('status', 1)
+            ->get();
 
-        // Check if user has complete profile address before proceeding.
-        // If not, stay on the shopping flow (cart) and just show an error popup,
-        // instead of redirecting them away to the account page.
-        if (
-            empty($userAddress['address']) ||
-            empty($userAddress['country']) ||
-            empty($userAddress['state']) ||
-            empty($userAddress['city']) ||
-            empty($userAddress['pincode']) ||
-            empty($userAddress['mobile'])
-        ) {
-            return redirect()
-                ->route('cart', ['condition' => $condition])
-                ->with('error_message', 'Please fill in your delivery address details in your profile before proceeding to checkout.');
+        // If user has no addresses in user_addresses table yet, 
+        // but has profile info, we can prepare a virtual one or 
+        // encourage them to add one. For now, let's just use what's in user_addresses.
+        // If they have profile info but no user_addresses, we can create one automatically.
+        if ($deliveryAddresses->isEmpty() && !empty($user->address) && !empty($user->pincode)) {
+            $newAddr = new \App\Models\UserAddress;
+            $newAddr->user_id = $user->id;
+            $newAddr->name = $user->name;
+            $newAddr->address = $user->address;
+            $newAddr->country_id = $user->country_id;
+            $newAddr->state_id = $user->state_id;
+            $newAddr->district_id = $user->district_id;
+            $newAddr->block_id = $user->block_id;
+            $newAddr->pincode = $user->pincode;
+            $newAddr->mobile = $user->phone;
+            $newAddr->is_default = 1;
+            $newAddr->save();
+
+            $deliveryAddresses = \App\Models\UserAddress::with(['country', 'state', 'district', 'block'])
+                ->where('user_id', Auth::id())
+                ->where('status', 1)
+                ->get();
         }
 
-        // Calculating the Shipping Charges (depending on the 'country' of the user's Profile Address)
-        $shippingCharges = ShippingCharge::getShippingCharges($total_weight, $userAddress['country']);
-
-        // Delivery Setting Override
+        // Delivery Setting Configuration
         $deliverySetting = \App\Models\DeliverySetting::where('status', 1)->first();
-        if ($deliverySetting) {
-            if ($deliverySetting->is_free_delivery) {
-                $shippingCharges = 0;
-            } else {
-                // If cart value is greater than Min Order Amount -> delivery charges apply, otherwise free
-                if ($total_price > $deliverySetting->min_order_amount) {
-                    $shippingCharges = $deliverySetting->delivery_charge;
+
+        // Calculate shipping and pincode counts for each address
+        foreach ($deliveryAddresses as $address) {
+            $address->codpincodeCount = DB::table('cod_pincodes')->where('pincode', $address->pincode)->count();
+            $address->prepaidpincodeCount = DB::table('prepaid_pincodes')->where('pincode', $address->pincode)->count();
+
+            // Base shipping charges
+            $shipping_charge = ShippingCharge::getShippingCharges($total_weight, $address->country->name ?? '');
+
+            // Delivery Setting Override
+            if ($deliverySetting) {
+                if ($deliverySetting->is_free_delivery) {
+                    $shipping_charge = 0;
                 } else {
-                    $shippingCharges = 0;
+                    if ($total_price > $deliverySetting->min_order_amount) {
+                        $shipping_charge = $deliverySetting->delivery_charge;
+                    } else {
+                        $shipping_charge = 0;
+                    }
                 }
             }
+            $address->shipping_charges = $shipping_charge;
         }
 
-        $userAddress['shipping_charges'] = $shippingCharges;
+        // Initial shipping charge for display (from default or first address)
+        $defaultAddress = $deliveryAddresses->where('is_default', 1)->first() ?? $deliveryAddresses->first();
+        $shippingCharges = $defaultAddress ? $defaultAddress->shipping_charges : 0;
 
-        // Checking PIN code availability
-        $userAddress['codpincodeCount'] = DB::table('cod_pincodes')->where('pincode', $user->pincode)->count();
-        $userAddress['prepaidpincodeCount'] = DB::table('prepaid_pincodes')->where('pincode', $user->pincode)->count();
-
-        // For backward compatibility with the view, wrap it in a collection or same structure
-        $deliveryAddresses = [$userAddress];
-
-        if ($request->isMethod('post')) { // if the <form> in front/products/checkout.blade.php is submitted (the HTML Form that the user submits to submit their Delivery Address and Payment Method)
+        if ($request->isMethod('post')) {
             $data = $request->all();
+
+            // Validate cart items before proceeding
             foreach ($getCartItems as $item) {
-                // Get the specific attribute for this cart item
-                $attribute = ProductsAttribute::with('product')
-                    ->where('id', $item['product_attribute_id'])
-                    ->first();
-
+                $attribute = ProductsAttribute::with('product')->find($item['product_attribute_id']);
                 if (!$attribute || !$attribute->product) {
-                    $message = 'One of the products in your cart is no longer available. Please remove it and try again.';
-
-                    return redirect('/cart')->with('error_message', $message);
+                    return redirect('/cart')->with('error_message', 'One of the products in your cart is no longer available.');
                 }
-
-                // Prevent 'disabled' (`status` = 0) products from being ordered
-                $product_status = Product::getProductStatus($item['product_id']);
-                if ($product_status == 0) {
-                    $message = $attribute->product->product_name . ' is not available. Please remove it from the Cart and choose another product.';
-
-                    return redirect('/cart')->with('error_message', $message);
+                if ($attribute->product->status == 0 || $attribute->status == 0) {
+                    return redirect('/cart')->with('error_message', $attribute->product->product_name . ' is not available.');
                 }
-
-                // Check attribute status (must be enabled)
-                if ($attribute->status == 0) {
-                    $message = $attribute->product->product_name . ' with ' . ($item['size'] ?? '') . ' size is not available. Please remove it from the Cart and choose another product.';
-
-                    return redirect('/cart')->with('error_message', $message);
+                if ($attribute->stock < $item['quantity']) {
+                    return redirect('/cart')->with('error_message', 'Not enough stock for ' . $attribute->product->product_name);
                 }
-
-                // Check stock for this specific attribute
-                $availableStock = (int) $attribute->stock;
-                if ($availableStock == 0 || $item['quantity'] > $availableStock) {
-                    $message = $attribute->product->product_name . ' with ' . ($item['size'] ?? '') . ' size stock is not available/enough. Please reduce quantity or remove it from the Cart.';
-
-                    return redirect('/cart')->with('error_message', $message);
-                }
-
-                // Check category status
-                $getCategoryStatus = Category::getCategoryStatus($attribute->product->category_id);
-                if ($getCategoryStatus == 0) {
-                    $message = $attribute->product->product_name . ' category is disabled. Please remove it from the Cart and choose another product.';
-
-                    return redirect('/cart')->with('error_message', $message);
+                if (Category::getCategoryStatus($attribute->product->category_id) == 0) {
+                    return redirect('/cart')->with('error_message', 'Section/Category for ' . $attribute->product->product_name . ' is disabled.');
                 }
             }
 
-            if (empty($data['address_id'])) { // if the user doesn't select a Delivery Address
-                $message = 'Please select Delivery Address!';
-
-                return redirect()->back()->with('error_message', $message);
+            if (empty($data['address_id'])) {
+                return redirect()->back()->with('error_message', 'Please select Delivery Address!');
             }
 
-            // Payment Method Validation
-            if (empty($data['payment_gateway'])) { // if the user doesn't select a Delivery Address
-                $message = 'Please select Payment Method!';
-
-                return redirect()->back()->with('error_message', $message);
+            if (empty($data['payment_gateway'])) {
+                return redirect()->back()->with('error_message', 'Please select Payment Method!');
             }
 
-            // Agree to T&C (Accept Terms and Conditions) Validation
-            if (empty($data['accept'])) { // if the user doesn't select a Delivery Address
-                $message = 'Please agree to T&C!';
-
-                return redirect()->back()->with('error_message', $message);
+            if (empty($data['accept'])) {
+                return redirect()->back()->with('error_message', 'Please agree to T&C!');
             }
 
-            $user = User::with(['country', 'state', 'district'])->find(Auth::id());
+            $selectedAddress = \App\Models\UserAddress::with(['country', 'state', 'district'])->find($data['address_id']);
+            if (!$selectedAddress || $selectedAddress->user_id != Auth::id()) {
+                return redirect()->back()->with('error_message', 'Invalid Delivery Address!');
+            }
+
             $deliveryAddress = [
-                'name' => $user->name,
-                'address' => $user->address,
-                'pincode' => $user->pincode,
-                'mobile' => $user->phone,
-                'country' => $user->country->name ?? '',
-                'state' => $user->state->name ?? '',
-                'city' => $user->district->name ?? '',
+                'name' => $selectedAddress->name,
+                'address' => $selectedAddress->address,
+                'pincode' => $selectedAddress->pincode,
+                'mobile' => $selectedAddress->mobile,
+                'country' => $selectedAddress->country->name ?? '',
+                'state' => $selectedAddress->state->name ?? '',
+                'city' => $selectedAddress->district->name ?? '',
             ];
 
             if ($data['payment_gateway'] == 'COD') {

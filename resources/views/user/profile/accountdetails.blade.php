@@ -112,9 +112,10 @@
                                         <i class="mdi mdi-book-outline mr-1"></i> Academic info
                                     </a>
                                 </li>
+
                                 <li class="nav-item">
-                                    <a class="nav-link" data-toggle="tab" href="#tab-address" role="tab">
-                                        <i class="mdi mdi-map-marker-outline mr-1"></i> Address
+                                    <a class="nav-link" data-toggle="tab" href="#tab-manage-addresses" role="tab">
+                                        <i class="mdi mdi-home-map-marker mr-1"></i> My Addresses
                                     </a>
                                 </li>
                                 <li class="nav-item">
@@ -169,14 +170,13 @@
                                         {{-- Academic info tab --}}
                                         <div class="tab-pane fade" id="tab-academic" role="tabpanel">
                                             <div class="form-group">
-                                                <label for="academic-institution">Institution</label>
-                                                <select id="academic-institution" name="institution_id"
-                                                        class="form-control">
-                                                    <option value="">Select Institution</option>
-                                                    @foreach ($institutions as $institution)
-                                                        <option value="{{ $institution->id }}"
-                                                            {{ optional($user)->institution_id == $institution->id ? 'selected' : '' }}>
-                                                            {{ $institution->name }}
+                                                <label for="academic-education-level">Education Level</label>
+                                                <select id="academic-education-level" name="education_level_id" class="form-control">
+                                                    <option value="">Select Education Level</option>
+                                                    @foreach ($sections as $sec)
+                                                        <option value="{{ $sec->id }}"
+                                                            {{ optional($user->academicProfile)->education_level_id == $sec->id ? 'selected' : '' }}>
+                                                            {{ $sec->name }}
                                                         </option>
                                                     @endforeach
                                                 </select>
@@ -189,73 +189,95 @@
                                             </div>
                                             <div class="form-group">
                                                 <label for="academic-class">Class</label>
-                                                <select id="academic-class" name="institution_classes_id"
-                                                        class="form-control">
+                                                <select id="academic-class" name="class_id" class="form-control">
                                                     <option value="">Select Class</option>
                                                 </select>
                                             </div>
-                                        </div>
-                                    {{-- Address tab --}}
-                                    <div class="tab-pane fade" id="tab-address" role="tabpanel">
-                                        <div class="form-group">
-                                            <label for="user-address">Address</label>
-                                            <input type="text" class="form-control" id="user-address"
-                                                name="address" placeholder="House / Street / Locality"
-                                                value="{{ Auth::user()->address ?? '' }}">
-                                        </div>
-
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label for="user-country-id">Country</label>
-                                                <select class="form-control" id="user-country-id" name="country_id">
-                                                    <option value="">Select country</option>
-                                                    @foreach ($countries as $country)
-                                                        <option value="{{ $country->id }}"
-                                                            {{ optional(Auth::user())->country_id == $country->id ? 'selected' : '' }}>
-                                                            {{ $country->name }}
+                                            <div class="form-group">
+                                                <label for="academic-institution">Institution (Optional)</label>
+                                                <select id="academic-institution" name="institution_id"
+                                                        class="form-control">
+                                                    <option value="">Select Institution</option>
+                                                    @foreach ($institutions as $institution)
+                                                        <option value="{{ $institution->id }}"
+                                                            {{ optional($user)->institution_id == $institution->id ? 'selected' : '' }}>
+                                                            {{ $institution->name }}
                                                         </option>
                                                     @endforeach
                                                 </select>
                                             </div>
-
-                                            <div class="form-group col-md-6">
-                                                <label for="user-state-id">State</label>
-                                                <select class="form-control" id="user-state-id" name="state_id">
-                                                    <option value="">Select state</option>
-                                                </select>
-                                            </div>
                                         </div>
 
-                                        <div class="form-row">
-                                            <div class="form-group col-md-6">
-                                                <label for="user-district-id">District</label>
-                                                <select class="form-control" id="user-district-id"
-                                                    name="district_id">
-                                                    <option value="">Select district</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="form-group col-md-6">
-                                                <label for="user-block-id">Block</label>
-                                                <select class="form-control" id="user-block-id" name="block_id">
-                                                    <option value="">Select block</option>
-                                                </select>
-                                            </div>
-                                            <div class="form-group col-md-6">
-                                                <label for="user-pincode">Pincode <span
-                                                        class="text-danger">*</span></label>
-                                                <input type="text" class="form-control" id="user-pincode"
-                                                    name="pincode" placeholder="e.g. 110001"
-                                                    value="{{ Auth::user()->pincode ?? '' }}" required>
-                                            </div>
+                                    {{-- Manage Addresses tab --}}
+                                    <div class="tab-pane fade" id="tab-manage-addresses" role="tabpanel">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <h6 class="font-weight-bold mb-0">Saved Shipping Addresses</h6>
+                                            <button type="button" class="btn btn-sm btn-primary" data-toggle="modal"
+                                                data-target="#addressModal" onclick="clearAddressForm()">
+                                                <i class="mdi mdi-plus mr-1"></i> Add New Address
+                                            </button>
                                         </div>
 
-                                        <div class="alert alert-info small mt-3 mb-0">
-                                            <i class="mdi mdi-information-outline mr-1"></i>
-                                            Address changes help us provide more accurate delivery and service
-                                            information.
+                                        <div class="row" id="addressList">
+                                            @foreach ($addresses as $addr)
+                                                <div class="col-md-6 mb-3">
+                                                    <div class="card border {{ $addr->is_default ? 'border-primary' : '' }}" style="border-radius: 10px; background: {{ $addr->is_default ? '#f8fbfc' : '#fff' }}">
+                                                        <div class="card-body p-3">
+                                                            <div class="d-flex justify-content-between">
+                                                                <h6 class="font-weight-bold mb-2">{{ $addr->name }}</h6>
+                                                                @if($addr->is_default)
+                                                                    <span class="badge badge-primary small">Default</span>
+                                                                @endif
+                                                            </div>
+                                                            <p class="text-muted small mb-2" style="line-height: 1.4">
+                                                                {{ $addr->address }}<br>
+                                                                {{ optional($addr->block)->name ? $addr->block->name . ', ' : '' }}
+                                                                {{ optional($addr->district)->name ? $addr->district->name . ', ' : '' }}
+                                                                {{ optional($addr->state)->name ? $addr->state->name : '' }} - {{ $addr->pincode }}<br>
+                                                                {{ optional($addr->country)->name }}
+                                                            </p>
+                                                            <p class="small mb-3"><strong>Mobile:</strong> {{ $addr->mobile }}</p>
+                                                            
+                                                            <div class="d-flex border-top pt-2">
+                                                                <button type="button" class="btn btn-link btn-sm p-0 text-primary mr-3" 
+                                                                    onclick="window.editThisAddress(this)"
+                                                                    data-id="{{ $addr->id }}"
+                                                                    data-name="{{ $addr->name }}"
+                                                                    data-mobile="{{ $addr->mobile }}"
+                                                                    data-address="{{ $addr->address }}"
+                                                                    data-pincode="{{ $addr->pincode }}"
+                                                                    data-country="{{ $addr->country_id }}"
+                                                                    data-state="{{ $addr->state_id }}"
+                                                                    data-district="{{ $addr->district_id }}"
+                                                                    data-block="{{ $addr->block_id }}">
+                                                                    <i class="mdi mdi-pencil mr-1"></i> Edit
+                                                                </button>
+                                                                <button type="button" class="btn btn-link btn-sm p-0 text-danger mr-3 delete-address" data-id="{{ $addr->id }}">
+                                                                    <i class="mdi mdi-delete mr-1"></i> Delete
+                                                                </button>
+                                                                @if(!$addr->is_default)
+                                                                    <button type="button" class="btn btn-link btn-sm p-0 text-secondary ml-auto set-default-address" data-id="{{ $addr->id }}">
+                                                                        Set Default
+                                                                    </button>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
                                         </div>
+
+                                        @if($addresses->isEmpty())
+                                            <div class="text-center py-5 bg-light rounded" style="border: 1px dashed #ddd;">
+                                                <i class="mdi mdi-map-marker-off-outline text-muted" style="font-size: 40px;"></i>
+                                                <p class="text-muted mt-2">No addresses saved yet.</p>
+                                                <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-toggle="modal" data-target="#addressModal" onclick="clearAddressForm()">
+                                                    Add Your First Address
+                                                </button>
+                                            </div>
+                                        @endif
                                     </div>
+
                                     {{-- Bank info tab --}}
                                     <div class="tab-pane fade" id="tab-bank" role="tabpanel">
                                         <div class="form-row">
@@ -344,6 +366,75 @@
         </div> {{-- /content-wrapper --}}
     </div> {{-- /main-panel --}}
 </div>
+
+    <!-- Address Modal -->
+    <div class="modal fade" id="addressModal" tabindex="-1" role="dialog" aria-labelledby="addressModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addressModalLabel">Add New Address</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="multiAddressForm">
+                    @csrf
+                    <input type="hidden" name="address_id" id="multi_address_id">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>Full Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" id="addr_name" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Mobile Number <span class="text-danger">*</span></label>
+                                <input type="text" name="mobile" id="addr_mobile" class="form-control" required>
+                            </div>
+                            <div class="col-md-12 form-group">
+                                <label>Address <span class="text-danger">*</span></label>
+                                <textarea name="address" id="addr_address" class="form-control" rows="3" required></textarea>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Country <span class="text-danger">*</span></label>
+                                <select name="country_id" id="addr_country_id" class="form-control" required>
+                                    <option value="">Select Country</option>
+                                    @foreach ($countries as $country)
+                                        <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>State <span class="text-danger">*</span></label>
+                                <select name="state_id" id="addr_state_id" class="form-control" required>
+                                    <option value="">Select State</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>District <span class="text-danger">*</span></label>
+                                <select name="district_id" id="addr_district_id" class="form-control" required>
+                                    <option value="">Select District</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Block</label>
+                                <select name="block_id" id="addr_block_id" class="form-control">
+                                    <option value="">Select Block</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>Pincode <span class="text-danger">*</span></label>
+                                <input type="text" name="pincode" id="addr_pincode" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary shadow-sm">Save Address</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 @include('user.layout.footer')
 
@@ -478,63 +569,58 @@
 </script>
 
 <script>
-    // Academic info cascading dropdowns (Institution -> Board -> Class)
+    // Academic info cascading dropdowns (Education Level -> Board -> Class)
     jQuery(document).ready(function($) {
-        var academicInstitutionSelect = $('#academic-institution');
+        var educationLevelSelect = $('#academic-education-level');
         var academicBoardSelect = $('#academic-board');
         var academicClassSelect = $('#academic-class');
 
-        var currentInstitutionId = @json(optional($user)->institution_id);
-        var currentBoardId = @json(optional(optional($user->academicProfile))->board_id);
-        var currentClassId = @json(optional($user)->institution_classes_id);
+        var currentEducationLevelId = @json(optional($user->academicProfile)->education_level_id);
+        var currentBoardId = @json(optional($user->academicProfile)->board_id);
+        var currentClassId = @json(optional($user->academicProfile)->class_id);
 
-        function loadBoards(institutionId, selectedBoardId) {
+        function loadAcademicBoards(sectionId, selectedBoardId) {
             academicBoardSelect.empty().append('<option value="">Select Board</option>');
-            if (!institutionId) {
-                return;
-            }
+            academicClassSelect.empty().append('<option value="">Select Class</option>');
+            if (!sectionId) return;
+
             $.ajax({
-                url: '{{ route('student.academic.boards') }}',
+                url: '{{ route('get.filter.categories') }}',
                 type: 'GET',
-                data: { institution_id: institutionId },
+                data: { section_id: sectionId },
                 dataType: 'json',
-                success: function (boards) {
-                    $.each(boards, function (index, board) {
+                success: function(response) {
+                    $.each(response, function(key, category) {
                         var option = $('<option></option>')
-                            .val(board.id)
-                            .text(board.name);
-                        if (selectedBoardId && parseInt(selectedBoardId) === parseInt(board.id)) {
+                            .val(category.id)
+                            .text(category.category_name);
+                        if (selectedBoardId && parseInt(selectedBoardId) === parseInt(category.id)) {
                             option.attr('selected', 'selected');
                         }
                         academicBoardSelect.append(option);
                     });
+                    if (selectedBoardId) {
+                        loadAcademicClasses(selectedBoardId, sectionId, currentClassId);
+                    }
                 }
             });
         }
 
-        function loadClasses(institutionId, boardId, selectedClassId) {
+        function loadAcademicClasses(categoryId, sectionId, selectedClassId) {
             academicClassSelect.empty().append('<option value="">Select Class</option>');
-            if (!institutionId) {
-                return;
-            }
+            if (!categoryId || !sectionId) return;
+
             $.ajax({
-                url: '{{ route('student.academic.classes') }}',
+                url: '{{ route('get.filter.subcategories') }}',
                 type: 'GET',
-                data: {
-                    institution_id: institutionId,
-                    board_id: boardId
-                },
+                data: { category_id: categoryId, section_id: sectionId },
                 dataType: 'json',
-                success: function (classes) {
-                    $.each(classes, function (index, cls) {
-                        var text = cls.name || 'Class';
-                        if (cls.strength) {
-                            text += ' (Strength: ' + cls.strength + ')';
-                        }
+                success: function(response) {
+                    $.each(response, function(key, subcat) {
                         var option = $('<option></option>')
-                            .val(cls.id)
-                            .text(text);
-                        if (selectedClassId && parseInt(selectedClassId) === parseInt(cls.id)) {
+                            .val(subcat.id)
+                            .text(subcat.category_name);
+                        if (selectedClassId && parseInt(selectedClassId) === parseInt(subcat.id)) {
                             option.attr('selected', 'selected');
                         }
                         academicClassSelect.append(option);
@@ -543,28 +629,17 @@
             });
         }
 
-        academicInstitutionSelect.on('change', function () {
-            var institutionId = $(this).val();
-            academicBoardSelect.empty().append('<option value="">Select Board</option>');
-            academicClassSelect.empty().append('<option value="">Select Class</option>');
-            if (institutionId) {
-                loadBoards(institutionId, null);
-            }
+        educationLevelSelect.on('change', function() {
+            loadAcademicBoards($(this).val(), null);
         });
 
-        academicBoardSelect.on('change', function () {
-            var institutionId = academicInstitutionSelect.val();
-            var boardId = $(this).val();
-            academicClassSelect.empty().append('<option value="">Select Class</option>');
-            if (institutionId) {
-                loadClasses(institutionId, boardId, null);
-            }
+        academicBoardSelect.on('change', function() {
+            loadAcademicClasses($(this).val(), educationLevelSelect.val(), null);
         });
 
         // Initial populate if user already has data
-        if (currentInstitutionId) {
-            loadBoards(currentInstitutionId, currentBoardId);
-            loadClasses(currentInstitutionId, currentBoardId, currentClassId);
+        if (currentEducationLevelId) {
+            loadAcademicBoards(currentEducationLevelId, currentBoardId);
         }
     });
 </script>
@@ -1129,7 +1204,132 @@
             });
         });
     });
+    // Address Management Logic
+    window.editThisAddress = function(el) {
+        var btn = $(el);
+        var addr = {
+            id: btn.attr('data-id'),
+            name: btn.attr('data-name'),
+            mobile: btn.attr('data-mobile'),
+            address: btn.attr('data-address'),
+            pincode: btn.attr('data-pincode'),
+            country_id: btn.attr('data-country'),
+            state_id: btn.attr('data-state'),
+            district_id: btn.attr('data-district'),
+            block_id: btn.attr('data-block')
+        };
+        
+        // Open modal first
+        $('#addressModal').modal('show');
+        $('#addressModalLabel').text('Edit Address');
+        
+        // Fill fields
+        $('#multi_address_id').val(addr.id);
+        $('#addr_name').val(addr.name);
+        $('#addr_mobile').val(addr.mobile);
+        $('#addr_address').val(addr.address);
+        $('#addr_pincode').val(addr.pincode);
+        $('#addr_country_id').val(addr.country_id);
+
+        // Load Cascading Dropdowns
+        if (addr.country_id) {
+            loadStates(addr.country_id, addr.state_id);
+            if (addr.state_id) {
+                loadDistricts(addr.state_id, addr.district_id);
+                if (addr.district_id) {
+                    loadBlocks(addr.district_id, addr.block_id);
+                }
+            }
+        }
+    };
+
+    window.clearAddressForm = function() {
+        $('#multi_address_id').val('');
+        $('#multiAddressForm')[0].reset();
+        $('#addr_state_id').html('<option value="">Select State</option>');
+        $('#addr_district_id').html('<option value="">Select District</option>');
+        $('#addr_block_id').html('<option value="">Select Block</option>');
+        $('#addressModalLabel').text('Add New Address');
+    }
+
+    function loadStates(countryId, stateId = null) {
+        if (!countryId) return;
+        $.get('{{ route('user_states') }}', { country: countryId }, function(res) {
+            let html = '<option value="">Select State</option>';
+            $.each(res, function(id, name) {
+                html += `<option value="${id}" ${id == stateId ? 'selected' : ''}>${name}</option>`;
+            });
+            $('#addr_state_id').html(html);
+        });
+    }
+
+    function loadDistricts(stateId, districtId = null) {
+        if (!stateId) return;
+        $.get('{{ route('user_districts') }}', { state: stateId }, function(res) {
+            let html = '<option value="">Select District</option>';
+            $.each(res, function(id, name) {
+                html += `<option value="${id}" ${id == districtId ? 'selected' : ''}>${name}</option>`;
+            });
+            $('#addr_district_id').html(html);
+        });
+    }
+
+    function loadBlocks(districtId, blockId = null) {
+        if (!districtId) return;
+        $.get('{{ route('user_blocks') }}', { district: districtId }, function(res) {
+            let html = '<option value="">Select Block</option>';
+            $.each(res, function(id, name) {
+                html += `<option value="${id}" ${id == blockId ? 'selected' : ''}>${name}</option>`;
+            });
+            $('#addr_block_id').html(html);
+        });
+    }
+
+    $(document).ready(function() {
+        $(document).on('change', '#addr_country_id', function() { loadStates($(this).val()); });
+        $(document).on('change', '#addr_state_id', function() { loadDistricts($(this).val()); });
+        $(document).on('change', '#addr_district_id', function() { loadBlocks($(this).val()); });
+
+        $('#multiAddressForm').on('submit', function(e) {
+            e.preventDefault();
+            var btn = $(this).find('button[type="submit"]');
+            btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> Saving...');
+            
+            $.ajax({
+                url: '{{ route('saveAddress') }}',
+                type: 'POST',
+                data: $(this).serialize(),
+                success: function(res) {
+                    if (res.type == 'success') {
+                        location.reload();
+                    } else {
+                        alert('Please check required fields.');
+                        btn.prop('disabled', false).text('Save Address');
+                    }
+                },
+                error: function() {
+                    alert('Error saving address.');
+                    btn.prop('disabled', false).text('Save Address');
+                }
+            });
+        });
+    });
+
+    window.deleteAddress = function(id) {
+        if (confirm('Delete this address?')) {
+            $.post('{{ route('deleteAddress') }}', { address_id: id, _token: '{{ csrf_token() }}' }, function(res) {
+                if (res.type == 'success') location.reload();
+            });
+        }
+    }
+
+    window.setDefaultAddress = function(id) {
+        $.post('{{ route('setDefaultAddress') }}', { address_id: id, _token: '{{ csrf_token() }}' }, function(res) {
+            if (res.type == 'success') location.reload();
+        });
+    }
 </script>
 </body>
 
 </html>
+

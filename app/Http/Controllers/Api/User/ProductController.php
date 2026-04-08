@@ -24,12 +24,14 @@ use App\Models\Category;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\OrdersLog;
+use App\Models\UserAddress;
 use App\Models\Notification;
 use App\Models\DeliverySetting;
 use App\Models\OrderQuery;
 use App\Models\OrderQueryMessage;
 use Razorpay\Api\Api;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 
 class ProductController extends Controller
 {
@@ -50,6 +52,7 @@ class ProductController extends Controller
             'max_price' => 'nullable|numeric|min:0',
             'search' => 'nullable|string|max:255',
             'isbn' => 'nullable|string|max:20',
+            'location_limit' => 'nullable|integer|min:1|max:1000',
         ]);
 
         if ($validator->fails()) {
@@ -78,7 +81,7 @@ class ProductController extends Controller
             '_' . md5(json_encode($request->all()));
 
         $data = Cache::remember($cacheKey, 300, function () use ($request, $user, $limit, $page, $lat, $lng) {
-            return $this->sqlSearch($request, $limit, $page, $lat, $lng);
+            return $this->sqlSearch($request, $limit, $page, $lat, $lng, $request->location_limit);
         });
 
         return response()->json([
@@ -88,33 +91,80 @@ class ProductController extends Controller
         ]);
     }
 
-    private function sqlSearch($request, $limit, $page, $lat, $lng)
+    private function sqlSearch($request, $limit, $page, $lat, $lng, $location_limit = null)
     {
         $user = auth('sanctum')->user();
 
-        // Use whereIn with subquery instead of whereHas for better performance at scale
-        $activeProductIds = ProductsAttribute::where('status', 1)
-            ->where('stock', '>=', 0)
-            ->distinct()
-            ->pluck('product_id');
-
         $query = Product::with([
-            'category',
-            'subcategory',
-            'section',
-            'subject',
-            'bookType',
-            'language',
-            'authors',
+            'category:id,category_name',
+            'subcategory:id,subcategory_name',
+            'section:id,name',
+            'subject:id,name',
+            'bookType:id,book_type,book_type_icon',
+            'language:id,name',
+            'authors:id,name',
             'attributes' => function ($q) {
                 $q->where('status', 1)
-                    ->select('id', 'product_id', 'user_id', 'vendor_id', 'user_product_price', 'product_discount', 'status', 'stock', 'old_book_condition_id');
+                    ->select('id', 'product_id', 'status', 'stock', 'old_book_condition_id', 'user_product_price', 'product_discount');
             },
-            'attributes.product:id,product_price',
-            'attributes.condition'
+            'attributes.condition:id,name,percentage'
         ])
             ->where('status', 1)
-            ->whereIn('id', $activeProductIds);
+            ->whereExists(function ($q) {
+                $q->select(DB::raw(1))
+                    ->from('products_attributes')
+                    ->whereRaw('products_attributes.product_id = products.id')
+                    ->where('products_attributes.status', 1)
+                    ->where('products_attributes.stock', '>=', 0);
+            });
+
+        if ($lat && $lng) {
+            $query->select('products.*');
+
+            // --- SCALE-HARDENING: Bounding Box Pre-filter ---
+            // Instead of running Haversine on 1M rows, we discard anything outside a square first.
+            // 1 degree of latitude is ~111km.
+            if ($location_limit && $location_limit < 1000) {
+                $latDelta = $location_limit / 111.045;
+                $lngDelta = $location_limit / (111.045 * cos(deg2rad($lat)));
+
+                $minLat = $lat - $latDelta;
+                $maxLat = $lat + $latDelta;
+                $minLng = $lng - $lngDelta;
+                $maxLng = $lng + $lngDelta;
+
+                $query->whereExists(function ($q) use ($minLat, $maxLat, $minLng, $maxLng) {
+                    $q->select(DB::raw(1))
+                        ->from('products_attributes as pa_bb')
+                        ->join('vendors as v_bb', 'pa_bb.vendor_id', '=', 'v_bb.id')
+                        ->whereRaw('pa_bb.product_id = products.id')
+                        ->where('pa_bb.status', 1)
+                        ->where('pa_bb.stock', '>=', 0)
+                        ->whereBetween(DB::raw("CAST(SUBSTRING_INDEX(v_bb.location, ',', 1) AS DECIMAL(10,6))"), [$minLat, $maxLat])
+                        ->whereBetween(DB::raw("CAST(SUBSTRING_INDEX(v_bb.location, ',', -1) AS DECIMAL(10,6))"), [$minLng, $maxLng]);
+                });
+            }
+
+            $query->selectRaw("(
+                SELECT MIN(6371 * acos(
+                    cos(radians(?)) *
+                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6)))) *
+                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', -1) AS DECIMAL(10,6))) - radians(?)) +
+                    sin(radians(?)) *
+                    sin(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6))))
+                ))
+                FROM products_attributes pa
+                INNER JOIN vendors v ON pa.vendor_id = v.id
+                WHERE pa.product_id = products.id
+                AND pa.status = 1
+                AND pa.stock >= 0
+            ) AS distance", [$lat, $lng, $lat]);
+
+            if ($location_limit && $location_limit < 1000) {
+                $query->having('distance', '<=', $location_limit);
+                $query->orderBy('distance', 'asc');
+            }
+        }
 
         // Personalization logic for students
         if ($user && $user->hasRole('student')) {
@@ -232,6 +282,7 @@ class ProductController extends Controller
 
                 return [
                     'id' => $product->id,
+                    'distance' => isset($product->distance) ? round($product->distance, 1) : null,
                     'product_name' => $product->product_name,
                     'product_isbn' => $product->product_isbn,
                     'product_price' => round($product->product_price),
@@ -1352,6 +1403,7 @@ class ProductController extends Controller
             'coupon_code' => 'nullable|string',
             'coupon_amount' => 'nullable|numeric|min:0',
             'use_wallet' => 'nullable|boolean',
+            'address_id' => 'nullable|integer',
         ]);
 
         if ($validator->fails()) {
@@ -1367,13 +1419,45 @@ class ProductController extends Controller
             ], 401);
         }
 
-        $user->load(['country', 'state', 'district']);
+        if ($request->address_id) {
+            $selectedAddress = UserAddress::with(['country', 'state', 'district', 'block'])
+                ->where('id', $request->address_id)
+                ->where('user_id', $user->id)
+                ->first();
 
-        if (empty($user->address) || empty($user->district_id) || empty($user->state_id) || empty($user->country_id) || empty($user->pincode) || empty($user->phone)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Please update your address before checkout'
-            ], 400);
+            if (!$selectedAddress) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Selected address not found'
+                ], 404);
+            }
+
+            $orderName = $selectedAddress->name;
+            $orderAddress = $selectedAddress->address;
+            $orderCity = $selectedAddress->district->name ?? '';
+            $orderState = $selectedAddress->state->name ?? '';
+            $orderCountry = $selectedAddress->country->name ?? '';
+            $orderPincode = $selectedAddress->pincode;
+            $orderMobile = $selectedAddress->mobile;
+            $orderEmail = $user->email;
+        } else {
+            $user->load(['country', 'state', 'district']);
+
+            if (empty($user->address) || empty($user->district_id) || empty($user->state_id) || empty($user->country_id) || empty($user->pincode) || empty($user->phone)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Please update your address before checkout'
+                ], 400);
+            }
+
+            $orderName = $user->name;
+            $orderAddress = $user->address;
+            $orderCity = $user->district->name ?? '';
+            $orderState = $user->state->name ?? '';
+            $orderCountry = $user->country->name ?? '';
+            $orderPincode = $user->pincode;
+            $orderMobile = $user->phone;
+            $orderEmail = $user->email;
         }
 
         $cartItems = Cart::where('user_id', $user->id)->get();
@@ -1551,14 +1635,14 @@ class ProductController extends Controller
 
                 $order = Order::create([
                     'user_id' => $user->id,
-                    'name' => $user->name,
-                    'address' => $user->address,
-                    'city' => $user->district->name ?? '',
-                    'state' => $user->state->name ?? '',
-                    'country' => $user->country->name ?? '',
-                    'pincode' => $user->pincode,
-                    'mobile' => $user->phone,
-                    'email' => $user->email,
+                    'name' => $orderName,
+                    'address' => $orderAddress,
+                    'city' => $orderCity,
+                    'state' => $orderState,
+                    'country' => $orderCountry,
+                    'pincode' => $orderPincode,
+                    'mobile' => $orderMobile,
+                    'email' => $orderEmail,
                     'shipping_charges' => $item_shipping,
                     'coupon_code' => ($item_coupon > 0) ? $request->coupon_code : null,
                     'coupon_amount' => $item_coupon,
@@ -1908,7 +1992,7 @@ class ProductController extends Controller
             'logs' => function ($query) {
                 $query->orderBy('id', 'asc');
             },
-            'orders_products'
+            'orders_products.product'
         ])->where('id', $id)->where('user_id', $user->id)->first();
 
         if (!$order) {
@@ -1918,21 +2002,44 @@ class ProductController extends Controller
             ], 404);
         }
 
+        $basePath = url('front/images/product_images');
+
         return response()->json([
             'status' => true,
             'message' => 'Order status fetched successfully',
             'data' => [
                 'order_id' => $order->id,
+                'date' => $order->created_at->format('d M Y, h:i A'),
+                'grand_total' => $order->grand_total,
+                'shipping_charges' => $order->shipping_charges,
+                'wallet_amount' => $order->wallet_amount,
+                'coupon_amount' => $order->coupon_amount,
+                'payment_method' => $order->payment_method,
+                'payment_status' => $order->payment_status,
+                'payment_gateway' => $order->payment_gateway,
+                'name' => $order->name,
+                'address' => $order->address,
+                'city' => $order->city,
+                'state' => $order->state,
+                'pincode' => $order->pincode,
+                'mobile' => $order->mobile,
                 'current_status' => $order->order_status,
                 'tracking_number' => $order->tracking_number,
                 'courier_name' => $order->courier_name,
                 'delivered_at' => $order->delivered_at,
                 'return_status' => $order->return_status,
                 'return_reason' => $order->return_reason,
-                'products' => $order->orders_products->map(function ($item) {
+                'products' => $order->orders_products->map(function ($item) use ($basePath) {
+                    $imageUrl = null;
+                    if ($item->product && $item->product->product_image) {
+                        $imageUrl = $basePath . '/small/' . $item->product->product_image;
+                    }
                     return [
                         'id' => $item->id,
-                        'product_name' => $item->product_name
+                        'product_name' => $item->product_name,
+                        'product_image' => $imageUrl,
+                        'product_price' => $item->product_price,
+                        'product_qty' => $item->product_qty
                     ];
                 }),
                 'logs' => $order->logs->map(function ($log) {
@@ -1972,7 +2079,7 @@ class ProductController extends Controller
         // Format itemized items with original price and vendor info
         $items = $order->orders_products->map(function ($item) {
             $originalPrice = $item->product->product_price ?? $item->product_price;
-            
+
             // Collect Vendor details with robust fallback
             $vendorDetail = $item->vendor_details->vendorbusinessdetails ?? null;
             $vendorInfo = null;
@@ -2318,5 +2425,205 @@ class ProductController extends Controller
             'message' => 'Query raised successfully. Your Ticket ID is ' . $ticket_id . '. Our team will get back to you soon.',
             'ticket_id' => $ticket_id
         ]);
+    }
+
+    public function orderQueries(Request $request)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized access.'
+            ], 401);
+        }
+
+        $queries = OrderQuery::with(['order', 'orderProduct', 'messages'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        $formattedQueries = $queries->through(function ($query) {
+            return [
+                'id' => $query->id,
+                'ticket_id' => $query->ticket_id,
+                'order_id' => $query->order_id,
+                'product_name' => $query->orderProduct->product_name ?? 'N/A',
+                'subject' => $query->subject,
+                'status' => strtolower($query->status),
+                'date' => $query->created_at->format('M d, Y h:i A'),
+                'messages_count' => $query->messages->count(),
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Order queries fetched successfully',
+            'data' => [
+                'total' => $queries->total(),
+                'current_page' => $queries->currentPage(),
+                'last_page' => $queries->lastPage(),
+                'queries' => $formattedQueries
+            ]
+        ]);
+    }
+
+    public function queryDetails($id)
+    {
+        $user = auth('sanctum')->user();
+
+        if (!$user) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $query = OrderQuery::with([
+            'order',
+            'orderProduct',
+            'messages.user',
+            'messages' => function ($q) {
+                $q->orderBy('created_at', 'asc');
+            }
+        ])
+            ->where('user_id', $user->id)
+            ->where('id', $id)
+            ->first();
+
+        if (!$query) {
+            return response()->json(['status' => false, 'message' => 'Query not found.'], 404);
+        }
+
+        $messages = $query->messages->map(function ($msg) {
+            $attachmentUrl = null;
+            if ($msg->attachment) {
+                // Determine if it already has full URL or just relative path
+                $attachmentUrl = str_starts_with($msg->attachment, 'http') ? $msg->attachment : url($msg->attachment);
+            }
+
+            return [
+                'id' => $msg->id,
+                'message' => $msg->message,
+                'sender_type' => $msg->sender_type,
+                'attachment' => $attachmentUrl,
+                'created_at' => $msg->created_at->format('d M Y, h:i A'),
+                'user_name' => $msg->user ? $msg->user->name : 'Support Team',
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Query details fetched successfully',
+            'data' => [
+                'id' => $query->id,
+                'ticket_id' => $query->ticket_id,
+                'order_id' => $query->order_id,
+                'product_name' => $query->orderProduct->product_name ?? 'N/A',
+                'subject' => $query->subject,
+                'message' => $query->message,
+                'status' => strtolower($query->status),
+                'date' => $query->created_at->format('d M Y, h:i A'),
+                'messages' => $messages
+            ]
+        ]);
+    }
+
+    public function postQueryReply(Request $request, $id)
+    {
+        try {
+            $user = auth('sanctum')->user();
+
+            if (!$user) {
+                return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'message' => 'required|string',
+                'attachment' => 'nullable|file|mimes:jpg,jpeg,png,mp4,mov,avi,pdf|max:10240', // 10MB
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+            }
+
+            $query = OrderQuery::where('user_id', $user->id)->where('id', $id)->first();
+
+            if (!$query) {
+                return response()->json(['status' => false, 'message' => 'Query not found.'], 404);
+            }
+
+            if (strtolower($query->status) == 'closed') {
+                return response()->json(['status' => false, 'message' => 'This ticket is closed and cannot be replied to.'], 400);
+            }
+
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                try {
+                    $file = $request->file('attachment');
+                    $filename = time() . '_' . $file->getClientOriginalName();
+                    $destinationPath = public_path('attachments/order_queries/');
+                    
+                    if (!file_exists($destinationPath)) {
+                        mkdir($destinationPath, 0755, true);
+                    }
+
+                    $file->move($destinationPath, $filename);
+                    $attachmentPath = 'attachments/order_queries/' . $filename;
+                } catch (\Exception $fe) {
+                    Log::error('Ticket Attachment Error: ' . $fe->getMessage());
+                    return response()->json([
+                        'status' => false, 
+                        'message' => 'Failed to process attachment. ' . $fe->getMessage(),
+                        'debug' => $fe->getMessage()
+                    ], 500);
+                }
+            }
+
+            $newMessage = OrderQueryMessage::create([
+                'order_query_id' => $id,
+                'user_id' => $user->id,
+                'message' => $request->message ?? '',
+                'attachment' => $attachmentPath,
+                'sender_type' => 'student',
+            ]);
+
+            // Optional: Notify Admin/Vendor - Wrapped in try-catch to avoid breaking the reply if notification table varies on live
+            try {
+                Notification::create([
+                    'type' => 'order_query',
+                    'title' => 'New Reply for Ticket #' . $query->ticket_id,
+                    'message' => "Customer '" . $user->name . "' replied to Ticket #" . $query->ticket_id,
+                    'related_id' => $query->order_id,
+                    'related_type' => Order::class,
+                    'is_read' => false,
+                ]);
+            } catch (\Exception $ne) {
+                Log::warning('Ticket Notification Failed: ' . $ne->getMessage());
+            }
+
+            $fullAttachmentUrl = $attachmentPath ? url($attachmentPath) : null;
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Reply sent successfully.',
+                'data' => [
+                    'id' => $newMessage->id,
+                    'message' => $newMessage->message,
+                    'sender_type' => $newMessage->sender_type,
+                    'attachment' => $fullAttachmentUrl,
+                    'created_at' => $newMessage->created_at->format('d M Y, h:i A'),
+                    'user_name' => $user->name,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Ticket Reply Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth('sanctum')->id()
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while sending your reply. Please try again later.',
+                'debug_message' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }

@@ -146,13 +146,13 @@ class OrderController extends Controller
         $vendorIds = $items->pluck('vendor_id')->filter()->unique();
         foreach ($vendorIds as $vendorId) {
             \App\Models\Notification::create([
-                'type'         => 'order_cancelled',
-                'title'        => 'Order Cancelled',
-                'message'      => 'Order #' . $order->id . ' containing your products was cancelled by the customer.',
-                'related_id'   => $order->id,
+                'type' => 'order_cancelled',
+                'title' => 'Order Cancelled',
+                'message' => 'Order #' . $order->id . ' containing your products was cancelled by the customer.',
+                'related_id' => $order->id,
                 'related_type' => \App\Models\Order::class,
-                'vendor_id'    => $vendorId,
-                'is_read'      => false,
+                'vendor_id' => $vendorId,
+                'is_read' => false,
             ]);
         }
 
@@ -211,13 +211,13 @@ class OrderController extends Controller
         // Notify Vendor
         if (!empty($item->vendor_id)) {
             \App\Models\Notification::create([
-                'type'         => 'order_return_requested',
-                'title'        => 'Item Return Requested',
-                'message'      => "Customer '" . Auth::user()->name . "' requested a return for '" . $item->product_name . "' (Order #" . $order->id . "). Reason: " . $request->return_reason,
-                'related_id'   => $order->id,
+                'type' => 'order_return_requested',
+                'title' => 'Item Return Requested',
+                'message' => "Customer '" . Auth::user()->name . "' requested a return for '" . $item->product_name . "' (Order #" . $order->id . "). Reason: " . $request->return_reason,
+                'related_id' => $order->id,
                 'related_type' => \App\Models\Order::class,
-                'vendor_id'    => $item->vendor_id,
-                'is_read'      => false,
+                'vendor_id' => $item->vendor_id,
+                'is_read' => false,
             ]);
         }
 
@@ -233,7 +233,7 @@ class OrderController extends Controller
 
         return redirect()->back()->with('success_message', 'Return request for "' . $item->product_name . '" has been submitted successfully.');
     }
-    
+
     public function payNow($id)
     {
         $order = Order::where('id', $id)->where('user_id', Auth::user()->id)->firstOrFail();
@@ -300,26 +300,29 @@ class OrderController extends Controller
         if ($request->ajax()) {
             return DataTables::of($queries)
                 ->addIndexColumn()
-                ->addColumn('ticket_id', function($q) {
+                ->addColumn('ticket_id', function ($q) {
                     return '<strong>' . $q->ticket_id . '</strong>';
                 })
-                ->addColumn('order_id', function($q) {
+                ->addColumn('order_id', function ($q) {
                     return '#' . $q->order_id;
                 })
-                ->addColumn('product_name', function($q) {
+                ->addColumn('product_name', function ($q) {
                     return $q->orderProduct->product_name ?? 'N/A';
                 })
-                ->addColumn('status', function($q) {
+                ->addColumn('status', function ($q) {
                     $class = 'badge-warning';
-                    if($q->status == 'resolved') $class = 'badge-success';
-                    elseif($q->status == 'ongoing') $class = 'badge-info';
-                    elseif($q->status == 'closed') $class = 'badge-secondary';
+                    if ($q->status == 'resolved')
+                        $class = 'badge-success';
+                    elseif ($q->status == 'ongoing')
+                        $class = 'badge-info';
+                    elseif ($q->status == 'closed')
+                        $class = 'badge-secondary';
                     return '<span class="badge ' . $class . '">' . ucfirst($q->status) . '</span>';
                 })
-                ->addColumn('date', function($q) {
+                ->addColumn('date', function ($q) {
                     return $q->created_at->format('M d, Y');
                 })
-                ->addColumn('action', function($q) {
+                ->addColumn('action', function ($q) {
                     return '<a href="' . route('student.orders.query.details', $q->id) . '" class="btn btn-sm btn-info">View Thread</a>';
                 })
                 ->rawColumns(['ticket_id', 'status', 'action'])

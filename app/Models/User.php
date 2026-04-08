@@ -232,4 +232,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(WalletTransaction::class, 'user_id');
     }
+
+    public function addresses()
+    {
+        return $this->hasMany(UserAddress::class, 'user_id')->where('status', 1);
+    }
 }

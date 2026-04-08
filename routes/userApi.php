@@ -52,6 +52,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/profile/bank-info', [ProfileController::class, 'updateBankInfo']);
     Route::post('/user/change-password', [ProfileController::class, 'changePassword']);
 
+    // Multiple Address Routes
+    Route::get('/user/addresses', [\App\Http\Controllers\Api\User\AddressController::class, 'index']);
+    Route::get('/user/addresses/{id}', [\App\Http\Controllers\Api\User\AddressController::class, 'show']);
+    Route::post('/user/addresses', [\App\Http\Controllers\Api\User\AddressController::class, 'store']);
+    Route::put('/user/addresses/{id}', [\App\Http\Controllers\Api\User\AddressController::class, 'update']);
+    Route::delete('/user/addresses/{id}', [\App\Http\Controllers\Api\User\AddressController::class, 'destroy']);
+    Route::patch('/user/addresses/{id}/set-default', [\App\Http\Controllers\Api\User\AddressController::class, 'setDefault']);
+
+
     Route::post('/user/checkout', [ProductController::class, 'checkout']);
     Route::post('/user/verify', [ProductController::class, 'verifyRazorpayPayment']);
     Route::get('/user/orders', [ProductController::class, 'orders']);
@@ -61,6 +70,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/orders/{id}/pay', [ProductController::class, 'payNow']);
     Route::post('/user/orders/{id}/return', [ProductController::class, 'returnOrder']);
     Route::post('/user/orders/raise-query', [ProductController::class, 'raiseQuery']);
+    Route::get('/user/order-queries', [ProductController::class, 'orderQueries']);
+    Route::get('/user/order-queries/{id}', [ProductController::class, 'queryDetails']);
+    Route::post('/user/order-queries/{id}/reply', [ProductController::class, 'postQueryReply']);
     Route::get('/user/wallet/transactions', [HomeController::class, 'getWalletTransactions']);
 
     // Sell Book Routes

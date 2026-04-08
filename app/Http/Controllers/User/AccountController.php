@@ -18,6 +18,7 @@ class AccountController extends Controller
     {
         $countries = Country::where('status', true)->get();
         $institutions = InstitutionManagement::where('status', 1)->orderBy('name')->get();
+        $sections = \App\Models\Section::all();
         $user      = User::with([
             'country',
             'state',
@@ -25,10 +26,12 @@ class AccountController extends Controller
             'block',
             'institution',
             'institutionClass.subcategory',
-            'academicProfile',
+            'academicProfile.board',
+            'academicProfile.educationLevel',
         ])->find(Auth::id());
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
+        $addresses = \App\Models\UserAddress::where('user_id', Auth::id())->orderBy('is_default', 'desc')->get();
 
         // Compute simple profile completion percentage
         $completionFields = [
@@ -67,10 +70,11 @@ class AccountController extends Controller
                     'district_id' => 'nullable|exists:districts,id',
                     'block_id'    => 'nullable|exists:blocks,id',
                     'mobile'      => 'required|numeric|digits:10',
-                    'pincode'     => 'required|digits:6',
+                    'pincode'     => 'nullable|digits:6',
                     'institution_id' => 'nullable|exists:institution_managements,id',
+                    'education_level_id' => 'nullable|exists:sections,id',
                     'board_id'       => 'nullable|exists:categories,id',
-                    'institution_classes_id' => 'nullable|exists:institution_classes,id',
+                    'class_id'       => 'nullable|exists:subcategories,id',
                     'bank_name'      => 'nullable|string|max:100',
                     'account_holder_name' => 'nullable|string|max:100',
                     'account_number' => 'nullable|string|max:30',
@@ -79,45 +83,40 @@ class AccountController extends Controller
                 ]);
 
                 $user = User::where('id', Auth::id())->first();
-                $user->update([
+                $updateData = [
                     'email'       => $validated['email'],
                     'name'        => $validated['name'],
                     'phone'       => $validated['mobile'],
-                    'country_id'  => $validated['country_id'] ?? null,
-                    'state_id'    => $validated['state_id'] ?? null,
-                    'district_id' => $validated['district_id'] ?? null,
-                    'block_id'    => $validated['block_id'] ?? null,
-                    'pincode'     => $validated['pincode'],
-                    'address'     => $validated['address'] ?? null,
-                    'institution_id' => $validated['institution_id'] ?? $user->institution_id,
-                    'institution_classes_id' => $validated['institution_classes_id'] ?? $user->institution_classes_id,
+                    'institution_id' => $validated['institution_id'] ?? null,
                     'bank_name'   => $validated['bank_name'] ?? null,
                     'account_holder_name' => $validated['account_holder_name'] ?? null,
                     'account_number' => $validated['account_number'] ?? null,
                     'ifsc_code'   => $validated['ifsc_code'] ?? null,
                     'upi_id'      => $validated['upi_id'] ?? null,
-                ]);
+                ];
 
-                // Sync academic profile if institution or class changed
-                if (!empty($validated['institution_id']) || !empty($validated['institution_classes_id'])) {
-                    $institution = null;
-                    if (!empty($validated['institution_id'])) {
-                        $institution = InstitutionManagement::find($validated['institution_id']);
-                    } elseif ($user->institution_id) {
-                        $institution = InstitutionManagement::find($user->institution_id);
-                    }
+                // Only update location fields if they exist in the request
+                // (Though they were removed from the form, we keep this for compatibility)
+                if ($request->has('country_id')) $updateData['country_id'] = $validated['country_id'];
+                if ($request->has('state_id')) $updateData['state_id'] = $validated['state_id'];
+                if ($request->has('district_id')) $updateData['district_id'] = $validated['district_id'];
+                if ($request->has('block_id')) $updateData['block_id'] = $validated['block_id'];
+                if ($request->has('pincode')) $updateData['pincode'] = $validated['pincode'];
+                if ($request->has('address')) $updateData['address'] = $validated['address'];
 
-                    $profileData = [
-                        'education_level_id' => $institution?->type,
-                        'board_id'           => $validated['board_id'] ?? $institution?->board,
-                        'class_id'           => $validated['institution_classes_id'] ?? $user->institution_classes_id,
-                    ];
+                $user->update($updateData);
 
-                    if ($user->academicProfile) {
-                        $user->academicProfile->update($profileData);
-                    } else {
-                        $user->academicProfile()->create($profileData);
-                    }
+                // Update academic profile
+                $profileData = [
+                    'education_level_id' => $validated['education_level_id'] ?? null,
+                    'board_id'           => $validated['board_id'] ?? null,
+                    'class_id'           => $validated['class_id'] ?? null,
+                ];
+
+                if ($user->academicProfile) {
+                    $user->academicProfile->update($profileData);
+                } else {
+                    $user->academicProfile()->create($profileData);
                 }
 
                 // Refresh user model to get updated values
@@ -170,7 +169,7 @@ class AccountController extends Controller
             }
         }
 
-        return view('user.profile.accountdetails', compact('user', 'countries', 'institutions', 'profileCompletion', 'logos', 'headerLogo'));
+        return view('user.profile.accountdetails', compact('user', 'countries', 'institutions', 'sections', 'profileCompletion', 'logos', 'headerLogo', 'addresses'));
     }
 
     public function updateProfile(Request $request)

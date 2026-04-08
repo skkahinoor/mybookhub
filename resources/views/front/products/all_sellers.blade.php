@@ -116,19 +116,48 @@
         }
 
         .btn-buy-now {
-            background: #2d3748;
-            color: #fff;
+            background: #f6ad55;
+            color: #1a202c;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 20px;
             border-radius: 6px;
-            font-weight: 600;
-            font-size: 13px;
+            font-weight: 700;
+            font-size: 14px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
         }
 
         .btn-buy-now:hover {
-            background: #1a202c;
+            background: #ed8936;
+            color: #1a202c;
+        }
+
+        .btn-wishlist {
+            background: #ff3366;
+            color: #fff;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-wishlist:hover {
+            background: #e62e5c;
+            transform: scale(1.05);
+        }
+
+        .action-flex {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         .sort-header {
@@ -352,12 +381,22 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <form action="{{ url('cart/add') }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
-                                        <input type="hidden" name="quantity" value="1">
-                                        <button type="submit" class="btn-buy-now">Buy Now</button>
-                                    </form>
+                                    <div class="action-flex">
+                                        <form action="{{ url('cart/add') }}" method="POST" style="flex: 1;">
+                                            @csrf
+                                            <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button type="submit" class="btn-buy-now">Buy Now</button>
+                                        </form>
+                                        <form action="{{ url('wishlist/add') }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
+                                            <input type="hidden" name="quantity" value="1">
+                                            <button type="submit" class="btn-wishlist" title="Add to Wishlist">
+                                                <i class="fas fa-heart"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

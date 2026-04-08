@@ -660,6 +660,11 @@ HTML;
         Route::get('user-districts', 'UserController@getUserDistricts')->name('user_districts');
         Route::get('user-blocks', 'UserController@getUserBlocks')->name('user_blocks');
 
+        // Address Management
+        Route::post('save-address', 'UserController@saveAddress')->name('saveAddress');
+        Route::post('delete-address', 'UserController@deleteAddress')->name('deleteAddress');
+        Route::post('set-default-address', 'UserController@setDefaultAddress')->name('setDefaultAddress');
+
         Route::post('/apply-coupon', 'ProductsController@applyCoupon')->name('applyCoupon');
         Route::match(['GET', 'POST'], '/checkout', 'ProductsController@checkout')->name('checkout');
 

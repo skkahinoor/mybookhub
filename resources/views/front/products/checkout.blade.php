@@ -403,38 +403,61 @@
                                 <div class="modern-card">
                                     <div class="card-header-modern">
                                         <h4><i class="fas fa-map-marker-alt"></i> Shipping Address</h4>
-                                        <a href="{{ url('user/account') }}" class="btn-edit-modern">
+                                        <a href="{{ url('student/account') }}" class="btn-edit-modern">
                                             <i class="fas fa-pen"></i> Edit Profile
                                         </a>
                                     </div>
                                     <div class="card-content">
-                                        <div class="address-card-modern">
-                                            @php $address = $deliveryAddresses[0]; @endphp
-                                            <div class="address-check">
-                                                <input type="radio" name="address_id" id="address{{ $address['id'] }}"
-                                                    value="{{ $address['id'] }}" checked
-                                                    shipping_charges="{{ $address['shipping_charges'] }}"
-                                                    total_price="{{ $total_price }}"
-                                                    coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
-                                                    codpincodeCount="{{ $address['codpincodeCount'] }}"
-                                                    prepaidpincodeCount="{{ $address['prepaidpincodeCount'] }}">
-                                            </div>
-                                            <div class="address-details">
-                                                <div class="d-flex align-items-center gap-3 mb-2">
-                                                    <h6 class="mb-0">{{ $address['name'] }}</h6>
-                                                    <span class="address-badge">Primary Delivery</span>
+                                        <div class="row g-3">
+                                            @foreach ($deliveryAddresses as $address)
+                                                <div class="col-md-12">
+                                                    <div class="address-card-modern {{ $address->is_default ? 'active-address' : '' }}"
+                                                        style="cursor: pointer; position: relative; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; transition: all 0.3s ease; display: flex; gap: 16px;"
+                                                        onclick="document.getElementById('address{{ $address->id }}').click(); this.parentElement.parentElement.querySelectorAll('.address-card-modern').forEach(el => el.classList.remove('active-address', 'border-primary')); this.classList.add('active-address', 'border-primary');">
+                                                        <div class="address-check">
+                                                            <input type="radio" name="address_id"
+                                                                id="address{{ $address->id }}"
+                                                                value="{{ $address->id }}"
+                                                                {{ $address->is_default ? 'checked' : '' }}
+                                                                shipping_charges="{{ $address->shipping_charges }}"
+                                                                total_price="{{ $total_price }}"
+                                                                coupon_amount="{{ \Illuminate\Support\Facades\Session::get('couponAmount') }}"
+                                                                codpincodeCount="{{ $address->codpincodeCount }}"
+                                                                prepaidpincodeCount="{{ $address->prepaidpincodeCount }}">
+                                                        </div>
+                                                        <div class="address-details w-100">
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                <h6 class="mb-0 fw-bold" style="font-size: 16px;">
+                                                                    {{ $address->name }}</h6>
+                                                                @if ($address->is_default)
+                                                                    <span class="address-badge"
+                                                                        style="background: #e0f2fe; color: #075985; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px;">DEFAULT</span>
+                                                                @endif
+                                                            </div>
+                                                            <p class="mb-2 text-muted"
+                                                                style="font-size: 14px; line-height: 1.5;">
+                                                                {{ $address->address }}<br>
+                                                                {{ optional($address->block)->name ? $address->block->name . ', ' : '' }}
+                                                                {{ optional($address->district)->name ? $address->district->name . ', ' : '' }}
+                                                                {{ optional($address->state)->name ? $address->state->name : '' }}
+                                                                - {{ $address->pincode }}<br>
+                                                                {{ optional($address->country)->name }}
+                                                            </p>
+                                                            <div class="phone-box d-flex align-items-center gap-2"
+                                                                style="font-size: 14px; color: #475569;">
+                                                                <i class="fas fa-phone-alt text-primary"></i>
+                                                                <span>{{ $address->mobile }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <p>
-                                                    {{ $address['address'] }}<br>
-                                                    {{ $address['city'] }}, {{ $address['state'] }},
-                                                    {{ $address['country'] }}<br>
-                                                    <strong>PIN:</strong> {{ $address['pincode'] }}
-                                                </p>
-                                                <div class="phone-box">
-                                                    <i class="fas fa-phone-alt me-2 text-primary"></i>
-                                                    <span>{{ $address['mobile'] }}</span>
-                                                </div>
-                                            </div>
+                                            @endforeach
+                                        </div>
+
+                                        <div class="mt-4 pt-3 border-top text-center">
+                                            <button type="button" class="btn btn-outline-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addressModal" onclick="clearAddressForm()">
+                                                <i class="fas fa-plus me-2"></i> Add or Manage Addresses
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -627,31 +650,87 @@
                         </div>
                     </form>
 
-                    <!-- Terms Modal -->
-                    <div class="modal fade" id="termsModal" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered modal-lg">
-                            <div class="modal-content border-0 shadow-lg">
-                                <div class="modal-header bg-light">
-                                    <h5 class="modal-title fw-bold"><i class="fas fa-file-contract text-primary me-2"></i>
-                                        Terms & Conditions</h5>
-                                    <button type="button" class="btn-close" data-dismiss="modal"
+                    <!-- Address Modal -->
+                    <div class="modal fade" id="addressModal" tabindex="-1" aria-labelledby="addressModalLabel"
+                        aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="addressModalLabel">Add New Address</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
                                         aria-label="Close"></button>
                                 </div>
-                                <div class="modal-body p-4">
-                                    <p style="line-height: 1.8; color: #475569;">
-                                        By completing a purchase on BookHub, you agree to abide by our terms designed to
-                                        provide a trusted experience.
-                                        This includes policies on product availability, pricing accuracy, shipping
-                                        timelines, and our returns/refund process.
-                                        <br><br>
-                                        We strive for excellence in every delivery. However, in cases of unforeseen
-                                        circumstances, we will keep you informed of any updates to your order status.
-                                    </p>
-                                </div>
-                                <div class="modal-footer border-0">
-                                    <button type="button" class="btn btn-secondary px-4"
-                                        data-dismiss="modal">Close</button>
-                                </div>
+                                <form id="addressForm">
+                                    @csrf
+                                    <input type="hidden" name="address_id" id="address_id">
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Full Name <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" name="name" id="addr_name" class="form-control"
+                                                    required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Mobile Number <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" name="mobile" id="addr_mobile"
+                                                    class="form-control" required>
+                                            </div>
+                                            <div class="col-md-12 mb-3">
+                                                <label class="form-label">Address <span
+                                                        class="text-danger">*</span></label>
+                                                <textarea name="address" id="addr_address" class="form-control" rows="3" required></textarea>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Country <span
+                                                        class="text-danger">*</span></label>
+                                                <select name="country_id" id="addr_country_id" class="form-select"
+                                                    required>
+                                                    <option value="">Select Country</option>
+                                                    @foreach ($countries as $country)
+                                                        <option value="{{ $country['id'] }}">{{ $country['name'] }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">State <span
+                                                        class="text-danger">*</span></label>
+                                                <select name="state_id" id="addr_state_id" class="form-select"
+                                                    required>
+                                                    <option value="">Select State</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">District <span
+                                                        class="text-danger">*</span></label>
+                                                <select name="district_id" id="addr_district_id" class="form-select"
+                                                    required>
+                                                    <option value="">Select District</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Block</label>
+                                                <select name="block_id" id="addr_block_id" class="form-select">
+                                                    <option value="">Select Block</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Pincode <span
+                                                        class="text-danger">*</span></label>
+                                                <input type="text" name="pincode" id="addr_pincode"
+                                                    class="form-control" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-primary" id="saveAddressBtn">Save
+                                            Address</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -662,9 +741,7 @@
     </div>
     </div>
 
-
-
-
+    @section('scripts')
     <script>
         $(document).ready(function() {
             function calculateTotals() {
@@ -684,7 +761,7 @@
                 }
 
                 var coupon = parseFloat("{{ \Illuminate\Support\Facades\Session::get('couponAmount') ?? 0 }}") ||
-                0;
+                    0;
                 if (addressEl.length > 0) {
                     var addressCoupon = parseFloat(addressEl.attr('coupon_amount'));
                     if (!isNaN(addressCoupon)) {
@@ -739,7 +816,8 @@
                     icon = 'fa-store';
                 }
 
-                $('#placeOrderBtn').html('<span>' + btnText + ' - ₹' + finalTotal + '</span><i class="fas ' + icon +
+                $('#placeOrderBtn').html('<span>' + btnText + ' - ₹' + finalTotal + '</span><i class="fas ' +
+                    icon +
                     ' ms-2"></i>');
 
                 // Pincode availability toggle
@@ -761,6 +839,106 @@
                 });
 
             calculateTotals();
+
+            // Cascading Dropdowns for Modal
+            $('#addr_country_id').on('change', function() {
+                loadModalStates($(this).val());
+            });
+            $('#addr_state_id').on('change', function() {
+                loadModalDistricts($(this).val());
+            });
+            $('#addr_district_id').on('change', function() {
+                loadModalBlocks($(this).val());
+            });
+
+            function loadModalStates(countryId, stateId = null) {
+                return new Promise((resolve) => {
+                    $.ajax({
+                        url: '{{ route('user_states') }}',
+                        data: {
+                            country: countryId
+                        },
+                        success: function(response) {
+                            let options = '<option value="">Select State</option>';
+                            $.each(response, function(id, name) {
+                                options += `<option value="${id}">${name}</option>`;
+                            });
+                            $('#addr_state_id').html(options);
+                            if (stateId) $('#addr_state_id').val(stateId);
+                            resolve();
+                        }
+                    });
+                });
+            }
+
+            function loadModalDistricts(stateId, districtId = null) {
+                return new Promise((resolve) => {
+                    if (!stateId) return resolve();
+                    $.ajax({
+                        url: '{{ route('user_districts') }}',
+                        data: {
+                            state: stateId
+                        },
+                        success: function(response) {
+                            let options = '<option value="">Select District</option>';
+                            $.each(response, function(id, name) {
+                                options += `<option value="${id}">${name}</option>`;
+                            });
+                            $('#addr_district_id').html(options);
+                            if (districtId) $('#addr_district_id').val(districtId);
+                            resolve();
+                        }
+                    });
+                });
+            }
+
+            function loadModalBlocks(districtId, blockId = null) {
+                return new Promise((resolve) => {
+                    if (!districtId) return resolve();
+                    $.ajax({
+                        url: '{{ route('user_blocks') }}',
+                        data: {
+                            district: districtId
+                        },
+                        success: function(response) {
+                            let options = '<option value="">Select Block</option>';
+                            $.each(response, function(id, name) {
+                                options += `<option value="${id}">${name}</option>`;
+                            });
+                            $('#addr_block_id').html(options);
+                            if (blockId) $('#addr_block_id').val(blockId);
+                            resolve();
+                        }
+                    });
+                });
+            }
+
+            // Save Address
+            $('#addressForm').on('submit', function(e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '{{ route('saveAddress') }}',
+                    type: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.type == 'success') {
+                            location.reload();
+                        } else {
+                            alert('Something went wrong. Please check your inputs.');
+                        }
+                    }
+                });
+            });
         });
+
+        function clearAddressForm() {
+            $('#address_id').val('');
+            $('#addressForm')[0].reset();
+            $('#addr_state_id').empty().append('<option value="">Select State</option>');
+            $('#addr_district_id').empty().append('<option value="">Select District</option>');
+            $('#addr_block_id').empty().append('<option value="">Select Block</option>');
+            $('#addressModalLabel').text('Add New Address');
+        }
     </script>
+    @endsection
 @endsection
