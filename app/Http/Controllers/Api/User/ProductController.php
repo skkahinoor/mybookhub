@@ -31,6 +31,7 @@ use App\Models\OrderQuery;
 use App\Models\OrderQueryMessage;
 use Razorpay\Api\Api;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 
 class ProductController extends Controller
 {
@@ -2522,70 +2523,90 @@ class ProductController extends Controller
 
     public function postQueryReply(Request $request, $id)
     {
-        $user = auth('sanctum')->user();
+        try {
+            $user = auth('sanctum')->user();
 
-        if (!$user) {
-            return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+            if (!$user) {
+                return response()->json(['status' => false, 'message' => 'Unauthorized'], 401);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'message' => 'required|string',
+                'attachment' => 'nullable|file|mimes:jpg,jpeg,png,mp4,mov,avi,pdf|max:10240', // 10MB
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
+            }
+
+            $query = OrderQuery::where('user_id', $user->id)->where('id', $id)->first();
+
+            if (!$query) {
+                return response()->json(['status' => false, 'message' => 'Query not found.'], 404);
+            }
+
+            if (strtolower($query->status) == 'closed') {
+                return response()->json(['status' => false, 'message' => 'This ticket is closed and cannot be replied to.'], 400);
+            }
+
+            $attachmentPath = null;
+            if ($request->hasFile('attachment')) {
+                $file = $request->file('attachment');
+                $filename = time() . '_' . $file->getClientOriginalName();
+                $destinationPath = public_path('attachments/order_queries');
+                
+                // Ensure directory exists
+                if (!File::isDirectory($destinationPath)) {
+                    File::makeDirectory($destinationPath, 0777, true, true);
+                }
+
+                $file->move($destinationPath, $filename);
+                $attachmentPath = 'attachments/order_queries/' . $filename;
+            }
+
+            $newMessage = OrderQueryMessage::create([
+                'order_query_id' => $id,
+                'user_id' => $user->id,
+                'message' => $request->message ?? '',
+                'attachment' => $attachmentPath,
+                'sender_type' => 'student',
+            ]);
+
+            // Optional: Notify Admin/Vendor
+            Notification::create([
+                'type' => 'order_query',
+                'title' => 'New Reply for Ticket #' . $query->ticket_id,
+                'message' => "Customer '" . $user->name . "' replied to Ticket #" . $query->ticket_id,
+                'related_id' => $query->order_id,
+                'related_type' => Order::class,
+                'is_read' => false,
+            ]);
+
+            $fullAttachmentUrl = $attachmentPath ? url($attachmentPath) : null;
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Reply sent successfully.',
+                'data' => [
+                    'id' => $newMessage->id,
+                    'message' => $newMessage->message,
+                    'sender_type' => $newMessage->sender_type,
+                    'attachment' => $fullAttachmentUrl,
+                    'created_at' => $newMessage->created_at->format('d M Y, h:i A'),
+                    'user_name' => $user->name,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Ticket Reply Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth('sanctum')->id()
+            ]);
+            
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred while sending your reply. Please try again later.',
+                'debug_message' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
         }
-
-        $validator = Validator::make($request->all(), [
-            'message' => 'required|string',
-            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,mp4,mov,avi,pdf|max:10240', // 10MB
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['status' => false, 'errors' => $validator->errors()], 422);
-        }
-
-        $query = OrderQuery::where('user_id', $user->id)->where('id', $id)->first();
-
-        if (!$query) {
-            return response()->json(['status' => false, 'message' => 'Query not found.'], 404);
-        }
-
-        if (strtolower($query->status) == 'closed') {
-            return response()->json(['status' => false, 'message' => 'This ticket is closed and cannot be replied to.'], 400);
-        }
-
-        $attachmentPath = null;
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('attachments/order_queries'), $filename);
-            $attachmentPath = 'attachments/order_queries/' . $filename;
-        }
-
-        $newMessage = OrderQueryMessage::create([
-            'order_query_id' => $id,
-            'user_id' => $user->id,
-            'message' => $request->message,
-            'attachment' => $attachmentPath,
-            'sender_type' => 'student',
-        ]);
-
-        // Optional: Notify Admin/Vendor
-        Notification::create([
-            'type' => 'order_query',
-            'title' => 'New Reply for Ticket #' . $query->ticket_id,
-            'message' => "Customer '" . $user->name . "' replied to Ticket #" . $query->ticket_id,
-            'related_id' => $query->order_id,
-            'related_type' => Order::class,
-            'is_read' => false,
-        ]);
-
-        $fullAttachmentUrl = $attachmentPath ? url($attachmentPath) : null;
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Reply sent successfully.',
-            'data' => [
-                'id' => $newMessage->id,
-                'message' => $newMessage->message,
-                'sender_type' => $newMessage->sender_type,
-                'attachment' => $fullAttachmentUrl,
-                'created_at' => $newMessage->created_at->format('d M Y, h:i A'),
-                'user_name' => $user->name,
-            ]
-        ]);
     }
 }
