@@ -52,6 +52,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/profile/bank-info', [ProfileController::class, 'updateBankInfo']);
     Route::post('/user/change-password', [ProfileController::class, 'changePassword']);
 
+    // Multiple Address Routes
+    Route::get('/user/addresses', [\App\Http\Controllers\Api\User\AddressController::class, 'index']);
+    Route::get('/user/addresses/{id}', [\App\Http\Controllers\Api\User\AddressController::class, 'show']);
+    Route::post('/user/addresses', [\App\Http\Controllers\Api\User\AddressController::class, 'store']);
+    Route::put('/user/addresses/{id}', [\App\Http\Controllers\Api\User\AddressController::class, 'update']);
+    Route::delete('/user/addresses/{id}', [\App\Http\Controllers\Api\User\AddressController::class, 'destroy']);
+    Route::patch('/user/addresses/{id}/set-default', [\App\Http\Controllers\Api\User\AddressController::class, 'setDefault']);
+
+
     Route::post('/user/checkout', [ProductController::class, 'checkout']);
     Route::post('/user/verify', [ProductController::class, 'verifyRazorpayPayment']);
     Route::get('/user/orders', [ProductController::class, 'orders']);
