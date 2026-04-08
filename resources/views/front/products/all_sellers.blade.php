@@ -386,7 +386,7 @@
                                             @csrf
                                             <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
                                             <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn-buy-now w-100">Buy Now</button>
+                                            <button type="submit" class="btn-buy-now">Buy Now</button>
                                         </form>
                                         <form action="{{ url('wishlist/add') }}" method="POST">
                                             @csrf
