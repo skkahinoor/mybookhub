@@ -19,8 +19,14 @@ class BookRequestsController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'bookRequests');
-        $bookRequests = BookRequest::with('user')->get();
         $adminType = Auth::guard('admin')->user()->type;
+        $adminVendorId = Auth::guard('admin')->user()->vendor_id;
+
+        $bookRequestsQuery = BookRequest::with(['user', 'vendor.user', 'vendor.vendorbusinessdetails']);
+        if ($adminType === 'vendor') {
+            $bookRequestsQuery->where('vendor_id', $adminVendorId);
+        }
+        $bookRequests = $bookRequestsQuery->get();
 
         return view('admin.requestedbooks.index', compact('bookRequests', 'logos', 'headerLogo', 'adminType'));
     }
@@ -37,6 +43,10 @@ class BookRequestsController extends Controller
             $bookRequest = BookRequest::find($id);
             if (! $bookRequest) {
                 return redirect()->back()->with('error_message', 'Book Request not found.');
+            }
+
+            if (Auth::guard('admin')->user()->type === 'vendor' && (int) $bookRequest->vendor_id !== (int) Auth::guard('admin')->user()->vendor_id) {
+                return redirect()->back()->with('error_message', 'You are not authorized to reply to this request.');
             }
 
             // Validation rules
@@ -97,6 +107,9 @@ class BookRequestsController extends Controller
         if (! $bookRequest) {
             return redirect()->back()->with('error_message', 'Book Request not found.');
         }
+        if (Auth::guard('admin')->user()->type === 'vendor' && (int) $bookRequest->vendor_id !== (int) Auth::guard('admin')->user()->vendor_id) {
+            return redirect()->route('vendor.requestbook.index')->with('error_message', 'You are not authorized to view this request.');
+        }
         $query = $bookRequest->toArray();
 
         $adminType = Auth::guard('admin')->user()->type;
@@ -109,6 +122,9 @@ class BookRequestsController extends Controller
         if ($request->ajax()) {
             $bookRequest = BookRequest::find($request->book_id);
             if ($bookRequest) {
+                if (Auth::guard('admin')->user()->type === 'vendor' && (int) $bookRequest->vendor_id !== (int) Auth::guard('admin')->user()->vendor_id) {
+                    return response()->json(['error' => 'Unauthorized action.'], 403);
+                }
                 // Toggle status: if pending or 0, change to in_progress; otherwise change to pending
                 if ($bookRequest->status == 'pending' || $bookRequest->status == '0' || $bookRequest->status == 0) {
                     $bookRequest->status = 'in_progress';
@@ -136,6 +152,10 @@ class BookRequestsController extends Controller
 
         if (! $bookRequest) {
             return redirect()->back()->with('error_message', 'Book request not found!');
+        }
+
+        if (Auth::guard('admin')->user()->type === 'vendor' && (int) $bookRequest->vendor_id !== (int) Auth::guard('admin')->user()->vendor_id) {
+            return redirect()->back()->with('error_message', 'You are not authorized to delete this request.');
         }
 
         // ✅ Delete replies FIRST

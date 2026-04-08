@@ -1,24 +1,133 @@
 @include('user.layout.header')
 
+<style>
+    .book-query-page .card {
+        border: 1px solid #e9edf3;
+        border-radius: 14px;
+        box-shadow: 0 6px 20px rgba(26, 43, 72, 0.06);
+    }
+    .book-query-page .page-hero {
+        border-radius: 12px;
+        padding: 18px 20px;
+        background: linear-gradient(135deg, #fff8ef 0%, #f6f9ff 100%);
+        border: 1px solid #f0e5d6;
+    }
+    .book-query-page .page-hero h1 {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 6px;
+        color: #1d2a3b;
+    }
+    .book-query-page .page-hero p {
+        margin: 0;
+        color: #5e6b7a;
+    }
+    .book-query-page .accent-btn {
+        background: #cf8938 !important;
+        color: #fff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+    }
+    .book-query-page .accordion-item {
+        border: 1px solid #e8edf5 !important;
+        border-radius: 12px !important;
+        overflow: hidden;
+    }
+    .book-query-page .accordion-button {
+        background: #f8fbff !important;
+    }
+    .book-query-page .accordion-button:not(.collapsed) {
+        background: #eef5ff !important;
+        box-shadow: none;
+    }
+    .book-query-page .query-head-content {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+    .book-query-page .query-title {
+        color: #1f2937;
+        font-size: 16px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        display: block;
+    }
+    .book-query-page .query-meta {
+        color: #64748b;
+        font-size: 12px;
+    }
+    .book-query-page .status-chip {
+        display: inline-block;
+        padding: 5px 11px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .book-query-page .status-chip.pending {
+        background: #fff3cd;
+        color: #8a6d1f;
+    }
+    .book-query-page .status-chip.progress {
+        background: #dbeafe;
+        color: #1d4ed8;
+    }
+    .book-query-page .status-chip.resolved {
+        background: #dcfce7;
+        color: #166534;
+    }
+    .book-query-page .message-admin-btn {
+        background-color: #2563eb;
+        color: #fff;
+        border: none;
+        padding: 7px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+    .book-query-page .query-info-box {
+        background: #f0f7ff;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        border-left: 4px solid #0ea5e9;
+    }
+    .book-query-page .reply-box {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #e5e7eb;
+        margin-top: 15px;
+    }
+</style>
+
 <div class="container-fluid page-body-wrapper">
     @include('user.layout.sidebar')
 
-    <div class="main-panel">
+    <div class="main-panel book-query-page">
         <div class="content-wrapper">
             <div class="row">
                 <div class="col-lg-12 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <div class="woocommerce-account-header"
+                            <div class="woocommerce-account-header page-hero"
                                 style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
                                 <div>
-                                    <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 10px;">My Book Request
+                                    <h1>My Book Request
                                         Queries</h1>
-                                    <p style="color: #666; margin: 0;">View the status and replies for all your book
+                                    <p>View the status and replies for all your book
                                         request
                                         queries.</p>
                                 </div>
-                                <a href="{{ route('student.query.index') }}" class="woocommerce-Button"
+                                <a href="{{ route('student.query.raise') }}" class="woocommerce-Button accent-btn"
                                     style="background-color: #cf8938; color: #fff; padding: 12px 30px; border-radius: 4px; text-decoration: none; display: inline-block; font-weight: 600; transition: background-color 0.3s; white-space: nowrap;"
                                     onmouseover="this.style.backgroundColor='#b8752f'"
                                     onmouseout="this.style.backgroundColor='#cf8938'">
@@ -40,6 +149,10 @@
                                     {{ session('error') }}
                                 </div>
                             @endif
+                            @php
+                                $queriesToShow = isset($selectedQuery) && $selectedQuery ? collect([$selectedQuery]) : collect();
+                            @endphp
+
                             {{-- Empty state when there are no queries yet --}}
                             @if ($queries->isEmpty())
                                 <div class="empty-state" style="text-align: center; padding: 60px 20px;">
@@ -50,104 +163,18 @@
                                     <p style="color: #666; margin-bottom: 30px;">Use the form below to raise your first
                                         book query.</p>
                                 </div>
+                            @elseif (!$selectedQuery)
+                                <div class="empty-state" style="text-align: center; padding: 40px 20px;">
+                                    <h3 style="color: #333; margin-bottom: 10px;">No query selected</h3>
+                                    <p style="color: #666; margin-bottom: 20px;">Open a query from My Book Requests to view details here.</p>
+                                </div>
                             @endif
 
-                            <!-- Quick New Query Form (always available) -->
-                            <style>
-                                .query-form-hidden {
-                                    display: none;
-                                }
-                            </style>
-                            <div class="card"
-                                style="margin-bottom: 20px; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden;">
-                                <div class="card-header"
-                                    style="background: #f8f9fa; padding: 15px 20px; border-bottom: 1px solid #e5e5e5; cursor: pointer;"
-                                    onclick="var form = document.getElementById('newQueryForm'); var icon = this.querySelector('.toggle-icon'); if(form.style.display === 'none') { form.style.display = 'block'; icon.textContent = '➖'; } else { form.style.display = 'none'; icon.textContent = '➕'; }">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <h5
-                                            style="margin: 0; color: #333; font-weight: 600; display: flex; align-items: center;">
-                                            <span style="margin-right: 10px; font-size: 20px;">💬</span>
-                                            Raise New Book Query
-                                        </h5>
-                                        <span class="toggle-icon" style="font-size: 18px; color: #666;">➕</span>
-                                    </div>
-                                </div>
-                                <div id="newQueryForm" style="display: none; padding: 20px; background: #fff;">
-                                    <form action="{{ route('student.book.request.store') }}" method="POST">
-                                        @csrf
-                                        <div class="mb-3">
-                                            <label
-                                                style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                                                Book Title <span class="required" style="color: #e74c3c;">*</span>
-                                            </label>
-                                            <input type="text" name="book_title" class="form-control"
-                                                style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px;"
-                                                placeholder="Enter book title" value="{{ old('book_title') }}"
-                                                required>
-                                            @error('book_title')
-                                                <small
-                                                    style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
-                                            @enderror
-                                        </div>
-                                        <div class="mb-3">
-                                            <label
-                                                style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                                                Author Name
-                                            </label>
-                                            <input type="text" name="author_name" class="form-control"
-                                                style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px;"
-                                                placeholder="Enter author name (optional)"
-                                                value="{{ old('author_name') }}">
-                                            @error('author_name')
-                                                <small
-                                                    style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
-                                            @enderror
-                                        </div>
-                                        <div class="mb-3">
-                                            <label
-                                                style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                                                Publisher Name
-                                            </label>
-                                            <input type="text" name="publisher_name" class="form-control"
-                                                style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px;"
-                                                placeholder="Enter publisher name (optional)"
-                                                value="{{ old('publisher_name') }}">
-                                            @error('publisher_name')
-                                                <small
-                                                    style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
-                                            @enderror
-                                        </div>
-                                        <div class="mb-3">
-                                            <label
-                                                style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">
-                                                Your Message <span class="required" style="color: #e74c3c;">*</span>
-                                            </label>
-                                            <textarea name="message" rows="5" class="form-control"
-                                                style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px; resize: vertical;"
-                                                required minlength="10" placeholder="Type your message here... Provide details about the book you're looking for.">{{ old('message') }}</textarea>
-                                            @error('message')
-                                                <small
-                                                    style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
-                                            @enderror
-                                            <small style="color: #666; display: block; margin-top: 5px;">
-                                                Minimum 10 characters required
-                                            </small>
-                                        </div>
-                                        <div style="margin-top: 15px;">
-                                            <button type="submit" class="woocommerce-Button"
-                                                style="background-color: #cf8938; color: #fff; padding: 12px 30px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: background-color 0.3s;">
-                                                <span style="margin-right: 5px;">📤</span>
-                                                Submit Query
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
 
                             {{-- Existing queries accordion list (only when there are queries) --}}
-                            @if (!$queries->isEmpty())
+                            @if ($queriesToShow->isNotEmpty())
                                 <div class="accordion" id="queriesAccordion" style="margin-top: 20px;">
-                                    @foreach ($queries as $key => $query)
+                                    @foreach ($queriesToShow as $key => $query)
                                         @php
                                             $collapseId = 'collapse' . $query->id;
                                             $headingId = 'heading' . $query->id;
@@ -155,12 +182,13 @@
                                             $statusValue = is_numeric($query->status) ? $query->status : $query->status;
                                             $isResolved = $statusValue === 'resolved' || $statusValue === 'Resolved';
                                             // Expand first query or if status is not resolved, collapse resolved queries by default
-                                            $isExpanded =
-                                                ($key == 0 && !$isResolved) ||
-                                                ($key == 0 && $isResolved && $queries->count() == 1);
+                                            $isExpanded = isset($selectedQueryId) && $selectedQueryId > 0
+                                                ? ((int) $selectedQueryId === (int) $query->id)
+                                                : (($key == 0 && !$isResolved) ||
+                                                    ($key == 0 && $isResolved && $queries->count() == 1));
                                         @endphp
 
-                                        <div class="accordion-item"
+                                        <div class="accordion-item" id="query-{{ $query->id }}"
                                             style="border: 1px solid #e5e5e5; border-radius: 8px; margin-bottom: 15px; overflow: hidden;">
                                             <h2 class="accordion-header" id="{{ $headingId }}">
                                                 <button class="accordion-button {{ $isExpanded ? '' : 'collapsed' }}"
@@ -169,17 +197,12 @@
                                                     aria-expanded="{{ $isExpanded ? 'true' : 'false' }}"
                                                     aria-controls="{{ $collapseId }}"
                                                     style="background: #f8f9fa; padding: 15px 20px;">
-                                                    <div
-                                                        style="flex: 1; display: flex; justify-content: space-between; align-items: center;">
-                                                        <div style="flex: 1;">
-                                                            <strong
-                                                                style="color: #333; font-size: 16px; display: block; margin-bottom: 5px;">{{ $query->book_title }}</strong>
-                                                            <small style="color: #666; font-size: 13px;">Requested
-                                                                on
-                                                                {{ $query->created_at->format('M d, Y h:i A') }}</small>
+                                                    <div class="query-head-content">
+                                                        <div style="flex: 1; min-width: 0;">
+                                                            <strong class="query-title">{{ $query->book_title }}</strong>
+                                                            <small class="query-meta">Requested on {{ $query->created_at->format('M d, Y h:i A') }}</small>
                                                         </div>
-                                                        <div
-                                                            style="margin-left: 15px; display: flex; align-items: center; gap: 10px;">
+                                                        <div style="margin-left: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
                                                             @php
                                                                 // Handle both numeric and string status
                                                                 $status = is_numeric($query->status)
@@ -189,32 +212,25 @@
                                                                     $status === 'resolved' || $status === 'Resolved';
                                                             @endphp
                                                             @if ($status === 0 || $status === 'pending' || $status === 'Pending')
-                                                                <span class="status-badge status-pending"
-                                                                    style="background: #ffc107; color: #000; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">Pending</span>
+                                                                <span class="status-chip pending">Pending</span>
                                                             @elseif ($status === 1 || $status === 'in_progress' || $status === 'In Progress')
-                                                                <span class="status-badge"
-                                                                    style="background: #cce5ff; color: #004085; border: 1px solid #b3d7ff; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">In
-                                                                    Progress</span>
+                                                                <span class="status-chip progress">In Progress</span>
                                                             @elseif ($status === 'resolved' || $status === 'Resolved')
-                                                                <span class="status-badge status-available"
-                                                                    style="background: #28a745; color: #fff; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">Resolved</span>
+                                                                <span class="status-chip resolved">Resolved</span>
                                                             @else
                                                                 <span class="status-badge"
                                                                     style="background: #6c757d; color: #fff; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">Book
                                                                     Available</span>
                                                             @endif
 
-                                                            @if (!$isResolved)
-                                                                <button type="button" class="btn-message-admin"
+                                                            {{-- @if (!$isResolved)
+                                                                <button type="button" class="message-admin-btn"
                                                                     onclick="event.stopPropagation(); expandAndFocusReply({{ $query->id }});"
-                                                                    style="background-color: #007bff; color: #fff; border: none; padding: 6px 14px; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background-color 0.3s; white-space: nowrap;"
-                                                                    onmouseover="this.style.backgroundColor='#0056b3'"
-                                                                    onmouseout="this.style.backgroundColor='#007bff'"
                                                                     title="Message Admin about this query">
                                                                     <span>💬</span>
                                                                     <span>Message Admin</span>
                                                                 </button>
-                                                            @endif
+                                                            @endif --}}
                                                         </div>
                                                     </div>
                                                 </button>
@@ -226,8 +242,7 @@
                                                 data-bs-parent="#queriesAccordion">
                                                 <div class="accordion-body" style="padding: 20px; background: #fff;">
                                                     <!-- Original Query -->
-                                                    <div
-                                                        style="background: #f0f7ff; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #0073aa;">
+                                                    <div class="query-info-box">
                                                         <strong
                                                             style="color: #0073aa; display: block; margin-bottom: 8px;">Your
                                                             Original Message:</strong>
@@ -238,6 +253,10 @@
                                                             @endif
                                                             @if ($query->publisher_name)
                                                                 <strong>Publisher:</strong> {{ $query->publisher_name }}<br>
+                                                            @endif
+                                                            @if ($query->vendor)
+                                                                <strong>Requested Vendor:</strong>
+                                                                {{ $query->vendor->vendorbusinessdetails->shop_name ?? $query->vendor->user->name ?? ('Vendor #' . $query->vendor->id) }}<br>
                                                             @endif
                                                             @if ($query->message)
                                                                 <strong>Message:</strong> {{ $query->message }}
@@ -322,8 +341,7 @@
                                                         </div>
                                                     @else
                                                         <!-- Reply Form - Always visible unless resolved -->
-                                                        <div
-                                                            style="background: white; padding: 20px; border-radius: 6px; border: 2px solid #e5e5e5; margin-top: 15px;">
+                                                        <div class="reply-box">
                                                             <h5
                                                                 style="margin-bottom: 15px; color: #333; display: flex; align-items: center;">
                                                                 <span style="margin-right: 10px;">💬</span>
@@ -398,6 +416,21 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectedQueryId = @json($selectedQueryId ?? 0);
+        if (selectedQueryId) {
+            const target = document.getElementById('query-' + selectedQueryId);
+            if (target) {
+                setTimeout(function() {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }, 200);
+            }
+        }
+    });
+
     function expandAndFocusReply(queryId) {
         // Find the accordion button and collapse element
         const headingId = 'heading' + queryId;

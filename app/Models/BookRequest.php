@@ -15,6 +15,7 @@ class BookRequest extends Model
         'message',
         'admin_reply',
         'requested_by_user',
+        'vendor_id',
         'status',
     ];
 
@@ -22,6 +23,12 @@ class BookRequest extends Model
     {
         return $this->belongsTo(User::class, 'requested_by_user');
     }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class, 'vendor_id');
+    }
+
     public function replies()
     {
         return $this->hasMany(BookRequestReply::class, 'book_request_id')->orderBy('created_at', 'asc');

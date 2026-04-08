@@ -8,14 +8,33 @@ use App\Models\BookRequestReply;
 use App\Models\HeaderLogo;
 use App\Models\Notification;
 use App\Models\User;
+use App\Models\Vendor;
 use Illuminate\Http\Request;
 use App\Models\Language;
 use App\Models\Product;
 use App\Models\Section;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class BookRequestController extends Controller
 {
+    private function getMatchingVendorsForUser($user)
+    {
+        if (empty($user->pincode)) {
+            return collect();
+        }
+
+        return Vendor::with(['user', 'vendorbusinessdetails'])
+            ->where(function ($query) use ($user) {
+                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($user) {
+                    $businessQuery->where('shop_pincode', $user->pincode);
+                })->orWhereHas('user', function ($userQuery) use ($user) {
+                    $userQuery->where('pincode', $user->pincode);
+                });
+            })
+            ->get();
+    }
+
     /**
      * User-side search page with "request a book" form.
      */
@@ -45,19 +64,41 @@ class BookRequestController extends Controller
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+
         $request->validate([
             'book_title'     => 'required|string|max:255',
             'author_name'    => 'nullable|string|max:255',
             'publisher_name' => 'nullable|string|max:255',
             'message'        => 'nullable|string|max:1000',
+            'vendor_id'      => ['required', Rule::exists('vendors', 'id')],
         ]);
 
-        BookRequest::create([
+        if (empty($user->pincode)) {
+            return redirect()->back()->with('error', 'Please update your pincode in profile before requesting a book.');
+        }
+
+        $isVendorMatchedByPincode = Vendor::where('id', $request->vendor_id)
+            ->where(function ($query) use ($user) {
+                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($user) {
+                    $businessQuery->where('shop_pincode', $user->pincode);
+                })->orWhereHas('user', function ($userQuery) use ($user) {
+                    $userQuery->where('pincode', $user->pincode);
+                });
+            })
+            ->exists();
+
+        if (!$isVendorMatchedByPincode) {
+            return redirect()->back()->with('error', 'Selected vendor is not available for your pincode.');
+        }
+
+        $bookRequest = BookRequest::create([
             'book_title'        => $request->book_title,
             'author_name'       => $request->author_name,
             'publisher_name'    => $request->publisher_name,
             'message'           => $request->message,
             'requested_by_user' => Auth::id(),
+            'vendor_id'         => $request->vendor_id,
         ]);
 
         Notification::create([
@@ -69,7 +110,8 @@ class BookRequestController extends Controller
             'is_read' => false,
         ]);
 
-        return redirect()->back()->with('success', 'Your book request has been submitted!');
+        return redirect()->route('student.query.index', ['query_id' => $bookRequest->id])
+            ->with('success', 'Your book request has been submitted!');
     }
 
     /**
@@ -80,7 +122,7 @@ class BookRequestController extends Controller
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $requestedBooks = BookRequest::where('requested_by_user', Auth::id())
-            ->with('replies')
+            ->with(['replies', 'vendor.user', 'vendor.vendorbusinessdetails'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -109,14 +151,32 @@ class BookRequestController extends Controller
         return redirect()->back()->with('success', 'Reply sent successfully!');
     }
 
-    public function indexqueries()
+    public function indexqueries(Request $request)
     {
         $queries = BookRequest::where('requested_by_user', Auth::id())
-            ->with('replies')
+            ->with(['replies', 'vendor.user', 'vendor.vendorbusinessdetails'])
             ->orderBy('created_at', 'desc')
             ->get();
+        $selectedQueryId = (int) $request->query('query_id', 0);
+        $selectedQuery = null;
+        if ($queries->isNotEmpty()) {
+            $selectedQuery = $selectedQueryId > 0
+                ? $queries->firstWhere('id', $selectedQueryId)
+                : $queries->first();
+        }
+
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        return view('user.book.myqueries', compact('queries', 'logos', 'headerLogo'));
+        return view('user.book.myqueries', compact('queries', 'logos', 'headerLogo', 'selectedQueryId', 'selectedQuery'));
+    }
+
+    public function raiseQueryPage()
+    {
+        $user = Auth::user();
+        $matchingVendors = $this->getMatchingVendorsForUser($user);
+        $logos = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
+
+        return view('user.book.raisequery', compact('matchingVendors', 'logos', 'headerLogo'));
     }
 }
