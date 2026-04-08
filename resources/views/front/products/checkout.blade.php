@@ -741,6 +741,7 @@
     </div>
     </div>
 
+    @section('scripts')
     <script>
         $(document).ready(function() {
             function calculateTotals() {
@@ -939,4 +940,5 @@
             $('#addressModalLabel').text('Add New Address');
         }
     </script>
+    @endsection
 @endsection

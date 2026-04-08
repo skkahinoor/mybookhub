@@ -31,6 +31,7 @@ class AccountController extends Controller
         ])->find(Auth::id());
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
+        $addresses = \App\Models\UserAddress::where('user_id', Auth::id())->orderBy('is_default', 'desc')->get();
 
         // Compute simple profile completion percentage
         $completionFields = [
@@ -69,7 +70,7 @@ class AccountController extends Controller
                     'district_id' => 'nullable|exists:districts,id',
                     'block_id'    => 'nullable|exists:blocks,id',
                     'mobile'      => 'required|numeric|digits:10',
-                    'pincode'     => 'required|digits:6',
+                    'pincode'     => 'nullable|digits:6',
                     'institution_id' => 'nullable|exists:institution_managements,id',
                     'education_level_id' => 'nullable|exists:sections,id',
                     'board_id'       => 'nullable|exists:categories,id',
@@ -82,23 +83,28 @@ class AccountController extends Controller
                 ]);
 
                 $user = User::where('id', Auth::id())->first();
-                $user->update([
+                $updateData = [
                     'email'       => $validated['email'],
                     'name'        => $validated['name'],
                     'phone'       => $validated['mobile'],
-                    'country_id'  => $validated['country_id'] ?? null,
-                    'state_id'    => $validated['state_id'] ?? null,
-                    'district_id' => $validated['district_id'] ?? null,
-                    'block_id'    => $validated['block_id'] ?? null,
-                    'pincode'     => $validated['pincode'],
-                    'address'     => $validated['address'] ?? null,
                     'institution_id' => $validated['institution_id'] ?? null,
                     'bank_name'   => $validated['bank_name'] ?? null,
                     'account_holder_name' => $validated['account_holder_name'] ?? null,
                     'account_number' => $validated['account_number'] ?? null,
                     'ifsc_code'   => $validated['ifsc_code'] ?? null,
                     'upi_id'      => $validated['upi_id'] ?? null,
-                ]);
+                ];
+
+                // Only update location fields if they exist in the request
+                // (Though they were removed from the form, we keep this for compatibility)
+                if ($request->has('country_id')) $updateData['country_id'] = $validated['country_id'];
+                if ($request->has('state_id')) $updateData['state_id'] = $validated['state_id'];
+                if ($request->has('district_id')) $updateData['district_id'] = $validated['district_id'];
+                if ($request->has('block_id')) $updateData['block_id'] = $validated['block_id'];
+                if ($request->has('pincode')) $updateData['pincode'] = $validated['pincode'];
+                if ($request->has('address')) $updateData['address'] = $validated['address'];
+
+                $user->update($updateData);
 
                 // Update academic profile
                 $profileData = [
@@ -163,7 +169,7 @@ class AccountController extends Controller
             }
         }
 
-        return view('user.profile.accountdetails', compact('user', 'countries', 'institutions', 'sections', 'profileCompletion', 'logos', 'headerLogo'));
+        return view('user.profile.accountdetails', compact('user', 'countries', 'institutions', 'sections', 'profileCompletion', 'logos', 'headerLogo', 'addresses'));
     }
 
     public function updateProfile(Request $request)
