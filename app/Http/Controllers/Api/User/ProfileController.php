@@ -165,36 +165,10 @@ class ProfileController extends Controller
 
         $user->assignRole($role);
 
-        // Credit referrer if applicable
-        if ($referredBy) {
-            $referrerUser = User::find($referredBy);
-            if ($referrerUser) {
-                $bonusAmount = 50; // Referral registration bonus
-                $referrerUser->wallet_balance += $bonusAmount;
-                $referrerUser->save();
-
-                WalletTransaction::create([
-                    'user_id' => $referrerUser->id,
-                    'amount' => $bonusAmount,
-                    'type' => 'credit',
-                    'description' => 'Referral registration bonus for ' . $user->name,
-                ]);
-
-                Notification::create([
-                    'type' => 'wallet_credit',
-                    'title' => 'Referral Bonus Received!',
-                    'message' => "You earned ₹{$bonusAmount} because {$user->name} registered using your referral link.",
-                    'related_id' => $referrerUser->id,
-                    'related_type' => 'App\Models\User',
-                    'is_read' => false,
-                ]);
-            }
-        }
-
         Notification::create([
             'type' => 'student_registration',
             'title' => 'New Student Registered',
-            'message' => "Student {$name} has registered successfully.",
+            'message' => 'A new student ' . $user->name . ' has registered.',
             'related_id' => $user->id,
             'related_type' => 'App\Models\User',
             'is_read' => false,
