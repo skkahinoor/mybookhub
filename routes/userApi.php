@@ -51,6 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/profile/address', [ProfileController::class, 'updateAddress']);
     Route::post('/user/profile/bank-info', [ProfileController::class, 'updateBankInfo']);
     Route::post('/user/change-password', [ProfileController::class, 'changePassword']);
+    Route::get('/user/referrals', [ProfileController::class, 'referrals']);
 
     // Multiple Address Routes
     Route::get('/user/addresses', [\App\Http\Controllers\Api\User\AddressController::class, 'index']);

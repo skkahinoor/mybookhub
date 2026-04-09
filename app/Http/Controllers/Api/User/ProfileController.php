@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
 use App\Models\Notification;
+use App\Models\WalletTransaction;
+use App\Models\HeaderLogo;
 use Spatie\Permission\Models\Role;
 
 class ProfileController extends Controller
@@ -511,5 +513,49 @@ class ProfileController extends Controller
             'message' => 'Bank details updated successfully',
             'data' => clone $this->getUpdatedUser($user->id)
         ], 200);
+    }
+
+    public function referrals(Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not authenticated',
+            ], 401);
+        }
+
+        // Generate referral code if not exists
+        if (empty($user->referral_code)) {
+            $user->referral_code = strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
+            $user->save();
+        }
+
+        // Get users referred by this user
+        $referrals = User::where('referred_by', $user->id)
+            ->select('id', 'name', 'phone', 'created_at', 'profile_image')
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        // Calculate total earnings from referrals
+        $totalReferralEarnings = WalletTransaction::where('user_id', $user->id)
+            ->where('type', 'credit')
+            ->where('description', 'LIKE', 'Referral commission%')
+            ->sum('amount');
+
+        $referralCount = User::where('referred_by', $user->id)->count();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Referrals fetched successfully',
+            'data' => [
+                'referrals' => $referrals,
+                'referral_count' => $referralCount,
+                'total_referral_earnings' => (float) $totalReferralEarnings,
+                'referral_code' => $user->referral_code,
+                'referral_link' => url('/register?ref=' . $user->referral_code)
+            ]
+        ]);
     }
 }
