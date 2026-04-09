@@ -196,44 +196,6 @@ class IndexController extends Controller
             ->take(3)
             ->get();
 
-        // Best Sellers
-        $bestSellers = Product::whereHas('attributes', function($q) {
-                $q->where('status', 1);
-            })
-            ->when($condition !== 'all', function ($q) use ($condition) {
-                $q->where('condition', $condition);
-            })
-            ->where('status', 1)
-            ->inRandomOrder()
-            ->get();
-
-        // Discounted Products
-        $discountedProducts = Product::with(['authors'])
-            ->whereHas('attributes', function($q) {
-                $q->where('status', 1)->where('product_discount', '>=', 20);
-            })
-            ->where('status', 1)
-            ->when($condition !== 'all', function ($q) use ($condition) {
-                $q->where('condition', $condition);
-            })
-            ->get();
-
-        // Featured Products
-        $featuredProducts = Product::with(['authors'])
-            ->whereHas('attributes', function($q) {
-                $q->where('status', 1);
-            })
-            ->where('status', 1)
-            ->when($condition !== 'all', function ($q) use ($condition) {
-                $q->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($q) {
-                $q->where('language_id', session('language'));
-            })
-            ->limit(10)
-            ->get();
-
-
         $meta_title       = 'BookHub - The Only Hub For Students';
         $meta_description = 'The cross platform where students meets their career through books.';
         $meta_keywords    = 'eshop website, online shopping, multi vendor e-commerce';
@@ -292,9 +254,6 @@ class IndexController extends Controller
             'fixBanners',
             'newProducts',
             'footerProducts',
-            'bestSellers',
-            'discountedProducts',
-            'featuredProducts',
             'meta_title',
             'meta_description',
             'meta_keywords',
