@@ -76,6 +76,10 @@ class ProfileController extends Controller
         Cache::put('student_reg_email_' . $request->phone, $request->email, now()->addMinutes(10));
         Cache::put('student_reg_phone_' . $request->phone, $request->phone, now()->addMinutes(10));
         Cache::put('student_reg_password_' . $request->phone, Hash::make($request->password), now()->addMinutes(10));
+        
+        if ($request->has('referral_code')) {
+            Cache::put('student_reg_referral_' . $request->phone, $request->referral_code, now()->addMinutes(10));
+        }
 
         $otp = rand(100000, 999999);
 
@@ -123,6 +127,7 @@ class ProfileController extends Controller
         $email = Cache::get('student_reg_email_' . $request->phone);
         $phone = Cache::get('student_reg_phone_' . $request->phone);
         $password = Cache::get('student_reg_password_' . $request->phone);
+        $referralCode = Cache::get('student_reg_referral_' . $request->phone);
 
         if (!$phone) {
             return response()->json([
@@ -140,6 +145,14 @@ class ProfileController extends Controller
             ]);
         }
 
+        $referredBy = null;
+        if ($referralCode) {
+            $referrer = User::where('referral_code', $referralCode)->first();
+            if ($referrer) {
+                $referredBy = $referrer->id;
+            }
+        }
+
         $user = User::create([
             'name' => $name,
             'email' => $email,
@@ -147,9 +160,36 @@ class ProfileController extends Controller
             'password' => $password,
             'role_id' => $role->id,
             'status' => 1,
+            'referred_by' => $referredBy,
         ]);
 
         $user->assignRole($role);
+
+        // Credit referrer if applicable
+        if ($referredBy) {
+            $referrerUser = User::find($referredBy);
+            if ($referrerUser) {
+                $bonusAmount = 50; // Referral registration bonus
+                $referrerUser->wallet_balance += $bonusAmount;
+                $referrerUser->save();
+
+                WalletTransaction::create([
+                    'user_id' => $referrerUser->id,
+                    'amount' => $bonusAmount,
+                    'type' => 'credit',
+                    'description' => 'Referral registration bonus for ' . $user->name,
+                ]);
+
+                Notification::create([
+                    'type' => 'wallet_credit',
+                    'title' => 'Referral Bonus Received!',
+                    'message' => "You earned ₹{$bonusAmount} because {$user->name} registered using your referral link.",
+                    'related_id' => $referrerUser->id,
+                    'related_type' => 'App\Models\User',
+                    'is_read' => false,
+                ]);
+            }
+        }
 
         Notification::create([
             'type' => 'student_registration',
@@ -554,7 +594,7 @@ class ProfileController extends Controller
                 'referral_count' => $referralCount,
                 'total_referral_earnings' => (float) $totalReferralEarnings,
                 'referral_code' => $user->referral_code,
-                'referral_link' => url('/register?ref=' . $user->referral_code)
+                'referral_link' => 'https://mybookhub.in?ref=' . $user->referral_code
             ]
         ]);
     }
