@@ -27,7 +27,17 @@
 
     <!-- FAVICONS ICON -->
     @if (!empty($logos))
-        <link rel="icon" type="image/x-icon" href="{{ asset('uploads/favicons/' . $logos->first()->favicon) ?? ''}}">
+        @php
+            $favicon = null;
+            if ($logos instanceof \Illuminate\Database\Eloquent\Model) {
+                $favicon = $logos->favicon;
+            } else {
+                $favicon = optional($logos->first())->favicon;
+            }
+        @endphp
+        @if(filled($favicon))
+            <link rel="icon" type="image/x-icon" href="{{ asset('uploads/favicons/' . $favicon) }}">
+        @endif
     @endif
 
 
