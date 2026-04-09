@@ -261,9 +261,15 @@
             transition: all 0.2s ease;
         }
 
-        .payment-item-modern input:checked+.payment-box-modern {
+        .payment-item-modern input:checked:not(:disabled)+.payment-box-modern {
             border-color: var(--primary-color);
             background: #eff6ff;
+        }
+
+        .payment-item-modern input:disabled+.payment-box-modern {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f8fafc;
         }
 
         .payment-label-modern {
@@ -463,7 +469,7 @@
                                 </div>
 
                                 <!-- Payment Method Card -->
-                                <div class="modern-card mt-4">
+                                <div class="modern-card">
                                     <div class="card-header-modern">
                                         <h4><i class="fas fa-credit-card"></i> Payment Method</h4>
                                     </div>
@@ -482,7 +488,7 @@
                                                                 receive</small>
                                                         </div>
                                                     </div>
-                                                    <span class="payment-status-badge">Available</span>
+                                                    <span class="payment-status-badge cod-badge">Available</span>
                                                 </label>
                                             </div>
 
@@ -519,7 +525,7 @@
                                                     <div class="d-flex align-items-center gap-2">
                                                         <img src="https://razorpay.com/favicon.png" width="16"
                                                             alt="RZP">
-                                                        <span class="payment-status-badge">Secure</span>
+                                                        <span class="payment-status-badge razorpay-badge">Secure</span>
                                                     </div>
                                                 </label>
                                             </div>
@@ -558,7 +564,7 @@
                                                     @php
                                                         $getDiscountAttributePrice = \App\Models\Product::getDiscountAttributePrice(
                                                             $item['product_id'],
-                                                            $item['size'],
+                                                            null,
                                                             $item['product_attribute_id']
                                                         );
                                                         $total_price +=
@@ -570,8 +576,7 @@
                                                             class="product-img" alt="item">
                                                         <div class="product-info-modern">
                                                             <h6>{{ $item['product']['product_name'] }}</h6>
-                                                            <div class="product-meta">Qty: {{ $item['quantity'] }} | Size:
-                                                                {{ $item['size'] }}</div>
+                                                            <div class="product-meta">Qty: {{ $item['quantity'] }}</div>
                                                             <div class="product-price-modern mt-1">
                                                                 ₹{{ number_format($getDiscountAttributePrice['final_price'] * $item['quantity'], 2) }}
                                                             </div>
@@ -820,15 +825,16 @@
                     icon +
                     ' ms-2"></i>');
 
-                // Pincode availability toggle
+                // Always show all payment methods as available
                 if (addressEl.length > 0) {
-                    var cod = parseInt(addressEl.attr('codpincodeCount')) || 0;
-                    var prepaid = parseInt(addressEl.attr('prepaidpincodeCount')) || 0;
-                    if (cod > 0) $('.codMethod').show();
-                    else $('.codMethod').hide();
-                    if (prepaid > 0) $('.razorpayMethod').show();
-                    else $('.razorpayMethod').hide();
-                    // Pickup is always available (doesn't depend on delivery pincodes)
+                    $('.codMethod').show();
+                    $('#cash-on-delivery').prop('disabled', false);
+                    $('.cod-badge').text('Available').css({background: '#f1f5f9', color: 'var(--secondary-color)'});
+
+                    $('.razorpayMethod').show();
+                    $('#razorpay').prop('disabled', false);
+                    $('.razorpay-badge').text('Secure').css({background: '#f1f5f9', color: 'var(--secondary-color)'});
+
                     $('.pickupMethod').show();
                 }
             }
