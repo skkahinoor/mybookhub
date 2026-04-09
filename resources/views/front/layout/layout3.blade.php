@@ -824,12 +824,14 @@
         <!-- Premium Header -->
         <header class="layout-app-header">
             <div class="header-logo">
-                @if (!empty($logos))
-                    <a href="{{ url('/') }}">
-                        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
-                    </a>
+                @php
+                    $logo = $logos ? $logos->first() : null;
+                @endphp
+
+                @if ($logo && $logo->logo)
+                    <img src="{{ asset('uploads/logos/' . $logo->logo) }}" alt="BookHub">
                 @else
-                    <h4 class="mb-0 fw-bold">BookHub</h4>
+                    <h4>BookHub</h4>
                 @endif
             </div>
             <div class="category-menu-wrapper header-filters">
@@ -1009,10 +1011,13 @@
                         <div class="col-xl-3 col-lg-12 wow fadeInUp" data-wow-delay="0.1s">
                             <div class="widget widget_about">
                                 <div class="footer-logo logo-white">
-                                    @if (!empty($logos))
+                                    @php
+                                        $logo = $logos ? $logos->first() : null;
+                                    @endphp
+
+                                    @if ($logo && $logo->logo)
                                         <a href="{{ url('/') }}">
-                                            <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
-                                                alt="BookHub">
+                                            <img src="{{ asset('uploads/logos/' . $logo->logo) }}" alt="BookHub">
                                         </a>
                                     @endif
 
@@ -1197,7 +1202,7 @@
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form id="registerForm" method="POST" action="{{ route('student.register') }}">
+                <form id="registerForm" method="POST" action="{{ route('student.registerstore') }}">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="registerModalLabel">Register</h5>

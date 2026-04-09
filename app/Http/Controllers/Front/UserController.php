@@ -69,31 +69,18 @@ class UserController extends Controller
             return response()->json(['type' => 'error', 'errors' => $validator->messages()]);
         }
 
-        // Save the user
-        $user           = new User;
+        // IMPORTANT:
+        // Do NOT create the User until OTP is verified.
+        // Store pending registration details in session and create the User in verifyOtp().
         // Prefer dynamic 'student' role; fallback to legacy 'user' role if needed
         $roleId = \App\Helpers\RoleHelper::studentId() ?? \App\Helpers\RoleHelper::userId();
-        $user->role_id  = $roleId;
-        $user->name     = $data['name'];
-        $user->phone   = $data['phone'];
-        $user->email    = $data['email'];
-        $user->password = bcrypt($data['password']);
-        $user->status   = 0; // inactive until OTP confirmed
-        $user->save();
-
-        // Sync Spatie role assignment with role_id
-        if ($roleId) {
-            $spatieRole = Role::find($roleId);
-            if ($spatieRole) {
-                $user->assignRole($spatieRole);
-                // If this is a student registration, also create an empty academic profile row
-                if ($spatieRole->name === 'student') {
-                    AcademicProfile::firstOrCreate([
-                        'user_id' => $user->id,
-                    ]);
-                }
-            }
-        }
+        Session::put('pending_registration', [
+            'name'           => $data['name'],
+            'email'          => $data['email'],
+            'phone'          => $data['phone'],
+            'password_hash' => bcrypt($data['password']),
+            'role_id'        => $roleId,
+        ]);
 
         // Generate and Send OTP
         $otp = rand(100000, 999999);
@@ -151,18 +138,61 @@ class UserController extends Controller
 
             $otpCount = Otp::where(['phone' => $phone, 'otp' => $data['otp']])->count();
             if ($otpCount > 0) {
-                // Activate User
-                User::where('phone', $phone)->update(['status' => 1]);
+                $pending = Session::get('pending_registration');
 
-                // Clear OTP
+                // Legacy fallback:
+                // If pending registration is missing, but the user already exists (old flow),
+                // activate and login the user.
+                if (!is_array($pending) || empty($pending['phone']) || ($pending['phone'] ?? null) !== $phone) {
+                    $existingUser = User::where('phone', $phone)->first();
+                    if (! $existingUser) {
+                        return redirect()->back()->with('error_message', 'Registration session expired. Please register again.');
+                    }
+
+                    $existingUser->status = 1;
+                    $existingUser->save();
+
+                    Auth::login($existingUser);
+                } else {
+                    // Final uniqueness safety check (in case user registered/activated in parallel).
+                    if (User::where('phone', $phone)->exists()) {
+                        return redirect()->back()->with('error_message', 'This phone number is already registered.');
+                    }
+
+                    if (!empty($pending['email']) && User::where('email', $pending['email'])->exists()) {
+                        return redirect()->back()->with('error_message', 'This email is already registered.');
+                    }
+
+                    $roleId = $pending['role_id'] ?? null;
+
+                    $user = User::create([
+                        'name'     => $pending['name'],
+                        'phone'    => $phone,
+                        'email'    => $pending['email'],
+                        'password' => $pending['password_hash'],
+                        'role_id'  => $roleId,
+                        'status'   => 1, // Activated after OTP verified
+                    ]);
+
+                    // Assign role + create academic profile (only for student role).
+                    if ($roleId) {
+                        $spatieRole = Role::find($roleId);
+                        if ($spatieRole) {
+                            $user->assignRole($spatieRole);
+                            if ($spatieRole->name === 'student') {
+                                AcademicProfile::firstOrCreate([
+                                    'user_id' => $user->id,
+                                ]);
+                            }
+                        }
+                    }
+
+                    Auth::login($user);
+                }
+
+                // Clear OTP + pending session only after successful verification.
                 Otp::where('phone', $phone)->delete();
-
-                // Login the user
-                $user = User::where('phone', $phone)->first();
-                Auth::login($user);
-
-                // Clear session
-                Session::forget('registration_phone');
+                Session::forget(['registration_phone', 'pending_registration']);
 
                 return redirect('/')->with('success_message', 'Registration confirmed! Welcome to MyBookHub.');
             } else {

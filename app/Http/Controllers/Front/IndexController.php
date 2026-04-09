@@ -148,25 +148,11 @@ class IndexController extends Controller
         }
 
 
-        // // Get 'condition' from query string (default to 'new' if not set or invalid)
-        // $condition = $request->query('condition');
-        // if (!in_array($condition, ['new', 'old'])) {
-        //     $condition = 'new';
-        // }
 
         $logos    = HeaderLogo::first();
         $language = Language::get();
         $sections = Section::all();
-        // $newProducts = Product::with(['authors', 'publisher'])
-        //     ->when($condition !== 'all', function ($query) use ($condition) {
-        //         $query->where('condition', $condition);
-        //     })
-        //     ->when(session('language') && session('language') !== 'all', function ($query) {
-        //         $query->where('language_id', session('language'));
-        //     })
-        //     ->where('status', 1)
-        //     ->orderBy('id', 'desc')
-        //     ->get();
+       
 
         $newProducts = Product::with(['authors', 'publisher'])
             ->whereHas('attributes', function($q) {
@@ -209,44 +195,6 @@ class IndexController extends Controller
             ->orderBy('id', 'Desc')
             ->take(3)
             ->get();
-
-        // Best Sellers
-        $bestSellers = Product::whereHas('attributes', function($q) {
-                $q->where('status', 1);
-            })
-            ->when($condition !== 'all', function ($q) use ($condition) {
-                $q->where('condition', $condition);
-            })
-            ->where('status', 1)
-            ->inRandomOrder()
-            ->get();
-
-        // Discounted Products
-        $discountedProducts = Product::with(['authors'])
-            ->whereHas('attributes', function($q) {
-                $q->where('status', 1)->where('product_discount', '>=', 20);
-            })
-            ->where('status', 1)
-            ->when($condition !== 'all', function ($q) use ($condition) {
-                $q->where('condition', $condition);
-            })
-            ->get();
-
-        // Featured Products
-        $featuredProducts = Product::with(['authors'])
-            ->whereHas('attributes', function($q) {
-                $q->where('status', 1);
-            })
-            ->where('status', 1)
-            ->when($condition !== 'all', function ($q) use ($condition) {
-                $q->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($q) {
-                $q->where('language_id', session('language'));
-            })
-            ->limit(10)
-            ->get();
-
 
         $meta_title       = 'BookHub - The Only Hub For Students';
         $meta_description = 'The cross platform where students meets their career through books.';
@@ -306,9 +254,6 @@ class IndexController extends Controller
             'fixBanners',
             'newProducts',
             'footerProducts',
-            'bestSellers',
-            'discountedProducts',
-            'featuredProducts',
             'meta_title',
             'meta_description',
             'meta_keywords',
