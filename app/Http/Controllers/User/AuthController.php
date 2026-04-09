@@ -30,9 +30,12 @@ class AuthController extends Controller
     }
     public function loginStore(Request $request)
     {
+        // Student module: phone + password ONLY (no email login)
         $validator = Validator::make($request->all(), [
-            'login'    => 'required|string|max:150', // email or phone
-            'password' => 'required|min:8',
+            'login'    => 'required|digits:10',
+            'password' => 'required|min:6',
+        ], [
+            'login.digits' => 'Mobile number must be 10 digits.',
         ]);
 
         if ($validator->fails()) {
@@ -40,20 +43,12 @@ class AuthController extends Controller
                 ->with('error', $validator->errors()->first());
         }
 
-        $loginInput = trim($request->login);
-
-        // Detect email or phone
-        if (filter_var($loginInput, FILTER_VALIDATE_EMAIL)) {
-            $credentials = [
-                'email'    => $loginInput,
-                'password' => $request->password,
-            ];
-        } else {
-            $credentials = [
-                'phone'    => $loginInput,
-                'password' => $request->password,
-            ];
-        }
+        $phone = preg_replace('/\D+/', '', (string) $request->login);
+        $credentials = [
+            'phone'    => $phone,
+            'password' => (string) $request->password,
+            'status'   => 1, // only allow verified/active users
+        ];
 
         if (Auth::attempt($credentials)) {
             // Merge guest cart with user cart
@@ -78,10 +73,6 @@ class AuthController extends Controller
             'phone' => 'required|numeric|digits:10|unique:users,phone',
         ]);
 
-        // App currently requires a unique, non-null email column in `users`.
-        // For phone-only registration we generate an internal email based on phone.
-        $generatedEmail = preg_replace('/\D+/', '', (string) $request->phone) . '@bookhub.local';
-
         // Determine intended role id (priority: request, then helpers, then role names)
         $roleId = $request->input('role_id');
         if (! $roleId) {
@@ -105,7 +96,8 @@ class AuthController extends Controller
         // Store pending registration details in session and create the User in Front\UserController@verifyOtp().
         Session::put('pending_registration', [
             'name'           => $request->name,
-            'email'          => $generatedEmail,
+            // Student module: no email concept
+            'email'          => null,
             'phone'          => $request->phone,
             'password_hash' => Hash::make($request->password),
             'role_id'        => $roleId,
