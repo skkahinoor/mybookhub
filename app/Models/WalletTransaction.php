@@ -178,13 +178,13 @@ class WalletTransaction extends Model
                         'order_id'    => $order->id,
                         'amount'      => $referralCommission,
                         'type'        => 'credit',
-                        'description' => 'Referral commission for user ID: ' . $user->id . ' (Order #' . $order->id . ')',
+                        'description' => 'Referral cashback for user ID: ' . $user->id . ' (Order #' . $order->id . ')',
                     ]);
 
                     \App\Models\Notification::create([
                         'type' => 'wallet_credit',
-                        'title' => 'Referral Commission!',
-                        'message' => '₹50 referral commission has been credited to your wallet for ' . $user->name . '\'s purchase (Order #' . $order->id . ').',
+                        'title' => 'Referral Cashback Received!',
+                        'message' => '₹50 referral cashback has been credited to your wallet for ' . $user->name . '\'s first purchase (Order #' . $order->id . ').',
                         'related_id' => (int) $referrer->id,
                         'related_type' => User::class,
                         'is_read' => false,
