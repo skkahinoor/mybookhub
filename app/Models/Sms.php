@@ -14,23 +14,19 @@ class Sms extends Model
     /**
      * Send SMS using MSG91
      */
-    public static function sendSms($mobile, $otp)
-    {
-        // Normalize number
+    public static function sendSms($mobile, $otp) {
+        // Normalize to Indian format with country code 91
         $to = '91' . preg_replace('/[^0-9]/', '', $mobile);
 
         try {
-            $client = new Client([
-                'timeout' => 10,          // ✅ total timeout (10 sec)
-                'connect_timeout' => 5,   // ✅ connection timeout
-            ]);
+            $client = new Client();
 
             $payload = [
                 "template_id" => config('services.msg91.template_id'),
-                "recipients" => [
+                "recipients"  => [
                     [
                         "mobiles" => $to,
-                        "var1" => $otp
+                        "var1"    => $otp
                     ],
                 ],
             ];
@@ -47,10 +43,9 @@ class Sms extends Model
             ]);
 
             $body = json_decode($response->getBody()->getContents(), true);
-
             Log::info("MSG91 Response:", [
                 'status' => $response->getStatusCode(),
-                'body' => $body,
+                'body'   => $body,
             ]);
 
             if (isset($body['type']) && $body['type'] === 'error') {
@@ -58,17 +53,8 @@ class Sms extends Model
             }
 
             return true;
-
-        } catch (\GuzzleHttp\Exception\ConnectException $e) {
-            Log::error("MSG91 CONNECTION TIMEOUT: " . $e->getMessage());
-            return false;
-
-        } catch (\GuzzleHttp\Exception\RequestException $e) {
-            Log::error("MSG91 REQUEST ERROR: " . $e->getMessage());
-            return false;
-
         } catch (\Exception $e) {
-            Log::error("MSG91 GENERAL ERROR: " . $e->getMessage());
+            Log::error("MSG91 ERROR: " . $e->getMessage());
             return false;
         }
     }
