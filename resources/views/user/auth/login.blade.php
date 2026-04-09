@@ -52,7 +52,7 @@
                                 @csrf
                                 <div class="form-group">
                                     <input type="text" class="form-control form-control-lg" id="exampleInputEmail1"
-                                        name="login" placeholder="Email or Mobile number" value="{{ old('login') }}">
+                                        name="login" placeholder="Mobile number" value="{{ old('login') }}">
                                 </div>
                                 <div class="form-group">
                                     <input type="password" class="form-control form-control-lg"
