@@ -33,24 +33,33 @@
                     <div class="col-lg-4 mx-auto">
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <div class="brand-logo">
-                                <img src="{{ asset('uploads/logos/' . $headerLogo->logo) }}" alt="logo">
+                                @if(isset($headerLogo) && filled($headerLogo->logo))
+                                    <img src="{{ asset('uploads/logos/' . $headerLogo->logo) }}" alt="logo">
+                                @else
+                                    <span class="h4 mb-0 font-weight-bold text-primary">BookHub</span>
+                                @endif
                             </div>
                             <h4>New here?</h4>
                             <h6 class="font-weight-light">Signing up is easy. It only takes a few steps</h6>
                             <form class="pt-3" action="{{ route('student.registerstore') }}" method="post">
                                 @csrf
                                 <input type="hidden" name="role_id" value="{{ \App\Helpers\RoleHelper::studentId() ?? \App\Helpers\RoleHelper::userId() }}">
+                                @if ($errors->any())
+                                    <div class="alert alert-danger">
+                                        <ul class="mb-0 pl-3">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
                                 <div class="form-group">
                                     <input type="text" class="form-control form-control-lg"
-                                        id="exampleInputUsername1" name="name" placeholder="Username">
+                                        id="exampleInputUsername1" name="name" value="{{ old('name') }}" placeholder="Username">
                                 </div>
-                                {{-- <div class="form-group">
-                                    <input type="email" class="form-control form-control-lg" id="exampleInputEmail1" name="email"
-                                        placeholder="Email">
-                                </div> --}}
                                 <div class="form-group">
                                     <input type="number" class="form-control form-control-lg" id="exampleInputPhone1" name="phone"
-                                        placeholder="Mobile Number">
+                                        value="{{ old('phone') }}" placeholder="Mobile Number">
                                 </div>
 
                                 <div class="form-group">

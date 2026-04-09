@@ -74,10 +74,13 @@ class AuthController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
             'phone' => 'required|numeric|digits:10|unique:users,phone',
         ]);
+
+        // App currently requires a unique, non-null email column in `users`.
+        // For phone-only registration we generate an internal email based on phone.
+        $generatedEmail = preg_replace('/\D+/', '', (string) $request->phone) . '@bookhub.local';
 
         // Determine intended role id (priority: request, then helpers, then role names)
         $roleId = $request->input('role_id');
@@ -99,7 +102,7 @@ class AuthController extends Controller
 
         $user = User::create([
             'name' => $request->name,
-            'email' => $request->email,
+            'email' => $generatedEmail,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'role_id' => $roleId,
