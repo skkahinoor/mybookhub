@@ -3,6 +3,10 @@
 
 <head>
     <!-- Required meta tags -->
+    @php
+        use App\Models\HeaderLogo;
+        $headerLogo = HeaderLogo::first();
+    @endphp
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>BookHub - Login</title>
@@ -16,11 +20,9 @@
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ asset('user/css/vertical-layout-light/style.css') }}">
     <!-- endinject -->
-    <link rel="shortcut icon" href="{{ asset('uploads/logos/' . $headerLogo->favicon) }}" />
-    @php
-        use App\Models\HeaderLogo;
-        $headerLogo = HeaderLogo::first();
-    @endphp
+    @if(isset($headerLogo) && filled($headerLogo->favicon))
+        <link rel="shortcut icon" href="{{ asset('uploads/logos/' . $headerLogo->favicon) }}" />
+    @endif
 </head>
 
 <body>
@@ -31,7 +33,11 @@
                     <div class="col-lg-4 mx-auto">
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <div class="brand-logo">
-                                <img src="{{ asset('uploads/logos/' . $headerLogo->logo) }}" alt="logo">
+                                @if(isset($headerLogo) && filled($headerLogo->logo))
+                                    <img src="{{ asset('uploads/logos/' . $headerLogo->logo) }}" alt="logo">
+                                @else
+                                    <span class="h4 mb-0 font-weight-bold text-primary">BookHub</span>
+                                @endif
                             </div>
                             <h4>Hello! let's get started</h4>
                             <h6 class="font-weight-light">Sign in to continue.</h6>

@@ -21,7 +21,9 @@
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ asset('user/css/vertical-layout-light/style.css') }}">
     <!-- endinject -->
-    <link rel="shortcut icon" href="{{ asset('uploads/logos/' . $headerLogo->favicon) }}" />
+    @if(isset($headerLogo) && filled($headerLogo->favicon))
+        <link rel="shortcut icon" href="{{ asset('uploads/logos/' . $headerLogo->favicon) }}" />
+    @endif
 
     <style>
         /* Global modern skin for Student/User panel */

@@ -1,7 +1,25 @@
 <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
     <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-        <a class="navbar-brand brand-logo mr-5" href="{{ url('/') }}"><img
-                src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" class="mr-2" alt="logo" /></a>
+        @php
+            $navbarLogo = null;
+            if (isset($logos)) {
+                if ($logos instanceof \Illuminate\Database\Eloquent\Model) {
+                    $navbarLogo = $logos->logo;
+                } else {
+                    $navbarLogo = optional($logos->first())->logo;
+                }
+            }
+            if (! filled($navbarLogo) && isset($headerLogo) && filled($headerLogo->logo)) {
+                $navbarLogo = $headerLogo->logo;
+            }
+        @endphp
+        <a class="navbar-brand brand-logo mr-5" href="{{ url('/') }}">
+            @if(filled($navbarLogo))
+                <img src="{{ asset('uploads/logos/' . $navbarLogo) }}" class="mr-2" alt="logo" />
+            @else
+                <span class="font-weight-bold text-primary mr-2">BookHub</span>
+            @endif
+        </a>
     </div>
 
     <div class="navbar-menu-wrapper d-flex align-items-center justify-content-end">
