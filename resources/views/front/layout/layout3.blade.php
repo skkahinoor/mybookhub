@@ -913,7 +913,7 @@
                         <div class="notification-dropdown" id="notificationDropdownMain">
                             <div class="notification-header">
                                 <h6 class="notification-title">Notifications</h6>
-                               
+
                             </div>
                             <div class="notification-list">
                                 @forelse(($navNotifications ?? []) as $n)
@@ -1192,7 +1192,7 @@
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form id="registerForm" method="POST" action="{{ route('student.register') }}">
+                <form id="registerForm" method="POST" action="{{ route('student.registerstore') }}">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="registerModalLabel">Register</h5>
@@ -2106,7 +2106,7 @@
                     hideBotTyping();
                     const welcomeMsg = `👋 Hi <strong>${name.trim()}</strong>! I'm BookGenie. I can help you find any book, personalize your feed, or even help you sell your old ones. What's on your mind?`;
                     appendMessage('bot', welcomeMsg);
-                    
+
                     // Show WhatsApp option
                     setTimeout(() => {
                         const waMsg = `Need urgent help? You can also <a href="https://wa.me/91XXXXXXXXXX" target="_blank" style="color:#25D366; font-weight:700; text-decoration:none;"><i class="fab fa-whatsapp"></i> Chat with us on WhatsApp</a>`;
@@ -2186,7 +2186,7 @@
                 }
 
                 window.lastBgFilters = activeFilters;
-                
+
                 // If filters are present, we don't need text search for the subject name
                 let actualSearchQuery = Object.keys(activeFilters).length > 0 ? '' : query;
 
@@ -2209,7 +2209,7 @@
 
             window.applyBgFilters = function() {
                 if (!window.lastBgFilters) return;
-                
+
                 const params = new URLSearchParams(window.lastBgFilters);
                 params.append('bookgenie_shown', 'true');
 
@@ -2234,7 +2234,7 @@
             window.bgFlow = function(type, id, name) {
                 appendMessage('user', name);
                 showBotTyping();
-                
+
                 let url = '';
                 if (type === 'category') {
                     currentFlowFilters = { section_id: id };
@@ -2251,7 +2251,7 @@
                     .then(r => r.json())
                     .then(data => {
                         hideBotTyping();
-                        
+
                         let nextType = '';
                         let prompt = '';
                         if (type === 'category') { nextType = 'subcategory'; prompt = 'Awesome! Now select your Board:'; }
@@ -2291,10 +2291,10 @@
                                 appendMessage('bot', `I didn't find specific subjects for ${name}, but I found these books for you:`);
                                 handleChatSearch({
                                     q: name,
-                                    filters: { 
-                                        section_id: currentFlowFilters.section_id, 
+                                    filters: {
+                                        section_id: currentFlowFilters.section_id,
                                         category_id: currentFlowFilters.category_id,
-                                        subcategory_id: id 
+                                        subcategory_id: id
                                     }
                                 });
                            } else {
@@ -2331,7 +2331,7 @@
                 voiceBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    
+
                     if (voiceBtn.classList.contains('listening')) {
                         recognition.stop();
                     } else {
@@ -2380,14 +2380,14 @@
                 recognition.onerror = (event) => {
                     voiceBtn.classList.remove('listening');
                     if (event.error === 'no-speech') return; // Ignore silent timeouts
-                    
+
                     let errorMsg = "Sorry, I couldn't hear you.";
                     if (event.error === 'not-allowed') {
                         errorMsg = "🎤 Mic access blocked! Please click the icon in your address bar to allow microphone access.";
                     } else if (event.error === 'network') {
                         errorMsg = "Network error. Please check your connection.";
                     }
-                    
+
                     appendMessage('bot', errorMsg);
                 };
             } else if (voiceBtn) {
@@ -2478,7 +2478,7 @@
                 }
 
                 const queryName = names.join(', ');
-                
+
                 // Show in chat
                 document.getElementById('bgChatInput').value = '';
                 handleChatSearch({

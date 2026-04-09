@@ -100,23 +100,16 @@ class AuthController extends Controller
             }
         }
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $generatedEmail,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'role_id' => $roleId,
-            'status' => 0, // Inactive until OTP verified
+        // IMPORTANT:
+        // Do NOT create the User until OTP is verified.
+        // Store pending registration details in session and create the User in Front\UserController@verifyOtp().
+        Session::put('pending_registration', [
+            'name'           => $request->name,
+            'email'          => $generatedEmail,
+            'phone'          => $request->phone,
+            'password_hash' => Hash::make($request->password),
+            'role_id'        => $roleId,
         ]);
-        if ($role) {
-            $user->assignRole($role);
-            // If this is a student registration, also create an empty academic profile row
-            if ($role->name === 'student') {
-                AcademicProfile::firstOrCreate([
-                    'user_id' => $user->id,
-                ]);
-            }
-        }
 
         // Generate and Send OTP
         $otp = rand(100000, 999999);

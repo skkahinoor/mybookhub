@@ -205,8 +205,9 @@ $(document).ready(function () {
     });
 
     // User Registration <form> submission (in front/users/login_register.blade.php)
-    $("#registerForm").submit(function () {
+    $("#registerForm").submit(function (e) {
         // When the registration <form> is submitted
+        e.preventDefault();
 
         // Show our Preloader/Loader/Loading Page/Preloading Screen while the <form> is submitted
         $(".loader").show();
@@ -215,11 +216,16 @@ $(document).ready(function () {
 
         // return false; // DON'T SUBMIT THE FORM!!
 
+        // IMPORTANT:
+        // Don't hardcode absolute URLs like "/user/register" because production might be deployed
+        // under a subdirectory or different base path. Use the form's action if present.
+        var registerUrl = $(this).attr("action") || (baseUrl ? baseUrl + "/user/register" : "/user/register");
+
         $.ajax({
             headers: {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             }, // X-CSRF-TOKEN: https://laravel.com/docs/9.x/csrf#csrf-x-csrf-token
-            url: "/user/register", // check this route in web.php
+            url: registerUrl,
             type: "POST",
             data: formdata, // Sending name/value pairs to server with the AJAX request (AJAX call)
             success: function (resp) {
@@ -263,6 +269,7 @@ $(document).ready(function () {
             error: function () {
                 // if the AJAX request is unsuccessful
                 alert("Error");
+                $(".loader").hide();
             },
         });
     });

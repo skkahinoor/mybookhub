@@ -148,25 +148,11 @@ class IndexController extends Controller
         }
 
 
-        // // Get 'condition' from query string (default to 'new' if not set or invalid)
-        // $condition = $request->query('condition');
-        // if (!in_array($condition, ['new', 'old'])) {
-        //     $condition = 'new';
-        // }
 
         $logos    = HeaderLogo::first();
         $language = Language::get();
         $sections = Section::all();
-        // $newProducts = Product::with(['authors', 'publisher'])
-        //     ->when($condition !== 'all', function ($query) use ($condition) {
-        //         $query->where('condition', $condition);
-        //     })
-        //     ->when(session('language') && session('language') !== 'all', function ($query) {
-        //         $query->where('language_id', session('language'));
-        //     })
-        //     ->where('status', 1)
-        //     ->orderBy('id', 'desc')
-        //     ->get();
+       
 
         $newProducts = Product::with(['authors', 'publisher'])
             ->whereHas('attributes', function($q) {
