@@ -33,7 +33,11 @@
                     <div class="col-lg-4 mx-auto">
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <div class="brand-logo">
-                                <img src="{{ asset('uploads/logos/' . $headerLogo->logo) }}" alt="logo">
+                                @if($headerLogo && $headerLogo->logo)
+                                    <img src="{{ asset('uploads/logos/' . $headerLogo->logo) }}" alt="logo">
+                                @else
+                                    <img src="" alt="BookHub">
+                                @endif
                             </div>
                             <h4>New here?</h4>
                             <h6 class="font-weight-light">Signing up is easy. It only takes a few steps</h6>
