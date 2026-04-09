@@ -34,7 +34,7 @@
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <div class="brand-logo">
                                 @if($headerLogo && $headerLogo->logo)
-                                    <img src="{{ asset('uploads/logos/' . $headerLogo->logo) }}" alt="logo">
+                                    <img src="{{ asset('uploads/logos/' . $headerLogo->logo) }}" alt="BookHub">
                                 @else
                                     <img src="" alt="BookHub">
                                 @endif
