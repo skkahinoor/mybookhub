@@ -1187,7 +1187,7 @@
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form id="registerForm" method="POST" action="{{ route('student.register') }}">
+                <form id="registerForm" method="POST" action="{{ route('student.registerstore') }}">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="registerModalLabel">Register</h5>
