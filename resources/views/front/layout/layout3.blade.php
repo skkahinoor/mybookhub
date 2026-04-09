@@ -26,9 +26,9 @@
     <meta name="app-url" content="{{ config('app.url') }}">
 
     <!-- FAVICONS ICON -->
-    @if (!empty($logos))
-        <link rel="icon" type="image/x-icon" href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}">
-    @endif
+@if ($logos && $logos->first() && $logos->first()->favicon)
+    <link rel="icon" type="image/x-icon" href="{{ asset('uploads/favicons/' . $logos->first()->favicon) }}">
+@endif
 
 
     <!-- PAGE TITLE HERE -->
@@ -814,12 +814,14 @@
         <!-- Premium Header -->
         <header class="layout-app-header">
             <div class="header-logo">
-                @if (!empty($logos))
-                    <a href="{{ url('/') }}">
-                        <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub">
-                    </a>
+                @php
+                    $logo = $logos ? $logos->first() : null;
+                @endphp
+
+                @if ($logo && $logo->logo)
+                    <img src="{{ asset('uploads/logos/' . $logo->logo) }}" alt="BookHub">
                 @else
-                    <h4 class="mb-0 fw-bold">BookHub</h4>
+                    <h4>BookHub</h4>
                 @endif
             </div>
             <div class="category-menu-wrapper header-filters">
@@ -999,10 +1001,13 @@
                         <div class="col-xl-3 col-lg-12 wow fadeInUp" data-wow-delay="0.1s">
                             <div class="widget widget_about">
                                 <div class="footer-logo logo-white">
-                                    @if (!empty($logos))
+                                    @php
+                                        $logo = $logos ? $logos->first() : null;
+                                    @endphp
+
+                                    @if ($logo && $logo->logo)
                                         <a href="{{ url('/') }}">
-                                            <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}"
-                                                alt="BookHub">
+                                            <img src="{{ asset('uploads/logos/' . $logo->logo) }}" alt="BookHub">
                                         </a>
                                     @endif
 
