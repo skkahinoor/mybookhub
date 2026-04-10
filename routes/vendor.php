@@ -289,6 +289,7 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
 
         // Render admin/orders/order_details.blade.php (View Order Details page) when clicking on the View Order Details icon in admin/orders/orders.blade.php (Orders tab under Orders Management section in Admin Panel)
         Route::get('orders/{id}', 'OrderController@orderDetails');
+        Route::post('orders/{id}/pickup-mark-delivered', 'OrderController@markPickupOrderDelivered');
 
 
         // Sales Concept (Vendor only)

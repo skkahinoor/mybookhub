@@ -277,6 +277,12 @@
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Ordered Products</h4>
+                            @php
+                                $pm = strtolower(trim((string) ($orderDetails['payment_method'] ?? '')));
+                                $pg = strtolower(trim((string) ($orderDetails['payment_gateway'] ?? '')));
+                                $isPickupLike = str_contains($pm, 'pickup') || in_array($pg, ['pickup', 'pickup from store'], true);
+                                $showVendorPayout = ! $isPickupLike;
+                            @endphp
 
                             <div class="table-responsive">
                                 {{-- Order products info table --}}
@@ -292,10 +298,13 @@
                                             <th>Product by</th>
                                         @endif
                                         <th>Distributed Discount</th>
+                                        <th>Wallet Deduction</th>
                                         <th>Item Total</th>
                                         <th>Commission</th>
                                         <th>Final Amount</th>
-                                        <th>Payout Status</th>
+                                        @if ($showVendorPayout)
+                                            <th>Payout Status</th>
+                                        @endif
                                         <th>Return Info</th>
                                         <th>Item Status</th>
                                     </tr>
@@ -357,40 +366,50 @@
                                                 } else {
                                                     $appliedDistributedDiscount = $item_discount;
                                                 }
-                                                $total_price = $originalTotalPrice - $appliedDistributedDiscount;
+                                                $walletTotal = (float) ($orderDetails['wallet_amount'] ?? 0);
+                                                $appliedWallet = $walletTotal > 0 && $total_items > 0
+                                                    ? round($walletTotal * ($product['product_qty'] / ($total_items ?: 1)), 2)
+                                                    : 0;
+
+                                                $total_price = $originalTotalPrice - $appliedDistributedDiscount - $appliedWallet;
                                             @endphp
                                             <td>₹{{ round($appliedDistributedDiscount, 2) }}</td>
+                                            <td class="text-success">-₹{{ round($appliedWallet, 2) }}</td>
                                             <td>₹{{ round($total_price, 2) }}</td>
 
                                             @if ($product['vendor_id'] > 0)
                                                 @php $commission = round(($total_price * $product['commission']) / 100, 2); @endphp
                                                 <td>₹{{ $commission }}</td>
                                                 <td>₹{{ round($total_price - $commission, 2) }}</td>
-                                                <td>
-                                                    @if (!empty($product['vendor_payout_status']) && $product['vendor_payout_status'] == 'Released')
-                                                        <span class="badge badge-success">Released</span>
-                                                        @if (!empty($product['vendor_payout_note']))
-                                                            <br><small class="text-muted mt-1">Note/Payment Id: {{ $product['vendor_payout_note'] }}</small>
+                                                @if ($showVendorPayout)
+                                                    <td>
+                                                        @if (!empty($product['vendor_payout_status']) && $product['vendor_payout_status'] == 'Released')
+                                                            <span class="badge badge-success">Released</span>
+                                                            @if (!empty($product['vendor_payout_note']))
+                                                                <br><small class="text-muted mt-1">Note/Payment Id: {{ $product['vendor_payout_note'] }}</small>
+                                                            @endif
+                                                        @else
+                                                            <span class="badge badge-warning">Pending</span>
+                                                            @if ($product['item_status'] == 'Delivered' && Auth::guard('admin')->user()->type != 'vendor')
+                                                                <br>
+                                                                <button type="button" class="btn btn-primary btn-sm mt-2 release-payout-btn"
+                                                                    data-item-id="{{ $product['id'] }}"
+                                                                    data-product-name="{{ $product['product_name'] }}"
+                                                                    data-vendor-id="{{ $product['vendor_id'] }}"
+                                                                    data-vendor-amount="{{ round($total_price - $commission, 2) }}"
+                                                                    data-toggle="modal" data-target="#releasePayoutModal">
+                                                                    <i class="mdi mdi-cash"></i> Release
+                                                                </button>
+                                                            @endif
                                                         @endif
-                                                    @else
-                                                        <span class="badge badge-warning">Pending</span>
-                                                        @if ($product['item_status'] == 'Delivered' && Auth::guard('admin')->user()->type != 'vendor')
-                                                            <br>
-                                                            <button type="button" class="btn btn-primary btn-sm mt-2 release-payout-btn"
-                                                                data-item-id="{{ $product['id'] }}"
-                                                                data-product-name="{{ $product['product_name'] }}"
-                                                                data-vendor-id="{{ $product['vendor_id'] }}"
-                                                                data-vendor-amount="{{ round($total_price - $commission, 2) }}"
-                                                                data-toggle="modal" data-target="#releasePayoutModal">
-                                                                <i class="mdi mdi-cash"></i> Release
-                                                            </button>
-                                                        @endif
-                                                    @endif
-                                                </td>
+                                                    </td>
+                                                @endif
                                             @else
                                                 <td>₹0</td>
                                                 <td>₹{{ round($total_price, 2) }}</td>
-                                                <td>N/A</td>
+                                                @if ($showVendorPayout)
+                                                    <td>N/A</td>
+                                                @endif
                                             @endif
 
                                             <td>
@@ -513,49 +532,113 @@
     </div>
 
     {{-- Release Vendor Payout Modal --}}
-    <div class="modal fade" id="releasePayoutModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="mdi mdi-cash"></i> Release Vendor Payout</h5>
-                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
-                </div>
-                <form action="{{ url('admin/release-vendor-payout') }}" method="POST">
-                    @csrf
-                    <input type="hidden" name="order_item_id" id="payout_item_id">
-                    <div class="modal-body">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <h6><strong>Product:</strong> <span id="payout_product_name"></span></h6>
-                                <h6><strong>Amount to Vendor:</strong> ₹<span id="payout_amount"></span></h6>
-                            </div>
-                            <div class="col-md-6">
-                                <h6 class="text-primary"><strong>Vendor Bank Details</strong></h6>
-                                <div id="vendor_bank_details">
-                                    <p class="text-muted">Loading...</p>
+    @if ($showVendorPayout ?? true)
+        <div class="modal fade" id="releasePayoutModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="mdi mdi-cash"></i> Release Vendor Payout</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                    </div>
+                    <form action="{{ url('admin/release-vendor-payout') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="order_item_id" id="payout_item_id">
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h6><strong>Product:</strong> <span id="payout_product_name"></span></h6>
+                                    <h6><strong>Amount to Vendor:</strong> ₹<span id="payout_amount"></span></h6>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-primary"><strong>Vendor Bank Details</strong></h6>
+                                    <div id="vendor_bank_details">
+                                        <p class="text-muted">Loading...</p>
+                                    </div>
                                 </div>
                             </div>
+                            <hr>
+                            <div class="form-group">
+                                <label for="vendor_payout_note"><strong>Payment Reference / Note</strong></label>
+                                <textarea class="form-control" name="vendor_payout_note" id="vendor_payout_note" rows="3"
+                                    placeholder="Enter transaction ID, reference number, or any notes..."></textarea>
+                            </div>
                         </div>
-                        <hr>
-                        <div class="form-group">
-                            <label for="vendor_payout_note"><strong>Payment Reference / Note</strong></label>
-                            <textarea class="form-control" name="vendor_payout_note" id="vendor_payout_note" rows="3"
-                                placeholder="Enter transaction ID, reference number, or any notes..."></textarea>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="mdi mdi-check-circle"></i> Mark as Released
+                            </button>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="mdi mdi-check-circle"></i> Mark as Released
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
-    </div>
+    @endif
+
+    {{-- Vendor Pickup: auto mark as delivered --}}
+    @if (($adminType ?? 'admin') === 'vendor' && ($isPickupLike ?? false) && (($orderDetails['order_status'] ?? '') !== 'Delivered'))
+        <div class="modal fade" id="pickupDeliverModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title"><i class="mdi mdi-store"></i> Pickup Order</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal" data-pickup-cancel><span>&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">
+                            This order is <strong>Pickup from store</strong>. Click <strong>Mark Delivered Now</strong> after confirming details.
+                        </p>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <tr><td><strong>Order ID</strong></td><td>#{{ $orderDetails['id'] }}</td></tr>
+                                    <tr><td><strong>Name</strong></td><td>{{ $orderDetails['name'] }}</td></tr>
+                                    <tr><td><strong>Mobile</strong></td><td>{{ $orderDetails['mobile'] }}</td></tr>
+                                    <tr><td><strong>Total</strong></td><td>₹{{ $orderDetails['grand_total'] }}</td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <tr><td><strong>Payment Method</strong></td><td>{{ $orderDetails['payment_method'] ?? '' }}</td></tr>
+                                    <tr><td><strong>Payment Gateway</strong></td><td>{{ $orderDetails['payment_gateway'] ?? '' }}</td></tr>
+                                    <tr><td><strong>Status</strong></td><td>{{ $orderDetails['order_status'] ?? '' }}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+                        <form id="pickupDeliverForm" method="POST" action="{{ url('vendor/orders/' . $orderDetails['id'] . '/pickup-mark-delivered') }}" class="d-none">
+                            @csrf
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" data-pickup-cancel>Cancel</button>
+                        <button type="button" class="btn btn-info" onclick="document.getElementById('pickupDeliverForm').submit();">
+                            Mark Delivered Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 
     @push('scripts')
     <script>
+        // Vendor pickup orders: show modal (manual mark delivered)
+        (function () {
+            try {
+                var adminType = @json($adminType ?? 'admin');
+                var isPickupLike = @json($isPickupLike ?? false);
+                var orderStatus = @json($orderDetails['order_status'] ?? '');
+                var orderId = @json($orderDetails['id'] ?? null);
+
+                if (adminType === 'vendor' && isPickupLike && orderId && orderStatus !== 'Delivered') {
+                    var modal = $('#pickupDeliverModal');
+                    if (modal.length) {
+                        modal.modal('show');
+                    }
+                }
+            } catch (e) {}
+        })();
+
         $(document).on('click', '.initiate-payment-btn', function() {
             var itemId = $(this).data('item-id');
             var productName = $(this).data('product-name');
