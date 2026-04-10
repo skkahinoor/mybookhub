@@ -150,7 +150,16 @@
 
 @include('user.layout.footer')
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- plugins:js -->
+<script src="{{ asset('user/vendors/js/vendor.bundle.base.js') }}"></script>
+<!-- endinject -->
+<!-- inject:js -->
+<script src="{{ asset('user/js/off-canvas.js') }}"></script>
+<script src="{{ asset('user/js/hoverable-collapse.js') }}"></script>
+<script src="{{ asset('user/js/template.js') }}"></script>
+<script src="{{ asset('user/js/settings.js') }}"></script>
+<!-- endinject -->
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
