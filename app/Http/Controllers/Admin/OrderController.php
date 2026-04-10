@@ -422,6 +422,56 @@ class OrderController extends Controller
         }
     }
 
+    public function markPickupOrderDelivered(Request $request, $id)
+    {
+        $admin = Auth::guard('admin')->user();
+        $isVendor = $admin->hasRole('vendor');
+        if (! $isVendor) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
+        $vendorId = (int) ($admin->vendor_id ?? 0);
+        if ($vendorId <= 0) {
+            return redirect()->back()->with('error_message', 'Vendor id missing.');
+        }
+
+        $order = Order::with(['orders_products' => function ($q) use ($vendorId) {
+            $q->where('vendor_id', $vendorId);
+        }])->where('id', $id)->first();
+
+        if (! $order) {
+            abort(404, 'Order not found');
+        }
+
+        $pm = strtolower(trim((string) ($order->payment_method ?? '')));
+        $pg = strtolower(trim((string) ($order->payment_gateway ?? '')));
+        $isPickupLike = str_contains($pm, 'pickup') || str_contains($pg, 'pickup');
+        if (! $isPickupLike) {
+            return redirect()->back()->with('error_message', 'This action is only for Pickup orders.');
+        }
+
+        $now = now();
+        OrdersProduct::where('order_id', $order->id)
+            ->where('vendor_id', $vendorId)
+            ->update(['item_status' => 'Delivered', 'item_delivered_at' => $now]);
+
+        // Update order status if everything is delivered
+        $totalItems = OrdersProduct::where('order_id', $order->id)->count();
+        $deliveredItems = OrdersProduct::where('order_id', $order->id)->where('item_status', 'Delivered')->count();
+        if ($totalItems > 0 && $totalItems === $deliveredItems) {
+            Order::where('id', $order->id)->update(['order_status' => 'Delivered', 'delivered_at' => $now]);
+        }
+
+        $log = new OrdersLog;
+        $log->order_id     = $order->id;
+        $log->order_status = 'Delivered';
+        $log->save();
+
+        \App\Models\WalletTransaction::checkAndCreditWallet($order->id);
+
+        return redirect()->back()->with('success_message', 'Pickup order marked as Delivered.');
+    }
+
     // demo code 3
 
     public function viewOrderInvoice($order_id)
@@ -1037,6 +1087,15 @@ class OrderController extends Controller
             return redirect()->back()->with('error_message', 'Payout can only be released for delivered items.');
         }
 
+        // Pickup orders are paid directly to vendor; admin shouldn't release payout
+        $order = $item->order ?? Order::find($item->order_id);
+        $pm = strtolower(trim((string) ($order?->payment_method ?? '')));
+        $pg = strtolower(trim((string) ($order?->payment_gateway ?? '')));
+        $isPickupLike = str_contains($pm, 'pickup') || in_array($pg, ['pickup', 'pickup from store'], true);
+        if ($isPickupLike) {
+            return redirect()->back()->with('error_message', 'Payout release is not applicable for Pickup from store orders.');
+        }
+
         // Vendor authorization check - only admins can perform this
         $admin = Auth::guard('admin')->user();
         if ($admin->hasRole('vendor')) {
@@ -1048,18 +1107,16 @@ class OrderController extends Controller
             'vendor_payout_note' => $request->vendor_payout_note,
         ]);
 
-        // Notify the vendor
-        $vendorUser = User::where('vendor_id', $item->vendor_id)->where('type', 'vendor')->first();
-        if ($vendorUser) {
-            Notification::create([
-                'type' => 'vendor_payout_released',
-                'title' => 'Payout Released',
-                'message' => 'Payout has been released for "' . $item->product_name . '" from Order #' . $item->order_id . '.',
-                'related_id' => $vendorUser->id,
-                'related_type' => User::class,
-                'is_read' => false,
-            ]);
-        }
+        // Notify the vendor (vendor_id scoped notifications; avoids depending on users.vendor_id column)
+        Notification::create([
+            'type' => 'vendor_payout_released',
+            'title' => 'Payout Released',
+            'message' => 'Payout has been released for "' . $item->product_name . '" from Order #' . $item->order_id . '.',
+            'related_id' => $item->id,
+            'related_type' => OrdersProduct::class,
+            'vendor_id' => $item->vendor_id ?: null,
+            'is_read' => false,
+        ]);
 
         return redirect()->back()->with('success_message', 'Vendor payout released successfully for "' . $item->product_name . '".');
     }
