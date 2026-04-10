@@ -93,4 +93,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/user/sell-books-faster/create-order', [SellBookController::class, 'createRazorpayOrder']);
     Route::post('/user/sell-books-faster/verify-payment', [SellBookController::class, 'verifyPlatformChargePayment']);
     Route::post('/user/sell-books-faster/mark-sold', [SellBookController::class, 'markAsSold']);
+    // Book Request Routes
+    Route::get('/user/book-request/matching-vendors', [\App\Http\Controllers\Api\User\BookRequestController::class, 'getMatchingVendors']);
+    Route::post('/user/book-request/store', [\App\Http\Controllers\Api\User\BookRequestController::class, 'store']);
+    Route::get('/user/book-requests', [\App\Http\Controllers\Api\User\BookRequestController::class, 'index']);
+    Route::get('/user/book-requests/{id}', [\App\Http\Controllers\Api\User\BookRequestController::class, 'show']);
+    Route::post('/user/book-requests/{id}/reply', [\App\Http\Controllers\Api\User\BookRequestController::class, 'replyToQuery']);
 });
