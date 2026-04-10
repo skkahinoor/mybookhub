@@ -200,6 +200,115 @@ class Product extends Model
     }
 
     /**
+     * Batch equivalent of getDiscountPrice() — one products scan + one attributes scan (avoids N+1).
+     * Uses the lowest-id active attribute per product (matches typical first() ordering).
+     *
+     * @param  array<int>  $productIds
+     * @return array<int, int> product_id => rounded final price
+     */
+    public static function getDiscountPricesForProductIds(array $productIds): array
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+        if ($productIds === []) {
+            return [];
+        }
+
+        $products = self::whereIn('id', $productIds)->get(['id', 'product_price', 'category_id'])->keyBy('id');
+
+        $attributes = ProductsAttribute::whereIn('product_id', $productIds)
+            ->where('status', 1)
+            ->orderBy('id')
+            ->get(['id', 'product_id', 'product_discount']);
+
+        $firstByProduct = [];
+        foreach ($attributes as $attr) {
+            if (! array_key_exists($attr->product_id, $firstByProduct)) {
+                $firstByProduct[$attr->product_id] = $attr;
+            }
+        }
+
+        $out = [];
+        foreach ($productIds as $pid) {
+            $product = $products->get($pid);
+            if (! $product) {
+                $out[$pid] = 0;
+                continue;
+            }
+            $originalPrice = (float) $product->product_price;
+            $attribute = $firstByProduct[$pid] ?? null;
+            $productDiscount = $attribute ? (float) $attribute->product_discount : 0;
+            if ($productDiscount > 0) {
+                $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
+            } else {
+                $finalPrice = $originalPrice;
+            }
+            $out[$pid] = (int) round($finalPrice);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Batch equivalent of getDiscountPriceDetails() for cart totals / listings.
+     *
+     * @param  array<int>  $productIds
+     * @return array<int, array{product_price:int,final_price:int,discount:int,discount_percent:int}>
+     */
+    public static function getDiscountPriceDetailsMapForProductIds(array $productIds): array
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+        if ($productIds === []) {
+            return [];
+        }
+
+        $products = self::whereIn('id', $productIds)->get(['id', 'product_price', 'category_id'])->keyBy('id');
+
+        $attributes = ProductsAttribute::whereIn('product_id', $productIds)
+            ->where('status', 1)
+            ->orderBy('id')
+            ->get(['id', 'product_id', 'product_discount']);
+
+        $firstByProduct = [];
+        foreach ($attributes as $attr) {
+            if (! array_key_exists($attr->product_id, $firstByProduct)) {
+                $firstByProduct[$attr->product_id] = $attr;
+            }
+        }
+
+        $out = [];
+        foreach ($productIds as $pid) {
+            $product = $products->get($pid);
+            if (! $product) {
+                $out[$pid] = [
+                    'product_price'    => 0,
+                    'final_price'      => 0,
+                    'discount'         => 0,
+                    'discount_percent' => 0,
+                ];
+                continue;
+            }
+            $originalPrice = (float) $product->product_price;
+            $attribute = $firstByProduct[$pid] ?? null;
+            $productDiscount = $attribute ? (float) $attribute->product_discount : 0;
+            if ($productDiscount > 0) {
+                $finalPrice = $originalPrice - ($originalPrice * $productDiscount / 100);
+            } else {
+                $finalPrice = $originalPrice;
+            }
+            $discountAmount = max(0, $originalPrice - $finalPrice);
+            $discountPercent = $originalPrice > 0 ? round(($discountAmount / $originalPrice) * 100) : 0;
+            $out[$pid] = [
+                'product_price'    => (int) round($originalPrice),
+                'final_price'      => (int) round($finalPrice),
+                'discount'         => (int) round($discountAmount),
+                'discount_percent' => $discountPercent,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
      * Get discount price details for a specific product/size combination or attribute_id.
      *
      * NOTE: This now uses the price stored on the ProductsAttribute row

@@ -3,89 +3,194 @@
 namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
-use App\Models\Banner;
 use App\Models\Category;
 use App\Models\HeaderLogo;
 use App\Models\Language;
 use App\Models\Product;
 use App\Models\Section;
 use App\Models\User;
-use App\Models\Vendor;
-use App\Models\Author;
-use App\Models\Cart;
 use App\Models\ProductsAttribute;
 use App\Models\FilterClassSubject;
 use App\Models\Subcategory;
 use App\Models\Subject;
 use App\Models\BookType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class IndexController extends Controller
 {
     public function index(Request $request)
     {
-        $sliderBanners  = Banner::where('type', 'Slider')->where('status', 1)->get()->toArray();
-        $fixBanners     = Banner::where('type', 'Fix')->where('status', 1)->get()->toArray();
-        $condition      = session('condition', 'all');
+        $condition = session('condition', 'all');
 
         $sessionSectionId = $request->cookie('bg_section_id') ?? session('bg_section_id');
         $sessionCategoryId = $request->cookie('bg_category_id') ?? session('bg_category_id');
         $sessionSubcategoryId = $request->cookie('bg_subcategory_id') ?? session('bg_subcategory_id');
         $sessionSubjectId = $request->cookie('bg_subject_id') ?? session('bg_subject_id');
 
-        // Defaults from session or request
         $currentSectionId = $request->filled('section_id') ? $request->section_id : $sessionSectionId;
         $currentCategoryId = $request->filled('category_id') ? $request->category_id : $sessionCategoryId;
         $currentSubcategoryId = $request->filled('subcategory_id') ? $request->subcategory_id : $sessionSubcategoryId;
         $currentSubjectId = $request->filled('subject_id') ? $request->subject_id : $sessionSubjectId;
 
-        // Overlay with Academic Profile for registered users if not explicitly specified by current request or session
-        if (Auth::check() && !$request->filled('section_id') && !$sessionSectionId) {
+        if (Auth::check() && ! $request->filled('section_id') && ! $sessionSectionId) {
             $profile = \App\Models\AcademicProfile::where('user_id', Auth::id())->first();
             if ($profile) {
-                // Pre-fill only the fields that are currently empty in session/request
-                if (!$currentSectionId) {
+                if (! $currentSectionId) {
                     $currentSectionId = $profile->education_level_id;
-                    // Update session too if we want to reflect it
                 }
-                if (!$currentCategoryId) {
+                if (! $currentCategoryId) {
                     $currentCategoryId = $profile->board_id;
                 }
-                if (!$currentSubcategoryId) {
+                if (! $currentSubcategoryId) {
                     $currentSubcategoryId = $profile->class_id;
                 }
             }
         }
 
-        // Persist distance in session
         if ($request->filled('distance')) {
-            session(['distance' => (int)$request->distance]);
+            session(['distance' => (int) $request->distance]);
         }
         $currentDistance = session('distance', 10);
+        $userLat = session('user_latitude');
+        $userLng = session('user_longitude');
 
-        $sliderProductsQuery = Product::with([
-                'authors',
-                'publisher'
-            ])
-            ->whereHas('attributes', function($q) {
+        if ($request->ajax() && $request->has('filter_update')) {
+            $sliderProductsQuery = $this->homeSliderProductsBaseQuery();
+            $this->applyHomeSliderFilters(
+                $sliderProductsQuery,
+                $request,
+                $condition,
+                $currentSectionId,
+                $currentCategoryId,
+                $currentSubcategoryId,
+                $currentSubjectId,
+                $currentDistance,
+                $userLat,
+                $userLng
+            );
+            $sliderProducts = $sliderProductsQuery->orderBy('id', 'desc')->paginate(12);
+            $homeSubjects = $this->loadHomeSubjects($currentSectionId, $currentCategoryId, $currentSubcategoryId);
+            $sliderProductDiscountPrices = Product::getDiscountPricesForProductIds(
+                $sliderProducts->pluck('id')->all()
+            );
+
+            return response()->json([
+                'html' => view('front.partials.home_product_grid', compact('sliderProducts', 'sliderProductDiscountPrices'))->render(),
+                'subjects_html' => view('front.partials.home_subjects', compact('homeSubjects'))->render(),
+                'has_more' => $sliderProducts->hasMorePages(),
+                'info' => $request->input('info', ''),
+            ]);
+        }
+
+        if ($request->ajax()) {
+            $newProducts = $this->homeNewProductsQuery($condition)->get();
+            $newProductDiscountPrices = Product::getDiscountPricesForProductIds($newProducts->pluck('id')->all());
+
+            return view('front.partials.new_products', compact('newProducts', 'newProductDiscountPrices'))->render();
+        }
+
+        $sliderProductsQuery = $this->homeSliderProductsBaseQuery();
+        $this->applyHomeSliderFilters(
+            $sliderProductsQuery,
+            $request,
+            $condition,
+            $currentSectionId,
+            $currentCategoryId,
+            $currentSubcategoryId,
+            $currentSubjectId,
+            $currentDistance,
+            $userLat,
+            $userLng
+        );
+        $sliderProducts = $sliderProductsQuery->orderBy('id', 'desc')->paginate(12);
+        $sliderProductDiscountPrices = Product::getDiscountPricesForProductIds(
+            $sliderProducts->pluck('id')->all()
+        );
+
+        $homeSubjects = $this->loadHomeSubjects($currentSectionId, $currentCategoryId, $currentSubcategoryId);
+
+        $logos = HeaderLogo::first();
+        $sections = Section::all();
+
+        $meta_title = 'BookHub - The Only Hub For Students';
+        $meta_description = 'The cross platform where students meets their career through books.';
+        $meta_keywords = 'eshop website, online shopping, multi vendor e-commerce';
+
+        $displayCategoryName = $currentCategoryId
+            ? Category::where('id', $currentCategoryId)->value('category_name')
+            : null;
+        $displaySubcategoryName = $currentSubcategoryId
+            ? Subcategory::where('id', $currentSubcategoryId)->value('subcategory_name')
+            : null;
+
+        return view('front.index3', [
+            'languages' => Language::where('status', 1)->get(),
+            'bookTypes' => BookType::where('status', 1)->get(),
+        ])->with(compact(
+            'meta_title',
+            'meta_description',
+            'meta_keywords',
+            'sections',
+            'logos',
+            'sliderProducts',
+            'sliderProductDiscountPrices',
+            'homeSubjects',
+            'currentSectionId',
+            'currentCategoryId',
+            'currentSubcategoryId',
+            'displayCategoryName',
+            'displaySubcategoryName'
+        ));
+    }
+
+    private function homeSliderProductsBaseQuery(): Builder
+    {
+        return Product::with(['authors', 'publisher'])
+            ->whereHas('attributes', function ($q) {
                 $q->where('status', 1);
             })
             ->where('status', 1);
+    }
 
+    private function homeNewProductsQuery(string $condition): Builder
+    {
+        return Product::with(['authors', 'publisher'])
+            ->whereHas('attributes', function ($q) {
+                $q->where('status', 1);
+            })
+            ->when($condition !== 'all', function ($query) use ($condition) {
+                $query->where('condition', $condition);
+            })
+            ->when(session('language') && session('language') !== 'all', function ($query) {
+                $query->where('language_id', session('language'));
+            })
+            ->where('status', 1)
+            ->orderBy('id', 'desc');
+    }
+
+    private function applyHomeSliderFilters(
+        Builder $sliderProductsQuery,
+        Request $request,
+        string $condition,
+        $currentSectionId,
+        $currentCategoryId,
+        $currentSubcategoryId,
+        $currentSubjectId,
+        $currentDistance,
+        $userLat,
+        $userLng
+    ): void {
         if ($currentSectionId) {
             $sliderProductsQuery->where('section_id', $currentSectionId);
         }
-
         if ($currentCategoryId) {
             $sliderProductsQuery->where('category_id', $currentCategoryId);
         }
-
         if ($currentSubcategoryId) {
             $sliderProductsQuery->where('subcategory_id', $currentSubcategoryId);
         }
-
         if ($request->filled('condition')) {
             if ($request->condition !== 'all') {
                 $sliderProductsQuery->where('condition', $request->condition);
@@ -93,42 +198,32 @@ class IndexController extends Controller
         } elseif ($condition !== 'all') {
             $sliderProductsQuery->where('condition', $condition);
         }
-
         if ($currentSubjectId) {
             $sliderProductsQuery->where('subject_id', $currentSubjectId);
         }
-
-        // --- NEW FILTERS ---
-        // 1. Book Types (Multiple)
         if ($request->filled('book_types')) {
-            $bookTypeIds = is_array($request->input('book_types')) ? $request->input('book_types') : explode(',', (string)$request->input('book_types'));
+            $bookTypeIds = is_array($request->input('book_types'))
+                ? $request->input('book_types')
+                : explode(',', (string) $request->input('book_types'));
             $sliderProductsQuery->whereIn('book_type_id', $bookTypeIds);
         }
-
-        // 2. Languages (Multiple)
         if ($request->filled('languages')) {
-            $langIds = is_array($request->input('languages')) ? $request->input('languages') : explode(',', (string)$request->input('languages'));
+            $langIds = is_array($request->input('languages'))
+                ? $request->input('languages')
+                : explode(',', (string) $request->input('languages'));
             $sliderProductsQuery->whereIn('language_id', $langIds);
         }
-
-        // 3. Distance Range
-        $userLat = session('user_latitude');
-        $userLng = session('user_longitude');
-        if ($userLat && $userLng) {
+        if ($userLat && $userLng && $currentDistance < 100) {
             $distance = $currentDistance;
-            if ($distance < 100) { // 100+ means show all
-                $sliderProductsQuery->whereHas('attributes.vendor', function ($q) use ($userLat, $userLng, $distance) {
-                    $q->whereNotNull('location')
-                        ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);
-                });
-            }
+            $sliderProductsQuery->whereHas('attributes.vendor', function ($q) use ($userLat, $userLng, $distance) {
+                $q->whereNotNull('location')
+                    ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);
+            });
         }
+    }
 
-        $sliderProducts = $sliderProductsQuery->orderBy('id', 'desc')
-            ->paginate(12);
-
-        /* SUBJECTS */
-        $homeSubjects = collect([]);
+    private function loadHomeSubjects($currentSectionId, $currentCategoryId, $currentSubcategoryId)
+    {
         if ($currentSectionId || $currentCategoryId || $currentSubcategoryId) {
             $subjectIdsQuery = FilterClassSubject::query();
             if ($currentSectionId) {
@@ -141,142 +236,11 @@ class IndexController extends Controller
                 $subjectIdsQuery->where('sub_category_id', $currentSubcategoryId);
             }
             $subjectIds = $subjectIdsQuery->distinct()->pluck('subject_id');
-            $homeSubjects = Subject::whereIn('id', $subjectIds)->where('status', 1)->get();
-        } else {
-            // Default subjects for the initial load
-            $homeSubjects = Subject::where('status', 1)->limit(20)->get();
+
+            return Subject::whereIn('id', $subjectIds)->where('status', 1)->get();
         }
 
-
-
-        $logos    = HeaderLogo::first();
-        $language = Language::get();
-        $sections = Section::all();
-       
-
-        $newProducts = Product::with(['authors', 'publisher'])
-            ->whereHas('attributes', function($q) {
-                $q->where('status', 1);
-            })
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($query) {
-                $query->where('language_id', session('language'));
-            })
-            ->where('status', 1)
-            ->orderBy('id', 'desc')
-            ->get();
-
-        $slidingProducts = Product::with(['authors', 'publisher'])
-            ->whereHas('attributes', function($q) {
-                $q->where('status', 1);
-            })
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
-            ->when(session('language') && session('language') !== 'all', function ($query) {
-                $query->where('language_id', session('language'));
-            })
-            ->where('status', 1)
-            ->orderBy('id', 'desc')
-            ->limit(10)
-            ->get();
-
-        $category = Category::limit(10)->get();
-
-        $footerProducts = Product::whereHas('attributes', function($q) {
-                $q->where('status', 1);
-            })
-            ->when($condition !== 'all', function ($query) use ($condition) {
-                $query->where('condition', $condition);
-            })
-            ->where('status', 1)
-            ->orderBy('id', 'Desc')
-            ->take(3)
-            ->get();
-
-        $meta_title       = 'BookHub - The Only Hub For Students';
-        $meta_description = 'The cross platform where students meets their career through books.';
-        $meta_keywords    = 'eshop website, online shopping, multi vendor e-commerce';
-
-        // Get total user count for dynamic statistics
-        $totalUsers = User::role('student', 'web')->count();
-
-        // Get total vendor count for dynamic statistics
-        $totalVendors = User::role('vendor', 'web')->count();
-
-        // Get total product count for dynamic statistics
-        $totalProducts = Product::where('status', 1)->count();
-
-        // Get total author count for dynamic statistics
-        $totalAuthors = Author::where('status', 1)->count();
-
-        $getCartItems = Cart::getCartItems();
-
-        // Calculate total price
-        $total_price = 0;
-        foreach ($getCartItems as $item) {
-            $getDiscountPriceDetails = \App\Models\Product::getDiscountPriceDetails($item['product_id']);
-            $total_price += $getDiscountPriceDetails['final_price'] * $item['quantity'];
-        }
-
-        // Fetch Student Old Books for Marketplace Section
-        $sellBookRequests = \App\Models\ProductsAttribute::with(['product', 'user'])
-            ->where('admin_type', 'user')
-            ->where('admin_approved', 1)
-            ->whereHas('product', function($q) {
-                $q->where('condition', 'old');
-            })
-            ->orderBy('id', 'desc')
-            ->limit(10)
-            ->get();
-
-        if ($request->ajax()) {
-            if ($request->has('filter_update')) {
-                return response()->json([
-                    'html' => view('front.partials.home_product_grid', compact('sliderProducts'))->render(),
-                    'subjects_html' => view('front.partials.home_subjects', compact('homeSubjects'))->render(),
-                    'has_more' => $sliderProducts->hasMorePages(),
-                    'info' => (isset($request->info) ? $request->info : '')
-                ]);
-            }
-            return view('front.partials.new_products', compact('newProducts'))->render();
-        }
-
-        return view('front.index3', [
-            'languages'        => Language::where('status', 1)->get(),
-            'bookTypes'        => BookType::where('status', 1)->get(),
-            'selectedLanguage' => Language::find(session('language')),
-
-        ])->with(compact(
-            'sliderBanners',
-            'fixBanners',
-            'newProducts',
-            'footerProducts',
-            'meta_title',
-            'meta_description',
-            'meta_keywords',
-            'condition',
-            'category',
-            'sections',
-            'language',
-            'logos',
-            'sliderProducts',
-            'slidingProducts',
-            'homeSubjects',
-            'totalUsers',
-            'totalVendors',
-            'totalProducts',
-            'totalAuthors',
-            'getCartItems',
-            'total_price',
-            'sellBookRequests',
-            'currentSectionId',
-            'currentCategoryId',
-            'currentSubcategoryId',
-            'currentSubjectId'
-        ));
+        return Subject::where('status', 1)->limit(20)->get();
     }
 
     public function setLanguage(Request $request)
