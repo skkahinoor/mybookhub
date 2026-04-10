@@ -38,7 +38,7 @@ class BookRequestController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Please update your pincode in profile before requesting a book.'
-            ], 400);
+            ], 200);
         }
 
         $vendors = $this->getMatchingVendorsForUser($user);
@@ -66,7 +66,7 @@ class BookRequestController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Please update your pincode in profile before requesting a book.'
-            ], 400);
+            ], 200);
         }
 
         $isVendorMatchedByPincode = Vendor::where('id', $request->vendor_id)
@@ -83,7 +83,7 @@ class BookRequestController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => 'Selected vendor is not available for your pincode.'
-            ], 400);
+            ], 200);
         }
 
         $bookRequest = BookRequest::create([
