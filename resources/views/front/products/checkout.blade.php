@@ -461,7 +461,7 @@
                                         </div>
 
                                         <div class="mt-4 pt-3 border-top text-center">
-                                            <button type="button" class="btn btn-outline-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addressModal" onclick="clearAddressForm()">
+                                            <button type="button" class="btn btn-outline-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#addressModal" onclick="clearAddressForm('{{ Auth::user()->name }}', '{{ Auth::user()->phone }}')">
                                                 <i class="fas fa-plus me-2"></i> Add or Manage Addresses
                                             </button>
                                         </div>
@@ -673,14 +673,20 @@
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Full Name <span
                                                         class="text-danger">*</span></label>
-                                                <input type="text" name="name" id="addr_name" class="form-control"
-                                                    required>
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-white"><i class="fas fa-user text-primary"></i></span>
+                                                    <input type="text" name="name" id="addr_name" class="form-control"
+                                                        placeholder="Enter full name" required>
+                                                </div>
                                             </div>
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label">Mobile Number <span
                                                         class="text-danger">*</span></label>
-                                                <input type="text" name="mobile" id="addr_mobile"
-                                                    class="form-control" required>
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-white"><i class="fas fa-phone text-primary"></i></span>
+                                                    <input type="text" name="mobile" id="addr_mobile"
+                                                        class="form-control" placeholder="Enter 10 digit mobile" required>
+                                                </div>
                                             </div>
                                             <div class="col-md-12 mb-3">
                                                 <label class="form-label">Address <span
@@ -725,7 +731,15 @@
                                                 <label class="form-label">Pincode <span
                                                         class="text-danger">*</span></label>
                                                 <input type="text" name="pincode" id="addr_pincode"
-                                                    class="form-control" required>
+                                                    class="form-control" placeholder="Enter 6 digit pincode" required>
+                                            </div>
+                                            <div class="col-md-12 mt-1">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="update_profile_checkout" name="update_profile" value="1">
+                                                    <label class="form-check-label small text-muted fw-bold" for="update_profile_checkout">
+                                                        <i class="fas fa-sync-alt me-1 text-primary"></i> Also update my account profile name and mobile
+                                                    </label>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -937,9 +951,11 @@
             });
         });
 
-        function clearAddressForm() {
+        function clearAddressForm(name = '', mobile = '') {
             $('#address_id').val('');
             $('#addressForm')[0].reset();
+            $('#addr_name').val(name);
+            $('#addr_mobile').val(mobile);
             $('#addr_state_id').empty().append('<option value="">Select State</option>');
             $('#addr_district_id').empty().append('<option value="">Select District</option>');
             $('#addr_block_id').empty().append('<option value="">Select Block</option>');
