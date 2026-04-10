@@ -608,6 +608,15 @@ class UserController extends Controller
             $address->block_id = $data['block_id'] ?? null;
             $address->save();
 
+            // Handle Profile Sync
+            if (!empty($data['update_profile'])) {
+                User::where('id', Auth::id())->update([
+                    'name'  => $data['name'],
+                    'phone' => $data['mobile']
+                ]);
+                $message .= " Profile also updated!";
+            }
+
             // If it's the first address, set it as default
             if (\App\Models\UserAddress::where('user_id', Auth::user()->id)->count() == 1) {
                 $address->is_default = 1;

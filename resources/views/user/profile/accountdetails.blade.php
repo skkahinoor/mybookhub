@@ -213,7 +213,7 @@
                                         <div class="d-flex justify-content-between align-items-center mb-4">
                                             <h6 class="font-weight-bold mb-0">Saved Shipping Addresses</h6>
                                             <button type="button" class="btn btn-sm btn-primary" data-toggle="modal"
-                                                data-target="#addressModal" onclick="clearAddressForm()">
+                                                data-target="#addressModal" onclick="clearAddressForm('{{ Auth::user()->name }}', '{{ Auth::user()->phone }}')">
                                                 <i class="mdi mdi-plus mr-1"></i> Add New Address
                                             </button>
                                         </div>
@@ -239,27 +239,32 @@
                                                             <p class="small mb-3"><strong>Mobile:</strong> {{ $addr->mobile }}</p>
                                                             
                                                             <div class="d-flex border-top pt-2">
-                                                                <button type="button" class="btn btn-link btn-sm p-0 text-primary mr-3" 
-                                                                    onclick="window.editThisAddress(this)"
-                                                                    data-id="{{ $addr->id }}"
-                                                                    data-name="{{ $addr->name }}"
-                                                                    data-mobile="{{ $addr->mobile }}"
-                                                                    data-address="{{ $addr->address }}"
-                                                                    data-pincode="{{ $addr->pincode }}"
-                                                                    data-country="{{ $addr->country_id }}"
-                                                                    data-state="{{ $addr->state_id }}"
-                                                                    data-district="{{ $addr->district_id }}"
-                                                                    data-block="{{ $addr->block_id }}">
-                                                                    <i class="mdi mdi-pencil mr-1"></i> Edit
-                                                                </button>
-                                                                <button type="button" class="btn btn-link btn-sm p-0 text-danger mr-3 delete-address" data-id="{{ $addr->id }}">
-                                                                    <i class="mdi mdi-delete mr-1"></i> Delete
-                                                                </button>
-                                                                @if(!$addr->is_default)
-                                                                    <button type="button" class="btn btn-link btn-sm p-0 text-secondary ml-auto set-default-address" data-id="{{ $addr->id }}">
-                                                                        Set Default
-                                                                    </button>
-                                                                @endif
+                                                                 <a href="javascript:void(0)" class="text-primary mr-3 small font-weight-bold" 
+                                                                     onclick="window.editThisAddress(this)"
+                                                                     data-id="{{ $addr->id }}"
+                                                                     data-name="{{ $addr->name }}"
+                                                                     data-mobile="{{ $addr->mobile }}"
+                                                                     data-address="{{ $addr->address }}"
+                                                                     data-pincode="{{ $addr->pincode }}"
+                                                                     data-country="{{ $addr->country_id }}"
+                                                                     data-state="{{ $addr->state_id }}"
+                                                                     data-district="{{ $addr->district_id }}"
+                                                                     data-block="{{ $addr->block_id }}"
+                                                                     style="text-decoration: none;">
+                                                                     <i class="mdi mdi-pencil mr-1"></i> Edit
+                                                                 </a>
+                                                                 <a href="javascript:void(0)" class="text-danger mr-3 small font-weight-bold" 
+                                                                     onclick="window.deleteAddress({{ $addr->id }})"
+                                                                     style="text-decoration: none;">
+                                                                     <i class="mdi mdi-delete mr-1"></i> Delete
+                                                                 </a>
+                                                                 @if(!$addr->is_default)
+                                                                     <a href="javascript:void(0)" class="text-secondary ml-auto small font-weight-bold" 
+                                                                         onclick="window.setDefaultAddress({{ $addr->id }})"
+                                                                         style="text-decoration: none;">
+                                                                         Set Default
+                                                                     </a>
+                                                                 @endif
                                                             </div>
                                                         </div>
                                                     </div>
@@ -271,7 +276,7 @@
                                             <div class="text-center py-5 bg-light rounded" style="border: 1px dashed #ddd;">
                                                 <i class="mdi mdi-map-marker-off-outline text-muted" style="font-size: 40px;"></i>
                                                 <p class="text-muted mt-2">No addresses saved yet.</p>
-                                                <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-toggle="modal" data-target="#addressModal" onclick="clearAddressForm()">
+                                                <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-toggle="modal" data-target="#addressModal" onclick="clearAddressForm('{{ Auth::user()->name }}', '{{ Auth::user()->phone }}')">
                                                     Add Your First Address
                                                 </button>
                                             </div>
@@ -384,11 +389,21 @@
                         <div class="row">
                             <div class="col-md-6 form-group">
                                 <label>Full Name <span class="text-danger">*</span></label>
-                                <input type="text" name="name" id="addr_name" class="form-control" required>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-white border-right-0"><i class="mdi mdi-account text-primary"></i></span>
+                                    </div>
+                                    <input type="text" name="name" id="addr_name" class="form-control border-left-0" placeholder="Enter full name" required>
+                                </div>
                             </div>
                             <div class="col-md-6 form-group">
                                 <label>Mobile Number <span class="text-danger">*</span></label>
-                                <input type="text" name="mobile" id="addr_mobile" class="form-control" required>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-white border-right-0"><i class="mdi mdi-phone text-primary"></i></span>
+                                    </div>
+                                    <input type="text" name="mobile" id="addr_mobile" class="form-control border-left-0" placeholder="Enter 10 digit mobile" required>
+                                </div>
                             </div>
                             <div class="col-md-12 form-group">
                                 <label>Address <span class="text-danger">*</span></label>
@@ -423,7 +438,15 @@
                             </div>
                             <div class="col-md-6 form-group">
                                 <label>Pincode <span class="text-danger">*</span></label>
-                                <input type="text" name="pincode" id="addr_pincode" class="form-control" required>
+                                <input type="text" name="pincode" id="addr_pincode" class="form-control" placeholder="Enter 6 digit pincode" required>
+                            </div>
+                            <div class="col-md-12 mt-2">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="update_profile" name="update_profile" value="1">
+                                    <label class="custom-control-label small text-muted font-weight-bold" for="update_profile">
+                                        <i class="mdi mdi-sync mr-1"></i> Also update my account profile name and mobile
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -450,8 +473,6 @@
 <script src="{{ asset('user/js/template.js') }}"></script>
 <script src="{{ asset('user/js/settings.js') }}"></script>
 <!-- endinject -->
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $('#saveProfileBtn').on('click', function(e) {
         e.preventDefault();
@@ -1243,9 +1264,12 @@
         }
     };
 
-    window.clearAddressForm = function() {
+    window.clearAddressForm = function(name = '', mobile = '') {
         $('#multi_address_id').val('');
         $('#multiAddressForm')[0].reset();
+        $('#addr_name').val(name);
+        $('#addr_mobile').val(mobile);
+        $('#update_profile').prop('checked', false);
         $('#addr_state_id').html('<option value="">Select State</option>');
         $('#addr_district_id').html('<option value="">Select District</option>');
         $('#addr_block_id').html('<option value="">Select Block</option>');
@@ -1290,9 +1314,11 @@
         $(document).on('change', '#addr_state_id', function() { loadDistricts($(this).val()); });
         $(document).on('change', '#addr_district_id', function() { loadBlocks($(this).val()); });
 
+        // Address management form submission
         $('#multiAddressForm').on('submit', function(e) {
             e.preventDefault();
             var btn = $(this).find('button[type="submit"]');
+            var originalText = btn.html();
             btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> Saving...');
             
             $.ajax({
@@ -1303,13 +1329,13 @@
                     if (res.type == 'success') {
                         location.reload();
                     } else {
-                        alert('Please check required fields.');
-                        btn.prop('disabled', false).text('Save Address');
+                        alert(res.message || 'Please check required fields.');
+                        btn.prop('disabled', false).html(originalText);
                     }
                 },
                 error: function() {
-                    alert('Error saving address.');
-                    btn.prop('disabled', false).text('Save Address');
+                    alert('Error saving address. Please try again.');
+                    btn.prop('disabled', false).html(originalText);
                 }
             });
         });

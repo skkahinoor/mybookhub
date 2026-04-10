@@ -80,6 +80,16 @@
 
 @include('user.layout.footer')
 
+<!-- plugins:js -->
+<script src="{{ asset('user/vendors/js/vendor.bundle.base.js') }}"></script>
+<!-- endinject -->
+<!-- inject:js -->
+<script src="{{ asset('user/js/off-canvas.js') }}"></script>
+<script src="{{ asset('user/js/hoverable-collapse.js') }}"></script>
+<script src="{{ asset('user/js/template.js') }}"></script>
+<script src="{{ asset('user/js/settings.js') }}"></script>
+<!-- endinject -->
+
 <script>
     (function () {
         var btn = document.getElementById('student-mark-all-read');
