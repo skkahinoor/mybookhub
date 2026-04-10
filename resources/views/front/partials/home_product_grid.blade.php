@@ -4,11 +4,12 @@
             continue;
         }
 
-        $minPrice = \App\Models\Product::getDiscountPrice($product->id);
+        $sliderPrices = $sliderProductDiscountPrices ?? [];
+        $minPrice = $sliderPrices[$product->id] ?? \App\Models\Product::getDiscountPrice($product->id);
         $minPriceText = (isset($minPrice) && $minPrice > 0) ? number_format($minPrice, 0) : ($product->product_price ? number_format($product->product_price, 0) : null);
         
-        $condition = strtolower(trim($product->condition ?? 'new'));
-        $isNew = $condition == 'new';
+        $bookCondition = strtolower(trim($product->condition ?? 'new'));
+        $isNew = $bookCondition == 'new';
         $conditionClass = $isNew ? 'new' : 'old';
         $conditionText = $isNew ? 'NEW' : 'OLD';
     @endphp

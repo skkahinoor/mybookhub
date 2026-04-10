@@ -1619,10 +1619,10 @@
                         $parts[] = collect($sections)->where('id', $currentSectionId)->first()?->name;
                     }
                     if (isset($currentCategoryId) && $currentCategoryId) {
-                        $parts[] = \App\Models\Category::find($currentCategoryId)?->category_name;
+                        $parts[] = $displayCategoryName;
                     }
                     if (isset($currentSubcategoryId) && $currentSubcategoryId) {
-                        $parts[] = \App\Models\Subcategory::find($currentSubcategoryId)?->subcategory_name;
+                        $parts[] = $displaySubcategoryName;
                     }
                     if (!empty($parts)) {
                         $displayText = implode(' > ', array_filter($parts));
@@ -1849,28 +1849,24 @@
                 <div class="filter-group">
                     <label>Book Type</label>
                     <div class="checkbox-group">
-                        @if (isset($bookTypes))
-                            @foreach ($bookTypes as $bt)
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="book_types[]" value="{{ $bt->id }}" checked>
-                                    <span class="checkbox-label">{{ $bt->book_type }}</span>
-                                </label>
-                            @endforeach
-                        @endif
+                        @foreach ($bookTypes ?? [] as $bt)
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="book_types[]" value="{{ $bt->id }}" checked>
+                                <span class="checkbox-label">{{ $bt->book_type }}</span>
+                            </label>
+                        @endforeach
                     </div>
                 </div>
 
                 <div class="filter-group">
                     <label>Language</label>
                     <div class="checkbox-group">
-                        @if (isset($languages))
-                            @foreach ($languages as $lang)
-                                <label class="checkbox-item">
-                                    <input type="checkbox" name="languages[]" value="{{ $lang->id }}" checked>
-                                    <span class="checkbox-label">{{ $lang->name }}</span>
-                                </label>
-                            @endforeach
-                        @endif
+                        @foreach ($languages ?? [] as $lang)
+                            <label class="checkbox-item">
+                                <input type="checkbox" name="languages[]" value="{{ $lang->id }}" checked>
+                                <span class="checkbox-label">{{ $lang->name }}</span>
+                            </label>
+                        @endforeach
                     </div>
                 </div>
             </div>

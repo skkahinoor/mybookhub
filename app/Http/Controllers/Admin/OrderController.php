@@ -266,39 +266,39 @@ class OrderController extends Controller
             $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $data['order_id'])->first()->toArray();
             $orderDetails    = Order::with('orders_products')->where('id', $data['order_id'])->first()->toArray();
 
-            if (!empty($data['courier_name']) && !empty($data['tracking_number'])) {
-                $email = $deliveryDetails['email'];
+            // if (!empty($data['courier_name']) && !empty($data['tracking_number'])) {
+            //     $email = $deliveryDetails['email'];
 
-                // The email message data/variables that will be passed in to the email view
-                $messageData = [
-                    'email'           => $email,
-                    'name'            => $deliveryDetails['name'],
-                    'order_id'        => $data['order_id'],
-                    'orderDetails'    => $orderDetails,
-                    'order_status'    => $data['order_status'],
-                    'courier_name'    => $data['courier_name'],
-                    'tracking_number' => $data['tracking_number']
-                ];
+            //     // The email message data/variables that will be passed in to the email view
+            //     $messageData = [
+            //         'email'           => $email,
+            //         'name'            => $deliveryDetails['name'],
+            //         'order_id'        => $data['order_id'],
+            //         'orderDetails'    => $orderDetails,
+            //         'order_status'    => $data['order_status'],
+            //         'courier_name'    => $data['courier_name'],
+            //         'tracking_number' => $data['tracking_number']
+            //     ];
 
-                \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) {
-                    $message->to($email)->subject('Order Status Updated - MultiVendorEcommerceApplication.com.eg');
-                });
-            } else { // if there are no Courier Name and Tracking Number data, don't include them in the email
-                $email = $deliveryDetails['email'];
+            //     \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) {
+            //         $message->to($email)->subject('Order Status Updated - MultiVendorEcommerceApplication.com.eg');
+            //     });
+            // } else { // if there are no Courier Name and Tracking Number data, don't include them in the email
+            //     $email = $deliveryDetails['email'];
 
-                // The email message data/variables that will be passed in to the email view
-                $messageData = [
-                    'email'        => $email,
-                    'name'         => $deliveryDetails['name'],
-                    'order_id'     => $data['order_id'],
-                    'orderDetails' => $orderDetails,
-                    'order_status' => $data['order_status']
-                ];
+            //     // The email message data/variables that will be passed in to the email view
+            //     $messageData = [
+            //         'email'        => $email,
+            //         'name'         => $deliveryDetails['name'],
+            //         'order_id'     => $data['order_id'],
+            //         'orderDetails' => $orderDetails,
+            //         'order_status' => $data['order_status']
+            //     ];
 
-                // \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) {
-                //     $message->to($email)->subject('Order Status Updated - MultiVendorEcommerceApplication.com.eg');
-                // });
-            }
+            //     // \Illuminate\Support\Facades\Mail::send('emails.order_status', $messageData, function ($message) use ($email) {
+            //     //     $message->to($email)->subject('Order Status Updated - MultiVendorEcommerceApplication.com.eg');
+            //     // });
+            // }
 
             $message = 'Order Status has been updated successfully!';
 

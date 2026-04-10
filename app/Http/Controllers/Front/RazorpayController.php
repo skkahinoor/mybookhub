@@ -192,13 +192,13 @@ class RazorpayController extends Controller
                 'orderDetails' => $orders->toArray()
             ];
 
-            try {
-                Mail::send('emails.order', $messageData, function ($message) use ($email) {
-                    $message->to($email)->subject('Order Placed - BookHub');
-                });
-            } catch (\Exception $e) {
-                // Log email fail
-            }
+            // try {
+            //     Mail::send('emails.order', $messageData, function ($message) use ($email) {
+            //         $message->to($email)->subject('Order Placed - BookHub');
+            //     });
+            // } catch (\Exception $e) {
+            //     // Log email fail
+            // }
 
             return redirect('razorpay/success');
         } else {
