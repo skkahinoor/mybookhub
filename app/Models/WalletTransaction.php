@@ -162,29 +162,33 @@ class WalletTransaction extends Model
         if (!empty($user->referred_by) && ($order->order_status == 'Delivered' || $isAnyItemDelivered)) {
             $referrer = User::find($user->referred_by);
             if ($referrer) {
-                // Check if referral commission already credited for this referral relationship
-                // We typically only give referral commission once per referred user to prevent abuse.
+                // Check if referral reward already credited for this referral relationship
+                // We only give referral reward once per referred user to prevent abuse.
                 $alreadyReferred = self::where('user_id', $referrer->id)
-                    ->where('description', 'LIKE', 'Referral commission for user ID: ' . $user->id . '%')
+                    ->where(function($q) use ($user) {
+                        $q->where('description', 'LIKE', 'Referral commission for user ID: ' . $user->id . '%')
+                          ->orWhere('description', 'LIKE', 'Referral cashback for user ID: ' . $user->id . '%')
+                          ->orWhere('description', 'LIKE', 'Referral reward for user ID: ' . $user->id . '%');
+                    })
                     ->exists();
 
                 if (!$alreadyReferred) {
-                    $referralCommission = 50;
-                    $referrer->wallet_balance += $referralCommission;
+                    $referralReward = 50;
+                    $referrer->wallet_balance += $referralReward;
                     $referrer->save();
 
                     self::create([
                         'user_id'     => $referrer->id,
                         'order_id'    => $order->id,
-                        'amount'      => $referralCommission,
+                        'amount'      => $referralReward,
                         'type'        => 'credit',
-                        'description' => 'Referral cashback for user ID: ' . $user->id . ' (Order #' . $order->id . ')',
+                        'description' => 'Referral reward for user ID: ' . $user->id . ' (Order #' . $order->id . ')',
                     ]);
 
                     \App\Models\Notification::create([
                         'type' => 'wallet_credit',
-                        'title' => 'Referral Cashback Received!',
-                        'message' => '₹50 referral cashback has been credited to your wallet for ' . $user->name . '\'s first purchase (Order #' . $order->id . ').',
+                        'title' => 'Referral Reward Received!',
+                        'message' => '₹50 referral reward has been credited to your wallet for ' . $user->name . '\'s first purchase (Order #' . $order->id . ').',
                         'related_id' => (int) $referrer->id,
                         'related_type' => User::class,
                         'is_read' => false,

@@ -505,7 +505,41 @@ Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Admin\OrderCont
 
 // Second: FRONT section routes:
 Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->group(function () {
-    Route::get('/', 'IndexController@index');
+    Route::get('/', function(\Illuminate\Http\Request $request) {
+        if ($request->has('ref')) {
+            $ref = $request->ref;
+            $intentUrl = "intent://mybookhub.in/register?ref={$ref}#Intent;scheme=https;package=com.bookhub.user;S.browser_fallback_url=https://play.google.com/store/apps/details?id=com.bookhub.user;end;";
+            
+            $html = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Opening BookHub...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #fff; }
+        .btn { display: inline-block; padding: 12px 24px; background: #FF6B00; color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 20px;}
+    </style>
+</head>
+<body>
+    <img src="/front/images/logos/logo.png" alt="BookHub" style="max-width: 150px; margin-bottom: 20px;">
+    <h2>Opening BookHub...</h2>
+    <p>Please wait while we redirect you to the app or Play Store.</p>
+    <a href="{$intentUrl}" class="btn">Click Here to Open App</a>
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.location.href = "{$intentUrl}";
+            }, 500);
+        };
+    </script>
+</body>
+</html>
+HTML;
+            return response($html);
+        }
+        return app(\App\Http\Controllers\Front\IndexController::class)->index($request);
+    });
     Route::post('set-condition', [IndexController::class, 'setCondition'])->name('set.condition');
     Route::post('/set-language', [IndexController::class, 'setLanguage']);
     Route::match(['get', 'post'], '/set-location-session', [App\Http\Controllers\Front\LocationController::class, 'setLocationSession']);
