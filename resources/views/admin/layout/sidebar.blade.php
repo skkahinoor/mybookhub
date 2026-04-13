@@ -97,7 +97,7 @@
                         Session::get('page') == 'update_bank_details') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-vendors" aria-expanded="false"
                     aria-controls="ui-vendors">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-head menu-icon"></i>
                     <span class="menu-title">Vendor Details</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -133,7 +133,7 @@
                         Session::get('page') == 'coupons') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-catalogue" aria-expanded="false"
                     aria-controls="ui-catalogue">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-book menu-icon"></i>
                     <span class="menu-title">Catalogue Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -190,7 +190,7 @@
                 <a @if (Session::get('page') == 'orders') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-orders" aria-expanded="false"
                     aria-controls="ui-orders">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-bag menu-icon"></i>
                     <span class="menu-title">Orders Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -230,7 +230,7 @@
                 <a @if (Session::get('page') == 'update_admin_password' || Session::get('page') == 'update_admin_details') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-settings" aria-expanded="false"
                     aria-controls="ui-settings">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-cog menu-icon"></i>
                     <span class="menu-title">Settings</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -277,7 +277,7 @@
                         Session::get('page') == 'view_all') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-admins" aria-expanded="false"
                     aria-controls="ui-admins">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-head menu-icon"></i>
                     <span class="menu-title">Admin Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -325,7 +325,7 @@
                         Session::get('page') == 'coupons') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-catalogue" aria-expanded="false"
                     aria-controls="ui-catalogue">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-book menu-icon"></i>
                     <span class="menu-title">Catalogue Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -416,7 +416,7 @@
                 <a @if (Session::get('page') == 'orders') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-orders" aria-expanded="false"
                     aria-controls="ui-orders">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-bag menu-icon"></i>
                     <span class="menu-title">Orders Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -446,7 +446,7 @@
                 <a @if (Session::get('page') == 'ratings') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-ratings" aria-expanded="false"
                     aria-controls="ui-ratings">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-star menu-icon"></i>
                     <span class="menu-title">Ratings Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -465,7 +465,7 @@
                 <a @if (Session::get('page') == 'users' || Session::get('page') == 'subscribers') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-users" aria-expanded="false"
                     aria-controls="ui-users">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-head menu-icon"></i>
                     <span class="menu-title">Users Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -500,7 +500,7 @@
                         Session::get('page') == 'blocks') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-institutions" aria-expanded="false"
                     aria-controls="ui-institutions">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-map menu-icon"></i>
                     <span class="menu-title">Institution Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -539,7 +539,7 @@
                 <a @if (Session::get('page') == 'withdrawals') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-withdrawals" aria-expanded="false"
                     aria-controls="ui-withdrawals">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-briefcase menu-icon"></i>
                     <span class="menu-title">Withdrawals Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -560,7 +560,7 @@
                 <a @if (Session::get('page') == 'banners') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-banners" aria-expanded="false"
                     aria-controls="ui-banners">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-image menu-icon"></i>
                     <span class="menu-title">Banners Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -581,18 +581,18 @@
                 <a @if (Session::get('page') == 'shipping') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-shipping" aria-expanded="false"
                     aria-controls="ui-shipping">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-location menu-icon"></i>
                     <span class="menu-title">Shipping Management</span>
                     <i class="menu-arrow"></i>
                 </a>
                 <div class="collapse" id="ui-shipping">
                     <ul class="nav flex-column sub-menu"
                         style="background: #fff !important; color: #052CA3 !important">
-                        @can('view_shipping')
+                        {{-- @can('view_shipping')
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'shipping') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/shipping-charges') }}">Shipping Charges</a></li>
-                        @endcan
+                        @endcan --}}
                     </ul>
                 </div>
             </li>
@@ -601,7 +601,7 @@
                 <a @if (Session::get('page') == 'otp_management') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-otp-management" aria-expanded="false"
                     aria-controls="ui-otp-management">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-lock menu-icon"></i>
                     <span class="menu-title">Otp Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -619,7 +619,7 @@
                 <a @if (Session::get('page') == 'report_management') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-report-management" aria-expanded="false"
                     aria-controls="ui-report-management">
-                    <i class="icon-layout menu-icon"></i>
+                    <i class="icon-bar-graph menu-icon"></i>
                     <span class="menu-title">Report Management</span>
                     <i class="menu-arrow"></i>
                 </a>
