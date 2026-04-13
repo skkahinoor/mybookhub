@@ -335,17 +335,81 @@
                             $userLat = session('user_latitude');
                             $userLng = session('user_longitude');
                         @endphp
-                        @foreach ($sortedSellers as $seller)
-                            @php
-                                $sellerPrice = \App\Models\Product::getDiscountAttributePrice($productDetails['id'], null, $seller->id);
-                                
+                        @php
+                            // Mirror API buy-box logic in Blade:
+                            // - price/discount from Product::getDiscountPriceDetailsByAttribute(attribute_id)
+                            // - sorting priority: plan(pro first) -> discount desc -> final_price asc -> stock desc -> distance asc
+                            // - distance: vendor->location, fallback to user lat/lng
+                            $sellerRows = collect($sortedSellers)->map(function ($attr) use ($userLat, $userLng) {
+                                $priceDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
+
                                 $distance = null;
-                                if ($userLat && $userLng && isset($seller->vendor->location) && $seller->vendor->location) {
-                                    $loc = explode(',', $seller->vendor->location);
-                                    if(count($loc) == 2) {
-                                        $distance = \App\Helpers\Helper::getDistance($userLat, $userLng, $loc[0], $loc[1]);
+                                if ($userLat && $userLng && $attr->vendor && $attr->vendor->location) {
+                                    $loc = explode(',', $attr->vendor->location);
+                                    if (count($loc) === 2) {
+                                        $distance = \App\Helpers\Helper::getDistance($userLat, $userLng, trim($loc[0]), trim($loc[1]));
                                     }
                                 }
+                                if ($distance === null && $userLat && $userLng && $attr->user && $attr->user->latitude && $attr->user->longitude) {
+                                    $distance = \App\Helpers\Helper::getDistance($userLat, $userLng, $attr->user->latitude, $attr->user->longitude);
+                                }
+
+                                $plan = $attr->vendor->plan ?? null;
+                                $planRank = ($plan === 'pro') ? 1 : 2;
+
+                                return (object) [
+                                    'attr' => $attr,
+                                    'price_details' => $priceDetails,
+                                    'distance' => $distance,
+                                    'plan' => $plan,
+                                    'plan_rank' => $planRank,
+                                    'discount' => (float) ($attr->product_discount ?? 0),
+                                    'stock' => (int) ($attr->stock ?? 0),
+                                ];
+                            });
+
+                            $sellerRows = $sellerRows->sort(function ($a, $b) {
+                                // Primary sort requested by user UI (kept as override)
+                                $sort = request('sort');
+                                if ($sort === 'distance') {
+                                    $ad = $a->distance;
+                                    $bd = $b->distance;
+                                    if ($ad === null && $bd !== null) return 1;
+                                    if ($ad !== null && $bd === null) return -1;
+                                    if ($ad !== null && $bd !== null && $ad != $bd) return $ad <=> $bd;
+                                } elseif ($sort === 'price') {
+                                    $ap = (float) ($a->price_details['final_price'] ?? 0);
+                                    $bp = (float) ($b->price_details['final_price'] ?? 0);
+                                    if ($ap != $bp) return $ap <=> $bp;
+                                }
+
+                                // API priorities (secondary / default)
+                                if ($a->plan_rank !== $b->plan_rank) return $a->plan_rank <=> $b->plan_rank;
+                                if ($a->discount != $b->discount) return $b->discount <=> $a->discount;
+
+                                $ap = (float) ($a->price_details['final_price'] ?? 0);
+                                $bp = (float) ($b->price_details['final_price'] ?? 0);
+                                if ($ap != $bp) return $ap <=> $bp;
+
+                                if ($a->stock !== $b->stock) return $b->stock <=> $a->stock;
+
+                                $ad = $a->distance;
+                                $bd = $b->distance;
+                                if ($ad === null && $bd !== null) return 1;
+                                if ($ad !== null && $bd === null) return -1;
+                                if ($ad !== null && $bd !== null && $ad != $bd) return $ad <=> $bd;
+
+                                return 0;
+                            })->values();
+                        @endphp
+
+                        @foreach ($sellerRows as $row)
+                            @php
+                                $seller = $row->attr;
+                                $sellerPrice = $row->price_details;
+                                $distance = $row->distance;
+                                $plan = $row->plan;
+                                $inStock = ((int) ($seller->stock ?? 0)) > 0;
                             @endphp
                             <tr>
                                 <td>
@@ -363,16 +427,39 @@
                                                 }
                                             @endphp
                                             {{ $sellerDisplayName }}
+
+                                            @if($plan)
+                                                <span class="ms-2 badge {{ $plan === 'pro' ? 'bg-success' : 'bg-secondary' }}" style="font-size: 10px; vertical-align: middle;">
+                                                    {{ strtoupper($plan) }}
+                                                </span>
+                                            @endif
+
+                                            @if(($sellerPrice['discount_percent'] ?? 0) > 0)
+                                                <span class="ms-2 badge bg-warning text-dark" style="font-size: 10px; vertical-align: middle;">
+                                                    -{{ (int) ($sellerPrice['discount_percent'] ?? 0) }}%
+                                                </span>
+                                            @endif
+
+                                            <div class="mt-1" style="font-size: 12px; color: {{ $inStock ? '#718096' : '#b91c1c' }};">
+                                                {{ $inStock ? ('Stock: ' . (int) ($seller->stock ?? 0)) : 'Out of stock' }}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="price-bold">₹{{ number_format($sellerPrice['final_price'], 0) }}</td>
+                                <td class="price-bold">
+                                    ₹{{ number_format($sellerPrice['final_price'] ?? 0, 0) }}
+                                    @if(($sellerPrice['discount'] ?? 0) > 0)
+                                        <div style="font-size: 12px; font-weight: 600; color: #94a3b8; text-decoration: line-through;">
+                                            ₹{{ number_format($sellerPrice['product_price'] ?? 0, 0) }}
+                                        </div>
+                                    @endif
+                                </td>
                                 <td>{{ $seller->condition->name ?? 'New' }}</td>
                                 <td class="text-secondary">
                                     @if($distance !== null)
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <span>{{ $distance < 1 ? round($distance * 1000) . ' m' : round($distance, 1) . ' km' }}</span>
-                                            <a href="https://www.google.com/maps/dir/?api=1&origin={{ $userLat }},{{ $userLng }}&destination={{ $seller->vendor->location }}" target="_blank" class="btn-directions" title="Get Directions">
+                                            <a href="https://www.google.com/maps/dir/?api=1&origin={{ $userLat }},{{ $userLng }}&destination={{ $seller->vendor->location ?? ($seller->user->latitude . ',' . $seller->user->longitude) }}" target="_blank" class="btn-directions" title="Get Directions">
                                                 <i class="fas fa-directions"></i>
                                             </a>
                                         </div>
@@ -386,7 +473,9 @@
                                             @csrf
                                             <input type="hidden" name="product_attribute_id" value="{{ $seller->id }}">
                                             <input type="hidden" name="quantity" value="1">
-                                            <button type="submit" class="btn-buy-now">Buy Now</button>
+                                            <button type="submit" class="btn-buy-now" {{ $inStock ? '' : 'disabled' }}>
+                                                {{ $inStock ? 'Buy Now' : 'Out of Stock' }}
+                                            </button>
                                         </form>
                                         <form action="{{ url('wishlist/add') }}" method="POST">
                                             @csrf
