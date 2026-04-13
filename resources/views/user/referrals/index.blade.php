@@ -124,6 +124,57 @@
         border-radius: 10px;
         padding: 8px 10px;
     }
+
+    /* Mobile responsiveness for referral share modal */
+    @media (max-width: 575.98px) {
+        #referralShareModal .modal-dialog {
+            margin: 0.75rem;
+        }
+        #referralShareModal .modal-content {
+            border-radius: 14px !important;
+        }
+        #referralShareModal .modal-header {
+            padding: 12px 14px;
+        }
+        #referralShareModal .modal-body {
+            padding: 14px;
+        }
+
+        .ref-share-card {
+            border-radius: 14px;
+            background: linear-gradient(180deg, #0d6efd 0%, #4c8dff 55%, #ffffff 55%);
+        }
+        .ref-share-card .ref-card-inner {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            padding: 14px;
+        }
+        .ref-share-card .ref-title {
+            font-size: 18px;
+        }
+        .ref-share-card .ref-code strong {
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+        .ref-share-card .ref-right {
+            padding: 12px;
+        }
+        .ref-share-card .ref-qr {
+            width: 124px;
+            height: 124px;
+        }
+        .ref-share-card .ref-link {
+            font-size: 10px;
+            padding: 8px 9px;
+        }
+
+        .ref-modal-actions .btn {
+            width: 100%;
+        }
+        #refWhatsappMessage {
+            min-height: 140px;
+        }
+    }
 </style>
 
 
@@ -356,7 +407,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-3 d-flex flex-wrap" style="gap:10px;">
+                        <div class="mt-3 d-flex flex-wrap ref-modal-actions" style="gap:10px;">
                             <button type="button" class="btn btn-outline-primary" onclick="copyTextFromEl('refModalCodeText', this)">
                                 <i class="ti-clipboard mr-1"></i> Copy Code
                             </button>
@@ -443,11 +494,12 @@
         // Render QR (safe re-render)
         var qrEl = document.getElementById('refModalQr');
         if (qrEl) qrEl.innerHTML = '';
+        var qrSize = (window.matchMedia && window.matchMedia('(max-width: 575.98px)').matches) ? 124 : 160;
         if (window.QRCode && qrEl) {
             new QRCode(qrEl, {
                 text: link,
-                width: 160,
-                height: 160,
+                width: qrSize,
+                height: qrSize,
                 colorDark: "#111827",
                 colorLight: "#ffffff",
                 correctLevel: QRCode.CorrectLevel.M
