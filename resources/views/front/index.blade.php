@@ -24,9 +24,6 @@
     </div>
     <!-- Main-Slider /- -->
 
-
-
-
     @if (isset($fixBanners[1]['image']))
         <!-- Banner-Layer -->
         <div class="banner-layer">

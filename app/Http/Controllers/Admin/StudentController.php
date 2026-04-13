@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Hash;
 use App\Models\InstitutionClass;
+use App\Helpers\RoleHelper;
 
 class StudentController extends Controller
 {
@@ -21,7 +22,7 @@ class StudentController extends Controller
         $logos = HeaderLogo::first();
         Session::put('page', 'students');
 
-        $students = User::role('student', 'web')->with('institution')->orderBy('id', 'desc')->get();
+        $students = User::where('role_id', RoleHelper::studentId())->with('institution')->orderBy('id', 'desc')->get();
 
         return view('admin.students.index')->with(compact('students', 'logos', 'headerLogo'));
     }
@@ -184,7 +185,7 @@ class StudentController extends Controller
             'status' => 'required|in:0,1',
         ]);
 
-        $student = User::role('student', 'web')->findOrFail($id);
+        $student = User::where('role_id', RoleHelper::studentId())->findOrFail($id);
         $oldStatus = $student->status;
         $student->status = (int) $data['status'];
         $student->save();
