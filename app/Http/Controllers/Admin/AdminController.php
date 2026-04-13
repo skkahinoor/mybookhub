@@ -40,9 +40,9 @@ class AdminController extends Controller
         $adminType = $admin->type;
         $vendorId = $admin->vendor_id;
 
-        $vendorrole = \Spatie\Permission\Models\Role::where('name', 'vendor')->first();
-        $studentrole = \Spatie\Permission\Models\Role::where('name', 'student')->first();
-        $salesrole = \Spatie\Permission\Models\Role::where('name', 'sales')->first();
+        $vendorrole = Role::where('name', 'vendor')->first();
+        $studentrole = Role::where('name', 'student')->first();
+        $salesrole = Role::where('name', 'sales')->first();
         // Default (Admin counts)
         $vendorsCount = User::where('role_id', $vendorrole->id ?? 0)->count();
         $studentsCount = User::where('role_id', $studentrole->id ?? 0)->count();

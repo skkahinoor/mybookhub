@@ -13,6 +13,7 @@ use App\Models\Category;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Helpers\RoleHelper;
 
 class StudentApiController extends Controller
 {
@@ -89,7 +90,7 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        $query = User::role('student')->with(['institution', 'institutionClass.subcategory']);
+        $query = User::where('role_id', RoleHelper::studentId())->with(['institution', 'institutionClass.subcategory']);
 
         if ($type === 'sales') {
             $query->where('added_by', $user->id);
@@ -220,7 +221,7 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        $student = User::role('student')->find($id);
+        $student = User::where('role_id', RoleHelper::studentId())->find($id);
 
         if (!$student) {
             return response()->json([
@@ -318,7 +319,7 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        $student = User::role('student')->find($id);
+        $student = User::where('role_id', RoleHelper::studentId())->find($id);
 
         if (!$student) {
             return response()->json([
@@ -354,7 +355,7 @@ class StudentApiController extends Controller
             ], 403);
         }
 
-        $query = User::role('student')->with(['institution', 'institutionClass.subcategory']);
+        $query = User::where('role_id', RoleHelper::studentId())->with(['institution', 'institutionClass.subcategory']);
 
         if ($type === 'sales') {
             $query->where('added_by', $user->id);

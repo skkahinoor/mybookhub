@@ -121,14 +121,14 @@ class SalesReportController extends Controller
         // Students added by this sales executive (role_id 5)
         $students = User::with(['institution', 'country', 'state', 'district', 'block'])
             ->where('added_by', $salesExecutive->user_id)
-            ->role('student', 'web')
+            ->where('role_id', RoleHelper::studentId())
             ->get();
 
         // Report stats (same logic as sales-side report, but for this specific executive)
         $incomePerTarget = $salesExecutive->income_per_target ?? 0;
 
         $approvedStudents = User::where('added_by', $salesExecutive->user_id)
-            ->role('student', 'web')
+            ->where('role_id', RoleHelper::studentId())
             ->where('status', 1);
 
         $todayStudentsCount = (clone $approvedStudents)

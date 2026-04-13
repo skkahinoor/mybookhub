@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use App\Helpers\RoleHelper;
 
 class UserController extends Controller
 {
@@ -24,7 +25,7 @@ class UserController extends Controller
 
         // Get all front users (students) and load relationships
         $users = User::with(['country', 'state', 'district', 'block'])
-            ->role('student', 'web')
+            ->where('role_id', RoleHelper::studentId())
             ->get()
             ->map(function ($user) {
                 // Transform data to match view expectations

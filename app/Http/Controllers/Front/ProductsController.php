@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use App\Helpers\RoleHelper;
 
 class ProductsController extends Controller
 {
@@ -690,8 +691,8 @@ class ProductsController extends Controller
 
 
         // Front user statistics (front users are 'student')
-        $totalUsers = User::role('student', 'web')->count();
-        $totalVendors = User::role('vendor', 'web')->count();
+        $totalUsers = User::where('role_id', RoleHelper::studentId())->count();
+        $totalVendors = User::where('role_id', RoleHelper::vendorId())->count();
         $totalProducts = Product::where('status', 1)->count();
         $totalAuthors = Author::where('status', 1)->count();
 
