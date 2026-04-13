@@ -295,6 +295,171 @@
                     </div>
                 @endif
             </div>
+
+            @if ($userType == 'superadmin' || $userType == 'admin')
+                {{-- Eligible Vendor Payouts --}}
+                <div class="row mt-4">
+                    <div class="col-12 mb-4">
+                        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden; font-family: 'Nunito', sans-serif;">
+                            <div class="card-header border-0 d-flex justify-content-between align-items-center"
+                                style="background: linear-gradient(to right, #f8faff, #ffffff); padding: 1.25rem 1.5rem;">
+                                <div class="d-flex align-items-center">
+                                    <div class="d-flex justify-content-center align-items-center shadow-sm"
+                                        style="width: 48px; height: 48px; min-width: 48px; border-radius: 12px; background: linear-gradient(135deg, #28a745, #5ddab4); color: white; margin-right: 15px;">
+                                        <i class="fas fa-hand-holding-usd" style="font-size: 1.2rem;"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="card-title m-0" style="font-weight: 800; color: #25396f; font-size: 1.25rem;">
+                                            Eligible Vendor Payouts
+                                        </h4>
+                                        <p class="text-muted mt-1 mb-0" style="font-size: 0.85rem; font-weight: 600;">
+                                            Delivered vendor items pending payout release.
+                                        </p>
+                                    </div>
+                                </div>
+                                <a href="{{ url('admin/orders') }}" class="btn btn-sm"
+                                    style="background-color: #f2f7ff; color: #435ebe; border: none; font-weight: 700; padding: 8px 16px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(67, 94, 190, 0.1);">
+                                    View Orders <i class="fas fa-arrow-right ml-1" style="font-size: 0.75rem;"></i>
+                                </a>
+                            </div>
+                            <div class="card-body px-0 py-0">
+                                <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+                                    <table class="table align-middle mb-0" style="border-collapse: separate; border-spacing: 0;">
+                                        <thead style="position: sticky; top: 0; background: #fbfdff; z-index: 10;">
+                                            <tr>
+                                                <th class="border-0 px-4 py-3 text-uppercase text-muted"
+                                                    style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">
+                                                    Order / Item
+                                                </th>
+                                                <th class="border-0 py-3 text-uppercase text-muted"
+                                                    style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">
+                                                    Product
+                                                </th>
+                                                <th class="border-0 py-3 text-uppercase text-muted"
+                                                    style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">
+                                                    Vendor
+                                                </th>
+                                                <th class="border-0 py-3 text-uppercase text-muted"
+                                                    style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">
+                                                    Vendor Amount
+                                                </th>
+                                                <th class="border-0 px-4 py-3 text-center text-uppercase text-muted"
+                                                    style="font-weight: 800; font-size: 0.75rem; letter-spacing: 0.5px; border-bottom: 2px solid #edf2f9 !important;">
+                                                    Action
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse(($eligibleVendorPayoutItems ?? collect()) as $item)
+                                                @php
+                                                    $orderId = $item->order_id;
+                                                    $vendorName = $item->vendor_details->user->name ?? ('Vendor #' . ($item->vendor_id ?? ''));
+                                                    $vendorId = $item->vendor_id;
+                                                    $amount = (float) ($item->vendor_payout_amount ?? 0);
+                                                @endphp
+                                                <tr style="transition: all 0.2s;" onmouseover="this.style.backgroundColor='#fcfdff';" onmouseout="this.style.backgroundColor='';">
+                                                    <td class="px-4 py-3" style="border-bottom: 1px solid #edf2f9;">
+                                                        <div class="d-flex flex-column">
+                                                            <span style="font-weight: 800; color: #25396f;">#{{ $orderId }}</span>
+                                                            <small class="text-muted" style="font-weight: 700;">Item #{{ $item->id }}</small>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-3" style="border-bottom: 1px solid #edf2f9; max-width: 320px;">
+                                                        <div class="d-flex flex-column">
+                                                            <span class="text-truncate" style="font-weight: 800; color: #435ebe;">
+                                                                {{ $item->product_name ?? 'N/A' }}
+                                                            </span>
+                                                            <small class="text-muted" style="font-weight: 700;">Delivered • Pending payout</small>
+                                                        </div>
+                                                    </td>
+                                                    <td class="py-3" style="border-bottom: 1px solid #edf2f9;">
+                                                        <span style="font-weight: 800; color: #25396f;">{{ $vendorName }}</span>
+                                                    </td>
+                                                    <td class="py-3" style="border-bottom: 1px solid #edf2f9;">
+                                                        <span style="font-weight: 900; color: #28a745;">₹{{ number_format($amount, 2) }}</span>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-center" style="border-bottom: 1px solid #edf2f9;">
+                                                        <div class="d-flex justify-content-center flex-wrap" style="gap: 8px;">
+                                                            <a href="{{ url('admin/orders/' . $orderId) }}" class="btn btn-sm btn-outline-primary"
+                                                                style="border-radius: 8px; font-weight: 800;">
+                                                                Details
+                                                            </a>
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-primary dashboard-release-payout-btn"
+                                                                style="border-radius: 8px; font-weight: 800;"
+                                                                data-item-id="{{ $item->id }}"
+                                                                data-product-name="{{ $item->product_name }}"
+                                                                data-vendor-id="{{ $vendorId }}"
+                                                                data-vendor-amount="{{ number_format($amount, 2, '.', '') }}"
+                                                                data-toggle="modal" data-target="#dashboardReleasePayoutModal">
+                                                                <i class="mdi mdi-cash"></i> Release
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="5" class="text-center py-5">
+                                                        <div class="d-flex flex-column align-items-center justify-content-center">
+                                                            <div style="width: 64px; height: 64px; background: rgba(40, 167, 69, 0.08); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; box-shadow: inset 0 0 0 1px rgba(40, 167, 69, 0.12);">
+                                                                <i class="fas fa-check text-success" style="font-size: 1.4rem;"></i>
+                                                            </div>
+                                                            <h6 style="color: #25396f; font-weight: 800; font-size: 1.15rem; margin-bottom: 5px;">No eligible payouts</h6>
+                                                            <p class="text-muted" style="font-size: 0.9rem; font-weight: 600;">There are no delivered vendor items pending payout right now.</p>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Release Vendor Payout Modal (Dashboard) --}}
+                <div class="modal fade" id="dashboardReleasePayoutModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title"><i class="mdi mdi-cash"></i> Release Vendor Payout</h5>
+                                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                            </div>
+                            <form action="{{ url('admin/release-vendor-payout') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="order_item_id" id="dash_payout_item_id">
+                                <div class="modal-body">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <h6><strong>Product:</strong> <span id="dash_payout_product_name"></span></h6>
+                                            <h6><strong>Amount to Vendor:</strong> ₹<span id="dash_payout_amount"></span></h6>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6 class="text-primary"><strong>Vendor Bank Details</strong></h6>
+                                            <div id="dash_vendor_bank_details">
+                                                <p class="text-muted">Loading...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="form-group">
+                                        <label for="dash_vendor_payout_note"><strong>Payment Reference / Note</strong></label>
+                                        <textarea class="form-control" name="vendor_payout_note" id="dash_vendor_payout_note" rows="3"
+                                            placeholder="Enter transaction ID, reference number, or any notes..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="mdi mdi-check-circle"></i> Mark as Released
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endif
              @if ($userType == 'superadmin' || $userType == 'admin')
             {{-- Sell Old Book Requests Row --}}
             <div class="row mt-4">
@@ -728,4 +893,63 @@
                 });
             });
         </script>
+
+        @if ($userType == 'superadmin' || $userType == 'admin')
+            <script>
+                (function () {
+                    function setText(id, value) {
+                        var el = document.getElementById(id);
+                        if (el) el.textContent = value ?? '';
+                    }
+                    function setValue(id, value) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = value ?? '';
+                    }
+                    function setHtml(id, html) {
+                        var el = document.getElementById(id);
+                        if (el) el.innerHTML = html ?? '';
+                    }
+
+                    document.addEventListener('click', function (e) {
+                        var btn = e.target && e.target.closest ? e.target.closest('.dashboard-release-payout-btn') : null;
+                        if (!btn) return;
+
+                        var itemId = btn.getAttribute('data-item-id') || '';
+                        var productName = btn.getAttribute('data-product-name') || '';
+                        var vendorAmount = btn.getAttribute('data-vendor-amount') || '';
+                        var vendorId = btn.getAttribute('data-vendor-id') || '';
+
+                        setValue('dash_payout_item_id', itemId);
+                        setText('dash_payout_product_name', productName);
+                        setText('dash_payout_amount', vendorAmount);
+                        setValue('dash_vendor_payout_note', '');
+
+                        setHtml('dash_vendor_bank_details', '<p class="text-muted">Loading...</p>');
+
+                        var endpoint = @json(url('admin/get-vendor-bank-details'));
+                        var url = endpoint + '?vendor_id=' + encodeURIComponent(vendorId);
+
+                        fetch(url, { headers: { 'Accept': 'application/json' } })
+                            .then(function (r) { return r.json(); })
+                            .then(function (response) {
+                                if (response && response.status === 'success') {
+                                    var d = response.data || {};
+                                    var html = '<table class="table table-sm table-bordered mb-0">';
+                                    html += '<tr><td><strong>Name</strong></td><td>' + (d.account_holder_name || 'N/A') + '</td></tr>';
+                                    html += '<tr><td><strong>Bank</strong></td><td>' + (d.bank_name || 'N/A') + '</td></tr>';
+                                    html += '<tr><td><strong>Account No</strong></td><td>' + (d.account_number || 'N/A') + '</td></tr>';
+                                    html += '<tr><td><strong>IFSC</strong></td><td>' + (d.bank_ifsc_code || 'N/A') + '</td></tr>';
+                                    html += '</table>';
+                                    setHtml('dash_vendor_bank_details', html);
+                                } else {
+                                    setHtml('dash_vendor_bank_details', '<p class="text-danger">Bank details not available.</p>');
+                                }
+                            })
+                            .catch(function () {
+                                setHtml('dash_vendor_bank_details', '<p class="text-danger">Failed to load bank details.</p>');
+                            });
+                    });
+                })();
+            </script>
+        @endif
     @endsection

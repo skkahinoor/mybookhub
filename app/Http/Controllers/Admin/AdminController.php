@@ -12,6 +12,7 @@ use App\Models\Coupon;
 use App\Models\District;
 use App\Models\HeaderLogo;
 use App\Models\Order;
+use App\Models\OrdersProduct;
 use App\Models\Product;
 use App\Models\ProductsAttribute;
 use App\Models\Setting;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Intervention\Image\Facades\Image; // Import Role model
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -113,6 +115,44 @@ class AdminController extends Controller
                 ->get();
         }
 
+        // Eligible vendor payouts (Admin dashboard only)
+        $eligibleVendorPayoutItems = collect();
+        if ($adminType === 'superadmin' || $adminType === 'admin') {
+            $candidates = OrdersProduct::query()
+                ->with([
+                    'order.orders_products',
+                    'vendor_details.user',
+                ])
+                ->where('vendor_id', '>', 0)
+                ->where('item_status', 'Delivered')
+                ->where(function ($q) {
+                    $q->whereNull('vendor_payout_status')
+                        ->orWhere('vendor_payout_status', '!=', 'Released');
+                })
+                ->orderByDesc('id')
+                ->take(60)
+                ->get();
+
+            $eligibleVendorPayoutItems = $candidates
+                ->filter(function ($item) {
+                    $order = $item->order;
+                    if (!$order) return false;
+
+                    $pm = Str::lower(trim((string) ($order->payment_method ?? '')));
+                    $pg = Str::lower(trim((string) ($order->payment_gateway ?? '')));
+                    $isPickupLike = Str::contains($pm, 'pickup') || in_array($pg, ['pickup', 'pickup from store'], true);
+
+                    return ! $isPickupLike;
+                })
+                ->map(function ($item) {
+                    $order = $item->order;
+                    $item->vendor_payout_amount = $order ? $this->computeVendorPayoutAmount($order, $item) : 0.0;
+                    return $item;
+                })
+                ->take(10)
+                ->values();
+        }
+
         // Vendor plan info
         $vendor = null;
         if ($adminType === 'vendor' && $vendorId) {
@@ -131,8 +171,55 @@ class AdminController extends Controller
             'vendor',
             'ordersPerMonth',
             'recentOrders',
-            'sellBookRequests'
+            'sellBookRequests',
+            'eligibleVendorPayoutItems'
         ));
+    }
+
+    private function computeVendorPayoutAmount(Order $order, OrdersProduct $item): float
+    {
+        $ordersProducts = $order->orders_products ?? collect();
+        $totalItems = (int) $ordersProducts->sum('product_qty');
+
+        $totalDiscount = (float) ($order->coupon_amount ?? 0) + (float) ($order->extra_discount ?? 0);
+        $itemDiscount = ($totalDiscount > 0 && $totalItems > 0) ? round($totalDiscount / $totalItems, 2) : 0.0;
+
+        $originalTotalPrice = (float) ($item->product_price ?? 0) * (int) ($item->product_qty ?? 0);
+
+        $appliedDistributedDiscount = 0.0;
+        $hasCoupon = !empty($order->coupon_amount) && (float) $order->coupon_amount > 0;
+        $hasExtraDiscount = !empty($order->extra_discount) && (float) $order->extra_discount > 0;
+
+        if ((int) $item->vendor_id > 0) {
+            if ($hasCoupon || $hasExtraDiscount) {
+                if ($hasCoupon) {
+                    $couponVendorId = 0;
+                    if (!empty($order->coupon_code)) {
+                        $details = Coupon::couponDetails($order->coupon_code);
+                        $couponVendorId = (int) ($details['vendor_id'] ?? 0);
+                    }
+                    if ($couponVendorId > 0) {
+                        $appliedDistributedDiscount = (float) $itemDiscount;
+                    } elseif ($hasExtraDiscount) {
+                        $appliedDistributedDiscount = (float) $order->extra_discount / ($totalItems ?: 1);
+                    }
+                } elseif ($hasExtraDiscount) {
+                    $appliedDistributedDiscount = (float) $itemDiscount;
+                }
+            }
+        } else {
+            $appliedDistributedDiscount = (float) $itemDiscount;
+        }
+
+        $walletTotal = (float) ($order->wallet_amount ?? 0);
+        $appliedWallet = ($walletTotal > 0 && $totalItems > 0)
+            ? round($walletTotal * (((int) $item->product_qty) / ($totalItems ?: 1)), 2)
+            : 0.0;
+
+        $totalPrice = (float) $originalTotalPrice - (float) $appliedDistributedDiscount - (float) $appliedWallet;
+        $commission = round(($totalPrice * (float) ($item->commission ?? 0)) / 100, 2);
+
+        return (float) round($totalPrice - $commission, 2);
     }
 
     public function login(Request $request)
