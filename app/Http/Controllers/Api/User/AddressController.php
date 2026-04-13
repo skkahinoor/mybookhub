@@ -124,7 +124,15 @@ class AddressController extends Controller
         }
 
         $address->update($request->only([
-            'name', 'address', 'mobile', 'pincode', 'country_id', 'state_id', 'district_id', 'block_id', 'is_default'
+            'name',
+            'address',
+            'mobile',
+            'pincode',
+            'country_id',
+            'state_id',
+            'district_id',
+            'block_id',
+            'is_default'
         ]));
 
         return response()->json([
@@ -164,7 +172,7 @@ class AddressController extends Controller
     public function setDefault(Request $request, $id)
     {
         $user = $request->user();
-        
+
         $address = UserAddress::where('id', $id)->where('user_id', $user->id)->first();
 
         if (!$address) {
