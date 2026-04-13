@@ -16,9 +16,16 @@ use App\Models\Admin;
 use App\Models\Product;
 use App\Models\Coupon;
 use App\Models\ProductsAttribute;
+use App\Services\FirebaseService;
 
 class OrderController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
 
     private function checkAccess(Request $request, array $allowedRoles = ['vendor'])
     {
@@ -196,6 +203,36 @@ class OrderController extends Controller
             'order_id' => $order->id,
             'order_status' => $request->order_status
         ]);
+
+        // ✅ Send Push Notification for specific status changes
+        $targetStatuses = ['Shipped', 'Delivered', 'Canceled', 'Cancelled'];
+        if (in_array($request->order_status, $targetStatuses)) {
+            // Only notify if there's a registered user (not guest)
+            if ($order->user_id > 0) {
+                $title = "Order Information Update";
+                $body = "Your order #{$order->id} status has been updated to {$request->order_status}.";
+                
+                // Customize messages
+                if (strtolower($request->order_status) == 'shipped') {
+                    $body = "Your order #{$order->id} has been shipped out for delivery.";
+                } elseif (strtolower($request->order_status) == 'delivered') {
+                    $body = "Success! Your order #{$order->id} has been delivered.";
+                } elseif (in_array(strtolower($request->order_status), ['canceled', 'cancelled'])) {
+                    $body = "Notice: Your order #{$order->id} has been cancelled.";
+                }
+
+                $this->firebaseService->sendToUsers(
+                    [$order->user_id], 
+                    $title, 
+                    $body, 
+                    [
+                        'order_id' => (string)$order->id,
+                        'type' => 'order_update',
+                        'status' => $request->order_status
+                    ]
+                );
+            }
+        }
 
         return response()->json([
             'status' => true,

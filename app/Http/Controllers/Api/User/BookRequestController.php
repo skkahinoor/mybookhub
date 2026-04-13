@@ -14,18 +14,36 @@ use Illuminate\Validation\Rule;
 
 class BookRequestController extends Controller
 {
-    private function getMatchingVendorsForUser($user)
+    private function getUserActivePincode($user)
     {
-        if (empty($user->pincode)) {
+        // 1. Try to get default address
+        $defaultAddress = $user->addresses()->where('is_default', 1)->first();
+        if ($defaultAddress) {
+            return $defaultAddress->pincode;
+        }
+
+        // 2. Try to get latest active address
+        $latestAddress = $user->addresses()->latest()->first();
+        if ($latestAddress) {
+            return $latestAddress->pincode;
+        }
+
+        // 3. Fallback to user model pincode (legacy)
+        return $user->pincode;
+    }
+
+    private function getMatchingVendorsForPincode($pincode)
+    {
+        if (empty($pincode)) {
             return collect();
         }
 
         return Vendor::with(['user', 'vendorbusinessdetails'])
-            ->where(function ($query) use ($user) {
-                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($user) {
-                    $businessQuery->where('shop_pincode', $user->pincode);
-                })->orWhereHas('user', function ($userQuery) use ($user) {
-                    $userQuery->where('pincode', $user->pincode);
+            ->where(function ($query) use ($pincode) {
+                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($pincode) {
+                    $businessQuery->where('shop_pincode', $pincode);
+                })->orWhereHas('user', function ($userQuery) use ($pincode) {
+                    $userQuery->where('pincode', $pincode);
                 });
             })
             ->get();
@@ -34,14 +52,16 @@ class BookRequestController extends Controller
     public function getMatchingVendors(Request $request)
     {
         $user = Auth::user();
-        if (!$user->pincode) {
+        $pincode = $this->getUserActivePincode($user);
+
+        if (!$pincode) {
             return response()->json([
                 'status' => false,
-                'message' => 'Please update your pincode in profile before requesting a book.'
-            ], 400);
+                'message' => 'Please update your address or pincode in your profile before requesting a book.'
+            ], 200);
         }
 
-        $vendors = $this->getMatchingVendorsForUser($user);
+        $vendors = $this->getMatchingVendorsForPincode($pincode);
 
         return response()->json([
             'status' => true,
@@ -62,19 +82,21 @@ class BookRequestController extends Controller
             'vendor_id' => ['required', Rule::exists('vendors', 'id')],
         ]);
 
-        if (empty($user->pincode)) {
+        $pincode = $this->getUserActivePincode($user);
+
+        if (empty($pincode)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Please update your pincode in profile before requesting a book.'
-            ], 400);
+                'message' => 'Please update your address or pincode in your profile before requesting a book.'
+            ], 200);
         }
 
         $isVendorMatchedByPincode = Vendor::where('id', $request->vendor_id)
-            ->where(function ($query) use ($user) {
-                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($user) {
-                    $businessQuery->where('shop_pincode', $user->pincode);
-                })->orWhereHas('user', function ($userQuery) use ($user) {
-                    $userQuery->where('pincode', $user->pincode);
+            ->where(function ($query) use ($pincode) {
+                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($pincode) {
+                    $businessQuery->where('shop_pincode', $pincode);
+                })->orWhereHas('user', function ($userQuery) use ($pincode) {
+                    $userQuery->where('pincode', $pincode);
                 });
             })
             ->exists();
@@ -82,8 +104,8 @@ class BookRequestController extends Controller
         if (!$isVendorMatchedByPincode) {
             return response()->json([
                 'status' => false,
-                'message' => 'Selected vendor is not available for your pincode.'
-            ], 400);
+                'message' => 'Selected vendor is not available for your area.'
+            ], 200);
         }
 
         $bookRequest = BookRequest::create([
