@@ -17,8 +17,11 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
 
     // Public auth endpoints
     Route::get('/login', [AuthController::class, 'Login'])->name('student.login');
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('student.forgot-password.form');
     Route::get('/register', [AuthController::class, 'Register'])->name('student.register');
     Route::post('/loginStore', [AuthController::class, 'loginStore'])->name('student.loginstore');
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->name('student.forgot-password');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('student.reset-password');
     Route::post('/registerStore', [AuthController::class, 'registerStore'])->name('student.registerstore');
 
     // Protected routes (require authentication as student)

@@ -324,48 +324,98 @@ class UserController extends Controller
     public function forgotPassword(Request $request)
     {
         if ($request->ajax()) {
-            $data = $request->all();
-            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-                'email' => 'required|email|max:150|exists:users',
-            ], [
-                'email.exists' => 'Email does not exist',
+            $validator = Validator::make($request->all(), [
+                'phone' => 'required',
             ]);
 
-            if ($validator->passes()) { // if validation passes (is successful), generate a new password for the user
-                $new_password = \Illuminate\Support\Str::random(16);
-
-
-                User::where('email', $data['email'])->update([
-                    'password' => bcrypt($new_password),
-                ]);
-
-                // Get user details
-                $userDetails = User::where('email', $data['email'])->first()->toArray();
-                $email = $data['email'];
-                $messageData = [
-                    'name'     => $userDetails['name'],
-                    'email'    => $email,
-                    'password' => $new_password,
-                ];
-                \Illuminate\Support\Facades\Mail::send('emails.user_forgot_password', $messageData, function ($message) use ($email) {
-                    $message->to($email)->subject('New Password - Multi-vendor E-commerce Application');
-                });
-
-
-                return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
-                    'type'    => 'success',
-                    'message' => 'New Password sent to your registered email.',
-                ]);
-            } else {                  // if validation fails (is unsuccessful), send the Validation Error Messages
-                                          // Here, we return a JSON response because the request is ORIGINALLY submitting an HTML <form> data using an AJAX request
-                return response()->json([ // JSON Responses: https://laravel.com/docs/9.x/responses#json-responses
-                    'type'   => 'error',
-                    'errors' => $validator->messages(), // we'll loop over the Validation Errors Messages array using jQuery to show them in the frontend (check front/js/custom.js)    // Working With Error Messages: https://laravel.com/docs/9.x/validation#working-with-error-messages
-                ]);
+            if ($validator->fails()) {
+                return response()->json([
+                    'type' => 'error',
+                    'errors' => $validator->errors(),
+                ], 422);
             }
+
+            $user = User::where('phone', $request->phone)->first();
+            if (!$user) {
+                return response()->json([
+                    'type' => 'error',
+                    'errors' => ['phone' => ['User not found with this phone number.']],
+                ], 404);
+            }
+
+            $otp = rand(100000, 999999);
+            Otp::updateOrCreate(
+                ['phone' => $request->phone],
+                ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+            );
+
+            $smsStatus = Sms::sendSms($request->phone, $otp);
+            if (!$smsStatus) {
+                return response()->json([
+                    'type' => 'error',
+                    'errors' => ['phone' => ['Failed to send OTP. Please try again later.']],
+                ], 500);
+            }
+
+            return response()->json([
+                'type' => 'success',
+                'message' => 'OTP sent successfully for password reset.',
+            ]);
         } else { // if the 'GET' request is coming from the <a> tag in front/users/login_register.blade.php, render the front/users/forgot_password.blade.php page
             return view('front.users.forgot_password');
         }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required',
+            'otp' => 'required',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'type' => 'error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $otpRecord = Otp::where('phone', $request->phone)
+            ->where('otp', $request->otp)
+            ->first();
+
+        if (!$otpRecord) {
+            return response()->json([
+                'type' => 'error',
+                'errors' => ['otp' => ['Invalid OTP.']],
+            ], 400);
+        }
+
+        if (now()->diffInMinutes($otpRecord->created_at) > 10) {
+            return response()->json([
+                'type' => 'error',
+                'errors' => ['otp' => ['OTP has expired.']],
+            ], 400);
+        }
+
+        $user = User::where('phone', $request->phone)->first();
+        if (!$user) {
+            return response()->json([
+                'type' => 'error',
+                'errors' => ['phone' => ['User not found.']],
+            ], 404);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        Otp::where('phone', $request->phone)->delete();
+
+        return response()->json([
+            'type' => 'success',
+            'message' => 'Password reset successful. You can now login with your new password.',
+        ]);
     }
 
     public function userAccount(Request $request)

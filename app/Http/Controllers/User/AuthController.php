@@ -28,6 +28,13 @@ class AuthController extends Controller
         $headerLogo = HeaderLogo::first();
         return view('user.auth.register', compact('logos', 'headerLogo'));
     }
+
+    public function showForgotPassword()
+    {
+        $logos = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
+        return view('user.auth.forgot-password', compact('logos', 'headerLogo'));
+    }
     public function loginStore(Request $request)
     {
         // Student module: phone + password ONLY (no email login)
@@ -62,6 +69,84 @@ class AuthController extends Controller
         }
 
         return redirect()->route('student.login')->with('error', 'Invalid credentials');
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|digits:10',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('student.forgot-password.form')
+                ->withErrors($validator, 'forgotPassword');
+        }
+
+        $user = User::where('phone', $request->phone)->first();
+        if (! $user) {
+            return redirect()->route('student.forgot-password.form')
+                ->withErrors(['phone' => 'User not found with this phone number.'], 'forgotPassword');
+        }
+
+        $otp = rand(100000, 999999);
+        Otp::updateOrCreate(
+            ['phone' => $request->phone],
+            ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+        );
+
+        $smsStatus = Sms::sendSms($request->phone, $otp);
+        if (! $smsStatus) {
+            return redirect()->route('student.forgot-password.form')
+                ->withErrors(['phone' => 'Failed to send OTP. Please try again later.'], 'forgotPassword');
+        }
+
+        return redirect()->route('student.forgot-password.form')
+            ->with('forgot_success', 'OTP sent successfully for password reset.')
+            ->with('reset_phone', $request->phone);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|digits:10',
+            'otp' => 'required|digits:6',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('student.forgot-password.form')
+                ->withErrors($validator, 'resetPassword')
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        $otpRecord = Otp::where('phone', $request->phone)
+            ->where('otp', $request->otp)
+            ->first();
+
+        if (! $otpRecord) {
+            return redirect()->route('student.forgot-password.form')
+                ->withErrors(['otp' => 'Invalid OTP.'], 'resetPassword')
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        if (now()->diffInMinutes($otpRecord->created_at) > 10) {
+            return redirect()->route('student.forgot-password.form')
+                ->withErrors(['otp' => 'OTP has expired.'], 'resetPassword')
+                ->withInput($request->except(['password', 'password_confirmation']));
+        }
+
+        $user = User::where('phone', $request->phone)->first();
+        if (! $user) {
+            return redirect()->route('student.forgot-password.form')
+                ->withErrors(['phone' => 'User not found.'], 'resetPassword');
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        Otp::where('phone', $request->phone)->delete();
+
+        return redirect()->route('student.login')->with('success', 'Password reset successful. You can now login with your new password.');
     }
 
 

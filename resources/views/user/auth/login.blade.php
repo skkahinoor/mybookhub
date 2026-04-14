@@ -48,15 +48,27 @@
                                 </div>
                             @endif
 
+                            @if (session('success'))
+                                <div class="alert alert-success mt-2">
+                                    {{ session('success') }}
+                                </div>
+                            @endif
+
                             <form class="pt-3" action="{{ route('student.loginstore') }}" method="post">
                                 @csrf
                                 <div class="form-group">
                                     <input type="text" class="form-control form-control-lg" id="exampleInputEmail1"
                                         name="login" placeholder="Mobile number" value="{{ old('login') }}">
+                                    @error('login')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                                 <div class="form-group">
                                     <input type="password" class="form-control form-control-lg"
                                         id="exampleInputPassword1" name="password" placeholder="Password">
+                                    @error('password')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                                 <div class="mt-3">
                                     <button type="submit"
@@ -70,7 +82,7 @@
                                             Keep me signed in
                                         </label>
                                     </div>
-                                    <a href="#" class="auth-link text-black">Forgot password?</a>
+                                    <a href="{{ route('student.forgot-password.form') }}" class="auth-link text-black">Forgot password?</a>
                                 </div>
                                 {{-- <div class="mb-2">
                                     <button type="button" class="btn btn-block btn-facebook auth-form-btn">
@@ -82,6 +94,7 @@
                                         class="text-primary">Create</a>
                                 </div>
                             </form>
+
                         </div>
                     </div>
                 </div>

@@ -645,6 +645,7 @@ HTML;
     Route::post('cart/delete', [ProductsController::class, 'cartDelete'])->name('cartDelete');
 
     Route::match(['get', 'post'], 'user/forgot-password', 'UserController@forgotPassword');
+    Route::post('user/reset-password', 'UserController@resetPassword');
     Route::get('user/confirm/{code}', 'UserController@confirmAccount');
     Route::match(['get', 'post'], 'user/verify-otp', 'UserController@verifyOtp')->name('user.verify-otp');
     Route::get('user/verify-otp', 'UserController@showVerifyOtp')->name('user.verify-otp.show');
