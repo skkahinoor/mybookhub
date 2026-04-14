@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\User\BookRequestController;
 Route::post('/user/register', [ProfileController::class, 'register']);
 Route::post('/user/verify-otp', [ProfileController::class, 'verifyOtp']);
 Route::post('/user/resend-otp', [ProfileController::class, 'resendOtp']);
+Route::post('/user/forgot-password', [ProfileController::class, 'forgotPassword']);
+Route::post('/user/reset-password', [ProfileController::class, 'resetPassword']);
 Route::get('/user/home', [HomeController::class, 'home']);
 Route::get('/user/products', [ProductController::class, 'index']);
 Route::get('/user/vendor-product/{product_id}', [ProductController::class, 'vendorsproduct']);

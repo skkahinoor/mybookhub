@@ -188,6 +188,99 @@ class ProfileController extends Controller
         ]);
     }
 
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required',
+        ]);
+
+        $user = User::where('phone', $request->phone)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found with this phone number.'
+            ], 404);
+        }
+
+        $otp = rand(100000, 999999);
+
+        DB::table('otps')->updateOrInsert(
+            ['phone' => $request->phone],
+            ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+        );
+
+        $smsStatus = $this->sendSMS($request->phone, $otp);
+
+        if (!$smsStatus) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to send OTP. Please try again later.'
+            ], 500);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OTP sent successfully for password reset.'
+        ]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required',
+            'otp' => 'required',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $otpRecord = DB::table('otps')
+            ->where('phone', $request->phone)
+            ->where('otp', $request->otp)
+            ->first();
+
+        if (!$otpRecord) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid OTP.'
+            ], 400);
+        }
+
+        // Check if OTP is expired (let's say 10 minutes)
+        if (now()->diffInMinutes($otpRecord->created_at) > 10) {
+            return response()->json([
+                'status' => false,
+                'message' => 'OTP has expired.'
+            ], 400);
+        }
+
+        $user = User::where('phone', $request->phone)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found.'
+            ], 404);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        DB::table('otps')->where('phone', $request->phone)->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Password reset successful. You can now login with your new password.'
+        ]);
+    }
+
+
     public function resendOtp(Request $request)
     {
         $request->validate([
