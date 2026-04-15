@@ -703,15 +703,22 @@
                         </div>
                         <div class="card-body px-4 pt-4">
                             @forelse($recentOrders as $order)
-                            <div class="recent-message d-flex align-items-center mb-4">
-                                <div class="avatar rounded-circle d-flex justify-content-center align-items-center" style="width: 45px; height: 45px; background: #e8eaff;">
-                                    <i class="fas fa-shopping-bag" style="color: #435ebe; font-size: 1.1rem;"></i>
+                            @php
+                                $orderDetailsUrl = Auth::guard('admin')->user()->type === 'vendor'
+                                    ? url('vendor/orders/' . $order->id)
+                                    : url('admin/orders/' . $order->id);
+                            @endphp
+                            <a href="{{ $orderDetailsUrl }}" class="d-block" style="text-decoration: none;">
+                                <div class="recent-message d-flex align-items-center mb-4">
+                                    <div class="avatar rounded-circle d-flex justify-content-center align-items-center" style="width: 45px; height: 45px; background: #e8eaff;">
+                                        <i class="fas fa-shopping-bag" style="color: #435ebe; font-size: 1.1rem;"></i>
+                                    </div>
+                                    <div class="name ms-3 ml-3 overflow-hidden" style="flex: 1;">
+                                        <h6 class="mb-0 text-truncate" style="font-weight: 700; color: #25396f; font-size: 0.95rem;">Order #{{ $order->id }}</h6>
+                                        <small class="text-muted text-truncate d-block" style="font-size: 0.8rem;">{{ $order->user ? $order->user->name : 'N/A' }} • ₹{{ number_format($order->grand_total, 2) }}</small>
+                                    </div>
                                 </div>
-                                <div class="name ms-3 ml-3 overflow-hidden" style="flex: 1;">
-                                    <h6 class="mb-0 text-truncate" style="font-weight: 700; color: #25396f; font-size: 0.95rem;">Order #{{ $order->id }}</h6>
-                                    <small class="text-muted text-truncate d-block" style="font-size: 0.8rem;">{{ $order->user ? $order->user->name : 'N/A' }} • ₹{{ number_format($order->grand_total, 2) }}</small>
-                                </div>
-                            </div>
+                            </a>
                             @empty
                             <div class="text-center text-muted w-100 py-3">
                                 <p style="font-size: 0.9rem;">No recent orders found.</p>

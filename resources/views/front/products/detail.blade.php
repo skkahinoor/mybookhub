@@ -565,11 +565,11 @@
                                                         @endphp
                                                         {{ $sellerDisplayName }}
 
-                                                        @if($plan)
+                                                        {{-- @if($plan)
                                                             <span class="ms-2 badge {{ $plan === 'pro' ? 'bg-success' : 'bg-secondary' }}" style="font-size: 10px; vertical-align: middle;">
                                                                 {{ strtoupper($plan) }}
                                                             </span>
-                                                        @endif
+                                                        @endif --}}
 
                                                         @if(($sellerPrice['discount_percent'] ?? 0) > 0)
                                                             <span class="ms-2 badge bg-warning text-dark" style="font-size: 10px; vertical-align: middle;">
