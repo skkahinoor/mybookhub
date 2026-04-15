@@ -50,7 +50,7 @@
                                         <td>{{ $query['phone'] }}</td>
                                         <td>{{ $query['email'] }}</td>
                                         <td>{{ $query['subject'] }}</td>
-                                        <td>{{ Str::limit($query['message'], 50) }}</td>
+                                        <td>{{ strlen($query['message']) > 50 ? substr($query['message'], 0, 50) . '...' : $query['message'] }}</td>
                                         <td>
                                             <select class="form-control updateStatus" data-query-id="{{ $query['id'] }}" style="width: auto; display: inline-block;">
                                                 <option value="pending" {{ $query['status'] == 'pending' ? 'selected' : '' }}>Pending</option>
