@@ -576,10 +576,10 @@
                                                                 -{{ (int) ($sellerPrice['discount_percent'] ?? 0) }}%
                                                             </span>
                                                         @endif
-
-                                                        <div class="mt-1" style="font-size: 12px; color: {{ $inStock ? '#4a5568' : '#b91c1c' }};">
+                                                        {{-- display stock only if the seller is a vendor  --}}
+                                                        {{-- <div class="mt-1" style="font-size: 12px; color: {{ $inStock ? '#4a5568' : '#b91c1c' }};">
                                                             {{ $inStock ? ('Stock: ' . (int) ($seller->stock ?? 0)) : 'Out of stock' }}
-                                                        </div>
+                                                        </div> --}}
 
                                                         @if($seller->contact_details_paid == 1 && $seller->user)
                                                             <div class="mt-2" style="font-size: 12px; font-weight: normal; color: #4a5568;">
