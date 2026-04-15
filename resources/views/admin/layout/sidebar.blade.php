@@ -576,6 +576,24 @@
                 </div>
             </li>
 
+            <li class="nav-item">
+                <a @if (Session::get('page') == 'dynamic_modals') style="background: #052CA3 !important; color: #FFF !important" @endif
+                    class="nav-link" data-toggle="collapse" href="#ui-dynamic-modals" aria-expanded="false"
+                    aria-controls="ui-dynamic-modals">
+                    <i class="icon-layers menu-icon"></i>
+                    <span class="menu-title">Dynamic Modal Management</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="ui-dynamic-modals">
+                    <ul class="nav flex-column sub-menu" style="background: #fff !important; color: #052CA3 !important">
+                        <li class="nav-item">
+                            <a @if (Session::get('page') == 'dynamic_modals') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ url('admin/dynamic-modals') }}">Dynamic Modals</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
 
             <li class="nav-item">
                 <a @if (Session::get('page') == 'shipping') style="background: #052CA3 !important; color: #FFF !important" @endif

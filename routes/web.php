@@ -348,6 +348,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-image-status', [AdminProductsController::class, 'updateImageStatus']);       // Update Images Status using AJAX in add_images.blade.php
         Route::get('delete-image/{id}', [AdminProductsController::class, 'deleteImage']);                // Delete an image in add_images.blade.php
 
+        // Dynamic Modals
+        Route::get('dynamic-modals', [App\Http\Controllers\Admin\DynamicModalController::class, 'index'])->name('admin.dynamic_modals.index');
+        Route::post('update-dynamic-modal-status', [App\Http\Controllers\Admin\DynamicModalController::class, 'updateStatus'])->name('admin.dynamic_modals.update_status');
+        Route::get('delete-dynamic-modal/{id}', [App\Http\Controllers\Admin\DynamicModalController::class, 'delete'])->name('admin.dynamic_modals.delete');
+        Route::match(['get', 'post'], 'add-edit-dynamic-modal/{id?}', [App\Http\Controllers\Admin\DynamicModalController::class, 'addEdit'])->name('admin.dynamic_modals.add_edit');
+
         // Banners
         Route::get('banners', 'BannerController@banners');
         Route::post('update-banner-status', 'BannerController@updateBannerStatus');               // Update Categories Status using AJAX in banners.blade.php
