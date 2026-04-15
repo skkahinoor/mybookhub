@@ -16,9 +16,23 @@ use App\Models\InstitutionManagement;
 use App\Models\InstitutionClass;
 use App\Models\WalletTransaction;
 use App\Models\FilterClassSubject;
+use App\Models\DynamicModal;
 
 class HomeController extends Controller
 {
+    public function getDynamicModal()
+    {
+        $dynamicModals = DynamicModal::where('status', 1)
+            ->orderBy('id', 'desc')
+            ->get(['id', 'text', 'image', 'link', 'status']);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Dynamic modal fetched successfully',
+            'data' => $dynamicModals,
+        ]);
+    }
+
     public function home(Request $request)
     {
         // Check if user logged in (optional)
