@@ -888,7 +888,13 @@ class CatalogueController extends Controller
         }
 
         // Fetch requests that are either specifically for this vendor OR broadcasted to their district
-        $bookRequests = BookRequest::with('user')
+        $bookRequests = BookRequest::with([
+                'user', 
+                'replies' => function ($q) use ($vendor) {
+                    $q->where('vendor_id', $vendor->id);
+                },
+                'replies.vendor.vendorbusinessdetails'
+            ])
             ->where(function ($query) use ($user, $vendor) {
                 $query->where('vendor_id', $vendor->id)
                     ->orWhere(function ($q) use ($user) {

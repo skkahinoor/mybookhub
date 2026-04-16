@@ -151,6 +151,7 @@ class BookRequestController extends Controller
     {
         $request->validate([
             'message' => 'required|string|min:1',
+            'vendor_id' => 'nullable|exists:vendors,id',
         ]);
 
         $query = BookRequest::where('requested_by_user', Auth::id())->find($id);
@@ -163,9 +164,25 @@ class BookRequestController extends Controller
 
         $reply = BookRequestReply::create([
             'book_request_id' => $query->id,
+            'vendor_id' => $request->vendor_id,
             'reply_by' => 'user',
             'message' => $request->message,
         ]);
+
+        // Notify the specific vendor if targeted
+        if ($request->vendor_id) {
+            $vendor = Vendor::find($request->vendor_id);
+            if ($vendor && $vendor->user_id) {
+                Notification::create([
+                    'type' => 'book_request_reply',
+                    'title' => 'New reply from student',
+                    'message' => 'Student replied to your message for: ' . ($query->book_title ?? 'requested book'),
+                    'related_id' => (int) $vendor->user_id,
+                    'related_type' => User::class,
+                    'is_read' => false,
+                ]);
+            }
+        }
 
         return response()->json([
             'status' => true,

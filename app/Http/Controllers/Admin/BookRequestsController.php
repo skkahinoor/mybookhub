@@ -123,12 +123,20 @@ class BookRequestsController extends Controller
         }
 
         // GET request - show reply form
-        $bookRequest = BookRequest::with('user', 'replies')->find($id);
+        $adminType = Auth::guard('admin')->user()->type;
+        $adminVendorId = Auth::guard('admin')->user()->vendor_id;
+
+        $bookRequest = BookRequest::with(['user', 'replies' => function($q) use ($adminType, $adminVendorId) {
+            if ($adminType === 'vendor') {
+                $q->where('vendor_id', $adminVendorId);
+            }
+        }, 'replies.vendor.vendorbusinessdetails'])->find($id);
+
         if (!$bookRequest) {
             return redirect()->back()->with('error_message', 'Book Request not found.');
         }
-        if (Auth::guard('admin')->user()->type === 'vendor') {
-            $adminVendorId = Auth::guard('admin')->user()->vendor_id;
+
+        if ($adminType === 'vendor') {
             $vendor = \App\Models\Vendor::with('user')->find($adminVendorId);
             $districtId = $vendor->user->district_id ?? null;
 
