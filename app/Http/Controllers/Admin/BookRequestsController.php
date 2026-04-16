@@ -8,42 +8,12 @@ use App\Models\BookRequestReply;
 use App\Models\HeaderLogo;
 use App\Models\Notification;
 use App\Models\User;
-use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class BookRequestsController extends Controller
 {
-    private function getVendorDistrictIdForAdmin($adminUser)
-    {
-        if ($adminUser->type !== 'vendor' || empty($adminUser->vendor_id)) {
-            return null;
-        }
-
-        $vendor = Vendor::with('user')->find($adminUser->vendor_id);
-
-        return $vendor?->user?->district_id;
-    }
-
-    private function canVendorAccessRequest($adminUser, BookRequest $bookRequest): bool
-    {
-        if ($adminUser->type !== 'vendor') {
-            return true;
-        }
-
-        if ((int) $bookRequest->vendor_id === (int) $adminUser->vendor_id) {
-            return true;
-        }
-
-        if (is_null($bookRequest->vendor_id)) {
-            $vendorDistrictId = $this->getVendorDistrictIdForAdmin($adminUser);
-            return !empty($vendorDistrictId) && (int) $bookRequest->district_id === (int) $vendorDistrictId;
-        }
-
-        return false;
-    }
-
     public function index()
     {
         $headerLogo = HeaderLogo::first();
@@ -51,11 +21,20 @@ class BookRequestsController extends Controller
         Session::put('page', 'bookRequests');
         $adminType = Auth::guard('admin')->user()->type;
         $adminVendorId = Auth::guard('admin')->user()->vendor_id;
-        $vendorDistrictId = $this->getVendorDistrictIdForAdmin(Auth::guard('admin')->user());
 
         $bookRequestsQuery = BookRequest::with(['user', 'vendor.user', 'vendor.vendorbusinessdetails']);
         if ($adminType === 'vendor') {
-            $bookRequestsQuery->where('vendor_id', $adminVendorId);
+            $vendor = \App\Models\Vendor::with('user')->find($adminVendorId);
+            $districtId = $vendor->user->district_id ?? null;
+
+            $bookRequestsQuery->where(function ($q) use ($adminVendorId, $districtId) {
+                $q->where('vendor_id', $adminVendorId);
+                if ($districtId) {
+                    $q->orWhere(function ($sq) use ($districtId) {
+                        $sq->whereNull('vendor_id')->where('district_id', $districtId);
+                    });
+                }
+            });
         }
         $bookRequests = $bookRequestsQuery->orderBy('id', 'desc')->get();
 
@@ -76,8 +55,17 @@ class BookRequestsController extends Controller
                 return redirect()->back()->with('error_message', 'Book Request not found.');
             }
 
-            if (Auth::guard('admin')->user()->type === 'vendor' && (int) $bookRequest->vendor_id !== (int) Auth::guard('admin')->user()->vendor_id) {
-                return redirect()->back()->with('error_message', 'You are not authorized to reply to this request.');
+            if (Auth::guard('admin')->user()->type === 'vendor') {
+                $adminVendorId = Auth::guard('admin')->user()->vendor_id;
+                $vendor = \App\Models\Vendor::with('user')->find($adminVendorId);
+                $districtId = $vendor->user->district_id ?? null;
+
+                $isAuthorized = (int) $bookRequest->vendor_id === (int) $adminVendorId ||
+                    ($bookRequest->vendor_id === null && (int) $bookRequest->district_id === (int) $districtId);
+
+                if (!$isAuthorized) {
+                    return redirect()->back()->with('error_message', 'You are not authorized to reply to this request.');
+                }
             }
 
             // Validation rules
@@ -138,17 +126,30 @@ class BookRequestsController extends Controller
         $adminType = Auth::guard('admin')->user()->type;
         $adminVendorId = Auth::guard('admin')->user()->vendor_id;
 
-        $bookRequest = BookRequest::with(['user', 'replies' => function($q) use ($adminType, $adminVendorId) {
-            if ($adminType === 'vendor') {
-                $q->where('vendor_id', $adminVendorId);
-            }
-        }, 'replies.vendor.vendorbusinessdetails'])->find($id);
+        $bookRequest = BookRequest::with([
+            'user',
+            'replies' => function ($q) use ($adminType, $adminVendorId) {
+                if ($adminType === 'vendor') {
+                    $q->where('vendor_id', $adminVendorId);
+                }
+            },
+            'replies.vendor.vendorbusinessdetails'
+        ])->find($id);
 
         if (!$bookRequest) {
             return redirect()->back()->with('error_message', 'Book Request not found.');
         }
-        if (Auth::guard('admin')->user()->type === 'vendor' && (int) $bookRequest->vendor_id !== (int) Auth::guard('admin')->user()->vendor_id) {
-            return redirect()->route('vendor.requestbook.index')->with('error_message', 'You are not authorized to view this request.');
+
+        if ($adminType === 'vendor') {
+            $vendor = \App\Models\Vendor::with('user')->find($adminVendorId);
+            $districtId = $vendor->user->district_id ?? null;
+
+            $isAuthorized = (int) $bookRequest->vendor_id === (int) $adminVendorId ||
+                ($bookRequest->vendor_id === null && (int) $bookRequest->district_id === (int) $districtId);
+
+            if (!$isAuthorized) {
+                return redirect()->route('admin.requestedbooks.index')->with('error_message', 'You are not authorized to view this request.');
+            }
         }
         $query = $bookRequest->toArray();
 
@@ -162,8 +163,17 @@ class BookRequestsController extends Controller
         if ($request->ajax()) {
             $bookRequest = BookRequest::find($request->book_id);
             if ($bookRequest) {
-                if (Auth::guard('admin')->user()->type === 'vendor' && (int) $bookRequest->vendor_id !== (int) Auth::guard('admin')->user()->vendor_id) {
-                    return response()->json(['error' => 'Unauthorized action.'], 403);
+                if (Auth::guard('admin')->user()->type === 'vendor') {
+                    $adminVendorId = Auth::guard('admin')->user()->vendor_id;
+                    $vendor = \App\Models\Vendor::with('user')->find($adminVendorId);
+                    $districtId = $vendor->user->district_id ?? null;
+
+                    $isAuthorized = (int) $bookRequest->vendor_id === (int) $adminVendorId ||
+                        ($bookRequest->vendor_id === null && (int) $bookRequest->district_id === (int) $districtId);
+
+                    if (!$isAuthorized) {
+                        return response()->json(['error' => 'Unauthorized action.'], 403);
+                    }
                 }
                 // Toggle status: if pending or 0, change to in_progress; otherwise change to pending
                 if ($bookRequest->status == 'pending' || $bookRequest->status == '0' || $bookRequest->status == 0) {
@@ -194,8 +204,17 @@ class BookRequestsController extends Controller
             return redirect()->back()->with('error_message', 'Book request not found!');
         }
 
-        if (Auth::guard('admin')->user()->type === 'vendor' && (int) $bookRequest->vendor_id !== (int) Auth::guard('admin')->user()->vendor_id) {
-            return redirect()->back()->with('error_message', 'You are not authorized to delete this request.');
+        if (Auth::guard('admin')->user()->type === 'vendor') {
+            $adminVendorId = Auth::guard('admin')->user()->vendor_id;
+            $vendor = \App\Models\Vendor::with('user')->find($adminVendorId);
+            $districtId = $vendor->user->district_id ?? null;
+
+            $isAuthorized = (int) $bookRequest->vendor_id === (int) $adminVendorId ||
+                ($bookRequest->vendor_id === null && (int) $bookRequest->district_id === (int) $districtId);
+
+            if (!$isAuthorized) {
+                return redirect()->back()->with('error_message', 'You are not authorized to delete this request.');
+            }
         }
 
         // ✅ Delete replies FIRST
