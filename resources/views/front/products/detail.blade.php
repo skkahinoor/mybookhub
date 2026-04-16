@@ -404,8 +404,16 @@
                             <div class="author-text">by {{ isset($productDetails['authors']) && count($productDetails['authors']) > 0 ? collect($productDetails['authors'])->pluck('name')->join(', ') : 'Unknown Author' }}</div>
 
                             @if($otherSellers->count() > 0)
+                                @php
+                                    // Show the exact price of the seller that won buybox logic.
+                                    $buyboxPrice = $finalPrice ?? 0;
+                                    if (!empty($productDetails['attribute_id'])) {
+                                        $buyboxPriceDetails = \App\Models\Product::getDiscountAttributePrice($productDetails['id'], null, $productDetails['attribute_id']);
+                                        $buyboxPrice = $buyboxPriceDetails['final_price'] ?? $buyboxPrice;
+                                    }
+                                @endphp
                                 <div class="best-price-badge">
-                                    Best Price: ₹{{ number_format($finalPrice, 0) }}
+                                    Best Price: ₹{{ number_format($buyboxPrice, 0) }}
                                     <span class="fire-icon">🔥</span>
                                 </div>
 
