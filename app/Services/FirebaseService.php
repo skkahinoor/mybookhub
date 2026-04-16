@@ -55,10 +55,21 @@ class FirebaseService
      */
     public function sendToUsers(array $userIds, $title, $body, $data = [])
     {
+        // Always create database entries for each user first
+        foreach ($userIds as $id) {
+            NotificationModel::create([
+                'type' => $data['type'] ?? 'targeted',
+                'title' => $title,
+                'message' => $body,
+                'related_id' => $id,
+                'related_type' => User::class,
+            ]);
+        }
+
         $tokens = UserFcmToken::whereIn('user_id', $userIds)->pluck('fcm_token')->toArray();
         
         if (empty($tokens)) {
-            return false;
+            return true; // Still return true because we saved it to DB at least
         }
 
         $notification = Notification::create($title, $body);
@@ -75,16 +86,6 @@ class FirebaseService
             $successCount += $report->successes()->count();
         }
 
-        // Create database entries for each user
-        foreach ($userIds as $id) {
-            NotificationModel::create([
-                'type' => 'targeted',
-                'title' => $title,
-                'message' => $body,
-                'related_id' => $id,
-                'related_type' => User::class,
-            ]);
-        }
         return $successCount > 0;
     }
 
