@@ -14,26 +14,49 @@ use App\Models\Language;
 use App\Models\Product;
 use App\Models\Section;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class BookRequestController extends Controller
 {
-    private function getMatchingVendorsForUser($user)
+    private function getUserDefaultDistrictId($user)
     {
-        if (empty($user->pincode)) {
+        $defaultAddress = $user->addresses()
+            ->where('is_default', 1)
+            ->first();
+
+        if ($defaultAddress && !empty($defaultAddress->district_id)) {
+            return $defaultAddress->district_id;
+        }
+
+        return null;
+    }
+
+    private function getMatchingVendorsForDistrict($districtId)
+    {
+        if (empty($districtId)) {
             return collect();
         }
 
         return Vendor::with(['user', 'vendorbusinessdetails'])
-            ->where(function ($query) use ($user) {
-                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($user) {
-                    $businessQuery->where('shop_pincode', $user->pincode);
-                })->orWhereHas('user', function ($userQuery) use ($user) {
-                    $userQuery->where('pincode', $user->pincode);
-                });
+            ->whereHas('vendorbusinessdetails')
+            ->whereHas('user', function ($userQuery) use ($districtId) {
+                $userQuery->where('district_id', $districtId);
             })
             ->get();
     }
+
+    // private function getMatchingVendorsForDistrict($districtId)
+    // {
+    //     if (empty($districtId)) {
+    //         return collect();
+    //     }
+
+    //     return Vendor::with(['user', 'vendorbusinessdetails'])
+    //         ->whereHas('vendorbusinessdetails')
+    //         ->whereHas('user', function ($userQuery) use ($districtId) {
+    //             $userQuery->where('district_id', $districtId);
+    //         })
+    //         ->get();
+    // }
 
     /**
      * User-side search page with "request a book" form.
@@ -71,25 +94,16 @@ class BookRequestController extends Controller
             'author_name'    => 'nullable|string|max:255',
             'publisher_name' => 'nullable|string|max:255',
             'message'        => 'nullable|string|max:1000',
-            'vendor_id'      => ['required', Rule::exists('vendors', 'id')],
         ]);
 
-        if (empty($user->pincode)) {
-            return redirect()->back()->with('error', 'Please update your pincode in profile before requesting a book.');
+        $districtId = $this->getUserDefaultDistrictId($user);
+        if (empty($districtId)) {
+            return redirect()->back()->with('error', 'Please set a default address with district before requesting a book.');
         }
 
-        $isVendorMatchedByPincode = Vendor::where('id', $request->vendor_id)
-            ->where(function ($query) use ($user) {
-                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($user) {
-                    $businessQuery->where('shop_pincode', $user->pincode);
-                })->orWhereHas('user', function ($userQuery) use ($user) {
-                    $userQuery->where('pincode', $user->pincode);
-                });
-            })
-            ->exists();
-
-        if (!$isVendorMatchedByPincode) {
-            return redirect()->back()->with('error', 'Selected vendor is not available for your pincode.');
+        $matchingVendors = $this->getMatchingVendorsForDistrict($districtId);
+        if ($matchingVendors->isEmpty()) {
+            return redirect()->back()->with('error', 'No vendors are available for your district right now.');
         }
 
         $bookRequest = BookRequest::create([
@@ -98,13 +112,14 @@ class BookRequestController extends Controller
             'publisher_name'    => $request->publisher_name,
             'message'           => $request->message,
             'requested_by_user' => Auth::id(),
-            'vendor_id'         => $request->vendor_id,
+            'district_id'       => $districtId,
+            'vendor_id'         => null,
         ]);
 
         Notification::create([
             'type' => 'book_request_submitted',
             'title' => 'Book request submitted',
-            'message' => 'Your request for "' . $request->book_title . '" has been submitted. We will get back to you soon.',
+            'message' => 'Your request for "' . $request->book_title . '" has been submitted and shared with vendors in your district.',
             'related_id' => (int) Auth::id(),
             'related_type' => User::class,
             'is_read' => false,
@@ -173,10 +188,11 @@ class BookRequestController extends Controller
     public function raiseQueryPage()
     {
         $user = Auth::user();
-        $matchingVendors = $this->getMatchingVendorsForUser($user);
+        $districtId = $this->getUserDefaultDistrictId($user);
+        $matchingVendors = $this->getMatchingVendorsForDistrict($districtId);
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
-        return view('user.book.raisequery', compact('matchingVendors', 'logos', 'headerLogo'));
+        return view('user.book.raisequery', compact('matchingVendors', 'logos', 'headerLogo', 'districtId'));
     }
 }

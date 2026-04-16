@@ -45,7 +45,7 @@
                             <div class="hero d-flex justify-content-between align-items-center flex-wrap" style="gap:12px;">
                                 <div>
                                     <h4>Raise Your Query</h4>
-                                    <p>Fill details and select a vendor by your pincode.</p>
+                                    <p>Fill details and your request will be shared with vendors in your default address district.</p>
                                 </div>
                                 <a href="{{ route('student.query.index') }}" class="btn btn-outline-primary" style="border-radius:8px;">
                                     View My Queries
@@ -93,27 +93,17 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        
                                         <div class="form-group">
-                                            <label>Select Vendor <span class="text-danger">*</span></label>
-                                            @if (empty(Auth::user()->pincode))
-                                                <div class="alert alert-warning mb-0">Please update your profile pincode first to see available vendors.</div>
+                                            <label>District Matching <span class="text-danger">*</span></label>
+                                            @if (empty($districtId))
+                                                <div class="alert alert-warning mb-0">Please set a default address with district to raise a query.</div>
                                             @elseif (isset($matchingVendors) && $matchingVendors->count() > 0)
-                                                <select name="vendor_id" class="form-control" required>
-                                                    <option value="">Select vendor in your pincode</option>
-                                                    @foreach ($matchingVendors as $vendor)
-                                                        <option value="{{ $vendor->id }}" {{ (string) old('vendor_id') === (string) $vendor->id ? 'selected' : '' }}>
-                                                            {{ $vendor->vendorbusinessdetails->shop_name ?? $vendor->user->name ?? ('Vendor #' . $vendor->id) }}
-                                                            ({{ $vendor->vendorbusinessdetails->shop_pincode ?? (Auth::user()->pincode ?? 'N/A') }})
-                                                        </option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="alert alert-success mb-0">
+                                                    Your request will be sent to {{ $matchingVendors->count() }} vendor(s) in your district.
+                                                </div>
                                             @else
-                                                <div class="alert alert-danger mb-0">No vendors found for your pincode ({{ Auth::user()->pincode }}).</div>
+                                                <div class="alert alert-danger mb-0">No vendors found for your district.</div>
                                             @endif
-                                            @error('vendor_id')
-                                                <small class="text-danger">{{ $message }}</small>
-                                            @enderror
                                         </div>
                                     </div>
                                 </div>
@@ -129,7 +119,7 @@
                                 </div>
 
                                 @php
-                                    $canSubmitQuery = !empty(Auth::user()->pincode) && isset($matchingVendors) && $matchingVendors->count() > 0;
+                                    $canSubmitQuery = !empty($districtId) && isset($matchingVendors) && $matchingVendors->count() > 0;
                                 @endphp
                                 <button type="submit" class="btn submit-btn" {{ $canSubmitQuery ? '' : 'disabled' }} style="{{ $canSubmitQuery ? '' : 'opacity:0.65;cursor:not-allowed;' }}">
                                     📤 Submit Query
