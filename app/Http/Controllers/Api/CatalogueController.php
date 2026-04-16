@@ -888,7 +888,13 @@ class CatalogueController extends Controller
         }
 
         // Fetch requests that are either specifically for this vendor OR broadcasted to their district
-        $bookRequests = BookRequest::with('user')
+        $bookRequests = BookRequest::with([
+                'user', 
+                'replies' => function ($q) use ($vendor) {
+                    $q->where('vendor_id', $vendor->id);
+                },
+                'replies.vendor.vendorbusinessdetails'
+            ])
             ->where(function ($query) use ($user, $vendor) {
                 $query->where('vendor_id', $vendor->id)
                     ->orWhere(function ($q) use ($user) {
@@ -938,13 +944,13 @@ class CatalogueController extends Controller
         ];
 
         if ($request->filled('admin_reply')) {
-            $rules['admin_reply'] = 'required|string|min:10';
+            $rules['admin_reply'] = 'required|string|min:1';
         }
 
         $validator = Validator::make($request->all(), $rules, [
             'status.required'     => 'Status is required',
             'admin_reply.required' => 'Reply message is required',
-            'admin_reply.min'     => 'Reply must be at least 10 characters',
+            'admin_reply.min'     => 'Reply must be at least 1 character',
         ]);
 
         if ($validator->fails()) {
