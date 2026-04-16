@@ -93,6 +93,7 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
+                                        
                                         <div class="form-group">
                                             <label>Select Vendor <span class="text-danger">*</span></label>
                                             @if (empty(Auth::user()->pincode))
