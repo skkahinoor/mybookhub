@@ -938,13 +938,13 @@ class CatalogueController extends Controller
         ];
 
         if ($request->filled('admin_reply')) {
-            $rules['admin_reply'] = 'required|string|min:10';
+            $rules['admin_reply'] = 'required|string|min:1';
         }
 
         $validator = Validator::make($request->all(), $rules, [
             'status.required'     => 'Status is required',
             'admin_reply.required' => 'Reply message is required',
-            'admin_reply.min'     => 'Reply must be at least 10 characters',
+            'admin_reply.min'     => 'Reply must be at least 1 character',
         ]);
 
         if ($validator->fails()) {

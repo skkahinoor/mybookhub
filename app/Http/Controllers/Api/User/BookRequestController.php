@@ -150,7 +150,7 @@ class BookRequestController extends Controller
     public function replyToQuery(Request $request, $id)
     {
         $request->validate([
-            'message' => 'required|string|min:10',
+            'message' => 'required|string|min:1',
         ]);
 
         $query = BookRequest::where('requested_by_user', Auth::id())->find($id);

@@ -79,9 +79,9 @@ class BookRequestsController extends Controller
 
             // Only require admin_reply if status is being changed to resolved or if providing a new reply
             if (!empty($data['admin_reply'])) {
-                $rules['admin_reply'] = 'required|string|min:10';
+                $rules['admin_reply'] = 'required|string|min:1';
                 $customMessages['admin_reply.required'] = 'Reply message is required';
-                $customMessages['admin_reply.min'] = 'Reply must be at least 10 characters';
+                $customMessages['admin_reply.min'] = 'Reply must be at least 1 character';
             }
 
             $this->validate($request, $rules, $customMessages);
