@@ -14,37 +14,33 @@ use Illuminate\Validation\Rule;
 
 class BookRequestController extends Controller
 {
-    private function getUserActivePincode($user)
+    private function getUserActiveDistrictId($user)
     {
         // 1. Try to get default address
         $defaultAddress = $user->addresses()->where('is_default', 1)->first();
-        if ($defaultAddress) {
-            return $defaultAddress->pincode;
+        if ($defaultAddress && $defaultAddress->district_id) {
+            return $defaultAddress->district_id;
         }
 
         // 2. Try to get latest active address
         $latestAddress = $user->addresses()->latest()->first();
-        if ($latestAddress) {
-            return $latestAddress->pincode;
+        if ($latestAddress && $latestAddress->district_id) {
+            return $latestAddress->district_id;
         }
 
-        // 3. Fallback to user model pincode (legacy)
-        return $user->pincode;
+        // 3. Fallback to user model district_id
+        return $user->district_id;
     }
 
-    private function getMatchingVendorsForPincode($pincode)
+    private function getMatchingVendorsForDistrict($districtId)
     {
-        if (empty($pincode)) {
+        if (empty($districtId)) {
             return collect();
         }
 
         return Vendor::with(['user', 'vendorbusinessdetails'])
-            ->where(function ($query) use ($pincode) {
-                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($pincode) {
-                    $businessQuery->where('shop_pincode', $pincode);
-                })->orWhereHas('user', function ($userQuery) use ($pincode) {
-                    $userQuery->where('pincode', $pincode);
-                });
+            ->whereHas('user', function ($userQuery) use ($districtId) {
+                $userQuery->where('district_id', $districtId);
             })
             ->get();
     }
@@ -52,16 +48,16 @@ class BookRequestController extends Controller
     public function getMatchingVendors(Request $request)
     {
         $user = Auth::user();
-        $pincode = $this->getUserActivePincode($user);
+        $districtId = $this->getUserActiveDistrictId($user);
 
-        if (!$pincode) {
+        if (!$districtId) {
             return response()->json([
                 'status' => false,
-                'message' => 'Please update your address or pincode in your profile before requesting a book.'
+                'message' => 'Please update your address or district in your profile before requesting a book.'
             ], 200);
         }
 
-        $vendors = $this->getMatchingVendorsForPincode($pincode);
+        $vendors = $this->getMatchingVendorsForDistrict($districtId);
 
         return response()->json([
             'status' => true,
@@ -79,32 +75,14 @@ class BookRequestController extends Controller
             'author_name' => 'nullable|string|max:255',
             'publisher_name' => 'nullable|string|max:255',
             'message' => 'nullable|string|max:1000',
-            'vendor_id' => ['required', Rule::exists('vendors', 'id')],
         ]);
 
-        $pincode = $this->getUserActivePincode($user);
+        $districtId = $this->getUserActiveDistrictId($user);
 
-        if (empty($pincode)) {
+        if (empty($districtId)) {
             return response()->json([
                 'status' => false,
-                'message' => 'Please update your address or pincode in your profile before requesting a book.'
-            ], 200);
-        }
-
-        $isVendorMatchedByPincode = Vendor::where('id', $request->vendor_id)
-            ->where(function ($query) use ($pincode) {
-                $query->whereHas('vendorbusinessdetails', function ($businessQuery) use ($pincode) {
-                    $businessQuery->where('shop_pincode', $pincode);
-                })->orWhereHas('user', function ($userQuery) use ($pincode) {
-                    $userQuery->where('pincode', $pincode);
-                });
-            })
-            ->exists();
-
-        if (!$isVendorMatchedByPincode) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Selected vendor is not available for your area.'
+                'message' => 'Please update your address or district in your profile before requesting a book.'
             ], 200);
         }
 
@@ -114,13 +92,14 @@ class BookRequestController extends Controller
             'publisher_name' => $request->publisher_name,
             'message' => $request->message,
             'requested_by_user' => Auth::id(),
-            'vendor_id' => $request->vendor_id,
+            'district_id' => $districtId,
+            'vendor_id' => null, // Broadcast to all vendors in district
         ]);
 
         Notification::create([
             'type' => 'book_request_submitted',
-            'title' => 'Book request submitted',
-            'message' => 'Your request for "' . $request->book_title . '" has been submitted. We will get back to you soon.',
+            'title' => 'Book request broadcasted',
+            'message' => 'Your request for "' . $request->book_title . '" has been sent to all vendors in your district.',
             'related_id' => (int) Auth::id(),
             'related_type' => User::class,
             'is_read' => false,
@@ -128,7 +107,7 @@ class BookRequestController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Your book request has been submitted!',
+            'message' => 'Your book request has been broadcasted to all vendors in your district!',
             'data' => $bookRequest
         ]);
     }
@@ -136,7 +115,7 @@ class BookRequestController extends Controller
     public function index()
     {
         $queries = BookRequest::where('requested_by_user', Auth::id())
-            ->with(['replies', 'vendor.user', 'vendor.vendorbusinessdetails'])
+            ->with(['replies.vendor.user', 'replies.vendor.vendorbusinessdetails'])
             ->withCount('replies')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -151,7 +130,7 @@ class BookRequestController extends Controller
     public function show($id)
     {
         $query = BookRequest::where('requested_by_user', Auth::id())
-            ->with(['replies', 'vendor.user', 'vendor.vendorbusinessdetails'])
+            ->with(['replies.vendor.user', 'replies.vendor.vendorbusinessdetails'])
             ->find($id);
 
         if (!$query) {

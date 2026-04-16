@@ -88,7 +88,7 @@
             margin-bottom: 0.25rem;
             font-family: 'Nunito', sans-serif;
         }
-        
+
         .dashboard-header-subtitle {
             color: #7e8299;
             font-size: 1rem;
@@ -119,7 +119,7 @@
             }
             .metric-text h3 {
                 font-size: 1.3rem;
-            }        
+            }
         }
     </style>
 
@@ -557,7 +557,7 @@
                                                         $sellerPhone = $request->admin_type === 'vendor' ? ($request->vendor->user->mobile ?? 'N/A') : ($request->user->mobile ?? 'N/A');
                                                         $bookImg = $request->user_old_book_image ? asset('front/images/product_images/medium/'.$request->user_old_book_image) : '';
                                                         $bookVid = $request->video_upload ? asset('front/videos/product_videos/'.$request->video_upload) : '';
-                                                        
+
                                                         $reqData = [
                                                             'id' => $request->id,
                                                             'bookName' => $request->product->product_name ?? 'N/A',
@@ -639,7 +639,7 @@
                                     </table>
                                 </div>
                             </div>
-                            
+
                             <hr style="border-top: 1px dashed #e2e8f0; margin: 15px 0;">
 
                             <div class="row align-items-center">
@@ -695,7 +695,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="col-12 col-lg-3 mb-4">
                     <div class="card shadow-sm border-0" style="border-radius: 12px; height: 100%;">
                         <div class="card-header bg-white border-0 pt-4 pb-0">
@@ -735,7 +735,7 @@
                 </div>
             </div>
 
-           
+
 
             <!-- content-wrapper ends -->
             @include('admin.layout.footer')
@@ -843,7 +843,7 @@
                 document.getElementById('m-sellerEmail').innerText = data.sellerEmail;
                 document.getElementById('m-sellerPhone').innerText = data.sellerPhone;
                 document.getElementById('m-requestedOn').innerText = data.requestedOn;
-                
+
                 // Image
                 var img = document.getElementById('m-img');
                 var imgTxt = document.getElementById('m-img-txt');

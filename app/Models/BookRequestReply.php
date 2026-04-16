@@ -11,6 +11,7 @@ class BookRequestReply extends Model
 
     protected $fillable = [
         'book_request_id',
+        'vendor_id',
         'reply_by',
         'message',
     ];
@@ -23,6 +24,11 @@ class BookRequestReply extends Model
     public function bookRequest()
     {
         return $this->belongsTo(BookRequest::class, 'book_request_id');
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class, 'vendor_id');
     }
 }
 

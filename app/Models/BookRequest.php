@@ -16,6 +16,7 @@ class BookRequest extends Model
         'admin_reply',
         'requested_by_user',
         'vendor_id',
+        'district_id',
         'status',
     ];
 
@@ -27,6 +28,11 @@ class BookRequest extends Model
     public function vendor()
     {
         return $this->belongsTo(Vendor::class, 'vendor_id');
+    }
+
+    public function district()
+    {
+        return $this->belongsTo(District::class, 'district_id');
     }
 
     public function replies()

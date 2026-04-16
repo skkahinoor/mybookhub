@@ -880,7 +880,24 @@ class CatalogueController extends Controller
             return $resp;
         }
 
-        $bookRequests = BookRequest::with('user')->latest()->get();
+        $user = $request->user();
+        $vendor = $user->vendorPersonal;
+
+        if (!$vendor) {
+            return response()->json(['status' => false, 'message' => 'Vendor profile not found'], 404);
+        }
+
+        // Fetch requests that are either specifically for this vendor OR broadcasted to their district
+        $bookRequests = BookRequest::with('user')
+            ->where(function ($query) use ($user, $vendor) {
+                $query->where('vendor_id', $vendor->id)
+                    ->orWhere(function ($q) use ($user) {
+                        $q->whereNull('vendor_id')
+                          ->where('district_id', $user->district_id);
+                    });
+            })
+            ->latest()
+            ->get();
 
         return response()->json([
             'status' => true,
@@ -952,6 +969,7 @@ class CatalogueController extends Controller
         if ($request->filled('admin_reply')) {
             BookRequestReply::create([
                 'book_request_id' => $bookRequest->id,
+                'vendor_id'       => ($admin->type === 'vendor') ? $admin->vendor_id : null,
                 'reply_by'        => 'admin',
                 'message'         => $request->admin_reply,
             ]);
