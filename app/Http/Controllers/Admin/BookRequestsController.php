@@ -126,11 +126,15 @@ class BookRequestsController extends Controller
         $adminType = Auth::guard('admin')->user()->type;
         $adminVendorId = Auth::guard('admin')->user()->vendor_id;
 
-        $bookRequest = BookRequest::with(['user', 'replies' => function($q) use ($adminType, $adminVendorId) {
-            if ($adminType === 'vendor') {
-                $q->where('vendor_id', $adminVendorId);
-            }
-        }, 'replies.vendor.vendorbusinessdetails'])->find($id);
+        $bookRequest = BookRequest::with([
+            'user',
+            'replies' => function ($q) use ($adminType, $adminVendorId) {
+                if ($adminType === 'vendor') {
+                    $q->where('vendor_id', $adminVendorId);
+                }
+            },
+            'replies.vendor.vendorbusinessdetails'
+        ])->find($id);
 
         if (!$bookRequest) {
             return redirect()->back()->with('error_message', 'Book Request not found.');

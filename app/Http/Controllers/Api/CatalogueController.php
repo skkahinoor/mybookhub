@@ -979,6 +979,30 @@ class CatalogueController extends Controller
                 'reply_by'        => 'admin',
                 'message'         => $request->admin_reply,
             ]);
+
+            // Create Push Notification for the student
+            try {
+                $student = $bookRequest->user;
+                if ($student) {
+                    $shopName = 'Vendor';
+                    if ($admin->type === 'vendor') {
+                        $vendor = $admin->vendorPersonal;
+                        $shopName = $vendor->vendorbusinessdetails->shop_name ?? $admin->name;
+                    }
+
+                    $title = "New reply for your book request";
+                    $messageBody = "{$shopName} replied regarding '{$bookRequest->book_title}': {$request->admin_reply}";
+                    
+                    $payload = [
+                        'type' => 'book_request_reply',
+                        'request_id' => (string)$bookRequest->id,
+                    ];
+
+                    app(\App\Services\FirebaseService::class)->sendToUsers([$student->id], $title, $messageBody, $payload);
+                }
+            } catch (\Exception $e) {
+                \Log::error("Push notification failed: " . $e->getMessage());
+            }
         }
 
         return response()->json([

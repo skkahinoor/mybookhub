@@ -50,6 +50,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Profile Routes
     Route::get('/user/profile', [ProfileController::class, 'getProfile']);
     Route::post('/user/register-fcm-token', [\App\Http\Controllers\Api\User\NotificationController::class, 'registerToken']);
+    Route::get('/user/notifications', [\App\Http\Controllers\Api\User\NotificationController::class, 'index']);
+    Route::patch('/user/notifications/mark-read', [\App\Http\Controllers\Api\User\NotificationController::class, 'markAllRead']);
+    Route::delete('/user/notifications/clear', [\App\Http\Controllers\Api\User\NotificationController::class, 'clearAll']);
     Route::post('/user/profile/basic-info', [ProfileController::class, 'updateBasicInfo']);
     Route::post('/user/profile/academic-info', [ProfileController::class, 'updateAcademicInfo']);
     Route::post('/user/profile/address', [ProfileController::class, 'updateAddress']);
