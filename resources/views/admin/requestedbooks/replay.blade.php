@@ -76,6 +76,12 @@
                                     <div class="info-value">{{ $bookRequest->user->email ?? 'N/A' }}</div>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="info-box">
+                                    <div class="info-label">Customer Contact Number</div>
+                                    <div class="info-value">{{ $bookRequest->user->mobile ?? 'N/A' }} ({{ $bookRequest->user->email ?? 'N/A' }})</div>
+                                </div>
+                            </div>
                             <div class="col-md-12">
                                 <div class="info-box">
                                     <div class="info-label">Book Title</div>

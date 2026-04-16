@@ -433,7 +433,7 @@ class AdminController extends Controller
                 // dd($data);
 
                 $rules = [
-                    'vendor_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
+                    'vendor_name' => 'required|regex:/^[\pL\s\-\&\.]+$/u', // only alphabetical characters and spaces
                     'vendor_mobile' => 'required|numeric',
                     'country_id' => 'nullable|exists:countries,id',
                     'state_id' => 'nullable|exists:states,id',
@@ -599,7 +599,7 @@ class AdminController extends Controller
                 $data = $request->all();
                 // dd($data);
                 $rules = [
-                    'account_holder_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
+                    'account_holder_name' => 'required|regex:/^[\pL\s\-\&\.]+$/u', // only alphabetical characters and spaces
                     'bank_name' => 'required',                       // only alphabetical characters and spaces
                     'account_number' => 'required|numeric',
                     'bank_ifsc_code' => 'required',
@@ -946,7 +946,7 @@ class AdminController extends Controller
 
             // Laravel's Validation
             $rules = [
-                'name' => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
+                'name' => 'required|regex:/^[\pL\s\-\&\.]+$/u',
                 'email' => $emailRule,
                 'mobile' => 'required|numeric',
             ];
