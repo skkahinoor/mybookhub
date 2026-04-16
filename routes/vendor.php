@@ -49,13 +49,9 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
         // Update the vendor's commission percentage (by the Admin) in `vendors` table (for every vendor on their own) in the Admin Panel in admin/admins/view_vendor_details.blade.php (Commissions module: Every vendor must pay a certain commission (that may vary from a vendor to another) for the website owner (admin) on every item sold, and it's defined by the website owner (admin))
         Route::post('update-vendor-commission', 'AdminController@updateVendorCommission');
 
-
-
-
         // Sales Reports (Admin)
         Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('vendor.reports.sales_reports.index');
         Route::get('reports/sales_reports/{id}', [SalesReportController::class, 'show'])->name('vendor.reports.sales_reports.show');
-
 
         // Notifications
         Route::get('notifications', 'NotificationController@index')->name('vendor.notifications.index');

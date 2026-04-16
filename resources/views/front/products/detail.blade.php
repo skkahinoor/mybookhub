@@ -404,8 +404,16 @@
                             <div class="author-text">by {{ isset($productDetails['authors']) && count($productDetails['authors']) > 0 ? collect($productDetails['authors'])->pluck('name')->join(', ') : 'Unknown Author' }}</div>
 
                             @if($otherSellers->count() > 0)
+                                @php
+                                    // Show the exact price of the seller that won buybox logic.
+                                    $buyboxPrice = $finalPrice ?? 0;
+                                    if (!empty($productDetails['attribute_id'])) {
+                                        $buyboxPriceDetails = \App\Models\Product::getDiscountAttributePrice($productDetails['id'], null, $productDetails['attribute_id']);
+                                        $buyboxPrice = $buyboxPriceDetails['final_price'] ?? $buyboxPrice;
+                                    }
+                                @endphp
                                 <div class="best-price-badge">
-                                    Best Price: ₹{{ number_format($finalPrice, 0) }}
+                                    Best Price: ₹{{ number_format($buyboxPrice, 0) }}
                                     <span class="fire-icon">🔥</span>
                                 </div>
 
@@ -565,21 +573,21 @@
                                                         @endphp
                                                         {{ $sellerDisplayName }}
 
-                                                        @if($plan)
+                                                        {{-- @if($plan)
                                                             <span class="ms-2 badge {{ $plan === 'pro' ? 'bg-success' : 'bg-secondary' }}" style="font-size: 10px; vertical-align: middle;">
                                                                 {{ strtoupper($plan) }}
                                                             </span>
-                                                        @endif
+                                                        @endif --}}
 
                                                         @if(($sellerPrice['discount_percent'] ?? 0) > 0)
                                                             <span class="ms-2 badge bg-warning text-dark" style="font-size: 10px; vertical-align: middle;">
                                                                 -{{ (int) ($sellerPrice['discount_percent'] ?? 0) }}%
                                                             </span>
                                                         @endif
-
-                                                        <div class="mt-1" style="font-size: 12px; color: {{ $inStock ? '#4a5568' : '#b91c1c' }};">
+                                                        {{-- display stock only if the seller is a vendor  --}}
+                                                        {{-- <div class="mt-1" style="font-size: 12px; color: {{ $inStock ? '#4a5568' : '#b91c1c' }};">
                                                             {{ $inStock ? ('Stock: ' . (int) ($seller->stock ?? 0)) : 'Out of stock' }}
-                                                        </div>
+                                                        </div> --}}
 
                                                         @if($seller->contact_details_paid == 1 && $seller->user)
                                                             <div class="mt-2" style="font-size: 12px; font-weight: normal; color: #4a5568;">

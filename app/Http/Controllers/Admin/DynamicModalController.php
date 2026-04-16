@@ -23,8 +23,10 @@ class DynamicModalController extends Controller
     {
         Session::put('page', 'dynamic_modals');
 
-        $dynamicModal = $id ? DynamicModal::findOrFail($id) : new DynamicModal();
-        $title = $id ? 'Edit Dynamic Modal' : 'Add Dynamic Modal';
+        // This module is single-entry only. Admin always uses Add form
+        // and on submit we replace old data with a fresh insert.
+        $dynamicModal = new DynamicModal();
+        $title = 'Add Dynamic Modal';
 
         if ($request->isMethod('post')) {
             $validated = $request->validate([
@@ -34,9 +36,22 @@ class DynamicModalController extends Controller
                 'image'  => 'nullable|image|mimes:jpeg,png,jpg,webp,avif,gif|max:5120',
             ]);
 
-            $dynamicModal->text = $validated['text'] ?? null;
-            $dynamicModal->link = $validated['link'] ?? null;
-            $dynamicModal->status = isset($validated['status']) ? (int) $validated['status'] : 1;
+            // Remove old stored image(s) and old record(s) before insert.
+            $existingModals = DynamicModal::get();
+            foreach ($existingModals as $existingModal) {
+                if (!empty($existingModal->getRawOriginal('image'))) {
+                    $oldImagePath = public_path('front/images/dynamic_modal_images/' . $existingModal->getRawOriginal('image'));
+                    if (File::exists($oldImagePath)) {
+                        File::delete($oldImagePath);
+                    }
+                }
+            }
+            DynamicModal::query()->delete();
+
+            $newDynamicModal = new DynamicModal();
+            $newDynamicModal->text = $validated['text'] ?? null;
+            $newDynamicModal->link = $validated['link'] ?? null;
+            $newDynamicModal->status = isset($validated['status']) ? (int) $validated['status'] : 1;
 
             if ($request->hasFile('image')) {
                 $imageFile = $request->file('image');
@@ -59,20 +74,13 @@ class DynamicModalController extends Controller
                     return back()->withErrors(['image' => 'Image processing failed: ' . $e->getMessage()])->withInput();
                 }
 
-                if ($id && !empty($dynamicModal->getRawOriginal('image'))) {
-                    $oldPath = $destinationDir . DIRECTORY_SEPARATOR . $dynamicModal->getRawOriginal('image');
-                    if (File::exists($oldPath)) {
-                        File::delete($oldPath);
-                    }
-                }
-
-                $dynamicModal->image = $imageName;
+                $newDynamicModal->image = $imageName;
             }
 
-            $dynamicModal->save();
+            $newDynamicModal->save();
 
             return redirect()->to(url('admin/dynamic-modals'))
-                ->with('success_message', $id ? 'Dynamic modal updated successfully' : 'Dynamic modal added successfully');
+                ->with('success_message', 'Dynamic modal replaced successfully');
         }
 
         return view('admin.dynamic_modals.add_edit', compact('dynamicModal', 'title'));

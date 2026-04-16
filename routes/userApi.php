@@ -13,6 +13,7 @@ Route::post('/user/resend-otp', [ProfileController::class, 'resendOtp']);
 Route::post('/user/forgot-password', [ProfileController::class, 'forgotPassword']);
 Route::post('/user/reset-password', [ProfileController::class, 'resetPassword']);
 Route::get('/user/home', [HomeController::class, 'home']);
+Route::get('/user/dynamic-modal', [HomeController::class, 'getDynamicModal']);
 Route::get('/user/products', [ProductController::class, 'index']);
 Route::get('/user/vendor-product/{product_id}', [ProductController::class, 'vendorsproduct']);
 Route::get('/user/product-details/{attribute_id}', [ProductController::class, 'productDetails']);

@@ -2409,7 +2409,7 @@
 
                         <div class="d-flex flex-column gap-2 mt-4">
                             <button type="button" class="welcome-btn-outline" id="continueToWebBtn">Continue to Web</button>
-                            <a href="{{ asset('app/mybookhub.apk') }}" class="welcome-btn-primary" id="downloadAppBtn">Use mybookhub App</a>
+                            <a href="https://play.google.com/store/apps/details?id=com.bookhub.user" class="welcome-btn-primary" id="downloadAppBtn">Use mybookhub App</a>
                         </div>
                     </div>
                 </div>
@@ -2478,8 +2478,9 @@
 
                 const welcomeShown = localStorage.getItem('welcome_shown');
                 const bookGenieShown = {{ (request()->cookie('bookgenie_shown') || session()->has('bookgenie_shown')) ? 'true' : 'false' }};
+                const isMobileBrowser = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-                if (!welcomeShown) {
+                if (isMobileBrowser && !welcomeShown) {
                     if (welcomeModal) welcomeModal.show();
                 } else if (!bookGenieShown) {
                     if (bookGenieModal) bookGenieModal.show();
