@@ -255,8 +255,8 @@
                                                                 <strong>Publisher:</strong> {{ $query->publisher_name }}<br>
                                                             @endif
                                                             @if ($query->vendor)
-                                                                <strong>Requested Vendor:</strong>
-                                                                {{ $query->vendor->vendorbusinessdetails->shop_name ?? $query->vendor->user->name ?? ('Vendor #' . $query->vendor->id) }}<br>
+                                                                <strong>Assigned Vendor:</strong>
+                                                                {{ $query->vendor->user->name ?? ('Vendor #' . $query->vendor->id) }}<br>
                                                             @endif
                                                             @if ($query->message)
                                                                 <strong>Message:</strong> {{ $query->message }}
@@ -294,7 +294,7 @@
                                                                             style="background: #e8f5e9; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #28a745;">
                                                                             <strong
                                                                                 style="color: #28a745; display: block; margin-bottom: 5px; font-size: 13px;">👨‍💼
-                                                                                Admin:</strong>
+                                                                                {{ $reply->vendor && $reply->vendor->user ? $reply->vendor->user->name : 'Admin' }}:</strong>
                                                                             <p
                                                                                 style="margin: 0; color: #333; line-height: 1.6; font-size: 14px;">
                                                                                 {{ $reply->message }}</p>

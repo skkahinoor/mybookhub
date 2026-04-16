@@ -23,22 +23,20 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(function () {
 
-    Route::match(['get', 'post'], 'login', 'AdminController@login')->name('vendor.login');
+    Route::match(['get', 'post'], 'login', [AdminController::class, 'login'])->name('vendor.login');
     // All routes in here are vendor-only (admins with type = 'vendor')
     Route::group(['middleware' => ['vendor']], function () {
         // check isbn
         Route::post('/book/isbn-lookup', [ProductsController::class, 'lookupByIsbn'])
             ->name('book.isbnLookup');
         Route::post('/book/name-suggestions', [ProductsController::class, 'nameSuggestions']);                                       // using our 'admin' guard (which we created in auth.php)
-        Route::get('dashboard', 'AdminController@dashboard')->name('vendor.dashboard'); // /vendor/dashboard
+        Route::get('dashboard', [AdminController::class, 'dashboard'])->name('vendor.dashboard'); // /vendor/dashboard
         // Route::get('logout', 'AdminController@logout');
         Route::post('logout', [AdminController::class, 'vendorlogout'])->name('vendor.logout');
-        Route::match(['get', 'post'], 'update-vendor-password', 'AdminController@updateAdminPassword');        // GET request to view the update password <form>, and a POST request to submit the update password <form>
-        Route::post('check-vendor-password', 'AdminController@checkAdminPassword');                            // Check Admin Password // This route is called from the AJAX call in admin/js/custom.js page
-        Route::match(['get', 'post'], 'update-vendor-details', 'AdminController@updateAdminDetails');          // Update Admin Details in update_admin_details.blade.php page    // 'GET' method to show the update_admin_details.blade.php page, and 'POST' method for the <form> submission in the same page
-        Route::match(['get', 'post'], 'update-vendor-details/{slug}', 'AdminController@updateVendorDetails');
-
-        Route::match(['get', 'post'], 'update-vendor-details/{slug}', 'AdminController@updateVendorDetails');
+        Route::match(['get', 'post'], 'update-vendor-password', [AdminController::class, 'updateAdminPassword']);        // GET request to view the update password <form>, and a POST request to submit the update password <form>
+        Route::post('check-vendor-password', [AdminController::class, 'checkAdminPassword']);                            // Check Admin Password // This route is called from the AJAX call in admin/js/custom.js page
+        Route::match(['get', 'post'], 'update-vendor-details', [AdminController::class, 'updateAdminDetails']);          // Update Admin Details in update_admin_details.blade.php page    // 'GET' method to show the update_admin_details.blade.php page, and 'POST' method for the <form> submission in the same page
+        Route::match(['get', 'post'], 'update-vendor-details/{slug}', [AdminController::class, 'updateVendorDetails']);
 
         // Vendor Plan Settings (Admin only)
         Route::get('plan-settings', [App\Http\Controllers\Admin\PlanSettingsController::class, 'index'])->name('vendor.plan.settings');
@@ -47,23 +45,24 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
 
 
         // Update the vendor's commission percentage (by the Admin) in `vendors` table (for every vendor on their own) in the Admin Panel in admin/admins/view_vendor_details.blade.php (Commissions module: Every vendor must pay a certain commission (that may vary from a vendor to another) for the website owner (admin) on every item sold, and it's defined by the website owner (admin))
-        Route::post('update-vendor-commission', 'AdminController@updateVendorCommission');
+        Route::post('update-vendor-commission', [AdminController::class, 'updateVendorCommission']);
 
         // Sales Reports (Admin)
         Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('vendor.reports.sales_reports.index');
         Route::get('reports/sales_reports/{id}', [SalesReportController::class, 'show'])->name('vendor.reports.sales_reports.show');
 
         // Notifications
-        Route::get('notifications', 'NotificationController@index')->name('vendor.notifications.index');
-        Route::get('notifications/get', 'NotificationController@getNotifications')->name('vendor.notifications.get');
-        Route::post('notifications/{id}/read', 'NotificationController@markAsRead')->name('vendor.notifications.read');
-        Route::post('notifications/mark-all-read', 'NotificationController@markAllAsRead')->name('vendor.notifications.mark_all_read');
+        // Notifications
+        Route::get('notifications', [App\Http\Controllers\Admin\NotificationController::class, 'index'])->name('vendor.notifications.index');
+        Route::get('notifications/get', [App\Http\Controllers\Admin\NotificationController::class, 'getNotifications'])->name('vendor.notifications.get');
+        Route::post('notifications/{id}/read', [App\Http\Controllers\Admin\NotificationController::class, 'markAsRead'])->name('vendor.notifications.read');
+        Route::post('notifications/mark-all-read', [App\Http\Controllers\Admin\NotificationController::class, 'markAllAsRead'])->name('vendor.notifications.mark_all_read');
 
-        Route::get('admins/{type?}', 'AdminController@admins');                                // In case the authenticated user (logged-in user) is superadmin, admin, subadmin, vendor these are the three Admin Management URLs depending on the slug. The slug is the `type` column in `admins` table which can only be: superadmin, admin, subadmin, or vendor    // Used an Optional Route Parameters (or Optional Route Parameters) using a '?' question mark sign, for in case that there's no any {type} passed, the page will show ALL superadmins, admins, subadmins and vendors at the same page
-        Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
-        Route::get('delete-admin/{id}', 'AdminController@deleteAdmin');                        // Delete an Admin
-        Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
-        Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('vendor.updateadminstatus');
+        Route::get('admins/{type?}', [AdminController::class, 'admins']);                                // In case the authenticated user (logged-in user) is superadmin, admin, subadmin, vendor these are the three Admin Management URLs depending on the slug. The slug is the `type` column in `admins` table which can only be: superadmin, admin, subadmin, or vendor    // Used an Optional Route Parameters (or Optional Route Parameters) using a '?' question mark sign, for in case that there's no any {type} passed, the page will show ALL superadmins, admins, subadmins and vendors at the same page
+        Route::match(['get', 'post'], 'add-edit-admin/{id?}', [AdminController::class, 'addEditAdmin']); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
+        Route::get('delete-admin/{id}', [AdminController::class, 'deleteAdmin']);                        // Delete an Admin
+        Route::get('view-vendor-details/{id}', [AdminController::class, 'viewVendorDetails']);           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
+        Route::post('update-admin-status', [AdminController::class, 'updateAdminStatus'])->name('vendor.updateadminstatus');
 
 
         // otp
@@ -393,7 +392,7 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
         Route::post('book-attribute', [BookAttributeController::class, 'store']);
 
 
-        Route::get('delete-contact-query/{id}', 'AdminController@deleteContactQuery');
+        Route::get('delete-contact-query/{id}', [AdminController::class, 'deleteContactQuery']);
 
         // Order Queries (Tickets)
         Route::get('order-queries', 'OrderQueryController@index')->name('vendor.order_queries.index');

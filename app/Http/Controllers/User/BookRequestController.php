@@ -14,6 +14,7 @@ use App\Models\Language;
 use App\Models\Product;
 use App\Models\Section;
 use Illuminate\Support\Facades\Auth;
+use App\Helpers\RoleHelper;
 
 class BookRequestController extends Controller
 {
@@ -36,27 +37,13 @@ class BookRequestController extends Controller
             return collect();
         }
 
-        return Vendor::with(['user', 'vendorbusinessdetails'])
-            ->whereHas('vendorbusinessdetails')
-            ->whereHas('user', function ($userQuery) use ($districtId) {
-                $userQuery->where('district_id', $districtId);
-            })
+        // Return users who have the 'vendor' role and match the district
+        // We bypass the Vendor model/Table temporarily as requested
+        return User::where('role_id', RoleHelper::vendorId())
+            ->where('district_id', $districtId)
+            ->where('status', 1)
             ->get();
     }
-
-    // private function getMatchingVendorsForDistrict($districtId)
-    // {
-    //     if (empty($districtId)) {
-    //         return collect();
-    //     }
-
-    //     return Vendor::with(['user', 'vendorbusinessdetails'])
-    //         ->whereHas('vendorbusinessdetails')
-    //         ->whereHas('user', function ($userQuery) use ($districtId) {
-    //             $userQuery->where('district_id', $districtId);
-    //         })
-    //         ->get();
-    // }
 
     /**
      * User-side search page with "request a book" form.
@@ -137,7 +124,7 @@ class BookRequestController extends Controller
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $requestedBooks = BookRequest::where('requested_by_user', Auth::id())
-            ->with(['replies', 'vendor.user', 'vendor.vendorbusinessdetails'])
+            ->with(['replies.vendor.user', 'vendor.user'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -169,7 +156,7 @@ class BookRequestController extends Controller
     public function indexqueries(Request $request)
     {
         $queries = BookRequest::where('requested_by_user', Auth::id())
-            ->with(['replies', 'vendor.user', 'vendor.vendorbusinessdetails'])
+            ->with(['replies.vendor.user', 'vendor.user'])
             ->orderBy('created_at', 'desc')
             ->get();
         $selectedQueryId = (int) $request->query('query_id', 0);
