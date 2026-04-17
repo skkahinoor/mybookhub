@@ -34,6 +34,8 @@ class BookRequestsController extends Controller
                         $sq->whereNull('vendor_id')->where('district_id', $districtId);
                     });
                 }
+            })->whereDoesntHave('replies', function($q) use ($adminVendorId) {
+                $q->where('vendor_id', $adminVendorId)->where('is_ended', true);
             });
         }
         $bookRequests = $bookRequestsQuery->orderBy('id', 'desc')->get();
@@ -66,6 +68,15 @@ class BookRequestsController extends Controller
                 if (!$isAuthorized) {
                     return redirect()->back()->with('error_message', 'You are not authorized to reply to this request.');
                 }
+
+                // Check if conversation ended
+                $isEnded = BookRequestReply::where('book_request_id', $id)
+                    ->where('vendor_id', $adminVendorId)
+                    ->where('is_ended', true)
+                    ->exists();
+                if ($isEnded) {
+                    return redirect()->back()->with('error_message', 'The student has ended this conversation.');
+                }
             }
 
             // Validation rules
@@ -92,8 +103,8 @@ class BookRequestsController extends Controller
                 $updateData['admin_reply'] = $data['admin_reply'];
             }
 
-            // If a vendor is replying, associate them with the request
-            if (Auth::guard('admin')->user()->type === 'vendor') {
+            // Only associate the vendor with the main request if they confirm it's available
+            if (Auth::guard('admin')->user()->type === 'vendor' && $data['status'] === 'available') {
                 $updateData['vendor_id'] = Auth::guard('admin')->user()->vendor_id;
             }
 
@@ -165,6 +176,12 @@ class BookRequestsController extends Controller
 
             if (!$isAuthorized) {
                 return redirect()->route('admin.requestedbooks.index')->with('error_message', 'You are not authorized to view this request.');
+            }
+
+            // Check if conversation has ended for this vendor
+            $isEnded = collect($bookRequest->replies)->where('vendor_id', $adminVendorId)->where('is_ended', true)->count() > 0;
+            if ($isEnded) {
+                return redirect()->route('admin.requestedbooks.index')->with('error_message', 'The student has ended this conversation.');
             }
         }
         $query = $bookRequest->toArray();

@@ -349,6 +349,24 @@
                                                                             <p
                                                                                 style="margin: 0; color: #333; line-height: 1.6; font-size: 14px; {{ $reply->is_ended ? 'font-style: italic; color: #777;' : '' }}">
                                                                                 {{ $reply->message }}</p>
+
+                                                                            @if($reply->vendor && $reply->vendor->vendorbusinessdetails)
+                                                                                <div style="margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #c3e6cb; border-radius: 6px; font-size: 12px; display: flex; justify-content: space-between; align-items: flex-end;">
+                                                                                    <div>
+                                                                                        <div style="font-weight: 700; color: #28a745; margin-bottom: 2px;">📍 {{ $reply->vendor->vendorbusinessdetails->shop_name }}</div>
+                                                                                        <div style="color: #666; margin-bottom: 2px;">{{ $reply->vendor->vendorbusinessdetails->shop_address }}, {{ $reply->vendor->vendorbusinessdetails->shop_city }}</div>
+                                                                                        <div style="color: #666;"><i class="mdi mdi-phone"></i> {{ $reply->vendor->vendorbusinessdetails->shop_mobile ?? $reply->vendor->user->phone }}</div>
+                                                                                    </div>
+                                                                                    @php 
+                                                                                        $replyMapQuery = $reply->vendor->location ?: (($reply->vendor->vendorbusinessdetails->shop_name ?? '') . ' ' . ($reply->vendor->vendorbusinessdetails->shop_address ?? ''));
+                                                                                    @endphp
+                                                                                    <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($replyMapQuery) }}" 
+                                                                                       target="_blank" class="btn btn-xs btn-outline-success" style="padding: 2px 8px; font-size: 11px; border-radius: 4px;">
+                                                                                        <i class="mdi mdi-directions"></i> Directions
+                                                                                    </a>
+                                                                                </div>
+                                                                            @endif
+
                                                                             <small
                                                                                 style="color: #999; display: block; margin-top: 5px; font-size: 12px;">{{ $reply->created_at->format('F d, Y h:i A') }}</small>
                                                                         </div>
