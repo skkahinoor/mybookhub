@@ -56,16 +56,15 @@ class FirebaseService
      */
     public function sendToUsers(array $userIds, $title, $body, $data = [])
     {
-        \Log::info('Firebase SendToUsers: Attempting to send to users: ' . implode(',', $userIds));
-
-        // Always create database entries for each user first
+        // Store the notification in the database for each user so it shows in their in-app list
         foreach ($userIds as $id) {
             NotificationModel::create([
                 'type' => $data['type'] ?? 'targeted',
                 'title' => $title,
                 'message' => $body,
                 'related_id' => $id,
-                'related_type' => User::class,
+                'related_type' => \App\Models\User::class,
+                'is_read' => false,
             ]);
         }
 
