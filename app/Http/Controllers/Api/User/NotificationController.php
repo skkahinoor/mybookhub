@@ -32,13 +32,20 @@ class NotificationController extends Controller
         }
 
         // Store the token for the mobile device
-        UserFcmToken::updateOrCreate(
-            ['user_id' => $user->id, 'fcm_token' => $request->token],
-            ['device_type' => $request->device_type ?? 'android', 'last_used_at' => now()]
-        );
+        \Log::info('Registering FCM Token for User ID: ' . $user->id . ' | Token: ' . substr($request->token, 0, 15) . '...');
+        
+        try {
+            UserFcmToken::updateOrCreate(
+                ['user_id' => $user->id, 'fcm_token' => $request->token],
+                ['device_type' => $request->device_type ?? 'android', 'last_used_at' => now()]
+            );
 
-        // Subscribe the token to the 'all_users' topic for broadcast notifications
-        $this->firebaseService->subscribeToTopic($request->token, 'all_users');
+            // Subscribe the token to the 'all_users' topic for broadcast notifications
+            $this->firebaseService->subscribeToTopic($request->token, 'all_users');
+            \Log::info('Successfully registered and subscribed FCM token for User: ' . $user->id);
+        } catch (\Exception $e) {
+            \Log::error('Failed to register FCM token for User: ' . $user->id . ' | Error: ' . $e->getMessage());
+        }
 
         return response()->json([
             'status' => 'success',

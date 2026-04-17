@@ -765,3 +765,59 @@ require __DIR__ . '/user.php';
 // Route::get('test-ajax-endpoints', function() {
 //     return view('test_ajax_endpoints');
 // })->name('test_ajax_endpoints');
+
+// Diagnostic tool for checking FCM Token Mapping
+Route::get('/debug-fcm', function() {
+    $mappings = \App\Models\UserFcmToken::with('user')->latest()->get();
+    
+    echo "<html><head><title>FCM Debugger</title><style>body{font-family:sans-serif;padding:20px;} table{width:100%;border-collapse:collapse;margin:20px 0;} th,td{padding:10px;border:1px solid #ddd;text-align:left;} th{background:#f8f9fa;}</style></head><body>";
+    echo "<h1>FCM Token Mapping Debugger</h1>";
+    echo "<table>";
+    echo "<thead><tr><th>User ID</th><th>User Name</th><th>Email</th><th>FCM Token (Start)</th><th>Device</th><th>Last Used</th><th>Action</th></tr></thead>";
+    echo "<tbody>";
+    
+    if($mappings->isEmpty()) {
+        echo "<tr><td colspan='7' style='text-align:center; color: red;'>No tokens found in user_fcm_tokens table. Students must log in to the app to register.</td></tr>";
+    }
+
+    foreach($mappings as $map) {
+        $userName = $map->user->name ?? 'N/A';
+        $userEmail = $map->user->email ?? 'N/A';
+        echo "<tr>";
+        echo "<td>{$map->user_id}</td>";
+        echo "<td>{$userName}</td>";
+        echo "<td>{$userEmail}</td>";
+        echo "<td>" . substr($map->fcm_token, 0, 30) . "...</td>";
+        echo "<td>{$map->device_type}</td>";
+        echo "<td>{$map->last_used_at}</td>";
+        echo "<td><a href='" . url('/debug-fcm/test/' . $map->user_id) . "'>Send Test Push</a></td>";
+        echo "</tr>";
+    }
+    echo "</tbody></table>";
+    
+    echo "<h2>Latest Firebase Logs (laravel.log)</h2>";
+    $logPath = storage_path('logs/laravel.log');
+    if (file_exists($logPath)) {
+        // Read last 30 lines safely
+        $file = file($logPath);
+        $lastLines = array_slice($file, -30);
+        echo "<pre style='background:#f4f4f4;padding:15px;border:1px solid #ccc;overflow:auto;max-height:500px;'>" . htmlspecialchars(implode("", $lastLines)) . "</pre>";
+    } else {
+        echo "<p>Log file not found at: {$logPath}</p>";
+    }
+    echo "</body></html>";
+});
+
+// Test route to send a targeted push to a specific user
+Route::get('/debug-fcm/test/{id}', function($id) {
+    echo "<html><body style='font-family:sans-serif;padding:20px;'>";
+    echo "<h3>Sending test notification to User ID: $id...</h3>";
+    try {
+        $status = app(\App\Services\FirebaseService::class)->sendToUsers([$id], "Diagnostic Test", "This is a direct test message from the debugger.");
+        echo $status ? "<p style='color:green;font-weight:bold;'>Success!</p><p>The message was handed off to Firebase. Check the device.</p>" : "<p style='color:red;font-weight:bold;'>Failed.</p><p>Check the logs for details.</p>";
+    } catch (\Exception $e) {
+        echo "<p style='color:red;'>Error: " . $e->getMessage() . "</p>";
+    }
+    echo "<br><br><a href='" . url('/debug-fcm') . "'>&larr; Back to Debugger</a>";
+    echo "</body></html>";
+});
