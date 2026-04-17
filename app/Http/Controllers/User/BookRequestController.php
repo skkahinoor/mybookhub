@@ -147,16 +147,38 @@ class BookRequestController extends Controller
         BookRequestReply::create([
             'book_request_id' => $query->id,
             'reply_by'        => 'user',
+            'vendor_id'       => $request->vendor_id ?: null,
             'message'         => $request->message,
         ]);
 
         return redirect()->back()->with('success', 'Reply sent successfully!');
     }
 
+    public function endConversation(Request $request, $id)
+    {
+        $query = BookRequest::find($id);
+        if (!$query) {
+            return redirect()->back()->with('error', 'Query not found.');
+        }
+
+        $vendorId = $request->vendor_id ?: null;
+
+        // Mark conversation as ended for this vendor
+        BookRequestReply::create([
+            'book_request_id' => $query->id,
+            'reply_by'        => 'user',
+            'vendor_id'       => $vendorId,
+            'message'         => 'Student has ended this conversation.',
+            'is_ended'        => true,
+        ]);
+
+        return redirect()->back()->with('success', 'Conversation with vendor ended successfully!');
+    }
+
     public function indexqueries(Request $request)
     {
         $queries = BookRequest::where('requested_by_user', Auth::id())
-            ->with(['replies.vendor.user', 'vendor.user'])
+            ->with(['replies.vendor.user', 'vendor.user', 'vendor.vendorbusinessdetails'])
             ->orderBy('created_at', 'desc')
             ->get();
         $selectedQueryId = (int) $request->query('query_id', 0);

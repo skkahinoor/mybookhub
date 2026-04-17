@@ -70,7 +70,7 @@ class BookRequestsController extends Controller
 
             // Validation rules
             $rules = [
-                'status' => 'required|in:pending,in_progress,resolved',
+                'status' => 'required|in:awaiting_response,vendor_replied,available,not_available',
             ];
 
             $customMessages = [
@@ -86,11 +86,17 @@ class BookRequestsController extends Controller
 
             $this->validate($request, $rules, $customMessages);
 
-            // Update book request status and admin_reply field (for backward compatibility)
+            // Update book request status and admin_reply field
             $updateData = ['status' => $data['status']];
             if (!empty($data['admin_reply'])) {
                 $updateData['admin_reply'] = $data['admin_reply'];
             }
+
+            // If a vendor is replying, associate them with the request
+            if (Auth::guard('admin')->user()->type === 'vendor') {
+                $updateData['vendor_id'] = Auth::guard('admin')->user()->vendor_id;
+            }
+
             BookRequest::where('id', $id)->update($updateData);
 
             // Save admin reply to conversation thread if provided
@@ -101,6 +107,11 @@ class BookRequestsController extends Controller
                     'vendor_id' => Auth::guard('admin')->user()->type === 'vendor' ? Auth::guard('admin')->user()->vendor_id : null,
                     'message' => $data['admin_reply'],
                 ]);
+
+                // Update status to 'vendor_replied' if it was 'awaiting_response'
+                if ($bookRequest->status === 'awaiting_response') {
+                    BookRequest::where('id', $id)->update(['status' => 'vendor_replied']);
+                }
 
                 // Notify the student who raised the request
                 if (!empty($bookRequest->requested_by_user)) {
@@ -115,8 +126,9 @@ class BookRequestsController extends Controller
                 }
             }
 
-            if ($data['status'] == 'resolved') {
-                return redirect('admin/requestedbooks')->with('success_message', 'Book request resolved successfully!');
+            if ($data['status'] == 'available' || $data['status'] == 'not_available') {
+                $msg = $data['status'] == 'available' ? 'Book confirmed as available!' : 'Book marked as not available.';
+                return redirect('admin/requestedbooks')->with('success_message', $msg);
             } else {
                 return redirect()->back()->with('success_message', 'Reply updated successfully!');
             }
@@ -130,10 +142,14 @@ class BookRequestsController extends Controller
             'user',
             'replies' => function ($q) use ($adminType, $adminVendorId) {
                 if ($adminType === 'vendor') {
-                    $q->where('vendor_id', $adminVendorId);
+                    $q->where(function ($sq) use ($adminVendorId) {
+                        $sq->where('vendor_id', $adminVendorId)
+                            ->orWhereNull('vendor_id');
+                    });
                 }
             },
-            'replies.vendor.vendorbusinessdetails'
+            'replies.vendor.vendorbusinessdetails',
+            'replies.vendor.user'
         ])->find($id);
 
         if (!$bookRequest) {

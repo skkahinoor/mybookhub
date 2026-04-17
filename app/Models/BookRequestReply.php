@@ -14,6 +14,7 @@ class BookRequestReply extends Model
         'vendor_id',
         'reply_by',
         'message',
+        'is_ended',
     ];
 
     protected $casts = [

@@ -113,14 +113,23 @@
                                         @foreach($query['replies'] as $reply)
                                             @if($reply['reply_by'] == 'admin')
                                                 <div style="background: #e8f5e9; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #28a745;">
-                                                    <strong style="color: #28a745;">Admin:</strong>
-                                                    <p style="margin: 5px 0; color: #333;">{{ $reply['message'] }}</p>
+                                                    <strong style="color: #28a745;">
+                                                        @if($reply['vendor_id'])
+                                                            Vendor ({{ $reply['vendor']['user']['name'] ?? ('#' . $reply['vendor_id']) }}):
+                                                        @else
+                                                            Admin:
+                                                        @endif
+                                                    </strong>
+                                                    <p style="margin: 5px 0; color: #333; {{ isset($reply['is_ended']) && $reply['is_ended'] ? 'font-style: italic; color: #777;' : '' }}">{{ $reply['message'] }}</p>
                                                     <small style="color: #999;">{{ date('F d, Y h:i A', strtotime($reply['created_at'])) }}</small>
                                                 </div>
                                             @else
                                                 <div style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #2196f3;">
                                                     <strong style="color: #2196f3;">Customer:</strong>
-                                                    <p style="margin: 5px 0; color: #333;">{{ $reply['message'] }}</p>
+                                                    <p style="margin: 5px 0; color: #333; {{ isset($reply['is_ended']) && $reply['is_ended'] ? 'font-style: italic; color: #777;' : '' }}">{{ $reply['message'] }}</p>
+                                                    @if(isset($reply['is_ended']) && $reply['is_ended'])
+                                                        <span class="badge badge-danger">Conversation Ended</span>
+                                                    @endif
                                                     <small style="color: #999;">{{ date('F d, Y h:i A', strtotime($reply['created_at'])) }}</small>
                                                 </div>
                                             @endif
@@ -131,19 +140,34 @@
                         @endif
 
                         @php
-                            $status = is_numeric($bookRequest->status) ? (int)$bookRequest->status : $bookRequest->status;
-                            $isResolved = ($status === 'resolved' || $status === 'Resolved');
+                            $status = $bookRequest->status;
+                            $isFinal = ($status === 'available' || $status === 'not_available');
+                            $isConversationEnded = collect($query['replies'])->where('is_ended', true)->count() > 0;
                         @endphp
-                        @if($isResolved)
-                            <!-- Resolved Status - Show Success Message -->
+
+                        @if($isFinal || $isConversationEnded)
+                            <!-- Final Status or Ended Conversation - Show Message -->
                             <div class="row">
                                 <div class="col-md-12">
-                                    <div class="alert alert-success" style="padding: 30px; text-align: center; border-left: 4px solid #28a745;">
-                                        <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
-                                        <h4 style="color: #155724; margin-bottom: 10px; font-weight: 600;">Query Successfully Resolved!</h4>
-                                        <p style="margin: 0; color: #155724; font-size: 16px;">This query has been marked as resolved. No further action is required.</p>
-                                        <p style="margin-top: 10px; color: #155724; font-size: 14px;">If you need to reopen this query, you can change the status below.</p>
-                                    </div>
+                                    @if($isConversationEnded)
+                                        <div class="alert alert-warning" style="padding: 30px; text-align: center; border-left: 4px solid #ffc107;">
+                                            <div style="font-size: 48px; margin-bottom: 15px;">🚫</div>
+                                            <h4 style="color: #856404; margin-bottom: 10px; font-weight: 600;">Conversation Ended</h4>
+                                            <p style="margin: 0; color: #856404; font-size: 16px;">The student has ended this conversation. No further replies can be sent.</p>
+                                        </div>
+                                    @elseif($status === 'available')
+                                        <div class="alert alert-success" style="padding: 30px; text-align: center; border-left: 4px solid #28a745;">
+                                            <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
+                                            <h4 style="color: #155724; margin-bottom: 10px; font-weight: 600;">Book Confirmed Available!</h4>
+                                            <p style="margin: 0; color: #155724; font-size: 16px;">This book has been marked as available.</p>
+                                        </div>
+                                    @elseif($status === 'not_available')
+                                        <div class="alert alert-danger" style="padding: 30px; text-align: center; border-left: 4px solid #dc3545;">
+                                            <div style="font-size: 48px; margin-bottom: 15px;">❌</div>
+                                            <h4 style="color: #721c24; margin-bottom: 10px; font-weight: 600;">Book Not Available</h4>
+                                            <p style="margin: 0; color: #721c24; font-size: 16px;">This request has been marked as not available.</p>
+                                        </div>
+                                    @endif
 
                                     <!-- Option to Change Status -->
                                     @php
@@ -156,9 +180,10 @@
                                                 <div class="form-group">
                                                     <label>Change Status (if needed)</label>
                                                     <select class="form-control" name="status" onchange="this.form.submit()">
-                                                        <option value="pending" {{ $status == 0 || $status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                                        <option value="in_progress" {{ $status == 1 || $status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                                        <option value="resolved" {{ $isResolved ? 'selected' : '' }}>Resolved</option>
+                                                        <option value="awaiting_response" {{ $status == 'awaiting_response' ? 'selected' : '' }}>🟡 Awaiting Vendor Response</option>
+                                                        <option value="vendor_replied" {{ $status == 'vendor_replied' ? 'selected' : '' }}>🔵 Vendor Replied</option>
+                                                        <option value="available" {{ $status == 'available' ? 'selected' : '' }}>🟢 Confirmed Available</option>
+                                                        <option value="not_available" {{ $status == 'not_available' ? 'selected' : '' }}>🔴 Not Available</option>
                                                     </select>
                                                     <input type="hidden" name="admin_reply" value="{{ $bookRequest->admin_reply ?? '' }}">
                                                 </div>
@@ -184,18 +209,18 @@
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="form-group">
-                                            <label>Admin Reply <span class="text-danger">*</span></label>
-                                            <textarea class="form-control" name="admin_reply" rows="5" required minlength="10">{{ old('admin_reply', $bookRequest->admin_reply ?? '') }}</textarea>
-                                            <small class="form-text text-muted">Minimum 10 characters required</small>
+                                            <label>Reply <span class="text-danger">*</span></label>
+                                            <textarea class="form-control" name="admin_reply" rows="5" required></textarea>
                                         </div>
                                     </div>
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label>Status <span class="text-danger">*</span></label>
                                             <select class="form-control" name="status" required>
-                                                <option value="pending" {{ $status == 0 || $status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                                <option value="in_progress" {{ $status == 1 || $status == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                                <option value="resolved" {{ $isResolved ? 'selected' : '' }}>Resolved</option>
+                                                <option value="awaiting_response" {{ $status == 'awaiting_response' ? 'selected' : '' }}>🟡 Awaiting Vendor Response</option>
+                                                <option value="vendor_replied" {{ $status == 'vendor_replied' ? 'selected' : '' }}>🔵 Vendor Replied</option>
+                                                <option value="available" {{ $status == 'available' ? 'selected' : '' }}>🟢 Confirmed Available</option>
+                                                <option value="not_available" {{ $status == 'not_available' ? 'selected' : '' }}>🔴 Not Available</option>
                                             </select>
                                         </div>
                                     </div>

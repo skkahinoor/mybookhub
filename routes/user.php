@@ -43,6 +43,7 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
         Route::post('/book-request', [BookRequestController::class, 'store'])->name('student.book.request.store');
         Route::get('/book-requests', [BookRequestController::class, 'indexbookrequest'])->name('student.book.indexrequest');
         Route::post('/book-request/{id}/reply', [BookRequestController::class, 'replyToQuery'])->name('student.book.reply');
+        Route::post('/book-request/{id}/end-conversation', [BookRequestController::class, 'endConversation'])->name('student.book.end_conversation');
         Route::get('/queries', [BookRequestController::class, 'indexqueries'])->name('student.query.index');
         Route::get('/queries/raise', [BookRequestController::class, 'raiseQueryPage'])->name('student.query.raise');
         Route::get('/orders', [OrderController::class, 'index'])->name('student.orders.index');

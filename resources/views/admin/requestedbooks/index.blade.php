@@ -76,21 +76,16 @@
                                                 </td>
                                                 <td>
                                                     @php
-                                                        $isAvailable = ($book['status'] == 'in_progress' || $book['status'] == 1);
-                                                        $statusUrl = ($adminType === 'vendor') ? route('vendor.bookrequests.updateStatus') : route('admin.bookrequests.updateStatus');
+                                                        $status = $book['status'];
+                                                        $badgeClass = 'secondary';
+                                                        $statusLabel = ucfirst(str_replace('_', ' ', $status));
+                                                        
+                                                        if($status == 'awaiting_response') { $badgeClass = 'warning'; $statusLabel = '🟡 Awaiting Response'; }
+                                                        elseif($status == 'vendor_replied') { $badgeClass = 'info'; $statusLabel = '🔵 Vendor Replied'; }
+                                                        elseif($status == 'available') { $badgeClass = 'success'; $statusLabel = '🟢 Available'; }
+                                                        elseif($status == 'not_available') { $badgeClass = 'danger'; $statusLabel = '🔴 Not Available'; }
                                                     @endphp
-                                                    <a class="updateBookStatus" id="book-{{ $book['id'] }}"
-                                                        book_id="{{ $book['id'] }}"
-                                                        data-url="{{ $statusUrl }}"
-                                                        href="javascript:void(0)">
-                                                        @if ($isAvailable)
-                                                            <i style="font-size:25px;" title="Book Available"
-                                                                class="mdi mdi-bookmark-check" status="Active"></i>
-                                                        @else
-                                                            <i style="font-size:25px;" title="Book Requested"
-                                                                class="mdi mdi-bookmark-outline" status="Inactive"></i>
-                                                        @endif
-                                                    </a>
+                                                    <span class="badge badge-{{ $badgeClass }}" style="padding: 6px 10px; font-weight: 600;">{{ $statusLabel }}</span>
                                                 </td>
                                                 <td>
                                                     {{-- @if ($adminType !== 'vendor')

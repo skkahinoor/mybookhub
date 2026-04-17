@@ -67,17 +67,21 @@
         font-weight: 700;
         white-space: nowrap;
     }
-    .book-query-page .status-chip.pending {
+    .book-query-page .status-chip.awaiting {
         background: #fff3cd;
-        color: #8a6d1f;
+        color: #856404;
     }
-    .book-query-page .status-chip.progress {
-        background: #dbeafe;
-        color: #1d4ed8;
+    .book-query-page .status-chip.replied {
+        background: #d1ecf1;
+        color: #0c5460;
     }
-    .book-query-page .status-chip.resolved {
-        background: #dcfce7;
-        color: #166534;
+    .book-query-page .status-chip.available {
+        background: #d4edda;
+        color: #155724;
+    }
+    .book-query-page .status-chip.unavailable {
+        background: #f8d7da;
+        color: #721c24;
     }
     .book-query-page .message-admin-btn {
         background-color: #2563eb;
@@ -106,6 +110,24 @@
         border-radius: 8px;
         border: 1px solid #e5e7eb;
         margin-top: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .book-query-page .btn-reply-small {
+        transition: all 0.2s ease;
+        opacity: 0.7;
+        font-weight: 600;
+    }
+    .book-query-page .btn-reply-small:hover {
+        opacity: 1;
+        transform: scale(1.05);
+        text-decoration: underline;
+    }
+    .book-query-page .reply-preview {
+        animation: slideDown 0.3s ease-out;
+    }
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 </style>
 
@@ -204,23 +226,20 @@
                                                         </div>
                                                         <div style="margin-left: 15px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end;">
                                                             @php
-                                                                // Handle both numeric and string status
-                                                                $status = is_numeric($query->status)
-                                                                    ? (int) $query->status
-                                                                    : $query->status;
-                                                                $isResolved =
-                                                                    $status === 'resolved' || $status === 'Resolved';
+                                                                $status = $query->status;
                                                             @endphp
-                                                            @if ($status === 0 || $status === 'pending' || $status === 'Pending')
-                                                                <span class="status-chip pending">Pending</span>
-                                                            @elseif ($status === 1 || $status === 'in_progress' || $status === 'In Progress')
-                                                                <span class="status-chip progress">In Progress</span>
-                                                            @elseif ($status === 'resolved' || $status === 'Resolved')
-                                                                <span class="status-chip resolved">Resolved</span>
+                                                            @if ($status === 'awaiting_response')
+                                                                <span class="status-chip awaiting">🟡 Awaiting Vendor Response</span>
+                                                            @elseif ($status === 'vendor_replied')
+                                                                <span class="status-chip replied">🔵 Vendor Replied</span>
+                                                            @elseif ($status === 'available')
+                                                                <span class="status-chip available">🟢 Confirmed Available</span>
+                                                            @elseif ($status === 'not_available')
+                                                                <span class="status-chip unavailable">🔴 Not Available</span>
                                                             @else
-                                                                <span class="status-badge"
-                                                                    style="background: #6c757d; color: #fff; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">Book
-                                                                    Available</span>
+                                                                <span class="status-badge" style="background: #6c757d; color: #fff; padding: 5px 12px; border-radius: 4px; font-size: 12px; font-weight: 600;">
+                                                                    {{ ucfirst(str_replace('_', ' ', $status)) }}
+                                                                </span>
                                                             @endif
 
                                                             {{-- @if (!$isResolved)
@@ -262,8 +281,14 @@
                                                                 <strong>Message:</strong> {{ $query->message }}
                                                             @endif
                                                         </p>
-                                                        <small
-                                                            style="color: #999; display: block; margin-top: 8px;">{{ $query->created_at->format('F d, Y h:i A') }}</small>
+                                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                                            <small style="color: #999;">{{ $query->created_at->format('F d, Y h:i A') }}</small>
+                                                            <button type="button" class="btn-reply-small" 
+                                                                    onclick="setReplyTarget({{ $query->id }}, null, 'Original Query', '{{ addslashes(Str::limit($query->message ?? $query->book_title, 50)) }}')"
+                                                                    style="background: none; border: none; color: #0ea5e9; cursor: pointer; font-size: 12px; padding: 0;">
+                                                                <i class="mdi mdi-reply"></i> Reply Globally
+                                                            </button>
+                                                        </div>
                                                     </div>
 
                                                     <!-- Admin Reply (if exists in admin_reply field) -->
@@ -282,6 +307,9 @@
 
                                                     <!-- Conversation Thread (Replies) -->
                                                     @if (isset($query->replies) && $query->replies && $query->replies->count() > 0)
+                                                        @php
+                                                            $endedVendorIds = $query->replies->where('is_ended', true)->pluck('vendor_id')->unique()->toArray();
+                                                        @endphp
                                                         <div style="margin-bottom: 15px;">
                                                             <strong
                                                                 style="color: #333; display: block; margin-bottom: 10px; font-size: 14px;">Conversation
@@ -291,22 +319,50 @@
                                                                 @foreach ($query->replies as $reply)
                                                                     @if ($reply->reply_by == 'admin')
                                                                         <div
-                                                                            style="background: #e8f5e9; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #28a745;">
-                                                                            <strong
-                                                                                style="color: #28a745; display: block; margin-bottom: 5px; font-size: 13px;">👨‍💼
-                                                                                {{ $reply->vendor && $reply->vendor->user ? $reply->vendor->user->name : 'Admin' }}:</strong>
+                                                                            style="background: #e8f5e9; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #28a745; position: relative;">
+                                                                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                                                                <strong
+                                                                                    style="color: #28a745; display: block; margin-bottom: 5px; font-size: 13px;">👨‍💼
+                                                                                    {{ $reply->vendor && $reply->vendor->user ? $reply->vendor->user->name : 'Admin' }}
+                                                                                    @if($reply->is_ended)
+                                                                                        <span class="status-chip resolved" style="font-size: 10px; padding: 2px 6px;">Conversation Ended</span>
+                                                                                    @endif
+                                                                                    :</strong>
+                                                                                <div style="display: flex; gap: 8px;">
+                                                                                    @if(!in_array($reply->vendor_id, $endedVendorIds))
+                                                                                        <button type="button" class="btn-reply-small" 
+                                                                                            onclick="setReplyTarget({{ $query->id }}, '{{ $reply->vendor_id }}', '{{ $reply->vendor && $reply->vendor->user ? addslashes($reply->vendor->user->name) : 'Admin' }}', '{{ addslashes(Str::limit($reply->message, 50)) }}')"
+                                                                                            style="background: none; border: none; color: #28a745; cursor: pointer; font-size: 12px; padding: 0;">
+                                                                                            <i class="mdi mdi-reply"></i> Reply
+                                                                                        </button>
+                                                                                        <form action="{{ route('student.book.end_conversation', $query->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('End conversation with this vendor?')">
+                                                                                            @csrf
+                                                                                            <input type="hidden" name="vendor_id" value="{{ $reply->vendor_id }}">
+                                                                                            <button type="submit" class="btn-reply-small" 
+                                                                                                    style="background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 12px; padding: 0;">
+                                                                                                <i class="mdi mdi-close-circle"></i> End
+                                                                                            </button>
+                                                                                        </form>
+                                                                                    @endif
+                                                                                </div>
+                                                                            </div>
                                                                             <p
-                                                                                style="margin: 0; color: #333; line-height: 1.6; font-size: 14px;">
+                                                                                style="margin: 0; color: #333; line-height: 1.6; font-size: 14px; {{ $reply->is_ended ? 'font-style: italic; color: #777;' : '' }}">
                                                                                 {{ $reply->message }}</p>
                                                                             <small
                                                                                 style="color: #999; display: block; margin-top: 5px; font-size: 12px;">{{ $reply->created_at->format('F d, Y h:i A') }}</small>
                                                                         </div>
                                                                     @else
                                                                         <div
-                                                                            style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #2196f3;">
-                                                                            <strong
-                                                                                style="color: #2196f3; display: block; margin-bottom: 5px; font-size: 13px;">👤
-                                                                                You:</strong>
+                                                                            style="background: #e3f2fd; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #2196f3; position: relative;">
+                                                                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                                                                <strong style="color: #2196f3; display: block; margin-bottom: 5px; font-size: 13px;">👤 You:</strong>
+                                                                                <button type="button" class="btn-reply-small" 
+                                                                                        onclick="setReplyTarget({{ $query->id }}, null, 'You', '{{ addslashes(Str::limit($reply->message, 50)) }}')"
+                                                                                        style="background: none; border: none; color: #2196f3; cursor: pointer; font-size: 12px; padding: 0;">
+                                                                                    <i class="mdi mdi-reply"></i> Reply
+                                                                                </button>
+                                                                            </div>
                                                                             <p
                                                                                 style="margin: 0; color: #333; line-height: 1.6; font-size: 14px;">
                                                                                 {{ $reply->message }}</p>
@@ -321,23 +377,44 @@
 
                                                     <!-- Reply Form or Resolved Message -->
                                                     @php
-                                                        $status = is_numeric($query->status)
-                                                            ? (int) $query->status
-                                                            : $query->status;
-                                                        $isResolved = $status === 'resolved' || $status === 'Resolved';
+                                                        $status = $query->status;
+                                                        $isFinal = ($status === 'available' || $status === 'not_available');
                                                     @endphp
-                                                    @if ($isResolved)
+                                                    @if ($isFinal)
                                                         <div
-                                                            style="background: #d4edda; padding: 20px; border-radius: 6px; border-left: 4px solid #28a745; text-align: center;">
-                                                            <div style="font-size: 48px; margin-bottom: 15px;">✅
+                                                            style="background: {{ $status === 'available' ? '#d4edda' : '#f8d7da' }}; padding: 20px; border-radius: 6px; border-left: 4px solid {{ $status === 'available' ? '#28a745' : '#dc3545' }}; text-align: center;">
+                                                            <div style="font-size: 48px; margin-bottom: 15px;">{{ $status === 'available' ? '✅' : '❌' }}
                                                             </div>
                                                             <h5
-                                                                style="color: #155724; margin-bottom: 10px; font-weight: 600;">
-                                                                Query Resolved Successfully!</h5>
-                                                            <p style="margin: 0; color: #155724; font-size: 16px;">
-                                                                Admin has successfully resolved your query. If you
-                                                                have any further questions, please feel free to
-                                                                submit a new query.</p>
+                                                                style="color: {{ $status === 'available' ? '#155724' : '#721c24' }}; margin-bottom: 10px; font-weight: 600;">
+                                                                {{ $status === 'available' ? 'Book Available!' : 'Book Not Available' }}</h5>
+                                                            <p style="margin: 0; color: {{ $status === 'available' ? '#155724' : '#721c24' }}; font-size: 16px;">
+                                                                {{ $status === 'available' 
+                                                                    ? 'The vendor has confirmed that the book is available. You can now proceed.' 
+                                                                    : 'Sorry, the vendors have indicated that this book is currently not available.' }}
+                                                            </p>
+
+                                                            @if ($status === 'available' && $query->vendor)
+                                                                <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 8px; text-align: left; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                                                                    <h6 style="color: #28a745; margin-bottom: 10px; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Confirmed Vendor Details:</h6>
+                                                                    <div style="display: flex; gap: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                                                                        <div style="flex: 1; min-width: 200px;">
+                                                                            <p style="margin: 0; font-weight: 700; font-size: 17px; color: #333;">{{ $query->vendor->vendorbusinessdetails->shop_name ?? $query->vendor->user->name }}</p>
+                                                                            <p style="margin: 4px 0; color: #555; font-size: 13px; line-height: 1.4;"><i class="mdi mdi-map-marker" style="color: #28a745;"></i> {{ $query->vendor->vendorbusinessdetails->shop_address ?? 'N/A' }}, {{ $query->vendor->vendorbusinessdetails->shop_city ?? '' }}, {{ $query->vendor->vendorbusinessdetails->shop_pincode ?? '' }}</p>
+                                                                            <p style="margin: 4px 0; color: #555; font-size: 13px;"><i class="mdi mdi-phone" style="color: #28a745;"></i> {{ $query->vendor->vendorbusinessdetails->shop_mobile ?? $query->vendor->user->phone ?? 'N/A' }}</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            @php 
+                                                                                $mapQuery = $query->vendor->location ?: (($query->vendor->vendorbusinessdetails->shop_name ?? '') . ' ' . ($query->vendor->vendorbusinessdetails->shop_address ?? '') . ' ' . ($query->vendor->vendorbusinessdetails->shop_city ?? ''));
+                                                                            @endphp
+                                                                            <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($mapQuery) }}" 
+                                                                               target="_blank" class="btn btn-success" style="border-radius: 6px; padding: 8px 18px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
+                                                                                <i class="mdi mdi-directions" style="font-size: 18px;"></i> Get Directions
+                                                                            </a>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @endif
                                                         </div>
                                                     @else
                                                         <!-- Reply Form - Always visible unless resolved -->
@@ -356,6 +433,17 @@
                                                             <form action="{{ route('student.book.reply', $query->id) }}"
                                                                 method="POST">
                                                                 @csrf
+                                                                <input type="hidden" name="vendor_id" id="vendor_id_{{ $query->id }}">
+                                                                
+                                                                <div id="replying_to_container_{{ $query->id }}" class="reply-preview" style="display: none; background: #f0f7ff; padding: 10px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #2196f3; position: relative;">
+                                                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                                                        <div>
+                                                                            <small style="color: #2196f3; font-weight: 700; display: block; margin-bottom: 2px;">Replying to <span id="replying_to_name_{{ $query->id }}"></span></small>
+                                                                            <div id="replying_to_text_{{ $query->id }}" style="font-size: 13px; color: #555; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px;"></div>
+                                                                        </div>
+                                                                        <button type="button" onclick="cancelReply({{ $query->id }})" style="background: #eee; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #666; font-size: 12px;">✕</button>
+                                                                    </div>
+                                                                </div>
                                                                 <div
                                                                     class="woocommerce-form-row woocommerce-form-row--wide">
                                                                     <label
@@ -365,16 +453,12 @@
                                                                     </label>
                                                                     <textarea name="message" id="replyTextarea{{ $query->id }}" rows="5" class="woocommerce-form"
                                                                         style="width: 100%; padding: 12px; border: 2px solid #e5e5e5; border-radius: 4px; font-size: 16px; resize: vertical;"
-                                                                        required minlength="10"
-                                                                        placeholder="Type your message or reply here... You can add additional information, ask questions, or provide more details about your book request."></textarea>
+                                                                        required
+                                                                        placeholder="Type your message or reply here...  You can add additional information, ask questions, or provide more details about your book request."></textarea>
                                                                     @error('message')
-                                                                        <small
+                                                                        <smal
                                                                             style="color: #e74c3c; display: block; margin-top: 5px;">{{ $message }}</small>
                                                                     @enderror
-                                                                    <small
-                                                                        style="color: #666; display: block; margin-top: 5px;">
-                                                                        Minimum 10 characters required
-                                                                    </small>
                                                                 </div>
                                                                 <div class="woocommerce-form-row"
                                                                     style="margin-top: 15px; display: flex; gap: 10px;">
@@ -430,6 +514,42 @@
             }
         }
     });
+
+    function setReplyTarget(queryId, vendorId, name, text) {
+        // Check if this vendor's conversation is ended
+        const queryReplies = @json($queries->keyBy('id')->map(fn($q) => $q->replies->where('is_ended', true)->pluck('vendor_id')));
+        const endedVendors = queryReplies[queryId] || [];
+        
+        if (endedVendors.includes(vendorId === '' ? null : parseInt(vendorId))) {
+            alert('This conversation has been ended.');
+            return;
+        }
+
+        const vendorInput = document.getElementById('vendor_id_' + queryId);
+        const container = document.getElementById('replying_to_container_' + queryId);
+        const nameSpan = document.getElementById('replying_to_name_' + queryId);
+        const textDiv = document.getElementById('replying_to_text_' + queryId);
+        const textarea = document.getElementById('replyTextarea' + queryId);
+
+        if (vendorInput && container && nameSpan && textDiv) {
+            vendorInput.value = vendorId || '';
+            nameSpan.innerText = name;
+            textDiv.innerText = text;
+            container.style.display = 'block';
+            
+            // Scroll to form and focus
+            expandAndFocusReply(queryId);
+        }
+    }
+
+    function cancelReply(queryId) {
+        const vendorInput = document.getElementById('vendor_id_' + queryId);
+        const container = document.getElementById('replying_to_container_' + queryId);
+        if (vendorInput && container) {
+            vendorInput.value = '';
+            container.style.display = 'none';
+        }
+    }
 
     function expandAndFocusReply(queryId) {
         // Find the accordion button and collapse element
