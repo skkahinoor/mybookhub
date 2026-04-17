@@ -78,13 +78,14 @@ class FirebaseService
 
         $notification = Notification::create($title, $body);
         
-        // Android specific config for high priority and sound
+        // Android specific config for high priority and "Heads-up" display
         $androidConfig = AndroidConfig::fromArray([
             'priority' => 'high',
             'notification' => [
                 'sound' => 'default',
-                'click_action' => 'FLUTTER_NOTIFICATION_CLICK', // Common for cross-platform notification libraries
-                'channel_id' => 'default',
+                'channel_id' => 'default', 
+                'visibility' => 'public',
+                'notification_priority' => 'PRIORITY_MAX',
             ],
         ]);
 

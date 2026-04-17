@@ -987,12 +987,15 @@ class CatalogueController extends Controller
                 if ($student) {
                     $shopName = 'Vendor';
                     if ($admin->type === 'vendor') {
-                        $vendor = $admin->vendorPersonal;
-                        $shopName = $vendor->vendorbusinessdetails->shop_name ?? $admin->name;
+                        // Safe way to get shop name without crashing on missing relationships
+                        $shopName = $admin->name; 
+                        if (isset($admin->vendorbusinessdetails->shop_name)) {
+                            $shopName = $admin->vendorbusinessdetails->shop_name;
+                        }
                     }
 
                     $title = "New reply for your book request";
-                    $messageBody = "{$shopName} replied regarding '{$bookRequest->book_title}': {$request->admin_reply}";
+                    $messageBody = "{$shopName} replied regarding '{$bookRequest->book_title}': " . \Str::limit($request->admin_reply, 50);
                     
                     $payload = [
                         'type' => 'book_request_reply',
