@@ -8,6 +8,7 @@ use App\Models\User;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 use Kreait\Firebase\Messaging\AndroidConfig;
+use Kreait\Firebase\Messaging\ApnsConfig;
 
 class FirebaseService
 {
@@ -55,6 +56,8 @@ class FirebaseService
      */
     public function sendToUsers(array $userIds, $title, $body, $data = [])
     {
+        \Log::info('Firebase SendToUsers: Attempting to send to users: ' . implode(',', $userIds));
+
         // Always create database entries for each user first
         foreach ($userIds as $id) {
             NotificationModel::create([
@@ -67,25 +70,50 @@ class FirebaseService
         }
 
         $tokens = UserFcmToken::whereIn('user_id', $userIds)->pluck('fcm_token')->toArray();
+        \Log::info('Firebase SendToUsers: Found ' . count($tokens) . ' tokens.');
         
         if (empty($tokens)) {
-            return true; // Still return true because we saved it to DB at least
+            \Log::warning('Firebase SendToUsers: No FCM tokens found for user IDs: ' . implode(',', $userIds));
+            return true;
         }
 
         $notification = Notification::create($title, $body);
+        
+        // Android specific config for high priority and sound
+        $androidConfig = AndroidConfig::fromArray([
+            'priority' => 'high',
+            'notification' => [
+                'sound' => 'default',
+                'click_action' => 'FLUTTER_NOTIFICATION_CLICK', // Common for cross-platform notification libraries
+                'channel_id' => 'default',
+            ],
+        ]);
+
         $chunks = array_chunk($tokens, 500);
         $successCount = 0;
 
         foreach ($chunks as $chunk) {
-            $message = CloudMessage::new()->withNotification($notification);
-            if (!empty($data)) {
-                $message = $message->withData($data);
+            try {
+                $message = CloudMessage::new()
+                    ->withNotification($notification)
+                    ->withAndroidConfig($androidConfig);
+
+                if (!empty($data)) {
+                    $message = $message->withData($data);
+                }
+                
+                $report = $this->messaging->sendMulticast($message, $chunk);
+                $successCount += $report->successes()->count();
+                
+                if ($report->failures()->count() > 0) {
+                    \Log::warning('Firebase SendToUsers: ' . $report->failures()->count() . ' failures out of ' . count($chunk));
+                }
+            } catch (\Exception $e) {
+                \Log::error('Firebase SendToUsers Exception: ' . $e->getMessage());
             }
-            
-            $report = $this->messaging->sendMulticast($message, $chunk);
-            $successCount += $report->successes()->count();
         }
 
+        \Log::info('Firebase SendToUsers: Successfully sent ' . $successCount . ' notifications.');
         return $successCount > 0;
     }
 
