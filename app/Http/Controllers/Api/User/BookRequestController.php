@@ -167,7 +167,19 @@ class BookRequestController extends Controller
             'vendor_id' => $request->vendor_id,
             'reply_by' => 'user',
             'message' => $request->message,
+            'is_ended' => $request->is_ended ?? false,
         ]);
+
+        // If the user marks the conversation as ended, update the status to available (meaning resolved)
+        if ($request->is_ended) {
+            $query->update(['status' => 'available']);
+        } else {
+            // If it's a student reply, we might want to set status back to awaiting_response
+            // but only if it's currently vendor_replied
+            if ($query->status === 'vendor_replied') {
+                $query->update(['status' => 'awaiting_response']);
+            }
+        }
 
         // Notify the specific vendor if targeted
         if ($request->vendor_id) {

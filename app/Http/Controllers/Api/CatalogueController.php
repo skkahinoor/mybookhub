@@ -940,7 +940,7 @@ class CatalogueController extends Controller
 
         // Validation
         $rules = [
-            'status' => 'required|in:pending,in_progress,resolved',
+            'status' => 'required|in:awaiting_response,vendor_replied,available,not_available',
         ];
 
         if ($request->filled('admin_reply')) {
@@ -978,6 +978,7 @@ class CatalogueController extends Controller
                 'vendor_id'       => ($admin->type === 'vendor') ? $admin->vendor_id : null,
                 'reply_by'        => 'admin',
                 'message'         => $request->admin_reply,
+                'is_ended'        => $request->is_ended ?? false,
             ]);
 
             // Create Push Notification for the student
@@ -1007,8 +1008,8 @@ class CatalogueController extends Controller
 
         return response()->json([
             'status'  => true,
-            'message' => $request->status === 'resolved'
-                ? 'Book request resolved successfully'
+            'message' => in_array($request->status, ['available', 'not_available'])
+                ? 'Book request updated and closed'
                 : 'Reply sent successfully',
             'data' => [
                 'book_request_id' => $bookRequest->id,
