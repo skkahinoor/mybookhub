@@ -971,41 +971,48 @@ class CatalogueController extends Controller
 
         $bookRequest->update($updateData);
 
-        // Save conversation reply
-        if ($request->filled('admin_reply')) {
-            BookRequestReply::create([
-                'book_request_id' => $bookRequest->id,
-                'vendor_id'       => ($admin->type === 'vendor') ? $admin->vendor_id : null,
-                'reply_by'        => 'admin',
-                'message'         => $request->admin_reply,
-                'is_ended'        => $request->is_ended ?? false,
-            ]);
-
-            // Create Push Notification for the student
-            try {
-                $student = $bookRequest->user;
-                if ($student) {
-                    $shopName = 'Vendor';
-                    if ($admin->type === 'vendor') {
-                        // Safe way to get shop name without crashing on missing relationships
-                        $shopName = $admin->name; 
-                        if (isset($admin->vendorbusinessdetails->shop_name)) {
-                            $shopName = $admin->vendorbusinessdetails->shop_name;
-                        }
-                    }
-
-                    $title = "New reply for your book request";
-                    $messageBody = "{$shopName} replied regarding '{$bookRequest->book_title}': " . \Str::limit($request->admin_reply, 50);
-                    
-                    $payload = [
-                        'type' => 'book_request_reply',
-                        'request_id' => (string)$bookRequest->id,
-                    ];
-
-                    app(\App\Services\FirebaseService::class)->sendToUsers([$student->id], $title, $messageBody, $payload);
+        // 1. Send Push Notification FIRST (to ensure it goes out even if DB fails)
+        try {
+            $studentId = $bookRequest->requested_by_user;
+            if ($studentId && $request->filled('admin_reply')) {
+                $shopName = 'Vendor';
+                if ($admin->type === 'vendor') {
+                    $shopName = $admin->vendorbusinessdetails->shop_name ?? $admin->name;
                 }
+
+                $title = "New reply for your book request";
+                $messageBody = "{$shopName} replied regarding '{$bookRequest->book_title}': " . \Str::limit($request->admin_reply, 60);
+                
+                $payload = [
+                    'type' => 'book_request_reply',
+                    'request_id' => (string)$bookRequest->id,
+                ];
+
+                app(\App\Services\FirebaseService::class)->sendToUsers([$studentId], $title, $messageBody, $payload);
+            }
+        } catch (\Exception $e) {
+            \Log::error("Push notification logic failed: " . $e->getMessage());
+        }
+
+        // 2. Save conversation reply
+        if ($request->filled('admin_reply')) {
+            try {
+                BookRequestReply::create([
+                    'book_request_id' => $bookRequest->id,
+                    'vendor_id'       => ($admin->type === 'vendor') ? $admin->vendor_id : null,
+                    'reply_by'        => 'admin',
+                    'message'         => $request->admin_reply,
+                    'is_ended'        => $request->is_ended ?? false,
+                ]);
             } catch (\Exception $e) {
-                \Log::error("Push notification failed: " . $e->getMessage());
+                \Log::error("Failed to save book request reply: " . $e->getMessage());
+                // If it fails due to missing 'is_ended' column, try without it
+                BookRequestReply::create([
+                    'book_request_id' => $bookRequest->id,
+                    'vendor_id'       => ($admin->type === 'vendor') ? $admin->vendor_id : null,
+                    'reply_by'        => 'admin',
+                    'message'         => $request->admin_reply,
+                ]);
             }
         }
 
