@@ -30,6 +30,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Yajra\DataTables\Facades\DataTables;
 
 class ProductsController extends Controller
 {
@@ -394,7 +395,7 @@ class ProductsController extends Controller
         return $map[$key];
     }
 
-    public function products()
+    public function products(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_products')) {
             abort(403, 'Unauthorized action.');
@@ -417,37 +418,160 @@ class ProductsController extends Controller
                     'Your Vendor Account is not approved yet. Please complete your personal, business, and bank details.'
                 );
         }
-
-        if ($adminType === 'vendor') {
-
-            $products = ProductsAttribute::where('vendor_id', $vendor_id)
-                ->where('admin_type', 'vendor')
-                ->orderBy('id', 'desc')
-                ->with([
-                    'product:id,product_name,product_isbn,product_image,category_id,section_id,condition,publisher_id,edition_id,language_id',
-                    'product.category:id,category_name',
-                    'product.section:id,name',
-                    'product.publisher:id,name',
-                    'product.edition:id,edition',
-                    'product.language:id,name',
-                    'vendor:id,user_id',
-                    'admin:id,name',
-                ])
-                ->get();
-        } else {
-            // Admin/Superadmin: Fetch from Product table instead of ProductsAttribute
-            $products = Product::orderBy('id', 'desc')
-                ->with([
+        if ($request->ajax()) {
+            if ($adminType === 'vendor') {
+                $query = ProductsAttribute::where('vendor_id', $vendor_id)
+                    ->where('admin_type', 'vendor')
+                    ->with([
+                        'product:id,product_name,product_isbn,product_image,category_id,section_id,condition,publisher_id,edition_id,language_id',
+                        'product.category:id,category_name',
+                        'product.section:id,name',
+                        'product.publisher:id,name',
+                        'product.edition:id,edition',
+                        'product.language:id,name',
+                        'vendor:id,user_id',
+                        'admin:id,name',
+                        'condition:id,name,percentage'
+                    ]);
+            } else {
+                $query = Product::with([
                     'category:id,category_name',
                     'section:id,name',
                     'publisher:id,name',
                     'edition:id,edition',
                     'language:id,name',
                     'attributes'
-                ])
-                ->get();
+                ]);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('isbn_condition', function ($row) use ($adminType) {
+                    $item = ($adminType === 'vendor') ? $row->product : $row;
+                    $isbn = $item->product_isbn ?? 'N/A';
+                    $cond = ucfirst($item->condition ?? 'N/A');
+                    return "ISBN-{$isbn} <span class='text-muted'>({$cond})</span>";
+                })
+                ->addColumn('image', function ($row) use ($adminType) {
+                    $item = ($adminType === 'vendor') ? $row->product : $row;
+                    $img = !empty($item->product_image) ? asset('front/images/product_images/small/' . $item->product_image) : asset('front/images/product_images/small/no-image.png');
+                    return '<img style="width:120px; height:100px" src="' . $img . '">';
+                })
+                ->addColumn('name', function ($row) use ($adminType) {
+                    $item = ($adminType === 'vendor') ? $row->product : $row;
+                    return $item->product_name ?? 'N/A';
+                })
+                ->addColumn('price', function ($row) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($row->id);
+                        if ($discountDetails['discount'] > 0) {
+                            $html = '<span style="text-decoration: line-through;">₹' . $discountDetails['product_price'] . '</span><br>';
+                            $html .= '<span class="text-danger">₹' . $discountDetails['final_price'] . '</span>';
+                            if ($row->product->condition === 'old') {
+                                $html .= '<br><small class="text-success" style="font-weight: bold;">(You will get this amount)</small>';
+                            }
+                            return $html;
+                        }
+                        $html = '₹' . $discountDetails['product_price'];
+                        if ($row->product->condition === 'old') {
+                            $html .= '<br><small class="text-success" style="font-weight: bold;">(You will get this amount)</small>';
+                        }
+                        return $html;
+                    }
+                    return '₹' . $row->product_price . ' (MRP)';
+                })
+                ->addColumn('condition_badge', function ($row) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        if ($row->condition) {
+                            return '<span class="badge badge-info">' . $row->condition->name . ' (' . $row->condition->percentage . '%)</span>';
+                        }
+                        return ucfirst($row->product->condition ?? 'N/A');
+                    }
+                    return '<span class="badge badge-info">' . ucfirst($row->condition ?? 'N/A') . '</span>';
+                })
+                ->addColumn('section', function ($row) use ($adminType) {
+                    $item = ($adminType === 'vendor') ? $row->product : $row;
+                    return $item->section->name ?? 'N/A';
+                })
+                ->addColumn('category', function ($row) use ($adminType) {
+                    $item = ($adminType === 'vendor') ? $row->product : $row;
+                    return $item->category->category_name ?? 'N/A';
+                })
+                ->addColumn('edition', function ($row) use ($adminType) {
+                    $item = ($adminType === 'vendor') ? $row->product : $row;
+                    return $item->edition->edition ?? 'N/A';
+                })
+                ->addColumn('publisher', function ($row) use ($adminType) {
+                    $item = ($adminType === 'vendor') ? $row->product : $row;
+                    return $item->publisher->name ?? 'N/A';
+                })
+                ->addColumn('language', function ($row) use ($adminType) {
+                    $item = ($adminType === 'vendor') ? $row->product : $row;
+                    return $item->language->name ?? 'N/A';
+                })
+                ->addColumn('stock', function ($row) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        return $row->stock ?? 'N/A';
+                    }
+                    return '<span class="badge badge-secondary">' . $row->attributes->sum('stock') . '</span>';
+                })
+                ->addColumn('seller', function ($row) use ($adminType) {
+                    if ($adminType !== 'vendor') {
+                        return '<span class="badge badge-info">' . $row->attributes->count() . ' Seller(s)</span>';
+                    }
+                    return null;
+                })
+                ->addColumn('status', function ($row) use ($adminType) {
+                    $status = $row->status ?? 0;
+                    $id = $row->id;
+                    $url = ($adminType === 'vendor') ? route('vendor.updateproductstatus') : route('admin.updateproductstatus');
+                    $icon = ($status == 1) ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    $state = ($status == 1) ? 'Active' : 'Inactive';
+
+                    return '<a class="updateProductStatus" id="product-' . $id . '" product_id="' . $id . '" data-url="' . $url . '" href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $icon . '" status="' . $state . '"></i>
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) use ($adminType) {
+                    $prefix = ($adminType === 'vendor') ? 'vendor' : 'admin';
+                    if ($adminType === 'vendor') {
+                        $p_id = $row->product_id;
+                        $p_name = addslashes($row->product->product_name ?? 'N/A');
+                        $p_stock = $row->stock ?? 0;
+                        $p_disc = $row->product_discount ?? 0;
+
+                        $html = '<a href="#" title="Add Stock" data-bs-toggle="modal"
+                                    data-bs-target="#addAttributeModal"
+                                    data-id="' . $p_id . '"
+                                    data-name="' . $p_name . '"
+                                    data-stock="' . $p_stock . '"
+                                    data-discount="' . $p_disc . '"
+                                    id="openAddAttributeModal">
+                                    <i style="font-size: 25px" class="mdi mdi-plus-box"></i>
+                                </a>';
+                        $html .= '<a href="' . url('vendor/delete-product-attribute/' . $row->id) . '"
+                                    onclick="return confirm(\'Are you sure you want to delete this product attribute?\')"
+                                    title="Delete Product Attribute">
+                                    <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                </a>';
+                        return $html;
+                    } else {
+                        $html = '<a title="Edit Book" href="' . url($prefix . '/add-edit-product/' . $row->id) . '">
+                                    <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                                </a>';
+                        $html .= '<a href="' . url('admin/delete-product/' . $row->id) . '"
+                                    onclick="return confirm(\'Are you sure you want to delete this book? This will also delete all associated seller entries.\')"
+                                    title="Delete Book">
+                                    <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                                </a>';
+                        return $html;
+                    }
+                })
+                ->rawColumns(['isbn_condition', 'image', 'price', 'condition_badge', 'stock', 'seller', 'status', 'actions'])
+                ->make(true);
         }
 
+        $products = [];
         return view(
             'admin.products.products',
             compact('products', 'logos', 'headerLogo', 'adminType')
