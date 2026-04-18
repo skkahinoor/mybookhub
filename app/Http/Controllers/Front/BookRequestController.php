@@ -21,6 +21,8 @@ class BookRequestController extends Controller
             'book_title' => 'required|string|max:255',
             'author_name' => 'nullable|string|max:255',
             'message' => 'nullable|string|max:1000',
+            'user_location' => 'nullable|string|max:100',
+            'user_location_name' => 'nullable|string|max:255',
         ]);
 
         BookRequest::create([
@@ -28,6 +30,8 @@ class BookRequestController extends Controller
             'author_name' => $request->author_name,
             'message' => $request->message,
             'requested_by_user' => Auth::id(),
+            'user_location' => $request->user_location,
+            'user_location_name' => $request->user_location_name,
         ]);
 
         return redirect()->back()->with('success', 'Your book request has been submitted!');

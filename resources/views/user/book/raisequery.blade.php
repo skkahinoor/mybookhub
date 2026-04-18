@@ -61,6 +61,8 @@
 
                             <form action="{{ route('student.book.request.store') }}" method="POST">
                                 @csrf
+                                <input type="hidden" name="user_location" id="user_location" value="{{ old('user_location') }}">
+                                <input type="hidden" name="user_location_name" id="user_location_name" value="{{ old('user_location_name') }}">
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
@@ -144,3 +146,39 @@
 <script src="{{ asset('user/js/template.js') }}"></script>
 <script src="{{ asset('user/js/settings.js') }}"></script>
 <!-- endinject -->
+
+<script>
+    (function () {
+        const locEl = document.getElementById('user_location');
+        const locNameEl = document.getElementById('user_location_name');
+        if (!locEl || !locNameEl) return;
+
+        function setLocation(lat, lng) {
+            locEl.value = `${lat},${lng}`;
+        }
+
+        function setLocationName(name) {
+            if (!locNameEl.value) locNameEl.value = name || '';
+        }
+
+        if (!('geolocation' in navigator)) return;
+
+        navigator.geolocation.getCurrentPosition(async function (pos) {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            setLocation(lat, lng);
+
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`;
+                const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data && data.display_name) setLocationName(data.display_name);
+            } catch (e) {
+                // ignore
+            }
+        }, function () {
+            // ignore
+        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+    })();
+</script>

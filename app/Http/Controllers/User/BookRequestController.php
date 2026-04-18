@@ -81,6 +81,8 @@ class BookRequestController extends Controller
             'author_name'    => 'nullable|string|max:255',
             'publisher_name' => 'nullable|string|max:255',
             'message'        => 'nullable|string|max:1000',
+            'user_location' => 'nullable|string|max:100',
+            'user_location_name' => 'nullable|string|max:255',
         ]);
 
         $districtId = $this->getUserDefaultDistrictId($user);
@@ -101,6 +103,8 @@ class BookRequestController extends Controller
             'requested_by_user' => Auth::id(),
             'district_id'       => $districtId,
             'vendor_id'         => null,
+            'user_location' => $request->user_location,
+            'user_location_name' => $request->user_location_name,
         ]);
 
         Notification::create([

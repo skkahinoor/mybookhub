@@ -17,6 +17,8 @@ class BookRequest extends Model
         'requested_by_user',
         'vendor_id',
         'district_id',
+        'user_location',
+        'user_location_name',
         'status',
     ];
 
