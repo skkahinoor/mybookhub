@@ -86,7 +86,7 @@
                                 <div class="info-box">
                                     <div class="info-label">Book Title</div>
                                     <div class="info-value">{{ $bookRequest->book_title }}</div>
-                                </div>
+                                </div> 
                             </div>
                             @if($bookRequest->author_name)
                             <div class="col-md-12">
