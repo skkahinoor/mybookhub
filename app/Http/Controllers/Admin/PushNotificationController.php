@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\UserFcmToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\File;
+use Intervention\Image\Facades\Image;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
 
@@ -38,14 +40,42 @@ class PushNotificationController extends Controller
             'body' => 'required|string',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif|max:2048',
             'image_url' => 'nullable|url',
         ]);
 
         $title = $request->title;
         $body = $request->body;
+        $imageUrl = $request->image_url;
+
+        if ($request->hasFile('image')) {
+            $imageFile = $request->file('image');
+            $imageName = time() . '.' . $imageFile->getClientOriginalExtension();
+            $relativeDir = 'admin/images/notifications';
+            $destinationDir = public_path($relativeDir);
+
+            if (!File::exists($destinationDir)) {
+                File::makeDirectory($destinationDir, 0755, true);
+            }
+
+            $savePath = $destinationDir . DIRECTORY_SEPARATOR . $imageName;
+
+            try {
+                Image::configure(['driver' => 'gd']);
+                $img = Image::make($imageFile->getRealPath());
+                $img->fit(1024, 512, function ($constraint) {
+                    $constraint->upsize();
+                });
+                $img->save($savePath);
+                $imageUrl = asset($relativeDir . '/' . $imageName);
+            } catch (\Throwable $e) {
+                return redirect()->back()->with('error_message', "Image upload failed: " . $e->getMessage());
+            }
+        }
+
         $data = [
             'type' => 'promotional',
-            'image_url' => $request->image_url,
+            'image_url' => $imageUrl,
         ];
 
         if ($request->has('user_ids') && !empty($request->user_ids)) {

@@ -24,9 +24,33 @@ class FirebaseService
      */
     public function sendToAll($title, $body, $data = [])
     {
-        $notification = Notification::create($title, $body);
+        $imageUrl = $data['image_url'] ?? null;
+        $notification = Notification::create($title, $body, $imageUrl);
+        
+        $data['image'] = $imageUrl; // Compatibility
+
         $message = CloudMessage::withTarget('topic', 'all_users')
             ->withNotification($notification);
+
+        if ($imageUrl) {
+            // Android Config
+            $androidConfig = AndroidConfig::fromArray([
+                'priority' => 'high',
+                'notification' => [
+                    'image' => $imageUrl,
+                    'sound' => 'default',
+                ],
+            ]);
+            $message = $message->withAndroidConfig($androidConfig);
+
+            // WebPush Config
+            $webPushConfig = [
+                'notification' => [
+                    'image' => $imageUrl,
+                ]
+            ];
+            $message = $message->withWebPushConfig($webPushConfig);
+        }
 
         if (!empty($data)) {
             $message = $message->withData($data);
@@ -76,10 +100,11 @@ class FirebaseService
             return true;
         }
 
-        $notification = Notification::create($title, $body);
+        $imageUrl = $data['image_url'] ?? null;
+        $notification = Notification::create($title, $body, $imageUrl);
         
         // Android specific config for high priority and "Heads-up" display
-        $androidConfig = AndroidConfig::fromArray([
+        $androidConfigData = [
             'priority' => 'high',
             'notification' => [
                 'sound' => 'default',
@@ -87,7 +112,29 @@ class FirebaseService
                 'visibility' => 'public',
                 'notification_priority' => 'PRIORITY_MAX',
             ],
-        ]);
+        ];
+
+        if ($imageUrl) {
+            $androidConfigData['notification']['image'] = $imageUrl;
+            $data['image'] = $imageUrl; // Compatibility
+        }
+
+        $androidConfig = AndroidConfig::fromArray($androidConfigData);
+
+        // Apns Config for iOS images
+        $apnsConfig = null;
+        if ($imageUrl) {
+            $apnsConfig = ApnsConfig::fromArray([
+                'payload' => [
+                    'aps' => [
+                        'mutable-content' => 1,
+                    ],
+                ],
+                'fcm_options' => [
+                    'image' => $imageUrl,
+                ],
+            ]);
+        }
 
         $chunks = array_chunk($tokens, 500);
         $successCount = 0;
@@ -97,6 +144,10 @@ class FirebaseService
                 $message = CloudMessage::new()
                     ->withNotification($notification)
                     ->withAndroidConfig($androidConfig);
+
+                if ($apnsConfig) {
+                    $message = $message->withApnsConfig($apnsConfig);
+                }
 
                 if (!empty($data)) {
                     $message = $message->withData($data);

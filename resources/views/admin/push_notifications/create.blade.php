@@ -17,7 +17,7 @@
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Compose Notification</h4>
-                            <form class="forms-sample" action="{{ route('admin.push-notifications.send') }}" method="POST">
+                            <form class="forms-sample" action="{{ route('admin.push-notifications.send') }}" method="POST" enctype="multipart/form-data">
                                 @csrf
                                 <div class="form-group">
                                     <label for="title">Notification Title</label>
@@ -28,9 +28,17 @@
                                     <textarea class="form-control" id="body" name="body" rows="4" placeholder="Enter message" required></textarea>
                                 </div>
                                 <div class="form-group">
-                                    <label for="image_url">Image URL (Optional)</label>
+                                    <label for="notification_image">Notification Image (Optional)</label>
+                                    <input type="file" class="form-control" id="notification_image" name="image" accept="image/*" onchange="previewImage(this)">
+                                    <div id="image-preview-container" class="mt-2" style="display:none;">
+                                        <img id="image-preview" src="#" alt="Image Preview" style="max-width: 200px; border-radius: 5px; border: 1px solid #ddd; padding: 5px;">
+                                    </div>
+                                    <small class="text-muted d-block mt-1">Upload an image to be displayed in the notification.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="image_url">Or Image URL</label>
                                     <input type="url" class="form-control" id="image_url" name="image_url" placeholder="https://example.com/image.png">
-                                    <small class="text-muted">Direct link to an image to be displayed in the notification.</small>
+                                    <small class="text-muted">Direct link to an image (used if no file is uploaded).</small>
                                 </div>
                                 <div class="form-group">
                                     <label for="user_ids">Target Users (Optional)</label>
@@ -75,5 +83,16 @@
             allowClear: true
         });
     });
+
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#image-preview').attr('src', e.target.result);
+                $('#image-preview-container').show();
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
 </script>
 @endpush
