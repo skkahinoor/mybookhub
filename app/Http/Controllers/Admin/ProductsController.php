@@ -118,59 +118,53 @@ class ProductsController extends Controller
                 }
 
                 // ---------- SECTION ----------
+                $sectionId = null;
                 $sectionName = trim($data['section'] ?? '');
-                if (!$sectionName) {
-                    $skippedInvalid++;
-                    continue;
+                if ($sectionName) {
+                    if (!isset($sections[strtolower($sectionName)])) {
+                        $section = Section::create([
+                            'name'   => ucwords($sectionName),
+                            'status' => 1
+                        ]);
+                        $sections[strtolower($sectionName)] = $section->id;
+                    }
+                    $sectionId = $sections[strtolower($sectionName)];
                 }
-
-                if (!isset($sections[strtolower($sectionName)])) {
-                    $section = Section::create([
-                        'name'   => ucwords($sectionName),
-                        'status' => 1
-                    ]);
-                    $sections[strtolower($sectionName)] = $section->id;
-                }
-                $sectionId = $sections[strtolower($sectionName)];
 
                 // ---------- CATEGORY ----------
+                $categoryId = null;
                 $categoryName = trim($data['category'] ?? '');
-                if (!$categoryName) {
-                    $skippedInvalid++;
-                    continue;
-                }
+                if ($categoryName) {
+                    $ROOT_CATEGORY_ID = 0;
 
-                $ROOT_CATEGORY_ID = 0;
-
-                if (!isset($categories[strtolower($categoryName)])) {
-                    $category = Category::create([
-                        'category_name' => ucwords($categoryName),
-                        'url' => ucwords($categoryName),
-                        'section_id'    => $sectionId,
-                        'parent_id'     => $ROOT_CATEGORY_ID,
-                        'status'        => 1
-                    ]);
-                    $categories[strtolower($categoryName)] = $category->id;
+                    if (!isset($categories[strtolower($categoryName)])) {
+                        $category = Category::create([
+                            'category_name' => ucwords($categoryName),
+                            'url' => ucwords($categoryName),
+                            'section_id'    => $sectionId,
+                            'parent_id'     => $ROOT_CATEGORY_ID,
+                            'status'        => 1
+                        ]);
+                        $categories[strtolower($categoryName)] = $category->id;
+                    }
+                    $categoryId = $categories[strtolower($categoryName)];
                 }
-                $categoryId = $categories[strtolower($categoryName)];
 
                 // ---------- OTHER FOREIGN KEYS ----------
-                // ---------- PUBLISHER (MANDATORY) ----------
+                // ---------- PUBLISHER (OPTIONAL) ----------
+                $publisherId = null;
                 $publisherName = trim($data['publisher'] ?? '');
-                if (!$publisherName) {
-                    $skippedInvalid++;
-                    continue;
+                if ($publisherName) {
+                    $publisherKey = strtolower($publisherName);
+                    if (!isset($publishers[$publisherKey])) {
+                        $publisher = Publisher::create([
+                            'name'   => ucwords($publisherName),
+                            'status' => 1
+                        ]);
+                        $publishers[$publisherKey] = $publisher->id;
+                    }
+                    $publisherId = $publishers[$publisherKey];
                 }
-
-                $publisherKey = strtolower($publisherName);
-                if (!isset($publishers[$publisherKey])) {
-                    $publisher = Publisher::create([
-                        'name'   => ucwords($publisherName),
-                        'status' => 1
-                    ]);
-                    $publishers[$publisherKey] = $publisher->id;
-                }
-                $publisherId = $publishers[$publisherKey];
 
 
                 // ---------- SUBJECT ----------
