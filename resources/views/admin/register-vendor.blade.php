@@ -100,7 +100,8 @@
                                     <div class="col-6">
                                         <div class="form-group mb-3">
                                             <input type="number" name="mobile" class="form-control"
-                                        placeholder="Mobile Number" required>
+                                        placeholder="Mobile Number (10 digits)" required>
+                                            <small class="text-muted">WhatsApp format will be saved as 91XXXXXXXXXX.</small>
                                         </div>
                                     </div>
                                     <div class="col-6">
@@ -108,6 +109,16 @@
                                              <input type="number" name="pincode" class="form-control"
                                         placeholder="Pin Code" required>
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="whatsapp_opt_in"
+                                            id="whatsapp_opt_in" value="1" required>
+                                        <label class="form-check-label" for="whatsapp_opt_in">
+                                            I agree to receive order updates and notifications on WhatsApp.
+                                        </label>
                                     </div>
                                 </div>
                                 {{-- OTP Input - Hidden initially --}}

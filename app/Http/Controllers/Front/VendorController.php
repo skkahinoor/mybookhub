@@ -21,6 +21,30 @@ use GuzzleHttp\Client;
 
 class VendorController extends Controller
 {
+    private function formatWhatsappPhone(?string $phone): ?string
+    {
+        if ($phone === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone);
+        if (!$digits) {
+            return null;
+        }
+
+        // If local 10-digit Indian mobile, prefix country code.
+        if (strlen($digits) === 10) {
+            return '91' . $digits;
+        }
+
+        // If already in 91XXXXXXXXXX format, keep as-is.
+        if (strlen($digits) === 12 && str_starts_with($digits, '91')) {
+            return $digits;
+        }
+
+        return null;
+    }
+
     public function loginRegister(Request $request)
     {
         $condition = session('condition', 'new');
@@ -195,9 +219,10 @@ class VendorController extends Controller
             $rules = [
                 'name'   => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
                 'email'  => 'required|email|unique:users,email,' . ($adminId ?? '') . ',id',
-                'mobile' => 'required|numeric',
+                'mobile' => 'required|digits:10',
                 'pincode' => 'required|numeric|digits:6',
-                'location' => ['required', 'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/']
+                'location' => ['required', 'regex:/^-?\d{1,3}\.\d+,\s*-?\d{1,3}\.\d+$/'],
+                'whatsapp_opt_in' => 'required|accepted',
             ];
 
             $customMessages = [
@@ -207,7 +232,9 @@ class VendorController extends Controller
                 'email.email'     => 'Valid Email is required',
                 'email.unique'    => 'Email already exists',
                 'mobile.required' => 'Mobile is required',
-                'mobile.numeric'  => 'Valid Mobile is required',
+                'mobile.digits'   => 'Mobile must be exactly 10 digits',
+                'whatsapp_opt_in.required' => 'WhatsApp consent is required',
+                'whatsapp_opt_in.accepted' => 'Please allow WhatsApp updates to continue',
             ];
 
             // Add mode password validation
@@ -219,6 +246,13 @@ class VendorController extends Controller
             }
 
             $this->validate($request, $rules, $customMessages);
+
+            $whatsappPhone = $this->formatWhatsappPhone($data['mobile'] ?? null);
+            if ($whatsappPhone === null) {
+                return back()
+                    ->withErrors(['mobile' => 'Enter a valid Indian mobile number (10 digits).'])
+                    ->withInput();
+            }
 
             // If ADD MODE with OTP, verify the OTP (only when coming from register-vendor page)
             if (empty($adminId)) {
@@ -258,22 +292,7 @@ class VendorController extends Controller
                     $selectedPlan = 'pro';
                 }
 
-                // Insert Vendor with plan
-                $vendorData = [
-                    'name'    => $data['name'],
-                    'email'   => $data['email'],
-                    'mobile'  => $data['mobile'],
-                    'location' => $data['location'],
-
-                    'plan'    => $selectedPlan,
-                    'plan_started_at' => now(),
-                    'plan_expires_at' => ($selectedPlan === 'pro' && ($giveNewUsersProPlan || $isInvitePro)) ? now()->addDays($proPlanTrialDurationDays) : null,
-                ];
-
-                $vendor = Vendor::create($vendorData);
-                $vendorId = $vendor->id;
-
-                // Insert User instead of Admin
+                // Insert User first (vendor basics are in users table).
                 $role = Role::where('name', 'vendor')->first();
                 $user = User::create([
                     'name'     => $data['name'],
@@ -290,8 +309,20 @@ class VendorController extends Controller
                     $user->assignRole($role);
                 }
 
-                // Link Vendor to User
-                $vendor->update(['user_id' => $user->id]);
+                // Insert Vendor with vendor-specific fields only.
+                $vendor = Vendor::create([
+                    'user_id' => $user->id,
+                    'location' => $data['location'],
+                    'whatsapp_opt_in' => true,
+                    'whatsapp_phone' => $whatsappPhone,
+                    'whatsapp_opt_in_at' => now(),
+                    'plan' => $selectedPlan,
+                    'plan_started_at' => now(),
+                    'plan_expires_at' => ($selectedPlan === 'pro' && ($giveNewUsersProPlan || $isInvitePro))
+                        ? now()->addDays($proPlanTrialDurationDays)
+                        : null,
+                ]);
+                $vendorId = $vendor->id;
 
 
 
@@ -322,10 +353,10 @@ class VendorController extends Controller
 
                 if ($admin && $admin->type === 'vendor' && $admin->vendor_id) {
                     Vendor::where('id', $admin->vendor_id)->update([
-                        'name'   => $data['name'],
-                        'email'  => $data['email'],
-                        'mobile' => $data['mobile'],
                         'location' => $data['location'],
+                        'whatsapp_opt_in' => $request->boolean('whatsapp_opt_in'),
+                        'whatsapp_phone' => $whatsappPhone,
+                        'whatsapp_opt_in_at' => $request->boolean('whatsapp_opt_in') ? now() : null,
                     ]);
                 }
 

@@ -49,4 +49,11 @@ return [
         'template_id' => env('MSG91_TEMPLATE_ID'),
     ],
 
+    'whatsapp' => [
+        'token' => env('WHATSAPP_TOKEN'),
+        'phone_id' => env('WHATSAPP_PHONE_ID'),
+        'template' => env('WHATSAPP_BOOK_REQUEST_TEMPLATE', 'book_request_alert'),
+        'language' => env('WHATSAPP_TEMPLATE_LANG', 'en'),
+    ],
+
 ];
