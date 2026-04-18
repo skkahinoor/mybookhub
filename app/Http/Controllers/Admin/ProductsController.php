@@ -446,6 +446,57 @@ class ProductsController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->filterColumn('isbn_condition', function ($q, $keyword) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->whereHas('product', function ($pq) use ($keyword) {
+                            $pq->where('product_isbn', 'like', "%{$keyword}%");
+                        });
+                    } else {
+                        $q->where('product_isbn', 'like', "%{$keyword}%");
+                    }
+                })
+                ->filterColumn('name', function ($q, $keyword) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->whereHas('product', function ($pq) use ($keyword) {
+                            $pq->where('product_name', 'like', "%{$keyword}%");
+                        });
+                    } else {
+                        $q->where('product_name', 'like', "%{$keyword}%");
+                    }
+                })
+                ->filterColumn('section', function ($q, $keyword) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->whereHas('product.section', function ($sq) use ($keyword) {
+                            $sq->where('name', 'like', "%{$keyword}%");
+                        });
+                    } else {
+                        $q->whereHas('section', function ($sq) use ($keyword) {
+                            $sq->where('name', 'like', "%{$keyword}%");
+                        });
+                    }
+                })
+                ->filterColumn('category', function ($q, $keyword) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->whereHas('product.category', function ($cq) use ($keyword) {
+                            $cq->where('category_name', 'like', "%{$keyword}%");
+                        });
+                    } else {
+                        $q->whereHas('category', function ($cq) use ($keyword) {
+                            $cq->where('category_name', 'like', "%{$keyword}%");
+                        });
+                    }
+                })
+                ->filterColumn('publisher', function ($q, $keyword) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->whereHas('product.publisher', function ($pbq) use ($keyword) {
+                            $pbq->where('name', 'like', "%{$keyword}%");
+                        });
+                    } else {
+                        $q->whereHas('publisher', function ($pbq) use ($keyword) {
+                            $pbq->where('name', 'like', "%{$keyword}%");
+                        });
+                    }
+                })
                 ->addColumn('isbn_condition', function ($row) use ($adminType) {
                     $item = ($adminType === 'vendor') ? $row->product : $row;
                     $isbn = $item->product_isbn ?? 'N/A';
