@@ -27,6 +27,7 @@ use App\Models\WalletTransaction;
 
 use App\Models\DeliverySetting;
 use App\Models\BookType;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -1671,6 +1672,42 @@ class ProductsController extends Controller
                         'vendor_id' => $cartItem->vendor_id,
                         'is_read' => false,
                     ]);
+
+                    $vendor = Vendor::with(['user', 'vendorbusinessdetails'])->find($cartItem->vendor_id);
+                    if ($vendor && $vendor->whatsapp_opt_in && !empty($vendor->whatsapp_phone)) {
+                        $vendorDisplayName = $vendor->vendorbusinessdetails->shop_name
+                            ?? $vendor->user->name
+                            ?? 'Vendor';
+                        $deliveryArea = implode(', ', array_filter([
+                            $order->country ?? null,
+                            $order->state ?? null,
+                            $order->city ?? null,
+                        ]));
+                        if (!empty($order->pincode) && strtoupper((string) $order->pincode) !== 'N/A') {
+                            $deliveryArea .= ($deliveryArea ? ' - ' : '') . $order->pincode;
+                        }
+                        if (empty($deliveryArea)) {
+                            $deliveryArea = '-';
+                        }
+
+                        $orderTemplate = config('services.whatsapp.order_template', 'vendor_new_order_alert_v1');
+                        $orderParams = [
+                            $vendorDisplayName,
+                            (string) $order->id,
+                            $cartItem->product_name ?? 'Product',
+                            (string) $item['quantity'],
+                            $order->name ?? 'Customer',
+                            $order->mobile ?? '-',
+                            $deliveryArea,
+                            $order->payment_method ?? '-',
+                        ];
+
+                        app(WhatsAppService::class)->sendTemplate(
+                            $vendor->whatsapp_phone,
+                            $orderTemplate,
+                            $orderParams
+                        );
+                    }
                 }
 
                 // Reduce stock for COD / Pickup orders immediately

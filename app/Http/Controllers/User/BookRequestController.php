@@ -174,11 +174,16 @@ class BookRequestController extends Controller
             $vendorDisplayName = $vendor->vendorbusinessdetails->shop_name
                 ?? $vendor->user->name
                 ?? 'Vendor';
+            $customerMobile = $user->phone ?? $user->mobile ?? '-';
 
             $params = [
                 $vendorDisplayName,
                 $request->book_title ?: '-',
+                $request->author_name ?: '-',
+                $request->publisher_name ?: '-',
                 $locationText,
+                $user->name ?: 'BookHub User',
+                $customerMobile,
             ];
 
             $sent = $this->whatsAppService->sendTemplate(

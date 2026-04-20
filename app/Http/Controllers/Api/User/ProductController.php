@@ -29,6 +29,7 @@ use App\Models\Notification;
 use App\Models\DeliverySetting;
 use App\Models\OrderQuery;
 use App\Models\OrderQueryMessage;
+use App\Services\WhatsAppService;
 use Razorpay\Api\Api;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
@@ -1691,6 +1692,42 @@ class ProductController extends Controller
                         'vendor_id' => $attribute->vendor_id,
                         'is_read' => false,
                     ]);
+
+                    $vendor = Vendor::with(['user', 'vendorbusinessdetails'])->find($attribute->vendor_id);
+                    if ($vendor && $vendor->whatsapp_opt_in && !empty($vendor->whatsapp_phone)) {
+                        $vendorDisplayName = $vendor->vendorbusinessdetails->shop_name
+                            ?? $vendor->user->name
+                            ?? 'Vendor';
+                        $deliveryArea = implode(', ', array_filter([
+                            $order->country ?? null,
+                            $order->state ?? null,
+                            $order->city ?? null,
+                        ]));
+                        if (!empty($order->pincode) && strtoupper((string) $order->pincode) !== 'N/A') {
+                            $deliveryArea .= ($deliveryArea ? ' - ' : '') . $order->pincode;
+                        }
+                        if (empty($deliveryArea)) {
+                            $deliveryArea = '-';
+                        }
+
+                        $orderTemplate = config('services.whatsapp.order_template', 'vendor_new_order_alert_v1');
+                        $orderParams = [
+                            $vendorDisplayName,
+                            (string) $order->id,
+                            $attribute->product->product_name ?? 'Product',
+                            (string) $item->quantity,
+                            $order->name ?? 'Customer',
+                            $order->mobile ?? '-',
+                            $deliveryArea,
+                            $order->payment_method ?? '-',
+                        ];
+
+                        app(WhatsAppService::class)->sendTemplate(
+                            $vendor->whatsapp_phone,
+                            $orderTemplate,
+                            $orderParams
+                        );
+                    }
                 }
             }
 

@@ -292,7 +292,7 @@
                                                     </div>
 
                                                     <!-- Admin Reply (if exists in admin_reply field) -->
-                                                    @if ($query->admin_reply)
+                                                    {{-- @if ($query->admin_reply)
                                                         <div
                                                             style="background: #e8f5e9; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #28a745;">
                                                             <strong
@@ -303,7 +303,7 @@
                                                             <small
                                                                 style="color: #999; display: block; margin-top: 8px;">{{ $query->updated_at->format('F d, Y h:i A') }}</small>
                                                         </div>
-                                                    @endif
+                                                    @endif --}}
 
                                                     <!-- Conversation Thread (Replies) -->
                                                     @if (isset($query->replies) && $query->replies && $query->replies->count() > 0)
