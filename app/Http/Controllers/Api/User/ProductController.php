@@ -1682,6 +1682,43 @@ class ProductController extends Controller
                     'commission' => $commission
                 ]);
 
+                // WhatsApp: send order confirmation to user (per item-order)
+                try {
+                    $userTemplate = config('services.whatsapp.user_order_template', 'user_order_confirmation_v1');
+                    $deliveryAreaForUser = implode(', ', array_filter([
+                        $order->country ?? null,
+                        $order->state ?? null,
+                        $order->city ?? null,
+                    ]));
+                    if (!empty($order->pincode) && strtoupper((string) $order->pincode) !== 'N/A') {
+                        $deliveryAreaForUser .= ($deliveryAreaForUser ? ' - ' : '') . $order->pincode;
+                    }
+                    if (empty($deliveryAreaForUser)) {
+                        $deliveryAreaForUser = '-';
+                    }
+
+                    $userParams = [
+                        $user->name ?: 'BookHub User',
+                        (string) $order->id,
+                        $attribute->product->product_name ?? 'Product',
+                        (string) $item->quantity,
+                        (string) round((float) ($order->grand_total ?? 0)),
+                        $order->payment_method ?? '-',
+                        $deliveryAreaForUser,
+                    ];
+
+                    app(WhatsAppService::class)->sendTemplate(
+                        $order->mobile ?? ($user->phone ?? ''),
+                        $userTemplate,
+                        $userParams
+                    );
+                } catch (\Throwable $e) {
+                    Log::warning('User WhatsApp order confirmation failed (api). ' . $e->getMessage(), [
+                        'order_id' => $order->id ?? null,
+                        'user_id' => $user->id ?? null,
+                    ]);
+                }
+
                 if (($attribute->vendor_id ?? 0) > 0) {
                     Notification::create([
                         'type' => 'order_placed',

@@ -7,6 +7,22 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppService
 {
+    private function formatToWhatsapp(string $to): ?string
+    {
+        $digits = preg_replace('/\D+/', '', $to);
+        if (empty($digits)) {
+            return null;
+        }
+
+        // Default India: accept 10-digit local numbers and prefix 91.
+        if (strlen($digits) === 10) {
+            return '91' . $digits;
+        }
+
+        // Already looks like an international number.
+        return $digits;
+    }
+
     public function sendTemplate(string $to, string $template, array $params = [], ?string $language = null): bool
     {
         $token = config('services.whatsapp.token');
@@ -21,7 +37,7 @@ class WhatsAppService
             return false;
         }
 
-        $formattedTo = preg_replace('/\D+/', '', $to);
+        $formattedTo = $this->formatToWhatsapp($to);
         if (empty($formattedTo)) {
             return false;
         }
