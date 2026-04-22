@@ -387,8 +387,10 @@
                 <div class="modal-body p-0">
                     <video id="bookVideoPlayer" width="100%" height="auto" controls
                         style="display: block; max-height: 80vh;">
-                        <source src="{{ asset('front/videos/product_videos/' . $productAttribute->video_upload) }}"
-                            type="video/{{ pathinfo($productAttribute->video_upload, PATHINFO_EXTENSION) }}">
+                        @if (!empty($productAttribute) && !empty($productAttribute->video_upload))
+                            <source src="{{ asset('front/videos/product_videos/' . $productAttribute->video_upload) }}"
+                                type="video/{{ pathinfo($productAttribute->video_upload, PATHINFO_EXTENSION) }}">
+                        @endif
                         Your browser does not support the video tag.
                     </video>
                 </div>
@@ -422,7 +424,7 @@
                                 alt="{{ $productDetails['product_name'] }}">
                         </div>
 
-                        @if (!empty($productAttribute->video_upload))
+                        @if (!empty($productAttribute) && !empty($productAttribute->video_upload))
                             <div class="product-video-box mt-4 text-center">
                                 <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal"
                                     data-bs-target="#videoModal"
