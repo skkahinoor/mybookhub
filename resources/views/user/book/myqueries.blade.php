@@ -292,7 +292,7 @@
                                                     </div>
 
                                                     <!-- Admin Reply (if exists in admin_reply field) -->
-                                                    @if ($query->admin_reply)
+                                                    {{-- @if ($query->admin_reply)
                                                         <div
                                                             style="background: #e8f5e9; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #28a745;">
                                                             <strong
@@ -303,7 +303,7 @@
                                                             <small
                                                                 style="color: #999; display: block; margin-top: 8px;">{{ $query->updated_at->format('F d, Y h:i A') }}</small>
                                                         </div>
-                                                    @endif
+                                                    @endif --}}
 
                                                     <!-- Conversation Thread (Replies) -->
                                                     @if (isset($query->replies) && $query->replies && $query->replies->count() > 0)
@@ -449,7 +449,7 @@
                                                                 @endif
                                                             </h5>
                                                             <form action="{{ route('student.book.reply', $query->id) }}"
-                                                                method="POST">
+                                                                method="POST" id="replyForm{{ $query->id }}">
                                                                 @csrf
                                                                 <input type="hidden" name="vendor_id" id="vendor_id_{{ $query->id }}">
                                                                 
@@ -460,6 +460,32 @@
                                                                             <div id="replying_to_text_{{ $query->id }}" style="font-size: 13px; color: #555; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px;"></div>
                                                                         </div>
                                                                         <button type="button" onclick="cancelReply({{ $query->id }})" style="background: #eee; border: none; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #666; font-size: 12px;">✕</button>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="quick-replies" style="margin-bottom: 12px;">
+                                                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                                                        <small style="color:#555; font-weight:700;">Quick replies</small>
+                                                                        <small style="color:#888;">Tap to send</small>
+                                                                    </div>
+                                                                    <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                                                                        @php
+                                                                            $quickReplies = [
+                                                                                "Hi, I’m interested. Please share price and availability.",
+                                                                                "Is it a new book or old book? Please confirm condition.",
+                                                                                "Please share delivery time / pickup option for my area.",
+                                                                                "Can you share photos of the book and edition details?",
+                                                                                "Thank you. I will confirm and get back to you shortly.",
+                                                                            ];
+                                                                        @endphp
+                                                                        @foreach ($quickReplies as $qr)
+                                                                            <button type="button"
+                                                                                data-message="{{ e($qr) }}"
+                                                                                onclick="sendQuickReply({{ $query->id }}, this.dataset.message)"
+                                                                                style="border:1px solid #e5e5e5; background:#fff; color:#333; padding:8px 10px; border-radius:999px; font-size:13px; cursor:pointer;">
+                                                                                {{ \Illuminate\Support\Str::limit($qr, 40) }}
+                                                                            </button>
+                                                                        @endforeach
                                                                     </div>
                                                                 </div>
                                                                 <div
@@ -614,6 +640,25 @@
                 textarea.focus();
             }, 100);
         }
+    }
+
+    function sendQuickReply(queryId, message) {
+        const textarea = document.getElementById('replyTextarea' + queryId);
+        const form = document.getElementById('replyForm' + queryId);
+        if (!textarea || !form) return;
+
+        textarea.value = message;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+        const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+        if (submitBtn) {
+            submitBtn.click();
+            return;
+        }
+
+        // Fallback
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else form.submit();
     }
 </script>
 

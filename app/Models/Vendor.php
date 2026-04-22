@@ -24,6 +24,9 @@ class Vendor extends Model
     protected $fillable = [
         'user_id',
         'location',
+        'whatsapp_opt_in',
+        'whatsapp_phone',
+        'whatsapp_opt_in_at',
         'commission',
         'plan',
         'plan_started_at',
@@ -36,6 +39,8 @@ class Vendor extends Model
     protected $casts = [
         'plan_started_at' => 'datetime',
         'plan_expires_at' => 'datetime',
+        'whatsapp_opt_in' => 'boolean',
+        'whatsapp_opt_in_at' => 'datetime',
     ];
 
 

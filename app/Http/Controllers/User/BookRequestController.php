@@ -13,11 +13,20 @@ use Illuminate\Http\Request;
 use App\Models\Language;
 use App\Models\Product;
 use App\Models\Section;
+use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Helpers\RoleHelper;
 
 class BookRequestController extends Controller
 {
+    private WhatsAppService $whatsAppService;
+
+    public function __construct(WhatsAppService $whatsAppService)
+    {
+        $this->whatsAppService = $whatsAppService;
+    }
+
     private function getUserDefaultDistrictId($user)
     {
         $defaultAddress = $user->addresses()
@@ -43,6 +52,40 @@ class BookRequestController extends Controller
             ->where('district_id', $districtId)
             ->where('status', 1)
             ->get();
+    }
+
+    private function getUserLocationText($user, $districtId): string
+    {
+        $address = $user->addresses()
+            ->with(['country', 'state', 'district'])
+            ->where('is_default', 1)
+            ->first();
+
+        if (!$address) {
+            $address = $user->addresses()
+                ->with(['country', 'state', 'district'])
+                ->latest()
+                ->first();
+        }
+
+        if ($address) {
+            $parts = array_filter([
+                optional($address->country)->name,
+                optional($address->state)->name,
+                optional($address->district)->name,
+            ]);
+
+            $location = implode(', ', $parts);
+            if (!empty($address->pincode)) {
+                $location .= ($location ? ' - ' : '') . $address->pincode;
+            }
+
+            if (!empty($location)) {
+                return $location;
+            }
+        }
+
+        return optional($user->district)->name ?: ('District #' . $districtId);
     }
 
     /**
@@ -116,6 +159,47 @@ class BookRequestController extends Controller
             'is_read' => false,
         ]);
 
+        // Send WhatsApp template to opted-in vendors in same district.
+        $vendorsForWhatsapp = Vendor::with(['user', 'vendorbusinessdetails'])
+            ->where('whatsapp_opt_in', true)
+            ->whereNotNull('whatsapp_phone')
+            ->whereHas('user', function ($q) use ($districtId) {
+                $q->where('district_id', $districtId)->where('status', 1);
+            })
+            ->get();
+
+        $template = config('services.whatsapp.template', 'book_request_alert');
+        $locationText = $this->getUserLocationText($user, $districtId);
+        foreach ($vendorsForWhatsapp as $vendor) {
+            $vendorDisplayName = $vendor->vendorbusinessdetails->shop_name
+                ?? $vendor->user->name
+                ?? 'Vendor';
+            $customerMobile = $user->phone ?? $user->mobile ?? '-';
+
+            $params = [
+                $vendorDisplayName,
+                $request->book_title ?: '-',
+                $request->author_name ?: '-',
+                $request->publisher_name ?: '-',
+                $locationText,
+                $user->name ?: 'BookHub User',
+                $customerMobile,
+            ];
+
+            $sent = $this->whatsAppService->sendTemplate(
+                $vendor->whatsapp_phone,
+                $template,
+                $params
+            );
+
+            if (!$sent) {
+                Log::warning('WhatsApp not sent for book request (web).', [
+                    'vendor_id' => $vendor->id,
+                    'book_request_id' => $bookRequest->id,
+                ]);
+            }
+        }
+
         return redirect()->route('student.query.index', ['query_id' => $bookRequest->id])
             ->with('success', 'Your book request has been submitted!');
     }
@@ -138,10 +222,9 @@ class BookRequestController extends Controller
     public function replyToQuery(Request $request, $id)
     {
         $request->validate([
-            'message' => 'required|string|min:10',
+            'message' => 'required|string',
         ], [
             'message.required' => 'Reply message is required',
-            'message.min' => 'Reply must be at least 10 characters',
         ]);
         $query = BookRequest::find($id);
         if (!$query) {

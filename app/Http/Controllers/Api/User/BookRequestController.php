@@ -8,12 +8,21 @@ use App\Models\BookRequestReply;
 use App\Models\Notification;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class BookRequestController extends Controller
 {
+    private WhatsAppService $whatsAppService;
+
+    public function __construct(WhatsAppService $whatsAppService)
+    {
+        $this->whatsAppService = $whatsAppService;
+    }
+
     private function getUserActiveDistrictId($user)
     {
         // 1. Try to get default address
@@ -43,6 +52,40 @@ class BookRequestController extends Controller
                 $userQuery->where('district_id', $districtId);
             })
             ->get();
+    }
+
+    private function getUserLocationText($user, $districtId): string
+    {
+        $address = $user->addresses()
+            ->with(['country', 'state', 'district'])
+            ->where('is_default', 1)
+            ->first();
+
+        if (!$address) {
+            $address = $user->addresses()
+                ->with(['country', 'state', 'district'])
+                ->latest()
+                ->first();
+        }
+
+        if ($address) {
+            $parts = array_filter([
+                optional($address->country)->name,
+                optional($address->state)->name,
+                optional($address->district)->name,
+            ]);
+
+            $location = implode(', ', $parts);
+            if (!empty($address->pincode)) {
+                $location .= ($location ? ' - ' : '') . $address->pincode;
+            }
+
+            if (!empty($location)) {
+                return $location;
+            }
+        }
+
+        return optional($user->district)->name ?: ('District #' . $districtId);
     }
 
     public function getMatchingVendors(Request $request)
@@ -108,6 +151,47 @@ class BookRequestController extends Controller
             'related_type' => User::class,
             'is_read' => false,
         ]);
+
+        // Send WhatsApp template to opted-in vendors in same district.
+        $vendorsForWhatsapp = Vendor::with(['user', 'vendorbusinessdetails'])
+            ->where('whatsapp_opt_in', true)
+            ->whereNotNull('whatsapp_phone')
+            ->whereHas('user', function ($q) use ($districtId) {
+                $q->where('district_id', $districtId)->where('status', 1);
+            })
+            ->get();
+
+        $template = config('services.whatsapp.template', 'book_request_alert');
+        $locationText = $this->getUserLocationText($user, $districtId);
+        foreach ($vendorsForWhatsapp as $vendor) {
+            $vendorDisplayName = $vendor->vendorbusinessdetails->shop_name
+                ?? $vendor->user->name
+                ?? 'Vendor';
+            $customerMobile = $user->phone ?? $user->mobile ?? '-';
+
+            $params = [
+                $vendorDisplayName,
+                $request->book_title ?: '-',
+                $request->author_name ?: '-',
+                $request->publisher_name ?: '-',
+                $locationText,
+                $user->name ?: 'BookHub User',
+                $customerMobile,
+            ];
+
+            $sent = $this->whatsAppService->sendTemplate(
+                $vendor->whatsapp_phone,
+                $template,
+                $params
+            );
+
+            if (!$sent) {
+                Log::warning('WhatsApp not sent for book request (api).', [
+                    'vendor_id' => $vendor->id,
+                    'book_request_id' => $bookRequest->id,
+                ]);
+            }
+        }
 
         return response()->json([
             'status' => true,
