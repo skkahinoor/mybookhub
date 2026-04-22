@@ -222,10 +222,9 @@ class BookRequestController extends Controller
     public function replyToQuery(Request $request, $id)
     {
         $request->validate([
-            'message' => 'required|string|min:10',
+            'message' => 'required|string',
         ], [
             'message.required' => 'Reply message is required',
-            'message.min' => 'Reply must be at least 10 characters',
         ]);
         $query = BookRequest::find($id);
         if (!$query) {
