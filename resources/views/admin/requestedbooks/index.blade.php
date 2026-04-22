@@ -59,6 +59,7 @@
                                             <th>Message</th>
                                             <th>Requested By User</th>
                                             <th>Target Vendor</th>
+                                            <th>Location</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -73,6 +74,21 @@
                                                 <td>{{ $book->user->name ?? 'User not found' }}</td>
                                                 <td>
                                                     {{ $book->vendor->vendorbusinessdetails->shop_name ?? $book->vendor->user->name ?? 'N/A' }}
+                                                </td>
+                                                <td>
+                                                    @if($book->user_location_name)
+                                                        <span title="{{ $book->user_location_name }}">
+                                                            {{ Str::limit($book->user_location_name, 30) }}
+                                                        </span>
+                                                        @if($book->user_location)
+                                                            <br>
+                                                            <a href="https://www.google.com/maps/search/?api=1&query={{ $book->user_location }}" target="_blank" style="font-size: 11px;">
+                                                                📍 View Map
+                                                            </a>
+                                                        @endif
+                                                    @else
+                                                        <span class="text-muted">N/A</span>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     @php

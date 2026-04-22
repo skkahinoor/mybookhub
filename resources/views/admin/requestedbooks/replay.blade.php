@@ -82,6 +82,24 @@
                                     <div class="info-value">{{ $bookRequest->user->mobile ?? 'N/A' }} ({{ $bookRequest->user->email ?? 'N/A' }})</div>
                                 </div>
                             </div>
+                            @if($bookRequest->user_location_name)
+                            <div class="col-md-6">
+                                <div class="info-box" style="background: #fff9f0; border-color: #ffe4bc;">
+                                    <div class="info-label text-warning">Capture Location</div>
+                                    <div class="info-value">
+                                        {{ $bookRequest->user_location_name }}
+                                        @if($bookRequest->user_location)
+                                            <div class="mt-2">
+                                                <small class="text-muted"><i class="mdi mdi-crosshairs-gps"></i> {{ $bookRequest->user_location }}</small>
+                                                <a href="https://www.google.com/maps/search/?api=1&query={{ $bookRequest->user_location }}" target="_blank" class="ml-2" style="font-size: 11px; font-weight: 700; text-decoration: none;">
+                                                    📍 VIEW MAP
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
                             <div class="col-md-12">
                                 <div class="info-box">
                                     <div class="info-label">Book Title</div>

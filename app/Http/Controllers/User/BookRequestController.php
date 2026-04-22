@@ -16,6 +16,7 @@ use App\Models\Section;
 use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use App\Helpers\RoleHelper;
 
 class BookRequestController extends Controller
@@ -138,6 +139,31 @@ class BookRequestController extends Controller
             return redirect()->back()->with('error', 'No vendors are available for your district right now.');
         }
 
+        $userLocationName = $request->user_location_name;
+        $userLocation = $request->user_location;
+
+        // If location name is missing but coordinates are present, fetch from Google Maps
+        if (empty($userLocationName) && !empty($userLocation)) {
+            $apiKey = config('services.google.maps_key');
+            if ($apiKey) {
+                try {
+                    $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                        'latlng' => $userLocation,
+                        'key' => $apiKey
+                    ]);
+
+                    if ($response->successful()) {
+                        $data = $response->json();
+                        if (!empty($data['results'][0]['formatted_address'])) {
+                            $userLocationName = $data['results'][0]['formatted_address'];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Google Maps Reverse Geocoding failed: ' . $e->getMessage());
+                }
+            }
+        }
+
         $bookRequest = BookRequest::create([
             'book_title'        => $request->book_title,
             'author_name'       => $request->author_name,
@@ -146,8 +172,8 @@ class BookRequestController extends Controller
             'requested_by_user' => Auth::id(),
             'district_id'       => $districtId,
             'vendor_id'         => null,
-            'user_location' => $request->user_location,
-            'user_location_name' => $request->user_location_name,
+            'user_location' => $userLocation,
+            'user_location_name' => $userLocationName,
         ]);
 
         Notification::create([
@@ -169,7 +195,7 @@ class BookRequestController extends Controller
             ->get();
 
         $template = config('services.whatsapp.template', 'book_request_alert');
-        $locationText = $this->getUserLocationText($user, $districtId);
+        $locationText = $request->user_location_name ?: $this->getUserLocationText($user, $districtId);
         foreach ($vendorsForWhatsapp as $vendor) {
             $vendorDisplayName = $vendor->vendorbusinessdetails->shop_name
                 ?? $vendor->user->name

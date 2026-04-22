@@ -502,6 +502,7 @@
     (function () {
         const locEl = document.getElementById('user_location');
         const locNameEl = document.getElementById('user_location_name');
+        const statusEl = document.getElementById('location-status-search');
         if (!locEl || !locNameEl) return;
 
         function setLocation(lat, lng) {
@@ -510,9 +511,17 @@
 
         function setLocationName(name) {
             if (!locNameEl.value) locNameEl.value = name || '';
+            if (statusEl) {
+                statusEl.innerHTML = '<i class="fas fa-check-circle text-success"></i> Location detected';
+                statusEl.classList.remove('text-muted');
+                statusEl.classList.add('text-success');
+            }
         }
 
-        if (!('geolocation' in navigator)) return;
+        if (!('geolocation' in navigator)) {
+            if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle text-warning"></i> Geolocation not supported';
+            return;
+        }
 
         navigator.geolocation.getCurrentPosition(async function (pos) {
             const lat = pos.coords.latitude;
@@ -522,14 +531,21 @@
             try {
                 const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`;
                 const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                if (!res.ok) return;
+                if (!res.ok) throw new Error('Fetch failed');
                 const data = await res.json();
-                if (data && data.display_name) setLocationName(data.display_name);
+                if (data && data.display_name) {
+                    setLocationName(data.display_name);
+                } else {
+                    if (statusEl) statusEl.innerHTML = '<i class="fas fa-check-circle text-success"></i> Coordinates captured';
+                }
             } catch (e) {
-                // ignore
+                if (statusEl) statusEl.innerHTML = '<i class="fas fa-check-circle text-success"></i> Coordinates captured';
             }
-        }, function () {
-            // ignore
+        }, function (err) {
+            if (statusEl) {
+                statusEl.innerHTML = '<i class="fas fa-times-circle text-danger"></i> Location access denied';
+                statusEl.classList.replace('text-muted', 'text-danger');
+            }
         }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
     })();
 </script>

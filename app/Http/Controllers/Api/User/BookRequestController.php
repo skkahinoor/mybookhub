@@ -12,6 +12,7 @@ use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 
 class BookRequestController extends Controller
@@ -131,6 +132,31 @@ class BookRequestController extends Controller
             ], 200);
         }
 
+        $userLocationName = $request->user_location_name;
+        $userLocation = $request->user_location;
+
+        // If location name is missing but coordinates are present, fetch from Google Maps
+        if (empty($userLocationName) && !empty($userLocation)) {
+            $apiKey = config('services.google.maps_key');
+            if ($apiKey) {
+                try {
+                    $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                        'latlng' => $userLocation,
+                        'key' => $apiKey
+                    ]);
+
+                    if ($response->successful()) {
+                        $data = $response->json();
+                        if (!empty($data['results'][0]['formatted_address'])) {
+                            $userLocationName = $data['results'][0]['formatted_address'];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Google Maps Reverse Geocoding failed (API): ' . $e->getMessage());
+                }
+            }
+        }
+
         $bookRequest = BookRequest::create([
             'book_title' => $request->book_title,
             'author_name' => $request->author_name,
@@ -139,8 +165,8 @@ class BookRequestController extends Controller
             'requested_by_user' => Auth::id(),
             'district_id' => $districtId,
             'vendor_id' => null, // Broadcast to all vendors in district
-            'user_location' => $request->user_location,
-            'user_location_name' => $request->user_location_name,
+            'user_location' => $userLocation,
+            'user_location_name' => $userLocationName,
         ]);
 
         Notification::create([
