@@ -86,7 +86,7 @@
                                                                 $finalPrice = $request->product->product_price;
                                                             }
                                                         }
-                                                    @endphp
+                                                    @endphp                                                   
                                                     &#8377;{{ $finalPrice ?? 'N/A' }}
                                                 </td>
                                                 <td class="text-muted">
