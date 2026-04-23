@@ -91,7 +91,7 @@
                                     <input type="text" class="form-control" id="publisher_name" placeholder="Enter Publisher Name" name="publisher_name" @if (!empty($publisher['name'])) value="{{ $publisher['name'] }}" @else value="{{ old('publisher_name') }}" @endif>
                                 </div>
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                <a href="{{ url('admin/publishers') }}" class="btn btn-light">Cancel</a>
+                                <a href="{{ url('admin/publisher') }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
                     </div>
