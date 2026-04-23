@@ -144,6 +144,8 @@ class SellBookController extends Controller
                 'old_book_condition_id' => 'required|exists:old_book_conditions,id',
                 'language_id' => 'required|exists:languages,id',
                 'video_upload' => 'nullable|mimes:mp4,ogv,webm,avi,mov|max:51200',
+                'user_location' => 'nullable|string|max:100',
+                'user_location_name' => 'nullable|string|max:255',
             ]);
 
             $data = $request->all();
@@ -264,6 +266,33 @@ class SellBookController extends Controller
                 $attribute->sku = 'BH-P'.$product->id.'-U'.$user->id;
             }
 
+            $userLocationName = $request->user_location_name;
+            $userLocation = $request->user_location;
+
+            // If location name is missing but coordinates are present, fetch from Google Maps
+            if (empty($userLocationName) && !empty($userLocation)) {
+                $apiKey = config('services.google.maps_key');
+                if ($apiKey) {
+                    try {
+                        $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                            'latlng' => $userLocation,
+                            'key' => $apiKey
+                        ]);
+
+                        if ($response->successful()) {
+                            $data_map = $response->json();
+                            if (!empty($data_map['results'][0]['formatted_address'])) {
+                                $userLocationName = $data_map['results'][0]['formatted_address'];
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Google Maps Reverse Geocoding failed: ' . $e->getMessage());
+                    }
+                }
+            }
+
+            $attribute->user_location = $userLocation;
+            $attribute->user_location_name = $userLocationName;
             $attribute->old_book_condition_id = $data['old_book_condition_id'] ?? null;
             $attribute->stock = 1;
             $attribute->product_discount = 0;

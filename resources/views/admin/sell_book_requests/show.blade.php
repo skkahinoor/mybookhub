@@ -130,6 +130,26 @@
                                         </tr>
                                     </table>
 
+                                    @if($requestData->user_location_name)
+                                    <div class="mt-4" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 15px;">
+                                        <div class="text-uppercase font-weight-bold mb-2" style="font-size: 11px; color: #92400e; letter-spacing: 0.5px;">
+                                            Capture Location
+                                        </div>
+                                        <div style="font-size: 14px; color: #1f2937; line-height: 1.5; margin-bottom: 8px;">
+                                            {{ $requestData->user_location_name }}
+                                        </div>
+                                        <div class="d-flex align-items-center" style="font-size: 12px; color: #6b7280;">
+                                            <i class="mdi mdi-target mr-1" style="font-size: 16px;"></i>
+                                            <span class="mr-3">{{ $requestData->user_location }}</span>
+                                            
+                                            <a href="https://www.google.com/maps?q={{ $requestData->user_location }}" target="_blank" 
+                                               class="text-primary font-weight-bold text-uppercase d-flex align-items-center" style="text-decoration: none; font-size: 11px;">
+                                                <i class="mdi mdi-map-marker text-danger mr-1" style="font-size: 16px;"></i> View Map
+                                            </a>
+                                        </div>
+                                    </div>
+                                    @endif
+
                                     <div class="mt-4">
                                         @if($requestData->admin_approved == 0)
                                             <form action="{{ route('admin.sell-book-requests.approve', $requestData->id) }}" method="POST" style="display:inline;">

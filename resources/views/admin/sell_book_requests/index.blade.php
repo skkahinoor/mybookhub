@@ -29,6 +29,7 @@
                                             <th>ISBN</th>
                                             <th>Book Condition</th>
                                             <th>Selling Price</th>
+                                            <th>Location</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -87,6 +88,21 @@
                                                         }
                                                     @endphp
                                                     &#8377;{{ $finalPrice ?? 'N/A' }}
+                                                </td>
+                                                <td class="text-muted">
+                                                    @if($request->user_location_name)
+                                                        <div style="font-size: 13px; line-height: 1.2; margin-bottom: 4px;">
+                                                            {{ Str::limit($request->user_location_name, 40) }}
+                                                        </div>
+                                                        @if($request->user_location)
+                                                            <a href="https://www.google.com/maps?q={{ $request->user_location }}" target="_blank" 
+                                                               class="text-primary font-weight-bold" style="font-size: 12px; text-decoration: none;">
+                                                                <i class="mdi mdi-map-marker text-danger"></i> View Map
+                                                            </a>
+                                                        @endif
+                                                    @else
+                                                        <span class="text-muted italic">N/A</span>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     @if($request->admin_approved == 1)

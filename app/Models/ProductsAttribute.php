@@ -45,7 +45,9 @@ class ProductsAttribute extends Model
         'show_contact',
         'contact_details_paid',
         'platform_charge',
-        'is_sold'
+        'is_sold',
+        'user_location',
+        'user_location_name'
     ];
 
     /**

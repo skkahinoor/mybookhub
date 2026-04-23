@@ -284,6 +284,17 @@
                                     </div>
                                 </div>
 
+                                <!-- Hidden Location Fields -->
+                                <input type="hidden" name="user_location" id="user_location" value="{{ old('user_location', $product->firstAttribute->user_location ?? '') }}">
+                                <input type="hidden" name="user_location_name" id="user_location_name" value="{{ old('user_location_name', $product->firstAttribute->user_location_name ?? '') }}">
+
+                                <div class="form-group mb-4">
+                                    <div id="location-status" class="text-muted d-flex align-items-center" style="font-size: 14px; font-style: italic; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px dashed #cbd5e1;">
+                                        <i class="mdi mdi-map-marker-radius mr-2" style="font-size: 20px; color: #6366f1;"></i> 
+                                        <span>Detecting your location for better buyer matching...</span>
+                                    </div>
+                                </div>
+
                                 <!-- Section 2: Categorization -->
                                 <div class="form-section-title">
                                     <i class="mdi mdi-layers-outline"></i> Categorization
@@ -1095,3 +1106,57 @@
 <script src="{{ asset('user/js/template.js') }}"></script>
 <script src="{{ asset('user/js/settings.js') }}"></script>
 <!-- endinject -->
+
+<script>
+    (function () {
+        const locEl = document.getElementById('user_location');
+        const locNameEl = document.getElementById('user_location_name');
+        const statusEl = document.getElementById('location-status');
+        if (!locEl || !locNameEl) return;
+
+        function setLocation(lat, lng) {
+            locEl.value = `${lat},${lng}`;
+        }
+
+        function setLocationName(name) {
+            if (!locNameEl.value) locNameEl.value = name || '';
+            if (statusEl) {
+                statusEl.innerHTML = '<i class="mdi mdi-check-circle text-success mr-2" style="font-size: 20px;"></i> <span class="text-success font-weight-bold">Location detected successfully</span>';
+                statusEl.style.background = '#f0fdf4';
+                statusEl.style.borderColor = '#bbf7d0';
+            }
+        }
+
+        if (!('geolocation' in navigator)) {
+            if (statusEl) statusEl.innerHTML = '<i class="mdi mdi-alert-circle text-warning mr-2"></i> Geolocation not supported';
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(async function (pos) {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            setLocation(lat, lng);
+
+            try {
+                const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`;
+                const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (!res.ok) throw new Error('Fetch failed');
+                const data = await res.json();
+                if (data && data.display_name) {
+                    setLocationName(data.display_name);
+                } else {
+                    if (statusEl) statusEl.innerHTML = '<i class="mdi mdi-check-circle text-success mr-2"></i> Coordinates captured';
+                }
+            } catch (e) {
+                if (statusEl) statusEl.innerHTML = '<i class="mdi mdi-check-circle text-success mr-2"></i> Coordinates captured';
+            }
+        }, function (err) {
+            if (statusEl) {
+                statusEl.innerHTML = '<i class="mdi mdi-close-circle text-danger mr-2"></i> Location access denied. Please enable location for better reach.';
+                statusEl.style.background = '#fef2f2';
+                statusEl.style.borderColor = '#fecaca';
+                statusEl.classList.replace('text-muted', 'text-danger');
+            }
+        }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 });
+    })();
+</script>
