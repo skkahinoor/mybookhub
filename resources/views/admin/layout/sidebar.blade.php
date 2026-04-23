@@ -6,12 +6,15 @@
         font-family: 'Nunito', sans-serif;
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.03);
     }
+
     .sidebar .nav {
         padding-top: 15px;
     }
+
     .sidebar .nav .nav-item {
         margin-bottom: 5px;
     }
+
     .sidebar .nav .nav-item .nav-link {
         color: #5a6a85 !important;
         font-weight: 600;
@@ -20,23 +23,26 @@
         padding: 12px 15px !important;
         transition: all 0.3s ease;
     }
+
     .sidebar .nav .nav-item .nav-link:hover {
         background: #90b7f5 !important;
         color: #435ebe !important;
     }
+
     .sidebar .menu-icon {
         color: #798bff !important;
         font-size: 1.25rem !important;
         margin-right: 15px !important;
     }
-    
+
     /* Override old dark blue active main menus */
-    .sidebar .nav .nav-item > a[style*="052CA3" i] {
+    .sidebar .nav .nav-item>a[style*="052CA3" i] {
         background: #435ebe !important;
         color: #ffffff !important;
         box-shadow: 0 3px 8px rgba(67, 94, 190, 0.25) !important;
     }
-    .sidebar .nav .nav-item > a[style*="052CA3" i] .menu-icon {
+
+    .sidebar .nav .nav-item>a[style*="052CA3" i] .menu-icon {
         color: #ffffff !important;
     }
 
@@ -55,19 +61,20 @@
         font-weight: 600 !important;
         border-radius: 8px !important;
     }
-    
+
     /* Override old inactive sub-menus */
-    .sidebar .nav.sub-menu .nav-item > a[style*="fff" i] {
+    .sidebar .nav.sub-menu .nav-item>a[style*="fff" i] {
         background: transparent !important;
         color: #4b5563 !important;
     }
-    .sidebar .nav.sub-menu .nav-item > a[style*="fff" i]:hover {
+
+    .sidebar .nav.sub-menu .nav-item>a[style*="fff" i]:hover {
         background: #f2f7ff !important;
         color: #435ebe !important;
     }
-    
+
     /* Override old active sub-menus */
-    .sidebar .nav.sub-menu .nav-item > a[style*="052CA3" i] {
+    .sidebar .nav.sub-menu .nav-item>a[style*="052CA3" i] {
         background: #f2f7ff !important;
         color: #435ebe !important;
         box-shadow: none !important;
@@ -235,7 +242,8 @@
                     <i class="menu-arrow"></i>
                 </a>
                 <div class="collapse" id="ui-settings">
-                    <ul class="nav flex-column sub-menu" style="background: #fff !important; color: #052CA3 !important">
+                    <ul class="nav flex-column sub-menu"
+                        style="background: #fff !important; color: #052CA3 !important">
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'update_admin_password') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('admin/update-admin-password') }}">Update Admin
@@ -396,19 +404,23 @@
                         @endcan
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'old_book_conditions') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                class="nav-link" href="{{ route('admin.old_book_conditions.index') }}">Old Book Conditions</a></li>
-                         <li class="nav-item"> <a
-                                 @if (Session::get('page') == 'sellBookRequests') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                 class="nav-link" href="{{ route('admin.sell-book-requests.index') }}">Sell Old Book Requests</a></li>
+                                class="nav-link" href="{{ route('admin.old_book_conditions.index') }}">Old Book
+                                Conditions</a></li>
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'sellBookRequests') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.sell-book-requests.index') }}">Sell Old Book
+                                Requests</a></li>
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'old_book_commissions_crud') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                class="nav-link" href="{{ route('admin.old_book_commissions.index') }}">Old Book Commission</a></li>
+                                class="nav-link" href="{{ route('admin.old_book_commissions.index') }}">Old Book
+                                Commission</a></li>
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'movs') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('admin/movs') }}">MOV Cashback</a></li>
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'delivery_settings') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                class="nav-link" href="{{ url('admin/delivery-settings') }}">Delivery Settings</a></li>
+                                class="nav-link" href="{{ url('admin/delivery-settings') }}">Delivery Settings</a>
+                        </li>
                     </ul>
                 </div>
             </li>
@@ -489,7 +501,8 @@
                         @endcan
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'push_notifications') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                class="nav-link" href="{{ route('admin.push-notifications.create') }}">Push Notifications</a></li>
+                                class="nav-link" href="{{ route('admin.push-notifications.create') }}">Push
+                                Notifications</a></li>
                     </ul>
                 </div>
             </li>
@@ -585,7 +598,8 @@
                     <i class="menu-arrow"></i>
                 </a>
                 <div class="collapse" id="ui-dynamic-modals">
-                    <ul class="nav flex-column sub-menu" style="background: #fff !important; color: #052CA3 !important">
+                    <ul class="nav flex-column sub-menu"
+                        style="background: #fff !important; color: #052CA3 !important">
                         <li class="nav-item">
                             <a @if (Session::get('page') == 'dynamic_modals') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('admin/dynamic-modals') }}">Dynamic Modals</a>
