@@ -42,7 +42,8 @@ class SellBookController extends Controller
 
         $products = $userAttributes->map(function ($attribute) use ($basePath) {
             $product = $attribute->product;
-            if (!$product) return null;
+            if (!$product)
+                return null;
 
             return [
                 'id' => $attribute->id,
@@ -84,6 +85,8 @@ class SellBookController extends Controller
                     'name' => $product->subcategory->subcategory_name,
                 ] : null,
                 'authors' => $product->authors->map(fn($a) => ['id' => $a->id, 'name' => $a->name]),
+                'user_location' => $attribute->user_location,
+                'user_location_name' => $attribute->user_location_name,
                 'created_at' => $product->created_at,
             ];
         });
@@ -213,6 +216,8 @@ class SellBookController extends Controller
                         'name' => $attribute->condition->name,
                         'percentage' => $attribute->condition->percentage,
                     ] : null,
+                    'user_location' => $attribute->user_location,
+                    'user_location_name' => $attribute->user_location_name,
                     'price_details' => Product::getDiscountPriceDetailsByAttribute($attribute->id),
                 ],
             ],
@@ -235,6 +240,8 @@ class SellBookController extends Controller
                 'language_id' => 'required|exists:languages,id',
                 'user_old_book_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
                 'video_upload' => 'nullable|mimes:mp4,mov,avi,wmv|max:51200',
+                'user_location' => 'nullable|string',
+                'user_location_name' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -348,7 +355,7 @@ class SellBookController extends Controller
                 $attribute->user_id = $user->id;
                 $attribute->admin_type = 'user';
                 $attribute->is_sold = 0;
-                
+
                 // Ensure unique SKU by appending a sequence number or listing ID
                 $count = ProductsAttribute::where('product_id', $product->id)->where('user_id', $user->id)->count();
                 $attribute->sku = 'BH-P' . $product->id . '-U' . $user->id . '-L' . ($count + 1);
@@ -424,6 +431,9 @@ class SellBookController extends Controller
                 $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
                 $attribute->product_discount = 100;
             }
+            
+            $attribute->user_location = $data['user_location'] ?? null;
+            $attribute->user_location_name = $data['user_location_name'] ?? null;
 
             $attribute->save();
 
@@ -469,7 +479,7 @@ class SellBookController extends Controller
 
             // Attempt to find specific listing by ID, fallback to active product listing
             $attribute = ProductsAttribute::where('id', $id)->where('user_id', $user->id)->first();
-            
+
             if (!$attribute) {
                 $attribute = ProductsAttribute::where('product_id', $id)
                     ->where('user_id', $user->id)
@@ -497,6 +507,8 @@ class SellBookController extends Controller
                 'language_id' => 'required|exists:languages,id',
                 'user_old_book_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
                 'video_upload' => 'nullable|mimes:mp4,mov,avi,wmv|max:5120',
+                'user_location' => 'nullable|string',
+                'user_location_name' => 'nullable|string',
             ]);
 
             if ($validator->fails()) {
@@ -630,6 +642,9 @@ class SellBookController extends Controller
                 $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
                 $attribute->product_discount = 100;
             }
+
+            $attribute->user_location = $data['user_location'] ?? $attribute->user_location;
+            $attribute->user_location_name = $data['user_location_name'] ?? $attribute->user_location_name;
 
             $attribute->save();
 

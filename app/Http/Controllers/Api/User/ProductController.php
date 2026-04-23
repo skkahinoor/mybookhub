@@ -155,16 +155,17 @@ class ProductController extends Controller
             $query->selectRaw("(
                 SELECT MIN(6371 * acos(
                     cos(radians(?)) *
-                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6)))) *
-                    cos(radians(CAST(SUBSTRING_INDEX(v.location, ',', -1) AS DECIMAL(10,6))) - radians(?)) +
+                    cos(radians(CAST(SUBSTRING_INDEX(COALESCE(v.location, pa.user_location, '0,0'), ',', 1) AS DECIMAL(10,6)))) *
+                    cos(radians(CAST(SUBSTRING_INDEX(COALESCE(v.location, pa.user_location, '0,0'), ',', -1) AS DECIMAL(10,6))) - radians(?)) +
                     sin(radians(?)) *
-                    sin(radians(CAST(SUBSTRING_INDEX(v.location, ',', 1) AS DECIMAL(10,6))))
+                    sin(radians(CAST(SUBSTRING_INDEX(COALESCE(v.location, pa.user_location, '0,0'), ',', 1) AS DECIMAL(10,6))))
                 ))
                 FROM products_attributes pa
                 LEFT JOIN vendors v ON pa.vendor_id = v.id
                 WHERE pa.product_id = products.id
                 AND pa.status = 1
                 AND pa.stock >= 0
+                AND (v.location IS NOT NULL OR pa.user_location IS NOT NULL)
             ) AS distance", [$lat, $lng, $lat]);
 
             if ($location_limit && $location_limit < 1000) {
@@ -542,8 +543,24 @@ class ProductController extends Controller
                 ->keyBy('product_attribute_id');
         }
 
-        $userOffers = $userAttributes->map(function ($attr) use ($user, $userCartItems) {
+        $userOffers = $userAttributes->map(function ($attr) use ($user, $userCartItems, $lat, $lng) {
             $priceDetails = Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
+
+            $distance = null;
+            if ($lat && $lng && $attr->user_location) {
+                $userLoc = explode(',', $attr->user_location);
+                if (count($userLoc) == 2) {
+                    $uLat = (float) trim($userLoc[0]);
+                    $uLng = (float) trim($userLoc[1]);
+
+                    $theta = $lng - $uLng;
+                    $dist = sin(deg2rad($lat)) * sin(deg2rad($uLat)) + cos(deg2rad($lat)) * cos(deg2rad($uLat)) * cos(deg2rad($theta));
+                    $dist = acos($dist);
+                    $dist = rad2deg($dist);
+                    $miles = $dist * 60 * 1.1515;
+                    $distance = round($miles * 1.609344, 2);
+                }
+            }
 
             // Use pre-loaded cart data
             $cartItem = $userCartItems->get($attr->id);
@@ -573,7 +590,11 @@ class ProductController extends Controller
                     'mobile' => $attr->user->mobile ?? null,
                     'image' => $attr->user->image ?? null,
                     'address' => $attr->user->address ?? null,
+                    'user_location_name' => $attr->user_location_name,
+                    'distance' => $distance,
                 ],
+                'distance' => $distance,
+                'user_location_name' => $attr->user_location_name,
                 'user_old_book_video' => $attr->video_upload ? url('front/videos/product_videos/' . $attr->video_upload) : null,
                 'cart_status' => [
                     'in_cart' => $inCart,
@@ -646,18 +667,21 @@ class ProductController extends Controller
         $lng = $request->lng;
         $distance = null;
 
-        if ($lat && $lng && $attribute->vendor && $attribute->vendor->location) {
-            $vendorLoc = explode(',', $attribute->vendor->location);
-            if (count($vendorLoc) == 2) {
-                $vLat = (float) trim($vendorLoc[0]);
-                $vLng = (float) trim($vendorLoc[1]);
+        if ($lat && $lng) {
+            $location = $attribute->vendor->location ?? $attribute->user_location;
+            if ($location) {
+                $loc = explode(',', $location);
+                if (count($loc) == 2) {
+                    $tLat = (float) trim($loc[0]);
+                    $tLng = (float) trim($loc[1]);
 
-                $theta = $lng - $vLng;
-                $dist = sin(deg2rad($lat)) * sin(deg2rad($vLat)) + cos(deg2rad($lat)) * cos(deg2rad($vLat)) * cos(deg2rad($theta));
-                $dist = acos($dist);
-                $dist = rad2deg($dist);
-                $miles = $dist * 60 * 1.1515;
-                $distance = round($miles * 1.609344, 2);
+                    $theta = $lng - $tLng;
+                    $dist = sin(deg2rad($lat)) * sin(deg2rad($tLat)) + cos(deg2rad($lat)) * cos(deg2rad($tLat)) * cos(deg2rad($theta));
+                    $dist = acos($dist);
+                    $dist = rad2deg($dist);
+                    $miles = $dist * 60 * 1.1515;
+                    $distance = round($miles * 1.609344, 2);
+                }
             }
         }
 
@@ -805,6 +829,8 @@ class ProductController extends Controller
                         'address' => $attribute->user->address ?? null,
                         'created_at' => $attribute->user->created_at ?? null,
                     ],
+                    'distance' => $distance,
+                    'user_location_name' => $attribute->user_location_name,
                     'user_old_book_video' => $attribute->video_upload ? url('front/videos/product_videos/' . $attribute->video_upload) : null,
                 ] : null,
 

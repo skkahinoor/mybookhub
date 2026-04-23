@@ -573,7 +573,9 @@
                                                             'status' => $request->admin_approved == 1 ? 'Approved' : 'Pending',
                                                             'img' => $bookImg,
                                                             'vid' => $bookVid,
-                                                            'isApproved' => $request->admin_approved == 1
+                                                            'isApproved' => $request->admin_approved == 1,
+                                                            'userLocation' => $request->user_location,
+                                                            'userLocationName' => $request->user_location_name
                                                         ];
                                                     @endphp
                                                     <button type="button" class="btn btn-sm shadow-sm" style="font-weight: 800; color: white; border-radius: 8px; padding: 6px 14px; background: linear-gradient(135deg, #435ebe, #5a75ce); border: none; font-size: 0.8rem; letter-spacing: 0.3px; transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.95)';" onmouseup="this.style.transform='scale(1)';" onclick='openSellRequestModal(@json($reqData))'>
@@ -637,6 +639,25 @@
                                         <tr><th class="px-0 py-1" style="color: #4b5563;">Phone:</th><td class="px-0 py-1" style="white-space: normal;" id="m-sellerPhone"></td></tr>
                                         <tr><th class="px-0 py-1" style="color: #4b5563;">Requested On:</th><td class="px-0 py-1" style="white-space: normal;" id="m-requestedOn"></td></tr>
                                     </table>
+                                </div>
+                            </div>
+
+                            <div id="m-location-box" class="mb-3" style="display: none;">
+                                <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 15px;">
+                                    <div class="text-uppercase font-weight-bold mb-2" style="font-size: 10px; color: #92400e; letter-spacing: 0.5px;">
+                                        Capture Location
+                                    </div>
+                                    <div id="m-location-name" style="font-size: 13px; color: #1f2937; line-height: 1.4; margin-bottom: 6px; font-weight: 600;">
+                                    </div>
+                                    <div class="d-flex align-items-center" style="font-size: 11px; color: #6b7280;">
+                                        <i class="mdi mdi-target mr-1" style="font-size: 14px;"></i>
+                                        <span id="m-location-coords" class="mr-3"></span>
+                                        
+                                        <a id="m-location-map" href="" target="_blank" 
+                                           class="text-primary font-weight-bold text-uppercase d-flex align-items-center" style="text-decoration: none; font-size: 10px;">
+                                            <i class="mdi mdi-map-marker text-danger mr-1" style="font-size: 14px;"></i> View Map
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
 
@@ -843,6 +864,17 @@
                 document.getElementById('m-sellerEmail').innerText = data.sellerEmail;
                 document.getElementById('m-sellerPhone').innerText = data.sellerPhone;
                 document.getElementById('m-requestedOn').innerText = data.requestedOn;
+                
+                // Location
+                var locBox = document.getElementById('m-location-box');
+                if (data.userLocationName) {
+                    locBox.style.display = 'block';
+                    document.getElementById('m-location-name').innerText = data.userLocationName;
+                    document.getElementById('m-location-coords').innerText = data.userLocation || '';
+                    document.getElementById('m-location-map').href = 'https://www.google.com/maps?q=' + encodeURIComponent(data.userLocation || '');
+                } else {
+                    locBox.style.display = 'none';
+                }
 
                 // Image
                 var img = document.getElementById('m-img');
