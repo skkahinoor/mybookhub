@@ -194,7 +194,7 @@ class BookRequestController extends Controller
             })
             ->get();
 
-        $template = config('services.whatsapp.template', 'book_request_alert');
+        $template = config('services.whatsapp.template', 'book_request_alert_v2');
         $locationText = $request->user_location_name ?: $this->getUserLocationText($user, $districtId);
         foreach ($vendorsForWhatsapp as $vendor) {
             $vendorDisplayName = $vendor->vendorbusinessdetails->shop_name

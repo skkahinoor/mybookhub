@@ -1664,7 +1664,7 @@ class ProductsController extends Controller
                 // WhatsApp: send order confirmation to user (per item-order)
                 try {
                     $user = Auth::user();
-                    $userTemplate = config('services.whatsapp.user_order_template', 'user_order_confirmation_v1');
+                    $userTemplate = config('services.whatsapp.user_order_template', 'user_order_confirmation_v2');
                     $deliveryAreaForUser = implode(', ', array_filter([
                         $order->country ?? null,
                         $order->state ?? null,
@@ -1728,7 +1728,7 @@ class ProductsController extends Controller
                             $deliveryArea = '-';
                         }
 
-                        $orderTemplate = config('services.whatsapp.order_template', 'vendor_new_order_alert_v1');
+                        $orderTemplate = config('services.whatsapp.order_template', 'vendor_new_order_alert_v2');
                         $orderParams = [
                             $vendorDisplayName,
                             (string) $order->id,
