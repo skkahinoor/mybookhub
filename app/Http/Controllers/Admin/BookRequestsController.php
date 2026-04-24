@@ -12,8 +12,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
+use App\Services\FirebaseService;
+
 class BookRequestsController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
     public function index()
     {
         $headerLogo = HeaderLogo::first();
@@ -126,6 +134,7 @@ class BookRequestsController extends Controller
 
                 // Notify the student who raised the request
                 if (!empty($bookRequest->requested_by_user)) {
+                    // Save to database (shows in in-app notification page)
                     Notification::create([
                         'type' => 'book_request_reply',
                         'title' => 'Book request update',
@@ -134,6 +143,31 @@ class BookRequestsController extends Controller
                         'related_type' => User::class,
                         'is_read' => false,
                     ]);
+
+                    // Send FCM push notification to the user's device
+                    try {
+                        $shopName = 'BookHub';
+                        if (Auth::guard('admin')->user()->type === 'vendor') {
+                            $vendor = \App\Models\Vendor::with('vendorbusinessdetails')->find(Auth::guard('admin')->user()->vendor_id);
+                            $shopName = $vendor->vendorbusinessdetails->shop_name ?? Auth::guard('admin')->user()->name;
+                        }
+
+                        $pushTitle = 'New reply for your book request';
+                        $pushBody = "{$shopName} replied regarding '" . ($bookRequest->book_title ?? 'your request') . "': " . \Str::limit($data['admin_reply'], 60);
+
+                        $this->firebaseService->sendToUsers(
+                            [(int) $bookRequest->requested_by_user],
+                            $pushTitle,
+                            $pushBody,
+                            [
+                                'type' => 'book_request_reply',
+                                'request_id' => (string) $bookRequest->id,
+                            ],
+                            true // Skip DB notification — already created above
+                        );
+                    } catch (\Exception $e) {
+                        \Log::error('FCM push failed for book request reply: ' . $e->getMessage());
+                    }
                 }
             }
 
