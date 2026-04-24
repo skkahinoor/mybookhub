@@ -86,7 +86,7 @@
                                                                 $finalPrice = $request->product->product_price;
                                                             }
                                                         }
-                                                    @endphp                                                   
+                                                    @endphp
                                                     &#8377;{{ $finalPrice ?? 'N/A' }}
                                                 </td>
                                                 <td class="text-muted">
@@ -95,7 +95,7 @@
                                                             {{ Str::limit($request->user_location_name, 40) }}
                                                         </div>
                                                         @if($request->user_location)
-                                                            <a href="https://www.google.com/maps?q={{ $request->user_location }}" target="_blank" 
+                                                            <a href="https://www.google.com/maps?q={{ $request->user_location }}" target="_blank"
                                                                class="text-primary font-weight-bold" style="font-size: 12px; text-decoration: none;">
                                                                 <i class="mdi mdi-map-marker text-danger"></i> View Map
                                                             </a>
@@ -112,7 +112,7 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                     <a href="{{ route('admin.sell-book-requests.show', $request->id) }}" 
+                                                     <a href="{{ route('admin.sell-book-requests.show', $request->id) }}"
                                                       class="btn btn-sm btn-outline-primary">
                                                             View
                                                       </a>
@@ -133,7 +133,7 @@
                                                 </td>
                                             </tr>
                                         @endforeach
-                                    </tbody>
+                                    </tbody> 
                                 </table>
                             </div>
                         </div>

@@ -174,9 +174,17 @@ class RazorpayController extends Controller
 
                 // Reduce Stock
                 foreach ($order->orders_products as $item) {
-                    $currentStock = ProductsAttribute::where('id', $item->product_attribute_id)->value('stock');
-                    ProductsAttribute::where('id', $item->product_attribute_id)
-                        ->update(['stock' => max(0, $currentStock - $item->product_qty)]);
+                    $attribute = ProductsAttribute::find($item->product_attribute_id);
+                    if ($attribute) {
+                        $attribute->decrement('stock', $item->product_qty);
+                        
+                        // If it's an old book listing by a student, mark it as sold out
+                        if ($attribute->user_id > 0) {
+                            $attribute->is_sold = 1;
+                            $attribute->status = 0;
+                            $attribute->save();
+                        }
+                    }
                 }
             }
 

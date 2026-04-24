@@ -78,6 +78,7 @@ Route::prefix('/student')->namespace('App\Http\Controllers\User')->group(functio
         Route::post('/sell-book/razorpay/create-order', [SellBookController::class, 'createRazorpayOrder'])->name('student.sell-book.razorpay.create-order');
         Route::post('/sell-book/razorpay/verify-payment', [SellBookController::class, 'verifyPlatformChargePayment'])->name('student.sell-book.razorpay.verify-payment');
         Route::post('/sell-book/mark-as-sold', [SellBookController::class, 'markAsSold'])->name('student.sell-book.mark-as-sold');
+        Route::get('/sell-book/{id}/purchaser-details', [SellBookController::class, 'purchaserDetails'])->name('student.sell-book.purchaser-details');
 
         Route::post('/sell-book/{id}', [SellBookController::class, 'store'])->name('student.sell-book.update');
     });

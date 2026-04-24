@@ -18,6 +18,8 @@ use App\Models\Publisher;
 use App\Models\Section;
 use App\Models\Subcategory;
 use App\Models\Subject;
+use App\Models\Order;
+use App\Models\OrdersProduct;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -759,6 +761,38 @@ class SellBookController extends Controller
 
             return response()->json(['status' => true, 'message' => 'Book marked as sold!']);
         }
+    }
+
+    /**
+     * Show purchaser details for a sold book
+     */
+    public function purchaserDetails($id)
+    {
+        $logos = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
+        
+        // Find the attribute (listing) for this user
+        $attribute = ProductsAttribute::with(['product', 'product.category'])
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
+
+        // Find the order product associated with this attribute
+        // We look for orders where this attribute was purchased
+        $orderProduct = OrdersProduct::with(['order', 'order.user'])
+            ->where('product_attribute_id', $attribute->id)
+            ->whereHas('order', function($q) {
+                $q->whereIn('order_status', ['Paid', 'Shipped', 'Delivered', 'New']); // Valid orders
+            })
+            ->latest()
+            ->first();
+
+        if (!$orderProduct) {
+            return redirect()->back()->with('error_message', 'No purchase record found for this book.');
+        }
+
+        $order = $orderProduct->order;
+
+        return view('user.sell-book.purchaser_details', compact('attribute', 'order', 'logos', 'headerLogo'));
     }
 }
 

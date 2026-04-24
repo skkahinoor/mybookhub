@@ -124,7 +124,9 @@
                                                                 <span class="text-muted" title="Manual mark as sold is for Sell Faster users only">Standard Sale</span>
                                                             @endif
                                                         @elseif($attribute->is_sold == 1)
-                                                            <span class="badge badge-secondary p-1">Completed</span>
+                                                            <a href="{{ route('student.sell-book.purchaser-details', $attribute->id) }}" class="btn btn-info btn-xs">
+                                                                <i class="mdi mdi-eye"></i> View Details
+                                                            </a>
                                                         @else
                                                             <span class="text-muted">Wait for Approval</span>
                                                         @endif

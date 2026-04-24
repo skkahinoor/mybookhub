@@ -1751,6 +1751,13 @@ class ProductsController extends Controller
                 // Reduce stock for COD / Pickup orders immediately
                 if (in_array($data['payment_gateway'], ['COD', 'PICKUP'])) {
                     $attribute->decrement('stock', $item['quantity']);
+
+                    // If it's an old book listing by a student, mark it as sold out
+                    if ($attribute->user_id > 0) {
+                        $attribute->is_sold = 1;
+                        $attribute->status = 0;
+                        $attribute->save();
+                    }
                 }
             }
 
