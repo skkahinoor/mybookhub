@@ -1571,10 +1571,11 @@ class ProductController extends Controller
         $deliverySetting = \App\Models\DeliverySetting::first();
         $min_order_amount = $deliverySetting ? $deliverySetting->min_order_amount : 499;
         $delivery_fee = $deliverySetting ? $deliverySetting->delivery_charge : 20;
+        $isFreeDeliveryEnabled = $deliverySetting ? ((int) $deliverySetting->is_free_delivery === 1) : false;
 
         $shipping_charges = 0;
         if ($request->payment_gateway != 'PICKUP') {
-            if ($total_price >= $min_order_amount) {
+            if ($isFreeDeliveryEnabled && (float) $total_price >= (float) $min_order_amount) {
                 $shipping_charges = 0;
             } else {
                 $shipping_charges = $delivery_fee;
@@ -1731,6 +1732,7 @@ class ProductController extends Controller
                         (string) round((float) ($order->grand_total ?? 0)),
                         $order->payment_method ?? '-',
                         $deliveryAreaForUser,
+                        url('/student/orders/' . $order->id),
                     ];
 
                     app(WhatsAppService::class)->sendTemplate(
@@ -1782,7 +1784,7 @@ class ProductController extends Controller
                             $order->name ?? 'Customer',
                             $order->mobile ?? '-',
                             $deliveryArea,
-                            $order->payment_method ?? '-',
+                            url('/admin/orders/' . $order->id),
                         ];
 
                         app(WhatsAppService::class)->sendTemplate(
