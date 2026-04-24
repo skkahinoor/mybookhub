@@ -78,18 +78,20 @@ class FirebaseService
     /**
      * Send notification to specific users by their IDs
      */
-    public function sendToUsers(array $userIds, $title, $body, $data = [])
+    public function sendToUsers(array $userIds, $title, $body, $data = [], $skipDbNotification = false)
     {
         // Store the notification in the database for each user so it shows in their in-app list
-        foreach ($userIds as $id) {
-            NotificationModel::create([
-                'type' => $data['type'] ?? 'targeted',
-                'title' => $title,
-                'message' => $body,
-                'related_id' => $id,
-                'related_type' => \App\Models\User::class,
-                'is_read' => false,
-            ]);
+        if (!$skipDbNotification) {
+            foreach ($userIds as $id) {
+                NotificationModel::create([
+                    'type' => $data['type'] ?? 'targeted',
+                    'title' => $title,
+                    'message' => $body,
+                    'related_id' => $id,
+                    'related_type' => \App\Models\User::class,
+                    'is_read' => false,
+                ]);
+            }
         }
 
         $tokens = UserFcmToken::whereIn('user_id', $userIds)->pluck('fcm_token')->toArray();
