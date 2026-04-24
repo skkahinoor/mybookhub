@@ -964,10 +964,10 @@ class ProductsController extends Controller
         $deliverySetting = DeliverySetting::where('status', 1)->first();
         $shipping_charge = 0;
         if ($deliverySetting) {
-            if (!$deliverySetting->is_free_delivery) {
-                if ($total_price > $deliverySetting->min_order_amount) {
-                    $shipping_charge = $deliverySetting->delivery_charge;
-                }
+            // Default charge applies unless free-delivery threshold is met.
+            $shipping_charge = (float) ($deliverySetting->delivery_charge ?? 0);
+            if ((int) $deliverySetting->is_free_delivery === 1 && (float) $total_price >= (float) $deliverySetting->min_order_amount) {
+                $shipping_charge = 0;
             }
         }
 
@@ -1033,10 +1033,9 @@ class ProductsController extends Controller
             $deliverySetting = DeliverySetting::where('status', 1)->first();
             $shipping_charge = 0;
             if ($deliverySetting) {
-                if (!$deliverySetting->is_free_delivery) {
-                    if ($subtotal > $deliverySetting->min_order_amount) {
-                        $shipping_charge = $deliverySetting->delivery_charge;
-                    }
+                $shipping_charge = (float) ($deliverySetting->delivery_charge ?? 0);
+                if ((int) $deliverySetting->is_free_delivery === 1 && (float) $subtotal >= (float) $deliverySetting->min_order_amount) {
+                    $shipping_charge = 0;
                 }
             }
 
@@ -1082,10 +1081,9 @@ class ProductsController extends Controller
             $deliverySetting = DeliverySetting::where('status', 1)->first();
             $shipping_charge = 0;
             if ($deliverySetting) {
-                if (!$deliverySetting->is_free_delivery) {
-                    if ($subtotal > $deliverySetting->min_order_amount) {
-                        $shipping_charge = $deliverySetting->delivery_charge;
-                    }
+                $shipping_charge = (float) ($deliverySetting->delivery_charge ?? 0);
+                if ((int) $deliverySetting->is_free_delivery === 1 && (float) $subtotal >= (float) $deliverySetting->min_order_amount) {
+                    $shipping_charge = 0;
                 }
             }
 
@@ -1481,14 +1479,8 @@ class ProductsController extends Controller
 
             // Delivery Setting Override
             if ($deliverySetting) {
-                if ($deliverySetting->is_free_delivery) {
+                if ((int) $deliverySetting->is_free_delivery === 1 && (float) $total_price >= (float) $deliverySetting->min_order_amount) {
                     $shipping_charge = 0;
-                } else {
-                    if ($total_price > $deliverySetting->min_order_amount) {
-                        $shipping_charge = $deliverySetting->delivery_charge;
-                    } else {
-                        $shipping_charge = 0;
-                    }
                 }
             }
             $address->shipping_charges = $shipping_charge;
@@ -1576,14 +1568,8 @@ class ProductsController extends Controller
             // Delivery Setting Override
             $deliverySetting = \App\Models\DeliverySetting::where('status', 1)->first();
             if ($deliverySetting && $data['payment_gateway'] != 'PICKUP') {
-                if ($deliverySetting->is_free_delivery) {
+                if ((int) $deliverySetting->is_free_delivery === 1 && (float) $total_price >= (float) $deliverySetting->min_order_amount) {
                     $total_shipping_charges = 0;
-                } else {
-                    if ($total_price > $deliverySetting->min_order_amount) {
-                        $total_shipping_charges = $deliverySetting->delivery_charge;
-                    } else {
-                        $total_shipping_charges = 0;
-                    }
                 }
             }
             $total_coupon_amount = Session::get('couponAmount') ?? 0;
@@ -1685,6 +1671,7 @@ class ProductsController extends Controller
                         (string) round((float) ($order->grand_total ?? 0)),
                         $order->payment_method ?? '-',
                         $deliveryAreaForUser,
+                        url('/student/orders/' . $order->id),
                     ];
 
                     app(WhatsAppService::class)->sendTemplate(
@@ -1737,7 +1724,7 @@ class ProductsController extends Controller
                             $order->name ?? 'Customer',
                             $order->mobile ?? '-',
                             $deliveryArea,
-                            $order->payment_method ?? '-',
+                            url('/admin/orders/' . $order->id),
                         ];
 
                         app(WhatsAppService::class)->sendTemplate(

@@ -18,6 +18,9 @@ use App\Models\Publisher;
 use App\Models\Section;
 use App\Models\Subcategory;
 use App\Models\Subject;
+use App\Models\Order;
+use App\Models\OrdersProduct;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -88,7 +91,22 @@ class SellBookController extends Controller
                 'user_location' => $attribute->user_location,
                 'user_location_name' => $attribute->user_location_name,
                 'created_at' => $product->created_at,
+                'buyer_name' => null, // Will be populated below for sold items
             ];
+        });
+
+        // Populate buyer info for sold items
+        $products = $products->map(function ($item) {
+            if ($item && $item['is_sold'] == 1) {
+                $orderProduct = OrdersProduct::where('product_attribute_id', $item['id'])->first();
+                if ($orderProduct) {
+                    $order = Order::find($orderProduct->order_id);
+                    if ($order) {
+                        $item['buyer_name'] = $order->name;
+                    }
+                }
+            }
+            return $item;
         });
 
         return response()->json([
@@ -220,8 +238,48 @@ class SellBookController extends Controller
                     'user_location_name' => $attribute->user_location_name,
                     'price_details' => Product::getDiscountPriceDetailsByAttribute($attribute->id),
                 ],
+                'buyer' => $this->getBuyerInfo($attribute),
             ],
         ]);
+    }
+
+    /**
+     * Get buyer details for a sold listing.
+     */
+    private function getBuyerInfo($attribute)
+    {
+        if ($attribute->is_sold != 1) {
+            return null;
+        }
+
+        $orderProduct = OrdersProduct::where('product_attribute_id', $attribute->id)->first();
+        if (!$orderProduct) {
+            return null;
+        }
+
+        $order = Order::find($orderProduct->order_id);
+        if (!$order) {
+            return null;
+        }
+
+        $buyer = User::find($order->user_id);
+
+        return [
+            'name' => $order->name,
+            'email' => $order->email ?? ($buyer->email ?? null),
+            'phone' => $order->mobile ?? ($buyer->phone ?? null),
+            'address' => implode(', ', array_filter([
+                $order->address,
+                $order->city,
+                $order->state,
+                $order->country,
+                $order->pincode,
+            ])),
+            'order_id' => $order->id,
+            'ordered_at' => $order->created_at ? $order->created_at->format('d M Y, h:i A') : null,
+            'payment_method' => $order->payment_method,
+            'payment_status' => $order->payment_status ?? $order->order_status,
+        ];
     }
 
     public function store(Request $request)

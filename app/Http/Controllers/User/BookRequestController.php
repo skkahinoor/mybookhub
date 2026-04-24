@@ -196,6 +196,7 @@ class BookRequestController extends Controller
 
         $template = config('services.whatsapp.template', 'book_request_alert_v2');
         $locationText = $request->user_location_name ?: $this->getUserLocationText($user, $districtId);
+        $bookRequestLink = url('/admin/requestedbooks');
         foreach ($vendorsForWhatsapp as $vendor) {
             $vendorDisplayName = $vendor->vendorbusinessdetails->shop_name
                 ?? $vendor->user->name
@@ -210,6 +211,7 @@ class BookRequestController extends Controller
                 $locationText,
                 $user->name ?: 'BookHub User',
                 $customerMobile,
+                $bookRequestLink,
             ];
 
             $sent = $this->whatsAppService->sendTemplate(

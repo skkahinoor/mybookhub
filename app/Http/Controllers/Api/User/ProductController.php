@@ -30,12 +30,68 @@ use App\Models\DeliverySetting;
 use App\Models\OrderQuery;
 use App\Models\OrderQueryMessage;
 use App\Services\WhatsAppService;
+use App\Services\FirebaseService;
 use Razorpay\Api\Api;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 
 class ProductController extends Controller
 {
+    /**
+     * After stock is decremented, check if user-listed books hit 0 stock.
+     * If so, mark them as sold and notify the seller via push notification.
+     */
+    private function markUserBooksSoldAndNotify($cartItems, $buyerName, $isOrderProduct = false)
+    {
+        $items = $isOrderProduct ? $cartItems : $cartItems;
+
+        foreach ($items as $item) {
+            $attrId = $isOrderProduct ? $item->product_attribute_id : $item->product_attribute_id;
+            $attribute = ProductsAttribute::with('product')->find($attrId);
+
+            if (!$attribute || !$attribute->user_id) {
+                continue; // Not a user-listed book, skip
+            }
+
+            // Refresh to get latest stock after decrement
+            $attribute->refresh();
+
+            if ($attribute->stock <= 0 && $attribute->is_sold == 0) {
+                // Mark as sold
+                $attribute->is_sold = 1;
+                $attribute->save();
+
+                $productName = $attribute->product->product_name ?? 'your book';
+                $sellerId = (int) $attribute->user_id;
+
+                // Create DB notification for the seller
+                Notification::create([
+                    'type' => 'book_sold',
+                    'title' => 'Your book has been sold! 🎉',
+                    'message' => "Great news! '{$productName}' has been purchased by {$buyerName}.",
+                    'related_id' => $sellerId,
+                    'related_type' => User::class,
+                    'is_read' => false,
+                ]);
+
+                // Send FCM push notification to the seller
+                try {
+                    app(FirebaseService::class)->sendToUsers(
+                        [$sellerId],
+                        'Your book has been sold! 🎉',
+                        "Great news! '{$productName}' has been purchased by {$buyerName}.",
+                        [
+                            'type' => 'book_sold',
+                            'attribute_id' => (string) $attribute->id,
+                        ],
+                        true // Skip DB notification — already created above
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('FCM push failed for book sold notification: ' . $e->getMessage());
+                }
+            }
+        }
+    }
     public function index(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -1571,10 +1627,11 @@ class ProductController extends Controller
         $deliverySetting = \App\Models\DeliverySetting::first();
         $min_order_amount = $deliverySetting ? $deliverySetting->min_order_amount : 499;
         $delivery_fee = $deliverySetting ? $deliverySetting->delivery_charge : 20;
+        $isFreeDeliveryEnabled = $deliverySetting ? ((int) $deliverySetting->is_free_delivery === 1) : false;
 
         $shipping_charges = 0;
         if ($request->payment_gateway != 'PICKUP') {
-            if ($total_price >= $min_order_amount) {
+            if ($isFreeDeliveryEnabled && (float) $total_price >= (float) $min_order_amount) {
                 $shipping_charges = 0;
             } else {
                 $shipping_charges = $delivery_fee;
@@ -1731,6 +1788,7 @@ class ProductController extends Controller
                         (string) round((float) ($order->grand_total ?? 0)),
                         $order->payment_method ?? '-',
                         $deliveryAreaForUser,
+                        url('/student/orders/' . $order->id),
                     ];
 
                     app(WhatsAppService::class)->sendTemplate(
@@ -1782,7 +1840,7 @@ class ProductController extends Controller
                             $order->name ?? 'Customer',
                             $order->mobile ?? '-',
                             $deliveryArea,
-                            $order->payment_method ?? '-',
+                            url('/admin/orders/' . $order->id),
                         ];
 
                         app(WhatsAppService::class)->sendTemplate(
@@ -1815,6 +1873,9 @@ class ProductController extends Controller
                         ->decrement('stock', $item->quantity);
                 }
 
+                // Auto mark-as-sold for user-listed books & notify seller
+                $this->markUserBooksSoldAndNotify($cartItems, $user->name);
+
                 // Cashback to wallet
                 $total_cashback = 0;
                 foreach ($order_ids as $id) {
@@ -1842,6 +1903,9 @@ class ProductController extends Controller
                     ProductsAttribute::where('id', $item->product_attribute_id)
                         ->decrement('stock', $item->quantity);
                 }
+
+                // Auto mark-as-sold for user-listed books & notify seller
+                $this->markUserBooksSoldAndNotify($cartItems, $user->name);
 
                 // Cashback to wallet
                 $total_cashback = 0;
@@ -1968,6 +2032,10 @@ class ProductController extends Controller
                     ProductsAttribute::where('id', $item->product_attribute_id)
                         ->decrement('stock', $item->product_qty);
                 }
+
+                // Auto mark-as-sold for user-listed books & notify seller
+                $buyerUser = User::find($order->user_id);
+                $this->markUserBooksSoldAndNotify($order->orders_products, $buyerUser->name ?? 'a buyer', true);
 
                 WalletTransaction::checkAndCreditWallet($order->id);
             }

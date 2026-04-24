@@ -19,10 +19,17 @@ use App\Models\ProductsAttribute;
 use App\Models\Coupon;
 use App\Models\Notification;
 use Illuminate\Support\Facades\DB;
+use App\Services\FirebaseService;
 
 
 class OrderController extends Controller
 {
+    protected $firebaseService;
+
+    public function __construct(FirebaseService $firebaseService)
+    {
+        $this->firebaseService = $firebaseService;
+    }
 
 
     // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel
@@ -227,9 +234,10 @@ class OrderController extends Controller
             // Update Order Status in `orders` table
             Order::where('id', $data['order_id'])->update(['order_status' => $data['order_status']]);
 
-            // Student notification: order status updated
+            // Student notification: order status updated + FCM push
             $orderForNotify = Order::select('id', 'user_id')->where('id', $data['order_id'])->first();
             if ($orderForNotify && !empty($orderForNotify->user_id)) {
+                // Save to database (shows in in-app notification page)
                 Notification::create([
                     'type' => 'order_status_updated',
                     'title' => 'Order status updated',
@@ -238,6 +246,34 @@ class OrderController extends Controller
                     'related_type' => User::class,
                     'is_read' => false,
                 ]);
+
+                // Send FCM push notification to the user's device
+                try {
+                    $pushTitle = 'Order Update';
+                    $pushBody = 'Your order #' . $orderForNotify->id . ' status changed to: ' . $data['order_status'];
+
+                    if (strtolower($data['order_status']) == 'shipped') {
+                        $pushBody = 'Your order #' . $orderForNotify->id . ' has been shipped out for delivery.';
+                    } elseif (strtolower($data['order_status']) == 'delivered') {
+                        $pushBody = 'Success! Your order #' . $orderForNotify->id . ' has been delivered.';
+                    } elseif (in_array(strtolower($data['order_status']), ['canceled', 'cancelled'])) {
+                        $pushBody = 'Notice: Your order #' . $orderForNotify->id . ' has been cancelled.';
+                    }
+
+                    $this->firebaseService->sendToUsers(
+                        [(int) $orderForNotify->user_id],
+                        $pushTitle,
+                        $pushBody,
+                        [
+                            'order_id' => (string) $orderForNotify->id,
+                            'type' => 'order_update',
+                            'status' => $data['order_status'],
+                        ],
+                        true // Skip DB notification — already created above
+                    );
+                } catch (\Exception $e) {
+                    \Log::error('FCM push failed for order status update: ' . $e->getMessage());
+                }
             }
 
             if ($data['order_status'] == 'Delivered') {
