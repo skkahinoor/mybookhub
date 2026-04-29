@@ -405,6 +405,10 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('release-vendor-payout', 'OrderController@releaseVendorPayout');
         Route::get('get-vendor-bank-details', 'OrderController@getVendorBankDetails');
 
+        // Old Book Payouts (for student sellers)
+        Route::get('old-book-payouts', 'OrderController@oldBookPayouts')->name('admin.old_book_payouts');
+        Route::post('release-old-book-payout', 'OrderController@releaseOldBookPayout')->name('admin.release_old_book_payout');
+
         // Orders Invoices
         // Render order invoice page (HTML) in order_invoice.blade.php
         Route::get('orders/invoice/{id}', 'OrderController@viewOrderInvoice');

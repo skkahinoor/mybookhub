@@ -435,14 +435,17 @@
                 <div class="collapse" id="ui-orders">
                     <ul class="nav flex-column sub-menu"
                         style="background: #fff !important; color: #052CA3 !important">
-                        @can('view_orders')
+                        @if (Auth::guard('admin')->user()->can('view_orders'))
                             <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'orders') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/orders') }}">Orders</a></li>
+                                     @if (Session::get('page') == 'orders') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                     class="nav-link" href="{{ url('admin/orders') }}">Orders</a></li>
                             <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'returns') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/returns') }}">Returns</a></li>
-                        @endcan
+                                     @if (Session::get('page') == 'old_book_payouts') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                     class="nav-link" href="{{ route('admin.old_book_payouts') }}">Old Book Payouts</a></li>
+                            <li class="nav-item"> <a
+                                     @if (Session::get('page') == 'returns') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                     class="nav-link" href="{{ url('admin/returns') }}">Returns</a></li>
+                        @endif
                         @can('view_sales_concept')
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'sales_concept') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif

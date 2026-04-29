@@ -68,6 +68,11 @@ class OrdersProduct extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
+    public function product_attribute()
+    {
+        return $this->belongsTo(ProductsAttribute::class, 'product_attribute_id');
+    }
+
     public function logs()
     {
         return $this->hasMany(OrdersLog::class, 'order_item_id');

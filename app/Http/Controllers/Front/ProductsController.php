@@ -1467,22 +1467,25 @@ class ProductsController extends Controller
         }
 
         // Delivery Setting Configuration
-        $deliverySetting = \App\Models\DeliverySetting::where('status', 1)->first();
+        $deliverySetting = DeliverySetting::where('status', 1)->first();
 
         // Calculate shipping and pincode counts for each address
         foreach ($deliveryAddresses as $address) {
             $address->codpincodeCount = DB::table('cod_pincodes')->where('pincode', $address->pincode)->count();
             $address->prepaidpincodeCount = DB::table('prepaid_pincodes')->where('pincode', $address->pincode)->count();
 
-            // Base shipping charges
-            $shipping_charge = ShippingCharge::getShippingCharges($total_weight, $address->country->name ?? '');
-
-            // Delivery Setting Override
+            // Dynamic Shipping Charge calculation (consistent with cart page)
+            $shipping_charge = 0;
             if ($deliverySetting) {
+                $shipping_charge = (float) ($deliverySetting->delivery_charge ?? 0);
                 if ((int) $deliverySetting->is_free_delivery === 1 && (float) $total_price >= (float) $deliverySetting->min_order_amount) {
                     $shipping_charge = 0;
                 }
+            } else {
+                // Fallback to weight-based if no dynamic delivery setting is active
+                $shipping_charge = ShippingCharge::getShippingCharges($total_weight, $address->country->name ?? '');
             }
+            
             $address->shipping_charges = $shipping_charge;
         }
 
@@ -1561,15 +1564,16 @@ class ProductsController extends Controller
                 $total_price += ($getDiscountAttributePrice['final_price'] * $item['quantity']);
             }
 
-            $total_shipping_charges = ($data['payment_gateway'] == 'PICKUP')
-                ? 0
-                : ShippingCharge::getShippingCharges($total_weight, $deliveryAddress['country']);
-
-            // Delivery Setting Override
-            $deliverySetting = \App\Models\DeliverySetting::where('status', 1)->first();
-            if ($deliverySetting && $data['payment_gateway'] != 'PICKUP') {
-                if ((int) $deliverySetting->is_free_delivery === 1 && (float) $total_price >= (float) $deliverySetting->min_order_amount) {
-                    $total_shipping_charges = 0;
+            $total_shipping_charges = 0;
+            if ($data['payment_gateway'] != 'PICKUP') {
+                $deliverySetting = \App\Models\DeliverySetting::where('status', 1)->first();
+                if ($deliverySetting) {
+                    $total_shipping_charges = (float) ($deliverySetting->delivery_charge ?? 0);
+                    if ((int) $deliverySetting->is_free_delivery === 1 && (float) $total_price >= (float) $deliverySetting->min_order_amount) {
+                        $total_shipping_charges = 0;
+                    }
+                } else {
+                    $total_shipping_charges = ShippingCharge::getShippingCharges($total_weight, $deliveryAddress['country']);
                 }
             }
             $total_coupon_amount = Session::get('couponAmount') ?? 0;
@@ -1637,6 +1641,16 @@ class ProductsController extends Controller
 
                 if ($attribute->vendor_id && $attribute->vendor_id > 0) {
                     $cartItem->commission = Vendor::getVendorCommission($attribute->vendor_id);
+                } else if ($attribute->user_id && $attribute->user_id > 0 && $attribute->old_book_condition_id) {
+                    // For old books sold by students, calculate commission
+                    $commissionPercentage = \Illuminate\Support\Facades\Cache::remember('old_book_commission_percentage', 3600, function () {
+                        $commission = \App\Models\OldBookCommission::first();
+                        return $commission ? (float) $commission->percentage : 0;
+                    });
+                    if ($commissionPercentage > 0) {
+                        $originalPrice = (float) ($attribute->product->product_price ?? 0);
+                        $cartItem->commission = round(($originalPrice * $commissionPercentage) / 100);
+                    }
                 }
 
                 $cartItem->product_id = $item['product_id'];

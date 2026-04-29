@@ -1171,4 +1171,61 @@ class OrderController extends Controller
 
         return response()->json(['status' => 'error', 'message' => 'Vendor bank details not found']);
     }
+
+    public function oldBookPayouts()
+    {
+        \Illuminate\Support\Facades\Session::put('page', 'old_book_payouts');
+
+        // Fetch all order items (OrdersProduct) that are:
+        // 1. Old Books sold by Students (linked to a user_id via product_attribute_id)
+        // 2. Item Status is 'Delivered'
+        
+        $payouts = OrdersProduct::with(['order', 'product_attribute.user', 'product_attribute.product'])
+            ->whereHas('product_attribute', function($query) {
+                $query->where('user_id', '>', 0)
+                      ->whereNotNull('old_book_condition_id');
+            })
+            ->orderBy('id', 'Desc')
+            ->get();
+
+        return view('admin.orders.old_book_payouts')->with(compact('payouts'));
+    }
+
+    public function releaseOldBookPayout(Request $request)
+    {
+        $request->validate([
+            'order_item_id' => 'required|exists:orders_products,id',
+            'payout_note' => 'nullable|string|max:500',
+        ]);
+
+        $item = OrdersProduct::findOrFail($request->order_item_id);
+
+        // Security check: ensure it's actually an old book sold by a student
+        $attribute = ProductsAttribute::find($item->product_attribute_id);
+        if (!$attribute || $attribute->user_id == 0 || !$attribute->old_book_condition_id) {
+            return redirect()->back()->with('error_message', 'Invalid payout request.');
+        }
+
+        if ($item->item_status !== 'Delivered') {
+            return redirect()->back()->with('error_message', 'Payout can only be released for delivered items.');
+        }
+
+        $item->update([
+            'vendor_payout_status' => 'Released',
+            'vendor_payout_note' => $request->payout_note,
+        ]);
+
+        // Notify the student seller
+        $payoutAmount = $attribute->contact_details_paid ? $item->product_price : ($item->product_price - $item->commission);
+        Notification::create([
+            'type' => 'student_payout_released',
+            'title' => 'Payment Released',
+            'message' => 'Payment of ₹' . number_format($payoutAmount, 2) . ' has been released for your sold book: ' . $item->product_name . '.',
+            'related_id' => (int) $attribute->user_id,
+            'related_type' => User::class,
+            'is_read' => false,
+        ]);
+
+        return redirect()->back()->with('success_message', 'Payout released successfully for "' . $item->product_name . '".');
+    }
 }
