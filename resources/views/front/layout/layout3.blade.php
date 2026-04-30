@@ -824,16 +824,18 @@
         <!-- Premium Header -->
         <header class="layout-app-header">
             <div class="header-logo">
-                @php
-                    $logo = $logos ? $logos->first() : null;
-                @endphp
+    @php
+        $logo = $logos ? $logos->first() : null;
+    @endphp
 
-                @if ($logo && $logo->logo)
-                    <img src="{{ asset('uploads/logos/' . $logo->logo) }}" alt="BookHub">
-                @else
-                    <h4>BookHub</h4>
-                @endif
-            </div>
+    <a href="{{ url('/') }}">
+        @if ($logo && $logo->logo)
+            <img src="{{ asset('uploads/logos/' . $logo->logo) }}" alt="BookHub">
+        @else
+            <h4>BookHub</h4>
+        @endif
+    </a>
+</div>
             <div class="category-menu-wrapper header-filters">
                 <div class="category-trigger" id="categoryToggle">
                     <i class="fas fa-th-large"></i>
