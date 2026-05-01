@@ -40,7 +40,11 @@ class SellBookController extends Controller
         $user_id = Auth::id();
 
         // Fetch all listings (attributes) for this user separately
-        $userProducts = ProductsAttribute::with(['product', 'product.category'])
+        $userProducts = ProductsAttribute::with(['product', 'product.category', 'ordersProducts' => function($q) {
+                $q->whereHas('order', function($o) {
+                    $o->whereIn('order_status', ['Paid', 'Shipped', 'Delivered', 'New']);
+                })->latest();
+            }])
             ->where('user_id', $user_id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -792,7 +796,12 @@ class SellBookController extends Controller
 
         $order = $orderProduct->order;
 
-        return view('user.sell-book.purchaser_details', compact('attribute', 'order', 'logos', 'headerLogo'));
+        // Calculate Payout details
+        // The student should get their listed price (user_product_price).
+        // Since we add commission ON TOP for the buyer, the payout is: orderProduct->product_price - orderProduct->commission
+        $netPayout = $orderProduct->product_price - $orderProduct->commission;
+
+        return view('user.sell-book.purchaser_details', compact('attribute', 'order', 'orderProduct', 'netPayout', 'logos', 'headerLogo'));
     }
 }
 

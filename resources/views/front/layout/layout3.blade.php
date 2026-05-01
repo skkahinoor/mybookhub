@@ -2573,6 +2573,49 @@
         })();
     </script>
 
+    <!-- Condition Mismatch Modal -->
+    <div class="modal fade" id="conditionMismatchModal" tabindex="-1" aria-labelledby="conditionMismatchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-danger" id="conditionMismatchModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Condition Mismatch
+                    </h5>
+                    <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p id="mismatchMessage" class="mb-0" style="font-size: 15px; color: #4a5568; line-height: 1.6;">
+                        @if(Session::has('error_condition_mismatch'))
+                            {{ Session::get('error_condition_mismatch') }}
+                        @else
+                            You already have some books in your cart and cannot checkout both old and new books at same time.
+                        @endif
+                    </p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 600;">Cancel</button>
+                    <form id="moveToWishlistForm" action="{{ route('cart.moveToWishlist') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="mismatch_attribute_id" id="mismatchAttributeId" value="{{ Session::get('mismatch_attribute_id') }}">
+                        <input type="hidden" name="mismatch_qty" id="mismatchQty" value="{{ Session::get('mismatch_qty', 1) }}">
+                        <button type="submit" class="btn btn-primary px-4" style="border-radius: 8px; font-weight: 600; background: #2979ff;">
+                            Move Cart to Wishlist
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if(Session::has('error_condition_mismatch'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var myModal = new bootstrap.Modal(document.getElementById('conditionMismatchModal'));
+            myModal.show();
+        });
+    </script>
+    @endif
+
     @yield('scripts')
 </body>
 

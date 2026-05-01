@@ -287,12 +287,44 @@
                 </div>
             </div>
         </div>
+
+        <!-- Release Payout Modal -->
+        <div class="modal fade" id="releasePayoutModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <form action="{{ route('admin.release_old_book_payout') }}" method="POST">
+                        @csrf
+                        <input type="hidden" name="order_item_id" id="payout_item_id">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Release Payout</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>You are releasing payment for <strong><span id="payout_product_name"></span></strong>.</p>
+                            <p>Amount to be paid: <strong class="text-primary">₹<span id="payout_amount"></span></strong></p>
+                            
+                            <div class="form-group">
+                                <label for="payout_note">Payout Note (Transaction ID, etc.)</label>
+                                <textarea class="form-control" name="payout_note" id="payout_note" rows="3" placeholder="Enter payout details..." required></textarea>
+                                <small class="text-muted">This information will be visible to the seller.</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Confirm Payout</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    $(document).ready(function() {
         $('#videoModal').on('shown.bs.modal', function () {
             var videoPlayer = $(this).find('video')[0];
             if (videoPlayer) {
@@ -311,7 +343,7 @@
         });
  
         // Release Payout Modal Logic
-        $('.release-payout-btn').click(function() {
+        $('.release-payout-btn').on('click', function() {
             var id = $(this).data('id');
             var name = $(this).data('name');
             var amount = $(this).data('amount');
@@ -323,36 +355,4 @@
         });
     });
 </script>
-@endsection
- 
-<!-- Release Payout Modal -->
-<div class="modal fade" id="releasePayoutModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form action="{{ route('admin.release_old_book_payout') }}" method="POST">
-                @csrf
-                <input type="hidden" name="order_item_id" id="payout_item_id">
-                <div class="modal-header">
-                    <h5 class="modal-title">Release Payout</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <p>You are releasing payment for <strong><span id="payout_product_name"></span></strong>.</p>
-                    <p>Amount to be paid: <strong class="text-primary">₹<span id="payout_amount"></span></strong></p>
-                    
-                    <div class="form-group">
-                        <label for="payout_note">Payout Note (Transaction ID, etc.)</label>
-                        <textarea class="form-control" name="payout_note" id="payout_note" rows="3" placeholder="Enter payout details..." required></textarea>
-                        <small class="text-muted">This information will be visible to the seller.</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Confirm Payout</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+@endpush

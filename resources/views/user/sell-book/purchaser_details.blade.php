@@ -78,26 +78,73 @@
                             </div>
 
                             <div class="row mt-4">
-                                <div class="col-md-12">
-                                    <div class="card">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
                                         <div class="card-body">
                                             <h5 class="card-title">Order Information</h5>
                                             <table class="table table-bordered">
                                                 <tr>
                                                     <th>Order ID</th>
                                                     <td>#{{ $order->id }}</td>
+                                                </tr>
+                                                <tr>
                                                     <th>Order Date</th>
                                                     <td>{{ date('d M Y, h:i A', strtotime($order->created_at)) }}</td>
                                                 </tr>
                                                 <tr>
                                                     <th>Payment Method</th>
                                                     <td>{{ $order->payment_method }}</td>
+                                                </tr>
+                                                <tr>
                                                     <th>Order Status</th>
                                                     <td>
                                                         <span class="badge badge-info">{{ $order->order_status }}</span>
                                                     </td>
                                                 </tr>
                                             </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-primary">
+                                        <div class="card-body">
+                                            <h5 class="card-title text-primary">Earnings & Payout</h5>
+                                            <div class="p-3 bg-light rounded">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>Your Listing Price:</span>
+                                                    <strong>₹{{ number_format($attribute->user_product_price, 2) }}</strong>
+                                                </div>
+                                                {{-- <div class="d-flex justify-content-between mb-2 text-muted">
+                                                    <span style="font-size: 0.9rem;">Platform Fee (Buyer Paid):</span>
+                                                    <span style="font-size: 0.9rem;">₹{{ number_format($orderProduct->commission, 2) }}</span>
+                                                </div> --}}
+                                                <hr>
+                                                <div class="d-flex justify-content-between mb-3">
+                                                    <span class="h6 mb-0">Total Payout:</span>
+                                                    <strong class="h5 mb-0 text-primary">₹{{ number_format($netPayout, 2) }}</strong>
+                                                </div>
+
+                                                <div class="mt-3">
+                                                    <p class="mb-1"><strong>Status:</strong> 
+                                                        @if($orderProduct->vendor_payout_status == 'Released')
+                                                            <span class="badge badge-success">Released</span>
+                                                        @else
+                                                            <span class="badge badge-warning">Pending Release</span>
+                                                        @endif
+                                                    </p>
+                                                    @if($orderProduct->vendor_payout_status == 'Released')
+                                                        <div class="alert alert-success p-2 mt-2" style="font-size: 13px;">
+                                                            <strong>Note from Admin:</strong><br>
+                                                            {{ $orderProduct->vendor_payout_note ?? 'Payment has been processed.' }}
+                                                        </div>
+                                                    @else
+                                                        <p class="text-muted small mt-2">
+                                                            <i class="mdi mdi-information-outline mr-1"></i>
+                                                            Admin will release the payout after verifying the delivery.
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

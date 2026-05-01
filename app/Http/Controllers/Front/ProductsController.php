@@ -892,6 +892,37 @@ class ProductsController extends Controller
             return back()->with('error_message', 'Invalid product.');
         }
 
+        // Cart Validation: New vs Old Books
+        $getCartItems = Cart::getCartItems();
+        $isAddingOld = !empty($attribute->old_book_condition_id);
+        
+        foreach($getCartItems as $item) {
+            $existingItemAttribute = ProductsAttribute::find($item['product_attribute_id']);
+            if (!$existingItemAttribute) continue;
+            
+            $isExistingOld = !empty($existingItemAttribute->old_book_condition_id);
+            
+            if ($isAddingOld !== $isExistingOld) {
+                $cartCondition = $isExistingOld ? 'old' : 'new';
+                $addingCondition = $isAddingOld ? 'old' : 'new';
+                
+                if ($request->ajax()) {
+                    Session::flash('error_condition_mismatch', "You already have some {$cartCondition} books in your cart and cannot checkout both old and new books at same time.");
+                    Session::flash('mismatch_attribute_id', $attribute->id);
+                    Session::flash('mismatch_qty', $qty);
+                    return response()->json([
+                        'status' => 'condition_mismatch',
+                        'url' => route('cart')
+                    ]);
+                }
+                
+                return redirect()->route('cart', ['condition' => $cartCondition])
+                             ->with('error_condition_mismatch', "You already have some {$cartCondition} books in your cart and cannot checkout both old and new books at same time.")
+                             ->with('mismatch_attribute_id', $attribute->id)
+                             ->with('mismatch_qty', $qty);
+            }
+        }
+
         if ($attribute->stock < $qty) {
             return back()->with('error_message', 'Requested quantity not available.');
         }
@@ -938,6 +969,58 @@ class ProductsController extends Controller
         return redirect()
             ->route('cart', ['condition' => $condition])
             ->with('success_message', 'Product added to cart successfully!');
+    }
+
+    public function moveCartToWishlist(Request $request)
+    {
+        $session_id = Session::get('session_id') ?? Session::getId();
+        $user_id = Auth::id() ?? 0;
+
+        $getCartItems = Cart::where(function ($q) use ($user_id, $session_id) {
+            $user_id > 0
+                ? $q->where('user_id', $user_id)
+                : $q->where('session_id', $session_id);
+        })->get();
+
+        foreach ($getCartItems as $item) {
+            // Move to Wishlist
+            $exists = Wishlist::where('product_attribute_id', $item->product_attribute_id)
+                ->where(function ($q) use ($user_id, $session_id) {
+                    $user_id > 0
+                        ? $q->where('user_id', $user_id)
+                        : $q->where('session_id', $session_id);
+                })->exists();
+
+            if (!$exists) {
+                Wishlist::create([
+                    'user_id' => $user_id,
+                    'session_id' => $session_id,
+                    'product_id' => $item->product_id,
+                    'product_attribute_id' => $item->product_attribute_id,
+                    'quantity' => $item->quantity
+                ]);
+            }
+            // Delete from Cart
+            $item->delete();
+        }
+
+        // If mismatch_attribute_id is provided, add it to cart now
+        if ($request->mismatch_attribute_id) {
+            $attribute = ProductsAttribute::find($request->mismatch_attribute_id);
+            if ($attribute) {
+                Cart::create([
+                    'session_id' => $session_id,
+                    'user_id' => $user_id,
+                    'product_attribute_id' => $attribute->id,
+                    'product_id' => $attribute->product_id,
+                    'quantity' => $request->mismatch_qty ?? 1,
+                ]);
+                return redirect()->route('cart', ['condition' => !empty($attribute->old_book_condition_id) ? 'old' : 'new'])
+                    ->with('success_message', 'Cart items moved to wishlist and product added to cart.');
+            }
+        }
+
+        return redirect()->route('cart')->with('success_message', 'Cart items moved to wishlist.');
     }
 
     // Render Cart page (front/products/cart.blade.php)
@@ -1428,9 +1511,15 @@ class ProductsController extends Controller
         $total_price = 0;
         $total_weight = 0;
 
+        $hasStudentItem = false;
         foreach ($getCartItems as $item) {
             $attrPrice = Product::getDiscountAttributePrice($item['product_id'], null, $item['product_attribute_id']);
             $total_price = $total_price + ($attrPrice['final_price'] * $item['quantity']);
+            
+            $attr = ProductsAttribute::find($item['product_attribute_id']);
+            if ($attr && $attr->user_id > 0) {
+                $hasStudentItem = true;
+            }
         }
 
         // Fetch the user
@@ -2007,7 +2096,8 @@ class ProductsController extends Controller
             'logos',
             'meta_title',
             'meta_description',
-            'meta_keywords'
+            'meta_keywords',
+            'hasStudentItem'
         ));
     }
 

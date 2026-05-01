@@ -637,6 +637,7 @@ HTML;
 
     // Render Cart page (front/products/cart.blade.php)    // this route is accessed from the <a> HTML tag inside the flash message inside cartAdd() method in Front/ProductsController.php (inside front/products/detail.blade.php)
     Route::get('cart', 'ProductsController@cart')->name('cart');
+    Route::post('cart/move-to-wishlist', 'ProductsController@moveCartToWishlist')->name('cart.moveToWishlist');
 
     // Wishlist page
     Route::get('wishlist', 'ProductsController@wishlist')->name('wishlist');

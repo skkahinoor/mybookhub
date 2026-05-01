@@ -833,7 +833,9 @@ $(document).ready(function () {
                 quantity: quantity,
             },
             success: function (resp) {
-                if (resp.status) {
+                if (resp.status === 'condition_mismatch') {
+                    window.location.href = resp.url;
+                } else if (resp.status) {
                     // Show success notification
                     showNotification(
                         "Product added to cart successfully!",

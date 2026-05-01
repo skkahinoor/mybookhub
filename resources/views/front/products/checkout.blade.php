@@ -492,22 +492,37 @@
                                                 </label>
                                             </div>
 
-                                            <div class="payment-item-modern pickupMethod">
-                                                <input type="radio" name="payment_gateway" id="pickup-from-store"
-                                                    value="PICKUP">
-                                                <label for="pickup-from-store" class="payment-box-modern">
-                                                    <div class="payment-label-modern">
-                                                        <i class="fas fa-store"></i>
-                                                        <div>
-                                                            <div>Pickup from Store</div>
-                                                            <small class="text-muted d-block"
-                                                                style="font-weight: 400; font-size: 12px;">Pickup yourself
-                                                                and pay online</small>
+                                            @if(isset($hasStudentItem) && $hasStudentItem)
+                                                <div class="payment-item-modern pickupMethod opacity-50" title="Pickup not available for peer-to-peer sales">
+                                                    <div class="payment-box-modern bg-light border-dashed">
+                                                        <div class="payment-label-modern text-muted">
+                                                            <i class="fas fa-store-slash"></i>
+                                                            <div>
+                                                                <div class="text-decoration-line-through">Pickup from Store</div>
+                                                                <small class="d-block" style="font-size: 11px;">Not available for student-to-student books</small>
+                                                            </div>
                                                         </div>
+                                                        <span class="badge bg-secondary" style="font-size: 10px;">Unavailable</span>
                                                     </div>
-                                                    <span class="payment-status-badge">Pickup</span>
-                                                </label>
-                                            </div>
+                                                </div>
+                                            @else
+                                                <div class="payment-item-modern pickupMethod">
+                                                    <input type="radio" name="payment_gateway" id="pickup-from-store"
+                                                        value="PICKUP">
+                                                    <label for="pickup-from-store" class="payment-box-modern">
+                                                        <div class="payment-label-modern">
+                                                            <i class="fas fa-store"></i>
+                                                            <div>
+                                                                <div>Pickup from Store</div>
+                                                                <small class="text-muted d-block"
+                                                                    style="font-weight: 400; font-size: 12px;">Pickup yourself
+                                                                    and pay online</small>
+                                                            </div>
+                                                        </div>
+                                                        <span class="payment-status-badge">Pickup</span>
+                                                    </label>
+                                                </div>
+                                            @endif
 
                                             <div class="payment-item-modern razorpayMethod">
                                                 <input type="radio" name="payment_gateway" id="razorpay"

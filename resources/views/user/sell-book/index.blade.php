@@ -48,6 +48,7 @@
                                                 <th>Selling Price</th>
                                                 <th width="150">Sell Faster</th>
                                                 <th>Status</th>
+                                                <th>Payout</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -113,6 +114,23 @@
                                                         @else
                                                             <span class="badge badge-warning">Pending Review</span>
                                                         @endif
+                                                    </td>
+                                                    <td>
+                                                         @php 
+                                                            $op = $attribute->ordersProducts->first(); 
+                                                         @endphp
+                                                         @if($attribute->is_sold == 1 && $op)
+                                                             @php 
+                                                                $payoutAmount = $op->product_price - $op->commission;
+                                                             @endphp
+                                                             @if($op->vendor_payout_status == 'Released')
+                                                                 <span class="badge badge-success" title="Released: {{ $op->vendor_payout_note }}">Released: ₹{{ number_format($payoutAmount, 2) }}</span>
+                                                             @else
+                                                                 <span class="badge badge-warning">Pending: ₹{{ number_format($payoutAmount, 2) }}</span>
+                                                             @endif
+                                                         @else
+                                                             -
+                                                         @endif
                                                     </td>
                                                     <td>
                                                         @if($attribute->admin_approved == 1 && $attribute->is_sold == 0)
