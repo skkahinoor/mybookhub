@@ -20,7 +20,7 @@ class SellBookRequestController extends Controller
         $logos = HeaderLogo::first();
 
         if ($request->ajax()) {
-            $query = ProductsAttribute::with(['product', 'user', 'condition', 'vendor'])
+            $query = ProductsAttribute::with(['product', 'user', 'condition', 'vendor', 'orders_product'])
                 ->whereNotNull('old_book_condition_id')
                 ->whereNotNull('user_id'); // student/user sell requests ONLY
 
@@ -88,6 +88,21 @@ class SellBookRequestController extends Controller
                         return '<span class="badge badge-warning">Pending</span>';
                     }
                 })
+                ->addColumn('payout', function ($row) {
+                    if ($row->orders_product) {
+                        if ($row->orders_product->vendor_payout_status == 'Released') {
+                            return '<span class="badge badge-success">Released</span>';
+                        } else {
+                            if ($row->orders_product->item_status == 'Delivered') {
+                                return '<span class="badge badge-info">Delivered (Pending Payout)</span>';
+                            } else {
+                                return '<span class="badge badge-secondary">Sold (Awaiting Delivery)</span>';
+                            }
+                        }
+                    } else {
+                        return '<span class="text-muted">Not Sold</span>';
+                    }
+                })
                 ->addColumn('actions', function ($row) {
                     $html = '<a href="' . route('admin.sell-book-requests.show', $row->id) . '" class="btn btn-sm btn-outline-primary">View</a>';
                     $html .= ' <form action="' . route('admin.sell-book-requests.reject', $row->id) . '" method="POST" style="display:inline;">
@@ -96,7 +111,7 @@ class SellBookRequestController extends Controller
                                </form>';
                     return $html;
                 })
-                ->rawColumns(['type', 'seller_name', 'book_condition', 'selling_price', 'location', 'status', 'actions'])
+                ->rawColumns(['type', 'seller_name', 'book_condition', 'selling_price', 'location', 'status', 'payout', 'actions'])
                 ->make(true);
         }
 
@@ -111,7 +126,12 @@ class SellBookRequestController extends Controller
         $requestData = ProductsAttribute::with(['product', 'user', 'condition', 'vendor'])
             ->findOrFail($id);
 
-        return view('admin.sell_book_requests.show', compact('requestData', 'logos', 'headerLogo'));
+        // Fetch sold information (payout) for this specific listing
+        $payoutInfo = \App\Models\OrdersProduct::with('order')
+            ->where('product_attribute_id', $id)
+            ->first();
+
+        return view('admin.sell_book_requests.show', compact('requestData', 'logos', 'headerLogo', 'payoutInfo'));
     }
 
     public function approve(Request $request, $id)

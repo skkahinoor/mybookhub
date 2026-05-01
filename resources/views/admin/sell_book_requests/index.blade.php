@@ -32,6 +32,7 @@
                                             <th>Selling Price</th>
                                             <th>Location</th>
                                             <th>Status</th>
+                                            <th>Payout</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -69,6 +70,7 @@
                     {data: 'selling_price', name: 'price', orderable: false, searchable: false},
                     {data: 'location', name: 'user_location_name'},
                     {data: 'status', name: 'admin_approved'},
+                    {data: 'payout', name: 'payout', orderable: false, searchable: false},
                     {data: 'actions', name: 'actions', orderable: false, searchable: false},
                 ],
                 order: [[8, 'asc']] // Default sort by status

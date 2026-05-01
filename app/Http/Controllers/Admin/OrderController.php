@@ -1275,9 +1275,9 @@ class OrderController extends Controller
             return redirect()->back()->with('error_message', 'Invalid payout request.');
         }
 
-        if ($item->item_status !== 'Delivered') {
+        /* if ($item->item_status !== 'Delivered') {
             return redirect()->back()->with('error_message', 'Payout can only be released for delivered items.');
-        }
+        } */
 
         $item->update([
             'vendor_payout_status' => 'Released',

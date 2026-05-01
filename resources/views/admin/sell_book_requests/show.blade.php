@@ -164,6 +164,83 @@
                                     </div>
                                 </div>
                             </div>
+ 
+                            <hr class="my-4">
+ 
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h5 class="mb-4">Bank Details</h5>
+                                    @if($requestData->admin_type === 'vendor')
+                                        @if($requestData->vendor && $requestData->vendor->bank)
+                                            <table class="table table-bordered">
+                                                <tr><th>Account Holder</th><td>{{ $requestData->vendor->bank->account_holder_name ?? 'N/A' }}</td></tr>
+                                                <tr><th>Bank Name</th><td>{{ $requestData->vendor->bank->bank_name ?? 'N/A' }}</td></tr>
+                                                <tr><th>Account Number</th><td>{{ $requestData->vendor->bank->account_number ?? 'N/A' }}</td></tr>
+                                                <tr><th>IFSC Code</th><td>{{ $requestData->vendor->bank->ifsc_code ?? 'N/A' }}</td></tr>
+                                                <tr><th>UPI ID</th><td>{{ $requestData->vendor->bank->upi_id ?? 'N/A' }}</td></tr>
+                                            </table>
+                                        @else
+                                            <div class="alert alert-warning">Vendor bank details not found.</div>
+                                        @endif
+                                    @else
+                                        <table class="table table-bordered">
+                                            <tr><th>Account Holder</th><td>{{ $requestData->user->account_holder_name ?? 'N/A' }}</td></tr>
+                                            <tr><th>Bank Name</th><td>{{ $requestData->user->bank_name ?? 'N/A' }}</td></tr>
+                                            <tr><th>Account Number</th><td>{{ $requestData->user->account_number ?? 'N/A' }}</td></tr>
+                                            <tr><th>IFSC Code</th><td>{{ $requestData->user->ifsc_code ?? 'N/A' }}</td></tr>
+                                            <tr><th>UPI ID</th><td>{{ $requestData->user->upi_id ?? 'N/A' }}</td></tr>
+                                        </table>
+                                    @endif
+                                </div>
+                                <div class="col-md-6">
+                                    <h5 class="mb-4">Payout Information</h5>
+                                    @if(isset($payoutInfo) && $payoutInfo)
+                                        <div class="card bg-light border">
+                                            <div class="card-body">
+                                                <p><strong>Sold in Order:</strong> #{{ $payoutInfo->order_id }}</p>
+                                                <p><strong>Order Status:</strong> {{ $payoutInfo->order->order_status ?? 'N/A' }}</p>
+                                                <p><strong>Item Status:</strong> <span class="badge badge-info">{{ $payoutInfo->item_status }}</span></p>
+                                                <p><strong>Payout Status:</strong> 
+                                                    @if($payoutInfo->vendor_payout_status == 'Released')
+                                                        <span class="badge badge-success">Released</span>
+                                                    @else
+                                                        <span class="badge badge-warning">Pending</span>
+                                                    @endif
+                                                </p>
+                                                
+                                                @php
+                                                    $isAdvancePaid = $payoutInfo->product_attribute->contact_details_paid == 1;
+                                                    $netPayout = $isAdvancePaid ? $payoutInfo->product_price : ($payoutInfo->product_price - $payoutInfo->commission);
+                                                @endphp
+                                                
+                                                <p><strong>Net Payout Amount:</strong> <strong class="text-primary">₹{{ number_format($netPayout, 2) }}</strong></p>
+ 
+                                                @if($payoutInfo->vendor_payout_note)
+                                                    <div class="alert alert-secondary p-2 mt-2">
+                                                        <small><strong>Payout Note:</strong><br>{{ $payoutInfo->vendor_payout_note }}</small>
+                                                    </div>
+                                                @endif
+ 
+                                                @if($payoutInfo->vendor_payout_status != 'Released')
+                                                    <button type="button" class="btn btn-primary mt-3 release-payout-btn" 
+                                                            data-id="{{ $payoutInfo->id }}" 
+                                                            data-name="{{ $payoutInfo->product_name }}"
+                                                            data-amount="{{ $netPayout }}">
+                                                        Release Payment
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="alert alert-info border">
+                                            <i class="mdi mdi-clock-outline mr-1"></i>
+                                            This book has not been sold yet. Payout information will appear here once an order is placed and delivered.
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+ 
+                            <hr class="my-4">
 
                                 @if($requestData->user_old_book_image || $requestData->video_upload)
                                  <div class="row mt-4">
@@ -232,6 +309,50 @@
                 videoPlayer.currentTime = 0;
             }
         });
+ 
+        // Release Payout Modal Logic
+        $('.release-payout-btn').click(function() {
+            var id = $(this).data('id');
+            var name = $(this).data('name');
+            var amount = $(this).data('amount');
+ 
+            $('#payout_item_id').val(id);
+            $('#payout_product_name').text(name);
+            $('#payout_amount').text(amount);
+            $('#releasePayoutModal').modal('show');
+        });
     });
 </script>
 @endsection
+ 
+<!-- Release Payout Modal -->
+<div class="modal fade" id="releasePayoutModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form action="{{ route('admin.release_old_book_payout') }}" method="POST">
+                @csrf
+                <input type="hidden" name="order_item_id" id="payout_item_id">
+                <div class="modal-header">
+                    <h5 class="modal-title">Release Payout</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>You are releasing payment for <strong><span id="payout_product_name"></span></strong>.</p>
+                    <p>Amount to be paid: <strong class="text-primary">₹<span id="payout_amount"></span></strong></p>
+                    
+                    <div class="form-group">
+                        <label for="payout_note">Payout Note (Transaction ID, etc.)</label>
+                        <textarea class="form-control" name="payout_note" id="payout_note" rows="3" placeholder="Enter payout details..." required></textarea>
+                        <small class="text-muted">This information will be visible to the seller.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Payout</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

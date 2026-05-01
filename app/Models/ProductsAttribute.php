@@ -216,5 +216,9 @@ class ProductsAttribute extends Model
             'discount_percent' => round($discount_percent, 2),
         ];
     }
+    public function orders_product()
+    {
+        return $this->hasOne(OrdersProduct::class, 'product_attribute_id');
+    }
 
 }
