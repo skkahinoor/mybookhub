@@ -279,6 +279,9 @@ class SellBookController extends Controller
             'ordered_at' => $order->created_at ? $order->created_at->format('d M Y, h:i A') : null,
             'payment_method' => $order->payment_method,
             'payment_status' => $order->payment_status ?? $order->order_status,
+            'product_price' => round($orderProduct->product_price),
+            'commission' => round($orderProduct->commission),
+            'net_payout' => round($orderProduct->product_price - $orderProduct->commission),
         ];
     }
 
