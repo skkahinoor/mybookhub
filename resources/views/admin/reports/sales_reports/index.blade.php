@@ -94,28 +94,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse ($salesExecutives as $salesExecutive)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $salesExecutive->name }}</td>
-                                                <td>{{ $salesExecutive->phone }}</td>
-                                                <td>
-                                                    @if ($salesExecutive->status)
-                                                        <span class="badge badge-success">Active</span>
-                                                    @else
-                                                        <span class="badge badge-secondary">Inactive</span>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <a href="{{ route('admin.reports.sales_reports.show', $salesExecutive->id) }}"
-                                                        class="btn btn-sm btn-outline-primary">View</a>
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="4" class="text-center text-muted">No sales executives found.</td>
-                                            </tr>
-                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -130,9 +108,31 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            // Optional: enable client-side DataTable (no AJAX)
-            $('#salesReportsTable').DataTable({
-                order: [[0, 'asc']]
+            var table = $('#salesReportsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('admin.reports.sales_reports.index') }}",
+                    data: function(d) {
+                        d.country_id = $('#filter-country').val();
+                        d.state_id = $('#filter-state').val();
+                        d.district_id = $('#filter-district').val();
+                        d.block_id = $('#filter-block').val();
+                    }
+                },
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'name', name: 'users.name'},
+                    {data: 'phone', name: 'users.phone'},
+                    {data: 'status', name: 'sales_executives.status'},
+                    {data: 'action', name: 'action', orderable: false, searchable: false},
+                ],
+                order: [[1, 'asc']]
+            });
+
+            $('#sales-report-filters').on('submit', function(e) {
+                e.preventDefault();
+                table.draw();
             });
         });
     </script>

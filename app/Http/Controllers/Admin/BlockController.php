@@ -12,17 +12,57 @@ use Illuminate\Support\Facades\Session;
 
 class BlockController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         Session::put('page', 'blocks');
 
-        $blocks = Block::with('district.state.country')
-            ->orderBy('id', 'desc')
-            ->get();
+        if ($request->ajax()) {
+            $query = Block::with('district.state.country');
 
-        return view('admin.blocks.index')->with(compact('blocks', 'logos', 'headerLogo'));
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('district', function($row) {
+                    return $row->district->name ?? 'N/A';
+                })
+                ->addColumn('state', function($row) {
+                    return $row->district->state->name ?? 'N/A';
+                })
+                ->addColumn('country', function($row) {
+                    return $row->district->state->country->name ?? 'N/A';
+                })
+                ->addColumn('status', function ($row) {
+                    $status = $row->status ? 'Active' : 'Inactive';
+                    $class = $row->status ? 'status-active' : 'status-inactive';
+                    return '<a href="javascript:void(0)"
+                               class="status-badge ' . $class . '"
+                               id="block-' . $row->id . '"
+                               onclick="updateBlockStatus(' . $row->id . ', \'' . $status . '\')">
+                                ' . $status . '
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) {
+                    $editUrl = route('admin.blocks.edit', $row->id);
+                    return '<a href="' . $editUrl . '" class="btn-action btn-edit">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            <a href="javascript:void(0)" class="btn-action btn-delete"
+                               onclick="confirmDelete(' . $row->id . ', \'' . $row->name . '\')">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                            <form id="delete-block-' . $row->id . '"
+                                  action="' . route('admin.blocks.destroy', $row->id) . '"
+                                  method="POST" style="display:none;">
+                                ' . csrf_field() . '
+                                ' . method_field('DELETE') . '
+                            </form>';
+                })
+                ->rawColumns(['status', 'actions'])
+                ->make(true);
+        }
+
+        return view('admin.blocks.index')->with(compact('logos', 'headerLogo'));
     }
 
     public function create()

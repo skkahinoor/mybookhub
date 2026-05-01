@@ -41,74 +41,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($sections as $key => $section)
-                                            <tr>
-                                                <td>{{ $key + 1 }}</td>
-
-                                                <!-- IMAGE COLUMN -->
-                                                <td>
-                                                    @if (!empty($section['image']))
-                                                        <img src="{{ $section['image'] }}" width="60" height="60"
-                                                            style="object-fit: cover; border-radius: 6px; border:1px solid #ddd;">
-                                                    @else
-                                                        <img src="{{ asset('admin/images/no-image.png') }}" width="60"
-                                                            height="60"
-                                                            style="object-fit: cover; border-radius: 6px; border:1px solid #ddd;">
-                                                    @endif
-                                                </td>
-
-                                                <td>{{ $section['name'] }}</td>
-
-                                                <td>
-                                                    @php
-                                                        $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
-                                                    @endphp
-                                                    @if ($section['status'] == 1)
-                                                        <a class="updateSectionStatus"
-                                                            id="education-level-{{ $section['id'] }}"
-                                                            education_level_id="{{ $section['id'] }}"
-                                                            data-url="{{ route($prefix . '.updateeducationstatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        <a class="updateSectionStatus"
-                                                            id="education-level-{{ $section['id'] }}"
-                                                            education_level_id="{{ $section['id'] }}"
-                                                            data-url="{{ route($prefix . '.updateeducationstatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                status="Inactive"></i>
-                                                        </a>
-                                                    @endif
-                                                </td>
-
-                                                <td>
-                                                    @php
-                                                        $editRoute =
-                                                            $adminType === 'vendor'
-                                                                ? 'vendor.add_edit_education_level'
-                                                                : 'admin.add_edit_education_level';
-                                                    @endphp
-                                                    <a href="{{ route($editRoute, $section['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                    </a>
-
-                                                    @php
-                                                        $deleteRoute =
-                                                            $adminType === 'vendor'
-                                                                ? 'vendor.delete_education'
-                                                                : 'admin.delete_education';
-                                                    @endphp
-                                                    <a href="javascript:void(0)" class="confirmDelete"
-                                                        data-module="Education Level"
-                                                        data-url="{{ route($deleteRoute, $section['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -128,3 +60,22 @@
         <!-- partial -->
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#education-levels').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'image', name: 'image', orderable: false, searchable: false},
+                    {data: 'name', name: 'name'},
+                    {data: 'status', name: 'status'},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ]
+            });
+        });
+    </script>
+@endpush

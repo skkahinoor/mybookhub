@@ -26,36 +26,6 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($queries as $query)
-                                    <tr>
-                                        <td><strong>{{ $query->ticket_id }}</strong></td>
-                                        <td>{{ $query->created_at->format('d-m-Y') }}</td>
-                                        <td>
-                                            {{ $query->user->name }}<br>
-                                            <small>{{ $query->user->email }}</small>
-                                        </td>
-                                        <td>#{{ $query->order_id }}</td>
-                                        <td>{{ $query->orderProduct->product_name ?? 'N/A' }}</td>
-                                        <td>{{ $query->subject }}</td>
-                                        <td>
-                                            <select class="form-control updateQueryStatus" data-query-id="{{ $query->id }}" style="height: 35px; padding: 2px 10px;">
-                                                <option value="pending" @if($query->status == 'pending') selected @endif text-warning>Pending</option>
-                                                <option value="ongoing" @if($query->status == 'ongoing') selected @endif text-info>Ongoing</option>
-                                                <option value="resolved" @if($query->status == 'resolved') selected @endif text-success>Resolved</option>
-                                                <option value="closed" @if($query->status == 'closed') selected @endif text-secondary>Closed</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <a href="{{ url('admin/order-query/reply/'.$query->id) }}" title="Reply/View Detail">
-                                                <i class="mdi mdi-reply" style="font-size: 25px;"></i>
-                                            </a>
-                                            &nbsp;&nbsp;
-                                            <a href="javascript:void(0)" class="confirmDelete" module="order-query" moduleid="{{ $query->id }}" title="Delete Query">
-                                                <i class="mdi mdi-delete" style="font-size: 25px;"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -70,7 +40,24 @@
 @push('scripts')
 <script>
 $(document).ready(function(){
-    $(".updateQueryStatus").change(function(){
+    $('#order_queries').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: "{{ url()->current() }}",
+        columns: [
+            {data: 'ticket_id', name: 'ticket_id'},
+            {data: 'date', name: 'created_at'},
+            {data: 'user_info', name: 'user.name'},
+            {data: 'order_id_formatted', name: 'order_id'},
+            {data: 'product_name', name: 'orderProduct.product_name'},
+            {data: 'subject', name: 'subject'},
+            {data: 'status_dropdown', name: 'status', orderable: false, searchable: false},
+            {data: 'actions', name: 'actions', orderable: false, searchable: false},
+        ],
+        order: [[1, 'desc']]
+    });
+
+    $(document).on("change", ".updateQueryStatus", function(){
         var status = $(this).val();
         var query_id = $(this).attr("data-query-id");
         $.ajax({

@@ -40,65 +40,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($authors as $key => $author)
-                                            <tr>
-                                                <td>{{ __($key + 1) }}</td>
-                                                <td>{{ $author['name'] }}</td>
-                                                <td>
-                                                    @if ($adminType === 'vendor')
-                                                        <a class="updateAuthorStatus" id="author-{{ $author['id'] }}"
-                                                            author_id="{{ $author['id'] }}"
-                                                            data-url="{{ route('vendor.updateauthorstatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        @if ($author['status'] == 1)
-                                                            <a class="updateAuthorStatus" id="author-{{ $author['id'] }}"
-                                                                author_id="{{ $author['id'] }}"
-                                                                data-url="{{ route('admin.updateauthorstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @else
-                                                            {{-- if the admin status is inactive --}}
-                                                            <a class="updateAuthorStatus" id="author-{{ $author['id'] }}"
-                                                                author_id="{{ $author['id'] }}"
-                                                                data-url="{{ route('admin.updateauthorstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @endif
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    @if ($adminType === 'vendor')
-                                                        <a href="{{ route('vendor.edit.author', $author->id) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                        </a>
-                                                        <a href="javascript:void(0)" class="confirmDelete"
-                                                            data-module="author"
-                                                            data-url="{{ route('vendor.delete.author', $author->id) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                        </a>
-                                                    @else
-                                                        <a href="{{ route('admin.edit.author', $author->id) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                        </a>
-                                                        <a href="javascript:void(0)" class="confirmDelete"
-                                                            data-module="author"
-                                                            data-url="{{ route('admin.delete.author', $author->id) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -111,7 +52,7 @@
         <!-- partial:../../partials/_footer.html -->
         <footer class="footer">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
+                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2026. All rights
                     reserved.</span>
             </div>
         </footer>
@@ -128,7 +69,17 @@
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#author').DataTable();
+            $('#author').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'name', name: 'name'},
+                    {data: 'status', name: 'status'},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ]
+            });
         });
     </script>
 @endpush

@@ -37,62 +37,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($ratings as $rating)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>
-                                                    @if (!empty($rating['product_attribute']))
-                                                        <a target="_blank"
-                                                            href="{{ url('product/' . $rating['product_attribute_id']) }}">
-                                                            {{ $rating['product_attribute']['product']['product_name'] ?? 'View Product' }}
-                                                        </a>
-                                                    @else
-                                                        <span class="text-danger">Product attribute not found</span>
-                                                    @endif
-                                                </td>
-
-
-                                                <td>{{ $rating['user']['email'] }}</td>
-                                                <td>{{ $rating['review'] }}</td>
-                                                <td>{{ $rating['rating'] }}</td>
-                                                <td>
-                                                    @if ($adminType === 'vendor')
-                                                        <a class="updateRatingStatus" id="rating-{{ $rating['id'] }}"
-                                                            rating_id="{{ $rating['id'] }}"
-                                                            data-url="{{ route('vendor.updateratingstatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        @if ($rating['status'] == 1)
-                                                            <a class="updateRatingStatus" id="rating-{{ $rating['id'] }}"
-                                                                rating_id="{{ $rating['id'] }}"
-                                                                data-url="{{ route('admin.updateratingstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @else
-                                                            {{-- if the admin status is inactive --}}
-                                                            <a class="updateRatingStatus" id="rating-{{ $rating['id'] }}"
-                                                                rating_id="{{ $rating['id'] }}"
-                                                                data-url="{{ route('admin.updateratingstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @endif
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <a href="javascript:void(0)" class="confirmDelete" data-module="rating"
-                                                        data-url="{{ route('admin.deleteRating', $rating['id']) }}">
-                                                        <i style="font-size:25px" class="mdi mdi-file-excel-box"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -111,4 +55,25 @@
         </footer>
         <!-- partial -->
     </div>
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#ratings').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'product_name', name: 'productAttribute.product.product_name'},
+                    {data: 'user_email', name: 'user.email'},
+                    {data: 'review', name: 'review'},
+                    {data: 'rating', name: 'rating'},
+                    {data: 'status', name: 'status', orderable: false, searchable: false},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ],
+                order: [[0, 'desc']]
+            });
+        });
+    </script>
+@endpush
 @endsection

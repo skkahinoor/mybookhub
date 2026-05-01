@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 class RatingController extends Controller
 {
 
-    public function ratings()
+    public function ratings(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_ratings')) {
             abort(403, 'Unauthorized action.');
@@ -23,10 +23,44 @@ class RatingController extends Controller
 
         Session::put('page', 'ratings');
 
-        $ratings = Rating::with(['user', 'product', 'productAttribute.product', 'productAttribute.product.vendor'])->get()->toArray();
+        if ($request->ajax()) {
+            $query = Rating::with(['user', 'product', 'productAttribute.product', 'productAttribute.product.vendor']);
+
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('product_name', function ($row) {
+                    if (!empty($row->productAttribute)) {
+                        $url = url('product/' . $row->product_attribute_id);
+                        $name = $row->productAttribute->product->product_name ?? 'View Product';
+                        return '<a target="_blank" href="' . $url . '">' . $name . '</a>';
+                    }
+                    return '<span class="text-danger">Product attribute not found</span>';
+                })
+                ->addColumn('user_email', function ($row) {
+                    return $row->user->email ?? 'N/A';
+                })
+                ->addColumn('status', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $url = ($adminType === 'vendor') ? route('vendor.updateratingstatus') : route('admin.updateratingstatus');
+                    $status = $row->status == 1 ? 'Active' : 'Inactive';
+                    $icon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    
+                    return '<a class="updateRatingStatus" id="rating-' . $row->id . '" rating_id="' . $row->id . '" data-url="' . $url . '" href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $icon . '" status="' . $status . '"></i>
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) {
+                    $url = route('admin.deleteRating', $row->id);
+                    return '<a href="javascript:void(0)" class="confirmDelete" data-module="rating" data-url="' . $url . '">
+                                <i style="font-size:25px" class="mdi mdi-file-excel-box"></i>
+                            </a>';
+                })
+                ->rawColumns(['product_name', 'status', 'actions'])
+                ->make(true);
+        }
 
         $adminType = Auth::guard('admin')->user()->type;
-        return view('admin.ratings.ratings')->with(compact('ratings', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.ratings.ratings')->with(compact('logos', 'headerLogo', 'adminType'));
     }
 
 

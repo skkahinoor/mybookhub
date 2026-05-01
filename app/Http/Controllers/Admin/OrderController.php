@@ -33,7 +33,7 @@ class OrderController extends Controller
 
 
     // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel
-    public function orders()
+    public function orders(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_orders')) {
             abort(403, 'Unauthorized action.');
@@ -57,28 +57,67 @@ class OrderController extends Controller
                 return redirect('admin/update-vendor-details/personal')
                     ->with('error_message', 'Your Vendor Account is not approved yet. Please make sure to fill your valid personal, business and bank details.');
             }
+        }
 
-            // Get vendor_id from the vendor relationship
-            $vendor_id = $user->vendor_id; // Using the accessor from User model
+        if ($request->ajax()) {
+            if ($isVendor) {
+                $vendor_id = $user->vendor_id;
+                $data = Order::with(['orders_products' => function ($query) use ($vendor_id) {
+                        $query->where('vendor_id', $vendor_id);
+                    }])
+                    ->whereHas('orders_products', function($query) use ($vendor_id) {
+                        $query->where('vendor_id', $vendor_id);
+                    })
+                    ->orderBy('id', 'Desc');
+            } else {
+                $data = Order::with('orders_products')
+                    ->has('orders_products')
+                    ->orderBy('id', 'Desc');
+            }
 
-            // Show only orders containing this vendor's products
-            $orders = Order::with([
-                'orders_products' => function ($query) use ($vendor_id) {
-                    $query->where('vendor_id', $vendor_id);
-                }
-            ])->orderBy('id', 'Desc')->get()->toArray();
-        } else {
-            // Admin or other roles - show ALL orders
-            $orders = Order::with('orders_products')->orderBy('id', 'Desc')->get()->toArray();
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('id', function ($row) {
+                    return '#' . $row->id;
+                })
+                ->addColumn('created_at', function ($row) {
+                    return date('Y-m-d h:i:s', strtotime($row->created_at));
+                })
+                ->addColumn('ordered_products', function ($row) {
+                    $products = '';
+                    $i = 1;
+                    foreach ($row->orders_products as $product) {
+                        $products .= $i . '. ' . $product->product_name . '(' . $product->product_qty . ')<br>';
+                        $i++;
+                    }
+                    return $products;
+                })
+                ->addColumn('actions', function ($row) use ($isVendor) {
+                    $adminType = $isVendor ? 'vendor' : 'admin';
+                    
+                    return '<a title="View Order Details" href="' . url($adminType . '/orders/' . $row->id) . '">
+                                <i style="font-size: 25px" class="mdi mdi-file-document"></i>
+                            </a>
+                            &nbsp;&nbsp;
+                            <a title="View Order Invoice" href="' . url($adminType . '/orders/invoice/' . $row->id) . '" target="_blank">
+                                <i style="font-size: 25px" class="mdi mdi-printer"></i>
+                            </a>
+                            &nbsp;&nbsp;
+                            <a title="Print PDF Invoice" href="' . url($adminType . '/orders/invoice/pdf/' . $row->id) . '" target="_blank">
+                                <i style="font-size: 25px" class="mdi mdi-file-pdf"></i>
+                            </a>';
+                })
+                ->rawColumns(['ordered_products', 'actions'])
+                ->make(true);
         }
 
         // Pass role information to view
         $adminType = $isVendor ? 'vendor' : ($isAdmin ? 'admin' : 'user');
 
-        return view('admin.orders.orders')->with(compact('orders', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.orders.orders')->with(compact('logos', 'headerLogo', 'adminType'));
     }
 
-    public function returns()
+    public function returns(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_orders')) {
             abort(403, 'Unauthorized action.');
@@ -92,18 +131,48 @@ class OrderController extends Controller
         $isVendor = $user->hasRole('vendor');
         $isAdmin = $user->hasRole('admin');
 
-        $query = OrdersProduct::with(['order'])
-            ->whereNotNull('return_status')
-            ->orderBy('id', 'Desc');
+        if ($request->ajax()) {
+            $query = OrdersProduct::with(['order'])
+                ->whereNotNull('return_status')
+                ->orderBy('id', 'Desc');
 
-        if ($isVendor) {
-            $query->where('vendor_id', $user->vendor_id);
+            if ($isVendor) {
+                $query->where('vendor_id', $user->vendor_id);
+            }
+
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('order_id', function ($row) {
+                    return '#' . $row->order_id;
+                })
+                ->addColumn('created_at', function ($row) {
+                    return date('Y-m-d', strtotime($row->created_at));
+                })
+                ->addColumn('customer_name', function ($row) {
+                    return $row->order->name ?? 'N/A';
+                })
+                ->addColumn('ordered_products', function ($row) {
+                    return $row->product_name . ' (' . $row->product_qty . ')';
+                })
+                ->addColumn('return_reason', function ($row) {
+                    return '<b class="text-danger">' . $row->return_reason . '</b><br><small>' . $row->return_comments . '</small>';
+                })
+                ->addColumn('current_status', function ($row) {
+                    return '<span class="badge badge-warning">' . $row->return_status . '</span><br>Item Status: ' . $row->item_status;
+                })
+                ->addColumn('actions', function ($row) use ($isVendor) {
+                    $adminType = $isVendor ? 'vendor' : 'admin';
+                    return '<a title="View Order Details" href="' . url($adminType . '/orders/' . $row->order_id) . '">
+                                <i style="font-size: 25px" class="mdi mdi-file-document"></i>
+                            </a>';
+                })
+                ->rawColumns(['return_reason', 'current_status', 'actions'])
+                ->make(true);
         }
 
-        $returnItems = $query->get()->toArray();
         $adminType = $isVendor ? 'vendor' : ($isAdmin ? 'admin' : 'user');
 
-        return view('admin.orders.returns')->with(compact('returnItems', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.orders.returns')->with(compact('logos', 'headerLogo', 'adminType'));
     }
 
     // demo code

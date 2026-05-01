@@ -24,40 +24,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($returnItems as $item)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>#{{ $item['order_id'] }}</td>
-                                                <td>{{ date('Y-m-d', strtotime($item['created_at'])) }}</td>
-                                                <td>{{ $item['order']['name'] ?? 'N/A' }}</td>
-                                                <td>
-                                                    {{ $item['product_name'] }} ({{ $item['product_qty'] }})
-                                                </td>
-                                                <td>
-                                                    <b class="text-danger">{{ $item['return_reason'] }}</b>
-                                                    <br>
-                                                    <small>{{ $item['return_comments'] }}</small>
-                                                </td>
-                                                <td>
-                                                    <span class="badge badge-warning">{{ $item['return_status'] }}</span>
-                                                    <br>
-                                                    Item Status: {{ $item['item_status'] }}
-                                                </td>
-                                                <td>
-                                                    @if ($adminType == 'vendor')
-                                                        <a title="View Order Details"
-                                                            href="{{ url('vendor/orders/' . $item['order_id']) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-file-document"></i>
-                                                        </a>
-                                                    @else
-                                                        <a title="View Order Details"
-                                                            href="{{ url('admin/orders/' . $item['order_id']) }}">
-                                                            <i style="font-size: 25px" class="mdi mdi-file-document"></i>
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
+                                    <tbody>
                                     </tbody>
                                 </table>
                             </div>
@@ -82,6 +49,19 @@
             }
 
             $('#returns').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'order_id', name: 'order_id'},
+                    {data: 'created_at', name: 'created_at'},
+                    {data: 'customer_name', name: 'customer_name'},
+                    {data: 'ordered_products', name: 'ordered_products', orderable: false, searchable: false},
+                    {data: 'return_reason', name: 'return_reason'},
+                    {data: 'current_status', name: 'current_status'},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ],
                 "order": [[1, "desc"]],
                 "pageLength": 10,
                 "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
@@ -89,10 +69,7 @@
                     "search": "Search:",
                     "lengthMenu": "Show _MENU_ entries",
                     "info": "Showing _START_ to _END_ of _TOTAL_ entries",
-                },
-                "columnDefs": [
-                    { "orderable": false, "targets": [4, 7] }
-                ]
+                }
             });
         });
     </script>

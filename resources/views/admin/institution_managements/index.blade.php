@@ -601,75 +601,6 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($institutions as $index => $institution)
-                                    <tr>
-                                        <td class="text-center">{{ $index + 1 }}</td>
-                                        <td>
-                                            <strong class="text-dark">{{ $institution->name }}</strong>
-                                        </td>
-                                        <td>
-                                            <span class="type-badge {{ $institution->type }}">
-                                                <i class="fas fa-building"></i>
-                                                {{ \App\Models\Section::find($institution->type)->name ?? ucfirst($institution->type) }}
-                                            </span>
-                                        </td>
-                                        <td>{{ \App\Models\Category::find($institution->board)->category_name ?? $institution->board }}
-                                        </td>
-                                        <td>{{ $institution->principal_name ?? 'N/A' }}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <i class="fas fa-phone text-success"></i>
-                                                <span>{{ $institution->contact_number ?? 'N/A' }}</span>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="location-info">
-                                                <div class="main-location">
-                                                    <i class="fas fa-map-marker-alt text-primary me-1"></i>
-                                                    {{ $institution->state->name ?? 'N/A' }}
-                                                </div>
-                                                <div class="sub-location">
-                                                    {{ $institution->district->name ?? '' }}
-                                                    @if ($institution->block)
-                                                        , {{ $institution->block->name }}
-                                                    @endif
-                                                    , {{ $institution->country->name ?? '' }}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="status-toggle-container">
-                                                <label class="toggle-switch">
-                                                    <input type="checkbox" class="institution-status-toggle"
-                                                        data-institution-id="{{ $institution->id }}"
-                                                        {{ $institution->status == 1 ? 'checked' : '' }}>
-                                                    <span class="toggle-slider"></span>
-                                                </label>
-                                                <span
-                                                    class="status-label {{ $institution->status == 1 ? 'active' : 'inactive' }}">
-                                                    {{ $institution->status == 1 ? 'Active' : 'Inactive' }}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="action-buttons">
-                                                <a href="{{ url('admin/institution-managements/' . $institution->id . '/edit') }}"
-                                                    class="action-btn edit" title="Edit Institution">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <button type="button" class="action-btn view"
-                                                    onclick="viewInstitution({{ $institution->id }})" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button type="button" class="action-btn delete"
-                                                    onclick="confirmDelete({{ $institution->id }})"
-                                                    title="Delete Institution">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
                             </tbody>
                         </table>
                     </div>
@@ -705,6 +636,20 @@
         $(document).ready(function() {
             // Initialize DataTable with refined configuration
             $('#institutionsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'name', name: 'name'},
+                    {data: 'type', name: 'type'},
+                    {data: 'board', name: 'board'},
+                    {data: 'principal_name', name: 'principal_name'},
+                    {data: 'contact', name: 'contact'},
+                    {data: 'location', name: 'location'},
+                    {data: 'status', name: 'status', className: 'text-center', orderable: false, searchable: false},
+                    {data: 'actions', name: 'actions', className: 'text-center', orderable: false, searchable: false},
+                ],
                 "pageLength": 10,
                 "lengthMenu": [
                     [10, 25, 50, -1],
@@ -725,39 +670,6 @@
                         "previous": "Previous"
                     }
                 },
-                "columnDefs": [{
-                        "orderable": false,
-                        "targets": [0, 6, 7]
-                    }, // Disable sorting for #, Status, and Actions
-                    {
-                        "width": "10%",
-                        "targets": 1
-                    }, // Institution Name
-                    {
-                        "width": "15%",
-                        "targets": 2
-                    }, // Type
-                    {
-                        "width": "12%",
-                        "targets": 3
-                    }, // Board
-                    {
-                        "width": "12%",
-                        "targets": 4
-                    }, // Principal Name
-                    {
-                        "width": "12%",
-                        "targets": 5
-                    }, // Contact
-                    {
-                        "width": "20%",
-                        "targets": 5
-                    }, // Location
-                    {
-                        "className": "text-center",
-                        "targets": [0, 6, 7]
-                    }
-                ],
                 "responsive": true,
                 "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
                     '<"row"<"col-sm-12"tr>>' +

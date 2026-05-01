@@ -229,48 +229,6 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($students as $student)
-                                    <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $student->name }}</td>
-                                        <td>{{ $student->roll_number }}</td>
-                                        <td>{{ ucfirst($student->gender) }}</td>
-                                        {{-- <td>{{ $student->class }}</td> --}}
-                                        <td>
-                                            {{ $student->dob ? \Carbon\Carbon::parse($student->dob)->format('d M Y') : 'N/A' }}
-                                        </td>
-                                        <td>
-                                            {{ $student->institution->name ?? 'No Institution' }}
-                                        </td>
-                                        {{-- <td>
-                                            {{ $student->institution->type ?? '-' }}
-                                        </td> --}}
-                                        <td>
-                                            <a class="updateStudentStatus"
-                                               id="student-{{ $student->id }}"
-                                               student_id="{{ $student->id }}"
-                                               data-url="{{ route('admin.students.updateStatus', $student->id) }}"
-                                               href="javascript:void(0)">
-                                                @if($student->status)
-                                                    <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
-                                                @else
-                                                    <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>
-                                                @endif
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <a href="{{ url('admin/students/'.$student->id.'/edit') }}"
-                                               class="btn btn-sm btn-success">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-
-                                            <button onclick="confirmDelete({{ $student->id }})"
-                                                    class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                @endforeach
                             </tbody>
                         </table>
                     </div>
@@ -298,13 +256,22 @@
 <script>
     $(document).ready(function () {
         $('#studentsTable').DataTable({
-            pageLength: 10,
-            ordering: true,
-            searching: true,
-            lengthChange: true
+            processing: true,
+            serverSide: true,
+            ajax: "{{ url()->current() }}",
+            columns: [
+                {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                {data: 'name', name: 'name'},
+                {data: 'roll_number', name: 'roll_number'},
+                {data: 'gender', name: 'gender'},
+                {data: 'dob', name: 'dob'},
+                {data: 'institution', name: 'institution'},
+                {data: 'status', name: 'status', orderable: false, searchable: false},
+                {data: 'actions', name: 'actions', orderable: false, searchable: false},
+            ]
         });
     });
-    </script>
+</script>
 <script>
 function confirmDelete(id) {
     if (confirm("Are you sure you want to delete this student? This action cannot be undone.")) {

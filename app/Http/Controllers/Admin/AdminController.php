@@ -706,7 +706,7 @@ class AdminController extends Controller
         }
     }
 
-    public function admins($type = null)
+    public function admins(Request $request, $type = null)
     { // $type can be: admin, subadmin, vendor
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -755,29 +755,57 @@ class AdminController extends Controller
             Session::put('page', 'view_all');
         }
 
+        if ($request->ajax()) {
+            return \Yajra\DataTables\Facades\DataTables::of($query->with('vendorPersonal'))
+                ->addIndexColumn()
+                ->editColumn('name', function($row) {
+                    return $row->name;
+                })
+                ->addColumn('mobile', function($row) {
+                    return $row->phone;
+                })
+                ->addColumn('image', function ($row) {
+                    if (!empty($row->profile_image)) {
+                        $url = asset('admin/images/photos/' . $row->profile_image);
+                        return '<img src="' . $url . '" alt="Admin Image" style="width: 50px; height: 50px; object-fit: cover;">';
+                    } else {
+                        $url = asset('admin/images/photos/no-image.gif');
+                        return '<img src="' . $url . '" alt="No Image" style="width: 50px; height: 50px; object-fit: cover;">';
+                    }
+                })
+                ->addColumn('status', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $url = ($adminType === 'vendor') ? route('vendor.updateadminstatus') : route('admin.updateadminstatus');
+                    $status = $row->status == 1 ? 'Active' : 'Inactive';
+                    $icon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    
+                    return '<a class="updateAdminStatus" id="admin-' . $row->id . '" admin_id="' . $row->id . '" data-url="' . $url . '" href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $icon . '" status="' . $status . '"></i>
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) {
+                    $html = '<div class="d-flex align-items-center" style="gap: 10px;">';
+                    $html .= '<a href="' . url('admin/add-edit-admin/' . $row->id) . '" title="Edit"><i style="font-size: 20px" class="mdi mdi-pencil"></i></a>';
+                    
+                    if ($row->type == 'vendor') {
+                        $html .= '<a href="' . url('admin/view-vendor-details/' . $row->id) . '" title="View Details"><i style="font-size: 20px" class="mdi mdi-file-document"></i></a>';
+                        
+                        $html .= '<form action="' . route('admin.delete', $row->id) . '" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this admin?\')" style="display:inline;">
+                                    ' . csrf_field() . '
+                                    <button type="submit" style="background:none;border:none;padding:0;"><i class="mdi mdi-delete" style="font-size:20px;color:#e74c3c;"></i></button>
+                                  </form>';
+                    }
+                    
+                    $html .= '</div>';
+                    return $html;
+                })
+                ->rawColumns(['image', 'status', 'actions'])
+                ->make(true);
+        }
+
         $adminType = Auth::guard('admin')->user()->type; // Works via Accessor
 
-        $admins = $query->with('vendorPersonal')
-            ->orderBy('id', 'desc')
-            ->get()
-            ->map(function ($user) {
-                // Map User model to legacy array structure expected by view
-                $arr = $user->toArray();
-                $arr['type'] = $user->type; // uses getTypeAttribute
-                $arr['mobile'] = $user->phone;
-                $arr['image'] = $user->profile_image;
-
-                if ($user->vendorPersonal) {
-                    $arr['vendor_id'] = $user->vendorPersonal->id;
-                } else {
-                    $arr['vendor_id'] = 0;
-                }
-
-                return $arr;
-            })
-            ->toArray();
-
-        return view('admin/admins/admins', compact('admins', 'title', 'logos', 'headerLogo', 'adminType'));
+        return view('admin/admins/admins', compact('title', 'logos', 'headerLogo', 'adminType'));
     }
 
     public function viewVendorDetails($id)
@@ -1110,15 +1138,42 @@ class AdminController extends Controller
         return redirect()->back()->with('success_message', 'Admin/Vendor deleted successfully!');
     }
 
-    public function contactQueries()
+    public function contactQueries(\Illuminate\Http\Request $request)
     {
         Session::put('page', 'contact_queries');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 
-        $queries = ContactUs::with('replies')->orderBy('created_at', 'desc')->get()->toArray();
+        if ($request->ajax()) {
+            $query = ContactUs::query();
 
-        return view('admin/contact_queries/index', compact('queries', 'logos', 'headerLogo'));
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('message_trimmed', function($row) {
+                    return strlen($row->message) > 50 ? substr($row->message, 0, 50) . '...' : $row->message;
+                })
+                ->addColumn('status_dropdown', function($row) {
+                    $html = '<select class="form-control updateStatus" data-query-id="' . $row->id . '" style="width: auto; display: inline-block;">';
+                    $html .= '<option value="pending" ' . ($row->status == 'pending' ? 'selected' : '') . '>Pending</option>';
+                    $html .= '<option value="in_progress" ' . ($row->status == 'in_progress' ? 'selected' : '') . '>In Progress</option>';
+                    $html .= '<option value="resolved" ' . ($row->status == 'resolved' ? 'selected' : '') . '>Resolved</option>';
+                    $html .= '</select>';
+                    return $html;
+                })
+                ->addColumn('date', function($row) {
+                    return date('Y-m-d H:i:s', strtotime($row->created_at));
+                })
+                ->addColumn('actions', function($row) {
+                    $deleteUrl = route('admin.delete.contact.query', $row->id);
+                    $html = '<a href="' . $deleteUrl . '" onclick="return confirm(\'Are you sure you want to delete this query?\')" title="Delete">';
+                    $html .= '<i style="font-size:25px;" class="mdi mdi-file-excel-box"></i></a>';
+                    return $html;
+                })
+                ->rawColumns(['status_dropdown', 'actions'])
+                ->make(true);
+        }
+
+        return view('admin/contact_queries/index', compact('logos', 'headerLogo'));
     }
 
     public function updateContactStatus(Request $request)

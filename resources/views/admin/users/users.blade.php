@@ -43,38 +43,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($users as $user)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $user['name'] }}</td>
-                                                <td>{{ $user['address'] }}</td>
-                                                <td>{{ $user['city'] }}</td>
-                                                <td>{{ $user['state'] }}</td>
-                                                <td>{{ $user['country'] }}</td>
-                                                <td>{{ $user['pincode'] }}</td>
-                                                <td>{{ $user['mobile'] }}</td>
-                                                <td>{{ $user['email'] }}</td>
-                                                <td>
-                                                    @if ($adminType === 'vendor')
-                                                        <a class="updateUserStatus" id="user-{{ $user['id'] }}" user_id="{{ $user['id'] }}" data-url="{{ route('vendor.updateuserstatus') }}" href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i>
-                                                        </a>
-                                                    @else   
-                                                    @if ($user['status'] == 1)
-                                                        <a class="updateUserStatus" id="user-{{ $user['id'] }}" user_id="{{ $user['id'] }}" data-url="{{ route('admin.updateuserstatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @else {{-- if the admin status is inactive --}}
-                                                        <a class="updateUserStatus" id="user-{{ $user['id'] }}" user_id="{{ $user['id'] }}" data-url="{{ route('admin.updateuserstatus') }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @endif
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
-
-
                                     </tbody>
                                 </table>
                             </div>
@@ -93,3 +61,27 @@
         <!-- partial -->
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#users').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'name', name: 'name'},
+                    {data: 'address', name: 'address'},
+                    {data: 'city', name: 'city'},
+                    {data: 'state', name: 'state'},
+                    {data: 'country', name: 'country'},
+                    {data: 'pincode', name: 'pincode'},
+                    {data: 'mobile', name: 'mobile'},
+                    {data: 'email', name: 'email'},
+                    {data: 'status', name: 'status'},
+                ]
+            });
+        });
+    </script>
+@endpush

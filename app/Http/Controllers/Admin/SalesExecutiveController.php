@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Auth;
 
 class SalesExecutiveController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_sales')) {
             abort(403, 'Unauthorized action.');
@@ -26,14 +26,41 @@ class SalesExecutiveController extends Controller
         Session::put('page', 'view_sales');
         $title = 'Sales Executives';
 
-        // Fetch Users with role 'sales' from the 'web' guard
-        $salesExecutives = User::role('sales', 'web')->with('salesExecutive')->orderBy('id', 'desc')->get();
-        // Map to structure expected by view if necessary (or update view to use user->salesExecutive relationship)
-        // Assuming view uses $sales->name, $sales->email, $sales->status directly on the object iterated.
-        // User has name, email, status. So it should be fine.
-        // But some fields like 'city', 'total_target' are in profile.
+        if ($request->ajax()) {
+            $data = User::role('sales', 'web')->with('salesExecutive')->orderBy('id', 'desc');
 
-        return view('admin.salesexecutives.index', compact('salesExecutives', 'title', 'logos', 'headerLogo'));
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('status', function ($row) {
+                    if ($row->status == 1) {
+                        return '<span class="badge bg-success status-icon text-white"><i class="mdi mdi-check"></i></span>';
+                    } else {
+                        return '<span class="badge bg-danger status-icon text-white"><i class="mdi mdi-close"></i></span>';
+                    }
+                })
+                ->addColumn('actions', function ($row) {
+                    return '<div class="d-flex align-items-center" style="gap: 10px;">
+                                <a href="javascript:void(0)" class="view-sales-executive"
+                                    data-id="' . $row->id . '" title="View Details">
+                                    <i style="font-size: 20px; color: #a71d84;" class="mdi mdi-eye"></i>
+                                </a>
+                                <a href="' . route('sales_executives.add_edit', $row->id) . '"
+                                    title="Edit">
+                                    <i style="font-size: 20px" class="mdi mdi-pencil"></i>
+                                </a>
+                                <a href="' . route('sales_executives.delete', $row->id) . '"
+                                    title="Delete"
+                                    onclick="return confirm(\'Delete this sales executive?\');">
+                                    <i style="font-size: 20px; color: #e74c3c;"
+                                        class="mdi mdi-delete"></i>
+                                </a>
+                            </div>';
+                })
+                ->rawColumns(['status', 'actions'])
+                ->make(true);
+        }
+
+        return view('admin.salesexecutives.index', compact('title', 'logos', 'headerLogo'));
     }
 
     public function addEdit(Request $request, $id = null)

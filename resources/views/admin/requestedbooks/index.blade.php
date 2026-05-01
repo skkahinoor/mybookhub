@@ -65,92 +65,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($bookRequests as $key => $book)
-                                            <tr>
-                                                <td>{{ $key + 1 }}</td>
-                                                <td>{{ $book['book_title'] }}</td>
-                                                <td>{{ $book['author_name'] }}</td>
-                                                <td>{{ $book['message'] }}</td>
-                                                <td>{{ $book->user->name ?? 'User not found' }}</td>
-                                                <td>
-                                                    {{ $book->vendor->vendorbusinessdetails->shop_name ?? $book->vendor->user->name ?? 'N/A' }}
-                                                </td>
-                                                <td>
-                                                    @if($book->user_location_name)
-                                                        <span title="{{ $book->user_location_name }}">
-                                                            {{ Str::limit($book->user_location_name, 30) }}
-                                                        </span>
-                                                        @if($book->user_location)
-                                                            <br>
-                                                            <a href="https://www.google.com/maps/search/?api=1&query={{ $book->user_location }}" target="_blank" style="font-size: 11px;">
-                                                                📍 View Map
-                                                            </a>
-                                                        @endif
-                                                    @else
-                                                        <span class="text-muted">N/A</span>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    @php
-                                                        $status = $book['status'];
-                                                        $badgeClass = 'secondary';
-                                                        $statusLabel = ucfirst(str_replace('_', ' ', $status));
-                                                        
-                                                        if($status == 'awaiting_response') { $badgeClass = 'warning'; $statusLabel = '🟡 Awaiting Response'; }
-                                                        elseif($status == 'vendor_replied') { $badgeClass = 'info'; $statusLabel = '🔵 Vendor Replied'; }
-                                                        elseif($status == 'available') { $badgeClass = 'success'; $statusLabel = '🟢 Available'; }
-                                                        elseif($status == 'not_available') { $badgeClass = 'danger'; $statusLabel = '🔴 Not Available'; }
-                                                    @endphp
-                                                    <span class="badge badge-{{ $badgeClass }}" style="padding: 6px 10px; font-weight: 600;">{{ $statusLabel }}</span>
-                                                </td>
-                                                <td>
-                                                    {{-- @if ($adminType !== 'vendor')
-                                                        <a href="{{ url('admin/requestedbooks/reply/' . $book['id']) }}"
-                                                            title="Reply">
-                                                            <i style="font-size:25px;" class="mdi mdi-reply"></i>
-                                                        </a>
-                                                    @endif --}}
-                                                    @php
-                                                        $replyRoute = ($adminType === 'vendor') ? 'vendor.requestbook.reply' : 'requestbook.reply';
-                                                    @endphp
-                                                    <a href="{{ route($replyRoute, $book['id']) }}"
-                                                        title="Reply">
-                                                        <i class="mdi mdi-reply icon-action"></i>
-                                                    </a>
-
-                                                    @if ($adminType === 'vendor')
-                                                        <form
-                                                            action="{{ route('vendor.bookrequests.delete', $book['id']) }}"
-                                                            method="POST" style="display:inline;"
-                                                            onsubmit="return confirm('Are you sure you want to delete this request?')">
-                                                            @csrf
-                                                            @method('DELETE')
-
-                                                            <button type="submit"
-                                                                style="background:none;border:none;padding:0;">
-                                                                <i style="color:red;"
-                                                                    class="mdi mdi-file-excel-box"></i>
-                                                            </button>
-                                                        </form>
-                                                    @else
-                                                        {{-- ADMIN DASHBOARD DELETE --}}
-                                                        <form
-                                                            action="{{ route('admin.bookrequests.delete', $book['id']) }}"
-                                                            method="POST" style="display:inline;"
-                                                            onsubmit="return confirm('Are you sure you want to delete this request?')">
-                                                            @csrf
-                                                            @method('DELETE')
-
-                                                            <button type="submit"
-                                                                style="background:none;border:none;padding:0;">
-                                                                <i style="color:red;"
-                                                                    class="mdi mdi-file-excel-box"></i>
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -173,7 +87,23 @@
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#request').DataTable();
+            $('#request').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'book_title', name: 'book_title'},
+                    {data: 'author_name', name: 'author_name'},
+                    {data: 'message', name: 'message'},
+                    {data: 'requested_by', name: 'user.name'},
+                    {data: 'target_vendor', name: 'vendor.user.name'},
+                    {data: 'location', name: 'user_location_name'},
+                    {data: 'status', name: 'status'},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ],
+                order: [[0, 'desc']]
+            });
         });
     </script>
     <script>

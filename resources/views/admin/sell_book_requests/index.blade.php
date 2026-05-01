@@ -16,6 +16,7 @@
                                         <span aria-hidden="true">&times;</span>
                                     </button>
                                 </div>
+
                             @endif
 
                             <div class="table-responsive pt-3">
@@ -35,105 +36,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($requests as $key => $request)
-                                            <tr>
-                                                <td>{{ $key + 1 }}</td>
-
-                                                {{-- Type badge --}}
-                                                <td>
-                                                    @if($request->admin_type === 'vendor')
-                                                        <span class="badge badge-warning">Vendor</span>
-                                                    @else
-                                                        <span class="badge badge-info">User</span>
-                                                    @endif
-                                                </td>
-
-                                                {{-- Seller name --}}
-                                                <td>
-                                                    @if($request->admin_type === 'vendor')
-                                                        {{-- Vendor listing --}}
-                                                        @if($request->vendor && $request->vendor->user)
-                                                            {{ $request->vendor->user->name ?? 'Vendor #'.$request->vendor_id }}
-                                                            <br><small class="text-muted">{{ $request->vendor->user->email ?? '' }}</small>
-                                                        @else
-                                                            Vendor ID: {{ $request->vendor_id }}
-                                                        @endif
-                                                    @elseif($request->user)
-                                                        {{-- User/student listing --}}
-                                                        {{ $request->user->name }}
-                                                        <br><small class="text-muted">{{ $request->user->email }}</small>
-                                                    @else
-                                                        N/A
-                                                    @endif
-                                                </td>
-
-                                                <td>{{ $request->product->product_name ?? 'N/A' }}</td>
-                                                <td>{{ $request->product->product_isbn ?? 'N/A' }}</td>
-                                                <td>
-                                                    @if($request->condition)
-                                                        <span class="badge badge-info">{{ $request->condition->name }}</span>
-                                                    @else
-                                                        N/A
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    @php
-                                                        $finalPrice = $request->price;
-                                                        if (!$finalPrice && $request->product && $request->product->product_price > 0) {
-                                                            if ($request->condition) {
-                                                                $finalPrice = ($request->product->product_price * $request->condition->percentage) / 100;
-                                                            } else {
-                                                                $finalPrice = $request->product->product_price;
-                                                            }
-                                                        }
-                                                    @endphp
-                                                    &#8377;{{ $finalPrice ?? 'N/A' }}
-                                                </td>
-                                                <td class="text-muted">
-                                                    @if($request->user_location_name)
-                                                        <div style="font-size: 13px; line-height: 1.2; margin-bottom: 4px;">
-                                                            {{ Str::limit($request->user_location_name, 40) }}
-                                                        </div>
-                                                        @if($request->user_location)
-                                                            <a href="https://www.google.com/maps?q={{ $request->user_location }}" target="_blank"
-                                                               class="text-primary font-weight-bold" style="font-size: 12px; text-decoration: none;">
-                                                                <i class="mdi mdi-map-marker text-danger"></i> View Map
-                                                            </a>
-                                                        @endif
-                                                    @else
-                                                        <span class="text-muted italic">N/A</span>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    @if($request->admin_approved == 1)
-                                                        <span class="badge badge-success">Approved</span>
-                                                    @else
-                                                        <span class="badge badge-warning">Pending</span>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                     <a href="{{ route('admin.sell-book-requests.show', $request->id) }}"
-                                                      class="btn btn-sm btn-outline-primary">
-                                                            View
-                                                      </a>
-                                                    {{-- @if($request->admin_approved == 0)
-                                                        <form action="{{ route('admin.sell-book-requests.approve', $request->id) }}" method="POST" style="display:inline;">
-                                                            @csrf
-                                                            <button type="submit" class="btn btn-link p-0" title="Approve" onclick="return confirm('Approve this listing?')">
-                                                                <i style="font-size: 25px" class="mdi mdi-check-circle text-success"></i>
-                                                            </button>
-                                                        </form>
-                                                    @endif --}}
-                                                    <form action="{{ route('admin.sell-book-requests.reject', $request->id) }}" method="POST" style="display:inline;">
-                                                     @csrf
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Reject and delete this request?')">
-                                                     Reject
-                                                    </button>
-                                                     </form>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody> 
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -148,3 +51,28 @@
         </footer>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#sell_requests').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'type', name: 'admin_type'},
+                    {data: 'seller_name', name: 'seller_name', orderable: false, searchable: false},
+                    {data: 'book_name', name: 'product.product_name'},
+                    {data: 'isbn', name: 'product.product_isbn'},
+                    {data: 'book_condition', name: 'condition.name', orderable: false},
+                    {data: 'selling_price', name: 'price', orderable: false, searchable: false},
+                    {data: 'location', name: 'user_location_name'},
+                    {data: 'status', name: 'admin_approved'},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ],
+                order: [[8, 'asc']] // Default sort by status
+            });
+        });
+    </script>
+@endpush

@@ -31,78 +31,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($orders as $key => $order)
-                                            @if ($order['orders_products'])
-                                                <tr>
-                                                    <td>{{ $loop->iteration }}</td>
-                                                    <td>#{{ $order['id'] }}</td>
-                                                    <td>{{ date('Y-m-d h:i:s', strtotime($order['created_at'])) }}</td>
-                                                    <td>{{ $order['name'] }}</td>
-                                                    <td>{{ $order['email'] }}</td>
-                                                    <td>
-                                                        @foreach ($order['orders_products'] as $product)
-                                                            {{ $loop->iteration }}.
-                                                            {{ $product['product_name'] }}({{ $product['product_qty'] }})
-                                                            <br>
-                                                        @endforeach
-                                                    </td>
-                                                    <td>{{ $order['grand_total'] }}</td>
-                                                    <td>{{ $order['order_status'] }}</td>
-                                                    <td>{{ $order['payment_method'] }}</td>
-                                                    <td>
-                                                        @if ($adminType == 'vendor')
-                                                            <a title="View Order Details"
-                                                                href="{{ url('vendor/orders/' . $order['id']) }}">
-                                                                <i style="font-size: 25px"
-                                                                    class="mdi mdi-file-document"></i>
-                                                            </a>
-                                                            &nbsp;&nbsp;
-
-                                                            {{-- View HTML invoice --}}
-                                                            <a title="View Order Invoice"
-                                                                href="{{ url('vendor/orders/invoice/' . $order['id']) }}"
-                                                                target="_blank">
-                                                                <i style="font-size: 25px" class="mdi mdi-printer"></i>
-                                                                {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                            &nbsp;&nbsp;
-
-                                                            {{-- View PDF invoice --}}
-                                                            <a title="Print PDF Invoice"
-                                                                href="{{ url('vendor/orders/invoice/pdf/' . $order['id']) }}"
-                                                                target="_blank">
-                                                                <i style="font-size: 25px" class="mdi mdi-file-pdf"></i>
-                                                                {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @else
-                                                            <a title="View Order Details"
-                                                                href="{{ url('admin/orders/' . $order['id']) }}">
-                                                                <i style="font-size: 25px"
-                                                                    class="mdi mdi-file-document"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                            &nbsp;&nbsp;
-
-                                                            {{-- View HTML invoice --}}
-                                                            <a title="View Order Invoice"
-                                                                href="{{ url('admin/orders/invoice/' . $order['id']) }}"
-                                                                target="_blank">
-                                                                <i style="font-size: 25px" class="mdi mdi-printer"></i>
-                                                                {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                            &nbsp;&nbsp;
-
-                                                            {{-- View PDF invoice --}}
-                                                            <a title="Print PDF Invoice"
-                                                                href="{{ url('admin/orders/invoice/pdf/' . $order['id']) }}"
-                                                                target="_blank">
-                                                                <i style="font-size: 25px" class="mdi mdi-file-pdf"></i>
-                                                                {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -133,6 +61,21 @@
 
             // Initialize DataTable
             $('#orders').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'id', name: 'id'},
+                    {data: 'created_at', name: 'created_at'},
+                    {data: 'name', name: 'name'},
+                    {data: 'email', name: 'email'},
+                    {data: 'ordered_products', name: 'ordered_products', orderable: false, searchable: false},
+                    {data: 'grand_total', name: 'grand_total'},
+                    {data: 'order_status', name: 'order_status'},
+                    {data: 'payment_method', name: 'payment_method'},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ],
                 "order": [
                     [1, "desc"]
                 ], // Sort by Order ID (column 1) descending - latest first
@@ -153,16 +96,7 @@
                         "next": "Next",
                         "previous": "Previous"
                     }
-                },
-                "columnDefs": [{
-                        "orderable": false,
-                        "targets": [5, 9]
-                    }, // Disable sorting on Ordered Products and Actions columns
-                    {
-                        "searchable": false,
-                        "targets": [9]
-                    } // Disable search on Actions column
-                ]
+                }
             });
         });
 

@@ -42,68 +42,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($publishers as $key => $publisher)
-                                            <tr>
-                                                <td>{{ __($key + 1) }}</td>
-                                                <td>{{ $publisher['name'] }}</td>
-                                                <td>
-                                                    @if ($adminType === 'vendor')
-                                                        @if ($publisher['status'] == 1)
-                                                            <a class="updatePublisherStatus"
-                                                                id="publisher-{{ $publisher['id'] }}"
-                                                                publisher_id="{{ $publisher['id'] }}"
-                                                                data-url="{{ route('vendor.updatepublisherstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i>
-                                                            </a>
-                                                        @else
-                                                            <a class="updatePublisherStatus"
-                                                                id="publisher-{{ $publisher['id'] }}"
-                                                                publisher_id="{{ $publisher['id'] }}"
-                                                                data-url="{{ route('vendor.updatepublisherstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i>
-                                                            </a>
-                                                        @endif
-                                                    @else
-                                                        @if ($publisher['status'] == 1)
-                                                            <a class="updatePublisherStatus"
-                                                                id="publisher-{{ $publisher['id'] }}"
-                                                                publisher_id="{{ $publisher['id'] }}"
-                                                                data-url="{{ route('admin.updatepublisherstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i>
-                                                            </a>
-                                                        @else
-                                                            <a class="updatePublisherStatus"
-                                                                id="publisher-{{ $publisher['id'] }}"
-                                                                publisher_id="{{ $publisher['id'] }}"
-                                                                data-url="{{ route('admin.updatepublisherstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i>
-                                                            </a>
-                                                        @endif
-                                                    @endif
-                                                </td>
-
-                                                <td>
-                                                    @php $prefix = $adminType === 'vendor' ? 'vendor' : 'admin'; @endphp
-                                                    <a
-                                                        href="{{ url($prefix . '/add-edit-publisher/' . $publisher['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                    </a>
-                                                    <a href="javascript:void(0)" class="confirmDelete"
-                                                        data-module="publisher"
-                                                        data-url="{{ url($prefix . '/delete-publisher/' . $publisher['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -133,7 +71,17 @@
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#publisher').DataTable();
+            $('#publisher').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'name', name: 'name'},
+                    {data: 'status', name: 'status'},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ]
+            });
         });
     </script>
 @endsection

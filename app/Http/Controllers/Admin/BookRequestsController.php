@@ -22,7 +22,7 @@ class BookRequestsController extends Controller
     {
         $this->firebaseService = $firebaseService;
     }
-    public function index()
+    public function index(Request $request)
     {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
@@ -30,25 +30,73 @@ class BookRequestsController extends Controller
         $adminType = Auth::guard('admin')->user()->type;
         $adminVendorId = Auth::guard('admin')->user()->vendor_id;
 
-        $bookRequestsQuery = BookRequest::with(['user', 'vendor.user', 'vendor.vendorbusinessdetails']);
-        if ($adminType === 'vendor') {
-            $vendor = \App\Models\Vendor::with('user')->find($adminVendorId);
-            $districtId = $vendor->user->district_id ?? null;
-            
-            $bookRequestsQuery->where(function($q) use ($adminVendorId, $districtId) {
-                $q->where('vendor_id', $adminVendorId);
-                if ($districtId) {
-                    $q->orWhere(function($sq) use ($districtId) {
-                        $sq->whereNull('vendor_id')->where('district_id', $districtId);
-                    });
-                }
-            })->whereDoesntHave('replies', function($q) use ($adminVendorId) {
-                $q->where('vendor_id', $adminVendorId)->where('is_ended', true);
-            });
-        }
-        $bookRequests = $bookRequestsQuery->orderBy('id', 'desc')->get();
+        if ($request->ajax()) {
+            $bookRequestsQuery = BookRequest::with(['user', 'vendor.user', 'vendor.vendorbusinessdetails']);
 
-        return view('admin.requestedbooks.index', compact('bookRequests', 'logos', 'headerLogo', 'adminType'));
+            if ($adminType === 'vendor') {
+                $vendor = \App\Models\Vendor::with('user')->find($adminVendorId);
+                $districtId = $vendor->user->district_id ?? null;
+                
+                $bookRequestsQuery->where(function($q) use ($adminVendorId, $districtId) {
+                    $q->where('vendor_id', $adminVendorId);
+                    if ($districtId) {
+                        $q->orWhere(function($sq) use ($districtId) {
+                            $sq->whereNull('vendor_id')->where('district_id', $districtId);
+                        });
+                    }
+                })->whereDoesntHave('replies', function($q) use ($adminVendorId) {
+                    $q->where('vendor_id', $adminVendorId)->where('is_ended', true);
+                });
+            }
+
+            return \Yajra\DataTables\Facades\DataTables::of($bookRequestsQuery)
+                ->addIndexColumn()
+                ->addColumn('requested_by', function ($row) {
+                    return $row->user->name ?? 'User not found';
+                })
+                ->addColumn('target_vendor', function ($row) {
+                    return $row->vendor->vendorbusinessdetails->shop_name ?? $row->vendor->user->name ?? 'N/A';
+                })
+                ->addColumn('location', function ($row) {
+                    if ($row->user_location_name) {
+                        $html = '<span title="' . $row->user_location_name . '">' . \Str::limit($row->user_location_name, 30) . '</span>';
+                        if ($row->user_location) {
+                            $html .= '<br><a href="https://www.google.com/maps/search/?api=1&query=' . $row->user_location . '" target="_blank" style="font-size: 11px;">📍 View Map</a>';
+                        }
+                        return $html;
+                    }
+                    return '<span class="text-muted">N/A</span>';
+                })
+                ->editColumn('status', function ($row) {
+                    $status = $row->status;
+                    $badgeClass = 'secondary';
+                    $statusLabel = ucfirst(str_replace('_', ' ', $status));
+                    
+                    if($status == 'awaiting_response') { $badgeClass = 'warning'; $statusLabel = '🟡 Awaiting Response'; }
+                    elseif($status == 'vendor_replied') { $badgeClass = 'info'; $statusLabel = '🔵 Vendor Replied'; }
+                    elseif($status == 'available') { $badgeClass = 'success'; $statusLabel = '🟢 Available'; }
+                    elseif($status == 'not_available') { $badgeClass = 'danger'; $statusLabel = '🔴 Not Available'; }
+                    
+                    return '<span class="badge badge-' . $badgeClass . '" style="padding: 6px 10px; font-weight: 600;">' . $statusLabel . '</span>';
+                })
+                ->addColumn('actions', function ($row) use ($adminType) {
+                    $replyRoute = ($adminType === 'vendor') ? 'vendor.requestbook.reply' : 'requestbook.reply';
+                    $deleteRoute = ($adminType === 'vendor') ? 'vendor.bookrequests.delete' : 'admin.bookrequests.delete';
+                    
+                    $html = '<a href="' . route($replyRoute, $row->id) . '" title="Reply"><i class="mdi mdi-reply icon-action"></i></a>';
+                    
+                    $html .= '<form action="' . route($deleteRoute, $row->id) . '" method="POST" style="display:inline;" onsubmit="return confirm(\'Are you sure you want to delete this request?\')">
+                                ' . csrf_field() . '
+                                ' . method_field('DELETE') . '
+                                <button type="submit" style="background:none;border:none;padding:0;"><i style="color:red; font-size: 22px;" class="mdi mdi-file-excel-box"></i></button>
+                              </form>';
+                    return $html;
+                })
+                ->rawColumns(['location', 'status', 'actions'])
+                ->make(true);
+        }
+
+        return view('admin.requestedbooks.index', compact('logos', 'headerLogo', 'adminType'));
     }
 
     public function reply(Request $request, $id)

@@ -16,18 +16,37 @@ class FilterController extends Controller
 
 
 
-    public function filters() {
+    public function filters(Request $request) {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'filters');
 
+        if ($request->ajax()) {
+            $query = ProductsFilter::query();
 
-        $filters = ProductsFilter::get()->toArray();
-        // dd($filters);
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('categories', function ($row) {
+                    $catIds = explode(',', $row->cat_ids);
+                    $names = [];
+                    foreach ($catIds as $catId) {
+                        $names[] = \App\Models\Category::getCategoryName($catId);
+                    }
+                    return implode(', ', $names);
+                })
+                ->addColumn('status', function ($row) {
+                    $status = $row->status == 1 ? 'Active' : 'Inactive';
+                    $icon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    return '<a class="updateFilterStatus" id="filter-' . $row->id . '" filter_id="' . $row->id . '" href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $icon . '" status="' . $status . '"></i>
+                            </a>';
+                })
+                ->rawColumns(['status'])
+                ->make(true);
+        }
 
-
-        return view('admin.filters.filters')->with(compact('filters', 'logos', 'headerLogo'));
+        return view('admin.filters.filters')->with(compact('logos', 'headerLogo'));
     }
 
     public function updateFilterStatus(Request $request) { // Update Filter Status using AJAX in filters.blade.php
@@ -80,18 +99,32 @@ class FilterController extends Controller
         return view('admin.filters.filters_values', compact('filters_values', 'logos', 'headerLogo'));
     }
 
-    public function filtersValues() {
+    public function filtersValues(Request $request) {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'filters');
 
+        if ($request->ajax()) {
+            $query = ProductsFiltersValue::query();
 
-        $filters_values = ProductsFiltersValue::get()->toArray();
-        // dd($filters);
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('filter_name', function ($row) {
+                    return \App\Models\ProductsFilter::getFilterName($row->filter_id);
+                })
+                ->addColumn('status', function ($row) {
+                    $status = $row->status == 1 ? 'Active' : 'Inactive';
+                    $icon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    return '<a class="updateFilterValueStatus" id="filter-' . $row->id . '" filter_id="' . $row->id . '" href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $icon . '" status="' . $status . '"></i>
+                            </a>';
+                })
+                ->rawColumns(['status'])
+                ->make(true);
+        }
 
-
-        return view('admin.filters.filters_values')->with(compact('filters_values', 'logos', 'headerLogo'));
+        return view('admin.filters.filters_values')->with(compact('logos', 'headerLogo'));
     }
 
     public function addEditFilter(Request $request, $id = null) { // If the $id is not passed, this means 'Add a Filter', but if it's passed, this means 'Edit the Filter'

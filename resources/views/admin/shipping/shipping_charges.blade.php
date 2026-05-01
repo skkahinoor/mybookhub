@@ -37,65 +37,7 @@
                                     </thead>
                                     <tbody>
 
-                                        @foreach ($shippingCharges as $shipping)
-                                            <tr>
-                                                <td>{{ $shipping['id'] }}</td>
-                                                <td>{{ $shipping['country'] }}</td>
-                                                <td>{{ $shipping['0_500g'] }}</td>
-                                                <td>{{ $shipping['501g_1000g'] }}</td>
-                                                <td>{{ $shipping['1001_2000g'] }}</td>
-                                                <td>{{ $shipping['2001g_5000g'] }}</td>
-                                                <td>{{ $shipping['above_5000g'] }}</td>
-                                                <td>
-                                                    @if ($adminType === 'vendor')
-                                                        <a class="updateShippingStatus" id="shipping-{{ $shipping['id'] }}"
-                                                            shipping_id="{{ $shipping['id'] }}"
-                                                            data-url="{{ route('vendor.updateshippingstatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        @if ($shipping['status'] == 1)
-                                                            <a class="updateShippingStatus"
-                                                                id="shipping-{{ $shipping['id'] }}"
-                                                                shipping_id="{{ $shipping['id'] }}"
-                                                                data-url="{{ route('admin.updateshippingstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @else
-                                                            {{-- if the admin status is inactive --}}
-                                                            <a class="updateShippingStatus"
-                                                                id="shipping-{{ $shipping['id'] }}"
-                                                                shipping_id="{{ $shipping['id'] }}"
-                                                                data-url="{{ route('admin.updateshippingstatus') }}"
-                                                                href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                            </a>
-                                                        @endif
-                                                    @endif
-                                                </td>
-
-                                                <td>
-                                                    <a href="{{ url('admin/edit-shipping-charges/' . $shipping['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
-                                                    </a>
-
-                                                    {{-- Confirm Deletion JS alert and Sweet Alert --}}
-                                                    {{-- <a title="Shipping" class="confirmDelete" href="{{ url('admin/delete-shipping/' . $shipping['id']) }}"> --}}
-                                                    {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}} {{-- Icons from Skydash Admin Panel Template --}}
-                                                    {{-- </a> --}}
-                                                    {{-- <a href="JavaScript:void(0)" class="confirmDelete" module="shipping" moduleid="{{ $shipping['id'] }}"> --}}
-                                                    {{--  <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}} {{-- Icons from Skydash Admin Panel Template --}}
-                                                    {{-- </a> --}}
-                                                </td>
-                                            </tr>
-                                        @endforeach
-
+                                    <tbody>
                                     </tbody>
                                 </table>
                             </div>
@@ -154,3 +96,26 @@
     </div>
 
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#shipping').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'id', name: 'id'},
+                    {data: 'country', name: 'country'},
+                    {data: '0_500g', name: '0_500g'},
+                    {data: '501g_1000g', name: '501g_1000g'},
+                    {data: '1001_2000g', name: '1001_2000g'},
+                    {data: '2001g_5000g', name: '2001g_5000g'},
+                    {data: 'above_5000g', name: 'above_5000g'},
+                    {data: 'status', name: 'status', orderable: false, searchable: false},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ]
+            });
+        });
+    </script>
+@endpush

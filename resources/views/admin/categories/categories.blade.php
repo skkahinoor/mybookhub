@@ -50,70 +50,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($categories as $key => $category)
-                                            {{-- @php echo '<pre>', var_dump($category['parent_category']), '</pre>'; @endphp --}}
-                                            @if (isset($category['parent_category']['category_name']) && !empty($category['parent_category']['category_name']))
-                                                @php $parent_category = $category['parent_category']['category_name']; @endphp
-                                            @else
-                                                @php $parent_category = 'Root'; @endphp
-                                            @endif
-                                            <tr>
-                                                <td>{{ __($key + 1) }}</td>
-                                                <td>
-                                                    @if (!empty($category['category_icon']))
-                                                        <img src="{{ asset('admin/images/category_icons/' . $category['category_icon']) }}"
-                                                            style="width: 50px; height: 50px;">
-                                                    @else
-                                                        No Icon
-                                                    @endif
-                                                </td>
-                                                <td>{{ $category['category_name'] }}</td>
-                                                <td>{{ $category['section']['name'] ?? 'N/A' }}</td>
-                                                <td>{{ $category['url'] }}</td>
-                                                <td>
-                                                    @if ($adminType === 'vendor')
-                                                        <a class="updateCategoryStatus" id="category-{{ $category['id'] }}"
-                                                            category_id="{{ $category['id'] }}"
-                                                            data-url="{{ route('vendor.updatecategorystatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        @if ($category['status'] == 1)
-                                                            <a class="updateCategoryStatus"
-                                                                id="category-{{ $category['id'] }}"
-                                                                category_id="{{ $category['id'] }}"
-                                                                data-url="{{ route('admin.updatecategorystatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i>
-                                                            </a>
-                                                        @else
-                                                            <a class="updateCategoryStatus"
-                                                                id="category-{{ $category['id'] }}"
-                                                                category_id="{{ $category['id'] }}"
-                                                                data-url="{{ route('admin.updatecategorystatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i>
-                                                            </a>
-                                                        @endif
-                                                    @endif
-                                                </td>
-
-                                                <td>
-                                                    <a href="{{ url($prefix . '/add-edit-category/' . $category['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                    </a>
-                                                    <a href="javascript:void(0)" class="confirmDelete"
-                                                        data-module="category"
-                                                        data-url="{{ url($prefix . '/delete-category/' . $category['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -133,3 +69,24 @@
         <!-- partial -->
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#categories').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'category_icon', name: 'category_icon', orderable: false, searchable: false},
+                    {data: 'category_name', name: 'category_name'},
+                    {data: 'parent_category', name: 'parent_category'},
+                    {data: 'url', name: 'url'},
+                    {data: 'status', name: 'status'},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ]
+            });
+        });
+    </script>
+@endpush

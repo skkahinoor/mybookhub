@@ -15,17 +15,58 @@ class WithdrawalController extends Controller
     /**
      * Display a listing of all withdrawal requests.
      */
-    public function index()
+    public function index(Request $request)
     {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'withdrawals');
 
-        $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
+        if ($request->ajax()) {
+            $query = Withdrawal::with('salesExecutive')->select('withdrawals.*');
 
-        $withdrawals = Withdrawal::with('salesExecutive')
-            ->orderBy('created_at', 'desc')
-            ->get();
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('sales_executive', function ($row) {
+                    $name = $row->salesExecutive->name ?? 'N/A';
+                    $email = $row->salesExecutive->email ?? 'N/A';
+                    return "<strong>{$name}</strong><br><small class='text-muted'>{$email}</small>";
+                })
+                ->editColumn('amount', function ($row) {
+                    return "<strong>₹" . number_format($row->amount, 2) . "</strong>";
+                })
+                ->editColumn('payment_method', function ($row) {
+                    if ($row->payment_method == 'bank_transfer') {
+                        return '<span class="badge badge-info">Bank Transfer</span>';
+                    } else {
+                        return '<span class="badge badge-success">UPI</span>';
+                    }
+                })
+                ->editColumn('status', function ($row) {
+                    if ($row->status == 'pending') {
+                        return '<span class="badge badge-warning">Pending</span>';
+                    } elseif ($row->status == 'approved') {
+                        return '<span class="badge badge-info">Approved</span>';
+                    } elseif ($row->status == 'completed') {
+                        return '<span class="badge badge-success">Completed</span>';
+                    } else {
+                        return '<span class="badge badge-danger">Rejected</span>';
+                    }
+                })
+                ->editColumn('created_at', function ($row) {
+                    return $row->created_at->format('d M Y, h:i A');
+                })
+                ->addColumn('processed_date', function ($row) {
+                    return $row->processed_at ? $row->processed_at->format('d M Y, h:i A') : 'N/A';
+                })
+                ->addColumn('actions', function ($row) {
+                    $url = route('admin.withdrawals.show', $row->id);
+                    return '<a href="' . $url . '" class="btn btn-sm btn-primary" title="View Details"><i class="mdi mdi-eye"></i></a>';
+                })
+                ->rawColumns(['sales_executive', 'amount', 'payment_method', 'status', 'actions'])
+                ->make(true);
+        }
+
+        $minimumWithdrawal = (float) Setting::getValue('min_withdrawal_amount', 50);
 
         // Calculate statistics
         $pendingCount = Withdrawal::where('status', 'pending')->count();
@@ -36,7 +77,6 @@ class WithdrawalController extends Controller
         $pendingAmount = Withdrawal::where('status', 'pending')->sum('amount');
 
         return view('admin.withdrawals.index', compact(
-            'withdrawals',
             'pendingCount',
             'approvedCount',
             'completedCount',

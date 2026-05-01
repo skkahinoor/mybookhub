@@ -13,20 +13,94 @@ use Illuminate\Support\Facades\Session;
 
 class SellBookRequestController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         Session::put('page', 'sellBookRequests');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
 
-        // Fetch attributes added by users listing old books (must have condition)
-        $requests = ProductsAttribute::with(['product', 'user', 'condition', 'vendor'])
-            ->whereNotNull('old_book_condition_id')
-            ->whereNotNull('user_id')             // student/user sell requests ONLY
-            ->orderBy('created_at', 'desc')
-            ->get();
+        if ($request->ajax()) {
+            $query = ProductsAttribute::with(['product', 'user', 'condition', 'vendor'])
+                ->whereNotNull('old_book_condition_id')
+                ->whereNotNull('user_id'); // student/user sell requests ONLY
 
-        return view('admin.sell_book_requests.index', compact('requests', 'logos', 'headerLogo'));
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('type', function ($row) {
+                    if ($row->admin_type === 'vendor') {
+                        return '<span class="badge badge-warning">Vendor</span>';
+                    } else {
+                        return '<span class="badge badge-info">User</span>';
+                    }
+                })
+                ->addColumn('seller_name', function ($row) {
+                    if ($row->admin_type === 'vendor') {
+                        if ($row->vendor && $row->vendor->user) {
+                            return ($row->vendor->user->name ?? 'Vendor #' . $row->vendor_id) . '<br><small class="text-muted">' . ($row->vendor->user->email ?? '') . '</small>';
+                        } else {
+                            return 'Vendor ID: ' . $row->vendor_id;
+                        }
+                    } elseif ($row->user) {
+                        return $row->user->name . '<br><small class="text-muted">' . $row->user->email . '</small>';
+                    } else {
+                        return 'N/A';
+                    }
+                })
+                ->addColumn('book_name', function ($row) {
+                    return $row->product->product_name ?? 'N/A';
+                })
+                ->addColumn('isbn', function ($row) {
+                    return $row->product->product_isbn ?? 'N/A';
+                })
+                ->addColumn('book_condition', function ($row) {
+                    if ($row->condition) {
+                        return '<span class="badge badge-info">' . $row->condition->name . '</span>';
+                    } else {
+                        return 'N/A';
+                    }
+                })
+                ->addColumn('selling_price', function ($row) {
+                    $finalPrice = $row->price;
+                    if (!$finalPrice && $row->product && $row->product->product_price > 0) {
+                        if ($row->condition) {
+                            $finalPrice = ($row->product->product_price * $row->condition->percentage) / 100;
+                        } else {
+                            $finalPrice = $row->product->product_price;
+                        }
+                    }
+                    return '&#8377;' . ($finalPrice ?? 'N/A');
+                })
+                ->addColumn('location', function ($row) {
+                    if ($row->user_location_name) {
+                        $html = '<div style="font-size: 13px; line-height: 1.2; margin-bottom: 4px;">' . \Illuminate\Support\Str::limit($row->user_location_name, 40) . '</div>';
+                        if ($row->user_location) {
+                            $html .= '<a href="https://www.google.com/maps?q=' . $row->user_location . '" target="_blank" class="text-primary font-weight-bold" style="font-size: 12px; text-decoration: none;"><i class="mdi mdi-map-marker text-danger"></i> View Map</a>';
+                        }
+                        return $html;
+                    } else {
+                        return '<span class="text-muted italic">N/A</span>';
+                    }
+                })
+                ->addColumn('status', function ($row) {
+                    if ($row->admin_approved == 1) {
+                        return '<span class="badge badge-success">Approved</span>';
+                    } else {
+                        return '<span class="badge badge-warning">Pending</span>';
+                    }
+                })
+                ->addColumn('actions', function ($row) {
+                    $html = '<a href="' . route('admin.sell-book-requests.show', $row->id) . '" class="btn btn-sm btn-outline-primary">View</a>';
+                    $html .= ' <form action="' . route('admin.sell-book-requests.reject', $row->id) . '" method="POST" style="display:inline;">
+                                ' . csrf_field() . '
+                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm(\'Reject and delete this request?\')">Reject</button>
+                               </form>';
+                    return $html;
+                })
+                ->rawColumns(['type', 'seller_name', 'book_condition', 'selling_price', 'location', 'status', 'actions'])
+                ->make(true);
+        }
+
+        return view('admin.sell_book_requests.index', compact('logos', 'headerLogo'));
     }
 
     public function show($id)

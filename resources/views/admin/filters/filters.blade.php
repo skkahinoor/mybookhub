@@ -38,34 +38,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($filters as $filter)
-                                            <tr>
-                                                <td>{{ $filter['id'] }}</td>
-                                                <td>{{ $filter['filter_name'] }}</td>
-                                                <td>{{ $filter['filter_column'] }}</td>
-                                                <td>
-                                                    @php
-                                                        $catIds = explode(',', $filter['cat_ids']);
-                                                        // echo '<pre>', var_dump($catIds), '</pre>';
-                                                        foreach ($catIds as $key => $catId) {
-                                                            $category_name = \App\Models\Category::getCategoryName($catId);
-                                                            echo $category_name . ' ';
-                                                        }
-                                                    @endphp
-                                                </td>
-                                                <td>
-                                                    @if ($filter['status'] == 1)
-                                                        <a class="updateFilterStatus" id="filter-{{ $filter['id'] }}" filter_id="{{ $filter['id'] }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @else {{-- if the admin status is inactive --}}
-                                                        <a class="updateFilterStatus" id="filter-{{ $filter['id'] }}" filter_id="{{ $filter['id'] }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endforeach
+                                    <tbody>
                                     </tbody>
                                 </table>
                             </div>
@@ -84,3 +57,23 @@
         <!-- partial -->
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#filters').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'filter_name', name: 'filter_name'},
+                    {data: 'filter_column', name: 'filter_column'},
+                    {data: 'categories', name: 'cat_ids'},
+                    {data: 'status', name: 'status', orderable: false, searchable: false},
+                ],
+                order: [[0, 'desc']]
+            });
+        });
+    </script>
+@endpush

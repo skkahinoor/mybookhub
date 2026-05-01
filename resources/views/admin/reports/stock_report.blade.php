@@ -268,10 +268,6 @@
                                     </p>
                                 </div>
                                 <div>
-                                    <span class="badge badge-primary px-3 py-2"
-                                        style="border-radius: 6px; font-size: 0.9rem;">
-                                        Total Books: {{ count($stockReport) }}
-                                    </span>
                                 </div>
                             </div>
 
@@ -345,117 +341,11 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($stockReport as $key => $report)
-                                            <tr data-id="{{ $report['id'] }}" class="product-row">
-                                                <!-- 1. Expand Icon -->
-                                                <td class="details-control text-center">
-                                                    <i class="fas fa-plus-circle expand-icon"></i>
-                                                </td>
-
-                                                <!-- 2. No. -->
-                                                <td class="text-center">{{ $key + 1 }}</td>
-
-                                                <!-- 3. ID -->
-                                                <td class="font-weight-bold text-muted">#{{ $report['id'] }}</td>
-
-                                                <!-- 3. Book Details -->
-                                                <td>
-                                                    <div class="d-flex align-items-center">
-                                                        <div class="book-icon">
-                                                            <i class="fas fa-book-open"></i>
-                                                        </div>
-                                                        <div>
-                                                            <div class="font-weight-bold text-dark"
-                                                                style="font-size: 1rem;">{{ $report['name'] }}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-
-                                                <!-- 4. Category/Section -->
-                                                <td>
-                                                    <span
-                                                        class="category-badge mb-1 d-inline-block">{{ $report['category'] }}</span>
-                                                    <div class="small text-muted mt-1 pl-1">{{ $report['section'] }}</div>
-                                                </td>
-
-                                                <!-- 5. Total Stock -->
-                                                <td class="text-center">
-                                                    <div
-                                                        class="stock-circle {{ $report['total_stock'] > 10 ? 'stock-high' : 'stock-low' }}">
-                                                        {{ $report['total_stock'] }}
-                                                    </div>
-                                                </td>
-
-                                                <!-- 6. Actions -->
-                                                <td class="text-center">
-                                                    <button type="button" class="btn-view-sellers view-details-btn">
-                                                        View Sellers
-                                                    </button>
-                                                </td>
-
-                                                <!-- 7. Hidden Detail Content -->
-                                                <td class="d-none detail-content">
-                                                    <div class="child-row-content">
-                                                        <div class="d-flex align-items-center mb-3">
-                                                            <div class="mr-3 text-primary"><i
-                                                                    class="fas fa-store fa-lg"></i></div>
-                                                            <h6 class="m-0 font-weight-bold text-dark">Vendor Stock
-                                                                Distribution</h6>
-                                                        </div>
-
-                                                        <table class="table vendor-table table-sm">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th width="50%">Vendor Name</th>
-                                                                    <th width="25%" class="text-center">Stock Available
-                                                                    </th>
-                                                                    <th width="25%" class="text-center">Status</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                @foreach ($report['vendors'] as $vendor)
-                                                                    <tr>
-                                                                        <td class="font-weight-medium">
-                                                                            {{ $vendor['name'] }}</td>
-                                                                        <td class="text-center font-weight-bold">
-                                                                            {{ $vendor['stock'] }}</td>
-                                                                        <td class="text-center">
-                                                                            @if ($vendor['stock'] > 0)
-                                                                                <span class="badge badge-success">In
-                                                                                    Stock</span>
-                                                                            @else
-                                                                                <span class="badge badge-danger">Out of
-                                                                                    Stock</span>
-                                                                            @endif
-                                                                        </td>
-                                                                    </tr>
-                                                                @endforeach
-                                                                @if (count($report['vendors']) == 0)
-                                                                    <tr>
-                                                                        <td colspan="3"
-                                                                            class="text-center text-muted py-3">No vendors
-                                                                            assigned</td>
-                                                                    </tr>
-                                                                @endif
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
 
-                            @if (count($stockReport) == 0)
-                                <div class="text-center py-5">
-                                    <div class="bg-light d-inline-block p-4 rounded-circle mb-3">
-                                        <i class="feather-box fa-3x text-muted"></i>
-                                    </div>
-                                    <h5>No Items Found</h5>
-                                    <p class="text-muted">Try adjusting your category or section filters.</p>
-                                </div>
-                            @endif
+
 
                         </div>
                     </div>
@@ -499,6 +389,26 @@
                     }
 
                     var table = $(tableId).DataTable({
+                        processing: true,
+                        serverSide: true,
+                        ajax: {
+                            url: "{{ url()->current() }}",
+                            data: function(d) {
+                                d.category_id = $('select[name="category_id"]').val();
+                                d.section_id = $('select[name="section_id"]').val();
+                                d.stock_status = $('select[name="stock_status"]').val();
+                            }
+                        },
+                        columns: [
+                            {data: 'expand', name: 'expand', orderable: false, searchable: false},
+                            {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                            {data: 'id_formatted', name: 'id'},
+                            {data: 'book_details', name: 'name'},
+                            {data: 'category_section', name: 'category', orderable: false},
+                            {data: 'stock_badge', name: 'total_stock', orderable: false, searchable: false},
+                            {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                            {data: 'hidden_details', name: 'hidden_details', orderable: false, searchable: false}
+                        ],
                         "pageLength": 10,
                         "order": [
                             [2, "asc"]
@@ -537,6 +447,12 @@
                             cell.innerHTML = i + 1;
                         });
                     }).draw();
+
+                    // Form submission using AJAX
+                    $('form').on('submit', function(e) {
+                        e.preventDefault();
+                        table.draw();
+                    });
 
                     // Row Expansion Logic
                     // We explicitly unbind click first to avoid duplicates if re-initialized

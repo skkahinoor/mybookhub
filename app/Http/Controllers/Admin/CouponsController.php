@@ -12,7 +12,7 @@ use App\Models\HeaderLogo;
 
 class CouponsController extends Controller
 {
-    public function coupons()
+    public function coupons(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_coupons')) {
             abort(403, 'Unauthorized action.');
@@ -35,12 +35,47 @@ class CouponsController extends Controller
                     ->with('error_message', 'Coupon management is not available in Free plan. Please upgrade to Pro plan to create and manage coupons.');
             }
 
-            $coupons = Coupon::where('vendor_id', $vendor_id)->get()->toArray();
+            $query = Coupon::where('vendor_id', $vendor_id);
         } else {
-            $coupons = Coupon::get()->toArray();
+            $query = Coupon::query();
         }
 
-        return view('admin.coupons.coupons')->with(compact('coupons', 'logos', 'headerLogo', 'adminType'));
+        if ($request->ajax()) {
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('amount_display', function ($row) {
+                    $amount = $row->amount;
+                    if ($row->amount_type == 'Percentage') {
+                        return $amount . '%';
+                    } else {
+                        return $amount . ' INR';
+                    }
+                })
+                ->addColumn('status', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $url = ($adminType === 'vendor') ? route('vendor.updatecouponstatus') : route('admin.updatecouponstatus');
+                    $status = $row->status == 1 ? 'Active' : 'Inactive';
+                    $icon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    
+                    return '<a class="updateCouponStatus" id="coupon-' . $row->id . '" coupon_id="' . $row->id . '" data-url="' . $url . '" href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $icon . '" status="' . $status . '"></i>
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) {
+                    $editUrl = url('admin/add-edit-coupon/' . $row->id);
+                    $deleteUrl = url('admin/delete-coupon/' . $row->id);
+                    return '<a href="' . $editUrl . '">
+                                <i style="font-size:25px" class="mdi mdi-pencil-box"></i>
+                            </a>
+                            <a href="' . $deleteUrl . '" onclick="return confirm(\'Are you sure you want to delete this coupon?\')" title="Delete Coupon">
+                                <i style="font-size:25px;color:red;" class="mdi mdi-file-excel-box"></i>
+                            </a>';
+                })
+                ->rawColumns(['status', 'actions'])
+                ->make(true);
+        }
+
+        return view('admin.coupons.coupons')->with(compact('logos', 'headerLogo', 'adminType'));
     }
     public function updateCouponStatus(Request $request)
     {

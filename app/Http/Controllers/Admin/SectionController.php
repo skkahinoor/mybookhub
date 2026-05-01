@@ -12,25 +12,61 @@ use Illuminate\Support\Facades\Auth;
 
 class SectionController extends Controller
 {
-    public function sections()
+    public function sections(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_sections')) {
             abort(403, 'Unauthorized action.');
         }
 
+        if ($request->ajax()) {
+            $data = Section::orderBy('id', 'desc');
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('image', function ($row) {
+                    if (!empty($row->image)) {
+                        return '<img src="' . $row->image . '" width="60" height="60" style="object-fit: cover; border-radius: 6px; border:1px solid #ddd;">';
+                    }
+                    return '<img src="' . asset('admin/images/no-image.png') . '" width="60" height="60" style="object-fit: cover; border-radius: 6px; border:1px solid #ddd;">';
+                })
+                ->addColumn('status', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                    $statusIcon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    $statusText = $row->status == 1 ? 'Active' : 'Inactive';
+                    
+                    return '<a class="updateSectionStatus" id="education-level-' . $row->id . '"
+                                education_level_id="' . $row->id . '"
+                                data-url="' . route($prefix . '.updateeducationstatus') . '"
+                                href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $statusIcon . '"
+                                    status="' . $statusText . '"></i>
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $editRoute = $adminType === 'vendor' ? 'vendor.add_edit_education_level' : 'admin.add_edit_education_level';
+                    $deleteRoute = $adminType === 'vendor' ? 'vendor.delete_education' : 'admin.delete_education';
+                    
+                    return '<a href="' . route($editRoute, $row->id) . '">
+                                <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                            </a>
+                            <a href="javascript:void(0)" class="confirmDelete"
+                                data-module="Education Level"
+                                data-url="' . route($deleteRoute, $row->id) . '">
+                                <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                            </a>';
+                })
+                ->rawColumns(['image', 'status', 'actions'])
+                ->make(true);
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'education-levels');
 
-
-        // $sections = Section::get(); // Eloquent Collection
-
-        $sections = Section::orderBy('id', 'desc')->get()->toArray(); // Plain PHP array
-        // dd($sections);
         $adminType = Auth::guard('admin')->user()->type;
 
-        return view('admin.sections.sections')->with(compact('sections', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.sections.sections')->with(compact('logos', 'headerLogo', 'adminType'));
     }
 
     public function updateSectionStatus(Request $request)

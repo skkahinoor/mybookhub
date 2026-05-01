@@ -11,17 +11,66 @@ use Illuminate\Support\Facades\Session;
 
 class AuthorController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_authors')) {
             abort(403, 'Unauthorized action.');
         }
-        $authors = Author::orderBy('id', 'desc')->get();
+
+        if ($request->ajax()) {
+            $data = Author::orderBy('id', 'desc');
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('status', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $statusIcon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    $statusText = $row->status == 1 ? 'Active' : 'Inactive';
+                    
+                    if ($adminType === 'vendor') {
+                        return '<a class="updateAuthorStatus" id="author-' . $row->id . '"
+                                    author_id="' . $row->id . '"
+                                    data-url="' . route('vendor.updateauthorstatus') . '"
+                                    href="javascript:void(0)">
+                                    <i style="font-size: 25px" class="mdi ' . $statusIcon . '"
+                                        status="' . $statusText . '"></i>
+                                </a>';
+                    } else {
+                        return '<a class="updateAuthorStatus" id="author-' . $row->id . '"
+                                    author_id="' . $row->id . '"
+                                    data-url="' . route('admin.updateauthorstatus') . '"
+                                    href="javascript:void(0)">
+                                    <i style="font-size: 25px" class="mdi ' . $statusIcon . '"
+                                        status="' . $statusText . '"></i>
+                                </a>';
+                    }
+                })
+                ->addColumn('actions', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    if ($adminType === 'vendor') {
+                        $editUrl = route('vendor.edit.author', $row->id);
+                        $deleteUrl = route('vendor.delete.author', $row->id);
+                    } else {
+                        $editUrl = route('admin.edit.author', $row->id);
+                        $deleteUrl = route('admin.delete.author', $row->id);
+                    }
+                    return '<a href="' . $editUrl . '">
+                                <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                            </a>
+                            <a href="javascript:void(0)" class="confirmDelete"
+                                data-module="author"
+                                data-url="' . $deleteUrl . '">
+                                <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                            </a>';
+                })
+                ->rawColumns(['status', 'actions'])
+                ->make(true);
+        }
+
         Session::put('page', 'authors');
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
-        return view('admin.authors.author', compact('authors', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.authors.author', compact('logos', 'headerLogo', 'adminType'));
     }
 
     public function add()

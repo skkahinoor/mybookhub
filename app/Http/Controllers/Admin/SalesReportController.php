@@ -19,7 +19,7 @@ use App\Helpers\RoleHelper;
 
 class SalesReportController extends Controller
 {
-    public function index(Request $request): \Illuminate\Contracts\View\View
+    public function index(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_reports')) {
             abort(403, 'Unauthorized action.');
@@ -28,6 +28,43 @@ class SalesReportController extends Controller
 
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
+
+        if ($request->ajax()) {
+            $query = SalesExecutive::query()
+                ->select('sales_executives.*', 'users.name', 'users.phone')
+                ->join('users', 'sales_executives.user_id', '=', 'users.id');
+
+            if ($request->filled('country_id')) {
+                $query->where('users.country_id', $request->get('country_id'));
+            }
+
+            if ($request->filled('state_id')) {
+                $query->where('users.state_id', $request->get('state_id'));
+            }
+
+            if ($request->filled('district_id')) {
+                $query->where('users.district_id', $request->get('district_id'));
+            }
+
+            if ($request->filled('block_id')) {
+                $query->where('users.block_id', $request->get('block_id'));
+            }
+
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('status', function ($row) {
+                    if ($row->status) {
+                        return '<span class="badge badge-success">Active</span>';
+                    } else {
+                        return '<span class="badge badge-secondary">Inactive</span>';
+                    }
+                })
+                ->addColumn('action', function ($row) {
+                    return '<a href="' . route('admin.reports.sales_reports.show', $row->id) . '" class="btn btn-sm btn-outline-primary">View</a>';
+                })
+                ->rawColumns(['status', 'action'])
+                ->make(true);
+        }
 
         // Distinct options for filters (from related Users)
         $countries = Country::select('countries.id', 'countries.name')
@@ -58,44 +95,11 @@ class SalesReportController extends Controller
             ->orderBy('blocks.name')
             ->get();
 
-        $query = SalesExecutive::query()
-            ->select('sales_executives.*', 'users.name', 'users.phone')
-            ->join('users', 'sales_executives.user_id', '=', 'users.id');
-
-        if ($request->filled('country_id')) {
-            $query->where('users.country_id', $request->get('country_id'));
-        }
-
-        if ($request->filled('state_id')) {
-            $query->where('users.state_id', $request->get('state_id'));
-        }
-
-        if ($request->filled('district_id')) {
-            $query->where('users.district_id', $request->get('district_id'));
-        }
-
-        if ($request->filled('block_id')) {
-            $query->where('users.block_id', $request->get('block_id'));
-        }
-
-        // Global search
-        $search = $request->input('search');
-        if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                // Name and phone have been moved to users table
-                $q->where('users.name', 'like', '%' . $search . '%')
-                    ->orWhere('users.phone', 'like', '%' . $search . '%');
-            });
-        }
-
-        $salesExecutives = $query->orderBy('users.name')->get();
-
         return view('admin.reports.sales_reports.index', compact(
             'countries',
             'states',
             'districts',
             'blocks',
-            'salesExecutives',
             'logos',
             'headerLogo'
         ));

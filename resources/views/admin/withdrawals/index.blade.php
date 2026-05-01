@@ -103,42 +103,6 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($withdrawals as $key => $withdrawal)
-                                    <tr>
-                                        <td>{{ $withdrawal->id }}</td>
-                                        <td>
-                                            <strong>{{ $withdrawal->salesExecutive->name ?? 'N/A' }}</strong><br>
-                                            <small class="text-muted">{{ $withdrawal->salesExecutive->email ?? 'N/A' }}</small>
-                                        </td>
-                                        <td><strong>₹{{ number_format($withdrawal->amount, 2) }}</strong></td>
-                                        <td>
-                                            @if($withdrawal->payment_method == 'bank_transfer')
-                                                <span class="badge badge-info">Bank Transfer</span>
-                                            @else
-                                                <span class="badge badge-success">UPI</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($withdrawal->status == 'pending')
-                                                <span class="badge badge-warning">Pending</span>
-                                            @elseif($withdrawal->status == 'approved')
-                                                <span class="badge badge-info">Approved</span>
-                                            @elseif($withdrawal->status == 'completed')
-                                                <span class="badge badge-success">Completed</span>
-                                            @else
-                                                <span class="badge badge-danger">Rejected</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $withdrawal->created_at->format('d M Y, h:i A') }}</td>
-                                        <td>{{ $withdrawal->processed_at ? $withdrawal->processed_at->format('d M Y, h:i A') : 'N/A' }}</td>
-                                        <td>
-                                            <a href="{{ route('admin.withdrawals.show', $withdrawal->id) }}"
-                                               class="btn btn-sm btn-primary" title="View Details">
-                                                <i class="mdi mdi-eye"></i>
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -161,6 +125,19 @@
 <script>
     $(document).ready(function() {
         $('#withdrawalsTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: "{{ route('admin.withdrawals.index') }}",
+            columns: [
+                {data: 'id', name: 'id'},
+                {data: 'sales_executive', name: 'salesExecutive.name'},
+                {data: 'amount', name: 'amount'},
+                {data: 'payment_method', name: 'payment_method'},
+                {data: 'status', name: 'status'},
+                {data: 'created_at', name: 'created_at'},
+                {data: 'processed_date', name: 'processed_at'},
+                {data: 'actions', name: 'actions', orderable: false, searchable: false},
+            ],
             order: [[0, 'desc']],
             pageLength: 25
         });

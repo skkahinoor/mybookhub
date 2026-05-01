@@ -12,7 +12,7 @@ use App\Models\BookType;
 class BookTypeController extends Controller
 {
     // ================= DISPLAY TYPES =================
-    public function types()
+    public function types(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_categories')) {
             abort(403, 'Unauthorized action.');
@@ -23,11 +23,45 @@ class BookTypeController extends Controller
 
         Session::put('page', 'types');
 
-        $types = BookType::orderBy('id', 'desc')->get();
+        if ($request->ajax()) {
+            $query = BookType::query();
+
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('icon', function ($row) {
+                    if (!empty($row->book_type_icon)) {
+                        $url = asset('admin/images/bookType/' . $row->book_type_icon);
+                        return '<img src="' . $url . '" width="60" height="60" style="object-fit:cover;border-radius:6px;border:1px solid #ddd;">';
+                    } else {
+                        $url = asset('admin/images/no-image.png');
+                        return '<img src="' . $url . '" width="60" height="60">';
+                    }
+                })
+                ->addColumn('status', function ($row) {
+                    if ($row->status == 1) {
+                        return '<a class="updateTypeStatus" id="type-' . $row->id . '" type_id="' . $row->id . '" href="javascript:void(0)">
+                                    <i style="font-size:25px" class="mdi mdi-bookmark-check" status="Active"></i>
+                                </a>';
+                    } else {
+                        return '<a class="updateTypeStatus" id="type-' . $row->id . '" type_id="' . $row->id . '" href="javascript:void(0)">
+                                    <i style="font-size:25px" class="mdi mdi-bookmark-outline" status="Inactive"></i>
+                                </a>';
+                    }
+                })
+                ->addColumn('actions', function ($row) {
+                    $editUrl = url('admin/add-edit-type/' . $row->id);
+                    $deleteUrl = url('admin/delete-type/' . $row->id);
+                    return '<a href="' . $editUrl . '"><i style="font-size:25px" class="mdi mdi-pencil-box"></i></a>
+                            <a href="' . $deleteUrl . '" onclick="return confirm(\'Delete this type?\')"><i style="font-size:25px;color:red" class="mdi mdi-delete"></i></a>';
+                })
+                ->rawColumns(['icon', 'status', 'actions'])
+                ->make(true);
+        }
+
         $adminType = Auth::guard('admin')->user()->type;
 
         return view('admin.type.type')
-            ->with(compact('types', 'logos', 'headerLogo', 'adminType'));
+            ->with(compact('logos', 'headerLogo', 'adminType'));
     }
 
 

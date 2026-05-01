@@ -14,22 +14,70 @@ use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
-    public function categories()
+    public function categories(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_categories')) {
             abort(403, 'Unauthorized action.');
         }
 
+        if ($request->ajax()) {
+            $data = Category::orderBy('id', 'desc')->with(['section', 'parentCategory']);
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('category_icon', function ($row) {
+                    if (!empty($row->category_icon)) {
+                        return '<img src="' . asset('admin/images/category_icons/' . $row->category_icon) . '" style="width: 50px; height: 50px;">';
+                    }
+                    return 'No Icon';
+                })
+                ->addColumn('parent_category', function ($row) {
+                    return $row->section ? $row->section->name : 'N/A';
+                })
+                ->addColumn('status', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $statusIcon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    $statusText = $row->status == 1 ? 'Active' : 'Inactive';
+                    
+                    if ($adminType === 'vendor') {
+                        return '<a class="updateCategoryStatus" id="category-' . $row->id . '"
+                                    category_id="' . $row->id . '"
+                                    data-url="' . route('vendor.updatecategorystatus') . '"
+                                    href="javascript:void(0)">
+                                    <i style="font-size: 25px" class="mdi mdi-bookmark-check"
+                                        status="Active"></i>
+                                </a>';
+                    } else {
+                        return '<a class="updateCategoryStatus" id="category-' . $row->id . '"
+                                    category_id="' . $row->id . '"
+                                    data-url="' . route('admin.updatecategorystatus') . '"
+                                    href="javascript:void(0)">
+                                    <i style="font-size: 25px" class="mdi ' . $statusIcon . '"
+                                        status="' . $statusText . '"></i>
+                                </a>';
+                    }
+                })
+                ->addColumn('actions', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                    
+                    return '<a href="' . url($prefix . '/add-edit-category/' . $row->id) . '">
+                                <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                            </a>
+                            <a href="javascript:void(0)" class="confirmDelete"
+                                data-module="category"
+                                data-url="' . url($prefix . '/delete-category/' . $row->id) . '">
+                                <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                            </a>';
+                })
+                ->rawColumns(['category_icon', 'status', 'actions'])
+                ->make(true);
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'categories');
-
-        $categories = Category::orderBy('id', 'desc')->with(['section', 'parentCategory'])->get()->toArray();
-        // dd($categories);
-
         $adminType = Auth::guard('admin')->user()->type;
-        return view('admin.categories.categories')->with(compact('categories', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.categories.categories')->with(compact('logos', 'headerLogo', 'adminType'));
     }
 
     public function updateCategoryStatus(Request $request)

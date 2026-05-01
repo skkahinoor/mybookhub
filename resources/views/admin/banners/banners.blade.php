@@ -21,7 +21,7 @@
                             @endif
 
                             <div class="table-responsive pt-3">
-                                <table class="table table-bordered">
+                                <table id="banners" class="table table-bordered">
                                     <thead>
                                         <tr>
                                             <th>ID</th>
@@ -35,33 +35,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse ($banners as $banner)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>
-                                                    @if (!empty($banner->image))
-                                                        <img style="width: 100%; height:100px; border-radius: 0px !important;" src="{{ $banner->image }}" alt="{{ $banner->alt }}">
-                                                    @endif
-                                                </td>
-                                                <td>{{ $banner->type }}</td>
-                                                <td>{{ $banner->link }}</td>
-                                                <td>{{ $banner->title }}</td>
-                                                <td>{{ $banner->alt }}</td>
-                                                <td>
-                                                    <span class="badge {{ $banner->status ? 'badge-success' : 'badge-secondary' }}">
-                                                        {{ $banner->status ? 'Active' : 'Inactive' }}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <a href="{{ url('admin/add-edit-banner/' . $banner->id) }}" class="btn btn-sm btn-primary">Edit</a>
-                                                    <a href="{{ url('admin/delete-banner/' . $banner->id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Delete this banner?')">Delete</a>
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="8">No banners found.</td>
-                                            </tr>
-                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -71,6 +44,28 @@
             </div>
         </div>
     </div>
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#banners').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'image', name: 'image', orderable: false, searchable: false},
+                    {data: 'type', name: 'type'},
+                    {data: 'link', name: 'link'},
+                    {data: 'title', name: 'title'},
+                    {data: 'alt', name: 'alt'},
+                    {data: 'status', name: 'status', orderable: false, searchable: false},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ],
+                order: [[0, 'desc']]
+            });
+        });
+    </script>
+@endpush
 @endsection
 
 

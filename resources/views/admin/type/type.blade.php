@@ -41,53 +41,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($types as $key => $type)
-                                            <tr>
-
-                                                <td>{{ $key + 1 }}</td>
-
-                                                <td>
-                                                    @if (!empty($type->book_type_icon))
-                                                        <img src="{{ asset('admin/images/bookType/' . $type->book_type_icon) }}"
-                                                            width="60" height="60"
-                                                            style="object-fit:cover;border-radius:6px;border:1px solid #ddd;">
-                                                    @else
-                                                        <img src="{{ asset('admin/images/no-image.png') }}" width="60"
-                                                            height="60">
-                                                    @endif
-                                                </td>
-
-                                                <td>{{ $type->book_type }}</td>
-
-                                                <td>
-                                                    @if ($type->status == 1)
-                                                        <a class="updateTypeStatus" id="type-{{ $type->id }}"
-                                                            type_id="{{ $type->id }}" href="javascript:void(0)">
-                                                            <i style="font-size:25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        <a class="updateTypeStatus" id="type-{{ $type->id }}"
-                                                            type_id="{{ $type->id }}" href="javascript:void(0)">
-                                                            <i style="font-size:25px" class="mdi mdi-bookmark-outline"
-                                                                status="Inactive"></i>
-                                                        </a>
-                                                    @endif
-                                                </td>
-
-                                                <td>
-                                                    <a href="{{ url('admin/add-edit-type/' . $type->id) }}">
-                                                        <i style="font-size:25px" class="mdi mdi-pencil-box"></i>
-                                                    </a>
-
-                                                    <a href="{{ url('admin/delete-type/' . $type->id) }}"
-                                                        onclick="return confirm('Delete this type?')">
-                                                        <i style="font-size:25px;color:red" class="mdi mdi-delete"></i>
-                                                    </a>
-                                                </td>
-
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -111,6 +64,19 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            $('#sections').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url('admin/types') }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'icon', name: 'icon', orderable: false, searchable: false},
+                    {data: 'book_type', name: 'book_type'},
+                    {data: 'status', name: 'status', orderable: false, searchable: false},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ],
+                order: [[0, 'desc']]
+            });
 
             $(document).on("click", ".updateTypeStatus", function() {
 

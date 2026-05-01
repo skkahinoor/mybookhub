@@ -13,20 +13,58 @@ use Illuminate\Support\Facades\Auth;
 
 class SubcategoryController extends Controller
 {
-    public function subcategories()
+    public function subcategories(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_categories')) {
             abort(403, 'Unauthorized action.');
+        }
+
+        if ($request->ajax()) {
+            $data = Subcategory::orderBy('id', 'desc');
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('subcategory_icon', function ($row) {
+                    if (!empty($row->subcategory_icon)) {
+                        return '<img src="' . asset('admin/images/subcategory_icons/' . $row->subcategory_icon) . '" style="width: 50px; height: 50px;">';
+                    }
+                    return 'No Icon';
+                })
+                ->addColumn('status', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                    $statusIcon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    $statusText = $row->status == 1 ? 'Active' : 'Inactive';
+                    
+                    return '<a class="updateSubcategoryStatus" id="subcategory-' . $row->id . '"
+                                subcategory_id="' . $row->id . '"
+                                data-url="' . route($prefix . '.updatesubcategorystatus') . '"
+                                href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $statusIcon . '"
+                                    status="' . $statusText . '"></i>
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                    
+                    return '<a href="' . url($prefix . '/add-edit-subcategory/' . $row->id) . '">
+                                <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                            </a>
+                            <a href="javascript:void(0)" class="confirmDelete" data-module="Class"
+                                data-url="' . url($prefix . '/delete-subcategory/' . $row->id) . '">
+                                <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                            </a>';
+                })
+                ->rawColumns(['subcategory_icon', 'status', 'actions'])
+                ->make(true);
         }
 
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'subcategories');
 
-        $subcategories = Subcategory::orderBy('id', 'desc')->get()->toArray();
-
         $adminType = Auth::guard('admin')->user()->type;
-        return view('admin.subcategories.subcategories')->with(compact('subcategories', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.subcategories.subcategories')->with(compact('logos', 'headerLogo', 'adminType'));
     }
 
     public function updateSubcategoryStatus(Request $request)

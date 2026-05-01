@@ -17,16 +17,39 @@ class ShippingController extends Controller
 
 
     // Render the Shipping Charges page (admin/shipping/shipping_charges.blade.php) in the Admin Panel for 'admin'-s only, not for vendors
-    public function shippingCharges() {
+    public function shippingCharges(Request $request) {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        // Highlight the 'Shipping Charges' module in the Sidebar on the left in the Admin Panel. Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'shipping');
 
-        $shippingCharges = ShippingCharge::get()->toArray();
+        if ($request->ajax()) {
+            $data = ShippingCharge::query();
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addColumn('status', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                    $statusIcon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    $statusText = $row->status == 1 ? 'Active' : 'Inactive';
+                    
+                    return '<a class="updateShippingStatus" id="shipping-' . $row->id . '"
+                                shipping_id="' . $row->id . '"
+                                data-url="' . route($prefix . '.updateshippingstatus') . '"
+                                href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $statusIcon . '"
+                                    status="' . $statusText . '"></i>
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) {
+                    return '<a href="' . url('admin/edit-shipping-charges/' . $row->id) . '">
+                                <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                            </a>';
+                })
+                ->rawColumns(['status', 'actions'])
+                ->make(true);
+        }
 
         $adminType = Auth::guard('admin')->user()->type;
-        return view('admin.shipping.shipping_charges')->with(compact('shippingCharges', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.shipping.shipping_charges')->with(compact('logos', 'headerLogo', 'adminType'));
     }
 
     // Update Shipping Status (active/inactive) via AJAX in admin/shipping/shipping_charages.blade.php, check admin/js/custom.js

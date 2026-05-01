@@ -10,20 +10,62 @@ use Session;
 
 class OrderQueryController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         Session::put('page', 'order_queries');
         $admin = Auth::guard('admin')->user();
         $isVendor = $admin->hasRole('vendor');
         
-        $query = OrderQuery::with(['order', 'orderProduct', 'user']);
-        
-        if ($isVendor) {
-            $query->where('vendor_id', $admin->vendor_id);
+        if ($request->ajax()) {
+            $query = OrderQuery::with(['order', 'orderProduct', 'user']);
+            
+            if ($isVendor) {
+                $query->where('vendor_id', $admin->vendor_id);
+            }
+
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addColumn('ticket_id', function ($row) {
+                    return '<strong>' . $row->ticket_id . '</strong>';
+                })
+                ->addColumn('date', function ($row) {
+                    return $row->created_at->format('d-m-Y');
+                })
+                ->addColumn('user_info', function ($row) {
+                    return $row->user->name . '<br><small>' . $row->user->email . '</small>';
+                })
+                ->addColumn('order_id_formatted', function ($row) {
+                    return '#' . $row->order_id;
+                })
+                ->addColumn('product_name', function ($row) {
+                    return $row->orderProduct->product_name ?? 'N/A';
+                })
+                ->addColumn('status_dropdown', function ($row) {
+                    $html = '<select class="form-control updateQueryStatus" data-query-id="' . $row->id . '" style="height: 35px; padding: 2px 10px;">';
+                    $statuses = [
+                        'pending' => 'text-warning',
+                        'ongoing' => 'text-info',
+                        'resolved' => 'text-success',
+                        'closed' => 'text-secondary'
+                    ];
+                    
+                    foreach ($statuses as $val => $class) {
+                        $selected = ($row->status == $val) ? 'selected' : '';
+                        $html .= '<option value="' . $val . '" ' . $selected . ' class="' . $class . '">' . ucfirst($val) . '</option>';
+                    }
+                    $html .= '</select>';
+                    return $html;
+                })
+                ->addColumn('actions', function ($row) {
+                    $replyUrl = url('admin/order-query/reply/' . $row->id);
+                    $html = '<a href="' . $replyUrl . '" title="Reply/View Detail"><i class="mdi mdi-reply" style="font-size: 25px;"></i></a>&nbsp;&nbsp;';
+                    $html .= '<a href="javascript:void(0)" class="confirmDelete" module="order-query" moduleid="' . $row->id . '" title="Delete Query"><i class="mdi mdi-delete" style="font-size: 25px;"></i></a>';
+                    return $html;
+                })
+                ->rawColumns(['ticket_id', 'user_info', 'status_dropdown', 'actions'])
+                ->make(true);
         }
         
-        $queries = $query->orderBy('created_at', 'desc')->get();
-        return view('admin.order_queries.index', compact('queries'));
+        return view('admin.order_queries.index');
     }
 
     public function updateStatus(Request $request)

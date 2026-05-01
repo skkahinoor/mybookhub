@@ -16,11 +16,50 @@ use App\Helpers\RoleHelper;
 
 class StudentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         Session::put('page', 'students');
+
+        if ($request->ajax()) {
+            $data = User::where('role_id', RoleHelper::studentId())->with('institution')->orderBy('id', 'desc');
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('institution', function ($row) {
+                    return $row->institution->name ?? 'No Institution';
+                })
+                ->addColumn('dob', function ($row) {
+                    return $row->dob ? \Carbon\Carbon::parse($row->dob)->format('d M Y') : 'N/A';
+                })
+                ->addColumn('gender', function ($row) {
+                    return ucfirst($row->gender);
+                })
+                ->addColumn('status', function ($row) {
+                    $statusIcon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    $statusText = $row->status == 1 ? 'Active' : 'Inactive';
+                    
+                    return '<a class="updateStudentStatus" id="student-' . $row->id . '"
+                                student_id="' . $row->id . '"
+                                data-url="' . route('admin.students.updateStatus', $row->id) . '"
+                                href="javascript:void(0)">
+                                <i style="font-size: 25px" class="mdi ' . $statusIcon . '"
+                                    status="' . $statusText . '"></i>
+                            </a>';
+                })
+                ->addColumn('actions', function ($row) {
+                    return '<a href="' . url('admin/students/'.$row->id.'/edit') . '"
+                               class="btn btn-sm btn-success">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <button onclick="confirmDelete(' . $row->id . ')"
+                                    class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>';
+                })
+                ->rawColumns(['status', 'actions'])
+                ->make(true);
+        }
 
         $students = User::where('role_id', RoleHelper::studentId())->with('institution')->orderBy('id', 'desc')->get();
 

@@ -38,51 +38,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($subcategories as $key => $subcategory)
-                                            <tr>
-                                                <td>{{ $key + 1 }}</td>
-                                                <td>
-                                                    @if (!empty($subcategory['subcategory_icon']))
-                                                        <img src="{{ asset('admin/images/subcategory_icons/' . $subcategory['subcategory_icon']) }}"
-                                                            style="width: 50px; height: 50px;">
-                                                    @else
-                                                        No Icon
-                                                    @endif
-                                                </td>
-                                                <td>{{ $subcategory['subcategory_name'] }}</td>
-                                                <td>
-                                                    @if ($subcategory['status'] == 1)
-                                                        <a class="updateSubcategoryStatus"
-                                                            id="subcategory-{{ $subcategory['id'] }}"
-                                                            subcategory_id="{{ $subcategory['id'] }}"
-                                                            data-url="{{ route($prefix . '.updatesubcategorystatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        <a class="updateSubcategoryStatus"
-                                                            id="subcategory-{{ $subcategory['id'] }}"
-                                                            subcategory_id="{{ $subcategory['id'] }}"
-                                                            data-url="{{ route($prefix . '.updatesubcategorystatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                status="Inactive"></i>
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <a
-                                                        href="{{ url($prefix . '/add-edit-subcategory/' . $subcategory['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
-                                                    </a>
-                                                    <a href="javascript:void(0)" class="confirmDelete" data-module="Class"
-                                                        data-url="{{ url($prefix . '/delete-subcategory/' . $subcategory['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -94,3 +49,22 @@
         @include('admin.layout.footer')
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#subcategories').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'subcategory_icon', name: 'subcategory_icon', orderable: false, searchable: false},
+                    {data: 'subcategory_name', name: 'subcategory_name'},
+                    {data: 'status', name: 'status'},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ]
+            });
+        });
+    </script>
+@endpush

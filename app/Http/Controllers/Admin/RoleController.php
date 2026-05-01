@@ -11,13 +11,40 @@ use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         Session::put('page', 'roles');
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
-        $roles = Role::with('permissions')->orderBy('id', 'desc')->get();
-        return view('admin.roles.index', compact('roles', 'logos', 'headerLogo'));
+
+        if ($request->ajax()) {
+            $data = Role::with('permissions')->orderBy('id', 'desc');
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('permissions', function ($row) {
+                    $badges = '';
+                    foreach ($row->permissions as $permission) {
+                        $badges .= '<span class="badge badge-info m-1">' . $permission->name . '</span>';
+                    }
+                    return '<div class="d-flex flex-wrap">' . $badges . '</div>';
+                })
+                ->addColumn('actions', function ($row) {
+                    return '<a href="' . route('admin.roles.edit', $row->id) . '" title="Edit Role" class="btn btn-sm btn-outline-primary border-0">
+                                <i style="font-size: 20px" class="mdi mdi-pencil-box"></i>
+                            </a>
+                            <form action="' . route('admin.roles.destroy', $row->id) . '" method="POST" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete this role?\')">
+                                ' . csrf_field() . '
+                                ' . method_field('DELETE') . '
+                                <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Delete Role">
+                                    <i style="font-size: 20px" class="mdi mdi-delete"></i>
+                                </button>
+                            </form>';
+                })
+                ->rawColumns(['permissions', 'actions'])
+                ->make(true);
+        }
+
+        return view('admin.roles.index', compact('logos', 'headerLogo'));
     }
 
     public function create()

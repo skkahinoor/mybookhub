@@ -43,38 +43,6 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($queries as $key => $query)
-                                    <tr>
-                                        <td>{{ $key + 1 }}</td>
-                                        <td>{{ $query['name'] }}</td>
-                                        <td>{{ $query['phone'] }}</td>
-                                        <td>{{ $query['email'] }}</td>
-                                        <td>{{ $query['subject'] }}</td>
-                                        <td>{{ strlen($query['message']) > 50 ? substr($query['message'], 0, 50) . '...' : $query['message'] }}</td>
-                                        <td>
-                                            <select class="form-control updateStatus" data-query-id="{{ $query['id'] }}" style="width: auto; display: inline-block;">
-                                                <option value="pending" {{ $query['status'] == 'pending' ? 'selected' : '' }}>Pending</option>
-                                                <option value="in_progress" {{ $query['status'] == 'in_progress' ? 'selected' : '' }}>In Progress</option>
-                                                <option value="resolved" {{ $query['status'] == 'resolved' ? 'selected' : '' }}>Resolved</option>
-                                            </select>
-                                        </td>
-                                        <td>{{ date('Y-m-d H:i:s', strtotime($query['created_at'])) }}</td>
-                                        <td>
-                                            {{-- <a href="{{ url('admin/contact-queries/reply/'.$query['id']) }}" title="Reply">
-                                                <i style="font-size:25px;" class="mdi mdi-reply"></i>
-                                            </a>
-                                            &nbsp; --}}
-                                            
-                                            <a href="{{ route('admin.delete.contact.query', $query['id']) }}"
-                                            onclick="return confirm('Are you sure you want to delete this query?')"
-                                            title="Delete">
-                                             <i style="font-size:25px;" class="mdi mdi-file-excel-box"></i>
-                                         </a>
-                                         
-                                             
-                                        </td>
-                                    </tr>
-                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -89,9 +57,21 @@
 <script>
     $(document).ready(function() {
         $('#contact_queries').DataTable({
-            "pageLength": 10,
-            "lengthMenu": [5, 10, 25, 50, 100],
-            "ordering": true,
+            processing: true,
+            serverSide: true,
+            ajax: "{{ url()->current() }}",
+            columns: [
+                {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                {data: 'name', name: 'name'},
+                {data: 'phone', name: 'phone'},
+                {data: 'email', name: 'email'},
+                {data: 'subject', name: 'subject'},
+                {data: 'message_trimmed', name: 'message'},
+                {data: 'status_dropdown', name: 'status', orderable: false, searchable: false},
+                {data: 'date', name: 'created_at'},
+                {data: 'actions', name: 'actions', orderable: false, searchable: false},
+            ],
+            order: [[7, 'desc']]
         });
 
         // Update status via AJAX

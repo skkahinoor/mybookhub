@@ -12,21 +12,68 @@ use Illuminate\Support\Facades\Auth;
 
 class PublisherController extends Controller
 {
-    public function publisher()
+    public function publisher(Request $request)
     {
         if (!Auth::guard('admin')->user()->can('view_publishers')) {
             abort(403, 'Unauthorized action.');
         }
+
+        if ($request->ajax()) {
+            $data = Publisher::orderBy('id', 'desc');
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('status', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $statusIcon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
+                    $statusText = $row->status == 1 ? 'Active' : 'Inactive';
+                    
+                    if ($adminType === 'vendor') {
+                        return '<a class="updatePublisherStatus"
+                                    id="publisher-' . $row->id . '"
+                                    publisher_id="' . $row->id . '"
+                                    data-url="' . route('vendor.updatepublisherstatus') . '"
+                                    href="javascript:void(0)">
+                                    <i style="font-size: 25px" class="mdi ' . $statusIcon . '"
+                                        status="' . $statusText . '"></i>
+                                </a>';
+                    } else {
+                        return '<a class="updatePublisherStatus"
+                                    id="publisher-' . $row->id . '"
+                                    publisher_id="' . $row->id . '"
+                                    data-url="' . route('admin.updatepublisherstatus') . '"
+                                    href="javascript:void(0)">
+                                    <i style="font-size: 25px" class="mdi ' . $statusIcon . '"
+                                        status="' . $statusText . '"></i>
+                                </a>';
+                    }
+                })
+                ->addColumn('actions', function ($row) {
+                    $adminType = Auth::guard('admin')->user()->type;
+                    $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                    
+                    $editUrl = url($prefix . '/add-edit-publisher/' . $row->id);
+                    $deleteUrl = url($prefix . '/delete-publisher/' . $row->id);
+                    
+                    return '<a href="' . $editUrl . '">
+                                <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
+                            </a>
+                            <a href="javascript:void(0)" class="confirmDelete"
+                                data-module="publisher"
+                                data-url="' . $deleteUrl . '">
+                                <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
+                            </a>';
+                })
+                ->rawColumns(['status', 'actions'])
+                ->make(true);
+        }
+
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         // Correcting issues in the Skydash Admin Panel Sidebar using Session
         Session::put('page', 'publisher');
 
-        $publishers = Publisher::orderBy('id', 'desc')->get()->toArray();
-        // Plain PHP array
-        // dd($publisher);
         $adminType = Auth::guard('admin')->user()->type;
-        return view('admin.publisher.publisher')->with(compact('publishers', 'logos', 'headerLogo', 'adminType'));
+        return view('admin.publisher.publisher')->with(compact('logos', 'headerLogo', 'adminType'));
     }
 
     public function updatePublisherStatus(Request $request)

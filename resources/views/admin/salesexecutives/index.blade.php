@@ -53,48 +53,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($salesExecutives as $se)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $se->name }}</td>
-                                                <td>{{ $se->email }}</td>
-                                                <td>{{ $se->phone }}</td>
-                                                <td class="text-center">
-                                                    @if ($se->status == 1)
-                                                        {{-- Active --}}
-                                                        <span class="badge bg-success status-icon text-white">
-                                                            <i class="mdi mdi-check"></i>
-                                                        </span>
-                                                    @else
-                                                        {{-- Inactive --}}
-                                                        <span class="badge bg-danger status-icon text-white">
-                                                            <i class="mdi mdi-close"></i>
-                                                        </span>
-                                                    @endif
-                                                </td>
-
-
-
-                                                <td>
-                                                    <div class="d-flex align-items-center" style="gap: 10px;">
-                                                        <a href="javascript:void(0)" class="view-sales-executive"
-                                                            data-id="{{ $se->id }}" title="View Details">
-                                                            <i style="font-size: 20px; color: #a71d84;" class="mdi mdi-eye"></i>
-                                                        </a>
-                                                        <a href="{{ route('sales_executives.add_edit', $se->id) }}"
-                                                            title="Edit">
-                                                            <i style="font-size: 20px" class="mdi mdi-pencil"></i>
-                                                        </a>
-                                                        <a href="{{ route('sales_executives.delete', $se->id) }}"
-                                                            title="Delete"
-                                                            onclick="return confirm('Delete this sales executive?');">
-                                                            <i style="font-size: 20px; color: #e74c3c;"
-                                                                class="mdi mdi-delete"></i>
-                                                        </a>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -120,6 +78,17 @@
     <script>
         $(function() {
             $('#sales-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'name', name: 'name'},
+                    {data: 'email', name: 'email'},
+                    {data: 'phone', name: 'phone'},
+                    {data: 'status', name: 'status', className: 'text-center', orderable: false, searchable: false},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ],
                 pageLength: 10,
                 lengthMenu: [5, 10, 25, 50, 100],
                 ordering: true,

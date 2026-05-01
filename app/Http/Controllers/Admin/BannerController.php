@@ -12,13 +12,38 @@ use Intervention\Image\Facades\Image;
 class BannerController extends Controller
 {
     // List banners (Admin)
-    public function banners()
+    public function banners(Request $request)
     {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        $banners = Banner::orderByDesc('id')->get();
-        // View expected by existing admin UI
-        return view('admin.banners.banners', compact('banners', 'logos', 'headerLogo'));
+        
+        if ($request->ajax()) {
+            $query = Banner::query();
+
+            return \Yajra\DataTables\Facades\DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('image', function ($row) {
+                    if (!empty($row->image)) {
+                        return '<img style="width: 100px; height:50px; border-radius: 0px !important;" src="' . $row->image . '" alt="' . $row->alt . '">';
+                    }
+                    return '';
+                })
+                ->addColumn('status', function ($row) {
+                    $badge = $row->status ? 'badge-success' : 'badge-secondary';
+                    $status = $row->status ? 'Active' : 'Inactive';
+                    return '<span class="badge ' . $badge . '">' . $status . '</span>';
+                })
+                ->addColumn('actions', function ($row) {
+                    $editUrl = url('admin/add-edit-banner/' . $row->id);
+                    $deleteUrl = url('admin/delete-banner/' . $row->id);
+                    return '<a href="' . $editUrl . '" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="' . $deleteUrl . '" class="btn btn-sm btn-danger" onclick="return confirm(\'Delete this banner?\')">Delete</a>';
+                })
+                ->rawColumns(['image', 'status', 'actions'])
+                ->make(true);
+        }
+
+        return view('admin.banners.banners', compact('logos', 'headerLogo'));
     }
 
     // Add/Edit Banner (GET render form, POST submit form)

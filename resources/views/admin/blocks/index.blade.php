@@ -152,47 +152,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($blocks as $index => $block)
-                                <tr>
-                                    <td>{{ $index + 1 }}</td>
-                                    <td>{{ $block->name }}</td>
-                                    <td>{{ $block->district->name ?? 'N/A' }}</td>
-                                    <td>{{ $block->district->state->name ?? 'N/A' }}</td>
-                                    <td>{{ $block->district->state->country->name ?? 'N/A' }}</td>
-                                    <td>
-                                        <a href="javascript:void(0)"
-                                           class="status-badge {{ $block->status ? 'status-active' : 'status-inactive' }}"
-                                           id="block-{{ $block->id }}"
-                                           onclick="updateBlockStatus({{ $block->id }}, '{{ $block->status ? 'Active' : 'Inactive' }}')">
-                                            {{ $block->status ? 'Active' : 'Inactive' }}
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.blocks.edit', $block->id) }}" class="btn-action btn-edit">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
-                                        <a href="javascript:void(0)" class="btn-action btn-delete"
-                                           onclick="confirmDelete({{ $block->id }}, '{{ $block->name }}')">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </a>
-                                        <form id="delete-block-{{ $block->id }}"
-                                              action="{{ route('admin.blocks.destroy', $block->id) }}"
-                                              method="POST" style="display:none;">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center py-4">
-                                        <i class="fas fa-cube fa-3x text-muted mb-3"></i>
-                                        <p class="text-muted">No blocks found.
-                                            <a href="{{ url('admin/blocks/create') }}">Add your first block</a>
-                                        </p>
-                                    </td>
-                                </tr>
-                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -213,13 +172,21 @@ let blocksTable = null;
 
 $(document).ready(function() {
     blocksTable = $('#blocksTable').DataTable({
-        "pageLength": 10,
-        "lengthMenu": [5, 10, 25, 50, 100],
-        "ordering": true,
-        "autoWidth": false,
-        "columnDefs": [
-            { "orderable": false, "targets": [6] } // Disable sorting for Actions
-        ]
+        processing: true,
+        serverSide: true,
+        ajax: "{{ url()->current() }}",
+        columns: [
+            {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+            {data: 'name', name: 'name'},
+            {data: 'district', name: 'district.name'},
+            {data: 'state', name: 'district.state.name'},
+            {data: 'country', name: 'district.state.country.name'},
+            {data: 'status', name: 'status', orderable: false, searchable: false},
+            {data: 'actions', name: 'actions', orderable: false, searchable: false},
+        ],
+        order: [[0, 'desc']],
+        pageLength: 10,
+        lengthMenu: [5, 10, 25, 50, 100],
     });
 });
 

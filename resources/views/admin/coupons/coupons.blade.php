@@ -35,63 +35,6 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($coupons as $coupon)
-                                            <tr>
-                                                <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $coupon['coupon_code'] }}</td>
-                                                <td>{{ $coupon['coupon_type'] }}</td>
-                                                <td>
-                                                    {{ $coupon['amount'] }}
-                                                    @if ($coupon['amount_type'] == 'Percentage')
-                                                        %
-                                                    @else
-                                                        INR
-                                                    @endif
-                                                </td>
-                                                <td>{{ $coupon['expiry_date'] }}</td>
-                                                <td>
-                                                    @if ($adminType === 'vendor')
-                                                        <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}"
-                                                            coupon_id="{{ $coupon['id'] }}"
-                                                            data-url="{{ route('vendor.updatecouponstatus') }}"
-                                                            href="javascript:void(0)">
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i>
-                                                        </a>
-                                                    @else
-                                                        @if ($coupon['status'] == 1)
-                                                            <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}"
-                                                                coupon_id="{{ $coupon['id'] }}"
-                                                                data-url="{{ route('admin.updatecouponstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                    status="Active"></i>
-                                                            </a>
-                                                        @else
-                                                            <a class="updateCouponStatus" id="coupon-{{ $coupon['id'] }}"
-                                                                coupon_id="{{ $coupon['id'] }}"
-                                                                data-url="{{ route('admin.updatecouponstatus') }}"
-                                                                href="javascript:void(0)">
-                                                                <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                    status="Inactive"></i>
-                                                            </a>
-                                                        @endif
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <a href="{{ url('admin/add-edit-coupon/' . $coupon['id']) }}">
-                                                        <i style="font-size:25px" class="mdi mdi-pencil-box"></i>
-                                                    </a>
-                                                    <a href="{{ url('admin/delete-coupon/' . $coupon['id']) }}"
-                                                        onclick="return confirm('Are you sure you want to delete this coupon?')"
-                                                        title="Delete Coupon">
-                                                        <i style="font-size:25px;color:red;"
-                                                            class="mdi mdi-file-excel-box"></i>
-                                                    </a>
-                                                </td>
-
-                                            </tr>
-                                        @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -109,4 +52,25 @@
         </footer>
         <!-- partial -->
     </div>
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#coupons').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ url()->current() }}",
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                    {data: 'coupon_code', name: 'coupon_code'},
+                    {data: 'coupon_type', name: 'coupon_type'},
+                    {data: 'amount_display', name: 'amount'},
+                    {data: 'expiry_date', name: 'expiry_date'},
+                    {data: 'status', name: 'status', orderable: false, searchable: false},
+                    {data: 'actions', name: 'actions', orderable: false, searchable: false},
+                ],
+                order: [[0, 'desc']]
+            });
+        });
+    </script>
+@endpush
 @endsection

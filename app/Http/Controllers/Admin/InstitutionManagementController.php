@@ -20,12 +20,89 @@ use Illuminate\Validation\ValidationException;
 
 class InstitutionManagementController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $headerLogo = HeaderLogo::first();
         $logos      = HeaderLogo::first();
         Session::put('page', 'institution_managements');
         $id           = Auth::guard('admin')->user()->name;
+
+        if ($request->ajax()) {
+            $data = InstitutionManagement::with(['country', 'state', 'district', 'block'])->orderBy('id', 'desc');
+
+            return \Yajra\DataTables\Facades\DataTables::of($data)
+                ->addIndexColumn()
+                ->addColumn('name', function ($row) {
+                    return '<strong class="text-dark">' . $row->name . '</strong>';
+                })
+                ->addColumn('type', function ($row) {
+                    $typeName = \App\Models\Section::find($row->type)->name ?? ucfirst($row->type);
+                    return '<span class="type-badge ' . $row->type . '"><i class="fas fa-building"></i> ' . $typeName . '</span>';
+                })
+                ->addColumn('board', function ($row) {
+                    return \App\Models\Category::find($row->board)->category_name ?? $row->board;
+                })
+                ->addColumn('principal_name', function ($row) {
+                    return $row->principal_name ?? 'N/A';
+                })
+                ->addColumn('contact', function ($row) {
+                    return '<div class="d-flex align-items-center gap-2">
+                                <i class="fas fa-phone text-success"></i>
+                                <span>' . ($row->contact_number ?? 'N/A') . '</span>
+                            </div>';
+                })
+                ->addColumn('location', function ($row) {
+                    $state = $row->state->name ?? 'N/A';
+                    $district = $row->district->name ?? '';
+                    $block = $row->block ? ', ' . $row->block->name : '';
+                    $country = $row->country ? ', ' . $row->country->name : '';
+                    return '<div class="location-info">
+                                <div class="main-location">
+                                    <i class="fas fa-map-marker-alt text-primary me-1"></i>
+                                    ' . $state . '
+                                </div>
+                                <div class="sub-location">
+                                    ' . $district . $block . $country . '
+                                </div>
+                            </div>';
+                })
+                ->addColumn('status', function ($row) {
+                    $checked = $row->status == 1 ? 'checked' : '';
+                    $statusClass = $row->status == 1 ? 'active' : 'inactive';
+                    $statusText = $row->status == 1 ? 'Active' : 'Inactive';
+                    
+                    return '<div class="status-toggle-container">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" class="institution-status-toggle"
+                                        data-institution-id="' . $row->id . '" ' . $checked . '>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="status-label ' . $statusClass . '">
+                                    ' . $statusText . '
+                                </span>
+                            </div>';
+                })
+                ->addColumn('actions', function ($row) {
+                    return '<div class="action-buttons">
+                                <a href="' . url('admin/institution-managements/' . $row->id . '/edit') . '"
+                                    class="action-btn edit" title="Edit Institution">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" class="action-btn view"
+                                    onclick="viewInstitution(' . $row->id . ')" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" class="action-btn delete"
+                                    onclick="confirmDelete(' . $row->id . ')"
+                                    title="Delete Institution">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>';
+                })
+                ->rawColumns(['name', 'type', 'contact', 'location', 'status', 'actions'])
+                ->make(true);
+        }
+
         $institutions = InstitutionManagement::with('institutionClasses')->orderBy('id', 'desc')->get();
         $sections     = Section::where('status', 1)
             ->whereNotIn('name', [

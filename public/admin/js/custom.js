@@ -3,20 +3,20 @@
 $(document).ready(function () {
     // DataTables jQuery library
     // Calling the DataTable class for all pages
-    $("#education-levels").DataTable(); // in sections.blade.php
-    $("#categories").DataTable(); // in categories.blade.php
-    $("#brands").DataTable(); // in brands.blade.php
-    $("#products").DataTable(); // in products.blade.php
-    $("#banners").DataTable(); // in banners.blade.php
-    $("#filters").DataTable(); // in filters.blade.php
-    $("#coupons").DataTable(); // in admin/coupons/coupons.blade.php
-    $("#users").DataTable(); // in admin/users/users.blade.php
-    $("#orders").DataTable(); // in admin/orders/orders.blade.php
-    $("#shipping").DataTable(); // in admin/shipping/shipping_charges.blade.php
-    $("#subcategories").DataTable(); // in admin/subcategories/subcategories.blade.php
-    $("#subscribers").DataTable(); // in admin/subscribers/subscribers.blade.php
-    $("#ratings").DataTable(); // in admin/ratings/ratings.blade.php
-    $("#delivery_settings").DataTable(); // in admin/delivery_settings/index.blade.php
+    // $("#education-levels").DataTable(); // in sections.blade.php
+    // $("#categories").DataTable(); // in categories.blade.php
+    // $("#brands").DataTable(); // in brands.blade.php
+    // $("#products").DataTable(); // in products.blade.php
+    // $("#banners").DataTable(); // in banners.blade.php
+    // $("#filters").DataTable(); // in filters.blade.php
+    // $("#coupons").DataTable(); // in admin/coupons/coupons.blade.php
+    // $("#users").DataTable(); // in admin/users/users.blade.php
+    // $("#orders").DataTable(); // in admin/orders/orders.blade.php
+    // $("#shipping").DataTable(); // in admin/shipping/shipping_charges.blade.php
+    // $("#subcategories").DataTable(); // in admin/subcategories/subcategories.blade.php
+    // $("#subscribers").DataTable(); // in admin/subscribers/subscribers.blade.php
+    // $("#ratings").DataTable(); // in admin/ratings/ratings.blade.php
+    // $("#delivery_settings").DataTable(); // in admin/delivery_settings/index.blade.php
 
     // Correcting issues in the Skydash Admin Panel Sidebar
     $(".nav-item").removeClass("active");

@@ -48,31 +48,6 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($roles as $role)
-                                        <tr>
-                                            <td class="align-middle">{{ $loop->iteration }}</td>
-                                            <td class="align-middle font-weight-bold">{{ $role->name }}</td>
-                                            <td class="text-wrap">
-                                                <div class="d-flex flex-wrap">
-                                                    @foreach ($role->permissions as $permission)
-                                                        <span class="badge badge-info m-1">{{ $permission->name }}</span>
-                                                    @endforeach
-                                                </div>
-                                            </td>
-                                            <td class="align-middle">
-                                                <a href="{{ route('admin.roles.edit', $role->id) }}" title="Edit Role" class="btn btn-sm btn-outline-primary border-0">
-                                                    <i style="font-size: 20px" class="mdi mdi-pencil-box"></i>
-                                                </a>
-                                                <form action="{{ route('admin.roles.destroy', $role->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this role?')">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Delete Role">
-                                                        <i style="font-size: 20px" class="mdi mdi-delete"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -87,7 +62,17 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        $('#roles-table').DataTable();
+        $('#roles-table').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: "{{ url()->current() }}",
+            columns: [
+                {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+                {data: 'name', name: 'name'},
+                {data: 'permissions', name: 'permissions', orderable: false, searchable: false},
+                {data: 'actions', name: 'actions', orderable: false, searchable: false},
+            ]
+        });
     });
 </script>
 @endpush
