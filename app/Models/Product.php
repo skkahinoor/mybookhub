@@ -393,8 +393,8 @@ class Product extends Model
             });
             
             if ($commissionPercentage > 0) {
-                // Commission is calculated from the seller's price (finalPrice)
-                $commissionAmount = round(($finalPrice * $commissionPercentage) / 100);
+                // Commission is calculated from the original MRP price
+                $commissionAmount = round(($originalPrice * $commissionPercentage) / 100);
                 $finalPrice = round($finalPrice + $commissionAmount);
             }
         }
