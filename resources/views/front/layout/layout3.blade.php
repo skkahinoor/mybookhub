@@ -897,9 +897,11 @@
                 <button type="submit"><i class="fa fa-search"></i></button>
             </form>
             <div class="header-icons">
+                @guest
                 <a href="{{ url('vendor/login') }}" class="header-text-link desktop-only-icon">
                     Vendor Login
                 </a>
+                @endguest
                 <a href="{{ Auth::check() ? route('student.sell-book.index') : route('student.login') }}" class="header-text-link desktop-only-icon">
                     Sell Book
                 </a>

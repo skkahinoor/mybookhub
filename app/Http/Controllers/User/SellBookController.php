@@ -768,9 +768,9 @@ class SellBookController extends Controller
     }
 
     /**
-     * Show purchaser details for a sold book
+     * Show purchase details for a sold book
      */
-    public function purchaserDetails($id)
+    public function purchaseDetails($id)
     {
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
