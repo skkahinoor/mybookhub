@@ -221,4 +221,9 @@ class ProductsAttribute extends Model
         return $this->hasOne(OrdersProduct::class, 'product_attribute_id');
     }
 
+    public function ordersProducts()
+    {
+        return $this->hasMany(OrdersProduct::class, 'product_attribute_id');
+    }
+
 }
