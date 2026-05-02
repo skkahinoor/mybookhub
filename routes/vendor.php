@@ -97,9 +97,9 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
 
 
 
-        //Publishers
         Route::get('publisher', 'PublisherController@publisher')->name('vendor.publisher');
         Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('vendor.updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
+        Route::get('export-publishers', 'PublisherController@exportPublishers')->name('vendor.export.publishers');
 
 
         Route::post('/admin/add-publisher-ajax', [App\Http\Controllers\Admin\PublisherController::class, 'addPublisherAjax'])->name('vendor.addPublisherAjax');
@@ -120,6 +120,7 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
 
         //Author
         Route::get('authors', [AuthorController::class, 'index'])->name('vendor.author');
+        Route::get('export-authors', [AuthorController::class, 'exportAuthors'])->name('vendor.export.authors');
         Route::get('add_author', [AuthorController::class, 'add'])->name('vendor.add.author');
         Route::post('/vendor/store_author', [AuthorController::class, 'store'])->name('vendor.store.author');
         Route::get('author_edit/{id}', [AuthorController::class, 'edit'])->name('vendor.edit.author');

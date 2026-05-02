@@ -12,9 +12,21 @@
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Publisher</h4>
-                            <a href="{{ url('admin/add-edit-publisher') }}"
-                                style="max-width: 150px; float: right; display: inline-block"
-                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Publisher</a>
+                            @if ($adminType === 'vendor')
+                                <a href="{{ route('vendor.add_edit_publisher') }}"
+                                    style="max-width: 150px; float: right; display: inline-block"
+                                    class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Publisher</a>
+                                <a href="{{ route('vendor.export.publishers') }}"
+                                    style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
+                                    class="btn btn-block btn-success"><i class="mdi mdi-file-excel"></i> Export</a>
+                            @else
+                                <a href="{{ route('admin.add_edit_publisher') }}"
+                                    style="max-width: 150px; float: right; display: inline-block"
+                                    class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Publisher</a>
+                                <a href="{{ route('admin.export.publishers') }}"
+                                    style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
+                                    class="btn btn-block btn-success"><i class="mdi mdi-file-excel"></i> Export</a>
+                            @endif
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Session;
 
 use App\Models\Publisher;
 use App\Models\HeaderLogo;
+use App\Exports\PublishersExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 
 class PublisherController extends Controller
@@ -222,5 +224,10 @@ class PublisherController extends Controller
 
 
         return view('admin.publisher.add_edit_publisher')->with(compact('title', 'publisher', 'logos', 'headerLogo'));
+    }
+
+    public function exportPublishers()
+    {
+        return Excel::download(new PublishersExport, 'publishers.xlsx');
     }
 }

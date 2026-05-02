@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\HeaderLogo;
+use App\Exports\AuthorsExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -185,5 +187,10 @@ class AuthorController extends Controller
             'status'    => $status,
             'author_id' => $data['author_id'],
         ]);
+    }
+
+    public function exportAuthors()
+    {
+        return Excel::download(new AuthorsExport, 'authors.xlsx');
     }
 }

@@ -8,14 +8,20 @@
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title">Author</h4>
-                            @if ($adminType === 'vendor')
+                             @if ($adminType === 'vendor')
                                 <a href="{{ route('vendor.add.author') }}"
                                     style="max-width: 150px; float: right; display: inline-block"
                                     class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Author</a>
+                                <a href="{{ route('vendor.export.authors') }}"
+                                    style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
+                                    class="btn btn-block btn-success"><i class="mdi mdi-file-excel"></i> Export</a>
                             @else
                                 <a href="{{ route('admin.add.author') }}"
                                     style="max-width: 150px; float: right; display: inline-block"
                                     class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Author</a>
+                                <a href="{{ route('admin.export.authors') }}"
+                                    style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
+                                    class="btn btn-block btn-success"><i class="mdi mdi-file-excel"></i> Export</a>
                             @endif
 
                             @if (Session::has('success_message'))
