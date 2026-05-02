@@ -298,6 +298,7 @@ class SellBookController extends Controller
             'commission' => round($commission),
             'net_payout' => round($orderProduct->product_price - $commission),
             'payout_status' => $orderProduct->vendor_payout_status ?? 'Pending',
+            'payout_note' => $orderProduct->vendor_payout_note,
         ];
     }
 

@@ -15,6 +15,9 @@
                                 <a href="{{ route('vendor.export.authors') }}"
                                     style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
                                     class="btn btn-block btn-success"><i class="mdi mdi-file-excel"></i> Export</a>
+                                <button type="button"
+                                    style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
+                                    class="btn btn-block btn-info" data-toggle="modal" data-target="#importModal"><i class="mdi mdi-file-import"></i> Import</button>
                             @else
                                 <a href="{{ route('admin.add.author') }}"
                                     style="max-width: 150px; float: right; display: inline-block"
@@ -22,7 +25,37 @@
                                 <a href="{{ route('admin.export.authors') }}"
                                     style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
                                     class="btn btn-block btn-success"><i class="mdi mdi-file-excel"></i> Export</a>
+                                <button type="button"
+                                    style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
+                                    class="btn btn-block btn-info" data-toggle="modal" data-target="#importModal"><i class="mdi mdi-file-import"></i> Import</button>
                             @endif
+
+                            <!-- Import Modal -->
+                            <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="importModalLabel">Import Authors</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <form action="{{ $adminType === 'vendor' ? route('vendor.import.authors') : route('admin.import.authors') }}" method="POST" enctype="multipart/form-data">
+                                            @csrf
+                                            <div class="modal-body">
+                                                <div class="form-group">
+                                                    <label for="file">Choose Excel/CSV File (Columns: name)</label>
+                                                    <input type="file" name="file" class="form-control" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary">Import</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
 
                             @if (Session::has('success_message'))
                                 <!-- Check AdminController.php, updateAdminPassword() method -->
