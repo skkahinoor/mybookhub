@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Author;
 use App\Models\HeaderLogo;
+use App\Exports\AuthorsExport;
+use App\Imports\AuthorsImport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -185,5 +188,26 @@ class AuthorController extends Controller
             'status'    => $status,
             'author_id' => $data['author_id'],
         ]);
+    }
+
+    public function exportAuthors()
+    {
+        return Excel::download(new AuthorsExport, 'authors.xlsx');
+    }
+
+    public function importAuthors(Request $request)
+    {
+        if ($request->isMethod('post')) {
+            $request->validate([
+                'file' => 'required|mimes:xlsx,xls,csv'
+            ]);
+
+            try {
+                Excel::import(new AuthorsImport, $request->file('file'));
+                return redirect()->back()->with('success_message', 'Authors imported successfully!');
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error_message', $e->getMessage());
+            }
+        }
     }
 }

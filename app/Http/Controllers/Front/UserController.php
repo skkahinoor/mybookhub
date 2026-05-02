@@ -180,9 +180,14 @@ class UserController extends Controller
                         if ($spatieRole) {
                             $user->assignRole($spatieRole);
                             if ($spatieRole->name === 'student') {
-                                AcademicProfile::firstOrCreate([
-                                    'user_id' => $user->id,
-                                ]);
+                                AcademicProfile::firstOrCreate(
+                                    ['user_id' => $user->id],
+                                    [
+                                        'education_level_id' => request()->cookie('bg_section_id') ?? session('bg_section_id'),
+                                        'board_id' => request()->cookie('bg_category_id') ?? session('bg_category_id'),
+                                        'class_id' => request()->cookie('bg_subcategory_id') ?? session('bg_subcategory_id'),
+                                    ]
+                                );
                             }
                         }
                     }
@@ -265,6 +270,26 @@ class UserController extends Controller
             }
 
             // Redirect to cart or dashboard
+            
+            // Sync BookGenie session to profile if profile is empty
+            if (Auth::user()->hasRole('student')) {
+                $profile = AcademicProfile::where('user_id', Auth::id())->first();
+                if ($profile && !$profile->education_level_id) {
+                    $profile->update([
+                        'education_level_id' => request()->cookie('bg_section_id') ?? session('bg_section_id'),
+                        'board_id' => request()->cookie('bg_category_id') ?? session('bg_category_id'),
+                        'class_id' => request()->cookie('bg_subcategory_id') ?? session('bg_subcategory_id'),
+                    ]);
+                } elseif (!$profile) {
+                    AcademicProfile::create([
+                        'user_id' => Auth::id(),
+                        'education_level_id' => request()->cookie('bg_section_id') ?? session('bg_section_id'),
+                        'board_id' => request()->cookie('bg_category_id') ?? session('bg_category_id'),
+                        'class_id' => request()->cookie('bg_subcategory_id') ?? session('bg_subcategory_id'),
+                    ]);
+                }
+            }
+
             return redirect(url()->previous());
         } else {
             // Incorrect credentials

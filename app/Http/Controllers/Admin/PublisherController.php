@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Session;
 
 use App\Models\Publisher;
 use App\Models\HeaderLogo;
+use App\Exports\PublishersExport;
+use App\Imports\PublishersImport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Auth;
 
 class PublisherController extends Controller
@@ -222,5 +225,26 @@ class PublisherController extends Controller
 
 
         return view('admin.publisher.add_edit_publisher')->with(compact('title', 'publisher', 'logos', 'headerLogo'));
+    }
+
+    public function exportPublishers()
+    {
+        return Excel::download(new PublishersExport, 'publishers.xlsx');
+    }
+
+    public function importPublishers(Request $request)
+    {
+        if ($request->isMethod('post')) {
+            $request->validate([
+                'file' => 'required|mimes:xlsx,xls,csv'
+            ]);
+
+            try {
+                Excel::import(new PublishersImport, $request->file('file'));
+                return redirect()->back()->with('success_message', 'Publishers imported successfully!');
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error_message', $e->getMessage());
+            }
+        }
     }
 }
