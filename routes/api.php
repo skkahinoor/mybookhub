@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\VendorPlanController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\SalesVendorController;
 use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\Deliveryagent\DeliveryAgentApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +40,16 @@ Route::post('/vendor/verify-otp', [VendorController::class, 'verifyOtp']);
 // rozerpay webhook for payment
 Route::post('razorpay/webhook', [VendorPlanController::class, 'razorpayWebhook']);
 // end rozerpay webhook for payment**
+
+// Delivery Agent Public Routes
+Route::post('/delivery-agent/register', [DeliveryAgentApiController::class, 'register']);
+Route::post('/delivery-agent/login', [DeliveryAgentApiController::class, 'login']);
+
+// Public Location Routes (for registration)
+Route::get('/public/countries', [InstitutionController::class, 'getCountries']);
+Route::get('/public/states/{country_id}', [InstitutionController::class, 'getStates']);
+Route::get('/public/districts/{state_id}', [InstitutionController::class, 'getDistricts']);
+Route::get('/public/blocks/{district_id}', [InstitutionController::class, 'getBlocks']);
 
 // Protected routes: logout (requires valid Sanctum token)
 Route::middleware('auth:sanctum')->group(function () {
@@ -203,6 +214,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('vendor/sales/search-isbn', [OrderController::class, 'searchByIsbn']);
     Route::post('/vendor/sales/process', [OrderController::class, 'processSale']);
     Route::post('/vendor/coupon/validate', [OrderController::class, 'validateCoupon']);
+});
+
+// Delivery Agent Protected Routes
+Route::middleware(['auth:sanctum', 'delivery_agent'])->group(function () {
+    Route::get('/delivery-agent/profile', [DeliveryAgentApiController::class, 'getProfile']);
+    // Future orders matching routes will go here
 });
 
 require __DIR__ . '/userApi.php';

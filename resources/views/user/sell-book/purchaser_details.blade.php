@@ -10,7 +10,7 @@
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h4 class="card-title mb-0">Purchaser Details</h4>
+                                <h4 class="card-title mb-0">Purchase Details</h4>
                                 <a href="{{ route('student.sell-book.index') }}" class="btn btn-secondary">
                                     <i class="mdi mdi-arrow-left"></i> Back to My Books
                                 </a>
@@ -43,11 +43,11 @@
                                     </div>
                                 </div>
 
-                                <!-- Purchaser Details -->
+                                <!-- Purchase Details -->
                                 <div class="col-md-6">
                                     <div class="card bg-light">
                                         <div class="card-body">
-                                            <h5 class="card-title text-success">Purchaser Info</h5>
+                                            <h5 class="card-title text-success">Buyer Information</h5>
                                             <hr>
                                             <div class="mb-3">
                                                 <p class="mb-1"><strong>Name:</strong> {{ $order->name }}</p>

@@ -308,6 +308,10 @@
                                     class="nav-link" href="{{ url('admin/sales-executive') }}">Sales
                                     Executives</a></li>
                         @endcan
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'view_delivery_agents') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ url('admin/delivery-agent') }}">Delivery
+                                Agents</a></li>
                         @can('view_roles')
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'roles') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
