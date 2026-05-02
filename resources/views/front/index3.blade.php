@@ -1693,23 +1693,7 @@
         </button>
     </div>
 
-    <!-- Sell Hero Section -->
-    <section class="sell-hero-premium">
-        <div class="sell-content-premium">
-            <h2>Turn Your <span>Old Books into Cash</span></h2>
-            <p class="steps-head-premium">Sell Used Books in 3 Easy Steps:</p>
-            <div class="sell-steps-premium">
-                <div class="sell-step-premium">📁 Upload Book Photo</div>
-                <div class="sell-step-premium">💰 Set Your Price</div>
-                <div class="sell-step-premium">💵 Get Paid</div>
-            </div>
-            <div class="hero-btns">
-                <a href="{{ url('/search-products') }}" class="btn-premium btn-orange">Sell Your Books</a>
-                <a href="{{ url('/marketplace') }}" class="btn-premium btn-blue">Browse Used Books</a>
-            </div>
-        </div>
-        <img src="{{ asset('front/theme_illustrations/sell_books.png') }}" alt="Sell Illustration">
-    </section>
+   
 
 
     <!-- Opportunity Banners -->
@@ -1759,6 +1743,29 @@
                 <h3 style="margin-bottom: 10px;">Register Today</h3>
                 <p>Fill out a short application, and our team will be in touch with you shortly.</p>
                 <a href="{{ url('/sales') }}" class="btn-join-premium">Join As Sales Executive →</a>
+            </div>
+        </div>
+
+        <!-- Delivery Agent Opportunity -->
+        <div class="banner-premium-card s-banner-premium"
+            style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); margin-top: 30px;">
+            <div class="v-text-premium">
+                <span class="v-label-premium" style="background: rgba(255,255,255,0.2); color: white;">🚚 Flexible
+                    Work</span>
+                <h2 style="color: #ffffffff;">Join as a <span>Delivery Partner</span></h2>
+                <p style="opacity: 0.9; margin-bottom: 25px; line-height: 1.6;">Be the hero who delivers knowledge. Join our
+                    delivery network, work on your own schedule, and earn for every successful delivery in your district.</p>
+                <div class="v-points-premium">
+                    <div class="v-point-premium">⏰ Flexible hours</div>
+                    <div class="v-point-premium">💰 Regular earnings</div>
+                </div>
+            </div>
+            <div class="s-card-premium">
+                <div class="s-icon-premium" style="background: #D1FAE5;">🚚</div>
+                <h3 style="margin-bottom: 10px;">Start Delivering</h3>
+                <p>Register now, upload your details, and start receiving delivery requests in your area.</p>
+                <a href="{{ url('/delivery-agent/register') }}" class="btn-join-premium"
+                    style="background: #059669;">Join As Delivery Partner →</a>
             </div>
         </div>
     </div>

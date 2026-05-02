@@ -67,6 +67,13 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-sales-executive-status', [SalesExecutiveController::class, 'updateStatus'])->name('sales_executives.update_status');
         Route::get('sales-executive/{id}/details', [SalesExecutiveController::class, 'getDetails'])->name('sales_executives.get_details');
 
+         // Delivery Agents Management
+        Route::get('delivery-agent', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'index'])->name('delivery_agents.index');
+        Route::match(['get', 'post'], 'add-edit-delivery-agent/{id?}', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'addEdit'])->name('delivery_agents.add_edit');
+        Route::get('delete-delivery-agent/{id}', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'delete'])->name('delivery_agents.delete');
+        Route::post('update-delivery-agent-status', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'updateStatus'])->name('delivery_agents.update_status');
+        Route::get('delivery-agent/{id}/details', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'getDetails'])->name('delivery_agents.get_details');
+
         // Roles & Permissions Management
         Route::get('roles/assign-permissions', [RoleController::class, 'assignPermissions'])->name('admin.roles.assign_permissions');
         Route::post('roles/update-permissions', [RoleController::class, 'updatePermissions'])->name('admin.roles.update_permissions');
@@ -752,6 +759,18 @@ HTML;
 
     // Add this route with your other front-end routes
     Route::get('/search-products', [App\Http\Controllers\Front\IndexController::class, 'searchProducts']);
+    
+    // Delivery Agent Registration
+    Route::get('delivery-agent/register', [App\Http\Controllers\Front\DeliveryAgentController::class, 'showRegister'])->name('delivery_agent.register');
+    Route::post('delivery-agent/register', [App\Http\Controllers\Front\DeliveryAgentController::class, 'register'])->name('delivery_agent.register.submit');
+    Route::get('delivery-agent/get-states', [App\Http\Controllers\Front\DeliveryAgentController::class, 'getStates'])->name('delivery_agent.get_states');
+    Route::get('delivery-agent/get-districts', [App\Http\Controllers\Front\DeliveryAgentController::class, 'getDistricts'])->name('delivery_agent.get_districts');
+    Route::get('delivery-agent/get-blocks', [App\Http\Controllers\Front\DeliveryAgentController::class, 'getBlocks'])->name('delivery_agent.get_blocks');
+
+
+       
+
+
 });
 
 Route::get('/dashboard', [App\Http\Controllers\Admin\AdminController::class, 'dashboard'])->name('dashboard');

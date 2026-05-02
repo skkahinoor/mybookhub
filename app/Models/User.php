@@ -175,6 +175,11 @@ class User extends Authenticatable
         return $this->hasOne(SalesExecutive::class, 'user_id');
     }
 
+    public function deliveryAgent()
+    {
+        return $this->hasOne(DeliveryAgent::class, 'user_id');
+    }
+
     public function vendorPersonal()
     {
         return $this->hasOne(Vendor::class, 'user_id');
