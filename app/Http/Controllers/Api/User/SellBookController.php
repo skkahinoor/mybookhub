@@ -264,6 +264,21 @@ class SellBookController extends Controller
 
         $buyer = User::find($order->user_id);
 
+        // Ensure commission is correctly accounted for (even if saved as 0 in older records for student books)
+        $commission = (float) ($orderProduct->commission ?? 0);
+        if ($commission == 0 && $attribute->old_book_condition_id) {
+            $commissionPercentage = \Illuminate\Support\Facades\Cache::remember('old_book_commission_percentage', 3600, function () {
+                $c = \App\Models\OldBookCommission::first();
+                return $c ? (float) $c->percentage : 0;
+            });
+            if ($commissionPercentage > 0) {
+                $product = Product::find($attribute->product_id);
+                if ($product) {
+                    $commission = round(($product->product_price * $commissionPercentage) / 100);
+                }
+            }
+        }
+
         return [
             'name' => $order->name,
             'email' => $order->email ?? ($buyer->email ?? null),
@@ -279,9 +294,10 @@ class SellBookController extends Controller
             'ordered_at' => $order->created_at ? $order->created_at->format('d M Y, h:i A') : null,
             'payment_method' => $order->payment_method,
             'payment_status' => $order->payment_status ?? $order->order_status,
-            'product_price' => round($orderProduct->product_price),
-            'commission' => round($orderProduct->commission),
-            'net_payout' => round($orderProduct->product_price - $orderProduct->commission),
+            'product_price' => round($orderProduct->product_price - $commission),
+            'commission' => round($commission),
+            'net_payout' => round($orderProduct->product_price - $commission),
+            'payout_status' => $orderProduct->vendor_payout_status ?? 'Pending',
         ];
     }
 

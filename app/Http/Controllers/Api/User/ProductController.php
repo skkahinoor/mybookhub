@@ -162,7 +162,7 @@ class ProductController extends Controller
             'authors:id,name',
             'attributes' => function ($q) {
                 $q->where('status', 1)
-                    ->select('id', 'product_id', 'status', 'stock', 'old_book_condition_id', 'user_product_price', 'product_discount');
+                    ->select('id', 'product_id', 'status', 'stock', 'old_book_condition_id', 'user_product_price', 'product_discount', 'vendor_id', 'user_id');
             },
             'attributes.condition:id,name,percentage'
         ])
@@ -1749,6 +1749,16 @@ class ProductController extends Controller
                 $commission = 0;
                 if ($attribute->vendor_id && $attribute->vendor_id > 0) {
                     $commission = Vendor::getVendorCommission($attribute->vendor_id);
+                } elseif ($attribute->old_book_condition_id) {
+                    // For student-listed old books
+                    $commissionPercentage = \Illuminate\Support\Facades\Cache::remember('old_book_commission_percentage', 3600, function () {
+                        $c = \App\Models\OldBookCommission::first();
+                        return $c ? (float) $c->percentage : 0;
+                    });
+                    if ($commissionPercentage > 0) {
+                        // Commission is calculated from the original MRP price
+                        $commission = round(($attribute->product->product_price * $commissionPercentage) / 100);
+                    }
                 }
 
                 OrdersProduct::create([
