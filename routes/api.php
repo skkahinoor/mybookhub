@@ -41,9 +41,7 @@ Route::post('/vendor/verify-otp', [VendorController::class, 'verifyOtp']);
 Route::post('razorpay/webhook', [VendorPlanController::class, 'razorpayWebhook']);
 // end rozerpay webhook for payment**
 
-// Delivery Agent Public Routes
-Route::post('/delivery-agent/register', [DeliveryAgentApiController::class, 'register']);
-Route::post('/delivery-agent/login', [DeliveryAgentApiController::class, 'login']);
+
 
 // Public Location Routes (for registration)
 Route::get('/public/countries', [InstitutionController::class, 'getCountries']);
@@ -216,10 +214,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/vendor/coupon/validate', [OrderController::class, 'validateCoupon']);
 });
 
-// Delivery Agent Protected Routes
-Route::middleware(['auth:sanctum', 'delivery_agent'])->group(function () {
-    Route::get('/delivery-agent/profile', [DeliveryAgentApiController::class, 'getProfile']);
-    // Future orders matching routes will go here
-});
+
+require __DIR__ . '/delivery_agent_api.php';
 
 require __DIR__ . '/userApi.php';

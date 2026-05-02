@@ -13,6 +13,8 @@ class DeliveryAgent extends Model
         'user_id',
         'vehicle_type',
         'license_number',
+        'id_proof',
+        'license_image',
         'profile_image',
         'status'
     ];
