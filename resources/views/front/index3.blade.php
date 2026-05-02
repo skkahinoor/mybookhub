@@ -2379,7 +2379,7 @@
         <!-- Welcome Modal (First Step) -->
         <div class="modal fade" id="welcomeModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content" style="border-radius:24px; border:none; overflow:hidden;">
+                <div class="modal-content" style="border-radius:24px; border:none; overflow:hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
                     <div style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 25px; text-align: center; color: white;">
                         <h4 style="font-weight: 800; color: white; margin-bottom: 5px;">Experience our mobile app!</h4>
                     </div>
@@ -2423,10 +2423,10 @@
             </div>
         </div>
 
-        <!-- Personalization Modal (Second Step) -->
+        <!-- Personalization Modal (Second Step - BookGenie AI) -->
         <div class="modal fade" id="bookGenieModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content" style="border-radius:24px; border:none; overflow:hidden;">
+                <div class="modal-content" style="border-radius:24px; border:none; overflow:hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
                     <div
                         style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 30px; text-align: center; color: white;">
                         <h3 style="font-weight: 800; color: white; margin-bottom: 10px;">✨ BookGenie AI</h3>
@@ -2434,9 +2434,8 @@
                             books that perfectly fit you!</p>
                     </div>
                     <div class="modal-body" style="padding: 30px;">
-                        <div class="mb-4">
-                            <label style="font-weight: 700; color: #333; margin-bottom: 8px;">Education Level
-                                (Section)</label>
+                        <div class="mb-3">
+                            <label style="font-weight: 700; color: #333; margin-bottom: 8px;">Education Level (Section)</label>
                             <select id="bgSectionSelect" class="form-select"
                                 style="border-radius: 12px; border: 2px solid #eee; padding: 12px; height: 50px;">
                                 <option value="">Select Education Level</option>
@@ -2445,17 +2444,15 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="mb-4">
-                            <label style="font-weight: 700; color: #333; margin-bottom: 8px;">Board / Domain
-                                (Category)</label>
+                        <div class="mb-3">
+                            <label style="font-weight: 700; color: #333; margin-bottom: 8px;">Board / Domain (Category)</label>
                             <select id="bgCategorySelect" class="form-select"
                                 style="border-radius: 12px; border: 2px solid #eee; padding: 12px; height: 50px;" disabled>
                                 <option value="">Select Board</option>
                             </select>
                         </div>
-                        <div class="mb-4">
-                            <label style="font-weight: 700; color: #333; margin-bottom: 8px;">Class / Stream (Sub
-                                Category)</label>
+                        <div class="mb-3">
+                            <label style="font-weight: 700; color: #333; margin-bottom: 8px;">Class / Stream (Sub Category)</label>
                             <select id="bgSubcategorySelect" class="form-select"
                                 style="border-radius: 12px; border: 2px solid #eee; padding: 12px; height: 50px;" disabled>
                                 <option value="">Select Class</option>
@@ -2464,9 +2461,9 @@
 
                         <div class="d-flex gap-3 mt-4">
                             <button type="button" class="btn btn-light w-50" id="closeBookGenie"
-                                style="border-radius: 12px; font-weight: 700; padding: 12px;">Skip</button>
+                                style="border-radius: 12px; font-weight: 700; padding: 12px; background: #f8f9fa; border: 1px solid #eee;">Skip</button>
                             <button type="button" class="btn text-white w-50" id="applyBookGenie"
-                                style="background: var(--primary-orange); border-radius: 12px; font-weight: 700; padding: 12px;">Personalize
+                                style="background: var(--primary-orange); border-radius: 12px; font-weight: 700; padding: 12px; box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);">Personalize
                                 <i class="fas fa-magic ms-1"></i>
                             </button>
                         </div>
@@ -2498,7 +2495,6 @@
                 if (continueBtn) {
                     continueBtn.addEventListener('click', function() {
                         localStorage.setItem('welcome_shown', 'true');
-                        // Set session flag too for reliability
                         fetch(`{{ url('/set-welcome-session') }}`, {
                             method: 'POST',
                             headers: {
@@ -2529,7 +2525,6 @@
                             },
                             body: JSON.stringify({ welcome_shown: true })
                         });
-                        // Web flow continues after download click
                     });
                 }
 
@@ -2586,7 +2581,7 @@
                 });
 
                 function dismissBookGenie(withData = false) {
-                    bookGenieModal.hide();
+                    if(bookGenieModal) bookGenieModal.hide();
 
                     let payload = {
                         bookgenie_shown: true
@@ -2613,16 +2608,25 @@
                 });
 
                 document.getElementById('applyBookGenie').addEventListener('click', function() {
-                    // Set the hidden filter bottom sheet values
-                    document.getElementById('filterSection').value = bgSection.value;
+                    if (!bgSection.value) {
+                        alert('Please select education level.');
+                        return;
+                    }
 
-                    document.getElementById('filterCategory').innerHTML = bgCategory.innerHTML;
-                    document.getElementById('filterCategory').value = bgCategory.value;
+                    // Sync to main filters
+                    if (document.getElementById('filterSection')) {
+                        document.getElementById('filterSection').value = bgSection.value;
+                    }
+                    if (document.getElementById('filterCategory')) {
+                        document.getElementById('filterCategory').innerHTML = bgCategory.innerHTML;
+                        document.getElementById('filterCategory').value = bgCategory.value;
+                    }
+                    if (document.getElementById('filterSubcategory')) {
+                        document.getElementById('filterSubcategory').innerHTML = bgSubcategory.innerHTML;
+                        document.getElementById('filterSubcategory').value = bgSubcategory.value;
+                    }
 
-                    document.getElementById('filterSubcategory').innerHTML = bgSubcategory.innerHTML;
-                    document.getElementById('filterSubcategory').value = bgSubcategory.value;
-
-                    // Perform AJAX update
+                    // Perform AJAX update on the home grid
                     if (typeof updateHomeGrid === 'function') {
                         updateHomeGrid(null, null, true);
                     }

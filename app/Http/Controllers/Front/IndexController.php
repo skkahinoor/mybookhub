@@ -29,23 +29,34 @@ class IndexController extends Controller
         $sessionSubcategoryId = $request->cookie('bg_subcategory_id') ?? session('bg_subcategory_id');
         $sessionSubjectId = $request->cookie('bg_subject_id') ?? session('bg_subject_id');
 
-        $currentSectionId = $request->filled('section_id') ? $request->section_id : $sessionSectionId;
-        $currentCategoryId = $request->filled('category_id') ? $request->category_id : $sessionCategoryId;
-        $currentSubcategoryId = $request->filled('subcategory_id') ? $request->subcategory_id : $sessionSubcategoryId;
-        $currentSubjectId = $request->filled('subject_id') ? $request->subject_id : $sessionSubjectId;
+        // Priority 1: Direct Request Params (Manually selected filters)
+        $currentSectionId = $request->filled('section_id') ? $request->section_id : null;
+        $currentCategoryId = $request->filled('category_id') ? $request->category_id : null;
+        $currentSubcategoryId = $request->filled('subcategory_id') ? $request->subcategory_id : null;
+        $currentSubjectId = $request->filled('subject_id') ? $request->subject_id : null;
 
-        if (Auth::check() && ! $request->filled('section_id') && ! $sessionSectionId) {
-            $profile = \App\Models\AcademicProfile::where('user_id', Auth::id())->first();
-            if ($profile) {
-                if (! $currentSectionId) {
+        // If no direct request params, check Profile or Session
+        if (!$currentSectionId) {
+            if (Auth::check()) {
+                // Priority 2: Academic Profile for Students
+                $profile = \App\Models\AcademicProfile::where('user_id', Auth::id())->first();
+                if ($profile && $profile->education_level_id) {
                     $currentSectionId = $profile->education_level_id;
-                }
-                if (! $currentCategoryId) {
                     $currentCategoryId = $profile->board_id;
-                }
-                if (! $currentSubcategoryId) {
                     $currentSubcategoryId = $profile->class_id;
+                } else {
+                    // Priority 3: Fallback to Session/Cookie for logged in users without profile
+                    $currentSectionId = $sessionSectionId;
+                    $currentCategoryId = $sessionCategoryId;
+                    $currentSubcategoryId = $sessionSubcategoryId;
+                    $currentSubjectId = $sessionSubjectId;
                 }
+            } else {
+                // Priority 3: Session/Cookie for Guest Users
+                $currentSectionId = $sessionSectionId;
+                $currentCategoryId = $sessionCategoryId;
+                $currentSubcategoryId = $sessionSubcategoryId;
+                $currentSubjectId = $sessionSubjectId;
             }
         }
 
@@ -279,6 +290,18 @@ class IndexController extends Controller
         if ($request->filled('subject_id')) {
             session(['bg_subject_id' => $request->subject_id]);
             \Illuminate\Support\Facades\Cookie::queue('bg_subject_id', (string)$request->subject_id, $minutes);
+        }
+
+        // Sync with AcademicProfile if logged in
+        if (Auth::check() && ($request->filled('section_id') || $request->filled('category_id') || $request->filled('subcategory_id'))) {
+            \App\Models\AcademicProfile::updateOrCreate(
+                ['user_id' => Auth::id()],
+                [
+                    'education_level_id' => $request->section_id ?? session('bg_section_id'),
+                    'board_id' => $request->category_id ?? session('bg_category_id'),
+                    'class_id' => $request->subcategory_id ?? session('bg_subcategory_id'),
+                ]
+            );
         }
 
         return response()->json(['success' => true]);
