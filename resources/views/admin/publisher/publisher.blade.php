@@ -19,6 +19,9 @@
                                 <a href="{{ route('vendor.export.publishers') }}"
                                     style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
                                     class="btn btn-block btn-success"><i class="mdi mdi-file-excel"></i> Export</a>
+                                <button type="button"
+                                    style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
+                                    class="btn btn-block btn-info" data-toggle="modal" data-target="#importModal"><i class="mdi mdi-file-import"></i> Import</button>
                             @else
                                 <a href="{{ route('admin.add_edit_publisher') }}"
                                     style="max-width: 150px; float: right; display: inline-block"
@@ -26,7 +29,37 @@
                                 <a href="{{ route('admin.export.publishers') }}"
                                     style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
                                     class="btn btn-block btn-success"><i class="mdi mdi-file-excel"></i> Export</a>
+                                <button type="button"
+                                    style="max-width: 150px; float: right; display: inline-block; margin-right: 10px; margin-top: 0px;"
+                                    class="btn btn-block btn-info" data-toggle="modal" data-target="#importModal"><i class="mdi mdi-file-import"></i> Import</button>
                             @endif
+
+                            <!-- Import Modal -->
+                            <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="importModalLabel">Import Publishers</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <form action="{{ $adminType === 'vendor' ? route('vendor.import.publishers') : route('admin.import.publishers') }}" method="POST" enctype="multipart/form-data">
+                                            @csrf
+                                            <div class="modal-body">
+                                                <div class="form-group">
+                                                    <label for="file">Choose Excel/CSV File (Columns: name)</label>
+                                                    <input type="file" name="file" class="form-control" required>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                <button type="submit" class="btn btn-primary">Import</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}

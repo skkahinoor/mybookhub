@@ -199,6 +199,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('publisher', 'PublisherController@publisher')->name('admin.publisher');
         Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('admin.updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
         Route::get('export-publishers', 'PublisherController@exportPublishers')->name('admin.export.publishers');
+        Route::post('import-publishers', 'PublisherController@importPublishers')->name('admin.import.publishers');
 
         Route::post('/admin/add-publisher-ajax', [App\Http\Controllers\Admin\PublisherController::class, 'addPublisherAjax'])->name('admin.addPublisherAjax');
 
@@ -215,6 +216,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Author
         Route::get('authors', [AuthorController::class, 'index'])->name('admin.author');
         Route::get('export-authors', [AuthorController::class, 'exportAuthors'])->name('admin.export.authors');
+        Route::post('import-authors', [AuthorController::class, 'importAuthors'])->name('admin.import.authors');
         Route::get('add_author', [AuthorController::class, 'add'])->name('admin.add.author');
         Route::post('store_author', [AuthorController::class, 'store'])->name('admin.store.author');
         Route::get('author_edit/{id}', [AuthorController::class, 'edit'])->name('admin.edit.author');
