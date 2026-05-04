@@ -412,6 +412,81 @@
                     </ul>
                 </div>
             </li>
+             {{-- Catalogue Management (Remaining Items) --}}
+            <li class="nav-item">
+                <a @if (Session::get('page') == 'education-levels' || Session::get('page') == 'categories' || Session::get('page') == 'subcategories' || Session::get('page') == 'publisher' || Session::get('page') == 'authors' || Session::get('page') == 'subjects' || Session::get('page') == 'class_subjects' || Session::get('page') == 'languages' || Session::get('page') == 'types' || Session::get('page') == 'products' || Session::get('page') == 'edition' || Session::get('page') == 'coupons' || Session::get('page') == 'bookRequests') style="background: #052CA3 !important; color: #FFF !important" @endif
+                    class="nav-link" data-toggle="collapse" href="#ui-catalogue" aria-expanded="false"
+                    aria-controls="ui-catalogue">
+                    <i class="icon-book menu-icon"></i>
+                    <span class="menu-title">Catalogue Management</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="ui-catalogue">
+                    <ul class="nav flex-column sub-menu" style="background: #fff !important; color: #052CA3 !important">
+                        @can('view_sections')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'education-levels') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/education-levels') }}">Education Levels</a></li>
+                        @endcan
+                        @can('view_categories')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'categories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/categories') }}">Board</a></li>
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'subcategories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/subcategories') }}">Class</a></li>
+                        @endcan
+                        @can('view_publishers')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'publisher') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/publisher') }}">Publisher</a></li>
+                        @endcan
+                        @can('view_authors')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'authors') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/authors') }}">Author</a></li>
+                        @endcan
+                        @can('view_subjects')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'subjects') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/subjects') }}">Subject</a></li>
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'class_subjects') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ route('admin.class_subjects.index') }}">Class Subjects</a></li>
+                        @endcan
+                        @can('view_languages')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'languages') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/languages') }}">Book Languages</a></li>
+                        @endcan
+                        @can('view_types')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'types') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/types') }}">Book Types</a></li>
+                        @endcan
+                        @can('view_products')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'products') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/products') }}">Products</a></li>
+                        @endcan
+                        @can('view_editions')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'edition') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/edition') }}">Edition</a></li>
+                        @endcan
+                        @can('view_coupons')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'coupons') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/coupons') }}">Coupons</a></li>
+                        @endcan
+                        @can('view_requested_books')
+                            <li class="nav-item"> <a
+                                    @if (Session::get('page') == 'bookRequests') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                    class="nav-link" href="{{ url('admin/requestedbooks') }}">Requested Books</a></li>
+                        @endcan
+                    </ul>
+                </div>
+            </li>
 
             {{-- Old Book Management --}}
             <li class="nav-item">
@@ -503,81 +578,7 @@
                 </div>
             </li>
 
-            {{-- Catalogue Management (Remaining Items) --}}
-            <li class="nav-item">
-                <a @if (Session::get('page') == 'education-levels' || Session::get('page') == 'categories' || Session::get('page') == 'subcategories' || Session::get('page') == 'publisher' || Session::get('page') == 'authors' || Session::get('page') == 'subjects' || Session::get('page') == 'class_subjects' || Session::get('page') == 'languages' || Session::get('page') == 'types' || Session::get('page') == 'products' || Session::get('page') == 'edition' || Session::get('page') == 'coupons' || Session::get('page') == 'bookRequests') style="background: #052CA3 !important; color: #FFF !important" @endif
-                    class="nav-link" data-toggle="collapse" href="#ui-catalogue" aria-expanded="false"
-                    aria-controls="ui-catalogue">
-                    <i class="icon-book menu-icon"></i>
-                    <span class="menu-title">Catalogue Management</span>
-                    <i class="menu-arrow"></i>
-                </a>
-                <div class="collapse" id="ui-catalogue">
-                    <ul class="nav flex-column sub-menu" style="background: #fff !important; color: #052CA3 !important">
-                        @can('view_sections')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'education-levels') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/education-levels') }}">Education Levels</a></li>
-                        @endcan
-                        @can('view_categories')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'categories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/categories') }}">Board</a></li>
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'subcategories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/subcategories') }}">Class</a></li>
-                        @endcan
-                        @can('view_publishers')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'publisher') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/publisher') }}">Publisher</a></li>
-                        @endcan
-                        @can('view_authors')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'authors') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/authors') }}">Author</a></li>
-                        @endcan
-                        @can('view_subjects')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'subjects') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/subjects') }}">Subject</a></li>
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'class_subjects') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ route('admin.class_subjects.index') }}">Class Subjects</a></li>
-                        @endcan
-                        @can('view_languages')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'languages') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/languages') }}">Book Languages</a></li>
-                        @endcan
-                        @can('view_types')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'types') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/types') }}">Book Types</a></li>
-                        @endcan
-                        @can('view_products')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'products') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/products') }}">Products</a></li>
-                        @endcan
-                        @can('view_editions')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'edition') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/edition') }}">Edition</a></li>
-                        @endcan
-                        @can('view_coupons')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'coupons') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/coupons') }}">Coupons</a></li>
-                        @endcan
-                        @can('view_requested_books')
-                            <li class="nav-item"> <a
-                                    @if (Session::get('page') == 'bookRequests') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                    class="nav-link" href="{{ url('admin/requestedbooks') }}">Requested Books</a></li>
-                        @endcan
-                    </ul>
-                </div>
-            </li>
+           
 
             {{-- Other Managements --}}
             <li class="nav-item">
