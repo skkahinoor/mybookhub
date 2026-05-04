@@ -13,6 +13,12 @@ use App\Http\Controllers\Api\Deliveryagent\DeliveryAgentApiController;
 Route::post('/delivery-agent/register', [DeliveryAgentApiController::class, 'register']);
 Route::post('/delivery-agent/login', [DeliveryAgentApiController::class, 'login']);
 
+// Location Routes (Public for registration)
+Route::get('/delivery-agent/countries', [DeliveryAgentApiController::class, 'getCountries']);
+Route::get('/delivery-agent/states', [DeliveryAgentApiController::class, 'getStates']);
+Route::get('/delivery-agent/districts', [DeliveryAgentApiController::class, 'getDistricts']);
+Route::get('/delivery-agent/blocks', [DeliveryAgentApiController::class, 'getBlocks']);
+
 // Protected Routes
 Route::middleware(['auth:sanctum', 'delivery_agent'])->group(function () {
     Route::get('/delivery-agent/profile', [DeliveryAgentApiController::class, 'getProfile']);

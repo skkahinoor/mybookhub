@@ -161,4 +161,46 @@ class DeliveryAgentApiController extends Controller
             'data' => $request->user()->load('deliveryAgent', 'country', 'state', 'district', 'block')
         ]);
     }
+
+    public function getCountries()
+    {
+        $countries = \App\Models\Country::where('status', 1)->get(['id', 'name']);
+        return response()->json([
+            'status' => true,
+            'data' => $countries
+        ]);
+    }
+
+    public function getStates(Request $request)
+    {
+        $states = \App\Models\State::where('country_id', $request->country_id)
+            ->where('status', 1)
+            ->get(['id', 'name']);
+        return response()->json([
+            'status' => true,
+            'data' => $states
+        ]);
+    }
+
+    public function getDistricts(Request $request)
+    {
+        $districts = \App\Models\District::where('state_id', $request->state_id)
+            ->where('status', 1)
+            ->get(['id', 'name']);
+        return response()->json([
+            'status' => true,
+            'data' => $districts
+        ]);
+    }
+
+    public function getBlocks(Request $request)
+    {
+        $blocks = \App\Models\Block::where('district_id', $request->district_id)
+            ->where('status', 1)
+            ->get(['id', 'name']);
+        return response()->json([
+            'status' => true,
+            'data' => $blocks
+        ]);
+    }
 }
