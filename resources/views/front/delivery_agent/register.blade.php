@@ -16,13 +16,13 @@
     
     <style>
         :root {
-            --primary-color: #435ebe;
+            --primary-color: #00a86b; /* Emerald Green matching App */
             --secondary-color: #6c757d;
             --accent-color: #ffc107;
-            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             --card-bg: #ffffff;
-            --text-main: #2c3e50;
-            --text-muted: #6c757d;
+            --text-main: #1a1a1a;
+            --text-muted: #666666;
         }
 
         body {
@@ -38,28 +38,28 @@
 
         .registration-card {
             background: var(--card-bg);
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 32px; /* Smoother corners */
+            box-shadow: 0 25px 50px -12px rgba(0, 168, 107, 0.15);
             overflow: hidden;
             width: 100%;
             max-width: 900px;
-            transition: transform 0.3s ease;
+            border: 1px solid rgba(0, 168, 107, 0.1);
         }
 
         .card-header-section {
             background: #fff;
-            padding: 40px 40px 20px;
+            padding: 50px 40px 30px;
             text-align: center;
-            border-bottom: 1px solid #f1f1f1;
         }
 
         .logo-img {
-            max-width: 180px;
-            margin-bottom: 25px;
+            max-width: 220px;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));
         }
 
         .form-section {
-            padding: 40px;
+            padding: 20px 50px 50px;
         }
 
         .section-title {
@@ -124,14 +124,14 @@
             background: var(--primary-color);
             color: #fff;
             border: none;
-            border-radius: 12px;
-            padding: 14px;
+            border-radius: 16px;
+            padding: 16px;
             font-weight: 700;
             font-size: 1.1rem;
             width: 100%;
             margin-top: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 15px -3px rgba(67, 94, 190, 0.4);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px -5px rgba(0, 168, 107, 0.4);
         }
 
         .btn-register:hover {
@@ -156,10 +156,97 @@
             text-decoration: underline;
         }
 
-        .alert {
-            border-radius: 16px;
+        /* Multi-step styles */
+        .step-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        .step-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding: 0 40px;
+            position: relative;
+        }
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 50px;
+            right: 50px;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 0;
+        }
+        .step {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+        .step-icon {
+            width: 42px;
+            height: 42px;
+            background: #fff;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            color: var(--secondary-color);
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .step.active .step-icon {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 0 0 4px rgba(0, 168, 107, 0.15);
+        }
+        .step.completed .step-icon {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: #fff;
+        }
+        .step-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        .step.active .step-label {
+            color: var(--primary-color);
+        }
+
+        .step-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn-prev {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: var(--text-main);
+            padding: 14px 25px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .btn-next {
+            flex: 1;
+            background: var(--primary-color);
+            color: #fff;
             border: none;
-            font-weight: 500;
+            border-radius: 12px;
+            padding: 14px;
+            font-weight: 700;
+            box-shadow: 0 10px 15px -3px rgba(0, 168, 107, 0.2);
         }
 
         /* Loading Spinner */
@@ -168,12 +255,62 @@
             margin-left: 5px;
         }
 
+        /* Responsiveness Fixes */
         @media (max-width: 768px) {
-            .form-section {
-                padding: 25px;
+            body {
+                padding: 15px 10px;
             }
             .registration-card {
-                border-radius: 16px;
+                border-radius: 20px;
+            }
+            .card-header-section {
+                padding: 30px 20px 20px;
+            }
+            .logo-img {
+                max-width: 160px;
+                margin-bottom: 20px;
+            }
+            .form-section {
+                padding: 10px 20px 30px;
+            }
+            .step-indicator {
+                padding: 0 10px;
+                margin-bottom: 30px;
+            }
+            .step-indicator::before {
+                left: 30px;
+                right: 30px;
+            }
+            .step-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 0.9rem;
+            }
+            .step-label {
+                font-size: 0.7rem;
+            }
+            .step-actions {
+                flex-direction: column-reverse; /* Stack buttons on mobile */
+                gap: 10px;
+            }
+            .btn-prev, .btn-next, .btn-register {
+                width: 100%;
+                padding: 12px;
+                font-size: 1rem;
+            }
+            .section-title {
+                font-size: 1.1rem;
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .step-label {
+                display: none; /* Hide labels on very small screens to save space */
+            }
+            .step-indicator {
+                margin-bottom: 20px;
             }
         }
     </style>
@@ -183,7 +320,11 @@
 <div class="registration-card">
     <div class="card-header-section">
         <a href="{{ url('/') }}">
-            <img src="{{ asset('front/images/logos/logo.png') }}" alt="MyBookHub Logo" class="logo-img">
+            @if(!empty($logos->logo))
+                <img src="{{ asset('uploads/logos/'.$logos->logo) }}" alt="MyBookHub Logo" class="logo-img">
+            @else
+                <img src="{{ asset('front/images/logos/logo.png') }}" alt="MyBookHub Logo" class="logo-img">
+            @endif
         </a>
         <h2 class="fw-bold h3 mb-2">Delivery Partner Registration</h2>
         <p class="text-muted">Fill out the form below to join our delivery network.</p>
@@ -214,124 +355,166 @@
             </div>
         @endif
 
-        <form action="{{ route('delivery_agent.register.submit') }}" method="POST">
+        <div class="step-indicator">
+            <div class="step active" id="step1-indicator">
+                <div class="step-icon">1</div>
+                <div class="step-label">Account</div>
+            </div>
+            <div class="step" id="step2-indicator">
+                <div class="step-icon">2</div>
+                <div class="step-label">Location</div>
+            </div>
+            <div class="step" id="step3-indicator">
+                <div class="step-icon">3</div>
+                <div class="step-label">Verify</div>
+            </div>
+        </div>
+
+        <form action="{{ route('delivery_agent.register.submit') }}" method="POST" enctype="multipart/form-data" id="multi-step-form">
             @csrf
             
-            <!-- Personal Information -->
-            <div class="section-title">
-                <i class="fas fa-user"></i> Personal Details
-            </div>
-            <div class="row g-4 mb-5">
-                <div class="col-md-12">
-                    <label class="form-label">Full Name</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-user-edit"></i></span>
-                        <input type="text" name="name" class="form-control" placeholder="Enter your full name" value="{{ old('name') }}" required>
+            <!-- Step 1: Personal Information -->
+            <div class="step-content active" id="step-1">
+                <div class="section-title">
+                    <i class="fas fa-user"></i> Personal Details
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <label class="form-label">Full Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user-edit"></i></span>
+                            <input type="text" name="name" class="form-control" placeholder="Enter your full name" value="{{ old('name') }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" name="email" class="form-control" placeholder="example@mail.com" value="{{ old('email') }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Mobile Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                            <input type="text" name="phone" class="form-control" placeholder="10-digit mobile number" value="{{ old('phone') }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                            <input type="password" name="password" class="form-control" placeholder="Create a strong password" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-shield-alt"></i></span>
+                            <input type="password" name="password_confirmation" class="form-control" placeholder="Repeat your password" required>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Email Address</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                        <input type="email" name="email" class="form-control" placeholder="example@mail.com" value="{{ old('email') }}" required>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Mobile Number</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                        <input type="text" name="phone" class="form-control" placeholder="10-digit mobile number" value="{{ old('phone') }}" required>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Password</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                        <input type="password" name="password" class="form-control" placeholder="Create a strong password" required>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Confirm Password</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-shield-alt"></i></span>
-                        <input type="password" name="password_confirmation" class="form-control" placeholder="Repeat your password" required>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Location Information (AJAX) -->
-            <div class="section-title">
-                <i class="fas fa-map-marker-alt"></i> Location Details
-            </div>
-            <div class="row g-4 mb-5">
-                <div class="col-md-6">
-                    <label class="form-label">Country</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-globe"></i></span>
-                        <select name="country_id" id="country_id" class="form-select" required>
-                            <option value="">Select Country</option>
-                            @foreach($countries as $country)
-                                <option value="{{ $country->id }}">{{ $country->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">State <span class="spinner-border spinner-border-sm text-primary" id="state_loader"></span></label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-map"></i></span>
-                        <select name="state_id" id="state_id" class="form-select" required disabled>
-                            <option value="">Select State</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">District <span class="spinner-border spinner-border-sm text-primary" id="district_loader"></span></label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-city"></i></span>
-                        <select name="district_id" id="district_id" class="form-select" required disabled>
-                            <option value="">Select District</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Block (Optional) <span class="spinner-border spinner-border-sm text-primary" id="block_loader"></span></label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-th-large"></i></span>
-                        <select name="block_id" id="block_id" class="form-select" disabled>
-                            <option value="">Select Block</option>
-                        </select>
-                    </div>
+                <div class="step-actions">
+                    <button type="button" class="btn-next" onclick="nextStep(2)">Continue to Location <i class="fas fa-arrow-right ms-2"></i></button>
                 </div>
             </div>
 
-            <!-- Vehicle Details -->
-            <div class="section-title">
-                <i class="fas fa-motorcycle"></i> Vehicle & Identification
-            </div>
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <label class="form-label">Vehicle Type</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-truck-pickup"></i></span>
-                        <input type="text" name="vehicle_type" class="form-control" placeholder="e.g. Bike, Electric Scooter" value="{{ old('vehicle_type') }}">
+            <!-- Step 2: Location Information (AJAX) -->
+            <div class="step-content" id="step-2">
+                <div class="section-title">
+                    <i class="fas fa-map-marker-alt"></i> Location Details
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Country</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-globe"></i></span>
+                            <select name="country_id" id="country_id" class="form-select" required>
+                                <option value="">Select Country</option>
+                                @foreach($countries as $country)
+                                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">State <span class="spinner-border spinner-border-sm text-primary" id="state_loader"></span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-map"></i></span>
+                            <select name="state_id" id="state_id" class="form-select" required disabled>
+                                <option value="">Select State</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">District <span class="spinner-border spinner-border-sm text-primary" id="district_loader"></span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-city"></i></span>
+                            <select name="district_id" id="district_id" class="form-select" required disabled>
+                                <option value="">Select District</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Block (Optional) <span class="spinner-border spinner-border-sm text-primary" id="block_loader"></span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-th-large"></i></span>
+                            <select name="block_id" id="block_id" class="form-select" disabled>
+                                <option value="">Select Block</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Driving License Number</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                        <input type="text" name="license_number" class="form-control" placeholder="Enter DL Number" value="{{ old('license_number') }}">
-                    </div>
+                <div class="step-actions">
+                    <button type="button" class="btn-prev" onclick="nextStep(1)">Previous</button>
+                    <button type="button" class="btn-next" onclick="nextStep(3)">Verification Proofs <i class="fas fa-arrow-right ms-2"></i></button>
                 </div>
             </div>
 
-            <button type="submit" class="btn-register">
-                Register as Delivery Partner <i class="fas fa-arrow-right ms-2"></i>
-            </button>
-
-            <div class="footer-link">
-                Already registered? <a href="{{ url('admin/login') }}">Login to Portal</a>
+            <!-- Step 3: Vehicle Details -->
+            <div class="step-content" id="step-3">
+                <div class="section-title">
+                    <i class="fas fa-motorcycle"></i> Vehicle & Identification
+                </div>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Vehicle Type</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-truck-pickup"></i></span>
+                            <input type="text" name="vehicle_type" class="form-control" placeholder="e.g. Bike, Electric Scooter" value="{{ old('vehicle_type') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Driving License Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                            <input type="text" name="license_number" class="form-control" placeholder="Enter DL Number" value="{{ old('license_number') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Upload ID Proof <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-file-upload"></i></span>
+                            <input type="file" name="id_proof" class="form-control" accept="image/*" required>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.75rem;">Aadhar/Voter ID (Max: 2MB)</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Upload License (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-image"></i></span>
+                            <input type="file" name="license_image" class="form-control" accept="image/*">
+                        </div>
+                        <small class="text-muted" style="font-size: 0.75rem;">Front Copy (Max: 2MB)</small>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="btn-prev" onclick="nextStep(2)">Previous</button>
+                    <button type="submit" class="btn-register">
+                        Complete Registration <i class="fas fa-check-circle ms-2"></i>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -418,6 +601,43 @@
             }
         });
     });
+
+    function nextStep(step) {
+        // Simple validation for current step
+        let currentStep = step === 2 ? 1 : (step === 3 ? 2 : 3);
+        let isValid = true;
+        
+        // Basic required field check for current step
+        $('#step-' + currentStep + ' [required]').each(function() {
+            if (!$(this).val()) {
+                $(this).closest('.input-group').css('border-color', '#dc3545');
+                isValid = false;
+            } else {
+                $(this).closest('.input-group').css('border-color', '#e2e8f0');
+            }
+        });
+
+        if (!isValid && step > currentStep) {
+            alert('Please fill all required fields before continuing.');
+            return;
+        }
+
+        // Hide all steps
+        $('.step-content').removeClass('active');
+        // Show target step
+        $('#step-' + step).addClass('active');
+
+        // Update indicators
+        $('.step').removeClass('active completed');
+        for (let i = 1; i <= step; i++) {
+            if (i < step) {
+                $('#step' + i + '-indicator').addClass('completed');
+            }
+            if (i === step) {
+                $('#step' + i + '-indicator').addClass('active');
+            }
+        }
+    }
 </script>
 
 </body>
