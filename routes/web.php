@@ -169,11 +169,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-mov/{id?}', 'MovController@addEditMov')->name('admin.add_edit_mov');
         Route::get('delete-mov/{id}', 'MovController@deleteMov')->name('admin.delete_mov');
 
-        // Delivery Settings
-        Route::get('delivery-settings', [DeliverySettingController::class, 'index'])->name('admin.delivery_settings');
-        Route::match(['get', 'post'], 'add-edit-delivery-setting/{id?}', [DeliverySettingController::class, 'addEdit'])->name('admin.add_edit_delivery_setting');
-        Route::get('delete-delivery-setting/{id}', [DeliverySettingController::class, 'delete'])->name('admin.delete_delivery_setting');
-        Route::post('update-delivery-setting-status', [DeliverySettingController::class, 'updateStatus'])->name('admin.update_delivery_setting_status');
+        // Shipping Charges (Renamed from Delivery Settings)
+        Route::get('shipping-charges', [DeliverySettingController::class, 'index'])->name('admin.delivery_settings');
+        Route::match(['get', 'post'], 'add-edit-shipping-charge/{id?}', [DeliverySettingController::class, 'addEdit'])->name('admin.add_edit_delivery_setting');
+        Route::get('delete-shipping-charge/{id}', [DeliverySettingController::class, 'delete'])->name('admin.delete_delivery_setting');
+        Route::post('update-shipping-charge-status', [DeliverySettingController::class, 'updateStatus'])->name('admin.update_delivery_setting_status');
 
         // Subcategories
         Route::get('subcategories', 'SubcategoryController@subcategories')->name('admin.subcategories');
@@ -427,8 +427,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Render order PDF invoice in order_invoice.blade.php using Dompdf Package
         Route::get('orders/invoice/pdf/{id}', 'OrderController@viewPDFInvoice');
 
-        // Shipping Charges module
-        // Render the Shipping Charges page (admin/shipping/shipping_charges.blade.php) in the Admin Panel for 'admin'-s only, not for vendors
+        // Old Shipping Charges module (Commented out to avoid conflict with renamed Delivery Settings)
+        /*
         Route::get('shipping-charges', 'ShippingController@shippingCharges');
 
         // Update Shipping Status (active/inactive) via AJAX in admin/shipping/shipping_charages.blade.php, check admin/js/custom.js
@@ -436,6 +436,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // Render admin/shipping/edit_shipping_charges.blade.php page in case of HTTP 'GET' request ('Edit/Update Shipping Charges'), or hadle the HTML Form submission in the same page in case of HTTP 'POST' request
         Route::match(['get', 'post'], 'edit-shipping-charges/{id}', 'ShippingController@editShippingCharges');
+        */
 
         // Newsletter Subscribers module
         // Render admin/subscribers/subscribers.blade.php page (Show all Newsletter subscribers in the Admin Panel)

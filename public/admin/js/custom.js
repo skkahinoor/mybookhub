@@ -740,7 +740,7 @@ $(document).ready(function () {
         });
     });
 
-    // Update Delivery Setting Status (active/inactive) via AJAX
+    // Update Shipping Charge Status (active/inactive) via AJAX
     $(document).on("click", ".updateDeliverySettingStatus", function () {
         var status = $(this).children("i").attr("status");
         var delivery_id = $(this).attr("delivery_id");
@@ -750,7 +750,7 @@ $(document).ready(function () {
                 "X-CSRF-TOKEN": $('meta[name="csrf-token"]').attr("content"),
             },
             type: "post",
-            url: "/admin/update-delivery-setting-status",
+            url: "/admin/update-shipping-charge-status",
             data: { status: status, delivery_id: delivery_id },
             success: function (resp) {
                 if (resp.status == 0) {

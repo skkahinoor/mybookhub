@@ -7,11 +7,11 @@
                 <div class="col-lg-12 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Delivery Settings</h4>
+                            <h4 class="card-title">Shipping Charges</h4>
 
-                            <a href="{{ url('admin/add-edit-delivery-setting') }}"
+                            <a href="{{ url('admin/add-edit-shipping-charge') }}"
                                 style="max-width: 200px; float: right; display: inline-block"
-                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Delivery Setting</a>
+                                class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Shipping Charge</a>
 
                             @if (Session::has('success_message'))
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -63,12 +63,12 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <a href="{{ url('admin/add-edit-delivery-setting/' . $setting->id) }}">
+                                                    <a href="{{ url('admin/add-edit-shipping-charge/' . $setting->id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-pencil-box"></i>
                                                     </a>
                                                     <a href="javascript:void(0)" class="confirmDelete"
-                                                        data-module="delivery-setting"
-                                                        data-url="{{ url('admin/delete-delivery-setting/' . $setting->id) }}">
+                                                        data-module="shipping-charge"
+                                                        data-url="{{ url('admin/delete-shipping-charge/' . $setting->id) }}">
                                                         <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i>
                                                     </a>
                                                 </td>

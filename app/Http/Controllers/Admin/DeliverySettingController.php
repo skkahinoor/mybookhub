@@ -12,7 +12,7 @@ class DeliverySettingController extends Controller
 {
     public function index()
     {
-        Session::put('page', 'delivery_settings');
+        Session::put('page', 'shipping_charges');
 
         $delivery_settings = DeliverySetting::orderBy('id', 'desc')->get();
         $logos = HeaderLogo::first();
@@ -23,21 +23,21 @@ class DeliverySettingController extends Controller
 
     public function addEdit(Request $request, $id = null)
     {
-        Session::put('page', 'delivery_settings');
+        Session::put('page', 'shipping_charges');
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
         if ($id == "") {
-            $title = "Add Delivery Setting";
+            $title = "Add Shipping Charge";
             $delivery_setting = new DeliverySetting();
-            $message = "Delivery setting added successfully!";
+            $message = "Shipping charge added successfully!";
         } else {
-            $title = "Edit Delivery Setting";
+            $title = "Edit Shipping Charge";
             $delivery_setting = DeliverySetting::find($id);
             if (!$delivery_setting) {
-                return redirect()->back()->with('error_message', 'Delivery setting not found!');
+                return redirect()->back()->with('error_message', 'Shipping charge not found!');
             }
-            $message = "Delivery setting updated successfully!";
+            $message = "Shipping charge updated successfully!";
         }
 
         if ($request->isMethod('post')) {
@@ -56,7 +56,7 @@ class DeliverySettingController extends Controller
             $delivery_setting->status = isset($data['status']) ? 1 : 0;
             $delivery_setting->save();
 
-            return redirect('admin/delivery-settings')->with('success_message', $message);
+            return redirect('admin/shipping-charges')->with('success_message', $message);
         }
 
         return view('admin.delivery_settings.add_edit', compact('title', 'delivery_setting', 'logos', 'headerLogo'));
@@ -65,7 +65,7 @@ class DeliverySettingController extends Controller
     public function delete($id)
     {
         DeliverySetting::where('id', $id)->delete();
-        $message = "Delivery setting has been deleted successfully!";
+        $message = "Shipping charge has been deleted successfully!";
         return redirect()->back()->with('success_message', $message);
     }
 
