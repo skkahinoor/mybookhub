@@ -59,18 +59,25 @@ class DeliveryAgentApiController extends Controller
 
             $user->assignRole($role);
 
+            // Debugging: You can check if files exist in the request
+            // Log::info($request->allFiles()); 
+
             $idProofName = null;
             if ($request->hasFile('id_proof')) {
                 $file = $request->file('id_proof');
-                $idProofName = 'id_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/delivery_agents/docs'), $idProofName);
+                if ($file->isValid()) {
+                    $idProofName = 'id_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/delivery_agents/docs'), $idProofName);
+                }
             }
 
             $licenseImageName = null;
             if ($request->hasFile('license_image')) {
                 $file = $request->file('license_image');
-                $licenseImageName = 'license_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/delivery_agents/docs'), $licenseImageName);
+                if ($file->isValid()) {
+                    $licenseImageName = 'license_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/delivery_agents/docs'), $licenseImageName);
+                }
             }
 
             DeliveryAgent::create([
@@ -201,6 +208,81 @@ class DeliveryAgentApiController extends Controller
         return response()->json([
             'status' => true,
             'data' => $blocks
+        ]);
+    }
+
+    public function getAvailableOrders(Request $request)
+    {
+        $user = $request->user();
+        $districtId = $user->district_id;
+
+        if (!$districtId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please set your district in profile first.'
+            ], 400);
+        }
+
+        // Get orders in the agent's district that are ready for delivery
+        // We assume 'Approved' or 'Processing' status is ready for pickup
+        $orders = \App\Models\Order::with(['orders_products.vendor', 'orders_products.vendor_details', 'user'])
+            ->where(function($query) use ($districtId) {
+                $query->where('district_id', $districtId)
+                      ->orWhereHas('user', function($q) use ($districtId) {
+                          $q->where('district_id', $districtId);
+                      });
+            })
+            ->whereIn('order_status', ['New', 'Approved', 'Processing'])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $formattedOrders = $orders->map(function($order) {
+            // Drop Location (Buyer)
+            $dropLocation = [
+                'name' => $order->name,
+                'address' => $order->address . ', ' . $order->city . ', ' . $order->state . ' - ' . $order->pincode,
+                'mobile' => $order->mobile,
+                'latitude' => $order->latitude ?? ($order->user ? $order->user->latitude : null),
+                'longitude' => $order->longitude ?? ($order->user ? $order->user->longitude : null),
+            ];
+
+            // Pickup Locations (Sellers) - There can be multiple sellers per order
+            $pickups = $order->orders_products->map(function($item) {
+                $seller = $item->vendor;
+                $business = $item->vendor_details;
+
+                return [
+                    'seller_name' => $seller ? $seller->name : 'N/A',
+                    'shop_name' => $business ? $business->shop_name : 'Individual Seller',
+                    'address' => $business ? $business->shop_address : ($seller ? $seller->address : 'N/A'),
+                    'mobile' => $business ? $business->shop_mobile : ($seller ? $seller->phone : 'N/A'),
+                    'latitude' => $business ? $business->latitude : ($seller ? $seller->latitude : null),
+                    'longitude' => $business ? $business->longitude : ($seller ? $seller->longitude : null),
+                    'product_name' => $item->product_name,
+                    'product_qty' => $item->product_qty,
+                    'product_price' => $item->product_price,
+                ];
+            });
+
+            return [
+                'order_id' => $order->id,
+                'grand_total' => $order->grand_total,
+                'payment_method' => $order->payment_method,
+                'order_status' => $order->order_status,
+                'created_at' => $order->created_at->format('M d, Y h:i A'),
+                'buyer_details' => [
+                    'id' => $order->user_id,
+                    'name' => $order->user ? $order->user->name : $order->name,
+                    'email' => $order->user ? $order->user->email : $order->email,
+                ],
+                'pickup_points' => $pickups,
+                'drop_location' => $dropLocation
+            ];
+        });
+
+        return response()->json([
+            'status' => true,
+            'data' => $formattedOrders
         ]);
     }
 }
