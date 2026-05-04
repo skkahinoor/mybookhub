@@ -16,7 +16,7 @@
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Delivery Configuration</h4>
+                            <h4 class="card-title">Shipping Charge Details</h4>
 
                             @if (Session::has('error_message'))
                                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -41,7 +41,7 @@
                             @endif
 
                             <form class="forms-sample"
-                                @if (empty($delivery_setting->id)) action="{{ url('admin/add-edit-delivery-setting') }}" @else action="{{ url('admin/add-edit-delivery-setting/' . $delivery_setting->id) }}" @endif
+                                @if (empty($delivery_setting->id)) action="{{ url('admin/add-edit-shipping-charge') }}" @else action="{{ url('admin/add-edit-shipping-charge/' . $delivery_setting->id) }}" @endif
                                 method="post"> @csrf
                                 
                                 <div class="form-group">
@@ -71,7 +71,7 @@
                                 </div>
 
                                 <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                <a href="{{ url('admin/delivery-settings') }}" class="btn btn-light">Cancel</a>
+                                <a href="{{ url('admin/shipping-charges') }}" class="btn btn-light">Cancel</a>
                             </form>
                         </div>
                     </div>
