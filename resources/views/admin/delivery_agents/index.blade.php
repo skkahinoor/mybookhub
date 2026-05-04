@@ -161,6 +161,18 @@
                                             <td style="padding: 8px; font-weight: bold;">Status:</td>
                                             <td style="padding: 8px;">${statusText}</td>
                                         </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">ID Proof:</td>
+                                            <td style="padding: 8px;">
+                                                ${data.id_proof ? `<a href="${data.id_proof}" target="_blank" class="badge badge-info"><i class="mdi mdi-file-find"></i> View ID Proof</a>` : 'Not Uploaded'}
+                                            </td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">License Image:</td>
+                                            <td style="padding: 8px;">
+                                                ${data.license_image ? `<a href="${data.license_image}" target="_blank" class="badge badge-info"><i class="mdi mdi-image"></i> View License</a>` : 'Not Uploaded'}
+                                            </td>
+                                        </tr>
                                         <tr>
                                             <td style="padding: 8px; font-weight: bold;">Registered On:</td>
                                             <td style="padding: 8px;">${data.created_at || 'N/A'}</td>

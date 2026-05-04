@@ -212,6 +212,8 @@ class DeliveryAgentController extends Controller
                 'district' => $user->district ? $user->district->name : 'N/A',
                 'vehicle_type' => $profile ? $profile->vehicle_type : 'N/A',
                 'license_number' => $profile ? $profile->license_number : 'N/A',
+                'id_proof' => ($profile && $profile->id_proof) ? asset('uploads/delivery_agents/docs/' . $profile->id_proof) : null,
+                'license_image' => ($profile && $profile->license_image) ? asset('uploads/delivery_agents/docs/' . $profile->license_image) : null,
                 'status' => $user->status,
                 'created_at' => $user->created_at->format('M d, Y h:i A'),
             ]

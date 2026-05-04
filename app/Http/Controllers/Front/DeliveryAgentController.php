@@ -58,6 +58,8 @@ class DeliveryAgentController extends Controller
             'block_id' => 'nullable|exists:blocks,id',
             'vehicle_type' => 'nullable|string',
             'license_number' => 'nullable|string',
+            'id_proof' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'license_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
         DB::beginTransaction();
@@ -81,10 +83,26 @@ class DeliveryAgentController extends Controller
 
             $user->assignRole($role);
 
+            $idProofName = null;
+            if ($request->hasFile('id_proof')) {
+                $file = $request->file('id_proof');
+                $idProofName = 'id_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/delivery_agents/docs'), $idProofName);
+            }
+
+            $licenseImageName = null;
+            if ($request->hasFile('license_image')) {
+                $file = $request->file('license_image');
+                $licenseImageName = 'license_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/delivery_agents/docs'), $licenseImageName);
+            }
+
             DeliveryAgent::create([
                 'user_id' => $user->id,
                 'vehicle_type' => $request->vehicle_type,
                 'license_number' => $request->license_number,
+                'id_proof' => $idProofName,
+                'license_image' => $licenseImageName,
                 'status' => 0,
             ]);
 
