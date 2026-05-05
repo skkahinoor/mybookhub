@@ -16,7 +16,10 @@ class DeliveryAgent extends Model
         'id_proof',
         'license_image',
         'profile_image',
-        'status'
+        'status',
+        'is_online',
+        'pickup_status',
+        'drop_status',
     ];
 
     public function user()

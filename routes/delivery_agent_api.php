@@ -22,6 +22,10 @@ Route::get('/delivery-agent/blocks', [DeliveryAgentApiController::class, 'getBlo
 // Protected Routes
 Route::middleware(['auth:sanctum', 'delivery_agent'])->group(function () {
     Route::get('/delivery-agent/profile', [DeliveryAgentApiController::class, 'getProfile']);
+    Route::post('/delivery-agent/toggle-online', [DeliveryAgentApiController::class, 'toggleOnline']);
+    Route::post('/delivery-agent/update-profile', [DeliveryAgentApiController::class, 'updateProfile']);
+    Route::post('/delivery-agent/accept-order', [DeliveryAgentApiController::class, 'acceptOrder']);
+    Route::post('/delivery-agent/update-order-status', [DeliveryAgentApiController::class, 'updateOrderStatus']);
     Route::get('/delivery-agent/available-orders', [DeliveryAgentApiController::class, 'getAvailableOrders']);
     
     // Future logical routes for delivery app:

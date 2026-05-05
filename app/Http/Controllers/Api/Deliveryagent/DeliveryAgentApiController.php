@@ -163,10 +163,199 @@ class DeliveryAgentApiController extends Controller
 
     public function getProfile(Request $request)
     {
+        $user = $request->user()->load('deliveryAgent', 'country', 'state', 'district', 'block');
+        
+        // Calculate completed trips
+        $completedTrips = \App\Models\Order::where('delivery_agent_id', $user->id)
+            ->where('order_status', 'Delivered')
+            ->count();
+
         return response()->json([
             'status' => true,
-            'data' => $request->user()->load('deliveryAgent', 'country', 'state', 'district', 'block')
+            'data' => $user,
+            'stats' => [
+                'completed_trips' => $completedTrips
+            ]
         ]);
+    }
+
+    public function toggleOnline(Request $request)
+    {
+        $user = $request->user();
+        $profile = $user->deliveryAgent;
+
+        if (!$profile) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Delivery agent profile not found.'
+            ], 404);
+        }
+
+        $newStatus = !$profile->is_online;
+        $profile->update(['is_online' => $newStatus]);
+
+        return response()->json([
+            'status' => true,
+            'message' => $newStatus ? 'You are now Online' : 'You are now Offline',
+            'is_online' => $newStatus
+        ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+        $profile = $user->deliveryAgent;
+
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'phone' => 'required|numeric|unique:users,phone,' . $user->id,
+            'country_id' => 'nullable|exists:countries,id',
+            'state_id' => 'nullable|exists:states,id',
+            'district_id' => 'nullable|exists:districts,id',
+            'block_id' => 'nullable|exists:blocks,id',
+            'address' => 'nullable|string|max:500',
+            'pincode' => 'nullable|string|max:10',
+            'vehicle_type' => 'nullable|string',
+            'license_number' => 'nullable|string',
+            'profile_image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Update User Table
+            $userData = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'country_id' => $request->country_id,
+                'state_id' => $request->state_id,
+                'district_id' => $request->district_id,
+                'block_id' => $request->block_id,
+                'address' => $request->address,
+                'pincode' => $request->pincode,
+            ];
+
+            if ($request->hasFile('profile_image')) {
+                $file = $request->file('profile_image');
+                $imageName = 'profile_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/delivery_agents/profiles'), $imageName);
+                $userData['profile_image'] = $imageName;
+            }
+
+            $user->update($userData);
+
+            // Update Delivery Agent Details
+            if ($profile) {
+                $profile->update([
+                    'vehicle_type' => $request->vehicle_type,
+                    'license_number' => $request->license_number,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Profile updated successfully!',
+                'data' => $user->load('deliveryAgent', 'country', 'state', 'district', 'block')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'status' => false,
+                'message' => 'Update failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function acceptOrder(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => 'Invalid Order ID'], 422);
+        }
+
+        $user = $request->user();
+        $order = \App\Models\Order::find($request->order_id);
+
+        // Check if order is already assigned
+        if ($order->delivery_agent_id != null) {
+            return response()->json(['status' => false, 'message' => 'Order already accepted by another agent'], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Assign agent to order
+            $order->update([
+                'delivery_agent_id' => $user->id,
+                'order_status' => 'Processing'
+            ]);
+
+            // Reset agent's current trip status
+            $user->deliveryAgent->update([
+                'pickup_status' => 0,
+                'drop_status' => 0
+            ]);
+
+            DB::commit();
+            return response()->json(['status' => true, 'message' => 'Order accepted successfully']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['status' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function updateOrderStatus(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+            'status' => 'required|in:Picked Up,Out for Delivery,Delivered',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => 'Invalid status provided'], 422);
+        }
+
+        $user = $request->user();
+        $order = \App\Models\Order::where('id', $request->order_id)
+                                  ->where('delivery_agent_id', $user->id)
+                                  ->first();
+
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found or not assigned to you'], 404);
+        }
+
+        try {
+            if ($request->status == 'Picked Up') {
+                $user->deliveryAgent->update(['pickup_status' => 1]);
+                $order->update(['order_status' => 'Picked Up']);
+            } elseif ($request->status == 'Delivered') {
+                $user->deliveryAgent->update(['drop_status' => 1]);
+                $order->update([
+                    'order_status' => 'Delivered',
+                    'delivered_at' => now()
+                ]);
+            } else {
+                $order->update(['order_status' => $request->status]);
+            }
+
+            return response()->json(['status' => true, 'message' => 'Status updated to ' . $request->status]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+        }
     }
 
     public function getCountries()
@@ -216,11 +405,21 @@ class DeliveryAgentApiController extends Controller
         $user = $request->user();
         $districtId = $user->district_id;
 
+        $profile = $user->deliveryAgent;
+
         if (!$districtId) {
             return response()->json([
                 'status' => false,
                 'message' => 'Please set your district in profile first.'
             ], 400);
+        }
+
+        if (!$profile || !$profile->is_online) {
+            return response()->json([
+                'status' => false,
+                'message' => 'You are currently offline. Please go online to see new orders.',
+                'data' => []
+            ]);
         }
 
         // Get orders in the agent's district that are ready for delivery
