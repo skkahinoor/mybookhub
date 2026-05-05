@@ -43,6 +43,7 @@ class AddressController extends Controller
             'state_id' => 'nullable|string',
             'district_id' => 'nullable|string',
             'block_id' => 'nullable|string',
+            'location' => 'nullable|string',
             'is_default' => 'nullable|boolean'
         ]);
 
@@ -74,6 +75,7 @@ class AddressController extends Controller
             'state_id' => $request->state_id,
             'district_id' => $request->district_id,
             'block_id' => $request->block_id,
+            'location' => $request->location,
             'is_default' => ($request->is_default || $isFirst) ? 1 : 0,
             'status' => 1
         ]);
@@ -108,6 +110,7 @@ class AddressController extends Controller
             'state_id' => 'nullable|string',
             'district_id' => 'nullable|string',
             'block_id' => 'nullable|string',
+            'location' => 'nullable|string',
             'is_default' => 'nullable|boolean'
         ]);
 
@@ -132,6 +135,7 @@ class AddressController extends Controller
             'state_id',
             'district_id',
             'block_id',
+            'location',
             'is_default'
         ]));
 

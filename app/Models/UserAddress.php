@@ -19,6 +19,7 @@ class UserAddress extends Model
         'block_id',
         'pincode',
         'mobile',
+        'location',
         'is_default',
         'status'
     ];
