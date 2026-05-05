@@ -232,7 +232,7 @@ class DeliveryAgentApiController extends Controller
                           $q->where('district_id', $districtId);
                       });
             })
-            ->whereIn('order_status', ['New', 'Approved', 'Processing'])
+            ->whereIn('order_status', ['New', 'Approved', 'Processing', 'Paid', 'Pending'])
             ->orderBy('id', 'desc')
             ->get();
 
@@ -248,16 +248,31 @@ class DeliveryAgentApiController extends Controller
 
             // Pickup Locations (Sellers) - There can be multiple sellers per order
             $pickups = $order->orders_products->map(function($item) {
-                $seller = $item->vendor;
-                $business = $item->vendor_details;
+                // vendor_details is the relationship to the Vendor model
+                $vendorProfile = $item->vendor_details; 
+                // The actual user who owns this vendor profile
+                $sellerUser = $vendorProfile ? $vendorProfile->user : null;
+                // The business/shop details
+                $business = $vendorProfile ? $vendorProfile->vendorbusinessdetails : null;
+
+                // Handle coordinates from vendor 'location' field (comma separated lat,long)
+                $lat = null;
+                $lng = null;
+                if ($vendorProfile && $vendorProfile->location) {
+                    $coords = explode(',', $vendorProfile->location);
+                    if (count($coords) == 2) {
+                        $lat = trim($coords[0]);
+                        $lng = trim($coords[1]);
+                    }
+                }
 
                 return [
-                    'seller_name' => $seller ? $seller->name : 'N/A',
+                    'seller_name' => $sellerUser ? $sellerUser->name : 'N/A',
                     'shop_name' => $business ? $business->shop_name : 'Individual Seller',
-                    'address' => $business ? $business->shop_address : ($seller ? $seller->address : 'N/A'),
-                    'mobile' => $business ? $business->shop_mobile : ($seller ? $seller->phone : 'N/A'),
-                    'latitude' => $business ? $business->latitude : ($seller ? $seller->latitude : null),
-                    'longitude' => $business ? $business->longitude : ($seller ? $seller->longitude : null),
+                    'address' => $business ? $business->shop_address : ($sellerUser ? $sellerUser->address : 'N/A'),
+                    'mobile' => $business ? $business->shop_mobile : ($sellerUser ? $sellerUser->phone : 'N/A'),
+                    'latitude' => $lat ?? ($business ? $business->latitude : ($sellerUser ? $sellerUser->latitude : null)),
+                    'longitude' => $lng ?? ($business ? $business->longitude : ($sellerUser ? $sellerUser->longitude : null)),
                     'product_name' => $item->product_name,
                     'product_qty' => $item->product_qty,
                     'product_price' => $item->product_price,
