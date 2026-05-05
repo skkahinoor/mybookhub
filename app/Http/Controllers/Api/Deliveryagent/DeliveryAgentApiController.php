@@ -165,17 +165,41 @@ class DeliveryAgentApiController extends Controller
     {
         $user = $request->user()->load('deliveryAgent', 'country', 'state', 'district', 'block');
         
-        // Calculate completed trips
-        $completedTrips = \App\Models\Order::where('delivery_agent_id', $user->id)
-            ->where('order_status', 'Delivered')
-            ->count();
+        $stats = [
+            'total_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->count(),
+            'today_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->whereDate('updated_at', \Carbon\Carbon::today())->count(),
+            'rating' => 4.8, // Mocked for now
+            'agent_rate_per_km' => \App\Models\DeliverySetting::where('status', 1)->first()->agent_rate_per_km ?? 10.00
+        ];
+
+        // Get active trip if exists
+        $activeTrip = \App\Models\Order::where('delivery_agent_id', $user->id)
+            ->whereNotIn('order_status', ['Delivered', 'Cancelled'])
+            ->with('orders_products') // Include products if needed
+            ->first();
+
+        // Standardize the response to include pickup/drop details for the app
+        if ($activeTrip) {
+            // Add dynamic labels or formatting if needed
+            $activeTrip->pickup_points = \App\Models\OrdersProduct::where('order_id', $activeTrip->id)
+                ->join('vendors_business_details', 'orders_products.vendor_id', '=', 'vendors_business_details.vendor_id')
+                ->select('orders_products.*', 'vendors_business_details.shop_name', 'vendors_business_details.latitude', 'vendors_business_details.longitude')
+                ->get();
+            
+            $activeTrip->drop_location = [
+                'name' => $activeTrip->name,
+                'address' => $activeTrip->address,
+                'latitude' => $activeTrip->latitude,
+                'longitude' => $activeTrip->longitude,
+                'mobile' => $activeTrip->mobile
+            ];
+        }
 
         return response()->json([
             'status' => true,
             'data' => $user,
-            'stats' => [
-                'completed_trips' => $completedTrips
-            ]
+            'stats' => $stats,
+            'active_trip' => $activeTrip
         ]);
     }
 
@@ -289,22 +313,40 @@ class DeliveryAgentApiController extends Controller
         }
 
         $user = $request->user();
+        
+        // 1. Check if the agent already has an active trip (Not Delivered)
+        $activeOrder = \App\Models\Order::where('delivery_agent_id', $user->id)
+            ->whereNotIn('order_status', ['Delivered', 'Cancelled', 'Returned'])
+            ->exists();
+
+        if ($activeOrder) {
+            return response()->json([
+                'status' => false, 
+                'message' => 'You already have an active delivery. Please complete it first.'
+            ], 400);
+        }
+
         $order = \App\Models\Order::find($request->order_id);
 
-        // Check if order is already assigned
+        // 2. Check if order is already assigned to someone else
         if ($order->delivery_agent_id != null) {
             return response()->json(['status' => false, 'message' => 'Order already accepted by another agent'], 400);
         }
 
+        $rate = \App\Models\DeliverySetting::where('status', 1)->first()->agent_rate_per_km ?? 10.00;
+
         DB::beginTransaction();
         try {
-            // Assign agent to order
+            // Assign agent to order and save start details
             $order->update([
                 'delivery_agent_id' => $user->id,
-                'order_status' => 'Processing'
+                'order_status' => 'Accepted',
+                'agent_start_lat' => $request->latitude,
+                'agent_start_lng' => $request->longitude,
+                'agent_rate_at_trip' => $rate
             ]);
 
-            // Reset agent's current trip status
+            // Reset agent's trip progress columns
             $user->deliveryAgent->update([
                 'pickup_status' => 0,
                 'drop_status' => 0
@@ -344,10 +386,32 @@ class DeliveryAgentApiController extends Controller
                 $order->update(['order_status' => 'Picked Up']);
             } elseif ($request->status == 'Delivered') {
                 $user->deliveryAgent->update(['drop_status' => 1]);
-                $order->update([
-                    'order_status' => 'Delivered',
-                    'delivered_at' => now()
-                ]);
+                $order->update(['order_status' => 'Delivered']);
+                
+                // Calculate Earning based on Distance
+                if ($order->agent_start_lat && $order->agent_start_lng) {
+                    $pickup = \App\Models\OrdersProduct::where('order_id', $order->id)->first(); // Get first pickup for distance calc
+                    $vendor = \App\Models\VendorsBusinessDetail::where('vendor_id', $pickup->vendor_id)->first();
+                    
+                    if ($vendor) {
+                        $d1 = $this->calculateDistancePHP(
+                            (float)$order->agent_start_lat, (float)$order->agent_start_lng,
+                            (float)$vendor->latitude, (float)$vendor->longitude
+                        );
+                        $d2 = $this->calculateDistancePHP(
+                            (float)$vendor->latitude, (float)$vendor->longitude,
+                            (float)$order->latitude, (float)$order->longitude
+                        );
+                        
+                        $totalDistance = $d1 + $d2;
+                        $earning = $totalDistance * (float)$order->agent_rate_at_trip;
+                        
+                        $order->update([
+                            'total_trip_distance' => $totalDistance,
+                            'agent_trip_earning' => $earning
+                        ]);
+                    }
+                }
             } else {
                 $order->update(['order_status' => $request->status]);
             }
@@ -356,6 +420,99 @@ class DeliveryAgentApiController extends Controller
         } catch (\Exception $e) {
             return response()->json(['status' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
+    }
+
+    private function calculateDistancePHP($lat1, $lon1, $lat2, $lon2)
+    {
+        $earthRadius = 6371;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return $earthRadius * $c;
+    }
+
+    public function getEarnings(Request $request)
+    {
+        $user = $request->user();
+        $query = \App\Models\Order::where('delivery_agent_id', $user->id)
+            ->where('order_status', 'Delivered');
+
+        // Apply Date Filters
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $query->whereBetween('updated_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+        }
+
+        $orders = $query->orderBy('updated_at', 'desc')->get();
+        $total_earnings = $orders->sum('agent_trip_earning');
+        $total_distance = $orders->sum('total_trip_distance');
+
+        return response()->json([
+            'status' => true,
+            'total_earnings' => $total_earnings,
+            'total_distance' => $total_distance,
+            'count' => $orders->count(),
+            'data' => $orders
+        ]);
+    }
+    public function getHistory(Request $request)
+    {
+        $user = $request->user();
+        $orders = \App\Models\Order::where('delivery_agent_id', $user->id)
+            ->whereIn('order_status', ['Delivered', 'Cancelled'])
+            ->with(['orders_products'])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        foreach ($orders as $order) {
+            $order->pickup_points = \App\Models\OrdersProduct::where('order_id', $order->id)
+                ->join('vendors_business_details', 'orders_products.vendor_id', '=', 'vendors_business_details.vendor_id')
+                ->select('orders_products.*', 'vendors_business_details.shop_name', 'vendors_business_details.latitude', 'vendors_business_details.longitude')
+                ->get();
+            
+            $order->drop_location = [
+                'name' => $order->name,
+                'address' => $order->address,
+                'latitude' => $order->latitude,
+                'longitude' => $order->longitude,
+                'mobile' => $order->mobile
+            ];
+        }
+
+        return response()->json([
+            'status' => true,
+            'data' => $orders
+        ]);
+    }
+
+    public function getOrderDetails(Request $request, $id)
+    {
+        $order = \App\Models\Order::with(['orders_products'])->find($id);
+        
+        if (!$order) {
+            return response()->json(['status' => false, 'message' => 'Order not found'], 404);
+        }
+
+        // Add pickup points and drop location as standardized before
+        $order->pickup_points = \App\Models\OrdersProduct::where('order_id', $order->id)
+            ->join('vendors_business_details', 'orders_products.vendor_id', '=', 'vendors_business_details.vendor_id')
+            ->select('orders_products.*', 'vendors_business_details.shop_name', 'vendors_business_details.latitude', 'vendors_business_details.longitude', 'vendors_business_details.shop_address', 'vendors_business_details.shop_mobile')
+            ->get();
+        
+        $order->drop_location = [
+            'name' => $order->name,
+            'address' => $order->address,
+            'latitude' => $order->latitude,
+            'longitude' => $order->longitude,
+            'mobile' => $order->mobile,
+            'email' => $order->email,
+            'pincode' => $order->pincode
+        ];
+
+        return response()->json([
+            'status' => true,
+            'data' => $order
+        ]);
     }
 
     public function getCountries()

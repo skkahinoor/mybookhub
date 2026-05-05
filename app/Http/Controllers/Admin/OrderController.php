@@ -408,6 +408,43 @@ class OrderController extends Controller
             $message = 'Order Status has been updated successfully!';
 
 
+            if ($data['order_status'] == 'Approved') {
+                try {
+                    $order = Order::find($data['order_id']);
+                    if ($order) {
+                        $districtId = $order->district_id;
+                        
+                        // Find all online delivery agents in this district
+                        $onlineAgents = User::role('delivery_agent')
+                            ->where('district_id', $districtId)
+                            ->whereHas('delivery_agent', function($q) {
+                                $q->where('is_online', 1)->whereNotNull('fcm_token');
+                            })
+                            ->with('delivery_agent')
+                            ->get();
+
+                        if ($onlineAgents->count() > 0) {
+                            $tokens = $onlineAgents->pluck('delivery_agent.fcm_token')->toArray();
+                            $pushTitle = 'New Order Available!';
+                            $pushBody = 'A new order #' . $order->id . ' is available for delivery in your area.';
+                            
+                            $this->firebaseService->sendToUsers(
+                                $onlineAgents->pluck('id')->toArray(),
+                                $pushTitle,
+                                $pushBody,
+                                [
+                                    'order_id' => (string)$order->id,
+                                    'type' => 'new_order_available',
+                                ],
+                                true // Skip DB notification for broad alert
+                            );
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('FCM broadcast failed for new order: ' . $e->getMessage());
+                }
+            }
+
             return redirect()->back()->with('success_message', $message);
             return view('admin.orders.orders', compact('orders', 'logos', 'headerLogo'));
         }

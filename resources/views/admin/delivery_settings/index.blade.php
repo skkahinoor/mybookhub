@@ -29,6 +29,7 @@
                                             <th>ID</th>
                                             <th>Min Order Amount (₹)</th>
                                             <th>Delivery Charge (₹)</th>
+                                            <th>Agent Rate (per KM) (₹)</th>
                                             <th>Free Delivery</th>
                                             <th>Status</th>
                                             <th>Actions</th>
@@ -40,6 +41,7 @@
                                                 <td>{{ $key + 1 }}</td>
                                                 <td>₹{{ number_format($setting->min_order_amount, 2) }}</td>
                                                 <td>₹{{ number_format($setting->delivery_charge, 2) }}</td>
+                                                <td>₹{{ number_format($setting->agent_rate_per_km, 2) }}</td>
                                                 <td>
                                                     @if($setting->is_free_delivery)
                                                         <span class="badge badge-success">Yes</span>

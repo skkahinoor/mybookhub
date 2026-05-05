@@ -46,12 +46,14 @@ class DeliverySettingController extends Controller
             $rules = [
                 'min_order_amount' => 'required|numeric',
                 'delivery_charge' => 'required|numeric',
+                'agent_rate_per_km' => 'required|numeric',
             ];
 
             $this->validate($request, $rules);
 
             $delivery_setting->min_order_amount = $data['min_order_amount'];
             $delivery_setting->delivery_charge = $data['delivery_charge'];
+            $delivery_setting->agent_rate_per_km = $data['agent_rate_per_km'];
             $delivery_setting->is_free_delivery = isset($data['is_free_delivery']) ? 1 : 0;
             $delivery_setting->status = isset($data['status']) ? 1 : 0;
             $delivery_setting->save();

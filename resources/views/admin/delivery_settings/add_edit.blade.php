@@ -59,6 +59,13 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label for="agent_rate_per_km">Delivery Agent Rate (per KM) (₹)</label>
+                                    <input type="number" step="0.01" class="form-control" id="agent_rate_per_km"
+                                        placeholder="Enter Delivery Agent Rate per KM" name="agent_rate_per_km"
+                                        @if (!empty($delivery_setting->agent_rate_per_km)) value="{{ $delivery_setting->agent_rate_per_km }}" @else value="{{ old('agent_rate_per_km') }}" @endif required>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="is_free_delivery">Is Free Delivery?</label>
                                     <input type="checkbox" id="is_free_delivery" name="is_free_delivery"
                                         @if ($delivery_setting->is_free_delivery == 1) checked @endif>

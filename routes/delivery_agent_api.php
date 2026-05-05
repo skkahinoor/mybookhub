@@ -27,6 +27,10 @@ Route::middleware(['auth:sanctum', 'delivery_agent'])->group(function () {
     Route::post('/delivery-agent/accept-order', [DeliveryAgentApiController::class, 'acceptOrder']);
     Route::post('/delivery-agent/update-order-status', [DeliveryAgentApiController::class, 'updateOrderStatus']);
     Route::get('/delivery-agent/available-orders', [DeliveryAgentApiController::class, 'getAvailableOrders']);
+    Route::get('/delivery-agent/history', [DeliveryAgentApiController::class, 'getHistory']);
+    Route::get('/delivery-agent/order/{id}', [DeliveryAgentApiController::class, 'getOrderDetails']);
+    Route::get('/delivery-agent/earnings', [DeliveryAgentApiController::class, 'getEarnings']);
+    Route::post('/delivery-agent/update-fcm-token', [DeliveryAgentApiController::class, 'updateFcmToken']);
     
     // Future logical routes for delivery app:
     // Route::get('/delivery-agent/orders', [DeliveryAgentApiController::class, 'availableOrders']);

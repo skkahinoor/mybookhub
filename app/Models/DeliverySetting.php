@@ -9,5 +9,5 @@ class DeliverySetting extends Model
 {
     use HasFactory;
     
-    protected $fillable = ['min_order_amount', 'delivery_charge', 'is_free_delivery', 'status'];
+    protected $fillable = ['min_order_amount', 'delivery_charge', 'agent_rate_per_km', 'is_free_delivery', 'status'];
 }

@@ -36,6 +36,12 @@ class Order extends Model
         'delivered_at',
         'return_reason',
         'return_status',
+        'delivery_agent_id',
+        'agent_start_lat',
+        'agent_start_lng',
+        'total_trip_distance',
+        'agent_trip_earning',
+        'agent_rate_at_trip',
     ];
 
     protected $casts = [
