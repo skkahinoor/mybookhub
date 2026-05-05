@@ -657,6 +657,7 @@ class UserController extends Controller
                 'country_id' => 'required',
                 'state_id' => 'required',
                 'district_id' => 'required',
+                'location' => 'nullable|string',
             ];
 
             $validator = Validator::make($data, $rules);
@@ -681,6 +682,7 @@ class UserController extends Controller
             $address->state_id = $data['state_id'];
             $address->district_id = $data['district_id'];
             $address->block_id = $data['block_id'] ?? null;
+            $address->location = $data['location'] ?? null;
             $address->save();
 
             // Handle Profile Sync
