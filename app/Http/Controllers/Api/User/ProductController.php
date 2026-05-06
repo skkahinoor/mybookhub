@@ -1527,6 +1527,9 @@ class ProductController extends Controller
             $orderState = $selectedAddress->state->name ?? '';
             $orderCountry = $selectedAddress->country->name ?? '';
             $orderPincode = $selectedAddress->pincode;
+            $orderDistrictId = $selectedAddress->district_id;
+            $orderLat = $selectedAddress->latitude;
+            $orderLng = $selectedAddress->longitude;
             $orderMobile = $selectedAddress->mobile;
             $orderEmail = $user->email;
         } else {
@@ -1545,6 +1548,9 @@ class ProductController extends Controller
             $orderState = $user->state->name ?? '';
             $orderCountry = $user->country->name ?? '';
             $orderPincode = $user->pincode;
+            $orderDistrictId = $user->district_id;
+            $orderLat = $user->latitude;
+            $orderLng = $user->longitude;
             $orderMobile = $user->phone;
             $orderEmail = $user->email;
         }
@@ -1731,6 +1737,9 @@ class ProductController extends Controller
                     'state' => $orderState,
                     'country' => $orderCountry,
                     'pincode' => $orderPincode,
+                    'district_id' => $orderDistrictId,
+                    'latitude' => $orderLat,
+                    'longitude' => $orderLng,
                     'mobile' => $orderMobile,
                     'email' => $orderEmail,
                     'shipping_charges' => $item_shipping,

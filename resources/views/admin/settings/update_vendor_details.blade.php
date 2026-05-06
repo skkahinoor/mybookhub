@@ -214,33 +214,56 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="shop_address">Shop Address</label>
-                                        <input type="text" class="form-control" id="shop_address" placeholder="Enter Shop Address" name="shop_address"  @if (isset($vendorDetails['shop_address'])) value="{{ $vendorDetails['shop_address'] }}" @endif> {{-- $vendorDetails was passed from AdminController --}}
+                                        <input type="text" class="form-control" id="shop_address" placeholder="Enter Shop Address" name="shop_address"  @if (isset($vendorDetails['shop_address'])) value="{{ $vendorDetails['shop_address'] }}" @endif> 
                                     </div>
+
                                     <div class="form-group">
-                                        <label for="shop_city">Shop City</label>
-                                        <input type="text" class="form-control" id="shop_city" placeholder="Enter Shop City" name="shop_city"  @if (isset($vendorDetails['shop_city'])) value="{{ $vendorDetails['shop_city'] }}" @endif> {{-- $vendorDetails was passed from AdminController --}}
+                                        <label>Select Shop Location on Map</label>
+                                        <div id="map" style="height: 300px; width: 100%; border-radius: 10px; margin-bottom: 10px; border: 1px solid #ddd;"></div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" id="latitude" name="latitude" placeholder="Latitude" value="{{ $vendorDetails['latitude'] ?? '' }}" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" id="longitude" name="longitude" placeholder="Longitude" value="{{ $vendorDetails['longitude'] ?? '' }}" readonly>
+                                            </div>
+                                        </div>
                                     </div>
+
+                                    <div class="form-group">
+                                        <label for="shop_country">Shop Country</label>
+                                        <select class="form-control" id="business_country_id" name="country_id" style="color: #495057">
+                                            <option value="">Select Country</option>
+                                            @foreach ($countries as $country)
+                                                <option value="{{ $country['id'] }}" @if (isset($vendorDetails['country_id']) && $vendorDetails['country_id'] == $country['id']) selected @endif>{{ $country['name'] }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
                                     <div class="form-group">
                                         <label for="shop_state">Shop State</label>
-                                        <input type="text" class="form-control" id="shop_state" placeholder="Enter Shop State" name="shop_state"  @if (isset($vendorDetails['shop_state'])) value="{{ $vendorDetails['shop_state'] }}" @endif> {{-- $vendorDetails was passed from AdminController --}}
+                                        <select class="form-control" id="business_state_id" name="state_id" style="color: #495057">
+                                            <option value="">Select State</option>
+                                        </select>
                                     </div>
 
                                     <div class="form-group">
-                                       <label for="shop_country">Shop Country</label>
+                                        <label for="shop_district">Shop District</label>
+                                        <select class="form-control" id="business_district_id" name="district_id" style="color: #495057">
+                                            <option value="">Select District</option>
+                                        </select>
+                                    </div>
 
-                                        <select class="form-control" id="shop_country" name="shop_country" style="color: #495057">
-                                            <option value="">Select Country</option>
-
-                                            @foreach ($countries as $country)
-                                                <option value="{{ $country['name'] }}"  @if (isset($vendorDetails['shop_country']) && $country['name'] == $vendorDetails['shop_country']) selected @endif>{{ $country['name'] }}</option>
-                                            @endforeach
-
+                                    <div class="form-group">
+                                        <label for="shop_block">Shop Block</label>
+                                        <select class="form-control" id="business_block_id" name="block_id" style="color: #495057">
+                                            <option value="">Select Block</option>
                                         </select>
                                     </div>
 
                                     <div class="form-group">
                                         <label for="shop_pincode">Shop Pincode</label>
-                                        <input type="text" class="form-control" id="shop_pincode" placeholder="Enter Shop Pincode" name="shop_pincode"  @if (isset($vendorDetails['shop_pincode'])) value="{{ $vendorDetails['shop_pincode'] }}" @endif> {{-- $vendorDetails was passed from AdminController --}}
+                                        <input type="text" class="form-control" id="shop_pincode" placeholder="Enter Shop Pincode" name="shop_pincode"  @if (isset($vendorDetails['shop_pincode'])) value="{{ $vendorDetails['shop_pincode'] }}" @endif> 
                                     </div>
                                     <div class="form-group">
                                         <label for="shop_mobile">Shop Mobile</label>
@@ -377,161 +400,145 @@
         <!-- partial -->
     </div>
 
-    @if ($slug == 'personal')
+    @if ($slug == 'personal' || $slug == 'business')
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_KEY') }}&libraries=places"></script>
     <script>
         $(document).ready(function() {
-            // Current vendor location values
+            var slug = '{{ $slug }}';
+            var prefix = slug === 'personal' ? 'vendor_' : 'business_';
+            
+            // Current values
+            var currentCountryId, currentStateId, currentDistrictId, currentBlockId;
+            
+            if (slug === 'personal') {
+                currentCountryId = @json(Auth::guard('admin')->user()->country_id ?? null);
+                currentStateId = @json(Auth::guard('admin')->user()->state_id ?? null);
+                currentDistrictId = @json(Auth::guard('admin')->user()->district_id ?? null);
+                currentBlockId = @json(Auth::guard('admin')->user()->block_id ?? null);
+            } else {
+                currentCountryId = @json($vendorDetails['country_id'] ?? null);
+                currentStateId = @json($vendorDetails['state_id'] ?? null);
+                currentDistrictId = @json($vendorDetails['district_id'] ?? null);
+                currentBlockId = @json($vendorDetails['block_id'] ?? null);
+            }
 
-            // Current vendor location values
-            var currentCountryId = @json(Auth::guard('admin')->user()->country_id ?? null);
-            var currentStateId = @json(Auth::guard('admin')->user()->state_id ?? null);
-            var currentDistrictId = @json(Auth::guard('admin')->user()->district_id ?? null);
-            var currentBlockId = @json(Auth::guard('admin')->user()->block_id ?? null);
+            // Google Maps Implementation for Business
+            if (slug === 'business') {
+                var initialLat = parseFloat($('#latitude').val()) || 20.5937;
+                var initialLng = parseFloat($('#longitude').val()) || 78.9629;
+                var zoomLevel = $('#latitude').val() ? 15 : 5;
 
-            // Load states based on country
-            function loadVendorStates(countryId) {
-                if (!countryId) {
-                    $('#vendor_state_id').empty().append('<option value="">Select State</option>');
-                    $('#vendor_district_id').empty().append('<option value="">Select District</option>');
-                    $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
-                    return Promise.resolve();
-                }
+                var map = new google.maps.Map(document.getElementById('map'), {
+                    center: {lat: initialLat, lng: initialLng},
+                    zoom: zoomLevel
+                });
 
-                return new Promise(function(resolve, reject) {
+                var marker = new google.maps.Marker({
+                    position: {lat: initialLat, lng: initialLng},
+                    map: map,
+                    draggable: true,
+                    title: "Drag to shop location"
+                });
+
+                // Update lat/lng on marker drag
+                google.maps.event.addListener(marker, 'dragend', function(event) {
+                    $('#latitude').val(event.latLng.lat());
+                    $('#longitude').val(event.latLng.lng());
+                });
+
+                // Update lat/lng on map click
+                google.maps.event.addListener(map, 'click', function(event) {
+                    marker.setPosition(event.latLng);
+                    $('#latitude').val(event.latLng.lat());
+                    $('#longitude').val(event.latLng.lng());
+                });
+            }
+
+            // AJAX Dropdowns
+            function loadStates(countryId) {
+                if (!countryId) return Promise.resolve();
+                return new Promise(function(resolve) {
                     $.ajax({
                         url: '{{ route('vendor_states') }}',
                         type: 'GET',
                         data: { country: countryId },
-                        dataType: 'json',
                         success: function(response) {
-                            var stateSelect = $('#vendor_state_id');
-                            stateSelect.empty();
-                            stateSelect.append('<option value="">Select State</option>');
-
+                            var select = $('#' + prefix + 'state_id');
+                            select.empty().append('<option value="">Select State</option>');
                             $.each(response, function(key, value) {
-                                stateSelect.append('<option value="' + key + '">' + value + '</option>');
+                                select.append('<option value="' + key + '">' + value + '</option>');
                             });
-
-                            // Clear dependent dropdowns
-                            $('#vendor_district_id').empty().append('<option value="">Select District</option>');
-                            $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
-
-                            // Set current value if exists
-                            if (currentStateId && currentStateId !== null) {
-                                stateSelect.val(currentStateId);
-                                loadVendorDistricts(currentStateId).then(resolve);
-                            } else {
-                                resolve();
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.log('Error loading states:', error);
-                            reject(error);
+                            if (currentStateId) {
+                                select.val(currentStateId);
+                                loadDistricts(currentStateId).then(resolve);
+                            } else resolve();
                         }
                     });
                 });
             }
 
-            // Load districts based on state
-            function loadVendorDistricts(stateId) {
-                if (!stateId) {
-                    $('#vendor_district_id').empty().append('<option value="">Select District</option>');
-                    $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
-                    return Promise.resolve();
-                }
-
-                return new Promise(function(resolve, reject) {
+            function loadDistricts(stateId) {
+                if (!stateId) return Promise.resolve();
+                return new Promise(function(resolve) {
                     $.ajax({
                         url: '{{ route('vendor_districts') }}',
                         type: 'GET',
                         data: { state: stateId },
-                        dataType: 'json',
                         success: function(response) {
-                            var districtSelect = $('#vendor_district_id');
-                            districtSelect.empty();
-                            districtSelect.append('<option value="">Select District</option>');
-
+                            var select = $('#' + prefix + 'district_id');
+                            select.empty().append('<option value="">Select District</option>');
                             $.each(response, function(key, value) {
-                                districtSelect.append('<option value="' + key + '">' + value + '</option>');
+                                select.append('<option value="' + key + '">' + value + '</option>');
                             });
-
-                            // Clear dependent dropdowns
-                            $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
-
-                            // Set current value if exists
-                            if (currentDistrictId && currentDistrictId !== null) {
-                                districtSelect.val(currentDistrictId);
-                                loadVendorBlocks(currentDistrictId).then(resolve);
-                            } else {
-                                resolve();
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.log('Error loading districts:', error);
-                            reject(error);
+                            if (currentDistrictId) {
+                                select.val(currentDistrictId);
+                                loadBlocks(currentDistrictId).then(resolve);
+                            } else resolve();
                         }
                     });
                 });
             }
 
-            // Load blocks based on district
-            function loadVendorBlocks(districtId) {
-                if (!districtId) {
-                    $('#vendor_block_id').empty().append('<option value="">Select Block</option>');
-                    return Promise.resolve();
-                }
-
-                return new Promise(function(resolve, reject) {
+            function loadBlocks(districtId) {
+                if (!districtId) return Promise.resolve();
+                return new Promise(function(resolve) {
                     $.ajax({
                         url: '{{ route('vendor_blocks') }}',
                         type: 'GET',
                         data: { district: districtId },
-                        dataType: 'json',
                         success: function(response) {
-                            var blockSelect = $('#vendor_block_id');
-                            blockSelect.empty();
-                            blockSelect.append('<option value="">Select Block</option>');
-
+                            var select = $('#' + prefix + 'block_id');
+                            select.empty().append('<option value="">Select Block</option>');
                             $.each(response, function(key, value) {
-                                blockSelect.append('<option value="' + key + '">' + value + '</option>');
+                                select.append('<option value="' + key + '">' + value + '</option>');
                             });
-
-                            // Set current value if exists
-                            if (currentBlockId && currentBlockId !== null) {
-                                blockSelect.val(currentBlockId);
-                            }
-
+                            if (currentBlockId) select.val(currentBlockId);
                             resolve();
-                        },
-                        error: function(xhr, status, error) {
-                            console.log('Error loading blocks:', error);
-                            reject(error);
                         }
                     });
                 });
             }
 
-            // Event handlers for cascading dropdowns
-            $('#vendor_country_id').on('change', function() {
-                var countryId = $(this).val();
-                loadVendorStates(countryId);
+            // Event handlers
+            $('#' + prefix + 'country_id').on('change', function() {
+                currentStateId = null; currentDistrictId = null; currentBlockId = null;
+                loadStates($(this).val());
             });
 
-            $('#vendor_state_id').on('change', function() {
-                var stateId = $(this).val();
-                loadVendorDistricts(stateId);
+            $('#' + prefix + 'state_id').on('change', function() {
+                currentDistrictId = null; currentBlockId = null;
+                loadDistricts($(this).val());
             });
 
-            $('#vendor_district_id').on('change', function() {
-                var districtId = $(this).val();
-                loadVendorBlocks(districtId);
+            $('#' + prefix + 'district_id').on('change', function() {
+                currentBlockId = null;
+                loadBlocks($(this).val());
             });
 
-            // Initialize form with current values
-            if (currentCountryId && currentCountryId !== null) {
-                $('#vendor_country_id').val(currentCountryId);
-                loadVendorStates(currentCountryId);
+            // Initialize
+            if (currentCountryId) {
+                loadStates(currentCountryId);
             }
         });
     </script>

@@ -360,6 +360,31 @@ class DeliveryAgentApiController extends Controller
         }
     }
 
+    public function rejectOrder(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'order_id' => 'required|exists:orders,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => 'Invalid Order ID'], 422);
+        }
+
+        $user = $request->user();
+        $agent = $user->deliveryAgent;
+        
+        $rejectedIds = $agent->rejected_order_ids ?? [];
+        if (!in_array($request->order_id, $rejectedIds)) {
+            $rejectedIds[] = $request->order_id;
+            $agent->update(['rejected_order_ids' => $rejectedIds]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Order rejected and hidden.'
+        ]);
+    }
+
     public function updateOrderStatus(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -390,16 +415,31 @@ class DeliveryAgentApiController extends Controller
                 
                 // Calculate Earning based on Distance
                 if ($order->agent_start_lat && $order->agent_start_lng) {
-                    $pickup = \App\Models\OrdersProduct::where('order_id', $order->id)->first(); // Get first pickup for distance calc
-                    $vendor = \App\Models\VendorsBusinessDetail::where('vendor_id', $pickup->vendor_id)->first();
+                    $pickup = \App\Models\OrdersProduct::where('order_id', $order->id)->first(); 
+                    $pickupLat = null;
+                    $pickupLng = null;
+
+                    if ($pickup->vendor_id > 0) {
+                        $business = \App\Models\VendorsBusinessDetail::where('vendor_id', $pickup->vendor_id)->first();
+                        if ($business) {
+                            $pickupLat = $business->latitude;
+                            $pickupLng = $business->longitude;
+                        }
+                    } else if ($pickup->admin_id > 0) {
+                        $seller = \App\Models\User::find($pickup->admin_id);
+                        if ($seller) {
+                            $pickupLat = $seller->latitude;
+                            $pickupLng = $seller->longitude;
+                        }
+                    }
                     
-                    if ($vendor) {
+                    if ($pickupLat && $pickupLng) {
                         $d1 = $this->calculateDistancePHP(
                             (float)$order->agent_start_lat, (float)$order->agent_start_lng,
-                            (float)$vendor->latitude, (float)$vendor->longitude
+                            (float)$pickupLat, (float)$pickupLng
                         );
                         $d2 = $this->calculateDistancePHP(
-                            (float)$vendor->latitude, (float)$vendor->longitude,
+                            (float)$pickupLat, (float)$pickupLng,
                             (float)$order->latitude, (float)$order->longitude
                         );
                         
@@ -494,10 +534,39 @@ class DeliveryAgentApiController extends Controller
         }
 
         // Add pickup points and drop location as standardized before
-        $order->pickup_points = \App\Models\OrdersProduct::where('order_id', $order->id)
-            ->join('vendors_business_details', 'orders_products.vendor_id', '=', 'vendors_business_details.vendor_id')
-            ->select('orders_products.*', 'vendors_business_details.shop_name', 'vendors_business_details.latitude', 'vendors_business_details.longitude', 'vendors_business_details.shop_address', 'vendors_business_details.shop_mobile')
-            ->get();
+        $pickupPoints = [];
+        foreach ($order->orders_products as $op) {
+            $point = [
+                'product_name' => $op->product_name,
+                'shop_name' => '',
+                'latitude' => null,
+                'longitude' => null,
+                'shop_address' => '',
+                'shop_mobile' => '',
+            ];
+
+            if ($op->vendor_id > 0) {
+                $business = \App\Models\VendorsBusinessDetail::where('vendor_id', $op->vendor_id)->first();
+                if ($business) {
+                    $point['shop_name'] = $business->shop_name;
+                    $point['latitude'] = $business->latitude;
+                    $point['longitude'] = $business->longitude;
+                    $point['shop_address'] = $business->shop_address;
+                    $point['shop_mobile'] = $business->shop_mobile;
+                }
+            } else if ($op->admin_id > 0) {
+                $seller = \App\Models\User::find($op->admin_id);
+                if ($seller) {
+                    $point['shop_name'] = $seller->name . " (Student Seller)";
+                    $point['latitude'] = $seller->latitude;
+                    $point['longitude'] = $seller->longitude;
+                    $point['shop_address'] = $seller->address;
+                    $point['shop_mobile'] = $seller->phone;
+                }
+            }
+            $pickupPoints[] = $point;
+        }
+        $order->pickup_points = $pickupPoints;
         
         $order->drop_location = [
             'name' => $order->name,
@@ -563,6 +632,7 @@ class DeliveryAgentApiController extends Controller
         $districtId = $user->district_id;
 
         $profile = $user->deliveryAgent;
+        $rejectedIds = $profile->rejected_order_ids ?? [];
 
         if (!$districtId) {
             return response()->json([
@@ -582,6 +652,8 @@ class DeliveryAgentApiController extends Controller
         // Get orders in the agent's district that are ready for delivery
         // We assume 'Approved' or 'Processing' status is ready for pickup
         $orders = \App\Models\Order::with(['orders_products.vendor', 'orders_products.vendor_details', 'user'])
+            ->whereNull('delivery_agent_id') // Only unassigned orders
+            ->whereNotIn('id', $rejectedIds) // Exclude orders this agent rejected
             ->where(function($query) use ($districtId) {
                 $query->where('district_id', $districtId)
                       ->orWhereHas('user', function($q) use ($districtId) {

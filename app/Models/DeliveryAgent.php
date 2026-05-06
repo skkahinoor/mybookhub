@@ -20,6 +20,11 @@ class DeliveryAgent extends Model
         'is_online',
         'pickup_status',
         'drop_status',
+        'rejected_order_ids',
+    ];
+
+    protected $casts = [
+        'rejected_order_ids' => 'array',
     ];
 
     public function user()

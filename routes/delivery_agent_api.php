@@ -25,6 +25,7 @@ Route::middleware(['auth:sanctum', 'delivery_agent'])->group(function () {
     Route::post('/delivery-agent/toggle-online', [DeliveryAgentApiController::class, 'toggleOnline']);
     Route::post('/delivery-agent/update-profile', [DeliveryAgentApiController::class, 'updateProfile']);
     Route::post('/delivery-agent/accept-order', [DeliveryAgentApiController::class, 'acceptOrder']);
+    Route::post('/delivery-agent/reject-order', [DeliveryAgentApiController::class, 'rejectOrder']);
     Route::post('/delivery-agent/update-order-status', [DeliveryAgentApiController::class, 'updateOrderStatus']);
     Route::get('/delivery-agent/available-orders', [DeliveryAgentApiController::class, 'getAvailableOrders']);
     Route::get('/delivery-agent/history', [DeliveryAgentApiController::class, 'getHistory']);

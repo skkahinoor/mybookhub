@@ -551,9 +551,12 @@ class AdminController extends Controller
                         'shop_mobile' => $data['shop_mobile'],
                         'shop_website' => $data['shop_website'],
                         'shop_address' => $data['shop_address'],
-                        'shop_city' => $data['shop_city'],
-                        'shop_state' => $data['shop_state'],
-                        'shop_country' => $data['shop_country'],
+                        'latitude' => $data['latitude'] ?? null,
+                        'longitude' => $data['longitude'] ?? null,
+                        'country_id' => $data['country_id'] ?? null,
+                        'state_id' => $data['state_id'] ?? null,
+                        'district_id' => $data['district_id'] ?? null,
+                        'block_id' => $data['block_id'] ?? null,
                         'shop_pincode' => $data['shop_pincode'],
                         'business_license_number' => $data['business_license_number'],
                         'gst_number' => $data['gst_number'],
@@ -569,9 +572,12 @@ class AdminController extends Controller
                         'shop_mobile' => $data['shop_mobile'],
                         'shop_website' => $data['shop_website'],
                         'shop_address' => $data['shop_address'],
-                        'shop_city' => $data['shop_city'],
-                        'shop_state' => $data['shop_state'],
-                        'shop_country' => $data['shop_country'],
+                        'latitude' => $data['latitude'] ?? null,
+                        'longitude' => $data['longitude'] ?? null,
+                        'country_id' => $data['country_id'] ?? null,
+                        'state_id' => $data['state_id'] ?? null,
+                        'district_id' => $data['district_id'] ?? null,
+                        'block_id' => $data['block_id'] ?? null,
                         'shop_pincode' => $data['shop_pincode'],
                         'business_license_number' => $data['business_license_number'],
                         'gst_number' => $data['gst_number'],
@@ -584,12 +590,22 @@ class AdminController extends Controller
                 return redirect()->back()->with('success_message', 'Vendor details updated successfully!');
             }
 
-            $vendorCount = VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->count(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-
             if ($vendorCount > 0) {
-                $vendorDetails = VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->first()->toArray(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
+                $vendorDetails = VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->first()->toArray(); 
             } else {
-                $vendorDetails = [];
+                // Auto-fetch from registration data (users table)
+                $user = Auth::guard('admin')->user();
+                $vendorDetails = [
+                    'shop_address' => $user->address,
+                    'country_id' => $user->country_id,
+                    'state_id' => $user->state_id,
+                    'district_id' => $user->district_id,
+                    'block_id' => $user->block_id,
+                    'shop_pincode' => $user->pincode,
+                    'shop_mobile' => $user->phone,
+                    'latitude' => $user->latitude,
+                    'longitude' => $user->longitude,
+                ];
             }
         } elseif ($slug == 'bank') {
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
