@@ -230,7 +230,7 @@
                                 </a>
                             </div>
 
-                            {{-- Coupons Card --}}
+                             {{-- Coupons Card --}}
                             <div class="metric-card">
                                 <a href="{{ url('admin/coupons') }}">
                                     <div class="metric-icon-wrapper icon-orange">
@@ -239,6 +239,19 @@
                                     <div class="metric-details">
                                         <div class="metric-label">Coupons</div>
                                         <div class="metric-value">{{ number_format($couponsCount) }}</div>
+                                    </div>
+                                </a>
+                            </div>
+
+                            {{-- Delivery Agents Card --}}
+                            <div class="metric-card">
+                                <a href="{{ url('admin/delivery-agent') }}">
+                                    <div class="metric-icon-wrapper icon-darkblue">
+                                        <i class="fas fa-truck"></i>
+                                    </div>
+                                    <div class="metric-details">
+                                        <div class="metric-label">Delivery Agents</div>
+                                        <div class="metric-value">{{ number_format($deliveryAgentsCount ?? 0) }}</div>
                                     </div>
                                 </a>
                             </div>

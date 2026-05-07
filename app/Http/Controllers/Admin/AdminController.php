@@ -19,6 +19,7 @@ use App\Models\Setting;
 use App\Models\State;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Models\DeliveryAgent;
 use App\Models\VendorsBankDetail;
 use App\Models\VendorsBusinessDetail;
 use Illuminate\Http\Request;
@@ -52,6 +53,7 @@ class AdminController extends Controller
         $productsCount = Product::where('status', 1)->count();
         $ordersCount = Order::count();
         $couponsCount = Coupon::where('status', 1)->count();
+        $deliveryAgentsCount = DeliveryAgent::count();
 
         // Vendor-specific counts
         if ($adminType === 'vendor' && $vendorId) {
@@ -166,6 +168,7 @@ class AdminController extends Controller
             'couponsCount',
             'vendorsCount',
             'salesExecutivesCount',
+            'deliveryAgentsCount',
             'logos',
             'headerLogo',
             'vendor',

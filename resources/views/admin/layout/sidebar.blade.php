@@ -379,6 +379,12 @@
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'view_delivery_agents') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('admin/delivery-agent') }}">Delivery Agents</a></li>
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'delivery_agent_payouts') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.delivery_agent_payouts') }}">Delivery Partner Payouts</a></li>
+                            <li class="nav-item">
+                                <a @if (Session::get('page') == 'delivery_agent_queries') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.delivery_agent_queries.index') }}">Delivery Agent Queries</a></li>
                     </ul>
                 </div>
             </li>

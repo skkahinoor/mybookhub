@@ -21,6 +21,12 @@ class DeliveryAgent extends Model
         'pickup_status',
         'drop_status',
         'rejected_order_ids',
+        'account_holder_name',
+        'bank_name',
+        'account_number',
+        'ifsc_code',
+        'upi_id',
+        'document_verify_status',
     ];
 
     protected $casts = [

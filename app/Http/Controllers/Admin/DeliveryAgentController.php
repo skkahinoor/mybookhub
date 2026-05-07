@@ -197,6 +197,35 @@ class DeliveryAgentController extends Controller
         ]);
     }
 
+    public function updateDocumentStatus(Request $request)
+    {
+        // if (!Auth::guard('admin')->user()->can('update_delivery_agent_status')) {
+        //     return response()->json(['success' => false, 'message' => 'Unauthorized action.'], 403);
+        // }
+
+        if (! $request->ajax()) {
+            abort(400, 'Invalid request');
+        }
+
+        $data = $request->validate([
+            'status'             => 'required|in:1,2', // 1: Approved, 2: Rejected
+            'delivery_agent_id'  => 'required|integer',
+        ]);
+
+        $profile = DeliveryAgent::where('user_id', $data['delivery_agent_id'])->first();
+        if ($profile) {
+            $profile->update(['document_verify_status' => $data['status']]);
+
+            return response()->json([
+                'success' => true,
+                'status'  => $data['status'],
+                'message' => $data['status'] == 1 ? 'Documents Approved successfully' : 'Documents Rejected successfully',
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Profile not found.']);
+    }
+
     public function getDetails($id)
     {
         $user = User::with('deliveryAgent', 'district')->findOrFail($id);
@@ -215,6 +244,7 @@ class DeliveryAgentController extends Controller
                 'id_proof' => ($profile && $profile->id_proof) ? asset('uploads/delivery_agents/docs/' . $profile->id_proof) : null,
                 'license_image' => ($profile && $profile->license_image) ? asset('uploads/delivery_agents/docs/' . $profile->license_image) : null,
                 'status' => $user->status,
+                'document_verify_status' => $profile ? $profile->document_verify_status : 0,
                 'created_at' => $user->created_at->format('M d, Y h:i A'),
             ]
         ]);

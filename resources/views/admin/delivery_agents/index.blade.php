@@ -158,8 +158,15 @@
                                             <td style="padding: 8px;">${data.license_number || 'N/A'}</td>
                                         </tr>
                                         <tr style="border-bottom: 1px solid #eee;">
-                                            <td style="padding: 8px; font-weight: bold;">Status:</td>
+                                            <td style="padding: 8px; font-weight: bold;">Account Status:</td>
                                             <td style="padding: 8px;">${statusText}</td>
+                                        </tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td style="padding: 8px; font-weight: bold;">Document Status:</td>
+                                            <td style="padding: 8px;">
+                                                ${data.document_verify_status == 1 ? '<span class="badge badge-success" style="color:white;">Approved</span>' : 
+                                                  (data.document_verify_status == 2 ? '<span class="badge badge-danger" style="color:white;">Rejected</span>' : '<span class="badge badge-warning" style="color:white;">Pending</span>')}
+                                            </td>
                                         </tr>
                                         <tr style="border-bottom: 1px solid #eee;">
                                             <td style="padding: 8px; font-weight: bold;">ID Proof:</td>
@@ -173,10 +180,19 @@
                                                 ${data.license_image ? `<a href="${data.license_image}" target="_blank" class="badge badge-info"><i class="mdi mdi-image"></i> View License</a>` : 'Not Uploaded'}
                                             </td>
                                         </tr>
-                                        <tr>
+                                        <tr style="border-bottom: 1px solid #eee;">
                                             <td style="padding: 8px; font-weight: bold;">Registered On:</td>
                                             <td style="padding: 8px;">${data.created_at || 'N/A'}</td>
                                         </tr>
+                                        ${data.document_verify_status != 1 ? `
+                                        <tr>
+                                            <td style="padding: 8px; font-weight: bold;">Action:</td>
+                                            <td style="padding: 8px;">
+                                                <button class="btn btn-sm btn-success update-doc-status" style="margin-right:5px;" data-id="${data.id}" data-status="1">Approve Docs</button>
+                                                <button class="btn btn-sm btn-danger update-doc-status" data-id="${data.id}" data-status="2">Reject Docs</button>
+                                            </td>
+                                        </tr>
+                                        ` : ''}
                                     </table>
                                 </div>
                             `;
@@ -228,6 +244,50 @@
                     }
                 });
             }
+
+            $(document).on('click', '.update-doc-status', function(e) {
+                e.preventDefault();
+                var deliveryAgentId = $(this).data('id');
+                var status = $(this).data('status');
+                var statusText = status == 1 ? 'Approve' : 'Reject';
+                var confirmBtnColor = status == 1 ? '#28a745' : '#dc3545';
+
+                Swal.fire({
+                    title: 'Confirm Action',
+                    text: 'Are you sure you want to ' + statusText + ' these documents?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: confirmBtnColor,
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, ' + statusText
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '{{ url('admin/update-delivery-agent-doc-status') }}',
+                            type: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                            },
+                            data: {
+                                delivery_agent_id: deliveryAgentId,
+                                status: status
+                            },
+                            success: function(response) {
+                                if(response.success) {
+                                    Swal.fire('Success', response.message, 'success').then(() => {
+                                        loadDeliveryAgentDetails(deliveryAgentId);
+                                    });
+                                } else {
+                                    Swal.fire('Error', response.message, 'error');
+                                }
+                            },
+                            error: function() {
+                                Swal.fire('Error', 'Something went wrong', 'error');
+                            }
+                        });
+                    }
+                });
+            });
 
             function updateDeliveryAgentStatus(deliveryAgentId, status) {
                 var confirmMessage = status === 'Active'

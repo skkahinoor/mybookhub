@@ -10,15 +10,59 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
+use GuzzleHttp\Client;
 
 class DeliveryAgentApiController extends Controller
 {
+    public function sendSMS($phone, $otp)
+    {
+        $to = '91' . preg_replace('/[^0-9]/', '', $phone);
+
+        try {
+            $client = new Client();
+
+            // payload must match MSG91 flow template variables
+            $payload = [
+                "template_id" => env('MSG91_TEMPLATE_ID'),
+                "recipients" => [
+                    [
+                        "mobiles" => $to,
+                        "var1"    => $otp
+                    ]
+                ]
+            ];
+
+            Log::info("MSG91 Delivery Agent OTP Payload", $payload);
+
+            $response = $client->post("https://control.msg91.com/api/v5/flow/", [
+                'json' => $payload,
+                'headers' => [
+                    'accept' => 'application/json',
+                    'authkey' => env('MSG91_AUTH_KEY'),
+                    'content-type' => 'application/json'
+                ],
+            ]);
+
+            Log::info("MSG91 Delivery Agent OTP Response", [
+                'status' => $response->getStatusCode(),
+                'body' => $response->getBody()->getContents()
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("MSG91 Delivery Agent OTP ERROR: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'phone' => 'required|numeric|unique:users,phone',
+            'email' => 'required|email',
+            'phone' => 'required|numeric',
             'password' => 'required|min:6|confirmed',
             'country_id' => 'required|exists:countries,id',
             'state_id' => 'required|exists:states,id',
@@ -38,13 +82,35 @@ class DeliveryAgentApiController extends Controller
             ], 422);
         }
 
-        DB::beginTransaction();
-        try {
-            $role = Role::firstOrCreate(
-                ['name' => 'delivery_agent', 'guard_name' => 'web']
-            );
+        $existingUser = User::where('phone', $request->phone)->orWhere('email', $request->email)->first();
+        if ($existingUser) {
+            if ($existingUser->hasRole('delivery_agent')) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Validation Error',
+                    'errors' => ['phone' => ['This mobile number or email is already registered as a Delivery Agent.']]
+                ], 422);
+            }
+        }
 
-            $user = User::create([
+        try {
+            // Handle File Uploads temporarily
+            $idProofName = null;
+            if ($request->hasFile('id_proof')) {
+                $file = $request->file('id_proof');
+                $idProofName = 'temp_id_' . time() . '_' . $request->phone . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/delivery_agents/docs'), $idProofName);
+            }
+
+            $licenseImageName = null;
+            if ($request->hasFile('license_image')) {
+                $file = $request->file('license_image');
+                $licenseImageName = 'temp_license_' . time() . '_' . $request->phone . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('uploads/delivery_agents/docs'), $licenseImageName);
+            }
+
+            // Store registration data in cache
+            $regData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'phone' => $request->phone,
@@ -53,37 +119,124 @@ class DeliveryAgentApiController extends Controller
                 'state_id' => $request->state_id,
                 'district_id' => $request->district_id,
                 'block_id' => $request->block_id,
-                'role_id' => $role->id,
-                'status' => 0, // Pending approval
-            ]);
+                'vehicle_type' => $request->vehicle_type,
+                'license_number' => $request->license_number,
+                'id_proof' => $idProofName,
+                'license_image' => $licenseImageName,
+            ];
 
-            $user->assignRole($role);
+            Cache::put('da_reg_' . $request->phone, $regData, now()->addMinutes(15));
 
-            // Debugging: You can check if files exist in the request
-            // Log::info($request->allFiles()); 
+            $otp = rand(100000, 999999);
+            DB::table('otps')->updateOrInsert(
+                ['phone' => $request->phone],
+                ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+            );
 
-            $idProofName = null;
-            if ($request->hasFile('id_proof')) {
-                $file = $request->file('id_proof');
-                if ($file->isValid()) {
-                    $idProofName = 'id_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-                    $file->move(public_path('uploads/delivery_agents/docs'), $idProofName);
-                }
+            $sendStatus = $this->sendSMS($request->phone, $otp);
+
+            if (!$sendStatus) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Failed to send OTP via MSG91. Please try again.'
+                ], 500);
             }
 
-            $licenseImageName = null;
-            if ($request->hasFile('license_image')) {
-                $file = $request->file('license_image');
-                if ($file->isValid()) {
-                    $licenseImageName = 'license_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-                    $file->move(public_path('uploads/delivery_agents/docs'), $licenseImageName);
-                }
+            return response()->json([
+                'status' => true,
+                'message' => 'OTP sent successfully to your mobile number.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Registration failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        $request->validate([
+            'phone' => 'required',
+            'otp' => 'required'
+        ]);
+
+        $otpRecord = DB::table('otps')
+            ->where('phone', $request->phone)
+            ->where('otp', $request->otp)
+            ->first();
+
+        if (!$otpRecord) {
+            return response()->json([
+                "status" => false,
+                "message" => "Invalid OTP"
+            ], 400);
+        }
+
+        $regData = Cache::get('da_reg_' . $request->phone);
+
+        if (!$regData) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Registration session expired. Please register again.'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $role = Role::firstOrCreate(
+                ['name' => 'delivery_agent', 'guard_name' => 'web']
+            );
+
+            $user = User::where('phone', $regData['phone'])->orWhere('email', $regData['email'])->first();
+
+            if ($user) {
+                // Update existing user with new location info if they are becoming a delivery agent
+                $user->update([
+                    'country_id' => $regData['country_id'],
+                    'state_id' => $regData['state_id'],
+                    'district_id' => $regData['district_id'],
+                    'block_id' => $regData['block_id'],
+                ]);
+            } else {
+                $user = User::create([
+                    'name' => $regData['name'],
+                    'email' => $regData['email'],
+                    'phone' => $regData['phone'],
+                    'password' => $regData['password'],
+                    'country_id' => $regData['country_id'],
+                    'state_id' => $regData['state_id'],
+                    'district_id' => $regData['district_id'],
+                    'block_id' => $regData['block_id'],
+                    'role_id' => $role->id,
+                    'status' => 0, // Pending approval for new users
+                ]);
+            }
+
+            if (!$user->hasRole('delivery_agent')) {
+                $user->assignRole($role);
+            }
+
+            // Rename temp files to include user ID
+            $idProofName = $regData['id_proof'];
+            if ($idProofName) {
+                $newIdName = str_replace('temp_id_', 'id_', $idProofName);
+                rename(public_path('uploads/delivery_agents/docs/' . $idProofName), public_path('uploads/delivery_agents/docs/' . $newIdName));
+                $idProofName = $newIdName;
+            }
+
+            $licenseImageName = $regData['license_image'];
+            if ($licenseImageName) {
+                $newLicenseName = str_replace('temp_license_', 'license_', $licenseImageName);
+                rename(public_path('uploads/delivery_agents/docs/' . $licenseImageName), public_path('uploads/delivery_agents/docs/' . $newLicenseName));
+                $licenseImageName = $newLicenseName;
             }
 
             DeliveryAgent::create([
                 'user_id' => $user->id,
-                'vehicle_type' => $request->vehicle_type,
-                'license_number' => $request->license_number,
+                'vehicle_type' => $regData['vehicle_type'],
+                'license_number' => $regData['license_number'],
                 'id_proof' => $idProofName,
                 'license_image' => $licenseImageName,
                 'status' => 0,
@@ -91,18 +244,57 @@ class DeliveryAgentApiController extends Controller
 
             DB::commit();
 
+            Cache::forget('da_reg_' . $request->phone);
+            DB::table('otps')->where('phone', $request->phone)->delete();
+
+            $this->sendRegistrationSuccessSMS($request->phone);
+
             return response()->json([
                 'status' => true,
                 'message' => 'Registration successful! Please wait for admin approval.',
-                'data' => $user
+                'data' => $user->load('deliveryAgent', 'country', 'state', 'district', 'block')
             ], 201);
 
         } catch (\Exception $e) {
             DB::rollback();
             return response()->json([
                 'status' => false,
-                'message' => 'Registration failed: ' . $e->getMessage()
+                'message' => 'Verification failed: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function sendRegistrationSuccessSMS($phone)
+    {
+        $to = '91' . preg_replace('/[^0-9]/', '', $phone);
+
+        try {
+            $client = new Client();
+
+            $payload = [
+                "template_id" => env('MSG91_REG_SUCCESS_TEMPLATE_ID'),
+                "recipients" => [
+                    [
+                        "mobiles" => $to
+                    ]
+                ]
+            ];
+
+            Log::info("DA Registration Success SMS Payload", $payload);
+
+            $client->post("https://control.msg91.com/api/v5/flow/", [
+                'json' => $payload,
+                'headers' => [
+                    'accept' => 'application/json',
+                    'authkey' => env('MSG91_AUTH_KEY'),
+                    'content-type' => 'application/json'
+                ],
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error("DA Registration Success SMS ERROR: " . $e->getMessage());
+            return false;
         }
     }
 
@@ -157,7 +349,7 @@ class DeliveryAgentApiController extends Controller
             'status' => true,
             'message' => 'Login successful',
             'token' => $token,
-            'data' => $user->load('deliveryAgent')
+            'data' => $user->load('deliveryAgent', 'country', 'state', 'district', 'block')
         ]);
     }
 
@@ -168,6 +360,7 @@ class DeliveryAgentApiController extends Controller
         $stats = [
             'total_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->count(),
             'today_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->whereDate('updated_at', \Carbon\Carbon::today())->count(),
+            'total_earnings' => (float)\App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->sum('agent_trip_earning'),
             'rating' => 4.8, // Mocked for now
             'agent_rate_per_km' => \App\Models\DeliverySetting::where('status', 1)->first()->agent_rate_per_km ?? 10.00
         ];
@@ -215,6 +408,24 @@ class DeliveryAgentApiController extends Controller
             ], 404);
         }
 
+        // Check if account is active
+        if (!$profile->is_online && ($user->status == 0 || $profile->status == 0)) {
+            return response()->json([
+                'status' => false,
+                'error_type' => 'account_deactivated',
+                'message' => 'Your account has been deactivated by the admin. You cannot go online.'
+            ], 403);
+        }
+
+        // Check if documents are verified before allowing to go online
+        if (!$profile->is_online && $profile->document_verify_status != 1) {
+            return response()->json([
+                'status' => false,
+                'error_type' => 'documents_pending',
+                'message' => 'Your submitted documents are pending review. You may go online after they are verified by the admin.'
+            ], 403);
+        }
+
         $newStatus = !$profile->is_online;
         $profile->update(['is_online' => $newStatus]);
 
@@ -222,6 +433,122 @@ class DeliveryAgentApiController extends Controller
             'status' => true,
             'message' => $newStatus ? 'You are now Online' : 'You are now Offline',
             'is_online' => $newStatus
+        ]);
+    }
+
+    public function submitContactQuery(Request $request)
+    {
+        $user = $request->user();
+        
+        $validator = Validator::make($request->all(), [
+            'subject' => 'required|string|max:255',
+            'message' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $query = \App\Models\DeliveryAgentContactQuery::create([
+            'user_id' => $user->id,
+            'subject' => $request->subject,
+            'status' => 'Open',
+        ]);
+
+        \App\Models\DeliveryAgentContactQueryMessage::create([
+            'query_id' => $query->id,
+            'sender_type' => 'agent',
+            'message' => $request->message,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Your query has been submitted successfully.'
+        ]);
+    }
+
+    public function getContactQueries(Request $request)
+    {
+        $user = $request->user();
+        $queries = \App\Models\DeliveryAgentContactQuery::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+        return response()->json([
+            'status' => true,
+            'data' => $queries
+        ]);
+    }
+
+    public function getQueryMessages(Request $request, $id)
+    {
+        $user = $request->user();
+        $query = \App\Models\DeliveryAgentContactQuery::where('user_id', $user->id)->where('id', $id)->first();
+        
+        if (!$query) {
+            return response()->json(['status' => false, 'message' => 'Query not found'], 404);
+        }
+
+        $messages = \App\Models\DeliveryAgentContactQueryMessage::where('query_id', $id)->orderBy('created_at', 'asc')->get();
+
+        return response()->json([
+            'status' => true,
+            'query' => $query,
+            'messages' => $messages
+        ]);
+    }
+
+    public function replyContactQuery(Request $request, $id)
+    {
+        $user = $request->user();
+        
+        $validator = Validator::make($request->all(), [
+            'message' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['status' => false, 'message' => 'Message is required'], 422);
+        }
+
+        $query = \App\Models\DeliveryAgentContactQuery::where('user_id', $user->id)->where('id', $id)->first();
+        
+        if (!$query) {
+            return response()->json(['status' => false, 'message' => 'Query not found'], 404);
+        }
+
+        if ($query->status === 'Closed' || $query->status === 'Solved') {
+            return response()->json(['status' => false, 'message' => 'Cannot reply to a closed/solved query'], 400);
+        }
+
+        $message = \App\Models\DeliveryAgentContactQueryMessage::create([
+            'query_id' => $query->id,
+            'sender_type' => 'agent',
+            'message' => $request->message,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Reply sent successfully.',
+            'data' => $message
+        ]);
+    }
+
+    public function closeContactQuery(Request $request, $id)
+    {
+        $user = $request->user();
+        $query = \App\Models\DeliveryAgentContactQuery::where('user_id', $user->id)->where('id', $id)->first();
+        
+        if (!$query) {
+            return response()->json(['status' => false, 'message' => 'Query not found'], 404);
+        }
+
+        $query->update(['status' => 'Closed']);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Query closed successfully.',
+            'query' => $query
         ]);
     }
 
@@ -282,6 +609,11 @@ class DeliveryAgentApiController extends Controller
                 $profile->update([
                     'vehicle_type' => $request->vehicle_type,
                     'license_number' => $request->license_number,
+                    'account_holder_name' => $request->account_holder_name,
+                    'bank_name' => $request->bank_name,
+                    'account_number' => $request->account_number,
+                    'ifsc_code' => $request->ifsc_code,
+                    'upi_id' => $request->upi_id,
                 ]);
             }
 
@@ -472,29 +804,6 @@ class DeliveryAgentApiController extends Controller
         return $earthRadius * $c;
     }
 
-    public function getEarnings(Request $request)
-    {
-        $user = $request->user();
-        $query = \App\Models\Order::where('delivery_agent_id', $user->id)
-            ->where('order_status', 'Delivered');
-
-        // Apply Date Filters
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $query->whereBetween('updated_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
-        }
-
-        $orders = $query->orderBy('updated_at', 'desc')->get();
-        $total_earnings = $orders->sum('agent_trip_earning');
-        $total_distance = $orders->sum('total_trip_distance');
-
-        return response()->json([
-            'status' => true,
-            'total_earnings' => $total_earnings,
-            'total_distance' => $total_distance,
-            'count' => $orders->count(),
-            'data' => $orders
-        ]);
-    }
     public function getHistory(Request $request)
     {
         $user = $request->user();
@@ -726,6 +1035,105 @@ class DeliveryAgentApiController extends Controller
         return response()->json([
             'status' => true,
             'data' => $formattedOrders
+        ]);
+    }
+
+    public function getAgentEarningsData(Request $request)
+    {
+        $user = $request->user();
+        $profile = $user->deliveryAgent;
+        
+        $totalEarnings = \App\Models\Order::where('delivery_agent_id', $user->id)
+            ->where('order_status', 'Delivered')
+            ->sum('agent_trip_earning');
+
+        $paidEarnings = \App\Models\DeliveryAgentPayout::where('delivery_agent_id', $profile->id)
+            ->where('status', 'Approved')
+            ->sum('amount');
+
+        $pendingPayouts = \App\Models\DeliveryAgentPayout::where('delivery_agent_id', $profile->id)
+            ->where('status', 'Pending')
+            ->sum('amount');
+
+        $availableToRequest = $totalEarnings - $paidEarnings - $pendingPayouts;
+
+        // Recent earnings list
+        $recentEarnings = \App\Models\Order::where('delivery_agent_id', $user->id)
+            ->where('order_status', 'Delivered')
+            ->orderBy('id', 'desc')
+            ->limit(10)
+            ->get(['id', 'agent_trip_earning', 'updated_at', 'total_trip_distance']);
+
+        return response()->json([
+            'status' => true,
+            'total_earnings' => (float)$totalEarnings,
+            'paid_payout' => (float)$paidEarnings,
+            'pending_payout' => (float)$pendingPayouts,
+            'available_payout' => (float)$availableToRequest,
+            'total_distance' => (float)\App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->sum('total_trip_distance'),
+            'count' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->count(),
+            'agent' => $profile,
+            'data' => $recentEarnings
+        ]);
+    }
+
+    public function requestPayout(Request $request)
+    {
+        $user = $request->user();
+        $profile = $user->deliveryAgent;
+
+        if (!$profile->account_number && !$profile->upi_id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please update your bank details or UPI ID first.'
+            ], 400);
+        }
+
+        $totalEarnings = \App\Models\Order::where('delivery_agent_id', $user->id)
+            ->where('order_status', 'Delivered')
+            ->sum('agent_trip_earning');
+
+        $paidEarnings = \App\Models\DeliveryAgentPayout::where('delivery_agent_id', $profile->id)
+            ->where('status', 'Approved')
+            ->sum('amount');
+
+        $pendingPayouts = \App\Models\DeliveryAgentPayout::where('delivery_agent_id', $profile->id)
+            ->where('status', 'Pending')
+            ->sum('amount');
+
+        $availableBalance = $totalEarnings - $paidEarnings - $pendingPayouts;
+
+        if ($availableBalance <= 0) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Insufficient balance to request payout.'
+            ], 400);
+        }
+
+        \App\Models\DeliveryAgentPayout::create([
+            'delivery_agent_id' => $profile->id,
+            'amount' => $availableBalance,
+            'status' => 'Pending'
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Payout request submitted successfully!'
+        ]);
+    }
+
+    public function getPayoutHistory(Request $request)
+    {
+        $user = $request->user();
+        $profile = $user->deliveryAgent;
+
+        $payouts = \App\Models\DeliveryAgentPayout::where('delivery_agent_id', $profile->id)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'data' => $payouts
         ]);
     }
 }

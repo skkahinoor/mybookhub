@@ -72,7 +72,15 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-delivery-agent/{id?}', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'addEdit'])->name('delivery_agents.add_edit');
         Route::get('delete-delivery-agent/{id}', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'delete'])->name('delivery_agents.delete');
         Route::post('update-delivery-agent-status', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'updateStatus'])->name('delivery_agents.update_status');
+        Route::post('update-delivery-agent-doc-status', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'updateDocumentStatus'])->name('delivery_agents.update_doc_status');
         Route::get('delivery-agent/{id}/details', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'getDetails'])->name('delivery_agents.get_details');
+
+        // Delivery Agent Queries
+        Route::get('delivery-agent-queries', [\App\Http\Controllers\Admin\DeliveryAgentQueryController::class, 'index'])->name('admin.delivery_agent_queries.index');
+        Route::get('delivery-agent-queries/{id}', [\App\Http\Controllers\Admin\DeliveryAgentQueryController::class, 'show'])->name('admin.delivery_agent_queries.show');
+        Route::post('delivery-agent-queries/{id}/reply', [\App\Http\Controllers\Admin\DeliveryAgentQueryController::class, 'reply'])->name('admin.delivery_agent_queries.reply');
+        Route::post('delivery-agent-queries/{id}/status', [\App\Http\Controllers\Admin\DeliveryAgentQueryController::class, 'updateStatus'])->name('admin.delivery_agent_queries.status');
+        Route::get('delivery-agent-queries/{id}/delete', [\App\Http\Controllers\Admin\DeliveryAgentQueryController::class, 'delete'])->name('admin.delivery_agent_queries.delete');
 
         // Roles & Permissions Management
         Route::get('roles/assign-permissions', [RoleController::class, 'assignPermissions'])->name('admin.roles.assign_permissions');
@@ -110,6 +118,10 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Delete an Admin
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
         Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('admin.updateadminstatus');
+        
+        // Delivery Agent Payouts
+        Route::get('delivery-agent-payouts', [App\Http\Controllers\Admin\DeliveryAgentPayoutController::class, 'payouts'])->name('admin.delivery_agent_payouts');
+        Route::post('update-delivery-agent-payout-status', [App\Http\Controllers\Admin\DeliveryAgentPayoutController::class, 'updatePayoutStatus'])->name('admin.update_delivery_agent_payout_status');
 
         // otp
         Route::get('otps', [OtpController::class, 'otps'])->name('admin.otps');
