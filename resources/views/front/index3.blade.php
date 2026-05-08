@@ -1946,9 +1946,13 @@
                         longitude
                     } = position.coords;
                     fetch(`{{ url('set-location-session') }}?latitude=${latitude}&longitude=${longitude}`)
-                        .then(() => {
+                        .then(res => res.json())
+                        .then(data => {
                             if (rangeLabel) rangeLabel.innerText = originalText;
                             console.log('Location updated');
+                            if (data.success && data.updated) {
+                                location.reload();
+                            }
                         })
                         .catch(err => {
                             if (rangeLabel) rangeLabel.innerText = originalText;

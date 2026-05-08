@@ -26,6 +26,9 @@ class StudentController extends Controller
             $data = User::where('role_id', RoleHelper::studentId())->with('institution')->orderBy('id', 'desc');
             return \Yajra\DataTables\Facades\DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('checkbox', function($row) {
+                    return '<div style="display: flex; justify-content: center; align-items: center;"><input type="checkbox" class="select-row-checkbox select-student-checkbox" value="' . $row->id . '" style="transform: scale(1.3); cursor: pointer;"></div>';
+                })
                 ->addColumn('institution', function ($row) {
                     return $row->institution->name ?? 'No Institution';
                 })
@@ -57,7 +60,7 @@ class StudentController extends Controller
                                 <i class="fas fa-trash"></i>
                             </button>';
                 })
-                ->rawColumns(['status', 'actions'])
+                ->rawColumns(['checkbox', 'status', 'actions'])
                 ->make(true);
         }
 
@@ -185,10 +188,41 @@ class StudentController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $student = User::findOrFail($id);
+        if ($student->academicProfile) {
+            $student->academicProfile->delete();
+        }
         $student->delete();
 
         return redirect('admin/students')->with('success_message', 'Student has been deleted successfully', 'logos');
         return view('admin.students.index', compact('students', 'logos', 'headerLogo'));
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No selected students found.'
+            ]);
+        }
+
+        $deletedCount = 0;
+        foreach ($ids as $id) {
+            $student = User::where('role_id', RoleHelper::studentId())->find($id);
+            if ($student) {
+                if ($student->academicProfile) {
+                    $student->academicProfile->delete();
+                }
+                $student->delete();
+                $deletedCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Selected ' . $deletedCount . ' students deleted successfully!'
+        ]);
     }
 
     /**

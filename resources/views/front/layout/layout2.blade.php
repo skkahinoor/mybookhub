@@ -893,7 +893,14 @@
                             latitude: position.coords.latitude,
                             longitude: position.coords.longitude
                         })
-                    });
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.updated) {
+                            location.reload();
+                        }
+                    })
+                    .catch(err => console.error("Error setting location session:", err));
                 });
             }
         });

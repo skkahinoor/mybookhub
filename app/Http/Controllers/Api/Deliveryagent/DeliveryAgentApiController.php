@@ -373,19 +373,74 @@ class DeliveryAgentApiController extends Controller
 
         // Standardize the response to include pickup/drop details for the app
         if ($activeTrip) {
-            // Add dynamic labels or formatting if needed
-            $activeTrip->pickup_points = \App\Models\OrdersProduct::where('order_id', $activeTrip->id)
-                ->join('vendors_business_details', 'orders_products.vendor_id', '=', 'vendors_business_details.vendor_id')
-                ->select('orders_products.*', 'vendors_business_details.shop_name', 'vendors_business_details.latitude', 'vendors_business_details.longitude')
-                ->get();
-            
-            $activeTrip->drop_location = [
+            // Load same relations as getAvailableOrders
+            $activeTrip->load(['orders_products.vendor', 'orders_products.vendor_details.vendorbusinessdetails', 'orders_products.vendor_details.user', 'user']);
+
+            // Drop Location (Buyer)
+            $dropLocation = [
                 'name' => $activeTrip->name,
-                'address' => $activeTrip->address,
-                'latitude' => $activeTrip->latitude,
-                'longitude' => $activeTrip->longitude,
-                'mobile' => $activeTrip->mobile
+                'address' => $activeTrip->address . ', ' . $activeTrip->city . ', ' . $activeTrip->state . ' - ' . $activeTrip->pincode,
+                'mobile' => $activeTrip->mobile,
+                'latitude' => $activeTrip->latitude ?? ($activeTrip->user ? $activeTrip->user->latitude : null),
+                'longitude' => $activeTrip->longitude ?? ($activeTrip->user ? $activeTrip->user->longitude : null),
             ];
+
+            // Pickup Locations (Sellers)
+            $pickups = $activeTrip->orders_products->map(function($item) {
+                $vendorProfile = $item->vendor_details; 
+                $sellerUser = $vendorProfile ? $vendorProfile->user : null;
+                $business = $vendorProfile ? $vendorProfile->vendorbusinessdetails : null;
+
+                $lat = null;
+                $lng = null;
+                if ($vendorProfile && $vendorProfile->location) {
+                    $coords = explode(',', $vendorProfile->location);
+                    if (count($coords) == 2) {
+                        $lat = trim($coords[0]);
+                        $lng = trim($coords[1]);
+                    }
+                }
+
+                // If it is not a vendor product, fetch seller details from ProductsAttribute (for student product)
+                if (!$vendorProfile || $item->vendor_id == 0) {
+                    $attr = $item->product_attribute;
+                    if ($attr && $attr->user_id > 0) {
+                        $sellerUser = \App\Models\User::find($attr->user_id);
+                    }
+                }
+
+                return [
+                    'seller_name' => $sellerUser ? $sellerUser->name : 'N/A',
+                    'shop_name' => $business ? $business->shop_name : ($sellerUser ? $sellerUser->name : 'Individual Seller'),
+                    'address' => $business ? $business->shop_address : ($sellerUser ? $sellerUser->address : 'N/A'),
+                    'mobile' => $business ? $business->shop_mobile : ($sellerUser ? $sellerUser->phone : 'N/A'),
+                    'latitude' => $lat ?? ($business ? $business->latitude : ($sellerUser ? $sellerUser->latitude : null)),
+                    'longitude' => $lng ?? ($business ? $business->longitude : ($sellerUser ? $sellerUser->longitude : null)),
+                    'product_name' => $item->product_name,
+                    'product_qty' => $item->product_qty,
+                    'product_price' => $item->product_price,
+                ];
+            });
+
+            $activeTripFormatted = [
+                'order_id' => $activeTrip->id,
+                'grand_total' => $activeTrip->grand_total,
+                'payment_method' => $activeTrip->payment_method,
+                'order_status' => $activeTrip->order_status,
+                'created_at' => $activeTrip->created_at->format('M d, Y h:i A'),
+                'buyer_details' => [
+                    'id' => $activeTrip->user_id,
+                    'name' => $activeTrip->user ? $activeTrip->user->name : $activeTrip->name,
+                    'email' => $activeTrip->user ? $activeTrip->user->email : $activeTrip->email,
+                ],
+                'pickup_points' => $pickups,
+                'drop_location' => $dropLocation,
+                'agent_start_lat' => $activeTrip->agent_start_lat,
+                'agent_start_lng' => $activeTrip->agent_start_lng,
+                'agent_rate_at_trip' => $activeTrip->agent_rate_at_trip,
+            ];
+
+            $activeTrip = $activeTripFormatted;
         }
 
         return response()->json([

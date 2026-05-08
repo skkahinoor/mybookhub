@@ -135,9 +135,9 @@ class ProductsAttribute extends Model
             $userLng = (float) $userLng;
             // Haversine formula
             $distanceSql = "(6371 * acos(
-                cos(radians($userLat)) * cos(radians(SUBSTRING_INDEX(COALESCE(pa_v.location, '0,0'), ',', 1))) * 
-                cos(radians(SUBSTRING_INDEX(COALESCE(pa_v.location, '0,0'), ',', -1)) - radians($userLng)) + 
-                sin(radians($userLat)) * sin(radians(SUBSTRING_INDEX(COALESCE(pa_v.location, '0,0'), ',', 1)))
+                cos(radians($userLat)) * cos(radians(COALESCE(pa_vbd.latitude, CAST(SUBSTRING_INDEX(COALESCE(pa_v.location, '0,0'), ',', 1) AS DECIMAL(10,6))))) * 
+                cos(radians(COALESCE(pa_vbd.longitude, CAST(SUBSTRING_INDEX(COALESCE(pa_v.location, '0,0'), ',', -1) AS DECIMAL(10,6)))) - radians($userLng)) + 
+                sin(radians($userLat)) * sin(radians(COALESCE(pa_vbd.latitude, CAST(SUBSTRING_INDEX(COALESCE(pa_v.location, '0,0'), ',', 1) AS DECIMAL(10,6)))))
             ))";
         }
 
@@ -148,7 +148,7 @@ class ProductsAttribute extends Model
                         -- 1. Pro Plan Priority (1: pro, 2: free, 3: student/none)
                         (CASE WHEN pa_v.plan = 'pro' THEN 1 WHEN pa_v.plan = 'free' THEN 2 ELSE 3 END) ASC,
                         -- 2. Distance Priority
-                        (CASE WHEN pa_v.location IS NOT NULL THEN $distanceSql ELSE 999999 END) ASC,
+                        (CASE WHEN (pa_v.location IS NOT NULL OR pa_vbd.latitude IS NOT NULL) THEN $distanceSql ELSE 999999 END) ASC,
                         -- 3. Stock Priority (Higher stock is slightly better)
                         pa.stock DESC,
                         -- 4. Rating Priority (Higher average rating is better)
@@ -164,6 +164,7 @@ class ProductsAttribute extends Model
                     FROM products_attributes pa
                     JOIN products p ON pa.product_id = p.id
                     LEFT JOIN vendors pa_v ON pa.vendor_id = pa_v.id
+                    LEFT JOIN vendors_business_details pa_vbd ON pa.vendor_id = pa_vbd.vendor_id
                     LEFT JOIN (
                         SELECT product_attribute_id, AVG(rating) as avg_rating 
                         FROM ratings 

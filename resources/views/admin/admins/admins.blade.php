@@ -10,9 +10,14 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="card-title mb-0">{{ $title }}</h4>
-                                <a href="{{ url('admin/add-edit-admin') }}" class="btn btn-primary">
-                                    <i class="mdi mdi-plus"></i> Add Vendor
-                                </a>
+                                <div class="d-flex align-items-center">
+                                    <button type="button" class="btn btn-danger mr-2" id="bulk-delete-vendors-btn" style="display: none;">
+                                        <i class="mdi mdi-delete-sweep"></i> Delete Selected (<span id="selected-vendors-count">0</span>)
+                                    </button>
+                                    <a href="{{ url('admin/add-edit-admin') }}" class="btn btn-primary">
+                                        <i class="mdi mdi-plus"></i> Add Vendor
+                                    </a>
+                                </div>
                             </div>
 
                             {{-- Success Message --}}
@@ -39,7 +44,8 @@
                                 <table class="table table-bordered" id="admins-table">
                                     <thead>
                                         <tr>
-                                            <th>Vendor ID</th>
+                                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-vendors" style="transform: scale(1.3); cursor: pointer;"></th>
+                                            <th>#</th>
                                             <th>Name</th>                                           
                                             <th>Mobile</th>
                                             <th>Email</th>
@@ -78,11 +84,12 @@
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#admins-table').DataTable({
+            var table = $('#admins-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: "{{ url()->current() }}",
                 columns: [
+                    {data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, class: 'text-center'},
                     {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
                     {data: 'name', name: 'name'},
                     {data: 'mobile', name: 'phone'},
@@ -91,9 +98,71 @@
                     {data: 'status', name: 'status', orderable: false, searchable: false},
                     {data: 'actions', name: 'actions', orderable: false, searchable: false},
                 ],
-                order: [[0, 'desc']],
+                order: [[1, 'desc']],
                 pageLength: 10,
-                lengthMenu: [5, 10, 25, 50, 100]
+                lengthMenu: [5, 10, 25, 50, 100],
+                drawCallback: function() {
+                    $('#select-all-vendors').prop('checked', false);
+                    updateBulkDeleteButton();
+                }
+            });
+
+            // Toggle select all
+            $('#select-all-vendors').on('click', function() {
+                var checked = this.checked;
+                $('.select-vendor-checkbox').each(function() {
+                    this.checked = checked;
+                });
+                updateBulkDeleteButton();
+            });
+
+            // Individual checkbox click
+            $(document).on('click', '.select-vendor-checkbox', function() {
+                var allChecked = $('.select-vendor-checkbox').length === $('.select-vendor-checkbox:checked').length;
+                $('#select-all-vendors').prop('checked', allChecked);
+                updateBulkDeleteButton();
+            });
+
+            function updateBulkDeleteButton() {
+                var checkedCount = $('.select-vendor-checkbox:checked').length;
+                if (checkedCount > 0) {
+                    $('#selected-vendors-count').text(checkedCount);
+                    $('#bulk-delete-vendors-btn').fadeIn();
+                } else {
+                    $('#bulk-delete-vendors-btn').fadeOut();
+                }
+            }
+
+            // Bulk delete click handler
+            $('#bulk-delete-vendors-btn').on('click', function() {
+                var selectedIds = [];
+                $('.select-vendor-checkbox:checked').each(function() {
+                    selectedIds.push($(this).val());
+                });
+
+                if (selectedIds.length > 0) {
+                    if (confirm("Are you sure you want to delete the " + selectedIds.length + " selected vendors? This will also delete their vendor profiles. This action cannot be undone.")) {
+                        $.ajax({
+                            url: "{{ route('admin.bulkDelete') }}",
+                            type: "POST",
+                            data: {
+                                ids: selectedIds,
+                                _token: "{{ csrf_token() }}"
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    alert(response.message);
+                                    table.ajax.reload();
+                                } else {
+                                    alert(response.message || "An error occurred while deleting.");
+                                }
+                            },
+                            error: function() {
+                                alert("Failed to perform bulk delete action.");
+                            }
+                        });
+                    }
+                }
             });
         });
     </script>

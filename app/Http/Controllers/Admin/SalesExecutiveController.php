@@ -31,6 +31,9 @@ class SalesExecutiveController extends Controller
 
             return \Yajra\DataTables\Facades\DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('checkbox', function($row) {
+                    return '<div style="display: flex; justify-content: center; align-items: center;"><input type="checkbox" class="select-row-checkbox select-sales-checkbox" value="' . $row->id . '" style="transform: scale(1.3); cursor: pointer;"></div>';
+                })
                 ->addColumn('status', function ($row) {
                     if ($row->status == 1) {
                         return '<span class="badge bg-success status-icon text-white"><i class="mdi mdi-check"></i></span>';
@@ -56,7 +59,7 @@ class SalesExecutiveController extends Controller
                                 </a>
                             </div>';
                 })
-                ->rawColumns(['status', 'actions'])
+                ->rawColumns(['checkbox', 'status', 'actions'])
                 ->make(true);
         }
 
@@ -190,6 +193,41 @@ class SalesExecutiveController extends Controller
         $user->delete();
 
         return redirect()->back()->with('success_message', 'Sales Executive deleted successfully!');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        if (!Auth::guard('admin')->user()->can('delete_sales')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized action.'
+            ], 403);
+        }
+
+        $ids = $request->input('ids');
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No selected items found.'
+            ]);
+        }
+
+        $deletedCount = 0;
+        foreach ($ids as $id) {
+            $user = User::role('sales', 'web')->find($id);
+            if ($user) {
+                // Delete profile
+                SalesExecutive::where('user_id', $user->id)->delete();
+                // Delete user
+                $user->delete();
+                $deletedCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Selected ' . $deletedCount . ' sales executives deleted successfully!'
+        ]);
     }
 
     public function updateStatus(Request $request)

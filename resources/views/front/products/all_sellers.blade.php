@@ -344,11 +344,28 @@
                                 $priceDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($attr->id, $attr);
 
                                 $distance = null;
-                                if ($userLat && $userLng && $attr->vendor && $attr->vendor->location) {
-                                    $loc = explode(',', $attr->vendor->location);
-                                    if (count($loc) === 2) {
-                                        $distance = \App\Helpers\Helper::getDistance($userLat, $userLng, trim($loc[0]), trim($loc[1]));
+                                $vLat = null;
+                                $vLng = null;
+                                if ($attr->vendor) {
+                                    if ($attr->vendor->vendorbusinessdetails && !empty($attr->vendor->vendorbusinessdetails->latitude) && !empty($attr->vendor->vendorbusinessdetails->longitude)) {
+                                        $vLat = $attr->vendor->vendorbusinessdetails->latitude;
+                                        $vLng = $attr->vendor->vendorbusinessdetails->longitude;
+                                    } elseif ($attr->vendor->location) {
+                                        $loc = explode(',', $attr->vendor->location);
+                                        if (count($loc) === 2) {
+                                            $vLat = trim($loc[0]);
+                                            $vLng = trim($loc[1]);
+                                        }
                                     }
+                                }
+
+                                if ($userLat && $userLng && $vLat !== null && $vLng !== null) {
+                                    $distance = \App\Helpers\Helper::getDistance(
+                                        $userLat,
+                                        $userLng,
+                                        $vLat,
+                                        $vLng
+                                    );
                                 }
                                 if ($distance === null && $userLat && $userLng && $attr->user && $attr->user->latitude && $attr->user->longitude) {
                                     $distance = \App\Helpers\Helper::getDistance($userLat, $userLng, $attr->user->latitude, $attr->user->longitude);
@@ -361,6 +378,8 @@
                                     'attr' => $attr,
                                     'price_details' => $priceDetails,
                                     'distance' => $distance,
+                                    'v_lat' => $vLat,
+                                    'v_lng' => $vLng,
                                     'plan' => $plan,
                                     'plan_rank' => $planRank,
                                     'discount' => (float) ($attr->product_discount ?? 0),
@@ -459,7 +478,10 @@
                                     @if($distance !== null)
                                         <div style="display: flex; align-items: center; gap: 8px;">
                                             <span>{{ $distance < 1 ? round($distance * 1000) . ' m' : round($distance, 1) . ' km' }}</span>
-                                            <a href="https://www.google.com/maps/dir/?api=1&origin={{ $userLat }},{{ $userLng }}&destination={{ $seller->vendor->location ?? ($seller->user->latitude . ',' . $seller->user->longitude) }}" target="_blank" class="btn-directions" title="Get Directions">
+                                            @php
+                                                $destCoords = ($row->v_lat && $row->v_lng) ? ($row->v_lat . ',' . $row->v_lng) : ($seller->user->latitude . ',' . $seller->user->longitude);
+                                            @endphp
+                                            <a href="https://www.google.com/maps/dir/?api=1&origin={{ $userLat }},{{ $userLng }}&destination={{ $destCoords }}" target="_blank" class="btn-directions" title="Get Directions">
                                                 <i class="fas fa-directions"></i>
                                             </a>
                                         </div>

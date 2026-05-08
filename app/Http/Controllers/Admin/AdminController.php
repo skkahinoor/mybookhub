@@ -508,15 +508,12 @@ class AdminController extends Controller
 
                 $rules = [
                     'shop_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
-                    'shop_city' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
                     'shop_mobile' => 'required|numeric',
                     'address_proof' => 'required',
                 ];
 
                 $customMessages = [ // Specifying A Custom Message For A Given Attribute: https://laravel.com/docs/9.x/validation#specifying-a-custom-message-for-a-given-attribute
                     'shop_name.required' => 'Name is required',
-                    'shop_city.required' => 'City is required',
-                    'shop_city.regex' => 'Valid City alphabetical is required',
                     'shop_name.regex' => 'Valid Shop Name is required',
                     'shop_mobile.required' => 'Mobile is required',
                     'shop_mobile.numeric' => 'Valid Mobile is required',
@@ -590,9 +587,18 @@ class AdminController extends Controller
                     ]);
                 }
 
+                // Synchronize coordinates back to vendors table's location field to fix distance filtering
+                if (!empty($data['latitude']) && !empty($data['longitude'])) {
+                    $locationStr = $data['latitude'] . ',' . $data['longitude'];
+                    \App\Models\Vendor::where('id', Auth::guard('admin')->user()->vendor_id)->update([
+                        'location' => $locationStr
+                    ]);
+                }
+
                 return redirect()->back()->with('success_message', 'Vendor details updated successfully!');
             }
 
+            $vendorCount = VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->count();
             if ($vendorCount > 0) {
                 $vendorDetails = VendorsBusinessDetail::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->first()->toArray(); 
             } else {
@@ -777,6 +783,9 @@ class AdminController extends Controller
         if ($request->ajax()) {
             return \Yajra\DataTables\Facades\DataTables::of($query->with('vendorPersonal'))
                 ->addIndexColumn()
+                ->addColumn('checkbox', function($row) {
+                    return '<div style="display: flex; justify-content: center; align-items: center;"><input type="checkbox" class="select-row-checkbox select-vendor-checkbox" value="' . $row->id . '" style="transform: scale(1.3); cursor: pointer;"></div>';
+                })
                 ->editColumn('name', function($row) {
                     return $row->name;
                 })
@@ -818,7 +827,7 @@ class AdminController extends Controller
                     $html .= '</div>';
                     return $html;
                 })
-                ->rawColumns(['image', 'status', 'actions'])
+                ->rawColumns(['checkbox', 'image', 'status', 'actions'])
                 ->make(true);
         }
 
@@ -1155,6 +1164,60 @@ class AdminController extends Controller
         $user->delete();
 
         return redirect()->back()->with('success_message', 'Admin/Vendor deleted successfully!');
+    }
+
+    public function bulkDeleteAdmins(Request $request)
+    {
+        $ids = $request->input('ids');
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No selected items found.'
+            ]);
+        }
+
+        $deletedCount = 0;
+        $failedCount = 0;
+
+        foreach ($ids as $id) {
+            // Prevent deleting own admin account
+            if ($id == Auth::guard('admin')->user()->id) {
+                $failedCount++;
+                continue;
+            }
+
+            $user = User::find($id);
+            if (!$user) {
+                continue;
+            }
+
+            // Check permissions
+            $permission = $user->type === 'vendor' ? 'delete_vendors' : 'delete_admins';
+            if (! Auth::guard('admin')->user()->can($permission)) {
+                $failedCount++;
+                continue;
+            }
+
+            // Delete admin profile image if exists
+            if (! empty($user->profile_image) && file_exists(public_path('admin/images/photos/' . $user->profile_image))) {
+                @unlink(public_path('admin/images/photos/' . $user->profile_image));
+            }
+
+            // Delete vendor from vendors table too if accessible via relation or user_id
+            $vendor = Vendor::where('user_id', $user->id)->first();
+            if ($vendor) {
+                $vendor->delete();
+            }
+
+            // Delete user
+            $user->delete();
+            $deletedCount++;
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Selected ' . $deletedCount . ' vendors deleted successfully!' . ($failedCount > 0 ? ' (' . $failedCount . ' could not be deleted)' : '')
+        ]);
     }
 
     public function contactQueries(\Illuminate\Http\Request $request)

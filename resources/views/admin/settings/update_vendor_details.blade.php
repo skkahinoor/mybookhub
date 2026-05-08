@@ -218,13 +218,16 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label>Select Shop Location on Map</label>
+                                        <label><strong>Search Business Location on Map</strong></label>
+                                        <input type="text" id="location_search" class="form-control mb-3" placeholder="Search location (Type name, street, city...)">
                                         <div id="map" style="height: 300px; width: 100%; border-radius: 10px; margin-bottom: 10px; border: 1px solid #ddd;"></div>
                                         <div class="row">
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 mb-2">
+                                                <label class="text-muted small">Latitude</label>
                                                 <input type="text" class="form-control" id="latitude" name="latitude" placeholder="Latitude" value="{{ $vendorDetails['latitude'] ?? '' }}" readonly>
                                             </div>
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 mb-2">
+                                                <label class="text-muted small">Longitude</label>
                                                 <input type="text" class="form-control" id="longitude" name="longitude" placeholder="Longitude" value="{{ $vendorDetails['longitude'] ?? '' }}" readonly>
                                             </div>
                                         </div>
@@ -402,7 +405,7 @@
 
     @if ($slug == 'personal' || $slug == 'business')
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_KEY') }}&libraries=places"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google.maps_key') }}&libraries=places"></script>
     <script>
         $(document).ready(function() {
             var slug = '{{ $slug }}';
@@ -425,8 +428,8 @@
 
             // Google Maps Implementation for Business
             if (slug === 'business') {
-                var initialLat = parseFloat($('#latitude').val()) || 20.5937;
-                var initialLng = parseFloat($('#longitude').val()) || 78.9629;
+                var initialLat = parseFloat($('#latitude').val()) || 20.2961;
+                var initialLng = parseFloat($('#longitude').val()) || 85.8245;
                 var zoomLevel = $('#latitude').val() ? 15 : 5;
 
                 var map = new google.maps.Map(document.getElementById('map'), {
@@ -441,18 +444,49 @@
                     title: "Drag to shop location"
                 });
 
+                // 🔍 Search autocomplete
+                var autocomplete = new google.maps.places.Autocomplete(
+                    document.getElementById("location_search")
+                );
+                autocomplete.bindTo("bounds", map);
+
+                autocomplete.addListener("place_changed", function() {
+                    var place = autocomplete.getPlace();
+                    if (!place.geometry) return;
+
+                    map.setCenter(place.geometry.location);
+                    marker.setPosition(place.geometry.location);
+
+                    $('#latitude').val(place.geometry.location.lat());
+                    $('#longitude').val(place.geometry.location.lng());
+                });
+
                 // Update lat/lng on marker drag
                 google.maps.event.addListener(marker, 'dragend', function(event) {
                     $('#latitude').val(event.latLng.lat());
                     $('#longitude').val(event.latLng.lng());
                 });
 
-                // Update lat/lng on map click
-                google.maps.event.addListener(map, 'click', function(event) {
-                    marker.setPosition(event.latLng);
-                    $('#latitude').val(event.latLng.lat());
-                    $('#longitude').val(event.latLng.lng());
-                });
+                // If latitude/longitude is not set, try to auto-detect current location
+                if (!$('#latitude').val() && navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        function(position) {
+                            var lat = position.coords.latitude;
+                            var lng = position.coords.longitude;
+                            var currentPos = new google.maps.LatLng(lat, lng);
+
+                            map.setCenter(currentPos);
+                            marker.setPosition(currentPos);
+                            map.setZoom(15);
+
+                            $('#latitude').val(lat);
+                            $('#longitude').val(lng);
+                        },
+                        function() {
+                            console.warn("User denied location access");
+                        }
+                    );
+                }
             }
 
             // AJAX Dropdowns

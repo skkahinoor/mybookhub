@@ -7,36 +7,7 @@
     .search-box-map input:focus {
         box-shadow: none;
     }
-    .map-pin-center {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -100%);
-        z-index: 1000;
-        pointer-events: none;
-    }
-    .pin-wrapper {
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    .pin-wrapper svg {
-        animation: bouncePin 0.6s infinite alternate;
-        filter: drop-shadow(0 8px 4px rgba(0,0,0,0.2));
-    }
-    .pin-dot {
-        width: 12px;
-        height: 6px;
-        background: rgba(0,0,0,0.15);
-        border-radius: 50%;
-        margin-top: -4px;
-        transition: all 0.3s;
-    }
-    @keyframes bouncePin {
-        from { transform: translateY(0) scale(1); }
-        to { transform: translateY(-12px) scale(1.05); }
-    }
+
     .map-selection-card {
         position: absolute;
         bottom: 24px;
@@ -591,15 +562,6 @@
                             <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
                         </svg>
                     </button>
-                    <!-- Center Pin Marker Overlay -->
-                    <div class="map-pin-center">
-                        <div class="pin-wrapper">
-                            <div class="pin-dot"></div>
-                            <svg width="50" height="50" viewBox="0 0 24 24" fill="#FF6B00" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));">
-                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                            </svg>
-                        </div>
-                    </div>
                     <!-- Selection Card -->
                     <div class="map-selection-card shadow-lg">
                         <div class="d-flex align-items-start">
@@ -608,7 +570,7 @@
                             </div>
                             <div class="flex-grow-1">
                                 <h6 class="font-weight-bold mb-1" style="font-size: 14px;">Select Location</h6>
-                                <p id="currentAddressText" class="text-muted mb-0" style="font-size: 12px; line-height: 1.4;">Move the map to pin your location</p>
+                                <p id="currentAddressText" class="text-muted mb-0" style="font-size: 12px; line-height: 1.4;">Drag the marker or search to select your location</p>
                             </div>
                         </div>
                         <button type="button" class="confirm-btn-modern" onclick="confirmLocation()">
@@ -1496,7 +1458,12 @@
                 if (map) {
                     google.maps.event.trigger(map, 'resize');
                     if (selectedLat && selectedLng) {
-                        map.setCenter({lat: selectedLat, lng: selectedLng});
+                        const pos = {lat: selectedLat, lng: selectedLng};
+                        map.setCenter(pos);
+                        if (marker) {
+                            marker.setPosition(pos);
+                        }
+                        updateAddressFromCoordinates(selectedLat, selectedLng);
                     }
                 }
             }
@@ -1521,9 +1488,19 @@
 
             geocoder = new google.maps.Geocoder();
 
+            // 📍 Create Draggable Marker
+            marker = new google.maps.Marker({
+                position: defaultPos,
+                map: map,
+                draggable: true,
+                title: "Drag marker to select location"
+            });
+
             // If it's a new address (no selectedLat), try to get current location immediately
             if (!selectedLat || !selectedLng) {
                 getCurrentLocation();
+            } else {
+                updateAddressFromCoordinates(selectedLat, selectedLng);
             }
 
             // Search Autocomplete
@@ -1535,29 +1512,27 @@
                 const place = autocomplete.getPlace();
                 if (!place.geometry || !place.geometry.location) return;
 
-                if (place.geometry.viewport) {
-                    map.fitBounds(place.geometry.viewport);
-                } else {
-                    map.setCenter(place.geometry.location);
-                    map.setZoom(17);
-                }
-                updateAddressFromMap();
+                map.setCenter(place.geometry.location);
+                map.setZoom(17);
+                marker.setPosition(place.geometry.location);
+                
+                selectedLat = place.geometry.location.lat();
+                selectedLng = place.geometry.location.lng();
+                updateAddressFromCoordinates(selectedLat, selectedLng);
             });
 
-            // Handle map idle (panning stopped)
-            map.addListener("idle", () => {
-                updateAddressFromMap();
+            // Handle marker dragend
+            google.maps.event.addListener(marker, 'dragend', function(event) {
+                selectedLat = event.latLng.lat();
+                selectedLng = event.latLng.lng();
+                updateAddressFromCoordinates(selectedLat, selectedLng);
             });
 
             mapInitialized = true;
         }
 
-        function updateAddressFromMap() {
-            const center = map.getCenter();
-            selectedLat = center.lat();
-            selectedLng = center.lng();
-
-            geocoder.geocode({ location: center }, (results, status) => {
+        function updateAddressFromCoordinates(lat, lng) {
+            geocoder.geocode({ location: { lat: lat, lng: lng } }, (results, status) => {
                 if (status === "OK") {
                     if (results[0]) {
                         document.getElementById("currentAddressText").innerText = results[0].formatted_address;
@@ -1591,8 +1566,14 @@
                             lat: position.coords.latitude,
                             lng: position.coords.longitude,
                         };
+                        selectedLat = pos.lat;
+                        selectedLng = pos.lng;
                         map.setCenter(pos);
                         map.setZoom(17);
+                        if (marker) {
+                            marker.setPosition(pos);
+                        }
+                        updateAddressFromCoordinates(pos.lat, pos.lng);
                         btn.removeClass('spinning');
                     },
                     () => {

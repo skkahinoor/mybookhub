@@ -66,6 +66,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('delete-sales-executive/{id}', [SalesExecutiveController::class, 'delete'])->name('sales_executives.delete');
         Route::post('update-sales-executive-status', [SalesExecutiveController::class, 'updateStatus'])->name('sales_executives.update_status');
         Route::get('sales-executive/{id}/details', [SalesExecutiveController::class, 'getDetails'])->name('sales_executives.get_details');
+        Route::post('sales-executive/bulk-delete', [SalesExecutiveController::class, 'bulkDelete'])->name('sales_executives.bulkDelete');
 
          // Delivery Agents Management
         Route::get('delivery-agent', [\App\Http\Controllers\Admin\DeliveryAgentController::class, 'index'])->name('delivery_agents.index');
@@ -115,6 +116,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // Add or Edit Admin // the slug (Route Parameter) {id?} is an Optional Parameter, so if it's passed, this means Edit/Update the Admin, and if not passed, this means Add an Admin
         Route::post('delete-admin/{id}', [AdminController::class, 'deleteAdmin'])
             ->name('admin.delete');
+        Route::post('bulk-delete-admins', [AdminController::class, 'bulkDeleteAdmins'])->name('admin.bulkDelete');
         // Delete an Admin
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
         Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('admin.updateadminstatus');
@@ -325,6 +327,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         ]);
         Route::get('students/{id}/details', 'StudentController@details')->name('admin.students.details');
         Route::post('students/{id}/update-status', 'StudentController@updateStatus')->name('admin.students.updateStatus');
+        Route::post('students/bulk-delete', 'StudentController@bulkDelete')->name('admin.students.bulkDelete');
         Route::get('get-institution-classes', 'StudentController@getInstitutionClasses')->name('admin.get_institution_classes');
         Route::get('get-institution-boards', 'StudentController@getInstitutionBoards')->name('admin.get_institution_boards');
 

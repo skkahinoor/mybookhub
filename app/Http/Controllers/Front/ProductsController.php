@@ -530,9 +530,17 @@ class ProductsController extends Controller
             ->where('stock', '>', 0);
 
         if ($userLat && $userLng && $distanceRadius < 100) {
-            $allSellersQuery->whereHas('vendor', function ($q) use ($userLat, $userLng, $distanceRadius) {
-                $q->whereNotNull('location')
-                    ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distanceRadius]);
+            $allSellersQuery->where(function ($query) use ($userLat, $userLng, $distanceRadius) {
+                $query->whereHas('vendor.vendorbusinessdetails', function ($q) use ($userLat, $userLng, $distanceRadius) {
+                    $q->whereNotNull('latitude')
+                      ->whereNotNull('longitude')
+                      ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) <= ?", [$userLat, $userLng, $userLat, $distanceRadius]);
+                })
+                ->orWhereHas('vendor', function ($q) use ($userLat, $userLng, $distanceRadius) {
+                    $q->whereDoesntHave('vendorbusinessdetails')
+                      ->whereNotNull('location')
+                      ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distanceRadius]);
+                });
             });
         }
 
@@ -576,7 +584,28 @@ class ProductsController extends Controller
 
             $sort = request('sort', 'buybox');
 
-            $sortedSellers = $allSellers->sort(function ($a, $b) use ($productId, $userLat, $userLng, $sort) {
+            $getDist = function ($vendor) use ($userLat, $userLng) {
+                $vLat = null;
+                $vLng = null;
+                if ($vendor) {
+                    if ($vendor->vendorbusinessdetails && !empty($vendor->vendorbusinessdetails->latitude) && !empty($vendor->vendorbusinessdetails->longitude)) {
+                        $vLat = (float) $vendor->vendorbusinessdetails->latitude;
+                        $vLng = (float) $vendor->vendorbusinessdetails->longitude;
+                    } elseif ($vendor->location) {
+                        $parts = explode(',', $vendor->location);
+                        if (count($parts) == 2) {
+                            $vLat = (float) $parts[0];
+                            $vLng = (float) $parts[1];
+                        }
+                    }
+                }
+                if ($vLat === null || $vLng === null) {
+                    return 999999;
+                }
+                return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad($vLat)) * cos(deg2rad($vLng) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad($vLat))));
+            };
+
+            $sortedSellers = $allSellers->sort(function ($a, $b) use ($productId, $userLat, $userLng, $sort, $getDist) {
                 if ($sort === 'price') {
                     $aPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $a->id)['final_price'] ?? 999999;
                     $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
@@ -585,16 +614,8 @@ class ProductsController extends Controller
                 }
 
                 if ($sort === 'distance' && $userLat && $userLng) {
-                    $getDist = function ($loc) use ($userLat, $userLng) {
-                        if (!$loc)
-                            return 999999;
-                        $parts = explode(',', $loc);
-                        if (count($parts) != 2)
-                            return 999999;
-                        return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float) $parts[0])) * cos(deg2rad((float) $parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float) $parts[0]))));
-                    };
-                    $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
-                    $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
+                    $aDist = $getDist($a->vendor);
+                    $bDist = $getDist($b->vendor);
                     if ($aDist != $bDist)
                         return $aDist <=> $bDist;
                 }
@@ -609,16 +630,8 @@ class ProductsController extends Controller
 
                 // Priority 2: Distance (as fallback if not explicitly sorting)
                 if ($userLat && $userLng && $sort !== 'distance') {
-                    $getDist = function ($loc) use ($userLat, $userLng) {
-                        if (!$loc)
-                            return 999999;
-                        $parts = explode(',', $loc);
-                        if (count($parts) != 2)
-                            return 999999;
-                        return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float) $parts[0])) * cos(deg2rad((float) $parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float) $parts[0]))));
-                    };
-                    $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
-                    $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
+                    $aDist = $getDist($a->vendor);
+                    $bDist = $getDist($b->vendor);
                     if ($aDist != $bDist)
                         return $aDist <=> $bDist;
                 }
@@ -760,9 +773,17 @@ class ProductsController extends Controller
             ->where('stock', '>', 0);
 
         if ($userLat && $userLng && $distanceRadius < 100) {
-            $allSellersQuery->whereHas('vendor', function ($q) use ($userLat, $userLng, $distanceRadius) {
-                $q->whereNotNull('location')
-                    ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distanceRadius]);
+            $allSellersQuery->where(function ($query) use ($userLat, $userLng, $distanceRadius) {
+                $query->whereHas('vendor.vendorbusinessdetails', function ($q) use ($userLat, $userLng, $distanceRadius) {
+                    $q->whereNotNull('latitude')
+                      ->whereNotNull('longitude')
+                      ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) <= ?", [$userLat, $userLng, $userLat, $distanceRadius]);
+                })
+                ->orWhereHas('vendor', function ($q) use ($userLat, $userLng, $distanceRadius) {
+                    $q->whereDoesntHave('vendorbusinessdetails')
+                      ->whereNotNull('location')
+                      ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distanceRadius]);
+                });
             });
         }
 
@@ -779,7 +800,28 @@ class ProductsController extends Controller
         $userLng = (float) session('user_longitude');
         $sort = request('sort', 'buybox');
 
-        $sortedSellers = $allSellers->sort(function ($a, $b) use ($productId, $userLat, $userLng, $sort) {
+        $getDist = function ($vendor) use ($userLat, $userLng) {
+            $vLat = null;
+            $vLng = null;
+            if ($vendor) {
+                if ($vendor->vendorbusinessdetails && !empty($vendor->vendorbusinessdetails->latitude) && !empty($vendor->vendorbusinessdetails->longitude)) {
+                    $vLat = (float) $vendor->vendorbusinessdetails->latitude;
+                    $vLng = (float) $vendor->vendorbusinessdetails->longitude;
+                } elseif ($vendor->location) {
+                    $parts = explode(',', $vendor->location);
+                    if (count($parts) == 2) {
+                        $vLat = (float) $parts[0];
+                        $vLng = (float) $parts[1];
+                    }
+                }
+            }
+            if ($vLat === null || $vLng === null) {
+                return 999999;
+            }
+            return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad($vLat)) * cos(deg2rad($vLng) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad($vLat))));
+        };
+
+        $sortedSellers = $allSellers->sort(function ($a, $b) use ($productId, $userLat, $userLng, $sort, $getDist) {
             if ($sort === 'price') {
                 $aPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $a->id)['final_price'] ?? 999999;
                 $bPrice = \App\Models\Product::getDiscountAttributePrice($productId, null, $b->id)['final_price'] ?? 999999;
@@ -788,16 +830,8 @@ class ProductsController extends Controller
             }
 
             if ($sort === 'distance' && $userLat && $userLng) {
-                $getDist = function ($loc) use ($userLat, $userLng) {
-                    if (!$loc)
-                        return 999999;
-                    $parts = explode(',', $loc);
-                    if (count($parts) != 2)
-                        return 999999;
-                    return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float) $parts[0])) * cos(deg2rad((float) $parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float) $parts[0]))));
-                };
-                $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
-                $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
+                $aDist = $getDist($a->vendor);
+                $bDist = $getDist($b->vendor);
                 if ($aDist != $bDist)
                     return $aDist <=> $bDist;
             }
@@ -810,16 +844,8 @@ class ProductsController extends Controller
                 return $aPlan <=> $bPlan;
 
             if ($userLat && $userLng && $sort !== 'distance') {
-                $getDist = function ($loc) use ($userLat, $userLng) {
-                    if (!$loc)
-                        return 999999;
-                    $parts = explode(',', $loc);
-                    if (count($parts) != 2)
-                        return 999999;
-                    return (6371 * acos(cos(deg2rad($userLat)) * cos(deg2rad((float) $parts[0])) * cos(deg2rad((float) $parts[1]) - deg2rad($userLng)) + sin(deg2rad($userLat)) * sin(deg2rad((float) $parts[0]))));
-                };
-                $aDist = $getDist(isset($a->vendor->location) ? $a->vendor->location : null);
-                $bDist = $getDist(isset($b->vendor->location) ? $b->vendor->location : null);
+                $aDist = $getDist($a->vendor);
+                $bDist = $getDist($b->vendor);
                 if ($aDist != $bDist)
                     return $aDist <=> $bDist;
             }
@@ -1700,6 +1726,9 @@ class ProductsController extends Controller
                 $order->state = $deliveryAddress['state'];
                 $order->country = $deliveryAddress['country'];
                 $order->pincode = $deliveryAddress['pincode'];
+                $order->district_id = $selectedAddress->district_id;
+                $order->latitude = Auth::user()->latitude;
+                $order->longitude = Auth::user()->longitude;
                 $order->mobile = $deliveryAddress['mobile'];
                 $order->email = Auth::user()->email;
                 $order->shipping_charges = $item_shipping;

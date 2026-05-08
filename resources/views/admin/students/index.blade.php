@@ -147,10 +147,15 @@
                     <h2 class="page-title">Student Management</h2>
                     <p class="page-subtitle">Manage student records and information</p>
                 </div>
-                <a href="{{ url('admin/students/create') }}" class="add-student-btn">
-                    <i class="fas fa-plus"></i>
-                    Add New Student
-                </a>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn btn-danger mr-2" id="bulk-delete-students-btn" style="display: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; height: 50px; align-items: center; justify-content: center; gap: 8px;">
+                        <i class="fas fa-trash-sweep"></i> Delete Selected (<span id="selected-students-count">0</span>)
+                    </button>
+                    <a href="{{ url('admin/students/create') }}" class="add-student-btn" style="margin-bottom: 0;">
+                        <i class="fas fa-plus"></i>
+                        Add New Student
+                    </a>
+                </div>
             </div>
 
             @if(Session::has('success_message'))
@@ -216,6 +221,7 @@
                         <table id="studentsTable" class="table table-bordered table-striped">
                             <thead class="thead-dark">
                                 <tr>
+                                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-students" style="transform: scale(1.3); cursor: pointer;"></th>
                                     <th>#</th>
                                     <th>Name</th>
                                     <th>Roll No</th>
@@ -255,11 +261,12 @@
 
 <script>
     $(document).ready(function () {
-        $('#studentsTable').DataTable({
+        var table = $('#studentsTable').DataTable({
             processing: true,
             serverSide: true,
             ajax: "{{ url()->current() }}",
             columns: [
+                {data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, class: 'text-center'},
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
                 {data: 'name', name: 'name'},
                 {data: 'roll_number', name: 'roll_number'},
@@ -268,7 +275,70 @@
                 {data: 'institution', name: 'institution'},
                 {data: 'status', name: 'status', orderable: false, searchable: false},
                 {data: 'actions', name: 'actions', orderable: false, searchable: false},
-            ]
+            ],
+            order: [[1, 'desc']],
+            drawCallback: function() {
+                $('#select-all-students').prop('checked', false);
+                updateBulkDeleteButton();
+            }
+        });
+
+        // Toggle select all
+        $('#select-all-students').on('click', function() {
+            var checked = this.checked;
+            $('.select-student-checkbox').each(function() {
+                this.checked = checked;
+            });
+            updateBulkDeleteButton();
+        });
+
+        // Individual checkbox click
+        $(document).on('click', '.select-student-checkbox', function() {
+            var allChecked = $('.select-student-checkbox').length === $('.select-student-checkbox:checked').length;
+            $('#select-all-students').prop('checked', allChecked);
+            updateBulkDeleteButton();
+        });
+
+        function updateBulkDeleteButton() {
+            var checkedCount = $('.select-student-checkbox:checked').length;
+            if (checkedCount > 0) {
+                $('#selected-students-count').text(checkedCount);
+                $('#bulk-delete-students-btn').css('display', 'inline-flex');
+            } else {
+                $('#bulk-delete-students-btn').css('display', 'none');
+            }
+        }
+
+        // Bulk delete click handler
+        $('#bulk-delete-students-btn').on('click', function() {
+            var selectedIds = [];
+            $('.select-student-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+
+            if (selectedIds.length > 0) {
+                if (confirm("Are you sure you want to delete the " + selectedIds.length + " selected students? This action cannot be undone.")) {
+                    $.ajax({
+                        url: "{{ route('admin.students.bulkDelete') }}",
+                        type: "POST",
+                        data: {
+                            ids: selectedIds,
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert(response.message);
+                                table.ajax.reload();
+                            } else {
+                                alert(response.message || "An error occurred while deleting.");
+                            }
+                        },
+                        error: function() {
+                            alert("Failed to perform bulk delete action.");
+                        }
+                    });
+                }
+            }
         });
     });
 </script>

@@ -226,9 +226,17 @@ class IndexController extends Controller
         }
         if ($userLat && $userLng && $currentDistance < 100) {
             $distance = $currentDistance;
-            $sliderProductsQuery->whereHas('attributes.vendor', function ($q) use ($userLat, $userLng, $distance) {
-                $q->whereNotNull('location')
-                    ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);
+            $sliderProductsQuery->where(function ($query) use ($userLat, $userLng, $distance) {
+                $query->whereHas('attributes.vendor.vendorbusinessdetails', function ($q) use ($userLat, $userLng, $distance) {
+                    $q->whereNotNull('latitude')
+                      ->whereNotNull('longitude')
+                      ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) <= ?", [$userLat, $userLng, $userLat, $distance]);
+                })
+                ->orWhereHas('attributes.vendor', function ($q) use ($userLat, $userLng, $distance) {
+                    $q->whereDoesntHave('vendorbusinessdetails')
+                      ->whereNotNull('location')
+                      ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);
+                });
             });
         }
     }
@@ -373,15 +381,23 @@ class IndexController extends Controller
 
             // Calculate distance
             $distance = null;
-            if ($userLat && $userLng && $vendor && $vendor->location) {
-                [$vLat, $vLng] = array_pad(explode(',', $vendor->location), 2, null);
-                if (is_numeric($vLat) && is_numeric($vLng)) {
-                    $R  = 6371;
-                    $dL = deg2rad((float)$vLat - (float)$userLat);
-                    $dN = deg2rad((float)$vLng - (float)$userLng);
-                    $a  = sin($dL / 2) ** 2 + cos(deg2rad((float)$userLat)) * cos(deg2rad((float)$vLat)) * sin($dN / 2) ** 2;
-                    $distance = round($R * 2 * atan2(sqrt($a), sqrt(1 - $a)), 1);
+            $vLat = null;
+            $vLng = null;
+            if ($vendor) {
+                if ($vendor->vendorbusinessdetails && !empty($vendor->vendorbusinessdetails->latitude) && !empty($vendor->vendorbusinessdetails->longitude)) {
+                    $vLat = $vendor->vendorbusinessdetails->latitude;
+                    $vLng = $vendor->vendorbusinessdetails->longitude;
+                } elseif ($vendor->location) {
+                    [$vLat, $vLng] = array_pad(explode(',', $vendor->location), 2, null);
                 }
+            }
+
+            if ($userLat && $userLng && is_numeric($vLat) && is_numeric($vLng)) {
+                $R  = 6371;
+                $dL = deg2rad((float)$vLat - (float)$userLat);
+                $dN = deg2rad((float)$vLng - (float)$userLng);
+                $a  = sin($dL / 2) ** 2 + cos(deg2rad((float)$userLat)) * cos(deg2rad((float)$vLat)) * sin($dN / 2) ** 2;
+                $distance = round($R * 2 * atan2(sqrt($a), sqrt(1 - $a)), 1);
             }
 
             $finalPrice = Product::getDiscountPrice($product->id);
@@ -524,9 +540,17 @@ class IndexController extends Controller
         $userLng = session('user_longitude');
         $distance = session('distance', 10);
         if ($userLat && $userLng && $distance < 100) {
-            $query->whereHas('attributes.vendor', function ($q) use ($userLat, $userLng, $distance) {
-                $q->whereNotNull('location')
-                    ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);
+            $query->where(function ($subQuery) use ($userLat, $userLng, $distance) {
+                $subQuery->whereHas('attributes.vendor.vendorbusinessdetails', function ($q) use ($userLat, $userLng, $distance) {
+                    $q->whereNotNull('latitude')
+                      ->whereNotNull('longitude')
+                      ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) <= ?", [$userLat, $userLng, $userLat, $distance]);
+                })
+                ->orWhereHas('attributes.vendor', function ($q) use ($userLat, $userLng, $distance) {
+                    $q->whereDoesntHave('vendorbusinessdetails')
+                      ->whereNotNull('location')
+                      ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);
+                });
             });
         }
 

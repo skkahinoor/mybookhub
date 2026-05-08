@@ -9,10 +9,15 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="card-title mb-0">{{ $title }}</h4>
-                                <a href="{{ route('sales_executives.add_edit') }}"
-                                    class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
-                                    <i class="mdi mdi-plus fs-5"></i> Add Sales Executive
-                                </a>
+                                <div class="d-flex align-items-center">
+                                    <button type="button" class="btn btn-danger mr-2" id="bulk-delete-sales-btn" style="display: none;">
+                                        <i class="mdi mdi-delete-sweep"></i> Delete Selected (<span id="selected-sales-count">0</span>)
+                                    </button>
+                                    <a href="{{ route('sales_executives.add_edit') }}"
+                                        class="btn btn-primary d-flex align-items-center gap-2 shadow-sm">
+                                        <i class="mdi mdi-plus fs-5"></i> Add Sales Executive
+                                    </a>
+                                </div>
                             </div>
 
 
@@ -44,6 +49,7 @@
                                 <table class="table table-bordered" id="sales-table">
                                     <thead>
                                         <tr>
+                                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-sales" style="transform: scale(1.3); cursor: pointer;"></th>
                                             <th>#</th>
                                             <th>Name</th>
                                             <th>Email</th>
@@ -77,11 +83,12 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(function() {
-            $('#sales-table').DataTable({
+            var table = $('#sales-table').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: "{{ url()->current() }}",
                 columns: [
+                    {data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, class: 'text-center'},
                     {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
                     {data: 'name', name: 'name'},
                     {data: 'email', name: 'email'},
@@ -92,10 +99,73 @@
                 pageLength: 10,
                 lengthMenu: [5, 10, 25, 50, 100],
                 ordering: true,
+                order: [[1, 'desc']],
                 columnDefs: [{
                     orderable: false,
-                    targets: [4, 5]
-                }]
+                    targets: [0, 5, 6]
+                }],
+                drawCallback: function() {
+                    $('#select-all-sales').prop('checked', false);
+                    updateBulkDeleteButton();
+                }
+            });
+
+            // Toggle select all
+            $('#select-all-sales').on('click', function() {
+                var checked = this.checked;
+                $('.select-sales-checkbox').each(function() {
+                    this.checked = checked;
+                });
+                updateBulkDeleteButton();
+            });
+
+            // Individual checkbox click
+            $(document).on('click', '.select-sales-checkbox', function() {
+                var allChecked = $('.select-sales-checkbox').length === $('.select-sales-checkbox:checked').length;
+                $('#select-all-sales').prop('checked', allChecked);
+                updateBulkDeleteButton();
+            });
+
+            function updateBulkDeleteButton() {
+                var checkedCount = $('.select-sales-checkbox:checked').length;
+                if (checkedCount > 0) {
+                    $('#selected-sales-count').text(checkedCount);
+                    $('#bulk-delete-sales-btn').fadeIn();
+                } else {
+                    $('#bulk-delete-sales-btn').fadeOut();
+                }
+            }
+
+            // Bulk delete click handler
+            $('#bulk-delete-sales-btn').on('click', function() {
+                var selectedIds = [];
+                $('.select-sales-checkbox:checked').each(function() {
+                    selectedIds.push($(this).val());
+                });
+
+                if (selectedIds.length > 0) {
+                    if (confirm("Are you sure you want to delete the " + selectedIds.length + " selected sales executives? This action cannot be undone.")) {
+                        $.ajax({
+                            url: "{{ route('sales_executives.bulkDelete') }}",
+                            type: "POST",
+                            data: {
+                                ids: selectedIds,
+                                _token: "{{ csrf_token() }}"
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    alert(response.message);
+                                    table.ajax.reload();
+                                } else {
+                                    alert(response.message || "An error occurred while deleting.");
+                                }
+                            },
+                            error: function() {
+                                alert("Failed to perform bulk delete action.");
+                            }
+                        });
+                    }
+                }
             });
 
             // View Sales Executive Details - Show SweetAlert
