@@ -11,19 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->dropColumn('cbse');
-            $table->dropColumn('operating_system');
-            $table->dropColumn('screen_size');
-            $table->dropColumn('occasion');
-            $table->dropColumn('fit');
-            $table->dropColumn('pattern');
-            $table->dropColumn('sleeve');
-            $table->dropColumn('ram');
-            $table->dropColumn('fabric');
-            $table->dropColumn('is_featured');
-            $table->dropColumn('is_bestseller');
-        });
+        $columns = Schema::getColumnListing('products');
+        $columnsToDrop = array_intersect([
+            'cbse', 'operating_system', 'screen_size', 'occasion', 'fit', 
+            'pattern', 'sleeve', 'ram', 'fabric', 'is_featured', 'is_bestseller'
+        ], $columns);
+
+        if (!empty($columnsToDrop)) {
+            Schema::table('products', function (Blueprint $table) use ($columnsToDrop) {
+                foreach ($columnsToDrop as $column) {
+                    $table->dropColumn($column);
+                }
+            });
+        }
     }
 
     /**
