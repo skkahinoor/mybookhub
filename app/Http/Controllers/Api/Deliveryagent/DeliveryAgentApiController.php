@@ -99,14 +99,22 @@ class DeliveryAgentApiController extends Controller
             if ($request->hasFile('id_proof')) {
                 $file = $request->file('id_proof');
                 $idProofName = 'temp_id_' . time() . '_' . $request->phone . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/delivery_agents/docs'), $idProofName);
+                $destPath = public_path('uploads/delivery_agents/docs');
+                if (!file_exists($destPath)) {
+                    mkdir($destPath, 0777, true);
+                }
+                $file->move($destPath, $idProofName);
             }
 
             $licenseImageName = null;
             if ($request->hasFile('license_image')) {
                 $file = $request->file('license_image');
                 $licenseImageName = 'temp_license_' . time() . '_' . $request->phone . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/delivery_agents/docs'), $licenseImageName);
+                $destPath = public_path('uploads/delivery_agents/docs');
+                if (!file_exists($destPath)) {
+                    mkdir($destPath, 0777, true);
+                }
+                $file->move($destPath, $licenseImageName);
             }
 
             // Store registration data in cache
@@ -219,17 +227,22 @@ class DeliveryAgentApiController extends Controller
             }
 
             // Rename temp files to include user ID
+            $docsPath = public_path('uploads/delivery_agents/docs');
+            if (!file_exists($docsPath)) {
+                mkdir($docsPath, 0777, true);
+            }
+
             $idProofName = $regData['id_proof'];
-            if ($idProofName) {
+            if ($idProofName && file_exists($docsPath . '/' . $idProofName)) {
                 $newIdName = str_replace('temp_id_', 'id_', $idProofName);
-                rename(public_path('uploads/delivery_agents/docs/' . $idProofName), public_path('uploads/delivery_agents/docs/' . $newIdName));
+                rename($docsPath . '/' . $idProofName, $docsPath . '/' . $newIdName);
                 $idProofName = $newIdName;
             }
 
             $licenseImageName = $regData['license_image'];
-            if ($licenseImageName) {
+            if ($licenseImageName && file_exists($docsPath . '/' . $licenseImageName)) {
                 $newLicenseName = str_replace('temp_license_', 'license_', $licenseImageName);
-                rename(public_path('uploads/delivery_agents/docs/' . $licenseImageName), public_path('uploads/delivery_agents/docs/' . $newLicenseName));
+                rename($docsPath . '/' . $licenseImageName, $docsPath . '/' . $newLicenseName);
                 $licenseImageName = $newLicenseName;
             }
 
@@ -653,7 +666,11 @@ class DeliveryAgentApiController extends Controller
             if ($request->hasFile('profile_image')) {
                 $file = $request->file('profile_image');
                 $imageName = 'profile_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/delivery_agents/profiles'), $imageName);
+                $destPath = public_path('uploads/delivery_agents/profiles');
+                if (!file_exists($destPath)) {
+                    mkdir($destPath, 0777, true);
+                }
+                $file->move($destPath, $imageName);
                 $userData['profile_image'] = $imageName;
             }
 
