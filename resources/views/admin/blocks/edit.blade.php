@@ -181,19 +181,52 @@
 
                         <div class="form-group">
                             <label class="form-label">
+                                <i class="fas fa-flag form-icon"></i>
+                                Country <span class="required">*</span>
+                            </label>
+                            <select name="country_id" id="country-select" class="form-control" required>
+                                <option value="">Select Country</option>
+                                @foreach($countries as $country)
+                                    <option value="{{ $country->id }}" {{ old('country_id', $block->district->state->country_id) == $country->id ? 'selected' : '' }}>
+                                        {{ $country->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('country_id')
+                                <div class="error-message">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fas fa-map form-icon"></i>
+                                State <span class="required">*</span>
+                            </label>
+                            <select name="state_id" id="state-select" class="form-control" required>
+                                <option value="">Select State</option>
+                                @foreach($states as $state)
+                                    <option value="{{ $state->id }}" {{ old('state_id', $block->district->state_id) == $state->id ? 'selected' : '' }}>
+                                        {{ $state->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('state_id')
+                                <div class="error-message">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
                                 <i class="fas fa-map-marker-alt form-icon"></i>
                                 District <span class="required">*</span>
                             </label>
                         
-                            <!-- 🔍 Search Input -->
-                            <input type="text" id="districtSearch" class="form-control mb-2" placeholder="Search district...">
-                        
                             <!-- 🏙️ District Dropdown -->
-                            <select name="district_id" id="districtSelect" class="form-control" required>
+                            <select name="district_id" id="district-select" class="form-control" required>
                                 <option value="">Select District</option>
                                 @foreach($districts as $district)
-                                    <option value="{{ $district->id }}" {{ old('district_id') == $district->id ? 'selected' : '' }}>
-                                        {{ $district->name }} ({{ $district->state->name ?? 'N/A' }})
+                                    <option value="{{ $district->id }}" {{ old('district_id', $block->district_id) == $district->id ? 'selected' : '' }}>
+                                        {{ $district->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -227,19 +260,49 @@
     </div>
 </div>
 
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    document.getElementById('districtSearch').addEventListener('keyup', function () {
-        let filter = this.value.toLowerCase();
-        let options = document.querySelectorAll('#districtSelect option');
-    
-        options.forEach(option => {
-            let text = option.textContent.toLowerCase();
-            option.style.display = text.includes(filter) || option.value === '' ? '' : 'none';
+    $(document).ready(function() {
+        $('#country-select').change(function() {
+            var country = $(this).val();
+            if (country) {
+                $.ajax({
+                    url: '{{ route('admin.institution.states') }}',
+                    type: 'GET',
+                    data: { country: country },
+                    success: function(response) {
+                        $('#state-select').empty().append('<option value="">Select State</option>');
+                        $.each(response, function(key, value) {
+                            $('#state-select').append(`<option value="${key}">${value}</option>`);
+                        });
+                        $('#district-select').empty().append('<option value="">Select District</option>');
+                    }
+                });
+            } else {
+                $('#state-select').empty().append('<option value="">Select State</option>');
+                $('#district-select').empty().append('<option value="">Select District</option>');
+            }
+        });
+
+        $('#state-select').change(function() {
+            var state = $(this).val();
+            if (state) {
+                $.ajax({
+                    url: '{{ route('admin.institution.districts') }}',
+                    type: 'GET',
+                    data: { state: state },
+                    success: function(response) {
+                        $('#district-select').empty().append('<option value="">Select District</option>');
+                        $.each(response, function(key, value) {
+                            $('#district-select').append(`<option value="${key}">${value}</option>`);
+                        });
+                    }
+                });
+            } else {
+                $('#district-select').empty().append('<option value="">Select District</option>');
+            }
         });
     });
-    </script>
+</script>
 
 @endsection

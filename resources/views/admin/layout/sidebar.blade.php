@@ -523,10 +523,10 @@
 
             {{-- Institution Management --}}
             <li class="nav-item">
-                <a @if (Session::get('page') == 'institution_managements' || Session::get('page') == 'blocks' || Session::get('page') == 'districts' || Session::get('page') == 'countries_states') style="background: #052CA3 !important; color: #FFF !important" @endif
+                <a @if (Session::get('page') == 'institution_managements') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-institution-mgmt" aria-expanded="false"
                     aria-controls="ui-institution-mgmt">
-                    <i class="icon-map menu-icon"></i>
+                    <i class="icon-columns menu-icon"></i>
                     <span class="menu-title">Institution Management</span>
                     <i class="menu-arrow"></i>
                 </a>
@@ -537,17 +537,32 @@
                                     @if (Session::get('page') == 'institution_managements') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/institution-managements') }}">Institution</a></li>
                         @endcan
+                    </ul>
+                </div>
+            </li>
+
+            {{-- Location Management --}}
+            <li class="nav-item">
+                <a @if (Session::get('page') == 'blocks' || Session::get('page') == 'districts' || Session::get('page') == 'countries_states') style="background: #052CA3 !important; color: #FFF !important" @endif
+                    class="nav-link" data-toggle="collapse" href="#ui-location-mgmt" aria-expanded="false"
+                    aria-controls="ui-location-mgmt">
+                    <i class="icon-map menu-icon"></i>
+                    <span class="menu-title">Location Management</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="ui-location-mgmt">
+                    <ul class="nav flex-column sub-menu" style="background: #fff !important; color: #052CA3 !important">
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'countries_states') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.countries_states.index') }}">State & Country</a></li>
+                        <li class="nav-item"> <a
+                                @if (Session::get('page') == 'districts') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                class="nav-link" href="{{ route('admin.districts.index') }}">District</a></li>
                         @can('view_blocks')
                             <li class="nav-item"> <a
                                     @if (Session::get('page') == 'blocks') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('admin/blocks') }}">Block</a></li>
                         @endcan
-                        <li class="nav-item"> <a
-                                @if (Session::get('page') == 'districts') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                class="nav-link" href="{{ route('admin.districts.index') }}">District</a></li>
-                        <li class="nav-item"> <a
-                                @if (Session::get('page') == 'countries_states') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                class="nav-link" href="{{ route('admin.countries_states.index') }}">State & Country</a></li>
                     </ul>
                 </div>
             </li>

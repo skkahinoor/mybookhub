@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Block;
 use App\Models\District;
 use App\Models\HeaderLogo;
+use App\Models\Country;
+use App\Models\State;
 // use App\Models\City;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -71,12 +73,9 @@ class BlockController extends Controller
         $headerLogo = HeaderLogo::first();
         Session::put('page', 'blocks');
 
-        $districts = District::where('status', true)
-            ->with('state.country')
-            ->orderBy('name')
-            ->get();
+        $countries = Country::where('status', 1)->get();
 
-        return view('admin.blocks.create')->with(compact('districts', 'logos', 'headerLogo'));
+        return view('admin.blocks.create')->with(compact('countries', 'logos', 'headerLogo'));
     }
 
     public function store(Request $request)
@@ -85,6 +84,8 @@ class BlockController extends Controller
         $headerLogo = HeaderLogo::first();
         $request->validate([
             'name' => 'required|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+            'state_id' => 'required|exists:states,id',
             'district_id' => 'required|exists:districts,id',
             'status' => 'boolean'
         ]);
@@ -104,13 +105,12 @@ class BlockController extends Controller
         $headerLogo = HeaderLogo::first();
         Session::put('page', 'blocks');
 
-        $block = Block::findOrFail($id);
-        $districts = District::where('status', true)
-            ->with('state.country')
-            ->orderBy('name')
-            ->get();
+        $block = Block::with('district.state.country')->findOrFail($id);
+        $countries = Country::where('status', 1)->get();
+        $states = State::where('country_id', $block->district->state->country_id)->get();
+        $districts = District::where('state_id', $block->district->state_id)->get();
 
-        return view('admin.blocks.edit')->with(compact('block', 'districts', 'logos', 'headerLogo'));
+        return view('admin.blocks.edit')->with(compact('block', 'countries', 'states', 'districts', 'logos', 'headerLogo'));
     }
 
     public function update(Request $request, $id)
@@ -119,6 +119,8 @@ class BlockController extends Controller
         $headerLogo = HeaderLogo::first();
         $request->validate([
             'name' => 'required|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+            'state_id' => 'required|exists:states,id',
             'district_id' => 'required|exists:districts,id',
             'status' => 'boolean'
         ]);
