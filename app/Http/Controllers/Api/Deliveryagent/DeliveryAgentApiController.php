@@ -99,14 +99,22 @@ class DeliveryAgentApiController extends Controller
             if ($request->hasFile('id_proof')) {
                 $file = $request->file('id_proof');
                 $idProofName = 'temp_id_' . time() . '_' . $request->phone . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/delivery_agents/docs'), $idProofName);
+                $destPath = public_path('uploads/delivery_agents/docs');
+                if (!file_exists($destPath)) {
+                    mkdir($destPath, 0777, true);
+                }
+                $file->move($destPath, $idProofName);
             }
 
             $licenseImageName = null;
             if ($request->hasFile('license_image')) {
                 $file = $request->file('license_image');
                 $licenseImageName = 'temp_license_' . time() . '_' . $request->phone . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/delivery_agents/docs'), $licenseImageName);
+                $destPath = public_path('uploads/delivery_agents/docs');
+                if (!file_exists($destPath)) {
+                    mkdir($destPath, 0777, true);
+                }
+                $file->move($destPath, $licenseImageName);
             }
 
             // Store registration data in cache
@@ -219,17 +227,22 @@ class DeliveryAgentApiController extends Controller
             }
 
             // Rename temp files to include user ID
+            $docsPath = public_path('uploads/delivery_agents/docs');
+            if (!file_exists($docsPath)) {
+                mkdir($docsPath, 0777, true);
+            }
+
             $idProofName = $regData['id_proof'];
-            if ($idProofName) {
+            if ($idProofName && file_exists($docsPath . '/' . $idProofName)) {
                 $newIdName = str_replace('temp_id_', 'id_', $idProofName);
-                rename(public_path('uploads/delivery_agents/docs/' . $idProofName), public_path('uploads/delivery_agents/docs/' . $newIdName));
+                rename($docsPath . '/' . $idProofName, $docsPath . '/' . $newIdName);
                 $idProofName = $newIdName;
             }
 
             $licenseImageName = $regData['license_image'];
-            if ($licenseImageName) {
+            if ($licenseImageName && file_exists($docsPath . '/' . $licenseImageName)) {
                 $newLicenseName = str_replace('temp_license_', 'license_', $licenseImageName);
-                rename(public_path('uploads/delivery_agents/docs/' . $licenseImageName), public_path('uploads/delivery_agents/docs/' . $newLicenseName));
+                rename($docsPath . '/' . $licenseImageName, $docsPath . '/' . $newLicenseName);
                 $licenseImageName = $newLicenseName;
             }
 
@@ -653,7 +666,11 @@ class DeliveryAgentApiController extends Controller
             if ($request->hasFile('profile_image')) {
                 $file = $request->file('profile_image');
                 $imageName = 'profile_' . time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/delivery_agents/profiles'), $imageName);
+                $destPath = public_path('uploads/delivery_agents/profiles');
+                if (!file_exists($destPath)) {
+                    mkdir($destPath, 0777, true);
+                }
+                $file->move($destPath, $imageName);
                 $userData['profile_image'] = $imageName;
             }
 
@@ -1013,20 +1030,35 @@ class DeliveryAgentApiController extends Controller
             ]);
         }
 
-        // Get orders in the agent's district that are ready for delivery
-        // We assume 'Approved' or 'Processing' status is ready for pickup
-        $orders = \App\Models\Order::with(['orders_products.vendor', 'orders_products.vendor_details', 'user'])
-            ->whereNull('delivery_agent_id') // Only unassigned orders
-            ->whereNotIn('id', $rejectedIds) // Exclude orders this agent rejected
-            ->where(function($query) use ($districtId) {
-                $query->where('district_id', $districtId)
-                      ->orWhereHas('user', function($q) use ($districtId) {
-                          $q->where('district_id', $districtId);
-                      });
-            })
-            ->whereIn('order_status', ['New', 'Approved', 'Processing', 'Paid', 'Pending'])
-            ->orderBy('id', 'desc')
-            ->get();
+        $lat = $request->latitude;
+        $lng = $request->longitude;
+        $radius = $request->radius ?? 30; // Default 30km radius
+
+        // Get orders ready for delivery
+        $query = \App\Models\Order::with([
+            'orders_products.vendor', 
+            'orders_products.vendor_details.user', 
+            'orders_products.vendor_details.vendorbusinessdetails', 
+            'user'
+        ])
+        ->whereNull('delivery_agent_id')
+        ->whereNotIn('id', $rejectedIds)
+        ->whereIn('order_status', ['New', 'Approved', 'Processing', 'Paid', 'Pending']);
+
+        // Hybrid matching: Either in same district OR within radius of coordinates
+        $query->where(function($q) use ($districtId, $lat, $lng, $radius) {
+            $q->where('district_id', $districtId)
+              ->orWhereHas('user', function($sub) use ($districtId) {
+                  $sub->where('district_id', $districtId);
+              });
+
+            if ($lat && $lng) {
+                // Haversine formula to find orders within radius
+                $q->orWhereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) < ?", [$lat, $lng, $lat, $radius]);
+            }
+        });
+
+        $orders = $query->orderBy('id', 'desc')->get();
 
         $formattedOrders = $orders->map(function($order) {
             // Drop Location (Buyer)

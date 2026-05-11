@@ -630,6 +630,39 @@
                 gap: 8px;
             }
         }
+        /* Premium Download Button */
+        .download-btn-premium {
+            background: #ffffff;
+            color: #1b66c9 !important;
+            border: 1.5px solid #1b66c9;
+            padding: 5px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            text-decoration: none !important;
+            white-space: nowrap;
+        }
+
+        .download-btn-premium:hover {
+            background: #1b66c9;
+            color: #ffffff !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(27, 102, 201, 0.15);
+        }
+
+        .download-btn-premium i {
+            font-size: 14px;
+        }
+
+        @media (max-width: 991px) {
+            .download-btn-premium {
+                display: none !important;
+            }
+        }
     </style>
 
     <style>
@@ -897,6 +930,10 @@
                 <button type="submit"><i class="fa fa-search"></i></button>
             </form>
             <div class="header-icons">
+                <a href="https://play.google.com/store/apps/details?id=com.bookhub.user" target="_blank" class="download-btn-premium">
+                    <i class="fab fa-google-play"></i>
+                    <span>Student App</span>
+                </a>
                 @guest
                 <a href="{{ url('vendor/login') }}" class="header-text-link desktop-only-icon">
                     Vendor Login
