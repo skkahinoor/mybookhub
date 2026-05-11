@@ -1013,20 +1013,35 @@ class DeliveryAgentApiController extends Controller
             ]);
         }
 
-        // Get orders in the agent's district that are ready for delivery
-        // We assume 'Approved' or 'Processing' status is ready for pickup
-        $orders = \App\Models\Order::with(['orders_products.vendor', 'orders_products.vendor_details', 'user'])
-            ->whereNull('delivery_agent_id') // Only unassigned orders
-            ->whereNotIn('id', $rejectedIds) // Exclude orders this agent rejected
-            ->where(function($query) use ($districtId) {
-                $query->where('district_id', $districtId)
-                      ->orWhereHas('user', function($q) use ($districtId) {
-                          $q->where('district_id', $districtId);
-                      });
-            })
-            ->whereIn('order_status', ['New', 'Approved', 'Processing', 'Paid', 'Pending'])
-            ->orderBy('id', 'desc')
-            ->get();
+        $lat = $request->latitude;
+        $lng = $request->longitude;
+        $radius = $request->radius ?? 30; // Default 30km radius
+
+        // Get orders ready for delivery
+        $query = \App\Models\Order::with([
+            'orders_products.vendor', 
+            'orders_products.vendor_details.user', 
+            'orders_products.vendor_details.vendorbusinessdetails', 
+            'user'
+        ])
+        ->whereNull('delivery_agent_id')
+        ->whereNotIn('id', $rejectedIds)
+        ->whereIn('order_status', ['New', 'Approved', 'Processing', 'Paid', 'Pending']);
+
+        // Hybrid matching: Either in same district OR within radius of coordinates
+        $query->where(function($q) use ($districtId, $lat, $lng, $radius) {
+            $q->where('district_id', $districtId)
+              ->orWhereHas('user', function($sub) use ($districtId) {
+                  $sub->where('district_id', $districtId);
+              });
+
+            if ($lat && $lng) {
+                // Haversine formula to find orders within radius
+                $q->orWhereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) < ?", [$lat, $lng, $lat, $radius]);
+            }
+        });
+
+        $orders = $query->orderBy('id', 'desc')->get();
 
         $formattedOrders = $orders->map(function($order) {
             // Drop Location (Buyer)
