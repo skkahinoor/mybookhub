@@ -1191,4 +1191,206 @@ class DeliveryAgentApiController extends Controller
             'data' => $payouts
         ]);
     }
+
+    public function deleteAccount(Request $request)
+    {
+        $user = $request->user();
+        
+        // 1. Check for active orders
+        $activeOrders = \App\Models\Order::where('delivery_agent_id', $user->id)
+            ->whereNotIn('order_status', ['Delivered', 'Cancelled', 'Returned'])
+            ->exists();
+
+        if ($activeOrders) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Cannot delete account with active orders. Please complete or cancel them first.'
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $profile = $user->deliveryAgent;
+            
+            // 2. Cleanup Delivery Agent Data
+            if ($profile) {
+                // Delete Payout History
+                \App\Models\DeliveryAgentPayout::where('delivery_agent_id', $profile->id)->delete();
+
+                // Delete Documents
+                $docsPath = public_path('uploads/delivery_agents/docs/');
+                if ($profile->id_proof && file_exists($docsPath . $profile->id_proof)) {
+                    unlink($docsPath . $profile->id_proof);
+                }
+                if ($profile->license_image && file_exists($docsPath . $profile->license_image)) {
+                    unlink($docsPath . $profile->license_image);
+                }
+                $profile->delete();
+            }
+
+            // 3. Cleanup User-related Data
+            // Unlink Orders (Set agent_id to null for historical records)
+            \App\Models\Order::where('delivery_agent_id', $user->id)->update([
+                'delivery_agent_id' => null
+            ]);
+
+            // Delete Contact Queries and Messages
+            $queries = \App\Models\DeliveryAgentContactQuery::where('user_id', $user->id)->get();
+            foreach ($queries as $query) {
+                \App\Models\DeliveryAgentContactQueryMessage::where('query_id', $query->id)->delete();
+                $query->delete();
+            }
+
+            // Delete OTPs
+            DB::table('otps')->where('phone', $user->phone)->delete();
+
+            // Delete Profile Image
+            if ($user->profile_image) {
+                $profilePath = public_path('uploads/delivery_agents/profiles/');
+                if (file_exists($profilePath . $user->profile_image)) {
+                    unlink($profilePath . $user->profile_image);
+                }
+            }
+
+            // 4. Revoke Tokens and Delete User
+            $user->tokens()->delete();
+            $user->delete();
+
+            DB::commit();
+            return response()->json([
+                'status' => true,
+                'message' => 'Account and all associated data permanently deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'status' => false,
+                'message' => 'Deletion failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::where('phone', $request->phone)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Account not found with this mobile number.'
+            ], 404);
+        }
+
+        if (!$user->hasRole('delivery_agent')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized. This account is not a delivery agent.'
+            ], 403);
+        }
+
+        try {
+            $otp = rand(100000, 999999);
+            DB::table('otps')->updateOrInsert(
+                ['phone' => $request->phone],
+                ['otp' => $otp, 'created_at' => now(), 'updated_at' => now()]
+            );
+
+            $sendStatus = $this->sendSMS($request->phone, $otp);
+
+            if (!$sendStatus) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Failed to send OTP. Please try again.'
+                ], 500);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'OTP sent successfully to your mobile number.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|numeric',
+            'otp' => 'required|numeric',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $otpRecord = DB::table('otps')
+            ->where('phone', $request->phone)
+            ->where('otp', $request->otp)
+            ->first();
+
+        if (!$otpRecord) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid or expired OTP.'
+            ], 400);
+        }
+
+        // Check if OTP is older than 15 mins
+        $otpCreatedAt = \Carbon\Carbon::parse($otpRecord->created_at);
+        if ($otpCreatedAt->addMinutes(15)->isPast()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'OTP has expired. Please request a new one.'
+            ], 400);
+        }
+
+        try {
+            $user = User::where('phone', $request->phone)->first();
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Account not found.'
+                ], 404);
+            }
+
+            $user->update([
+                'password' => Hash::make($request->password)
+            ]);
+
+            DB::table('otps')->where('phone', $request->phone)->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Password reset successful. You can now login with your new password.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to reset password: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

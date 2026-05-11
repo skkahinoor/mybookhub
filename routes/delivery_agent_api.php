@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\Deliveryagent\DeliveryAgentApiController;
 Route::post('/delivery-agent/register', [DeliveryAgentApiController::class, 'register']);
 Route::post('/delivery-agent/verify-otp', [DeliveryAgentApiController::class, 'verifyOtp']);
 Route::post('/delivery-agent/login', [DeliveryAgentApiController::class, 'login']);
+Route::post('/delivery-agent/forgot-password', [DeliveryAgentApiController::class, 'forgotPassword']);
+Route::post('/delivery-agent/reset-password', [DeliveryAgentApiController::class, 'resetPassword']);
 
 // Location Routes (Public for registration)
 Route::get('/delivery-agent/countries', [DeliveryAgentApiController::class, 'getCountries']);
@@ -40,6 +42,7 @@ Route::middleware(['auth:sanctum', 'delivery_agent'])->group(function () {
     Route::get('/delivery-agent/contact-queries/{id}', [DeliveryAgentApiController::class, 'getQueryMessages']);
     Route::post('/delivery-agent/contact-queries/{id}/reply', [DeliveryAgentApiController::class, 'replyContactQuery']);
     Route::post('/delivery-agent/contact-queries/{id}/close', [DeliveryAgentApiController::class, 'closeContactQuery']);
+    Route::post('/delivery-agent/delete-account', [DeliveryAgentApiController::class, 'deleteAccount']);
     
     // Future logical routes for delivery app:
     // Route::get('/delivery-agent/orders', [DeliveryAgentApiController::class, 'availableOrders']);
