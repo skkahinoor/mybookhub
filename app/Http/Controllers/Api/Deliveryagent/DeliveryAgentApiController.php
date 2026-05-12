@@ -218,7 +218,7 @@ class DeliveryAgentApiController extends Controller
                     'district_id' => $regData['district_id'],
                     'block_id' => $regData['block_id'],
                     'role_id' => $role->id,
-                    'status' => 0, // Pending approval for new users
+                    'status' => 1, // Active by default, allowed to login
                 ]);
             }
 
@@ -252,7 +252,8 @@ class DeliveryAgentApiController extends Controller
                 'license_number' => $regData['license_number'],
                 'id_proof' => $idProofName,
                 'license_image' => $licenseImageName,
-                'status' => 0,
+                'status' => 1, // Active, but documents might still be pending
+                'document_verify_status' => 0, // Default to pending verification
             ]);
 
             DB::commit();
