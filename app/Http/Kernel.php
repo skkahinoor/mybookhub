@@ -37,6 +37,7 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\StaffPrefixMiddleware::class,
         ],
 
         'api' => [
@@ -69,6 +70,7 @@ class Kernel extends HttpKernel
         // My code:
         // Registering Middleware: Assigning Middleware To Routes: https://laravel.com/docs/9.x/middleware#assigning-middleware-to-routes
         'admin' => \App\Http\Middleware\Admin::class,
+        'admin.permission' => \App\Http\Middleware\CheckAdminPermission::class,
         'user' => \App\Http\Middleware\User::class,
         // Student is the new front-user role (alias to the same middleware)
         'student' => \App\Http\Middleware\User::class,

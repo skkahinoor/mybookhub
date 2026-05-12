@@ -299,13 +299,11 @@ class AdminController extends Controller
                 } elseif ($user->hasRole('student')) {
                     return redirect('/student/dashboard');
                 } elseif ($isStaff) {
-                    // Custom-role staff always land on admin dashboard;
-                    // sidebar/menu is filtered by @can permission directives
-                    return redirect('/admin/dashboard');
+                    return redirect('/staff/dashboard');
                 }
 
                 // Fallback
-                return redirect('/admin/dashboard');
+                return $isStaff ? redirect('/staff/dashboard') : redirect('/admin/dashboard');
             } else {
                 return redirect()->back()->with('error_message', 'Invalid Email or Password');
             }

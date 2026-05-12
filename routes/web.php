@@ -37,7 +37,8 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__ . '/auth.php';
 
-Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function () {
+$adminRoutesClosure = function () {
+
     Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one
     Route::group(['middleware' => ['auth:admin']], function () {
         // check isbn
@@ -544,7 +545,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     Route::get('vendor-states', [App\Http\Controllers\Admin\AdminController::class, 'getVendorStates'])->name('vendor_states');
     Route::get('vendor-districts', [App\Http\Controllers\Admin\AdminController::class, 'getVendorDistricts'])->name('vendor_districts');
     Route::get('vendor-blocks', [App\Http\Controllers\Admin\AdminController::class, 'getVendorBlocks'])->name('vendor_blocks');
-});
+
+};
+
+$adminPrefix = request()->is('staff') || request()->is('staff/*') ? 'staff' : 'admin';
+Route::prefix($adminPrefix)->namespace('App\Http\Controllers\Admin')->group($adminRoutesClosure);
+
 
 // Vendor routes (separate prefix /vendor, vendor-only access)
 require __DIR__ . '/vendor.php';
