@@ -933,13 +933,39 @@ class SellBookController extends Controller
             return response()->json(['status' => true, 'data' => []]);
         }
 
-        $books = Product::where('product_name', 'LIKE', '%' . $query . '%')
+        $basePath = url('front/images/product_images');
+        $relations = ['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'section', 'bookType', 'language'];
+
+        $books = Product::with($relations)
+            ->where('product_name', 'LIKE', '%' . $query . '%')
             ->limit(10)
-            ->get(['id', 'product_name', 'product_isbn']);
+            ->get();
 
         return response()->json([
             'status' => true,
-            'data' => $books,
+            'data' => $books->map(function($product) use ($basePath) {
+                return [
+                    'id' => $product->id,
+                    'product_name' => $product->product_name,
+                    'product_isbn' => $product->product_isbn,
+                    'product_price' => $product->product_price,
+                    'description' => $product->description,
+                    'image_urls' => [
+                        'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
+                        'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
+                        'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                    ],
+                    'section' => $product->section ? ['id' => $product->section->id, 'name' => $product->section->name] : null,
+                    'category' => $product->category ? ['id' => $product->category->id, 'name' => $product->category->category_name] : null,
+                    'subcategory' => $product->subcategory ? ['id' => $product->subcategory->id, 'name' => $product->subcategory->subcategory_name] : null,
+                    'subject' => $product->subject ? ['id' => $product->subject->id, 'name' => $product->subject->name] : null,
+                    'publisher' => $product->publisher ? ['id' => $product->publisher->id, 'name' => $product->publisher->name] : null,
+                    'edition' => $product->edition ? ['id' => $product->edition->id, 'name' => $product->edition->edition] : null,
+                    'language' => $product->language ? ['id' => $product->language->id, 'name' => $product->language->name] : null,
+                    'book_type' => $product->bookType ? ['id' => $product->bookType->id, 'name' => $product->bookType->book_type] : null,
+                    'authors' => $product->authors->map(fn($a) => ['id' => $a->id, 'name' => $a->name]),
+                ];
+            }),
         ]);
     }
 

@@ -1819,7 +1819,7 @@
                     </select>
                 </div>
 
-                <div class="filter-group">
+                <div class="filter-group" id="subcategoryFilterGroup">
                     <label>Class/Stream</label>
                     <select class="filter-select" id="filterSubcategory">
                         <option value="">Select Class</option>
@@ -1931,6 +1931,9 @@
                         }
                     });
             }
+            if (savedSectionId) {
+                checkReligiousBook();
+            }
         })();
 
         // Location Detection
@@ -2039,6 +2042,7 @@
             document.getElementById('homeSortBy').value = 'all';
 
             updateHomeGrid();
+            checkReligiousBook();
         });
 
         overlay.addEventListener('click', () => toggleModal(false));
@@ -2234,10 +2238,23 @@
 
             updateHomeGrid(subjectId === 'all' ? null : subjectId, activeSubjectName);
         }
+        function checkReligiousBook() {
+            const sectionText = sectionSelect.options[sectionSelect.selectedIndex].text.trim().toLowerCase();
+            const subcategoryGroup = document.getElementById('subcategoryFilterGroup');
+            if (sectionText === 'religious book') {
+                subcategoryGroup.style.display = 'none';
+                subcategorySelect.value = '';
+            } else {
+                subcategoryGroup.style.display = 'block';
+            }
+        }
+
         sectionSelect.addEventListener('change', function() {
             const sectionId = this.value;
             categorySelect.innerHTML = '<option value="">Loading...</option>';
             subcategorySelect.innerHTML = '<option value="">Select Class</option>';
+
+            checkReligiousBook();
 
             if (sectionId) {
                 fetch(`{{ url('get-filter-categories') }}?section_id=${sectionId}`)
