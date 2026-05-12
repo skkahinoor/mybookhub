@@ -95,6 +95,17 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             'destroy' => 'admin.roles.destroy',
         ]);
 
+        // Staff Management (custom-role users who login via admin URL)
+        Route::resource('staff', \App\Http\Controllers\Admin\StaffController::class)->names([
+            'index'   => 'admin.staff.index',
+            'create'  => 'admin.staff.create',
+            'store'   => 'admin.staff.store',
+            'edit'    => 'admin.staff.edit',
+            'update'  => 'admin.staff.update',
+            'destroy' => 'admin.staff.destroy',
+        ])->except(['show']);
+        Route::post('update-staff-status', [\App\Http\Controllers\Admin\StaffController::class, 'updateStatus'])->name('admin.staff.update_status');
+
         // Sales Reports (Admin)
         Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('admin.reports.sales_reports.index');
         Route::get('reports/sales_reports/{id}', [SalesReportController::class, 'show'])->name('admin.reports.sales_reports.show');

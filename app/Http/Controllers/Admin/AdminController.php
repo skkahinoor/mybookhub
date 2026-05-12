@@ -268,18 +268,24 @@ class AdminController extends Controller
 
                 $routePrefix = request()->segment(1); // 'admin', 'vendor', 'sales'
 
-                // Prevent vendors logging into admin login URL and vice versa
-                if ($routePrefix == 'admin' && ! $user->hasRole('admin') && ! $user->hasRole('superadmin') && $user->role_id != RoleHelper::adminId()) {
-                    Auth::guard('admin')->logout();
+                // Core role slugs
+                $coreRoles = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user'];
+                $userRoleNames = $user->roles->pluck('name')->toArray();
+                $isStaff = !empty(array_diff($userRoleNames, $coreRoles));
 
+                // Prevent vendors logging into admin login URL and vice versa
+                if ($routePrefix == 'admin'
+                    && ! $user->hasRole('admin')
+                    && ! $user->hasRole('superadmin')
+                    && $user->role_id != RoleHelper::adminId()
+                    && ! $isStaff) {
+                    Auth::guard('admin')->logout();
                     return redirect()->back()->with('error_message', 'You do not have admin access.');
                 } elseif ($routePrefix == 'vendor' && ! $user->hasRole('vendor') && $user->role_id != RoleHelper::vendorId()) {
                     Auth::guard('admin')->logout();
-
                     return redirect()->back()->with('error_message', 'You do not have vendor access.');
                 } elseif ($routePrefix == 'sales' && ! $user->hasRole('sales') && $user->role_id != RoleHelper::salesId()) {
                     Auth::guard('admin')->logout();
-
                     return redirect()->back()->with('error_message', 'You do not have sales access.');
                 }
 
@@ -292,9 +298,13 @@ class AdminController extends Controller
                     return redirect('/sales/dashboard');
                 } elseif ($user->hasRole('student')) {
                     return redirect('/student/dashboard');
+                } elseif ($isStaff) {
+                    // Custom-role staff always land on admin dashboard;
+                    // sidebar/menu is filtered by @can permission directives
+                    return redirect('/admin/dashboard');
                 }
 
-                // Fallback to admin dashboard if no specific role found
+                // Fallback
                 return redirect('/admin/dashboard');
             } else {
                 return redirect()->back()->with('error_message', 'Invalid Email or Password');

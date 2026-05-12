@@ -14,9 +14,16 @@
                                     <button type="button" class="btn btn-danger mr-2" id="bulk-delete-vendors-btn" style="display: none;">
                                         <i class="mdi mdi-delete-sweep"></i> Delete Selected (<span id="selected-vendors-count">0</span>)
                                     </button>
-                                    <a href="{{ url('admin/add-edit-admin') }}" class="btn btn-primary">
-                                        <i class="mdi mdi-plus"></i> Add Vendor
-                                    </a>
+                                    {{-- Hide "Add Vendor" on the Admin listing page; show "Add Staff" instead --}}
+                                    @if (Request::is('admin/admins/admin') || Request::is('admin/admins'))
+                                        <a href="{{ route('admin.staff.create') }}" class="btn btn-success">
+                                            <i class="mdi mdi-account-plus"></i> Add Staff
+                                        </a>
+                                    @else
+                                        <a href="{{ url('admin/add-edit-admin') }}" class="btn btn-primary">
+                                            <i class="mdi mdi-plus"></i> Add Vendor
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
 
