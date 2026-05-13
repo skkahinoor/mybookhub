@@ -108,7 +108,7 @@ class AdminController extends Controller
 
         // Sell Book Requests for Admin Dashboard
         $sellBookRequests = collect();
-        if ($adminType === 'superadmin' || $adminType === 'admin') {
+        if (Auth::guard('admin')->user()->can('view_sell_book_requests')) {
             $sellBookRequests = ProductsAttribute::with(['product', 'user', 'condition', 'vendor'])
                 ->whereNotNull('old_book_condition_id')
                 ->whereNotNull('user_id')
@@ -119,7 +119,7 @@ class AdminController extends Controller
 
         // Eligible vendor payouts (Admin dashboard only)
         $eligibleVendorPayoutItems = collect();
-        if ($adminType === 'superadmin' || $adminType === 'admin') {
+        if (Auth::guard('admin')->user()->can('view_vendor_payouts')) {
             $candidates = OrdersProduct::query()
                 ->with([
                     'order.orders_products',
