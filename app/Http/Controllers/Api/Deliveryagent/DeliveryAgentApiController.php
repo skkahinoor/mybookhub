@@ -1046,16 +1046,43 @@ class DeliveryAgentApiController extends Controller
         ->whereNotIn('id', $rejectedIds)
         ->whereIn('order_status', ['New', 'Approved', 'Processing', 'Paid', 'Pending']);
 
-        // Hybrid matching: Either in same district OR within radius of coordinates
+        // Hybrid matching:
+        // If latitude & longitude are provided, search geospatially across all districts for pickup/drop-off points within radius
+        // Otherwise, fall back to matching by the agent's home district
         $query->where(function($q) use ($districtId, $lat, $lng, $radius) {
-            $q->where('district_id', $districtId)
-              ->orWhereHas('user', function($sub) use ($districtId) {
-                  $sub->where('district_id', $districtId);
-              });
-
             if ($lat && $lng) {
-                // Haversine formula to find orders within radius
-                $q->orWhereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) < ?", [$lat, $lng, $lat, $radius]);
+                // 1. Matches if buyer (drop-off) is within radius of agent coordinates
+                $q->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) < ?", [$lat, $lng, $lat, $radius]);
+
+                // 2. Matches if buyer's registered user address coordinates are within radius
+                $q->orWhereHas('user', function($sub) use ($lat, $lng, $radius) {
+                    $sub->whereNotNull('latitude')
+                        ->whereNotNull('longitude')
+                        ->where('latitude', '!=', '')
+                        ->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) < ?", [$lat, $lng, $lat, $radius]);
+                });
+
+                // 3. Matches if ANY vendor pickup points are within radius
+                $q->orWhereHas('orders_products.vendor_details.vendorbusinessdetails', function($sub) use ($lat, $lng, $radius) {
+                    $sub->whereNotNull('latitude')
+                        ->whereNotNull('longitude')
+                        ->where('latitude', '!=', '')
+                        ->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) < ?", [$lat, $lng, $lat, $radius]);
+                });
+
+                // 4. Matches if ANY student seller (individual product attribute user) is within radius
+                $q->orWhereHas('orders_products.product_attribute.user', function($sub) use ($lat, $lng, $radius) {
+                    $sub->whereNotNull('latitude')
+                        ->whereNotNull('longitude')
+                        ->where('latitude', '!=', '')
+                        ->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) < ?", [$lat, $lng, $lat, $radius]);
+                });
+            } else {
+                // Fallback to district matching
+                $q->where('district_id', $districtId)
+                  ->orWhereHas('user', function($sub) use ($districtId) {
+                      $sub->where('district_id', $districtId);
+                  });
             }
         });
 
@@ -1091,9 +1118,23 @@ class DeliveryAgentApiController extends Controller
                     }
                 }
 
+                // If vendorProfile is null, resolve from student seller details (vendor_id = 0 fallback)
+                if (!$vendorProfile && ($item->vendor_id == 0 || !$item->vendor_id)) {
+                    $studentId = $item->admin_id > 0 ? $item->admin_id : null;
+                    if (!$studentId && $item->product_id) {
+                        $product = \App\Models\Product::find($item->product_id);
+                        if ($product) {
+                            $studentId = $product->seller_id;
+                        }
+                    }
+                    if ($studentId) {
+                        $sellerUser = \App\Models\User::find($studentId);
+                    }
+                }
+
                 return [
-                    'seller_name' => $sellerUser ? $sellerUser->name : 'N/A',
-                    'shop_name' => $business ? $business->shop_name : 'Individual Seller',
+                    'seller_name' => $sellerUser ? $sellerUser->name : 'Individual Seller',
+                    'shop_name' => $business ? $business->shop_name : ($sellerUser ? $sellerUser->name . "'s Books" : 'Student Seller'),
                     'address' => $business ? $business->shop_address : ($sellerUser ? $sellerUser->address : 'N/A'),
                     'mobile' => $business ? $business->shop_mobile : ($sellerUser ? $sellerUser->phone : 'N/A'),
                     'latitude' => $lat ?? ($business ? $business->latitude : ($sellerUser ? $sellerUser->latitude : null)),
