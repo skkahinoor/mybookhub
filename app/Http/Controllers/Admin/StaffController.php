@@ -90,7 +90,7 @@ class StaffController extends Controller
         $logos      = HeaderLogo::first();
 
         // Only non-core roles can be assigned to staff
-        $coreRoles = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user'];
+        $coreRoles = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user', 'delivery_agent'];
         $roles = Role::whereNotIn('name', $coreRoles)->get();
 
         return view('admin.admins.add_staff', compact('logos', 'headerLogo', 'roles'));
@@ -164,7 +164,7 @@ class StaffController extends Controller
 
         $staff = User::with('roles')->findOrFail($id);
 
-        $coreRoles = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user'];
+        $coreRoles = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user', 'delivery_agent'];
         $roles     = Role::whereNotIn('name', $coreRoles)->get();
 
         $currentRoleId = $staff->roles->first()?->id;

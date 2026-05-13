@@ -18,8 +18,6 @@ class StaffPrefixMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        $uri = $request->getRequestUri();
-
         // Check if user is authenticated under the 'admin' guard
         if (Auth::guard('admin')->check()) {
             $user = Auth::guard('admin')->user();
@@ -29,17 +27,23 @@ class StaffPrefixMiddleware
             $userRoleNames = $user->roles->pluck('name')->toArray();
             $isStaff = !empty(array_diff($userRoleNames, $coreRoles)) && !$user->hasRole('admin') && !$user->hasRole('superadmin');
 
+            $path = $request->path();
+
             if ($isStaff) {
-                // If a restricted staff member accesses '/admin/...' directly, redirect them to '/staff/...'
-                if (strpos($uri, '/admin/') !== false) {
-                    $newUri = str_replace('/admin/', '/staff/', $uri);
-                    return redirect($newUri);
+                // If a restricted staff member accesses 'admin/...' directly, redirect them to 'staff/...'
+                if (strpos($path, 'admin/') === 0) {
+                    $newPath = 'staff/' . substr($path, 6);
+                    return redirect($newPath);
+                } elseif ($path === 'admin') {
+                    return redirect('staff');
                 }
             } else {
-                // If a superadmin/admin accesses '/staff/...' directly, redirect them to '/admin/...'
-                if (strpos($uri, '/staff/') !== false) {
-                    $newUri = str_replace('/staff/', '/admin/', $uri);
-                    return redirect($newUri);
+                // If a superadmin/admin accesses 'staff/...' directly, redirect them to 'admin/...'
+                if (strpos($path, 'staff/') === 0) {
+                    $newPath = 'admin/' . substr($path, 6);
+                    return redirect($newPath);
+                } elseif ($path === 'staff') {
+                    return redirect('admin');
                 }
             }
         }
@@ -54,12 +58,17 @@ class StaffPrefixMiddleware
             $userRoleNames = $user->roles->pluck('name')->toArray();
             $isStaff = !empty(array_diff($userRoleNames, $coreRoles)) && !$user->hasRole('admin') && !$user->hasRole('superadmin');
 
+            $baseUrl = $request->getBaseUrl();
+
             if ($isStaff) {
+                $fromPrefix = $baseUrl . '/admin/';
+                $toPrefix = $baseUrl . '/staff/';
+
                 // For restricted staff, rewrite redirect Location headers to '/staff/'
                 if ($response->isRedirection()) {
                     $location = $response->headers->get('Location');
-                    if ($location && strpos($location, '/admin/') !== false) {
-                        $newLocation = str_replace('/admin/', '/staff/', $location);
+                    if ($location && strpos($location, $fromPrefix) !== false) {
+                        $newLocation = str_replace($fromPrefix, $toPrefix, $location);
                         $response->headers->set('Location', $newLocation);
                     }
                 }
@@ -69,16 +78,19 @@ class StaffPrefixMiddleware
                 if ($contentType && strpos($contentType, 'text/html') !== false) {
                     $content = $response->getContent();
                     if (is_string($content)) {
-                        $content = $this->rewriteAdminHtml($content, '/admin/', '/staff/');
+                        $content = $this->rewriteAdminHtml($content, $fromPrefix, $toPrefix);
                         $response->setContent($content);
                     }
                 }
             } else {
+                $fromPrefix = $baseUrl . '/staff/';
+                $toPrefix = $baseUrl . '/admin/';
+
                 // For admins/superadmins, rewrite redirect Location headers to '/admin/' if they point to '/staff/'
                 if ($response->isRedirection()) {
                     $location = $response->headers->get('Location');
-                    if ($location && strpos($location, '/staff/') !== false) {
-                        $newLocation = str_replace('/staff/', '/admin/', $location);
+                    if ($location && strpos($location, $fromPrefix) !== false) {
+                        $newLocation = str_replace($fromPrefix, $toPrefix, $location);
                         $response->headers->set('Location', $newLocation);
                     }
                 }
@@ -88,7 +100,7 @@ class StaffPrefixMiddleware
                 if ($contentType && strpos($contentType, 'text/html') !== false) {
                     $content = $response->getContent();
                     if (is_string($content)) {
-                        $content = $this->rewriteAdminHtml($content, '/staff/', '/admin/');
+                        $content = $this->rewriteAdminHtml($content, $fromPrefix, $toPrefix);
                         $response->setContent($content);
                     }
                 }
@@ -123,7 +135,7 @@ class StaffPrefixMiddleware
             return $attribute . '=' . $quote . $base . $to . $path . $quote;
         }, $html);
 
-        // Also handle JSON endpoints, script tags or other instances of "/admin/" or "/staff/"
+        // Also handle JSON endpoints, script tags or other instances of base-prefixed URL
         $rewritten = str_replace('"' . $from, '"' . $to, $rewritten);
         $rewritten = str_replace('\'' . $from, '\'' . $to, $rewritten);
 
