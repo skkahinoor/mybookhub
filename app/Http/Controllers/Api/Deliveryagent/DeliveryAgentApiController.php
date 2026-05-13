@@ -1078,9 +1078,15 @@ class DeliveryAgentApiController extends Controller
                         ->whereRaw("( 6371 * acos( cos( radians(?) ) * cos( radians( latitude ) ) * cos( radians( longitude ) - radians(?) ) + sin( radians(?) ) * sin( radians( latitude ) ) ) ) < ?", [$lat, $lng, $lat, $radius]);
                 });
             } else {
-                // Fallback to district matching
+                // Fallback to district matching: Match if buyer's district OR buyer's registered profile OR any vendor shop OR student seller matches agent's district
                 $q->where('district_id', $districtId)
                   ->orWhereHas('user', function($sub) use ($districtId) {
+                      $sub->where('district_id', $districtId);
+                  })
+                  ->orWhereHas('orders_products.vendor_details.vendorbusinessdetails', function($sub) use ($districtId) {
+                      $sub->where('district_id', $districtId);
+                  })
+                  ->orWhereHas('orders_products.product_attribute.user', function($sub) use ($districtId) {
                       $sub->where('district_id', $districtId);
                   });
             }
