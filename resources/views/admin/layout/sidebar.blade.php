@@ -127,6 +127,7 @@
             </li>
 
 
+            @if (Auth::guard('admin')->user()->can('view_products') || Auth::guard('admin')->user()->can('view_coupons') || Auth::guard('admin')->user()->can('view_requested_books'))
             <li class="nav-item">
                 <a @if (Session::get('page') == 'education-levels' ||
                         Session::get('page') == 'categories' ||
@@ -191,8 +192,9 @@
                     </ul>
                 </div>
             </li>
+            @endif
 
-            {{-- If the authenticated/logged-in user is 'vendor', show ONLY the orders of the products added by that specific 'vendor' (In constrast to the case where the authenticated/logged-in user is 'admin', we show ALL orders) --}}
+            @if (Auth::guard('admin')->user()->can('view_orders') || Auth::guard('admin')->user()->can('view_sales_concept') || Auth::guard('admin')->user()->can('view_order_queries'))
             <li class="nav-item">
                 <a @if (Session::get('page') == 'orders') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-orders" aria-expanded="false"
@@ -216,12 +218,15 @@
                                     @if (Session::get('page') == 'sales_concept') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                     class="nav-link" href="{{ url('vendor/sales-concept') }}">Sales Concept</a></li>
                         @endif
+                        @if (Auth::guard('admin')->user()->can('view_order_queries'))
                         <li class="nav-item"> <a
                                 @if (Session::get('page') == 'order_queries') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                 class="nav-link" href="{{ url('vendor/order-queries') }}">Order Queries</a></li>
+                        @endif
                     </ul>
                 </div>
             </li>
+            @endif
         @else
             {{-- In case the authenticated user (the logged-in user) (using the 'admin' Authentication Guard in auth.php) type is 'superadmin', or 'admin', or 'subadmin' --}}
 
@@ -262,6 +267,7 @@
             @endcanany
 
             {{-- Report --}}
+            @can('view_reports')
             <li class="nav-item">
                 <a @if (Session::get('page') == 'sales_reports' || Session::get('page') == 'stock_report') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-reports" aria-expanded="false"
@@ -283,8 +289,10 @@
                     </ul>
                 </div>
             </li>
+            @endcan
 
             {{-- Admin Management --}}
+            @canany(['view_admins', 'manage_staff', 'manage_admin_password', 'manage_admin_details'])
             <li class="nav-item">
                 <a @if (Session::get('page') == 'view_admins' || Session::get('page') == 'view_staff' || Session::get('page') == 'update_admin_password' || Session::get('page') == 'update_admin_details') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-admin-mgmt" aria-expanded="false"
@@ -313,8 +321,10 @@
                     </ul>
                 </div>
             </li>
+            @endcanany
 
             {{-- Vendor Management --}}
+            @canany(['view_vendors', 'manage_vendor_plans', 'view_sales_concept'])
             <li class="nav-item">
                 <a @if (Session::get('page') == 'view_vendors' || Session::get('page') == 'plan_settings' || Session::get('page') == 'sales_concept') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-vendor-mgmt" aria-expanded="false"
@@ -341,8 +351,10 @@
                     </ul>
                 </div>
             </li>
+            @endcanany
 
             {{-- Sales Management --}}
+            @can('view_sales')
             <li class="nav-item">
                 <a @if (Session::get('page') == 'view_sales') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-sales-mgmt" aria-expanded="false"
@@ -361,8 +373,10 @@
                     </ul>
                 </div>
             </li>
+            @endcan
 
             {{-- Delivery Management --}}
+            @canany(['view_delivery_agents', 'view_delivery_agent_payouts', 'view_delivery_agent_queries'])
             <li class="nav-item">
                 <a @if (Session::get('page') == 'view_delivery_agents') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-delivery-mgmt" aria-expanded="false"
@@ -385,8 +399,10 @@
                     </ul>
                 </div>
             </li>
+            @endcanany
 
             {{-- Student Management --}}
+            @canany(['view_students', 'view_subscribers', 'view_contact_queries'])
             <li class="nav-item">
                 <a @if (Session::get('page') == 'students' || Session::get('page') == 'subscribers' || Session::get('page') == 'contact_queries') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-student-mgmt" aria-expanded="false"
@@ -415,7 +431,9 @@
                     </ul>
                 </div>
             </li>
+            @endcanany
              {{-- Catalogue Management (Remaining Items) --}}
+            @canany(['view_sections', 'view_categories', 'view_publishers', 'view_authors', 'view_subjects', 'view_languages', 'view_types', 'view_products', 'view_editions', 'view_coupons', 'view_requested_books'])
             <li class="nav-item">
                 <a @if (Session::get('page') == 'education-levels' || Session::get('page') == 'categories' || Session::get('page') == 'subcategories' || Session::get('page') == 'publisher' || Session::get('page') == 'authors' || Session::get('page') == 'subjects' || Session::get('page') == 'class_subjects' || Session::get('page') == 'languages' || Session::get('page') == 'types' || Session::get('page') == 'products' || Session::get('page') == 'edition' || Session::get('page') == 'coupons' || Session::get('page') == 'bookRequests') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-catalogue" aria-expanded="false"
@@ -490,6 +508,7 @@
                     </ul>
                 </div>
             </li>
+            @endcanany
 
             {{-- Old Book Management --}}
             @canany(['view_old_book_conditions','view_sell_book_requests','view_old_book_commissions','view_old_book_payouts'])
@@ -520,6 +539,7 @@
             @endcanany
 
             {{-- Institution Management --}}
+            @can('view_institutions')
             <li class="nav-item">
                 <a @if (Session::get('page') == 'institution_managements') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-institution-mgmt" aria-expanded="false"
@@ -538,6 +558,7 @@
                     </ul>
                 </div>
             </li>
+            @endcan
 
             {{-- Location Management --}}
             @canany(['view_locations','view_blocks'])
@@ -563,6 +584,7 @@
             @endcanany
 
             {{-- Order Management --}}
+            @canany(['view_orders', 'view_order_queries', 'manage_movs', 'manage_shipping_charges'])
             <li class="nav-item">
                 <a @if (Session::get('page') == 'orders' || Session::get('page') == 'returns' || Session::get('page') == 'order_queries' || Session::get('page') == 'movs' || Session::get('page') == 'shipping_charges') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-order-mgmt" aria-expanded="false"
@@ -589,10 +611,12 @@
                     </ul>
                 </div>
             </li>
+            @endcanany
 
            
 
             {{-- Other Managements --}}
+            @canany(['view_ratings', 'view_withdrawals', 'view_banners', 'manage_dynamic_modals', 'manage_commission_settings'])
             <li class="nav-item">
                 <a @if (Session::get('page') == 'ratings' || Session::get('page') == 'withdrawals' || Session::get('page') == 'banners' || Session::get('page') == 'dynamic_modals' || Session::get('page') == 'commission_settings') style="background: #052CA3 !important; color: #FFF !important" @endif
                     class="nav-link" data-toggle="collapse" href="#ui-others" aria-expanded="false"
@@ -627,6 +651,7 @@
                     </ul>
                 </div>
             </li>
+            @endcanany
         @endif
 
     </ul>

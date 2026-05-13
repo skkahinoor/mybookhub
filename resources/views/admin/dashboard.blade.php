@@ -162,9 +162,10 @@
 
             {{-- Metrics Grid --}}
             <div class="row">
-                @if ($userType == 'superadmin' || $userType == 'admin')
+                @if ($userType == 'superadmin' || $userType == 'admin' || $userType == 'staff')
                     <div class="col-md-12">
                         <div class="metric-grid">
+                            @can('view_vendors')
                             {{-- Vendors Card --}}
                             <div class="metric-card">
                                 <a href="{{ url('admin/admins/vendor') }}">
@@ -177,7 +178,9 @@
                                     </div>
                                 </a>
                             </div>
+                            @endcan
 
+                            @can('view_students')
                              {{-- Students Card --}}
                             <div class="metric-card">
                                 <a href="{{ url('admin/students') }}">
@@ -190,7 +193,9 @@
                                     </div>
                                 </a>
                             </div>
+                            @endcan
 
+                            @can('view_sales')
                             {{-- Sales Executives Card --}}
                             <div class="metric-card">
                                 <a href="{{ url('admin/sales-executive') }}">
@@ -203,7 +208,9 @@
                                     </div>
                                 </a>
                             </div>
+                            @endcan
 
+                            @can('view_products')
                             {{-- Products Card --}}
                             <div class="metric-card">
                                 <a href="{{ url('admin/products') }}">
@@ -216,7 +223,9 @@
                                     </div>
                                 </a>
                             </div>
+                            @endcan
 
+                            @can('view_orders')
                             {{-- Orders Card --}}
                             <div class="metric-card">
                                 <a href="{{ url('admin/orders') }}">
@@ -229,7 +238,9 @@
                                     </div>
                                 </a>
                             </div>
+                            @endcan
 
+                            @can('view_coupons')
                              {{-- Coupons Card --}}
                             <div class="metric-card">
                                 <a href="{{ url('admin/coupons') }}">
@@ -242,7 +253,9 @@
                                     </div>
                                 </a>
                             </div>
+                            @endcan
 
+                            @can('view_delivery_agents')
                             {{-- Delivery Agents Card --}}
                             <div class="metric-card">
                                 <a href="{{ url('admin/delivery-agent') }}">
@@ -255,6 +268,7 @@
                                     </div>
                                 </a>
                             </div>
+                            @endcan
                         </div>
                     </div>
                 @elseif ($userType == 'vendor')
@@ -309,7 +323,8 @@
                 @endif
             </div>
 
-            @if ($userType == 'superadmin' || $userType == 'admin')
+            @if ($userType == 'superadmin' || $userType == 'admin' || $userType == 'staff')
+                @can('view_vendor_payouts')
                 {{-- Eligible Vendor Payouts --}}
                 <div class="row mt-4">
                     <div class="col-12 mb-4">
@@ -472,8 +487,10 @@
                         </div>
                     </div>
                 </div>
+                @endcan
             @endif
-             @if ($userType == 'superadmin' || $userType == 'admin')
+             @if ($userType == 'superadmin' || $userType == 'admin' || $userType == 'staff')
+            @can('view_sell_book_requests')
             {{-- Sell Old Book Requests Row --}}
             <div class="row mt-4">
                 <div class="col-12 mb-4">
@@ -711,8 +728,8 @@
                             </div>
                         </div>
                     </div>
-                </div>
             </div>
+            @endcan
             @endif
             {{-- Charts & Activity Row --}}
             <div class="row mt-4">
@@ -946,7 +963,7 @@
             });
         </script>
 
-        @if ($userType == 'superadmin' || $userType == 'admin')
+        @if ($userType == 'superadmin' || $userType == 'admin' || $userType == 'staff')
             <script>
                 (function () {
                     function setText(id, value) {

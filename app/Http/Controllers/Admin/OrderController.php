@@ -1238,10 +1238,10 @@ class OrderController extends Controller
             return redirect()->back()->with('error_message', 'Payout release is not applicable for Pickup from store orders.');
         }
 
-        // Vendor authorization check - only admins can perform this
+        // Authorization check
         $admin = Auth::guard('admin')->user();
-        if ($admin->hasRole('vendor')) {
-            return redirect()->back()->with('error_message', 'Unauthorized action. Only admins can release payouts.');
+        if (!$admin->can('view_vendor_payouts')) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
         }
 
         $item->update([
@@ -1265,6 +1265,9 @@ class OrderController extends Controller
 
     public function getVendorBankDetails(Request $request)
     {
+        if (!Auth::guard('admin')->user()->can('view_vendor_payouts')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
         $vendorId = $request->input('vendor_id');
         $vendorBank = \App\Models\VendorsBankDetail::where('vendor_id', $vendorId)->first();
 
