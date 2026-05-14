@@ -55,6 +55,11 @@ class AdminController extends Controller
         $couponsCount = Coupon::where('status', 1)->count();
         $deliveryAgentsCount = DeliveryAgent::count();
 
+        // Staff count
+        $coreRolesForStaff = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user', 'delivery_agent'];
+        $staffRoles = Role::whereNotIn('name', $coreRolesForStaff)->pluck('name')->toArray();
+        $staffsCount = !empty($staffRoles) ? User::role($staffRoles, 'web')->count() : 0;
+
         // Vendor-specific counts
         if ($adminType === 'vendor' && $vendorId) {
 
@@ -169,6 +174,7 @@ class AdminController extends Controller
             'vendorsCount',
             'salesExecutivesCount',
             'deliveryAgentsCount',
+            'staffsCount',
             'logos',
             'headerLogo',
             'vendor',

@@ -180,6 +180,21 @@
                             </div>
                             @endcan
 
+                            @can('manage_staff')
+                            {{-- Staff Card --}}
+                            <div class="metric-card">
+                                <a href="{{ route('admin.staff.index') }}">
+                                    <div class="metric-icon-wrapper icon-cyan">
+                                        <i class="fas fa-users-cog"></i>
+                                    </div>
+                                    <div class="metric-details">
+                                        <div class="metric-label">Staff</div>
+                                        <div class="metric-value">{{ number_format($staffsCount) }}</div>
+                                    </div>
+                                </a>
+                            </div>
+                            @endcan
+
                             @can('view_students')
                              {{-- Students Card --}}
                             <div class="metric-card">
