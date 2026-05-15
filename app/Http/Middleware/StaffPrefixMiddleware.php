@@ -29,7 +29,8 @@ class StaffPrefixMiddleware
                 'vendor',
                 'sales',
                 'student',
-                'user'
+                'user',
+                'delivery-agent'
             ];
 
             $userRoleNames = $user->roles->pluck('name')->toArray();
@@ -52,15 +53,15 @@ class StaffPrefixMiddleware
 
                 // Redirect admin/* => staff/*
                 if (
-    strpos($path, 'admin/') === 0 &&
-    strpos($path, 'admin/orders/') !== 0
-) {
+                    strpos($path, 'admin/') === 0 &&
+                    strpos($path, 'admin/orders/') !== 0
+                ) {
 
-    $newPath = '/staff/' .
-        ltrim(substr($path, strlen('admin/')), '/');
+                    $newPath = '/staff/' .
+                        ltrim(substr($path, strlen('admin/')), '/');
 
-    return redirect($newPath);
-}
+                    return redirect($newPath);
+                }
 
                 // Redirect /admin => /staff
                 if ($path === 'admin') {
@@ -73,9 +74,7 @@ class StaffPrefixMiddleware
             |--------------------------------------------------------------------------
             | ADMIN / SUPERADMIN USERS
             |--------------------------------------------------------------------------
-            */
-
-            else {
+            */ else {
 
                 // Redirect staff/* => admin/*
                 if (strpos($path, 'staff/') === 0) {
