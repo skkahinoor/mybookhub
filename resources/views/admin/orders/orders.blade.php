@@ -11,13 +11,26 @@
                         <div class="card-body">
                             <h4 class="card-title">Orders</h4>
 
-
+                            <div class="d-flex justify-content-between align-items-center pt-3 mb-3">
+                                <div>
+                                    @can('delete_orders')
+                                        <button id="deleteSelectedOrders" class="btn btn-danger btn-sm" style="display: none;">
+                                            <i class="mdi mdi-delete"></i> Delete Selected
+                                        </button>
+                                    @endcan
+                                </div>
+                            </div>
 
                             <div class="table-responsive pt-3">
                                 {{-- DataTable --}}
                                 <table id="orders" class="table table-bordered"> {{-- using the id here for the DataTable --}}
                                     <thead>
                                         <tr>
+                                            <th>
+                                                <div style="display: flex; justify-content: center;">
+                                                    <input type="checkbox" id="selectAllOrders" style="transform: scale(1.3); cursor: pointer;">
+                                                </div>
+                                            </th>
                                             <th>Sl.No</th>
                                             <th>Order ID</th>
                                             <th>Order Date</th>
@@ -65,6 +78,7 @@
                 serverSide: true,
                 ajax: "{{ url()->current() }}",
                 columns: [
+                    {data: 'checkbox', name: 'checkbox', orderable: false, searchable: false},
                     {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
                     {data: 'id', name: 'id'},
                     {data: 'created_at', name: 'created_at'},
@@ -77,8 +91,8 @@
                     {data: 'actions', name: 'actions', orderable: false, searchable: false},
                 ],
                 "order": [
-                    [1, "desc"]
-                ], // Sort by Order ID (column 1) descending - latest first
+                    [2, "desc"]
+                ], // Sort by Order ID (column 2 now due to checkbox) descending - latest first
                 "pageLength": 10, // Show 10 entries per page
                 "lengthMenu": [
                     [10, 25, 50, 100, -1],
@@ -96,6 +110,99 @@
                         "next": "Next",
                         "previous": "Previous"
                     }
+                }
+            });
+
+            // Handle Select All Checkbox
+            $('#selectAllOrders').on('click', function() {
+                var isChecked = $(this).prop('checked');
+                $('.select-order-checkbox').prop('checked', isChecked);
+                toggleDeleteButton();
+            });
+
+            // Handle Individual Checkbox
+            $(document).on('change', '.select-order-checkbox', function() {
+                // Uncheck "Select All" if any individual checkbox is unchecked
+                if (!$(this).prop('checked')) {
+                    $('#selectAllOrders').prop('checked', false);
+                }
+                
+                // Check "Select All" if all individual checkboxes are checked
+                if ($('.select-order-checkbox:checked').length == $('.select-order-checkbox').length && $('.select-order-checkbox').length > 0) {
+                    $('#selectAllOrders').prop('checked', true);
+                }
+
+                toggleDeleteButton();
+            });
+
+            // Handle table pagination/draw to uncheck "Select All"
+            $('#orders').on('draw.dt', function() {
+                $('#selectAllOrders').prop('checked', false);
+                toggleDeleteButton();
+            });
+
+            function toggleDeleteButton() {
+                var checkedCount = $('.select-order-checkbox:checked').length;
+                if (checkedCount > 0) {
+                    $('#deleteSelectedOrders').show();
+                } else {
+                    $('#deleteSelectedOrders').hide();
+                }
+            }
+
+            // Bulk Delete Action
+            $('#deleteSelectedOrders').on('click', function() {
+                var selectedIds = [];
+                $('.select-order-checkbox:checked').each(function() {
+                    selectedIds.push($(this).val());
+                });
+
+                if (selectedIds.length > 0) {
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You won't be able to revert this! Selected orders will be deleted.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete them!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                url: '{{ route('admin.orders.bulkDelete') }}',
+                                type: 'POST',
+                                data: {
+                                    ids: selectedIds,
+                                    _token: '{{ csrf_token() }}'
+                                },
+                                success: function(response) {
+                                    if (response.status) {
+                                        Swal.fire(
+                                            'Deleted!',
+                                            response.message,
+                                            'success'
+                                        );
+                                        $('#orders').DataTable().ajax.reload();
+                                        $('#selectAllOrders').prop('checked', false);
+                                        $('#deleteSelectedOrders').hide();
+                                    } else {
+                                        Swal.fire(
+                                            'Error!',
+                                            response.message,
+                                            'error'
+                                        );
+                                    }
+                                },
+                                error: function(xhr) {
+                                    Swal.fire(
+                                        'Error!',
+                                        'Something went wrong. Please try again.',
+                                        'error'
+                                    );
+                                }
+                            });
+                        }
+                    });
                 }
             });
         });

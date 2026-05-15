@@ -77,6 +77,9 @@ class OrderController extends Controller
 
             return \Yajra\DataTables\Facades\DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('checkbox', function ($row) {
+                    return '<div style="display: flex; justify-content: center;"><input type="checkbox" class="select-order-checkbox" value="' . $row->id . '" style="transform: scale(1.3); cursor: pointer;"></div>';
+                })
                 ->addColumn('id', function ($row) {
                     return '#' . $row->id;
                 })
@@ -107,7 +110,7 @@ class OrderController extends Controller
                                 <i style="font-size: 25px" class="mdi mdi-file-pdf"></i>
                             </a>';
                 })
-                ->rawColumns(['ordered_products', 'actions'])
+                ->rawColumns(['checkbox', 'ordered_products', 'actions'])
                 ->make(true);
         }
 
@@ -115,6 +118,26 @@ class OrderController extends Controller
         $adminType = $isVendor ? 'vendor' : ($isAdmin ? 'admin' : 'user');
 
         return view('admin.orders.orders')->with(compact('logos', 'headerLogo', 'adminType'));
+    }
+
+    public function bulkDeleteOrders(Request $request)
+    {
+        $user = Auth::guard('admin')->user();
+        if (!$user->can('delete_orders') && !$user->hasRole('superadmin')) {
+            return response()->json(['status' => false, 'message' => 'Unauthorized action.'], 403);
+        }
+
+        $ids = $request->ids;
+        if (empty($ids)) {
+            return response()->json(['status' => false, 'message' => 'No orders selected']);
+        }
+
+        try {
+            Order::whereIn('id', $ids)->delete();
+            return response()->json(['status' => true, 'message' => 'Selected orders have been deleted successfully.']);
+        } catch (\Exception $e) {
+            return response()->json(['status' => false, 'message' => 'Error: ' . $e->getMessage()]);
+        }
     }
 
     public function returns(Request $request)

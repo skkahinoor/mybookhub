@@ -422,6 +422,7 @@ $adminRoutesClosure = function () {
         // Orders
         // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel
         Route::get('orders', 'OrderController@orders');
+        Route::post('bulk-delete-orders', 'OrderController@bulkDeleteOrders')->name('admin.orders.bulkDelete');
         Route::get('returns', 'OrderController@returns');
 
         // Render admin/orders/order_details.blade.php (View Order Details page) when clicking on the View Order Details icon in admin/orders/orders.blade.php (Orders tab under Orders Management section in Admin Panel)
