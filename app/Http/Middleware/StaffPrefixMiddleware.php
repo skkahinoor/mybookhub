@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Helpers\RoleHelper;
 
 class StaffPrefixMiddleware
 {
@@ -18,127 +17,84 @@ class StaffPrefixMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        // Check if user is authenticated under the 'admin' guard
+        // Check authenticated admin user
         if (Auth::guard('admin')->check()) {
+
             $user = Auth::guard('admin')->user();
 
-            // Detect if the logged-in user is a custom-role staff member
-            $coreRoles = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user'];
-            $userRoleNames = $user->roles->pluck('name')->toArray();
-            $isStaff = !empty(array_diff($userRoleNames, $coreRoles)) && !$user->hasRole('admin') && !$user->hasRole('superadmin');
+            // Core roles
+            $coreRoles = [
+                'admin',
+                'superadmin',
+                'vendor',
+                'sales',
+                'student',
+                'user'
+            ];
 
-            $path = $request->path();
+            $userRoleNames = $user->roles->pluck('name')->toArray();
+
+            // Detect restricted staff
+            $isStaff =
+                !empty(array_diff($userRoleNames, $coreRoles)) &&
+                !$user->hasRole('admin') &&
+                !$user->hasRole('superadmin');
+
+            $path = trim($request->path(), '/');
+
+            /*
+            |--------------------------------------------------------------------------
+            | STAFF USERS
+            |--------------------------------------------------------------------------
+            */
 
             if ($isStaff) {
-                // If a restricted staff member accesses 'admin/...' directly, redirect them to 'staff/...'
-                if (strpos($path, 'admin/') === 0) {
-                    $newPath = 'staff/' . substr($path, 6);
-                    return redirect($newPath);
-                } elseif ($path === 'admin') {
-                    return redirect('staff');
+
+                // Redirect admin/* => staff/*
+                if (
+    strpos($path, 'admin/') === 0 &&
+    strpos($path, 'admin/orders/') !== 0
+) {
+
+    $newPath = '/staff/' .
+        ltrim(substr($path, strlen('admin/')), '/');
+
+    return redirect($newPath);
+}
+
+                // Redirect /admin => /staff
+                if ($path === 'admin') {
+
+                    return redirect('/staff');
                 }
-            } else {
-                // If a superadmin/admin accesses 'staff/...' directly, redirect them to 'admin/...'
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | ADMIN / SUPERADMIN USERS
+            |--------------------------------------------------------------------------
+            */
+
+            else {
+
+                // Redirect staff/* => admin/*
                 if (strpos($path, 'staff/') === 0) {
-                    $newPath = 'admin/' . substr($path, 6);
+
+                    $newPath = '/admin/' .
+                        ltrim(substr($path, strlen('staff/')), '/');
+
                     return redirect($newPath);
-                } elseif ($path === 'staff') {
-                    return redirect('admin');
+                }
+
+                // Redirect /staff => /admin
+                if ($path === 'staff') {
+
+                    return redirect('/admin');
                 }
             }
         }
 
-        // Process request
-        $response = $next($request);
-
-        // Modify response for authenticated users to ensure URL consistency in links and redirects
-        if (Auth::guard('admin')->check()) {
-            $user = Auth::guard('admin')->user();
-            $coreRoles = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user'];
-            $userRoleNames = $user->roles->pluck('name')->toArray();
-            $isStaff = !empty(array_diff($userRoleNames, $coreRoles)) && !$user->hasRole('admin') && !$user->hasRole('superadmin');
-
-            $baseUrl = $request->getBaseUrl();
-
-            if ($isStaff) {
-                $fromPrefix = $baseUrl . '/admin/';
-                $toPrefix = $baseUrl . '/staff/';
-
-                // For restricted staff, rewrite redirect Location headers to '/staff/'
-                if ($response->isRedirection()) {
-                    $location = $response->headers->get('Location');
-                    if ($location && strpos($location, $fromPrefix) !== false) {
-                        $newLocation = str_replace($fromPrefix, $toPrefix, $location);
-                        $response->headers->set('Location', $newLocation);
-                    }
-                }
-
-                // For restricted staff, rewrite HTML links to '/staff/'
-                $contentType = $response->headers->get('Content-Type');
-                if ($contentType && strpos($contentType, 'text/html') !== false) {
-                    $content = $response->getContent();
-                    if (is_string($content)) {
-                        $content = $this->rewriteAdminHtml($content, $fromPrefix, $toPrefix);
-                        $response->setContent($content);
-                    }
-                }
-            } else {
-                $fromPrefix = $baseUrl . '/staff/';
-                $toPrefix = $baseUrl . '/admin/';
-
-                // For admins/superadmins, rewrite redirect Location headers to '/admin/' if they point to '/staff/'
-                if ($response->isRedirection()) {
-                    $location = $response->headers->get('Location');
-                    if ($location && strpos($location, $fromPrefix) !== false) {
-                        $newLocation = str_replace($fromPrefix, $toPrefix, $location);
-                        $response->headers->set('Location', $newLocation);
-                    }
-                }
-
-                // For admins/superadmins, rewrite HTML links to '/admin/' if they point to '/staff/'
-                $contentType = $response->headers->get('Content-Type');
-                if ($contentType && strpos($contentType, 'text/html') !== false) {
-                    $content = $response->getContent();
-                    if (is_string($content)) {
-                        $content = $this->rewriteAdminHtml($content, $fromPrefix, $toPrefix);
-                        $response->setContent($content);
-                    }
-                }
-            }
-        }
-
-        return $response;
-    }
-
-    /**
-     * Helper to rewrite prefix in HTML attributes, excluding static assets.
-     */
-    private function rewriteAdminHtml($html, string $from, string $to)
-    {
-        $escapedFrom = preg_quote($from, '/');
-        $pattern = '/(href|action)=["\']([^"\']*)(' . $escapedFrom . ')([^"\']*)(["\'])/i';
-        
-        $rewritten = preg_replace_callback($pattern, function($matches) use ($from, $to) {
-            $attribute = $matches[1];
-            $base = $matches[2];
-            $path = $matches[4];
-            $quote = $matches[5];
-            
-            $extensions = ['css', 'js', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'map'];
-            $pathInfo = pathinfo($path);
-            $extension = isset($pathInfo['extension']) ? strtolower($pathInfo['extension']) : '';
-            
-            if (in_array($extension, $extensions)) {
-                return $attribute . '=' . $quote . $base . $from . $path . $quote;
-            }
-            
-            return $attribute . '=' . $quote . $base . $to . $path . $quote;
-        }, $html);
-
-        // Also handle JSON endpoints, script tags or other instances of base-prefixed URL
-        $rewritten = str_replace('"' . $from, '"' . $to, $rewritten);
-        $rewritten = str_replace('\'' . $from, '\'' . $to, $rewritten);
-
-        return $rewritten;
+        // Continue request normally
+        return $next($request);
     }
 }
