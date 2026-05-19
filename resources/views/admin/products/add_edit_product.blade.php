@@ -349,7 +349,7 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group">
+                                <div class="form-group" id="class_wrapper">
                                     <label for="subcategory_id">Class</label>
                                     <select name="subcategory_id" id="subcategory_id" class="form-control text-dark">
                                         <option value="">Select Class</option>
@@ -361,7 +361,7 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group">
+                                <div class="form-group" id="subject_wrapper">
                                     <label for="subject_id">Subject</label>
                                     <select name="subject_id" id="subject_id" class="form-control text-dark">
                                         <option value="">Select Subject</option>
@@ -806,9 +806,23 @@
                 });
             }
 
+            function toggleReligiousFields() {
+                var sectionName = $('#section_id').find("option:selected").text().trim().toLowerCase();
+                var noSubjectsSections = ['religious book', 'religious', 'technical book', 'technical', 'novel & story book', 'novel & story', 'competitive books', 'competitive'];
+                
+                if (noSubjectsSections.includes(sectionName)) {
+                    $("#class_wrapper").hide();
+                    $("#subject_wrapper").hide();
+                } else {
+                    $("#class_wrapper").show();
+                    $("#subject_wrapper").show();
+                }
+            }
+
             $section.on('change', function() {
                 var sectionId = $(this).val();
                 window.loadBoards(sectionId, null);
+                toggleReligiousFields();
             });
 
             $board.on('change', function() {
@@ -838,6 +852,9 @@
                     }
                 }
             }
+
+            // Initial UI check for Religious fields
+            toggleReligiousFields();
         });
     </script>
 

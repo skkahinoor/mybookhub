@@ -797,17 +797,26 @@ class ProductsController extends Controller
                 $isbnValidationRule = 'required|digits_between:10,13';
             }
 
-            $validator = Validator::make($request->all(), [
+            $section = Section::find($data['section_id'] ?? null);
+            $noSubjectsSections = ['Religious Book', 'Religious', 'Technical Book', 'Technical', 'Novel & Story Book', 'Novel & Story', 'Competitive Books', 'Competitive'];
+            $isReligious = $section && in_array($section->name, $noSubjectsSections);
+
+            $rules = [
                 'section_id'    => 'required|exists:sections,id',
                 'category_id'   => 'required|exists:categories,id',
-                'subcategory_id' => 'required|exists:subcategories,id',
-                'subject_id'    => 'required|exists:subjects,id',
                 'condition'     => 'required|in:new,old',
                 'product_name'  => 'required',
                 'product_isbn'  => $isbnValidationRule,
                 'product_price' => 'required|numeric',
                 'language_id'   => 'required',
-            ]);
+            ];
+
+            if (!$isReligious) {
+                $rules['subcategory_id'] = 'required|exists:subcategories,id';
+                $rules['subject_id'] = 'required|exists:subjects,id';
+            }
+
+            $validator = Validator::make($request->all(), $rules);
 
             // Custom validation: Check ISBN + condition uniqueness
             // Note: We already checked for existingProduct above, but this ensures validation consistency
