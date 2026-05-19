@@ -43,7 +43,7 @@
                                 <div id="appendSubcategoriesLevel">
                                     {{-- Subcategories will be loaded here via AJAX --}}
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group" id="subjects-container">
                                     <label>Select Subjects</label>
                                     <div class="row">
                                         @foreach ($subjects as $subject)
@@ -96,6 +96,18 @@
                             alert("Error loading classes");
                         }
                     });
+                }
+            });
+            $(document).on('change', '#section_id', function() {
+                var sectionName = $(this).find("option:selected").text().trim().toLowerCase();
+                var noSubjectsSections = ['religious book', 'religious', 'technical book', 'technical', 'novel & story book', 'novel & story', 'competitive books', 'competitive'];
+                
+                if (noSubjectsSections.includes(sectionName)) {
+                    $("#appendSubcategoriesLevel").hide();
+                    $("#subjects-container").hide();
+                } else {
+                    $("#appendSubcategoriesLevel").show();
+                    $("#subjects-container").show();
                 }
             });
         });

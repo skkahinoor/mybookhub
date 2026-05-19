@@ -16,7 +16,7 @@
                 <div class="col-md-8 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Class: {{ $subCategory->subcategory_name }}</h4>
+                            <h4 class="card-title">Class: {{ $subCategory ? $subCategory->subcategory_name : 'N/A' }}</h4>
                             @if ($errors->any())
                                 <div class="alert alert-danger">
                                     <ul>
@@ -26,7 +26,7 @@
                                     </ul>
                                 </div>
                             @endif
-                            <form class="forms-sample" action="{{ route('admin.class_subjects.update', $subCategory->id) }}"
+                            <form class="forms-sample" action="{{ route('admin.class_subjects.update', $subCategory ? $subCategory->id : 0) }}"
                                 method="POST">
                                 @csrf
 
@@ -56,21 +56,21 @@
                                         </select>
                                     </div>
                                 </div>
-                                <div id="appendSubcategoriesLevel">
+                                <div id="appendSubcategoriesLevel" style="display: {{ $subCategory ? 'block' : 'none' }}">
                                     <div class="form-group">
                                         <label for="subcategory_id">Select Class (Subcategory)</label>
-                                        <input type="hidden" name="subcategory_id" value="{{ $subCategory->id }}">
+                                        <input type="hidden" name="subcategory_id" value="{{ $subCategory ? $subCategory->id : '' }}">
                                         <select id="subcategory_id" class="form-control" disabled>
                                             <option value="">Select Class</option>
                                             @foreach ($subcategories as $subcategory)
                                                 <option value="{{ $subcategory->id }}"
-                                                    {{ $subCategory->id == $subcategory->id ? 'selected' : '' }}>
+                                                    {{ ($subCategory && $subCategory->id == $subcategory->id) ? 'selected' : '' }}>
                                                     {{ $subcategory->subcategory_name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group" id="subjects-container" style="display: {{ $subCategory ? 'block' : 'none' }}">
                                     <label>Select Subjects</label>
                                     <div class="row">
                                         @foreach ($subjects as $subject)
