@@ -65,6 +65,16 @@ class AddressController extends Controller
         // If this is the first address, make it default
         $isFirst = UserAddress::where('user_id', $user->id)->count() === 0;
 
+        $latitude = null;
+        $longitude = null;
+        if ($request->location) {
+            $parts = explode(',', $request->location);
+            if (count($parts) === 2) {
+                $latitude = (float) trim($parts[0]);
+                $longitude = (float) trim($parts[1]);
+            }
+        }
+
         $address = UserAddress::create([
             'user_id' => $user->id,
             'name' => $request->name,
@@ -75,7 +85,8 @@ class AddressController extends Controller
             'state_id' => $request->state_id,
             'district_id' => $request->district_id,
             'block_id' => $request->block_id,
-            'location' => $request->location,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
             'is_default' => ($request->is_default || $isFirst) ? 1 : 0,
             'status' => 1
         ]);
@@ -126,7 +137,7 @@ class AddressController extends Controller
             UserAddress::where('user_id', $request->user()->id)->update(['is_default' => 0]);
         }
 
-        $address->update($request->only([
+        $updateData = $request->only([
             'name',
             'address',
             'mobile',
@@ -135,9 +146,23 @@ class AddressController extends Controller
             'state_id',
             'district_id',
             'block_id',
-            'location',
             'is_default'
-        ]));
+        ]);
+
+        if ($request->has('location')) {
+            if ($request->location) {
+                $parts = explode(',', $request->location);
+                if (count($parts) === 2) {
+                    $updateData['latitude'] = (float) trim($parts[0]);
+                    $updateData['longitude'] = (float) trim($parts[1]);
+                }
+            } else {
+                $updateData['latitude'] = null;
+                $updateData['longitude'] = null;
+            }
+        }
+
+        $address->update($updateData);
 
         return response()->json([
             'status' => true,

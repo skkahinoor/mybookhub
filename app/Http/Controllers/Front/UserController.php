@@ -682,15 +682,28 @@ class UserController extends Controller
             $address->state_id = $data['state_id'];
             $address->district_id = $data['district_id'];
             $address->block_id = $data['block_id'] ?? null;
-            $address->location = $data['location'] ?? null;
+
+            // Extract and save latitude & longitude separately if location is present
+            if (!empty($data['location'])) {
+                $parts = explode(',', $data['location']);
+                if (count($parts) === 2) {
+                    $address->latitude = (float) trim($parts[0]);
+                    $address->longitude = (float) trim($parts[1]);
+                }
+            }
             $address->save();
 
             // Handle Profile Sync
             if (!empty($data['update_profile'])) {
-                User::where('id', Auth::id())->update([
+                $updateData = [
                     'name'  => $data['name'],
                     'phone' => $data['mobile']
-                ]);
+                ];
+                if (!empty($address->latitude) && !empty($address->longitude)) {
+                    $updateData['latitude'] = $address->latitude;
+                    $updateData['longitude'] = $address->longitude;
+                }
+                User::where('id', Auth::id())->update($updateData);
                 $message .= " Profile also updated!";
             }
 
