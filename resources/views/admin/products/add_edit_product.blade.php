@@ -397,7 +397,7 @@
 
 
 
-                                <div class="form-group">
+                                <div class="form-group" id="edition_wrapper">
                                     <label for="edition_id">Select Edition</label>
                                     <select name="edition_id" id="edition_id" class="form-control text-dark">
                                         <option value="">Select Edition</option>
@@ -408,7 +408,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group" id="booktype_wrapper">
                                     <label for="book_type_id">Select Book Type</label>
                                     <select name="book_type_id" id="book_type_id" class="form-control text-dark">
                                         <option value="">Select Book Type</option>
@@ -813,9 +813,13 @@
                 if (noSubjectsSections.includes(sectionName)) {
                     $("#class_wrapper").hide();
                     $("#subject_wrapper").hide();
+                    $("#edition_wrapper").hide();
+                    $("#booktype_wrapper").hide();
                 } else {
                     $("#class_wrapper").show();
                     $("#subject_wrapper").show();
+                    $("#edition_wrapper").show();
+                    $("#booktype_wrapper").show();
                 }
             }
 

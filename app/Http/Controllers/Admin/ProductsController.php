@@ -910,15 +910,15 @@ class ProductsController extends Controller
                     $product->publisher_id = $data['publisher_id'];
                 }
 
-                $product->subject_id  = $data['subject_id'];
-                $product->subcategory_id = $data['subcategory_id'] ?? null;
+                $product->subject_id  = !empty($data['subject_id']) ? $data['subject_id'] : null;
+                $product->subcategory_id = !empty($data['subcategory_id']) ? $data['subcategory_id'] : null;
                 $product->language_id = $data['language_id'];
 
                 $product->condition        = $data['condition'];
                 $product->product_name     = $data['product_name'];
                 $product->product_isbn     = $data['product_isbn'];
                 $product->product_price    = $data['product_price'];
-                $product->edition_id       = $data['edition_id'];
+                $product->edition_id       = !empty($data['edition_id']) ? $data['edition_id'] : null;
                 $product->description      = $data['description'];
                 $product->meta_title       = $data['meta_title'];
                 $product->meta_keywords    = $data['meta_keywords'];
