@@ -60,6 +60,16 @@ class IndexController extends Controller
             }
         }
 
+        // Verify that category and subcategory belong to the selected section to avoid session pollution
+        if ($currentSectionId && $currentCategoryId) {
+            $catExists = Category::where('id', $currentCategoryId)->where('section_id', $currentSectionId)->exists();
+            if (!$catExists) {
+                $currentCategoryId = null;
+                $currentSubcategoryId = null;
+                $currentSubjectId = null;
+            }
+        }
+
         if ($request->filled('distance')) {
             session(['distance' => (int) $request->distance]);
         }
@@ -284,10 +294,25 @@ class IndexController extends Controller
         }
 
         if ($request->filled('section_id')) {
+            $oldSectionId = session('bg_section_id') ?? \Illuminate\Support\Facades\Cookie::get('bg_section_id');
+            if ($oldSectionId != $request->section_id) {
+                // Section changed: Clear old category, subcategory, subject to prevent pollution
+                session()->forget(['bg_category_id', 'bg_subcategory_id', 'bg_subject_id']);
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_category_id'));
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subcategory_id'));
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subject_id'));
+            }
             session(['bg_section_id' => $request->section_id]);
             \Illuminate\Support\Facades\Cookie::queue('bg_section_id', (string)$request->section_id, $minutes);
         }
         if ($request->filled('category_id')) {
+            $oldCategoryId = session('bg_category_id') ?? \Illuminate\Support\Facades\Cookie::get('bg_category_id');
+            if ($oldCategoryId != $request->category_id) {
+                // Category changed: Clear old subcategory and subject
+                session()->forget(['bg_subcategory_id', 'bg_subject_id']);
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subcategory_id'));
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subject_id'));
+            }
             session(['bg_category_id' => $request->category_id]);
             \Illuminate\Support\Facades\Cookie::queue('bg_category_id', (string)$request->category_id, $minutes);
         }
@@ -433,9 +458,15 @@ class IndexController extends Controller
             ->distinct()
             ->pluck('category_id');
 
-        $categories = Category::whereIn('id', $categoryIds)
-            ->where('status', 1)
-            ->get(['id', 'category_name']);
+        if ($categoryIds->isEmpty()) {
+            $categories = Category::where('section_id', $request->section_id)
+                ->where('status', 1)
+                ->get(['id', 'category_name']);
+        } else {
+            $categories = Category::whereIn('id', $categoryIds)
+                ->where('status', 1)
+                ->get(['id', 'category_name']);
+        }
 
         return response()->json($categories);
     }
@@ -447,9 +478,15 @@ class IndexController extends Controller
             ->distinct()
             ->pluck('sub_category_id');
 
-        $subcategories = Subcategory::whereIn('id', $subcategoryIds)
-            ->where('status', 1)
-            ->get(['id', 'subcategory_name as category_name']); // using aliased name for frontend compatibility
+        if ($subcategoryIds->isEmpty()) {
+            $subcategories = Subcategory::where('category_id', $request->category_id)
+                ->where('status', 1)
+                ->get(['id', 'subcategory_name as category_name']);
+        } else {
+            $subcategories = Subcategory::whereIn('id', $subcategoryIds)
+                ->where('status', 1)
+                ->get(['id', 'subcategory_name as category_name']); // using aliased name for frontend compatibility
+        }
 
         return response()->json($subcategories);
     }
