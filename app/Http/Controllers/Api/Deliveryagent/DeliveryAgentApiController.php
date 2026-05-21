@@ -1498,4 +1498,30 @@ class DeliveryAgentApiController extends Controller
             ], 500);
         }
     }
+
+    public function updateLocation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid coordinates'
+            ], 422);
+        }
+
+        $user = $request->user();
+        $user->update([
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Location updated successfully'
+        ]);
+    }
 }

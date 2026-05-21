@@ -102,8 +102,11 @@ class SubjectController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos = HeaderLogo::first();
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:subjects,name',
             'subject_icon' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
+        ],
+        [
+            'name.unique' => 'Subject name already exists',
         ]);
 
         $subject_icon = null;
