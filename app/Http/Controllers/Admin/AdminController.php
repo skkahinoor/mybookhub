@@ -521,7 +521,7 @@ class AdminController extends Controller
                 // dd($data);
 
                 $rules = [
-                    'shop_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
+                    'shop_name' => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u', // only alphabetical characters and spaces
                     'shop_mobile' => 'required|numeric',
                     'address_proof' => 'required',
                 ];

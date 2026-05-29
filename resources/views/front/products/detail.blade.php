@@ -372,6 +372,7 @@
         .range-slider::-webkit-slider-thumb:hover {
             transform: scale(1.1);
         }
+
     </style>
     <div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -395,8 +396,8 @@
                     </video>
                 </div>
             </div>
-        </div>
-    </div>
+        </div>       
+      </div>   
     </div>
 
     <section class="content-inner-1" style="background: #efeff4; padding-top: 40px;">
