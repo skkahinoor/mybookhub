@@ -373,8 +373,8 @@ class DeliveryAgentApiController extends Controller
         
         $stats = [
             'total_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->count(),
-            'today_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->whereDate('updated_at', \Carbon\Carbon::today())->count(),
-            'today_earnings' => (float)\App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->whereDate('updated_at', \Carbon\Carbon::today())->sum('agent_trip_earning'),
+            'today_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->whereBetween('updated_at', [\Carbon\Carbon::today()->startOfDay(), \Carbon\Carbon::today()->endOfDay()])->count(),
+            'today_earnings' => (float)\App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->whereBetween('updated_at', [\Carbon\Carbon::today()->startOfDay(), \Carbon\Carbon::today()->endOfDay()])->sum('agent_trip_earning'),
             'total_earnings' => (float)\App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->sum('agent_trip_earning'),
             'rating' => 4.8, // Mocked for now
             'agent_rate_per_km' => \App\Models\DeliverySetting::where('status', 1)->first()->agent_rate_per_km ?? 10.00

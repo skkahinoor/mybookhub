@@ -275,7 +275,11 @@
                             <div class="filter-container">
                                 <form action="{{ url('admin/reports/stock_report') }}" method="GET">
                                     <div class="row align-items-end">
-                                        <div class="col-md-3 mb-3 mb-md-0">
+                                        <div class="col-md-2 mb-3 mb-md-0">
+                                            <label class="filter-label">ISBN</label>
+                                            <input type="text" name="isbn" class="form-control" placeholder="ISBN..." value="{{ request('isbn') }}" style="height: 42px; border-radius: 8px; border: 1px solid #e0e0e0; padding: 10px;">
+                                        </div>
+                                        <div class="col-md-2 mb-3 mb-md-0">
                                             <label class="filter-label">Category</label>
                                             <select name="category_id" class="form-control select2">
                                                 <option value="">All Categories</option>
@@ -287,7 +291,7 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="col-md-3 mb-3 mb-md-0">
+                                        <div class="col-md-2 mb-3 mb-md-0">
                                             <label class="filter-label">Section</label>
                                             <select name="section_id" class="form-control select2">
                                                 <option value="">All Sections</option>
@@ -397,6 +401,13 @@
                                 d.category_id = $('select[name="category_id"]').val();
                                 d.section_id = $('select[name="section_id"]').val();
                                 d.stock_status = $('select[name="stock_status"]').val();
+                                d.isbn = $('input[name="isbn"]').val();
+                                
+                                // Pass product_id if present in URL
+                                const urlParams = new URLSearchParams(window.location.search);
+                                if (urlParams.has('product_id')) {
+                                    d.product_id = urlParams.get('product_id');
+                                }
                             }
                         },
                         columns: [
@@ -448,6 +459,16 @@
                         });
                     }).draw();
 
+                    // Auto-expand if product_id is in URL
+                    table.on('draw.dt', function() {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        if (urlParams.has('product_id')) {
+                            setTimeout(function() {
+                                $('.view-details-btn').first().trigger('click');
+                            }, 300);
+                        }
+                    });
+
                     // Form submission using AJAX
                     $('form').on('submit', function(e) {
                         e.preventDefault();
@@ -456,9 +477,9 @@
 
                     // Row Expansion Logic
                     // We explicitly unbind click first to avoid duplicates if re-initialized
-                    $(tableId + ' tbody').off('click', 'td.details-control, .view-details-btn');
+                    $(tableId + ' tbody').off('click', '.expand-icon, .view-details-btn');
 
-                    $(tableId + ' tbody').on('click', 'td.details-control, .view-details-btn', function(e) {
+                    $(tableId + ' tbody').on('click', '.expand-icon, .view-details-btn', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
 
@@ -471,10 +492,9 @@
                             tr.removeClass('shown');
                         } else {
                             // Open
-                            // Get content from the hidden column index 7
-                            // DataTables internal storage [0, 1, 2, 3, 4, 5, 6, 7]
+                            // Get content from the hidden column name 'hidden_details'
                             var rowData = row.data();
-                            var details = rowData[7]; // Index 7 is our "HiddenDetails" column HTML
+                            var details = rowData.hidden_details || rowData[7]; // Support both object property and fallback
 
                             if (details) {
                                 row.child(details).show();
