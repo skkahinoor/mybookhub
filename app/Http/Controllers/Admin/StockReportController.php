@@ -16,6 +16,8 @@ class StockReportController extends Controller
         // Fetch all categories and sections for filters
         $categories = \App\Models\Category::where('status', 1)->get();
         $sections = \App\Models\Section::where('status', 1)->get();
+        $logos      = \App\Models\HeaderLogo::first();
+        $headerLogo = \App\Models\HeaderLogo::first();
 
         if ($request->ajax()) {
             $query = Product::with(['attributes' => function ($query) {
@@ -170,6 +172,6 @@ class StockReportController extends Controller
                 ->make(true);
         }
 
-        return view('admin.reports.stock_report', compact('categories', 'sections'));
+        return view('admin.reports.stock_report', compact('categories', 'sections', 'logos', 'headerLogo'));
     }
 }
