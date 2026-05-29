@@ -510,7 +510,8 @@ class AdminController extends Controller
                 return redirect()->back()->with('success_message', 'Vendor details updated successfully!');
             }
 
-            $vendorDetails = Vendor::where('id', Auth::guard('admin')->user()->vendor_id)->first()->toArray(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
+            $vendor = Vendor::where('id', Auth::guard('admin')->user()->vendor_id)->first();
+            $vendorDetails = $vendor ? $vendor->toArray() : []; // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
 
         } elseif ($slug == 'business') {
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
