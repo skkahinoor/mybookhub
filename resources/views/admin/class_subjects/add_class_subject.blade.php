@@ -112,7 +112,7 @@
             });
             $(document).on('change', '#section_id', function() {
                 var sectionName = $(this).find("option:selected").text().trim().toLowerCase();
-                var noSubjectsSections = ['religious book', 'religious', 'technical book', 'technical', 'novel & story book', 'novel & story', 'competitive books', 'competitive'];
+                var noSubjectsSections = ['religious book', 'religious', 'religious books'];
                 
                 if (noSubjectsSections.includes(sectionName)) {
                     $("#appendSubcategoriesLevel").hide();

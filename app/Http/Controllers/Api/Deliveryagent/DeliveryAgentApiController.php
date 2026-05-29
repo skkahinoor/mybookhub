@@ -373,7 +373,8 @@ class DeliveryAgentApiController extends Controller
         
         $stats = [
             'total_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->count(),
-            'today_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->whereDate('updated_at', \Carbon\Carbon::today())->count(),
+            'today_trips' => \App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->whereBetween('updated_at', [\Carbon\Carbon::today()->startOfDay(), \Carbon\Carbon::today()->endOfDay()])->count(),
+            'today_earnings' => (float)\App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->whereBetween('updated_at', [\Carbon\Carbon::today()->startOfDay(), \Carbon\Carbon::today()->endOfDay()])->sum('agent_trip_earning'),
             'total_earnings' => (float)\App\Models\Order::where('delivery_agent_id', $user->id)->where('order_status', 'Delivered')->sum('agent_trip_earning'),
             'rating' => 4.8, // Mocked for now
             'agent_rate_per_km' => \App\Models\DeliverySetting::where('status', 1)->first()->agent_rate_per_km ?? 10.00
@@ -819,43 +820,67 @@ class DeliveryAgentApiController extends Controller
                 $order->update(['order_status' => 'Delivered']);
                 
                 // Calculate Earning based on Distance
-                if ($order->agent_start_lat && $order->agent_start_lng) {
-                    $pickup = \App\Models\OrdersProduct::where('order_id', $order->id)->first(); 
-                    $pickupLat = null;
-                    $pickupLng = null;
+                $startLat = $order->agent_start_lat ? (float)$order->agent_start_lat : null;
+                $startLng = $order->agent_start_lng ? (float)$order->agent_start_lng : null;
+                
+                // Fallback to request coordinates if start coordinates are missing
+                if (!$startLat && $request->latitude) {
+                    $startLat = (float)$request->latitude;
+                    $startLng = (float)$request->longitude;
+                    $order->update([
+                        'agent_start_lat' => $request->latitude,
+                        'agent_start_lng' => $request->longitude
+                    ]);
+                }
 
+                $pickup = \App\Models\OrdersProduct::where('order_id', $order->id)->first(); 
+                $pickupLat = null;
+                $pickupLng = null;
+
+                if ($pickup) {
                     if ($pickup->vendor_id > 0) {
                         $business = \App\Models\VendorsBusinessDetail::where('vendor_id', $pickup->vendor_id)->first();
                         if ($business) {
                             $pickupLat = $business->latitude;
                             $pickupLng = $business->longitude;
                         }
-                    } else if ($pickup->admin_id > 0) {
-                        $seller = \App\Models\User::find($pickup->admin_id);
-                        if ($seller) {
-                            $pickupLat = $seller->latitude;
-                            $pickupLng = $seller->longitude;
+                    } else {
+                        // Fallback to student seller / individual user product attribute
+                        $attr = $pickup->product_attribute;
+                        $sellerUser = null;
+                        if ($attr && $attr->user_id > 0) {
+                            $sellerUser = \App\Models\User::find($attr->user_id);
+                        } else if ($pickup->admin_id > 0) {
+                            $sellerUser = \App\Models\User::find($pickup->admin_id);
+                        }
+                        if ($sellerUser) {
+                            $pickupLat = $sellerUser->latitude;
+                            $pickupLng = $sellerUser->longitude;
                         }
                     }
+                }
+                
+                $dropLat = $order->latitude ? (float)$order->latitude : null;
+                $dropLng = $order->longitude ? (float)$order->longitude : null;
+
+                if ($startLat && $startLng && $pickupLat && $pickupLng && $dropLat && $dropLng) {
+                    $d1 = $this->calculateDistancePHP($startLat, $startLng, (float)$pickupLat, (float)$pickupLng);
+                    $d2 = $this->calculateDistancePHP((float)$pickupLat, (float)$pickupLng, $dropLat, $dropLng);
                     
-                    if ($pickupLat && $pickupLng) {
-                        $d1 = $this->calculateDistancePHP(
-                            (float)$order->agent_start_lat, (float)$order->agent_start_lng,
-                            (float)$pickupLat, (float)$pickupLng
-                        );
-                        $d2 = $this->calculateDistancePHP(
-                            (float)$pickupLat, (float)$pickupLng,
-                            (float)$order->latitude, (float)$order->longitude
-                        );
-                        
-                        $totalDistance = $d1 + $d2;
-                        $earning = $totalDistance * (float)$order->agent_rate_at_trip;
-                        
-                        $order->update([
-                            'total_trip_distance' => $totalDistance,
-                            'agent_trip_earning' => $earning
-                        ]);
+                    $totalDistance = $d1 + $d2;
+                    
+                    $rate = (float)$order->agent_rate_at_trip;
+                    if ($rate <= 0) {
+                        $rate = \App\Models\DeliverySetting::where('status', 1)->first()->agent_rate_per_km ?? 10.00;
+                        $order->update(['agent_rate_at_trip' => $rate]);
                     }
+                    
+                    $earning = $totalDistance * $rate;
+                    
+                    $order->update([
+                        'total_trip_distance' => $totalDistance,
+                        'agent_trip_earning' => $earning
+                    ]);
                 }
             } else {
                 $order->update(['order_status' => $request->status]);
@@ -1472,5 +1497,31 @@ class DeliveryAgentApiController extends Controller
                 'message' => 'Failed to reset password: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function updateLocation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid coordinates'
+            ], 422);
+        }
+
+        $user = $request->user();
+        $user->update([
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Location updated successfully'
+        ]);
     }
 }

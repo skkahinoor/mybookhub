@@ -568,7 +568,25 @@ class ProductsController extends Controller
                 })
                 ->addColumn('seller', function ($row) use ($adminType) {
                     if ($adminType !== 'vendor') {
-                        return '<span class="badge badge-info">' . $row->attributes->count() . ' Seller(s)</span>';
+                        // Count unique sellers who have active listings with available stock
+                        $activeUniqueSellersCount = $row->attributes
+                            ->where('status', 1)
+                            ->where('stock', '>', 0)
+                            ->map(function ($attr) {
+                                if ($attr->vendor_id) {
+                                    return 'vendor_' . $attr->vendor_id;
+                                } elseif ($attr->admin_id && $attr->admin_type === 'admin') {
+                                    return 'admin_' . $attr->admin_id;
+                                } elseif ($attr->user_id) {
+                                    return 'user_' . $attr->user_id;
+                                }
+                                return null;
+                            })
+                            ->filter()
+                            ->unique()
+                            ->count();
+
+                        return '<span class="badge badge-info">' . $activeUniqueSellersCount . ' Seller(s)</span>';
                     }
                     return null;
                 })

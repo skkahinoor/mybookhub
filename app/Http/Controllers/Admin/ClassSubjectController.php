@@ -68,7 +68,7 @@ class ClassSubjectController extends Controller
     {
 
         $section = Section::find($request->section_id);
-        $noSubjectsSections = ['Religious Book', 'Religious', 'Technical Book', 'Technical', 'Novel & Story Book', 'Novel & Story', 'Competitive Books', 'Competitive'];
+        $noSubjectsSections = ['Religious Book', 'Religious', 'Religious Books'];
 
         if ($section && in_array($section->name, $noSubjectsSections)) {
             $request->validate([

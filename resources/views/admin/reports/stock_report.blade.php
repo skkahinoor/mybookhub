@@ -456,9 +456,9 @@
 
                     // Row Expansion Logic
                     // We explicitly unbind click first to avoid duplicates if re-initialized
-                    $(tableId + ' tbody').off('click', 'td.details-control, .view-details-btn');
+                    $(tableId + ' tbody').off('click', '.expand-icon, .view-details-btn');
 
-                    $(tableId + ' tbody').on('click', 'td.details-control, .view-details-btn', function(e) {
+                    $(tableId + ' tbody').on('click', '.expand-icon, .view-details-btn', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
 
@@ -471,10 +471,9 @@
                             tr.removeClass('shown');
                         } else {
                             // Open
-                            // Get content from the hidden column index 7
-                            // DataTables internal storage [0, 1, 2, 3, 4, 5, 6, 7]
+                            // Get content from the hidden column name 'hidden_details'
                             var rowData = row.data();
-                            var details = rowData[7]; // Index 7 is our "HiddenDetails" column HTML
+                            var details = rowData.hidden_details || rowData[7]; // Support both object property and fallback
 
                             if (details) {
                                 row.child(details).show();
