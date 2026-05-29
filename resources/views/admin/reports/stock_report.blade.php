@@ -275,7 +275,11 @@
                             <div class="filter-container">
                                 <form action="{{ url('admin/reports/stock_report') }}" method="GET">
                                     <div class="row align-items-end">
-                                        <div class="col-md-3 mb-3 mb-md-0">
+                                        <div class="col-md-2 mb-3 mb-md-0">
+                                            <label class="filter-label">ISBN</label>
+                                            <input type="text" name="isbn" class="form-control" placeholder="ISBN..." value="{{ request('isbn') }}" style="height: 42px; border-radius: 8px; border: 1px solid #e0e0e0; padding: 10px;">
+                                        </div>
+                                        <div class="col-md-2 mb-3 mb-md-0">
                                             <label class="filter-label">Category</label>
                                             <select name="category_id" class="form-control select2">
                                                 <option value="">All Categories</option>
@@ -287,7 +291,7 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="col-md-3 mb-3 mb-md-0">
+                                        <div class="col-md-2 mb-3 mb-md-0">
                                             <label class="filter-label">Section</label>
                                             <select name="section_id" class="form-control select2">
                                                 <option value="">All Sections</option>
@@ -397,6 +401,13 @@
                                 d.category_id = $('select[name="category_id"]').val();
                                 d.section_id = $('select[name="section_id"]').val();
                                 d.stock_status = $('select[name="stock_status"]').val();
+                                d.isbn = $('input[name="isbn"]').val();
+                                
+                                // Pass product_id if present in URL
+                                const urlParams = new URLSearchParams(window.location.search);
+                                if (urlParams.has('product_id')) {
+                                    d.product_id = urlParams.get('product_id');
+                                }
                             }
                         },
                         columns: [
@@ -447,6 +458,16 @@
                             cell.innerHTML = i + 1;
                         });
                     }).draw();
+
+                    // Auto-expand if product_id is in URL
+                    table.on('draw.dt', function() {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        if (urlParams.has('product_id')) {
+                            setTimeout(function() {
+                                $('.view-details-btn').first().trigger('click');
+                            }, 300);
+                        }
+                    });
 
                     // Form submission using AJAX
                     $('form').on('submit', function(e) {

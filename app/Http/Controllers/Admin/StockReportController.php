@@ -31,6 +31,14 @@ class StockReportController extends Controller
                 $query->where('section_id', $request->section_id);
             }
 
+            if ($request->filled('product_id')) {
+                $query->where('id', $request->product_id);
+            }
+
+            if ($request->filled('isbn')) {
+                $query->where('product_isbn', 'like', "%{$request->isbn}%");
+            }
+
             $products = $query->get();
 
             $stockReport = [];
@@ -112,6 +120,7 @@ class StockReportController extends Controller
                     'total_stock' => $totalStock,
                     'category' => $product->category->category_name ?? 'N/A',
                     'section' => $product->section->name ?? 'N/A',
+                    'condition' => $product->condition ?? 'N/A',
                     'vendors_html' => $vendorHtml
                 ];
             }
@@ -125,12 +134,20 @@ class StockReportController extends Controller
                     return '<span class="font-weight-bold text-muted">#' . $row['id'] . '</span>';
                 })
                 ->addColumn('book_details', function ($row) {
+                    $conditionBadge = '';
+                    if (!empty($row['condition'])) {
+                        $cond = strtolower($row['condition']);
+                        $class = $cond === 'new' ? 'badge-success' : 'badge-info';
+                        $conditionBadge = '<span class="badge ' . $class . ' ml-2" style="font-size: 0.75rem;">' . ucfirst($row['condition']) . '</span>';
+                    }
                     return '<div class="d-flex align-items-center">
                                 <div class="book-icon">
                                     <i class="fas fa-book-open"></i>
                                 </div>
                                 <div>
-                                    <div class="font-weight-bold text-dark" style="font-size: 1rem;">' . $row['name'] . '</div>
+                                    <div class="font-weight-bold text-dark d-flex align-items-center" style="font-size: 1rem;">
+                                        ' . $row['name'] . $conditionBadge . '
+                                    </div>
                                 </div>
                             </div>';
                 })

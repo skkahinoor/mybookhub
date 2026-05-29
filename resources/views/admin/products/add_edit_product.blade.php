@@ -1123,6 +1123,22 @@
             $('form').on('submit', function(e) {
                 e.preventDefault();
 
+                // Validate Book Condition if condition is 'old'
+                let condition = $('input[name="condition"]:checked').val();
+                if (condition === 'old') {
+                    let bookConditionId = $('#old_book_condition_id').val();
+                    if (!bookConditionId) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Validation Error',
+                            text: 'You have not selected the Book Condition.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#dc3545'
+                        });
+                        return false;
+                    }
+                }
+
                 const form = $(this);
                 const formData = new FormData(form[0]);
                 const submitBtn = $('#submitBtn');

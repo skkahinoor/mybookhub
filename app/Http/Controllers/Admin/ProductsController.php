@@ -586,7 +586,8 @@ class ProductsController extends Controller
                             ->unique()
                             ->count();
 
-                        return '<span class="badge badge-info">' . $activeUniqueSellersCount . ' Seller(s)</span>';
+                        $url = url('admin/reports/stock_report?product_id=' . $row->id);
+                        return '<a href="' . $url . '"><span class="badge badge-info">' . $activeUniqueSellersCount . ' Seller(s)</span></a>';
                     }
                     return null;
                 })
