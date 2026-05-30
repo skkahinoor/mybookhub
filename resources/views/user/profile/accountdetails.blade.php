@@ -1,52 +1,20 @@
 @include('user.layout.header')
 <style>
-    /* Map Picker Styles */
-    .search-box-map {
-        flex: 1;
-    }
-    .search-box-map input:focus {
-        box-shadow: none;
-    }
-
-    .map-selection-card {
-        position: absolute;
-        bottom: 24px;
-        left: 24px;
-        right: 24px;
-        background: white;
-        padding: 24px;
-        border-radius: 16px;
-        z-index: 1001;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    }
-    .modal-body.position-relative {
-        position: relative !important;
+    /* Address map (inline in modal) */
+    .address-map-wrap {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
         background: #f8f9fa;
     }
-    .confirm-btn-modern {
-        background: #2874f0 !important; /* Flipkart Blue */
-        color: white !important;
-        border: none;
-        border-radius: 8px;
-        width: 100%;
-        padding: 14px;
-        font-weight: 700;
-        font-size: 15px;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        margin-top: 20px;
-        transition: all 0.2s;
-        box-shadow: 0 4px 12px rgba(40, 116, 240, 0.2);
-    }
-    .confirm-btn-modern:hover {
-        background: #1259cc !important;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 15px rgba(40, 116, 240, 0.3);
+    .address-map-search input:focus {
+        box-shadow: none;
     }
     .current-location-btn {
         position: absolute;
-        right: 20px;
-        top: 80px;
+        right: 12px;
+        top: 12px;
         width: 40px;
         height: 40px;
         background: white;
@@ -62,7 +30,7 @@
     }
     .current-location-btn:hover {
         background: #f8f9fa;
-        color: #FF6B00;
+        color: #2874f0;
     }
     .current-location-btn.spinning svg {
         animation: spin 1s linear infinite;
@@ -70,6 +38,9 @@
     @keyframes spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
+    }
+    .pac-container {
+        z-index: 10000 !important;
     }
 </style>
 
@@ -323,7 +294,7 @@
                                                                      data-state="{{ $addr->state_id }}"
                                                                      data-district="{{ $addr->district_id }}"
                                                                      data-block="{{ $addr->block_id }}"
-                                                                     data-location="{{ $addr->location }}"
+                                                                     data-location="{{ ($addr->latitude && $addr->longitude) ? $addr->latitude . ',' . $addr->longitude : '' }}"
                                                                      style="text-decoration: none;">
                                                                      <i class="mdi mdi-pencil mr-1"></i> Edit
                                                                  </a>
@@ -480,13 +451,26 @@
                                     <input type="text" name="mobile" id="addr_mobile" class="form-control border-left-0" placeholder="Enter 10 digit mobile" required>
                                 </div>
                             </div>
-                             <div class="col-md-12 form-group">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label class="mb-0">Address <span class="text-danger">*</span></label>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="openMapPicker()" style="border-radius: 20px; padding: 2px 12px; font-size: 12px; font-weight: 600;">
-                                        <i class="mdi mdi-map-marker-radius mr-1"></i> Pin on Map
+                            <div class="col-md-12 form-group">
+                                <label>Search Location <span class="text-danger">*</span></label>
+                                <div class="input-group address-map-search shadow-sm mb-2" style="border-radius: 10px; overflow: hidden; border: 1px solid #eee;">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-white border-0"><i class="mdi mdi-magnify text-muted"></i></span>
+                                    </div>
+                                    <input type="text" id="addressMapSearchInput" class="form-control border-0" placeholder="Search for area, street name, landmark...">
+                                </div>
+                                <div class="address-map-wrap">
+                                    <div id="addressMapContainer" style="height: 280px; width: 100%;"></div>
+                                    <button type="button" class="current-location-btn" onclick="getCurrentLocation()" title="Use my current location">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+                                        </svg>
                                     </button>
                                 </div>
+                                <small class="text-muted d-block mt-1">Drag the pin or search to set your delivery location.</small>
+                            </div>
+                            <div class="col-md-12 form-group">
+                                <label>Address <span class="text-danger">*</span></label>
                                 <textarea name="address" id="addr_address" class="form-control" rows="3" required></textarea>
                             </div>
                             <div class="col-md-6 form-group">
@@ -535,49 +519,6 @@
                         <button type="submit" class="btn btn-primary shadow-sm">Save Address</button>
                     </div>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <!-- Map Picker Modal -->
-    <div class="modal fade" id="mapPickerModal" tabindex="-1" role="dialog" aria-hidden="true" style="z-index: 2000;">
-        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-            <div class="modal-content border-0 shadow-lg" style="border-radius: 15px; overflow: hidden;">
-                <div class="modal-header bg-white border-0 py-3">
-                    <div class="input-group search-box-map shadow-sm" style="border-radius: 10px; overflow: hidden; border: 1px solid #eee;">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text bg-white border-0"><i class="mdi mdi-magnify text-muted"></i></span>
-                        </div>
-                        <input type="text" id="mapSearchInput" class="form-control border-0" placeholder="Search for area, street name...">
-                    </div>
-                    <button type="button" class="close ml-3" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body p-0 position-relative">
-                    <div id="mapContainer" style="height: 450px; width: 100%;"></div>
-                    <!-- Current Location Button -->
-                    <button type="button" class="current-location-btn" onclick="getCurrentLocation()" title="My Location">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
-                        </svg>
-                    </button>
-                    <!-- Selection Card -->
-                    <div class="map-selection-card shadow-lg">
-                        <div class="d-flex align-items-start">
-                            <div class="icon-circle bg-primary text-white mr-3" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                                <i class="mdi mdi-navigation-variant"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="font-weight-bold mb-1" style="font-size: 14px;">Select Location</h6>
-                                <p id="currentAddressText" class="text-muted mb-0" style="font-size: 12px; line-height: 1.4;">Drag the marker or search to select your location</p>
-                            </div>
-                        </div>
-                        <button type="button" class="confirm-btn-modern" onclick="confirmLocation()">
-                            Confirm Location
-                        </button>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -1364,11 +1305,7 @@
             location: btn.attr('data-location')
         };
         
-        // Open modal first
-        $('#addressModal').modal('show');
-        $('#addressModalLabel').text('Edit Address');
-        
-        // Fill fields
+        // Fill fields first, then open modal so map reads saved coordinates
         $('#multi_address_id').val(addr.id);
         $('#addr_location').val(addr.location);
         $('#addr_name').val(addr.name);
@@ -1376,6 +1313,9 @@
         $('#addr_address').val(addr.address);
         $('#addr_pincode').val(addr.pincode);
         $('#addr_country_id').val(addr.country_id);
+
+        $('#addressModalLabel').text('Edit Address');
+        $('#addressModal').modal('show');
 
         // Load Cascading Dropdowns
         if (addr.country_id) {
@@ -1394,6 +1334,10 @@
         $('#multiAddressForm')[0].reset();
         $('#addr_name').val(name);
         $('#addr_mobile').val(mobile);
+        $('#addr_location').val('');
+        $('#addressMapSearchInput').val('');
+        selectedLat = null;
+        selectedLng = null;
         $('#update_profile').prop('checked', false);
         $('#addr_state_id').html('<option value="">Select State</option>');
         $('#addr_district_id').html('<option value="">Select District</option>');
@@ -1440,44 +1384,60 @@
         let selectedLat, selectedLng;
         let mapInitialized = false;
 
-        function openMapPicker() {
+        function parseLocationFromForm() {
             const existingLoc = $('#addr_location').val();
             if (existingLoc && existingLoc.includes(',')) {
                 const parts = existingLoc.split(',');
                 selectedLat = parseFloat(parts[0]);
                 selectedLng = parseFloat(parts[1]);
+                if (isNaN(selectedLat) || isNaN(selectedLng)) {
+                    selectedLat = null;
+                    selectedLng = null;
+                }
+            } else {
+                selectedLat = null;
+                selectedLng = null;
             }
-            $('#mapPickerModal').modal('show');
         }
 
-        // Initialize map when modal is fully shown
-        $(document).on('shown.bs.modal', '#mapPickerModal', function () {
+        function syncLocationToForm(lat, lng, formattedAddress) {
+            selectedLat = lat;
+            selectedLng = lng;
+            document.getElementById('addr_location').value = `${lat},${lng}`;
+            if (formattedAddress) {
+                document.getElementById('addr_address').value = formattedAddress;
+                const pincodeMatch = formattedAddress.match(/\b\d{6}\b/);
+                if (pincodeMatch) {
+                    document.getElementById('addr_pincode').value = pincodeMatch[0];
+                }
+            }
+        }
+
+        $(document).on('shown.bs.modal', '#addressModal', function () {
+            parseLocationFromForm();
             if (!mapInitialized) {
-                initMap();
-            } else {
-                if (map) {
-                    google.maps.event.trigger(map, 'resize');
-                    if (selectedLat && selectedLng) {
-                        const pos = {lat: selectedLat, lng: selectedLng};
-                        map.setCenter(pos);
-                        if (marker) {
-                            marker.setPosition(pos);
-                        }
-                        updateAddressFromCoordinates(selectedLat, selectedLng);
-                    }
+                initAddressMap();
+            } else if (map) {
+                google.maps.event.trigger(map, 'resize');
+                if (selectedLat && selectedLng) {
+                    const pos = { lat: selectedLat, lng: selectedLng };
+                    map.setCenter(pos);
+                    map.setZoom(17);
+                    if (marker) marker.setPosition(pos);
+                } else {
+                    getCurrentLocation();
                 }
             }
         });
 
-        function initMap() {
+        function initAddressMap() {
             if (mapInitialized) return;
 
-            // Default to Bhubaneswar if geolocation fails or is pending
-            const defaultPos = (selectedLat && selectedLng) 
-                ? { lat: selectedLat, lng: selectedLng } 
-                : { lat: 20.2961, lng: 85.8245 }; 
-            
-            map = new google.maps.Map(document.getElementById("mapContainer"), {
+            const defaultPos = (selectedLat && selectedLng)
+                ? { lat: selectedLat, lng: selectedLng }
+                : { lat: 20.2961, lng: 85.8245 };
+
+            map = new google.maps.Map(document.getElementById('addressMapContainer'), {
                 center: defaultPos,
                 zoom: (selectedLat && selectedLng) ? 17 : 12,
                 mapTypeControl: false,
@@ -1488,102 +1448,78 @@
 
             geocoder = new google.maps.Geocoder();
 
-            // 📍 Create Draggable Marker
             marker = new google.maps.Marker({
                 position: defaultPos,
                 map: map,
                 draggable: true,
-                title: "Drag marker to select location"
+                title: 'Drag to adjust location',
             });
 
-            // If it's a new address (no selectedLat), try to get current location immediately
             if (!selectedLat || !selectedLng) {
                 getCurrentLocation();
-            } else {
-                updateAddressFromCoordinates(selectedLat, selectedLng);
             }
 
-            // Search Autocomplete
-            const input = document.getElementById("mapSearchInput");
-            autocomplete = new google.maps.places.Autocomplete(input);
-            autocomplete.bindTo("bounds", map);
+            const input = document.getElementById('addressMapSearchInput');
+            autocomplete = new google.maps.places.Autocomplete(input, {
+                componentRestrictions: { country: 'in' },
+            });
+            autocomplete.bindTo('bounds', map);
 
-            autocomplete.addListener("place_changed", () => {
+            autocomplete.addListener('place_changed', () => {
                 const place = autocomplete.getPlace();
                 if (!place.geometry || !place.geometry.location) return;
 
+                const lat = place.geometry.location.lat();
+                const lng = place.geometry.location.lng();
                 map.setCenter(place.geometry.location);
                 map.setZoom(17);
                 marker.setPosition(place.geometry.location);
-                
-                selectedLat = place.geometry.location.lat();
-                selectedLng = place.geometry.location.lng();
-                updateAddressFromCoordinates(selectedLat, selectedLng);
+                syncLocationToForm(lat, lng, place.formatted_address || place.name);
             });
 
-            // Handle marker dragend
-            google.maps.event.addListener(marker, 'dragend', function(event) {
-                selectedLat = event.latLng.lat();
-                selectedLng = event.latLng.lng();
-                updateAddressFromCoordinates(selectedLat, selectedLng);
+            google.maps.event.addListener(marker, 'dragend', function (event) {
+                const lat = event.latLng.lat();
+                const lng = event.latLng.lng();
+                updateAddressFromCoordinates(lat, lng);
             });
 
             mapInitialized = true;
         }
 
         function updateAddressFromCoordinates(lat, lng) {
-            geocoder.geocode({ location: { lat: lat, lng: lng } }, (results, status) => {
-                if (status === "OK") {
-                    if (results[0]) {
-                        document.getElementById("currentAddressText").innerText = results[0].formatted_address;
-                    }
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    syncLocationToForm(lat, lng, results[0].formatted_address);
+                } else {
+                    syncLocationToForm(lat, lng, null);
                 }
             });
         }
 
-        function confirmLocation() {
-            const address = document.getElementById("currentAddressText").innerText;
-            document.getElementById("addr_address").value = address;
-            document.getElementById("addr_location").value = `${selectedLat},${selectedLng}`;
-            
-            // Try to extract pincode from address if possible
-            const pincodeMatch = address.match(/\b\d{6}\b/);
-            if (pincodeMatch) {
-                document.getElementById("addr_pincode").value = pincodeMatch[0];
-            }
-
-            $('#mapPickerModal').modal('hide');
-        }
-
         function getCurrentLocation() {
-            if (navigator.geolocation) {
-                const btn = $('.current-location-btn');
-                btn.addClass('spinning');
-                
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const pos = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude,
-                        };
-                        selectedLat = pos.lat;
-                        selectedLng = pos.lng;
+            if (!navigator.geolocation) return;
+
+            const btn = $('#addressModal .current-location-btn');
+            btn.addClass('spinning');
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const pos = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    if (map) {
                         map.setCenter(pos);
                         map.setZoom(17);
-                        if (marker) {
-                            marker.setPosition(pos);
-                        }
-                        updateAddressFromCoordinates(pos.lat, pos.lng);
-                        btn.removeClass('spinning');
-                    },
-                    () => {
-                        alert("Error: The Geolocation service failed.");
-                        btn.removeClass('spinning');
                     }
-                );
-            } else {
-                alert("Error: Your browser doesn't support geolocation.");
-            }
+                    if (marker) marker.setPosition(pos);
+                    updateAddressFromCoordinates(pos.lat, pos.lng);
+                    btn.removeClass('spinning');
+                },
+                () => {
+                    btn.removeClass('spinning');
+                }
+            );
         }
 
     $(document).ready(function() {
@@ -1594,6 +1530,10 @@
         // Address management form submission
         $('#multiAddressForm').on('submit', function(e) {
             e.preventDefault();
+            if (!$('#addr_location').val()) {
+                alert('Please search or select your location on the map.');
+                return;
+            }
             var btn = $(this).find('button[type="submit"]');
             var originalText = btn.html();
             btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin mr-1"></i> Saving...');
