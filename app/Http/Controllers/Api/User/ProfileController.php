@@ -645,13 +645,18 @@ class ProfileController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        // Calculate total earnings from referrals
+        // Calculate total earnings from referrals (sum of credit transactions with referral-related descriptions)
         $totalReferralEarnings = WalletTransaction::where('user_id', $user->id)
             ->where('type', 'credit')
-            ->where('description', 'LIKE', 'Referral commission%')
+            ->where(function($q) {
+                $q->where('description', 'LIKE', 'Referral commission%')
+                  ->orWhere('description', 'LIKE', 'Referral cashback%')
+                  ->orWhere('description', 'LIKE', 'Referral reward%');
+            })
             ->sum('amount');
 
         $referralCount = User::where('referred_by', $user->id)->count();
+        $referralAmount = \App\Models\Setting::getValue('referral_amount', 50);
 
         return response()->json([
             'status' => true,
@@ -661,7 +666,8 @@ class ProfileController extends Controller
                 'referral_count' => $referralCount,
                 'total_referral_earnings' => (float) $totalReferralEarnings,
                 'referral_code' => $user->referral_code,
-                'referral_link' => 'https://mybookhub.in?ref=' . $user->referral_code
+                'referral_link' => 'https://mybookhub.in?ref=' . $user->referral_code,
+                'referral_amount' => (float) $referralAmount
             ]
         ]);
     }

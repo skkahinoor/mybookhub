@@ -221,6 +221,10 @@ $adminRoutesClosure = function () {
         Route::get('commission-settings', [App\Http\Controllers\Admin\CommissionSettingsController::class, 'index'])->name('admin.commission.settings');
         Route::post('commission-settings/update', [App\Http\Controllers\Admin\CommissionSettingsController::class, 'update'])->name('admin.commission.settings.update');
 
+        // Refer Settings
+        Route::get('refer-settings', [App\Http\Controllers\Admin\ReferSettingsController::class, 'index'])->name('admin.refer.settings');
+        Route::post('refer-settings/update', [App\Http\Controllers\Admin\ReferSettingsController::class, 'update'])->name('admin.refer.settings.update');
+
         // Publishers
         Route::get('publisher', 'PublisherController@publisher')->name('admin.publisher');
         Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('admin.updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php

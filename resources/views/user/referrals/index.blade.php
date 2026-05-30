@@ -225,8 +225,8 @@
                             <p class="card-description">Copy the link below and share it with your friends via WhatsApp, Email, or Social Media.</p>
                             
                             <div class="bg-light p-4 rounded text-center border">
-                                <h3 class="text-primary mb-3">Earn ₹50 per Referral</h3>
-                                <p class="mb-4">When your friend joins using your link and makes their first purchase, you'll get ₹50 in your wallet instantly!</p>
+                                <h3 class="text-primary mb-3">Earn ₹{{ number_format($referralAmount, 0) }} per Referral</h3>
+                                <p class="mb-4">When your friend joins using your link and makes their first purchase, you'll get ₹{{ number_format($referralAmount, 0) }} in your wallet instantly!</p>
                                 
                                 <div class="input-group mb-3 mx-auto" style="max-width: 550px;">
                                     <input type="text" class="form-control" id="referralLink" 
@@ -271,7 +271,7 @@
                                 <div class="col-md-4 text-center p-3">
                                     <i class="ti-gift text-primary mb-2" style="font-size: 2rem;"></i>
                                     <h5>Step 3: Earn</h5>
-                                    <small class="text-muted">You get ₹50 on their first purchase</small>
+                                    <small class="text-muted">You get ₹{{ number_format($referralAmount, 0) }} on their first purchase</small>
                                 </div>
                             </div>
                         </div>
@@ -374,11 +374,11 @@
                                         BookHub
                                     </div>
                                     <div class="ref-badge mt-2">
-                                        <i class="ti-gift"></i> Earn ₹50 per referral
+                                        <i class="ti-gift"></i> Earn ₹{{ number_format($referralAmount, 0) }} per referral
                                     </div>
                                     <div class="ref-title">Invite friends. Earn rewards.</div>
                                     <p class="ref-sub">
-                                        Your friend signs up using your code/link and makes their first purchase — you get ₹50 in your wallet.
+                                        Your friend signs up using your code/link and makes their first purchase — you get ₹{{ number_format($referralAmount, 0) }} in your wallet.
                                     </p>
 
                                     <div class="ref-code">

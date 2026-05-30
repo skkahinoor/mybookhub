@@ -51,13 +51,18 @@ class WalletController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        // Calculate total earnings from referrals (sum of credit transactions with 'Referral commission' in description)
+        // Calculate total earnings from referrals (sum of credit transactions with referral-related descriptions)
         $totalReferralEarnings = WalletTransaction::where('user_id', $user->id)
             ->where('type', 'credit')
-            ->where('description', 'LIKE', 'Referral commission%')
+            ->where(function($q) {
+                $q->where('description', 'LIKE', 'Referral commission%')
+                  ->orWhere('description', 'LIKE', 'Referral cashback%')
+                  ->orWhere('description', 'LIKE', 'Referral reward%');
+            })
             ->sum('amount');
 
         $referralCount = \App\Models\User::where('referred_by', $user->id)->count();
+        $referralAmount = \App\Models\Setting::getValue('referral_amount', 50);
 
         return view('user.referrals.index', compact(
             'logos',
@@ -65,7 +70,8 @@ class WalletController extends Controller
             'user',
             'referrals',
             'referralCount',
-            'totalReferralEarnings'
+            'totalReferralEarnings',
+            'referralAmount'
         ));
     }
 }

@@ -173,7 +173,7 @@ class WalletTransaction extends Model
                     ->exists();
 
                 if (!$alreadyReferred) {
-                    $referralReward = 50;
+                    $referralReward = (float) \App\Models\Setting::getValue('referral_amount', 50);
                     $referrer->wallet_balance += $referralReward;
                     $referrer->save();
 
@@ -188,7 +188,7 @@ class WalletTransaction extends Model
                     \App\Models\Notification::create([
                         'type' => 'wallet_credit',
                         'title' => 'Referral Reward Received!',
-                        'message' => '₹50 referral reward has been credited to your wallet for ' . $user->name . '\'s first purchase (Order #' . $order->id . ').',
+                        'message' => '₹' . $referralReward . ' referral reward has been credited to your wallet for ' . $user->name . '\'s first purchase (Order #' . $order->id . ').',
                         'related_id' => (int) $referrer->id,
                         'related_type' => User::class,
                         'is_read' => false,

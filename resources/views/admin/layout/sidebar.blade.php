@@ -432,6 +432,27 @@
                 </div>
             </li>
             @endcanany
+
+            {{-- Refer Management --}}
+            @if(in_array(Auth::guard('admin')->user()->type, ['superadmin', 'admin']))
+            <li class="nav-item">
+                <a @if (Session::get('page') == 'refer_settings') style="background: #052CA3 !important; color: #FFF !important" @endif
+                    class="nav-link" data-toggle="collapse" href="#ui-refer-mgmt" aria-expanded="false"
+                    aria-controls="ui-refer-mgmt">
+                    <i class="icon-gift menu-icon"></i>
+                    <span class="menu-title">Refer Management</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse @if(Session::get('page') == 'refer_settings') show @endif" id="ui-refer-mgmt">
+                    <ul class="nav flex-column sub-menu" style="background: #fff !important; color: #052CA3 !important">
+                        <li class="nav-item">
+                            <a @if(Session::get('page')=='refer_settings') style="background:#052CA3 !important;color:#FFF !important" @else style="background:#fff !important;color:#052CA3 !important" @endif class="nav-link" href="{{ route('admin.refer.settings') }}">Refer Setting</a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+            @endif
+
              {{-- Catalogue Management (Remaining Items) --}}
             @canany(['view_sections', 'view_categories', 'view_publishers', 'view_authors', 'view_subjects', 'view_languages', 'view_types', 'view_products', 'view_editions', 'view_coupons', 'view_requested_books'])
             <li class="nav-item">
