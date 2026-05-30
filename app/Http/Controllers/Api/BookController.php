@@ -665,18 +665,26 @@ class BookController extends Controller
         }
 
         $request->validate([
-            'isbn' => 'required|string|max:20'
+            'isbn' => 'required|string|max:20',
+            'condition' => 'nullable|in:new,old'
         ]);
 
         $isbn = $request->isbn;
 
-        $product = Product::select(
+        $query = Product::select(
             'id',
             'product_name',
             'product_price',
             'product_isbn',
-            'product_image'
-        )->where('product_isbn', $isbn)->first();
+            'product_image',
+            'condition'
+        )->where('product_isbn', $isbn);
+
+        if ($request->filled('condition')) {
+            $query->where('condition', $request->condition);
+        }
+
+        $product = $query->first();
 
         if (!$product) {
             return response()->json([
@@ -713,6 +721,7 @@ class BookController extends Controller
                 'product_name'     => $product->product_name,
                 'product_price'    => $product->product_price,
                 'product_isbn'     => $product->product_isbn,
+                'condition'        => $product->condition,
 
                 // original image name
                 'product_image'    => $product->product_image,
@@ -753,7 +762,8 @@ class BookController extends Controller
             'product_name',
             'product_price',
             'product_isbn',
-            'product_image'
+            'product_image',
+            'condition'
         )->findOrFail($id);
 
         if ($user->type === 'vendor') {
@@ -781,6 +791,7 @@ class BookController extends Controller
                 'product_name'     => $product->product_name,
                 'product_price'    => $product->product_price,
                 'product_isbn'     => $product->product_isbn,
+                'condition'        => $product->condition,
 
                 'product_image'    => $product->product_image,
 
