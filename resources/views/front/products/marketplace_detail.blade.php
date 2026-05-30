@@ -137,7 +137,7 @@
                 <div class="col">
                     <div class="dz-box">
                         <div class="dz-media">
-                            <img src="{{ $bookDetails->product->product_image ? asset('book_covers/'.$bookDetails->product->product_image) : asset('front/images/product/default.jpg') }}"
+                            <img src="{{ $bookDetails->product->product_image ? config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/').$bookDetails->product->product_image : asset('front/images/product/default.jpg') }}"
                                 alt="{{ $bookDetails->product->product_name }}" class="img-fluid rounded shadow-sm"
                                 style="width: 398px; height: 572px; object-fit: cover; {{ $bookDetails->stock == 0 ? 'filter: grayscale(100%);' : '' }}">
                             

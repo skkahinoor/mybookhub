@@ -33,7 +33,7 @@ class SellBookController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         $userAttributes = ProductsAttribute::where('user_id', $user->id)
             ->with([
@@ -139,7 +139,7 @@ class SellBookController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         // Try to find the specific listing by ID (attribute_id)
         $attribute = ProductsAttribute::with('condition')->find($id);
@@ -812,7 +812,7 @@ class SellBookController extends Controller
         }
 
         $cleanSearch = preg_replace('/[^0-9X]/i', '', $isbn);
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         $relations = ['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'section', 'bookType', 'language'];
 
@@ -941,7 +941,7 @@ class SellBookController extends Controller
             return response()->json(['status' => true, 'data' => []]);
         }
 
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
         $relations = ['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'section', 'bookType', 'language'];
 
         $books = Product::with($relations)

@@ -90,7 +90,7 @@ class BookController extends Controller
         }
 
         $products = $query->get();
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         $products->each(function ($product) use ($basePath) {
             $product->image_urls = [
@@ -233,7 +233,7 @@ class BookController extends Controller
 
             if ($product) {
 
-                $basePath = url('book_covers');
+                $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
                 $product->image_urls = [
                     'large' => $product->product_image
@@ -324,7 +324,7 @@ class BookController extends Controller
             ], 404);
         }
 
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         $product->image_urls = [
             'large' => $product->product_image
@@ -608,7 +608,7 @@ class BookController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         $product->image_urls = [
             'large'  => $product->product_image ? $basePath . '/' . $product->product_image : null,
@@ -716,7 +716,7 @@ class BookController extends Controller
         $totalStock = $attribute?->stock ?? 0;
         $discount   = $attribute?->product_discount ?? 0;
 
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         return response()->json([
             'status' => true,
@@ -786,7 +786,7 @@ class BookController extends Controller
 
         $discount = (float) $query->max('product_discount');
 
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         return response()->json([
             'status' => true,

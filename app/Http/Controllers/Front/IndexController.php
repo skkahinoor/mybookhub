@@ -435,7 +435,7 @@ class IndexController extends Controller
                 'name'        => $product->product_name,
                 'isbn'        => $product->product_isbn,
                 'image'       => $product->product_image
-                    ? asset('book_covers/' . $product->product_image)
+                    ? config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product->product_image
                     : null,
                 'price'       => '₹' . number_format($finalPrice, 0),
                 'shop'        => $shopName,

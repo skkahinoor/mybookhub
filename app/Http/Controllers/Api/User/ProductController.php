@@ -332,7 +332,7 @@ class ProductController extends Controller
             'current_page' => $results->currentPage(),
             'last_page' => $results->lastPage(),
             'products' => $results->through(function ($product) {
-                $basePath = url('book_covers');
+                $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
                 // Aggregate price range and offer count from associated attributes
                 $prices = $product->attributes
@@ -663,7 +663,7 @@ class ProductController extends Controller
         $vendorOffers = $vendorOffers->values()->concat($userOffers->values());
 
         $authorNames = $product->authors->pluck('name')->join(', ');
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         return response()->json([
             'status' => true,
@@ -782,7 +782,7 @@ class ProductController extends Controller
         $authorNames = $product->authors->pluck('name')->join(', ');
 
 
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         return response()->json([
             'status' => true,
@@ -933,7 +933,7 @@ class ProductController extends Controller
 
         $total_price = 0;
         $total_items = 0;
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         foreach ($cartItems as $item) {
 
@@ -1225,7 +1225,7 @@ class ProductController extends Controller
 
         $total_price = 0;
         $total_items = 0;
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         foreach ($wishlists as $item) {
 
@@ -2109,7 +2109,7 @@ class ProductController extends Controller
         // Format the orders to include full details
         $formattedOrders = $orders->through(function ($order) {
 
-            $basePath = url('book_covers');
+            $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
             // Format order products
             $products = $order->orders_products->map(function ($item) use ($basePath) {
@@ -2195,7 +2195,7 @@ class ProductController extends Controller
             ], 404);
         }
 
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         return response()->json([
             'status' => true,

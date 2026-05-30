@@ -8,7 +8,7 @@
         <tr>
             {{-- Image --}}
             <td>
-                <img src="{{ asset('book_covers/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
+                <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . ($item['product']['product_image'] ?? 'no-image.png') }}"
                     width="80">
             </td>
 

@@ -20,9 +20,9 @@
 
 
                         @if (!empty($product['product_image']) && file_exists($product_image_path)) {{-- if the product image exists in BOTH database table AND filesystem (on server) --}}
-                            <img class="img-fluid" src="{{ asset($product_image_path) }}" alt="Product">
+                            <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product['product_image'] }}" alt="Product">
                         @else {{-- show the dummy image --}}
-                            <img class="img-fluid" src="{{ asset('book_covers/no-image.png') }}" alt="Product">
+                            <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}" alt="Product">
                         @endif
 
 

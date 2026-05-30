@@ -511,7 +511,7 @@ class ProductsController extends Controller
                 })
                 ->addColumn('image', function ($row) use ($adminType) {
                     $item = ($adminType === 'vendor') ? $row->product : $row;
-                    $img = !empty($item->product_image) ? asset('book_covers/' . $item->product_image) : asset('book_covers/no-image.png');
+                    $img = !empty($item->product_image) ? config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $item->product_image : config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png';
                     return '<img style="width:120px; height:100px" src="' . $img . '">';
                 })
                 ->addColumn('name', function ($row) use ($adminType) {

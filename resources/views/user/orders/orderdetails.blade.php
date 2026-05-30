@@ -149,7 +149,7 @@
                                         $productImage = \App\Models\Product::getProductImage($product->product_id);
                                     @endphp
                                     <div style="position: relative;">
-                                        <img src="{{ asset('book_covers/' . $productImage) }}"
+                                        <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $productImage }}"
                                             alt="{{ $product->product_name }}"
                                             style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; margin-right: 20px;">
                                         <span class="badge badge-primary"

@@ -487,7 +487,7 @@
                                     {{-- Show the product image, if any (if exits) --}}
                                     @if (!empty($product['product_image']))
                                         <a target="_blank"
-                                            href="{{ url('book_covers/' . $product['product_image']) }}">View
+                                            href="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product['product_image'] }}">View
                                             Book Image</a>&nbsp;|&nbsp; {{-- Showing the 'large' image inside the 'large' folder --}}
                                         <a href="JavaScript:void(0)" class="confirmDelete" module="product-image"
                                             moduleid="{{ $product['id'] }}">Delete Book Image</a>

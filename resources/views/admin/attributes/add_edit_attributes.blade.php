@@ -105,9 +105,9 @@
                                 <div class="form-group">
                                     {{-- Show the product image, if any (if exits) --}}
                                     @if (!empty($product['product_image']))
-                                        <img style="width: 120px" src="{{ url('book_covers/' . $product['product_image']) }}"> {{--  the 'small' image --}}
+                                        <img style="width: 120px" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product['product_image'] }}"> {{--  the 'small' image --}}
                                     @else
-                                        <img style="width: 120px" src="{{ url('book_covers/no-image.png') }}"> {{--  the 'small' image --}}
+                                        <img style="width: 120px" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}"> {{--  the 'small' image --}}
                                     @endif
                                 </div>
 

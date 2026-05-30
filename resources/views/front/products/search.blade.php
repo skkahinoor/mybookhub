@@ -376,9 +376,9 @@
                         <div class="prod-card-img-wrap">
                             <a href="{{ url('product/' . $product->id) }}">
                                 <img
-                                    src="{{ asset('book_covers/' . $product->product_image) }}"
+                                    src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product->product_image }}"
                                     alt="{{ $product->product_name }}"
-                                    onerror="this.src='{{ asset('book_covers/no-image.png') }}'">
+                                    onerror="this.src='{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}'">
                             </a>
                             <span class="prod-badge {{ $product->condition == 'new' ? 'new' : 'old' }}">
                                 {{ ucfirst($product->condition) }}

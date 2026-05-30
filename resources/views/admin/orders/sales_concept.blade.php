@@ -292,7 +292,7 @@
 
                 // if (res.data.product_image) {
                 //     $('#product_image')
-                //         .attr('src', '{{ url('book_covers') }}/' + res.data
+                //         .attr('src', '{{ rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/') }}/' + res.data
                 //             .product_image)
                 //         .show();
                 // }

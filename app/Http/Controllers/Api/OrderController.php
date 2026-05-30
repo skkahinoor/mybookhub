@@ -323,7 +323,7 @@ class OrderController extends Controller
         $discountAmount = min($discountAmount, $basePrice);
         $finalPrice = round($basePrice - $discountAmount);
 
-        $basePath = url('book_covers');
+        $basePath = rtrim(config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'), '/');
 
         return response()->json([
             'status' => true,
