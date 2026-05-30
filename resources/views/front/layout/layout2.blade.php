@@ -488,7 +488,7 @@
                                         <div class="thumb-wrap">
                                             <a href="{{ url('product/' . $product['id']) }}">
                                                 <img
-                                                    src="{{ asset('front/images/product_images/small/' . $product['product_image']) }}">
+                                                    src="{{ asset('book_covers/' . $product['product_image']) }}">
                                             </a>
                                         </div>
                                         <div class="content-entry-wrap">

@@ -421,7 +421,7 @@
                     <!-- Left: Image -->
                     <div class="col-md-4">
                         <div class="product-image-box">
-                            <img src="{{ asset('front/images/product_images/large/' . $productDetails['product_image']) }}"
+                            <img src="{{ asset('book_covers/' . $productDetails['product_image']) }}"
                                 alt="{{ $productDetails['product_name'] }}">
                         </div>
 

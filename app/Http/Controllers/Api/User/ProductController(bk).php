@@ -209,7 +209,7 @@ class ProductController extends Controller
             'last_page'    => $results->lastPage(),
             'products'     => $results->through(function ($product) {
 
-                $basePath = url('front/images/product_images');
+                $basePath = url('book_covers');
 
                 return [
                     'id'              => $product->id,
@@ -218,13 +218,13 @@ class ProductController extends Controller
                     'product_price'   => $product->product_price,
                     'image_urls'       => [
                         'large'  => $product->product_image
-                            ? $basePath . '/large/' . $product->product_image
+                            ? $basePath . '/' . $product->product_image
                             : null,
                         'medium' => $product->product_image
-                            ? $basePath . '/medium/' . $product->product_image
+                            ? $basePath . '/' . $product->product_image
                             : null,
                         'small'  => $product->product_image
-                            ? $basePath . '/small/' . $product->product_image
+                            ? $basePath . '/' . $product->product_image
                             : null,
                     ],
                     'description'     => $product->description,
@@ -349,7 +349,7 @@ class ProductController extends Controller
         $authorNames = $product->authors->pluck('name')->join(', ');
 
 
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         return response()->json([
             'status' => true,
@@ -365,9 +365,9 @@ class ProductController extends Controller
                     'condition' => $product->condition,
 
                     'image_urls' => [
-                        'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-                        'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                        'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                        'large'  => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                        'medium' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                        'small'  => $product->product_image ? $basePath . '/' . $product->product_image : null,
                     ],
 
                     'description' => $product->description,
@@ -468,7 +468,7 @@ class ProductController extends Controller
 
         $total_price = 0;
         $total_items = 0;
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         foreach ($cartItems as $item) {
 
@@ -485,9 +485,9 @@ class ProductController extends Controller
 
             if ($item->product) {
                 $item->product->image_urls = [
-                    'large'  => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
-                    'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
-                    'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
+                    'large'  => $item->product->product_image ? $basePath . '/' . $item->product->product_image : null,
+                    'medium' => $item->product->product_image ? $basePath . '/' . $item->product->product_image : null,
+                    'small'  => $item->product->product_image ? $basePath . '/' . $item->product->product_image : null,
                 ];
 
                 $authorString = $item->product->authors->pluck('author_name')->join(', ');
@@ -717,7 +717,7 @@ class ProductController extends Controller
 
         $total_price = 0;
         $total_items = 0;
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         foreach ($wishlists as $item) {
 
@@ -734,9 +734,9 @@ class ProductController extends Controller
 
             if ($item->product) {
                 $item->product->image_urls = [
-                    'large'  => $item->product->product_image ? $basePath . '/large/' . $item->product->product_image : null,
-                    'medium' => $item->product->product_image ? $basePath . '/medium/' . $item->product->product_image : null,
-                    'small'  => $item->product->product_image ? $basePath . '/small/' . $item->product->product_image : null,
+                    'large'  => $item->product->product_image ? $basePath . '/' . $item->product->product_image : null,
+                    'medium' => $item->product->product_image ? $basePath . '/' . $item->product->product_image : null,
+                    'small'  => $item->product->product_image ? $basePath . '/' . $item->product->product_image : null,
                 ];
             }
 
@@ -1382,7 +1382,7 @@ class ProductController extends Controller
         // Format the orders to include full details
         $formattedOrders = $orders->through(function ($order) {
 
-            $basePath = url('front/images/product_images');
+            $basePath = url('book_covers');
 
             // Format order products
             $products = $order->orders_products->map(function ($item) use ($basePath) {
@@ -1391,7 +1391,7 @@ class ProductController extends Controller
                 $imageUrl = null;
 
                 if ($product && $product->product_image) {
-                    $imageUrl = $basePath . '/small/' . $product->product_image;
+                    $imageUrl = $basePath . '/' . $product->product_image;
                 }
 
                 return [

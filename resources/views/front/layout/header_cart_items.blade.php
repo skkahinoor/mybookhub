@@ -25,10 +25,10 @@
                 <li class="clearfix">
                     <a href="{{ url('product/' . $item['product_id']) }}">
                         @if (!empty($item['product']['product_image']))
-                            <img src="{{ asset('front/images/product_images/small/' . $item['product']['product_image']) }}"
+                            <img src="{{ asset('book_covers/' . $item['product']['product_image']) }}"
                                 alt="{{ $item['product']['product_name'] ?? 'Product' }}">
                         @else
-                            <img src="{{ asset('front/images/product_images/small/no-image.png') }}"
+                            <img src="{{ asset('book_covers/no-image.png') }}"
                                 alt="No Image">
                         @endif
                         <span class="mini-item-name">{{ $item['product']['product_name'] ?? 'Product' }}</span>

@@ -97,7 +97,7 @@
                                     $getProductImage = \App\Models\Product::getProductImage($product['product_id']);
                                 @endphp
                                 <a target="_blank" href="{{ url('product/' . $product['product_id']) }}">
-                                    <img style="width: 80px" src="{{ asset('front/images/product_images/small/' . $getProductImage) }}">
+                                    <img style="width: 80px" src="{{ asset('book_covers/' . $getProductImage) }}">
                                 </a>
                             </td>
 

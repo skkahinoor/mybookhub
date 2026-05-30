@@ -376,9 +376,9 @@
                         <div class="prod-card-img-wrap">
                             <a href="{{ url('product/' . $product->id) }}">
                                 <img
-                                    src="{{ asset('front/images/product_images/small/' . $product->product_image) }}"
+                                    src="{{ asset('book_covers/' . $product->product_image) }}"
                                     alt="{{ $product->product_name }}"
-                                    onerror="this.src='{{ asset('front/images/product_images/small/no-image.png') }}'">
+                                    onerror="this.src='{{ asset('book_covers/no-image.png') }}'">
                             </a>
                             <span class="prod-badge {{ $product->condition == 'new' ? 'new' : 'old' }}">
                                 {{ ucfirst($product->condition) }}

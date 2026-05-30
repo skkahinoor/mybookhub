@@ -33,7 +33,7 @@ class SellBookController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         $userAttributes = ProductsAttribute::where('user_id', $user->id)
             ->with([
@@ -69,12 +69,12 @@ class SellBookController extends Controller
                 'platform_charge' => $attribute ? $attribute->platform_charge : 0,
                 'is_sold' => $attribute ? $attribute->is_sold : 0,
                 'image_urls' => [
-                    'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-                    'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                    'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                    'large' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                    'medium' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                    'small' => $product->product_image ? $basePath . '/' . $product->product_image : null,
                 ],
                 'user_old_book_image' => $attribute && $attribute->user_old_book_image
-                    ? $basePath . '/large/' . $attribute->user_old_book_image
+                    ? $basePath . '/' . $attribute->user_old_book_image
                     : null,
                 'user_old_book_video' => $attribute && $attribute->video_upload
                     ? url('front/videos/product_videos/' . $attribute->video_upload)
@@ -139,7 +139,7 @@ class SellBookController extends Controller
     public function show($id)
     {
         $user = Auth::user();
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         // Try to find the specific listing by ID (attribute_id)
         $attribute = ProductsAttribute::with('condition')->find($id);
@@ -175,9 +175,9 @@ class SellBookController extends Controller
                 'description' => $product->description,
                 'condition' => $product->condition,
                 'image_urls' => [
-                    'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-                    'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                    'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                    'large' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                    'medium' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                    'small' => $product->product_image ? $basePath . '/' . $product->product_image : null,
                 ],
                 'section' => $product->section ? [
                     'id' => $product->section->id,
@@ -224,7 +224,7 @@ class SellBookController extends Controller
                     'platform_charge' => $attribute->platform_charge,
                     'is_sold' => $attribute->is_sold,
                     'user_old_book_image' => $attribute->user_old_book_image
-                        ? $basePath . '/large/' . $attribute->user_old_book_image
+                        ? $basePath . '/' . $attribute->user_old_book_image
                         : null,
                     'user_old_book_video' => $attribute->video_upload
                         ? url('front/videos/product_videos/' . $attribute->video_upload)
@@ -394,6 +394,8 @@ class SellBookController extends Controller
                         Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);
                         Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
                         Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
+                        // Also save to book_covers
+                        Image::make($image_tmp)->resize(500, 500)->save(public_path('book_covers/' . $imageName));
                         $product->product_image = $imageName;
                     }
                 }
@@ -457,6 +459,8 @@ class SellBookController extends Controller
                     Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);
                     Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
                     Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
+                    // Also save to book_covers
+                    Image::make($image_tmp)->resize(500, 500)->save(public_path('book_covers/' . $imageName));
                     $attribute->user_old_book_image = $imageName;
                 }
             }
@@ -640,6 +644,8 @@ class SellBookController extends Controller
                     Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);
                     Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
                     Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
+                    // Also save to book_covers
+                    Image::make($image_tmp)->resize(500, 500)->save(public_path('book_covers/' . $imageName));
                     $product->product_image = $imageName;
                 }
             }
@@ -668,6 +674,8 @@ class SellBookController extends Controller
                     Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);
                     Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
                     Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
+                    // Also save to book_covers
+                    Image::make($image_tmp)->resize(500, 500)->save(public_path('book_covers/' . $imageName));
                     $attribute->user_old_book_image = $imageName;
                 }
             }
@@ -804,7 +812,7 @@ class SellBookController extends Controller
         }
 
         $cleanSearch = preg_replace('/[^0-9X]/i', '', $isbn);
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         $relations = ['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'section', 'bookType', 'language'];
 
@@ -832,9 +840,9 @@ class SellBookController extends Controller
                     'product_price' => $product->product_price,
                     'description' => $product->description,
                     'image_urls' => [
-                        'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-                        'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                        'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                        'large' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                        'medium' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                        'small' => $product->product_image ? $basePath . '/' . $product->product_image : null,
                     ],
                     'section' => $product->section ? [
                         'id' => $product->section->id,
@@ -933,7 +941,7 @@ class SellBookController extends Controller
             return response()->json(['status' => true, 'data' => []]);
         }
 
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
         $relations = ['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'section', 'bookType', 'language'];
 
         $books = Product::with($relations)
@@ -951,9 +959,9 @@ class SellBookController extends Controller
                     'product_price' => $product->product_price,
                     'description' => $product->description,
                     'image_urls' => [
-                        'large' => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-                        'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                        'small' => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                        'large' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                        'medium' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                        'small' => $product->product_image ? $basePath . '/' . $product->product_image : null,
                     ],
                     'section' => $product->section ? ['id' => $product->section->id, 'name' => $product->section->name] : null,
                     'category' => $product->category ? ['id' => $product->category->id, 'name' => $product->category->category_name] : null,

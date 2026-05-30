@@ -600,7 +600,7 @@
                                                         $sellerName = $request->admin_type === 'vendor' ? ($request->vendor->user->name ?? 'Vendor') : ($request->user->name ?? 'N/A');
                                                         $sellerEmail = $request->admin_type === 'vendor' ? ($request->vendor->user->email ?? 'N/A') : ($request->user->email ?? 'N/A');
                                                         $sellerPhone = $request->admin_type === 'vendor' ? ($request->vendor->user->mobile ?? 'N/A') : ($request->user->mobile ?? 'N/A');
-                                                        $bookImg = $request->user_old_book_image ? asset('front/images/product_images/medium/'.$request->user_old_book_image) : '';
+                                                        $bookImg = $request->user_old_book_image ? asset('book_covers/'.$request->user_old_book_image) : '';
                                                         $bookVid = $request->video_upload ? asset('front/videos/product_videos/'.$request->video_upload) : '';
 
                                                         $reqData = [

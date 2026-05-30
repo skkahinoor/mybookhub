@@ -369,6 +369,12 @@ class ProductsController extends Controller
                     $constraint->aspectRatio();
                     $constraint->upsize();
                 })->save('front/images/product_images/small/' . $imageName);
+
+                // Also save to book_covers
+                Image::make($image_tmp)->resize(500, 500, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })->save(public_path('book_covers/' . $imageName));
             }
         }
 
@@ -505,7 +511,7 @@ class ProductsController extends Controller
                 })
                 ->addColumn('image', function ($row) use ($adminType) {
                     $item = ($adminType === 'vendor') ? $row->product : $row;
-                    $img = !empty($item->product_image) ? asset('front/images/product_images/small/' . $item->product_image) : asset('front/images/product_images/small/no-image.png');
+                    $img = !empty($item->product_image) ? asset('book_covers/' . $item->product_image) : asset('book_covers/no-image.png');
                     return '<img style="width:120px; height:100px" src="' . $img . '">';
                 })
                 ->addColumn('name', function ($row) use ($adminType) {
@@ -900,6 +906,10 @@ class ProductsController extends Controller
                             ->save('front/images/product_images/medium/' . $imageName);
                         Image::make($image_tmp)->resize(250, 250)
                             ->save('front/images/product_images/small/' . $imageName);
+
+                        // Also save to book_covers
+                        Image::make($image_tmp)->resize(500, 500)
+                            ->save(public_path('book_covers/' . $imageName));
 
                         $product->product_image = $imageName;
                     }

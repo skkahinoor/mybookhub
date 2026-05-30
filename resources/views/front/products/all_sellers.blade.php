@@ -281,7 +281,7 @@
         <div class="container">
             <div class="all-sellers-container">
                 <div class="product-mini-info">
-                    <img src="{{ asset('front/images/product_images/large/' . $productDetails['product_image']) }}" alt="{{ $productDetails['product_name'] }}">
+                    <img src="{{ asset('book_covers/' . $productDetails['product_image']) }}" alt="{{ $productDetails['product_name'] }}">
                     <div>
                         <h2>{{ $productDetails['product_name'] }}</h2>
                         <p>by {{ isset($productDetails['authors']) && count($productDetails['authors']) > 0 ? collect($productDetails['authors'])->pluck('name')->join(', ') : 'Unknown Author' }}</p>

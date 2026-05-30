@@ -96,9 +96,9 @@
                                 <div class="form-group">
                                     {{-- Show the product image, if any (if exits) --}}
                                     @if (!empty($product['product_image']))
-                                        <img style="width: 120px" src="{{ url('front/images/product_images/small/' . $product['product_image']) }}"> {{--  the 'small' image --}}
+                                        <img style="width: 120px" src="{{ url('book_covers/' . $product['product_image']) }}"> {{--  the 'small' image --}}
                                     @else
-                                        <img style="width: 120px" src="{{ url('front/images/product_images/small/no-image.png') }}"> {{--  the 'small' image --}}
+                                        <img style="width: 120px" src="{{ url('book_covers/no-image.png') }}"> {{--  the 'small' image --}}
                                     @endif
                                 </div>
 
@@ -132,7 +132,7 @@
                                     @foreach ($product['images'] as $image) {{-- using the relationship 'images' --}}<tr>
                                             <td>{{ $image['id'] }}</td>
                                             <td>
-                                                <img src="{{ url('front/images/product_images/small/' . $image['image']) }}"> {{-- Small --}}
+                                                <img src="{{ url('book_covers/' . $image['image']) }}"> {{-- Small --}}
                                                 {{-- Medium --}}
                                                 {{-- Large --}}
                                             </td>

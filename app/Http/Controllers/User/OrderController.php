@@ -48,7 +48,7 @@ class OrderController extends Controller
                         $productImage = \App\Models\Product::getProductImage($firstProduct->product_id);
 
                         $html = '<div class="d-flex align-items-center">';
-                        $html .= '<img src="' . asset('front/images/product_images/small/' . $productImage) . '" alt="Product" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-right: 10px;">';
+                        $html .= '<img src="' . asset('book_covers/' . $productImage) . '" alt="Product" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; margin-right: 10px;">';
                         $html .= '<div>';
                         $html .= '<div class="font-weight-bold">' . $firstProduct->product_name . '</div>';
                         if ($order->orders_products->count() > 1) {

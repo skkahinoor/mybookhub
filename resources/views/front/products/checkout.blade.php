@@ -731,7 +731,7 @@
                                                             $item['quantity'];
                                                     @endphp
                                                     <div class="product-modern">
-                                                        <img src="{{ asset('front/images/product_images/large/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
+                                                        <img src="{{ asset('book_covers/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
                                                             class="product-img" alt="item">
                                                         <div class="product-info-modern">
                                                             <h6>{{ $item['product']['product_name'] }}</h6>

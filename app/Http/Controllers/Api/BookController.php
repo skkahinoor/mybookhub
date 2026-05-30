@@ -90,18 +90,18 @@ class BookController extends Controller
         }
 
         $products = $query->get();
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         $products->each(function ($product) use ($basePath) {
             $product->image_urls = [
                 'large'  => $product->product_image
-                    ? $basePath . '/large/' . $product->product_image
+                    ? $basePath . '/' . $product->product_image
                     : null,
                 'medium' => $product->product_image
-                    ? $basePath . '/medium/' . $product->product_image
+                    ? $basePath . '/' . $product->product_image
                     : null,
                 'small'  => $product->product_image
-                    ? $basePath . '/small/' . $product->product_image
+                    ? $basePath . '/' . $product->product_image
                     : null,
             ];
         });
@@ -233,19 +233,19 @@ class BookController extends Controller
 
             if ($product) {
 
-                $basePath = url('front/images/product_images');
+                $basePath = url('book_covers');
 
                 $product->image_urls = [
                     'large' => $product->product_image
-                        ? $basePath . '/large/' . $product->product_image
+                        ? $basePath . '/' . $product->product_image
                         : null,
 
                     'medium' => $product->product_image
-                        ? $basePath . '/medium/' . $product->product_image
+                        ? $basePath . '/' . $product->product_image
                         : null,
 
                     'small' => $product->product_image
-                        ? $basePath . '/small/' . $product->product_image
+                        ? $basePath . '/' . $product->product_image
                         : null,
                 ];
 
@@ -324,19 +324,19 @@ class BookController extends Controller
             ], 404);
         }
 
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         $product->image_urls = [
             'large' => $product->product_image
-                ? $basePath . '/large/' . $product->product_image
+                ? $basePath . '/' . $product->product_image
                 : null,
 
             'medium' => $product->product_image
-                ? $basePath . '/medium/' . $product->product_image
+                ? $basePath . '/' . $product->product_image
                 : null,
 
             'small' => $product->product_image
-                ? $basePath . '/small/' . $product->product_image
+                ? $basePath . '/' . $product->product_image
                 : null,
         ];
 
@@ -565,6 +565,10 @@ class BookController extends Controller
                 Image::make($image_tmp)->resize(250, 250)
                     ->save(public_path('front/images/product_images/small/' . $imageName));
 
+                // Also save to book_covers
+                Image::make($image_tmp)->resize(500, 500)
+                    ->save(public_path('book_covers/' . $imageName));
+
                 $product->update([
                     'product_image' => $imageName
                 ]);
@@ -604,12 +608,12 @@ class BookController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         $product->image_urls = [
-            'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-            'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-            'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+            'large'  => $product->product_image ? $basePath . '/' . $product->product_image : null,
+            'medium' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+            'small'  => $product->product_image ? $basePath . '/' . $product->product_image : null,
         ];
 
         /*
@@ -712,7 +716,7 @@ class BookController extends Controller
         $totalStock = $attribute?->stock ?? 0;
         $discount   = $attribute?->product_discount ?? 0;
 
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         return response()->json([
             'status' => true,
@@ -729,13 +733,13 @@ class BookController extends Controller
                 // FULL IMAGE PATHS
                 'image_urls'       => [
                     'large'  => $product->product_image
-                        ? $basePath . '/large/' . $product->product_image
+                        ? $basePath . '/' . $product->product_image
                         : null,
                     'medium' => $product->product_image
-                        ? $basePath . '/medium/' . $product->product_image
+                        ? $basePath . '/' . $product->product_image
                         : null,
                     'small'  => $product->product_image
-                        ? $basePath . '/small/' . $product->product_image
+                        ? $basePath . '/' . $product->product_image
                         : null,
                 ],
 
@@ -782,7 +786,7 @@ class BookController extends Controller
 
         $discount = (float) $query->max('product_discount');
 
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         return response()->json([
             'status' => true,
@@ -797,13 +801,13 @@ class BookController extends Controller
 
                 'image_urls'       => [
                     'large'  => $product->product_image
-                        ? $basePath . '/large/' . $product->product_image
+                        ? $basePath . '/' . $product->product_image
                         : null,
                     'medium' => $product->product_image
-                        ? $basePath . '/medium/' . $product->product_image
+                        ? $basePath . '/' . $product->product_image
                         : null,
                     'small'  => $product->product_image
-                        ? $basePath . '/small/' . $product->product_image
+                        ? $basePath . '/' . $product->product_image
                         : null,
                 ],
 

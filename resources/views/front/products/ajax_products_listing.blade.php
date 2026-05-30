@@ -3,7 +3,7 @@
 
     @foreach ($categoryProducts as $product)
         @php
-            $product_image_path = 'front/images/product_images/small/' . $product->product_image;
+            $product_image_path = 'book_covers/' . $product->product_image;
             $getDiscountPrice = \App\Models\Product::getDiscountPrice($product->id);
         @endphp
         <div class="product-item col-lg-4 col-md-6 col-sm-6">
@@ -13,7 +13,7 @@
                         @if (!empty($product->product_image) && file_exists($product_image_path))
                             <img class="img-fluid" src="{{ asset($product_image_path) }}" alt="Product">
                         @else
-                            <img class="img-fluid" src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="Product">
+                            <img class="img-fluid" src="{{ asset('book_covers/no-image.png') }}" alt="Product">
                         @endif
                     </a>
                     <div class="item-action-behaviors">

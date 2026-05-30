@@ -8,7 +8,7 @@
         <tr>
             {{-- Image --}}
             <td>
-                <img src="{{ asset('front/images/product_images/small/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
+                <img src="{{ asset('book_covers/' . ($item['product']['product_image'] ?? 'no-image.png')) }}"
                     width="80">
             </td>
 

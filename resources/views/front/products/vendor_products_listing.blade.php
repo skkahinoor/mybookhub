@@ -15,14 +15,14 @@
 
 
                         @php
-                            $product_image_path = 'front/images/product_images/small/' . $product['product_image'];
+                            $product_image_path = 'book_covers/' . $product['product_image'];
                         @endphp
 
 
                         @if (!empty($product['product_image']) && file_exists($product_image_path)) {{-- if the product image exists in BOTH database table AND filesystem (on server) --}}
                             <img class="img-fluid" src="{{ asset($product_image_path) }}" alt="Product">
                         @else {{-- show the dummy image --}}
-                            <img class="img-fluid" src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="Product">
+                            <img class="img-fluid" src="{{ asset('book_covers/no-image.png') }}" alt="Product">
                         @endif
 
 

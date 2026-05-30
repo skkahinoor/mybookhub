@@ -233,6 +233,8 @@ class SellBookController extends Controller
                         Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);
                         Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
                         Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
+                        // Also save to book_covers
+                        Image::make($image_tmp)->resize(500, 500)->save(public_path('book_covers/'.$imageName));
                         $product->product_image = $imageName;
                     }
                 }
@@ -317,6 +319,8 @@ class SellBookController extends Controller
                     Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);
                     Image::make($image_tmp)->resize(500, 500)->save($mediumImagePath);
                     Image::make($image_tmp)->resize(250, 250)->save($smallImagePath);
+                    // Also save to book_covers
+                    Image::make($image_tmp)->resize(500, 500)->save(public_path('book_covers/'.$imageName));
                     $attribute->user_old_book_image = $imageName;
                 }
             }

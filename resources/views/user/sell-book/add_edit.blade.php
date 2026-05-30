@@ -442,7 +442,7 @@
                                             @if (!empty($product->firstAttribute->user_old_book_image))
                                                 <div class="mt-2">
                                                     <a target="_blank" class="text-primary font-weight-bold"
-                                                        href="{{ url('front/images/product_images/large/' . $product->firstAttribute->user_old_book_image) }}">
+                                                        href="{{ url('book_covers/' . $product->firstAttribute->user_old_book_image) }}">
                                                         <i class="mdi mdi-eye"></i> View Current Image
                                                     </a>
                                                 </div>

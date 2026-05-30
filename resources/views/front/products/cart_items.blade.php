@@ -198,10 +198,10 @@
                     {{-- Product Image --}}
                     <td class="product-item-img">
                         @if (!empty($item['product']['product_image']))
-                            <img src="{{ asset('front/images/product_images/small/' . $item['product']['product_image']) }}"
+                            <img src="{{ asset('book_covers/' . $item['product']['product_image']) }}"
                                 alt="{{ $item['product']['product_name'] }}" class="img-fluid" style="max-width:80px;">
                         @else
-                            <img src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="No Image"
+                            <img src="{{ asset('book_covers/no-image.png') }}" alt="No Image"
                                 class="img-fluid" style="max-width:80px;">
                         @endif
                     </td>

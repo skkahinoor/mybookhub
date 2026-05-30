@@ -247,7 +247,7 @@
                                      @if($requestData->user_old_book_image)
                                          <div class="col-md-6 text-center">
                                              <h5>Book Image</h5>
-                                             <img src="{{ asset('front/images/product_images/medium/' . $requestData->user_old_book_image) }}" class="img-thumbnail" style="max-width: 300px;">
+                                             <img src="{{ asset('book_covers/' . $requestData->user_old_book_image) }}" class="img-thumbnail" style="max-width: 300px;">
                                          </div>
                                      @endif
                                      

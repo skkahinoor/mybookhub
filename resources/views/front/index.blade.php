@@ -70,7 +70,7 @@
                                     @foreach ($newProducts as $product)
                                         @php
                                             if (!$product) continue;
-                                            $product_image_path = 'front/images/product_images/small/' . $product->product_image;
+                                            $product_image_path = 'book_covers/' . $product->product_image;
                                         @endphp
 
                                         <div class="item">
@@ -79,7 +79,7 @@
                                                     @if (!empty($product->product_image) && file_exists($product_image_path))
                                                         <img class="img-fluid" src="{{ asset($product_image_path) }}" alt="Product">
                                                     @else
-                                                        <img class="img-fluid" src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ asset('book_covers/no-image.png') }}" alt="Product">
                                                     @endif
                                                 </a>
                                                 <div class="item-action-behaviors">
@@ -129,7 +129,7 @@
                                     @foreach ($bestSellers as $product)
                                         @php
                                             if (!$product) continue;
-                                            $product_image_path = 'front/images/product_images/small/' . $product->product_image;
+                                            $product_image_path = 'book_covers/' . $product->product_image;
                                         @endphp
                                         <div class="item">
                                             <div class="image-container">
@@ -137,7 +137,7 @@
                                                     @if (!empty($product->product_image) && file_exists($product_image_path))
                                                         <img class="img-fluid" src="{{ asset($product_image_path) }}" alt="Product">
                                                     @else
-                                                        <img class="img-fluid" src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ asset('book_covers/no-image.png') }}" alt="Product">
                                                     @endif
                                                 </a>
                                                 <div class="item-action-behaviors">
@@ -187,7 +187,7 @@
                                     @foreach ($discountedProducts as $product)
                                         @php
                                             if (!$product) continue;
-                                            $product_image_path = 'front/images/product_images/small/' . $product->product_image;
+                                            $product_image_path = 'book_covers/' . $product->product_image;
                                         @endphp
                                         <div class="item">
                                             <div class="image-container">
@@ -195,7 +195,7 @@
                                                     @if (!empty($product->product_image) && file_exists($product_image_path))
                                                         <img class="img-fluid" src="{{ asset($product_image_path) }}" alt="Product">
                                                     @else
-                                                        <img class="img-fluid" src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ asset('book_covers/no-image.png') }}" alt="Product">
                                                     @endif
                                                 </a>
                                                 <div class="item-action-behaviors">
@@ -242,7 +242,7 @@
                                     @foreach ($featuredProducts as $product)
                                         @php
                                             if (!$product) continue;
-                                            $product_image_path = 'front/images/product_images/small/' . $product->product_image;
+                                            $product_image_path = 'book_covers/' . $product->product_image;
                                         @endphp
                                         <div class="item">
                                             <div class="image-container">
@@ -250,7 +250,7 @@
                                                     @if (!empty($product->product_image) && file_exists($product_image_path))
                                                         <img class="img-fluid" src="{{ asset($product_image_path) }}" alt="Product">
                                                     @else
-                                                        <img class="img-fluid" src="{{ asset('front/images/product_images/small/no-image.png') }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ asset('book_covers/no-image.png') }}" alt="Product">
                                                     @endif
                                                 </a>
                                                 <div class="item-action-behaviors">

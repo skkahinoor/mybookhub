@@ -323,7 +323,7 @@ class OrderController extends Controller
         $discountAmount = min($discountAmount, $basePrice);
         $finalPrice = round($basePrice - $discountAmount);
 
-        $basePath = url('front/images/product_images');
+        $basePath = url('book_covers');
 
         return response()->json([
             'status' => true,
@@ -337,9 +337,9 @@ class OrderController extends Controller
                 'final_price'      => $finalPrice,
                 'stock'            => $attribute->stock,
                 'image_urls' => [
-                    'large'  => $product->product_image ? $basePath . '/large/' . $product->product_image : null,
-                    'medium' => $product->product_image ? $basePath . '/medium/' . $product->product_image : null,
-                    'small'  => $product->product_image ? $basePath . '/small/' . $product->product_image : null,
+                    'large'  => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                    'medium' => $product->product_image ? $basePath . '/' . $product->product_image : null,
+                    'small'  => $product->product_image ? $basePath . '/' . $product->product_image : null,
                 ],
             ]
         ], 200);

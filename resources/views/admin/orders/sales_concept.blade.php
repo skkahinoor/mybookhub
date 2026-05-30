@@ -292,7 +292,7 @@
 
                 // if (res.data.product_image) {
                 //     $('#product_image')
-                //         .attr('src', '{{ url('front/images/product_images/small') }}/' + res.data
+                //         .attr('src', '{{ url('book_covers') }}/' + res.data
                 //             .product_image)
                 //         .show();
                 // }

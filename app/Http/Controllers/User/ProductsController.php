@@ -374,6 +374,12 @@ class ProductsController extends Controller
                     $constraint->aspectRatio();
                     $constraint->upsize();
                 })->save('front/images/product_images/small/' . $imageName);
+
+                // Also save to book_covers
+                Image::make($image_tmp)->resize(500, 500, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })->save(public_path('book_covers/' . $imageName));
             }
         }
 
@@ -707,6 +713,10 @@ class ProductsController extends Controller
                             ->save('front/images/product_images/medium/' . $imageName);
                         Image::make($image_tmp)->resize(250, 250)
                             ->save('front/images/product_images/small/' . $imageName);
+
+                        // Also save to book_covers
+                        Image::make($image_tmp)->resize(500, 500)
+                            ->save(public_path('book_covers/' . $imageName));
 
                         $product->product_image = $imageName;
                     }

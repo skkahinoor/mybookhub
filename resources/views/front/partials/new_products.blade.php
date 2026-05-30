@@ -5,7 +5,7 @@
             <div class="position-relative">
                 @if (!empty($product['product_image']))
                     <a href="{{ url('product/' . $product['id']) }}">
-                        <img src="{{ asset('front/images/product_images/small/' . $product['product_image']) }}"
+                        <img src="{{ asset('book_covers/' . $product['product_image']) }}"
                             class="card-img-top" alt="product_name" style="height: 200px; object-fit: cover;">
                     </a>
                 @endif

@@ -2192,7 +2192,7 @@
                     results.forEach(item => {
                         const card = `
                                 <a href="${item.url}" class="bg-product-card">
-                                    <img src="${item.image || '/front/images/product_images/large/no-image.png'}" class="bg-product-img">
+                                    <img src="${item.image || '/book_covers/no-image.png'}" class="bg-product-img">
                                     <div class="bg-product-name">${item.name}</div>
                                     <div class="bg-product-price">${item.price}</div>
                                     <div class="bg-product-vendor">${item.shop}</div>
