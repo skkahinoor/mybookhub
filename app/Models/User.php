@@ -117,7 +117,7 @@ class User extends Authenticatable
     public function getTypeAttribute()
     {
         // Check Spatie Roles first
-        if ($this->hasRole('admin')) {
+        if ($this->hasRole('admin') || $this->hasRole('superadmin')) {
             return 'admin';
         }
         if ($this->hasRole('vendor')) {
@@ -129,7 +129,15 @@ class User extends Authenticatable
         if ($this->hasRole('student')) {
             return 'student';
         }
-        // Fallback to legacy behavior if needed (e.g. checks role_id directly)
+
+        // Check if user has any non-core custom role → they are 'staff'
+        $coreRoles = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user'];
+        $customRoles = $this->roles->pluck('name')->diff($coreRoles);
+        if ($customRoles->isNotEmpty()) {
+            return 'staff';
+        }
+
+        // Fallback to legacy role_id checks
         if ($this->role_id == \App\Helpers\RoleHelper::adminId()) return 'admin';
         if ($this->role_id == \App\Helpers\RoleHelper::vendorId()) return 'vendor';
         if ($this->role_id == \App\Helpers\RoleHelper::salesId()) return 'sales';

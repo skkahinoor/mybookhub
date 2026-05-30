@@ -43,11 +43,23 @@
                                 <div id="appendSubcategoriesLevel">
                                     {{-- Subcategories will be loaded here via AJAX --}}
                                 </div>
-                                <div class="form-group">
-                                    <label>Select Subjects</label>
-                                    <div class="row">
+                                <div class="form-group" id="subjects-container">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="mb-0">Select Subjects</label>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-xs btn-outline-primary" id="selectAllFiltered" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">Select All Visible</button>
+                                            <button type="button" class="btn btn-xs btn-outline-secondary" id="deselectAllFiltered" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; margin-left: 5px;">Deselect All Visible</button>
+                                        </div>
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <input type="text" id="search-subjects" class="form-control" placeholder="Search subjects here...">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" type="button" id="clear-search"><i class="mdi mdi-close"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="row" id="subjects-list" style="max-height: 250px; overflow-y: auto; border: 1px solid #e3e3e3; padding: 15px; border-radius: 4px; margin: 0 1px 15px 1px; background-color: #fcfcfc;">
                                         @foreach ($subjects as $subject)
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 subject-item">
                                                 <div class="form-check">
                                                     <label class="form-check-label">
                                                         <input type="checkbox" name="subject_ids[]"
@@ -97,6 +109,57 @@
                         }
                     });
                 }
+            });
+            $(document).on('change', '#section_id', function() {
+                var sectionName = $(this).find("option:selected").text().trim().toLowerCase();
+                var noSubjectsSections = ['religious book', 'religious', 'religious books'];
+                
+                if (noSubjectsSections.includes(sectionName)) {
+                    $("#appendSubcategoriesLevel").hide();
+                    $("#subjects-container").hide();
+                } else {
+                    $("#appendSubcategoriesLevel").show();
+                    $("#subjects-container").show();
+                }
+            });
+
+            // Live search for subjects
+            $('#search-subjects').on('keyup input', function() {
+                var value = $(this).val().toLowerCase();
+                var visibleCount = 0;
+                
+                $('#subjects-list .subject-item').each(function() {
+                    var text = $(this).text().toLowerCase();
+                    if (text.indexOf(value) > -1) {
+                        $(this).show();
+                        visibleCount++;
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                if (visibleCount === 0) {
+                    if ($('#no-subjects-found').length === 0) {
+                        $('#subjects-list').append('<div id="no-subjects-found" class="col-12 text-muted text-center py-3">No matching subjects found</div>');
+                    }
+                } else {
+                    $('#no-subjects-found').remove();
+                }
+            });
+
+            // Clear search field
+            $('#clear-search').on('click', function() {
+                $('#search-subjects').val('').trigger('input');
+            });
+
+            // Select all visible subjects
+            $('#selectAllFiltered').on('click', function() {
+                $('#subjects-list .subject-item:visible').find('input[type="checkbox"]').prop('checked', true);
+            });
+
+            // Deselect all visible subjects
+            $('#deselectAllFiltered').on('click', function() {
+                $('#subjects-list .subject-item:visible').find('input[type="checkbox"]').prop('checked', false);
             });
         });
     </script>

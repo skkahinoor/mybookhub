@@ -55,6 +55,11 @@ class AdminController extends Controller
         $couponsCount = Coupon::where('status', 1)->count();
         $deliveryAgentsCount = DeliveryAgent::count();
 
+        // Staff count
+        $coreRolesForStaff = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user', 'delivery_agent'];
+        $staffRoles = Role::whereNotIn('name', $coreRolesForStaff)->pluck('name')->toArray();
+        $staffsCount = !empty($staffRoles) ? User::role($staffRoles, 'web')->count() : 0;
+
         // Vendor-specific counts
         if ($adminType === 'vendor' && $vendorId) {
 
@@ -108,7 +113,7 @@ class AdminController extends Controller
 
         // Sell Book Requests for Admin Dashboard
         $sellBookRequests = collect();
-        if ($adminType === 'superadmin' || $adminType === 'admin') {
+        if (Auth::guard('admin')->user()->can('view_sell_book_requests')) {
             $sellBookRequests = ProductsAttribute::with(['product', 'user', 'condition', 'vendor'])
                 ->whereNotNull('old_book_condition_id')
                 ->whereNotNull('user_id')
@@ -119,7 +124,7 @@ class AdminController extends Controller
 
         // Eligible vendor payouts (Admin dashboard only)
         $eligibleVendorPayoutItems = collect();
-        if ($adminType === 'superadmin' || $adminType === 'admin') {
+        if (Auth::guard('admin')->user()->can('view_vendor_payouts')) {
             $candidates = OrdersProduct::query()
                 ->with([
                     'order.orders_products',
@@ -169,6 +174,7 @@ class AdminController extends Controller
             'vendorsCount',
             'salesExecutivesCount',
             'deliveryAgentsCount',
+            'staffsCount',
             'logos',
             'headerLogo',
             'vendor',
@@ -268,18 +274,24 @@ class AdminController extends Controller
 
                 $routePrefix = request()->segment(1); // 'admin', 'vendor', 'sales'
 
-                // Prevent vendors logging into admin login URL and vice versa
-                if ($routePrefix == 'admin' && ! $user->hasRole('admin') && ! $user->hasRole('superadmin') && $user->role_id != RoleHelper::adminId()) {
-                    Auth::guard('admin')->logout();
+                // Core role slugs
+                $coreRoles = ['admin', 'superadmin', 'vendor', 'sales', 'student', 'user'];
+                $userRoleNames = $user->roles->pluck('name')->toArray();
+                $isStaff = !empty(array_diff($userRoleNames, $coreRoles));
 
+                // Prevent vendors logging into admin login URL and vice versa
+                if ($routePrefix == 'admin'
+                    && ! $user->hasRole('admin')
+                    && ! $user->hasRole('superadmin')
+                    && $user->role_id != RoleHelper::adminId()
+                    && ! $isStaff) {
+                    Auth::guard('admin')->logout();
                     return redirect()->back()->with('error_message', 'You do not have admin access.');
                 } elseif ($routePrefix == 'vendor' && ! $user->hasRole('vendor') && $user->role_id != RoleHelper::vendorId()) {
                     Auth::guard('admin')->logout();
-
                     return redirect()->back()->with('error_message', 'You do not have vendor access.');
                 } elseif ($routePrefix == 'sales' && ! $user->hasRole('sales') && $user->role_id != RoleHelper::salesId()) {
                     Auth::guard('admin')->logout();
-
                     return redirect()->back()->with('error_message', 'You do not have sales access.');
                 }
 
@@ -292,10 +304,12 @@ class AdminController extends Controller
                     return redirect('/sales/dashboard');
                 } elseif ($user->hasRole('student')) {
                     return redirect('/student/dashboard');
+                } elseif ($isStaff) {
+                    return redirect('/staff/dashboard');
                 }
 
-                // Fallback to admin dashboard if no specific role found
-                return redirect('/admin/dashboard');
+                // Fallback
+                return $isStaff ? redirect('/staff/dashboard') : redirect('/admin/dashboard');
             } else {
                 return redirect()->back()->with('error_message', 'Invalid Email or Password');
             }
@@ -496,7 +510,8 @@ class AdminController extends Controller
                 return redirect()->back()->with('success_message', 'Vendor details updated successfully!');
             }
 
-            $vendorDetails = Vendor::where('id', Auth::guard('admin')->user()->vendor_id)->first()->toArray(); // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
+            $vendor = Vendor::where('id', Auth::guard('admin')->user()->vendor_id)->first();
+            $vendorDetails = $vendor ? $vendor->toArray() : []; // Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
 
         } elseif ($slug == 'business') {
             // Correcting issues in the Skydash Admin Panel Sidebar using Session
@@ -507,7 +522,7 @@ class AdminController extends Controller
                 // dd($data);
 
                 $rules = [
-                    'shop_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
+                    'shop_name' => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u', // only alphabetical characters and spaces
                     'shop_mobile' => 'required|numeric',
                     'address_proof' => 'required',
                 ];

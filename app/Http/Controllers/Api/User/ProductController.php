@@ -1528,8 +1528,8 @@ class ProductController extends Controller
             $orderCountry = $selectedAddress->country->name ?? '';
             $orderPincode = $selectedAddress->pincode;
             $orderDistrictId = $selectedAddress->district_id;
-            $orderLat = $selectedAddress->latitude;
-            $orderLng = $selectedAddress->longitude;
+            $orderLat = $selectedAddress->latitude ?? null;
+            $orderLng = $selectedAddress->longitude ?? null;
             $orderMobile = $selectedAddress->mobile;
             $orderEmail = $user->email;
         } else {

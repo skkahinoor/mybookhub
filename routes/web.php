@@ -37,7 +37,8 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__ . '/auth.php';
 
-Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function () {
+$adminRoutesClosure = function () {
+
     Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() method is used to use more than one
     Route::group(['middleware' => ['auth:admin']], function () {
         // check isbn
@@ -94,6 +95,17 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
             'update' => 'admin.roles.update',
             'destroy' => 'admin.roles.destroy',
         ]);
+
+        // Staff Management (custom-role users who login via admin URL)
+        Route::resource('staff', \App\Http\Controllers\Admin\StaffController::class)->names([
+            'index'   => 'admin.staff.index',
+            'create'  => 'admin.staff.create',
+            'store'   => 'admin.staff.store',
+            'edit'    => 'admin.staff.edit',
+            'update'  => 'admin.staff.update',
+            'destroy' => 'admin.staff.destroy',
+        ])->except(['show']);
+        Route::post('update-staff-status', [\App\Http\Controllers\Admin\StaffController::class, 'updateStatus'])->name('admin.staff.update_status');
 
         // Sales Reports (Admin)
         Route::get('reports/sales_reports', [SalesReportController::class, 'index'])->name('admin.reports.sales_reports.index');
@@ -410,6 +422,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // Orders
         // Render admin/orders/orders.blade.php page (Orders Management section) in the Admin Panel
         Route::get('orders', 'OrderController@orders');
+        Route::post('bulk-delete-orders', 'OrderController@bulkDeleteOrders')->name('admin.orders.bulkDelete');
         Route::get('returns', 'OrderController@returns');
 
         // Render admin/orders/order_details.blade.php (View Order Details page) when clicking on the View Order Details icon in admin/orders/orders.blade.php (Orders tab under Orders Management section in Admin Panel)
@@ -533,7 +546,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
     Route::get('vendor-states', [App\Http\Controllers\Admin\AdminController::class, 'getVendorStates'])->name('vendor_states');
     Route::get('vendor-districts', [App\Http\Controllers\Admin\AdminController::class, 'getVendorDistricts'])->name('vendor_districts');
     Route::get('vendor-blocks', [App\Http\Controllers\Admin\AdminController::class, 'getVendorBlocks'])->name('vendor_blocks');
-});
+
+};
+
+$adminPrefix = request()->is('staff') || request()->is('staff/*') ? 'staff' : 'admin';
+Route::prefix($adminPrefix)->namespace('App\Http\Controllers\Admin')->group($adminRoutesClosure);
+
 
 // Vendor routes (separate prefix /vendor, vendor-only access)
 require __DIR__ . '/vendor.php';

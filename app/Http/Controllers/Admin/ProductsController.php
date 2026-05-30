@@ -568,7 +568,26 @@ class ProductsController extends Controller
                 })
                 ->addColumn('seller', function ($row) use ($adminType) {
                     if ($adminType !== 'vendor') {
-                        return '<span class="badge badge-info">' . $row->attributes->count() . ' Seller(s)</span>';
+                        // Count unique sellers who have active listings with available stock
+                        $activeUniqueSellersCount = $row->attributes
+                            ->where('status', 1)
+                            ->where('stock', '>', 0)
+                            ->map(function ($attr) {
+                                if ($attr->vendor_id) {
+                                    return 'vendor_' . $attr->vendor_id;
+                                } elseif ($attr->admin_id && $attr->admin_type === 'admin') {
+                                    return 'admin_' . $attr->admin_id;
+                                } elseif ($attr->user_id) {
+                                    return 'user_' . $attr->user_id;
+                                }
+                                return null;
+                            })
+                            ->filter()
+                            ->unique()
+                            ->count();
+
+                        $url = url('admin/reports/stock_report?product_id=' . $row->id);
+                        return '<a href="' . $url . '"><span class="badge badge-info">' . $activeUniqueSellersCount . ' Seller(s)</span></a>';
                     }
                     return null;
                 })
@@ -797,17 +816,26 @@ class ProductsController extends Controller
                 $isbnValidationRule = 'required|digits_between:10,13';
             }
 
-            $validator = Validator::make($request->all(), [
+            $section = Section::find($data['section_id'] ?? null);
+            $noSubjectsSections = ['Religious Book', 'Religious', 'Technical Book', 'Technical', 'Novel & Story Book', 'Novel & Story', 'Competitive Books', 'Competitive'];
+            $isReligious = $section && in_array($section->name, $noSubjectsSections);
+
+            $rules = [
                 'section_id'    => 'required|exists:sections,id',
                 'category_id'   => 'required|exists:categories,id',
-                'subcategory_id' => 'required|exists:subcategories,id',
-                'subject_id'    => 'required|exists:subjects,id',
                 'condition'     => 'required|in:new,old',
                 'product_name'  => 'required',
                 'product_isbn'  => $isbnValidationRule,
                 'product_price' => 'required|numeric',
                 'language_id'   => 'required',
-            ]);
+            ];
+
+            if (!$isReligious) {
+                $rules['subcategory_id'] = 'required|exists:subcategories,id';
+                $rules['subject_id'] = 'required|exists:subjects,id';
+            }
+
+            $validator = Validator::make($request->all(), $rules);
 
             // Custom validation: Check ISBN + condition uniqueness
             // Note: We already checked for existingProduct above, but this ensures validation consistency
@@ -901,15 +929,15 @@ class ProductsController extends Controller
                     $product->publisher_id = $data['publisher_id'];
                 }
 
-                $product->subject_id  = $data['subject_id'];
-                $product->subcategory_id = $data['subcategory_id'] ?? null;
+                $product->subject_id  = !empty($data['subject_id']) ? $data['subject_id'] : null;
+                $product->subcategory_id = !empty($data['subcategory_id']) ? $data['subcategory_id'] : null;
                 $product->language_id = $data['language_id'];
 
                 $product->condition        = $data['condition'];
                 $product->product_name     = $data['product_name'];
                 $product->product_isbn     = $data['product_isbn'];
                 $product->product_price    = $data['product_price'];
-                $product->edition_id       = $data['edition_id'];
+                $product->edition_id       = !empty($data['edition_id']) ? $data['edition_id'] : null;
                 $product->description      = $data['description'];
                 $product->meta_title       = $data['meta_title'];
                 $product->meta_keywords    = $data['meta_keywords'];

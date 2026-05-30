@@ -349,7 +349,7 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group">
+                                <div class="form-group" id="class_wrapper">
                                     <label for="subcategory_id">Class</label>
                                     <select name="subcategory_id" id="subcategory_id" class="form-control text-dark">
                                         <option value="">Select Class</option>
@@ -361,7 +361,7 @@
                                     </select>
                                 </div>
 
-                                <div class="form-group">
+                                <div class="form-group" id="subject_wrapper">
                                     <label for="subject_id">Subject</label>
                                     <select name="subject_id" id="subject_id" class="form-control text-dark">
                                         <option value="">Select Subject</option>
@@ -397,7 +397,7 @@
 
 
 
-                                <div class="form-group">
+                                <div class="form-group" id="edition_wrapper">
                                     <label for="edition_id">Select Edition</label>
                                     <select name="edition_id" id="edition_id" class="form-control text-dark">
                                         <option value="">Select Edition</option>
@@ -408,7 +408,7 @@
                                         @endforeach
                                     </select>
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group" id="booktype_wrapper">
                                     <label for="book_type_id">Select Book Type</label>
                                     <select name="book_type_id" id="book_type_id" class="form-control text-dark">
                                         <option value="">Select Book Type</option>
@@ -806,9 +806,27 @@
                 });
             }
 
+            function toggleReligiousFields() {
+                var sectionName = $('#section_id').find("option:selected").text().trim().toLowerCase();
+                var noSubjectsSections = ['religious book', 'religious', 'technical book', 'technical', 'novel & story book', 'novel & story', 'competitive books', 'competitive'];
+                
+                if (noSubjectsSections.includes(sectionName)) {
+                    $("#class_wrapper").hide();
+                    $("#subject_wrapper").hide();
+                    $("#edition_wrapper").hide();
+                    $("#booktype_wrapper").hide();
+                } else {
+                    $("#class_wrapper").show();
+                    $("#subject_wrapper").show();
+                    $("#edition_wrapper").show();
+                    $("#booktype_wrapper").show();
+                }
+            }
+
             $section.on('change', function() {
                 var sectionId = $(this).val();
                 window.loadBoards(sectionId, null);
+                toggleReligiousFields();
             });
 
             $board.on('change', function() {
@@ -838,6 +856,9 @@
                     }
                 }
             }
+
+            // Initial UI check for Religious fields
+            toggleReligiousFields();
         });
     </script>
 
@@ -1101,6 +1122,22 @@
             // Handle form submission
             $('form').on('submit', function(e) {
                 e.preventDefault();
+
+                // Validate Book Condition if condition is 'old'
+                let condition = $('input[name="condition"]:checked').val();
+                if (condition === 'old') {
+                    let bookConditionId = $('#old_book_condition_id').val();
+                    if (!bookConditionId) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Validation Error',
+                            text: 'You have not selected the Book Condition.',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#dc3545'
+                        });
+                        return false;
+                    }
+                }
 
                 const form = $(this);
                 const formData = new FormData(form[0]);

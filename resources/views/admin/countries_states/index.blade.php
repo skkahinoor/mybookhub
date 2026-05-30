@@ -284,7 +284,7 @@
                                                         </div>
                                                     </td>
                                                     <td class="text-center">
-                                                        <div class="action-buttons">
+                                                        <div class="action-buttons" id="country-actions-{{ $country->id }}" style="display: {{ $country->status == 1 ? 'flex' : 'none' }};">
                                                             <button class="action-btn edit" onclick="openCountryModal({{ $country->id }})" title="Edit">
                                                                 <i class="fas fa-edit"></i>
                                                             </button>
@@ -341,7 +341,7 @@
                                                         </div>
                                                     </td>
                                                     <td class="text-center">
-                                                        <div class="action-buttons">
+                                                        <div class="action-buttons" id="state-actions-{{ $state->id }}" style="display: {{ $state->status == 1 ? 'flex' : 'none' }};">
                                                             <button class="action-btn edit" onclick="openStateModal({{ $state->id }})" title="Edit">
                                                                 <i class="fas fa-edit"></i>
                                                             </button>
@@ -464,9 +464,11 @@
                         if (resp['status'] == 0) {
                             $("#country-" + country_id).prop('checked', false);
                             $(".status-text-" + country_id).text("INACTIVE");
+                            $("#country-actions-" + country_id).hide();
                         } else if (resp['status'] == 1) {
                             $("#country-" + country_id).prop('checked', true);
                             $(".status-text-" + country_id).text("ACTIVE");
+                            $("#country-actions-" + country_id).css("display", "flex");
                         }
                     }
                 });
@@ -487,9 +489,11 @@
                         if (resp['status'] == 0) {
                             $("#state-" + state_id).prop('checked', false);
                             $(".state-status-text-" + state_id).text("INACTIVE");
+                            $("#state-actions-" + state_id).hide();
                         } else if (resp['status'] == 1) {
                             $("#state-" + state_id).prop('checked', true);
                             $(".state-status-text-" + state_id).text("ACTIVE");
+                            $("#state-actions-" + state_id).css("display", "flex");
                         }
                     }
                 });

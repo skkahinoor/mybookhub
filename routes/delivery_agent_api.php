@@ -43,6 +43,7 @@ Route::middleware(['auth:sanctum', 'delivery_agent'])->group(function () {
     Route::post('/delivery-agent/contact-queries/{id}/reply', [DeliveryAgentApiController::class, 'replyContactQuery']);
     Route::post('/delivery-agent/contact-queries/{id}/close', [DeliveryAgentApiController::class, 'closeContactQuery']);
     Route::post('/delivery-agent/delete-account', [DeliveryAgentApiController::class, 'deleteAccount']);
+    Route::post('/delivery-agent/update-location', [DeliveryAgentApiController::class, 'updateLocation']);
     
     // Future logical routes for delivery app:
     // Route::get('/delivery-agent/orders', [DeliveryAgentApiController::class, 'availableOrders']);

@@ -1726,9 +1726,14 @@ class ProductsController extends Controller
                 $order->state = $deliveryAddress['state'];
                 $order->country = $deliveryAddress['country'];
                 $order->pincode = $deliveryAddress['pincode'];
-                $order->district_id = $selectedAddress->district_id;
-                $order->latitude = Auth::user()->latitude;
-                $order->longitude = Auth::user()->longitude;
+                $orderLat = $selectedAddress->latitude ?? null;
+                $orderLng = $selectedAddress->longitude ?? null;
+                if (empty($orderLat) || empty($orderLng)) {
+                    $orderLat = Auth::user()->latitude;
+                    $orderLng = Auth::user()->longitude;
+                }
+                $order->latitude = $orderLat;
+                $order->longitude = $orderLng;
                 $order->mobile = $deliveryAddress['mobile'];
                 $order->email = Auth::user()->email;
                 $order->shipping_charges = $item_shipping;

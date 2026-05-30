@@ -31,8 +31,8 @@ class ClassSubjectController extends Controller
         $assignments = DB::table('filter_class_subject')
             ->join('sections', 'filter_class_subject.section_id', '=', 'sections.id')
             ->join('categories', 'filter_class_subject.category_id', '=', 'categories.id')
-            ->join('subcategories', 'filter_class_subject.sub_category_id', '=', 'subcategories.id')
-            ->join('subjects', 'filter_class_subject.subject_id', '=', 'subjects.id')
+            ->leftJoin('subcategories', 'filter_class_subject.sub_category_id', '=', 'subcategories.id')
+            ->leftJoin('subjects', 'filter_class_subject.subject_id', '=', 'subjects.id')
             ->select(
                 'filter_class_subject.sub_category_id',
                 'filter_class_subject.section_id',
@@ -66,6 +66,34 @@ class ClassSubjectController extends Controller
 
     public function store(Request $request)
     {
+
+        $section = Section::find($request->section_id);
+        $noSubjectsSections = ['Religious Book', 'Religious', 'Religious Books'];
+
+        if ($section && in_array($section->name, $noSubjectsSections)) {
+            $request->validate([
+                'section_id' => 'required|exists:sections,id',
+                'category_id' => 'required|exists:categories,id',
+            ]);
+            
+            // Delete existing mapping if any
+            DB::table('filter_class_subject')
+                ->where('section_id', $request->section_id)
+                ->where('category_id', $request->category_id)
+                ->whereNull('sub_category_id')
+                ->delete();
+
+            // Insert new mapping with nulls
+            DB::table('filter_class_subject')->insert([
+                'section_id' => $request->section_id,
+                'category_id' => $request->category_id,
+                'sub_category_id' => null,
+                'subject_id' => null,
+            ]);
+
+            return redirect()->route('admin.class_subjects.index')->with('success_message', 'Assignment completed for this section successfully!');
+        }
+
         $request->validate([
             'section_id' => 'required|exists:sections,id',
             'category_id' => 'required|exists:categories,id',
@@ -102,9 +130,11 @@ class ClassSubjectController extends Controller
         $logos = HeaderLogo::first();
         $adminType = Auth::guard('admin')->user()->type;
 
-        // Since it's a pivot entry, we might want to edit a specific one or all for a subcat
-        // For simplicity, let's assume we edit based on sub_category_id as before but show the others
-        $subCategory = Subcategory::with('subjects')->findOrFail($id);
+        if ($id == 0) {
+            $subCategory = null;
+        } else {
+            $subCategory = Subcategory::with('subjects')->findOrFail($id);
+        }
 
         $sections = Section::where('status', 1)->get();
 
@@ -113,25 +143,34 @@ class ClassSubjectController extends Controller
         $currentCategoryId = $request->category_id;
 
         if (!$currentSectionId || !$currentCategoryId) {
-            $firstAssignment = DB::table('filter_class_subject')->where('sub_category_id', $id)->first();
+            if ($id == 0) {
+                $firstAssignment = DB::table('filter_class_subject')->whereNull('sub_category_id')->first();
+            } else {
+                $firstAssignment = DB::table('filter_class_subject')->where('sub_category_id', $id)->first();
+            }
             $currentSectionId = $firstAssignment ? $firstAssignment->section_id : null;
             $currentCategoryId = $firstAssignment ? $firstAssignment->category_id : null;
         }
 
         $categories = $currentSectionId ? Category::where('section_id', $currentSectionId)->get() : [];
-        $subcategories = Subcategory::where('status', 1)->orWhere('id', $id)->get();
-        $subjects = Subject::where('status', 1)->get();
 
-        if ($currentSectionId && $currentCategoryId) {
-            $assignedSubjectIds = DB::table('filter_class_subject')
-                ->where('sub_category_id', $id)
-                ->where('section_id', $currentSectionId)
-                ->where('category_id', $currentCategoryId)
-                ->pluck('subject_id')
-                ->toArray();
+        if ($id == 0) {
+            $subcategories = collect();
+            $assignedSubjectIds = [];
         } else {
-            $assignedSubjectIds = $subCategory->subjects->pluck('id')->toArray();
+            $subcategories = Subcategory::where('status', 1)->orWhere('id', $id)->get();
+            if ($currentSectionId && $currentCategoryId) {
+                $assignedSubjectIds = DB::table('filter_class_subject')
+                    ->where('sub_category_id', $id)
+                    ->where('section_id', $currentSectionId)
+                    ->where('category_id', $currentCategoryId)
+                    ->pluck('subject_id')
+                    ->toArray();
+            } else {
+                $assignedSubjectIds = $subCategory->subjects->pluck('id')->toArray();
+            }
         }
+        $subjects = Subject::where('status', 1)->get();
 
         return view('admin.class_subjects.edit_class_subject', compact('subCategory', 'sections', 'categories', 'subcategories', 'subjects', 'assignedSubjectIds', 'currentSectionId', 'currentCategoryId', 'logos', 'headerLogo', 'adminType'));
     }
@@ -170,8 +209,14 @@ class ClassSubjectController extends Controller
 
     public function delete(Request $request, $id)
     {
-        // $id is now sub_category_id from the grouped index
-        $query = DB::table('filter_class_subject')->where('sub_category_id', $id);
+        // $id is now sub_category_id from the grouped index (0 if null)
+        $query = DB::table('filter_class_subject');
+        
+        if ($id == 0) {
+            $query->whereNull('sub_category_id');
+        } else {
+            $query->where('sub_category_id', $id);
+        }
 
         if ($request->has('section_id')) {
             $query->where('section_id', $request->section_id);
