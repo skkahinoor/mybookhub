@@ -452,6 +452,9 @@ class ProductsController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->addColumn('checkbox', function ($row) {
+                    return '<input type="checkbox" class="product_checkbox" value="' . $row->id . '" style="transform: scale(1.3); cursor: pointer;">';
+                })
                 ->filterColumn('isbn_condition', function ($q, $keyword) use ($adminType) {
                     if ($adminType === 'vendor') {
                         $q->whereHas('product', function ($pq) use ($keyword) {
@@ -643,7 +646,7 @@ class ProductsController extends Controller
                         return $html;
                     }
                 })
-                ->rawColumns(['isbn_condition', 'image', 'price', 'condition_badge', 'stock', 'seller', 'status', 'actions'])
+                ->rawColumns(['checkbox', 'isbn_condition', 'image', 'price', 'condition_badge', 'stock', 'seller', 'status', 'actions'])
                 ->make(true);
         }
 
@@ -1763,5 +1766,71 @@ class ProductsController extends Controller
         $product->delete();
 
         return redirect()->back()->with('success_message', 'Book has been deleted successfully!');
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $user = Auth::guard('admin')->user();
+        $ids = $request->ids;
+
+        if (empty($ids) || !is_array($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select at least one item to delete.'
+            ], 400);
+        }
+
+        if ($user->type === 'vendor') {
+            // Vendor deletes ProductsAttribute rows
+            if (!$user->can('edit_products')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to delete listings.'
+                ], 403);
+            }
+
+            ProductsAttribute::whereIn('id', $ids)
+                ->where('vendor_id', $user->vendor_id)
+                ->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Selected listings have been deleted successfully!'
+            ]);
+        } else {
+            // Admin/Superadmin deletes Product rows
+            if (!$user->can('delete_products')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have permission to delete products.'
+                ], 403);
+            }
+
+            $products = Product::whereIn('id', $ids)->get();
+            $small_image_path  = 'front/images/product_images/small/';
+            $medium_image_path = 'front/images/product_images/medium/';
+            $large_image_path  = 'front/images/product_images/large/';
+
+            foreach ($products as $product) {
+                if (!empty($product->product_image)) {
+                    if (file_exists($small_image_path . $product->product_image)) {
+                        @unlink($small_image_path . $product->product_image);
+                    }
+                    if (file_exists($medium_image_path . $product->product_image)) {
+                        @unlink($medium_image_path . $product->product_image);
+                    }
+                    if (file_exists($large_image_path . $product->product_image)) {
+                        @unlink($large_image_path . $product->product_image);
+                    }
+                }
+                ProductsAttribute::where('product_id', $product->id)->delete();
+                $product->delete();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Selected books have been deleted successfully!'
+            ]);
+        }
     }
 }

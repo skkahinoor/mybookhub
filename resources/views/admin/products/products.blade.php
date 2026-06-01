@@ -6,30 +6,33 @@
                 <div class="col-lg-12 grid-margin stretch-card">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="card-title">Books</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h4 class="card-title mb-0">Books</h4>
+                                @php
+                                    $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
+                                @endphp
+                                <div class="d-flex align-items-center" style="gap: 10px;">
+                                    <button type="button" class="btn btn-danger" id="bulk-delete-products-btn" style="display: none;">
+                                        <i class="mdi mdi-delete-sweep"></i> Delete Selected (<span id="selected-products-count">0</span>)
+                                    </button>
+                                    @if ($adminType == 'vendor')
+                                        <a href="{{ url('vendor/add-edit-product') }}"
+                                            class="btn btn-primary"><i class="mdi mdi-plus"></i> Add Book</a>
+                                    @else
+                                        <a href="{{ url('admin/add-edit-product') }}" class="btn btn-primary">
+                                            <i class="mdi mdi-plus"></i> Add Book
+                                        </a>
 
-                            @php
-                                $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
-                            @endphp
-                            @if ($adminType == 'vendor')
-                                <a href="{{ url('vendor/add-edit-product') }}"
-                                    style="max-width: 150px; float: right; display: inline-block"
-                                    class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Book</a>
-                            @else
-                                <div style="display: flex;    justify-content: flex-end; gap: 10px;">
-                                    <a href="{{ url('admin/add-edit-product') }}" class="btn btn-primary">
-                                        <i class="mdi mdi-plus"></i> Add Book
-                                    </a>
+                                        <a href="{{ url('admin/import-product') }}" class="btn btn-success">
+                                            <i class="mdi mdi-plus"></i> Import Book
+                                        </a>
 
-                                    <a href="{{ url('admin/import-product') }}" class="btn btn-success">
-                                        <i class="mdi mdi-plus"></i> Import Book
-                                    </a>
-
-                                    <a href="{{ url('admin/import-images') }}" class="btn btn-warning">
-                                        <i class="mdi mdi-camera"></i> Import Images
-                                    </a>
+                                        <a href="{{ url('admin/import-images') }}" class="btn btn-warning">
+                                            <i class="mdi mdi-camera"></i> Import Images
+                                        </a>
+                                    @endif
                                 </div>
-                            @endif
+                            </div>
 
                             {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
@@ -49,6 +52,7 @@
                                 <table id="products" class="table table-bordered"> {{-- using the id here for the DataTable --}}
                                     <thead>
                                         <tr>
+                                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-products" style="transform: scale(1.3); cursor: pointer;"></th>
                                             <th>#</th>
                                             <th>ISBN</th>
                                             <th>Image</th>
@@ -169,6 +173,7 @@
                 serverSide: true,
                 ajax: "{{ url()->current() }}",
                 columns: [
+                    { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, class: 'text-center' },
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'isbn_condition', name: 'isbn_condition' },
                     { data: 'image', name: 'image', orderable: false, searchable: false },
@@ -187,8 +192,99 @@
                     { data: 'status', name: 'status', orderable: false, searchable: false },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false }
                 ],
-                order: [[1, 'desc']], // Default sort by ISBN or something relevant
-                pageLength: 10
+                order: [[2, 'desc']], // Default sort by isbn_condition
+                pageLength: 10,
+                drawCallback: function() {
+                    $('#select-all-products').prop('checked', false);
+                    updateBulkDeleteButton();
+                }
+            });
+
+            // Toggle select all
+            $('#select-all-products').on('click', function() {
+                var checked = this.checked;
+                $('.product_checkbox').each(function() {
+                    this.checked = checked;
+                });
+                updateBulkDeleteButton();
+            });
+
+            // Individual checkbox click
+            $(document).on('click', '.product_checkbox', function() {
+                var allChecked = $('.product_checkbox').length === $('.product_checkbox:checked').length;
+                $('#select-all-products').prop('checked', allChecked);
+                updateBulkDeleteButton();
+            });
+
+            function updateBulkDeleteButton() {
+                var checkedCount = $('.product_checkbox:checked').length;
+                if (checkedCount > 0) {
+                    $('#selected-products-count').text(checkedCount);
+                    $('#bulk-delete-products-btn').fadeIn();
+                } else {
+                    $('#bulk-delete-products-btn').fadeOut();
+                }
+            }
+
+            // Bulk delete click handler
+            $('#bulk-delete-products-btn').on('click', function() {
+                var selectedIds = [];
+                $('.product_checkbox:checked').each(function() {
+                    selectedIds.push($(this).val());
+                });
+
+                if (selectedIds.length > 0) {
+                    Swal.fire({
+                        title: "Are you sure?",
+                        text: "You want to delete " + selectedIds.length + " selected books? This action cannot be undone!",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#d33",
+                        cancelButtonColor: "#3085d6",
+                        confirmButtonText: "Yes, delete them!",
+                        cancelButtonText: "Cancel"
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                url: "{{ url($prefix . '/products/bulk-delete') }}",
+                                type: "POST",
+                                data: {
+                                    ids: selectedIds,
+                                    _token: "{{ csrf_token() }}"
+                                },
+                                success: function(response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            title: "Deleted!",
+                                            text: response.message,
+                                            icon: "success",
+                                            timer: 2000,
+                                            showConfirmButton: false
+                                        });
+                                        table.ajax.reload(null, false); // Reload table without resetting pagination
+                                    } else {
+                                        Swal.fire({
+                                            title: "Error!",
+                                            text: response.message || "An error occurred while deleting.",
+                                            icon: "error"
+                                        });
+                                    }
+                                },
+                                error: function(xhr) {
+                                    var errorMessage = "Failed to perform bulk delete action.";
+                                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        errorMessage = xhr.responseJSON.message;
+                                    }
+                                    Swal.fire({
+                                        title: "Error!",
+                                        text: errorMessage,
+                                        icon: "error"
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
             });
 
             // Open modal and fill book name
