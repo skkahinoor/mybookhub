@@ -95,7 +95,7 @@ class AuthorController extends Controller
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|regex:/^[\pL\s\-]+$/u',
         ]);
         $store = Author::create([
             'name' => $request->name,

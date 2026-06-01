@@ -135,7 +135,7 @@ class PublisherController extends Controller
         $logos = HeaderLogo::first();
         if ($request->ajax()) {
             $request->validate([
-                'name' => 'required|string|max:255',
+                'name' => 'required|string|max:255|regex:/^[\pL\s\-]+$/u',
             ]);
 
             // Check if already exists
