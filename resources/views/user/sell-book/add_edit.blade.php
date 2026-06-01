@@ -758,17 +758,50 @@
                     $("#product_price").val(d.product_price || '');
                     $("#description").val(d.description || '');
 
-                    // dropdowns (NO trigger)
-                    $("#language_id").val(d.language_id || '');
-                    $("#publisher_id").val(d.publisher_id || '');
-                    $("#edition_id").val(d.edition_id || '');
+                    // Check and set Language
+                    if (d.language_id) {
+                        if ($("#language_id option[value='" + d.language_id + "']").length === 0) {
+                            $("#language_id").append($('<option></option>').val(d.language_id).text(d.language_name || 'Select Language'));
+                        }
+                        $("#language_id").val(d.language_id);
+                    } else {
+                        $("#language_id").val('');
+                    }
+
+                    // Check and set Publisher
+                    if (d.publisher_id) {
+                        if ($("#publisher_id option[value='" + d.publisher_id + "']").length === 0) {
+                            $("#publisher_id").append($('<option></option>').val(d.publisher_id).text(d.publisher_name || 'Select Publisher'));
+                        }
+                        $("#publisher_id").val(d.publisher_id);
+                    } else {
+                        $("#publisher_id").val('');
+                    }
+
+                    // Check and set Edition
+                    if (d.edition_id) {
+                        if ($("#edition_id option[value='" + d.edition_id + "']").length === 0) {
+                            $("#edition_id").append($('<option></option>').val(d.edition_id).text(d.edition_name || 'Select Edition'));
+                        }
+                        $("#edition_id").val(d.edition_id);
+                    } else {
+                        $("#edition_id").val('');
+                    }
+
                     $("#book_type_id").val(d.book_type_id || '');
 
                     // deterministically set select values
                                         $("#section_id").val(d.section_id || '');
                                         $("#category_id").val(d.category_id || '');
                                         $("#subcategory_id").val(d.subcategory_id || '');
-                                        $("#subject_id").val(d.subject_id || '');
+                    if (d.subject_id) {
+                        if ($("#subject_id option[value='" + d.subject_id + "']").length === 0) {
+                            $("#subject_id").append($('<option></option>').val(d.subject_id).text(d.subject_name || 'Select Subject'));
+                        }
+                        $("#subject_id").val(d.subject_id);
+                    } else {
+                        $("#subject_id").val('');
+                    }
                     // authors (SAFE CHECK)
                     if (Array.isArray(d.author_ids) && typeof authors !== 'undefined') {
                         selected = [];

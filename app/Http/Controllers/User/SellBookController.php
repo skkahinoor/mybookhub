@@ -433,7 +433,7 @@ class SellBookController extends Controller
         $cleanSearch = preg_replace('/[^0-9X]/i', '', $isbn);
 
         // 1. Try to find "new" products first
-        $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
+        $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'language'])
             ->where('condition', 'new')
             ->where(function ($query) use ($isbn, $cleanSearch) {
                 $query->where('product_isbn', $isbn)
@@ -445,7 +445,7 @@ class SellBookController extends Controller
 
         // 2. Fallback to "old" products if no "new" ones found
         if (! $product) {
-            $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject'])
+            $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'language'])
                 ->where('condition', 'old')
                 ->where(function ($query) use ($isbn, $cleanSearch) {
                     $query->where('product_isbn', $isbn)
@@ -464,10 +464,13 @@ class SellBookController extends Controller
                     'product_name' => $product->product_name,
                     'author_ids' => $product->authors->pluck('id'),
                     'publisher_id' => $product->publisher_id ?? '',
+                    'publisher_name' => $product->publisher->name ?? '',
                     'edition_id' => $product->edition_id ?? '',
+                    'edition_name' => $product->edition->edition ?? '',
                     'subject_id' => $product->subject_id,
                     'subject_name' => $product->subject->name ?? '',
                     'language_id' => $product->language_id,
+                    'language_name' => $product->language->name ?? '',
                     'category_id' => $product->category_id,
                     'category_name' => $product->category->category_name ?? '',
                     'subcategory_id' => $product->subcategory_id,
@@ -496,15 +499,35 @@ class SellBookController extends Controller
 
                 // Prepare master record
                 $publisher_id = null;
+                $publisher_name = '';
                 if (! empty($book['publisher'])) {
                     $publisher = Publisher::firstOrCreate(['name' => $book['publisher']], ['status' => 1]);
                     $publisher_id = $publisher->id;
+                    $publisher_name = $publisher->name;
                 }
 
                 $subject_id = null;
+                $subject_name = '';
                 if (! empty($book['subjects'][0])) {
                     $subject = Subject::firstOrCreate(['name' => $book['subjects'][0]], ['status' => 1]);
                     $subject_id = $subject->id;
+                    $subject_name = $subject->name;
+                }
+
+                $edition_id = null;
+                $edition_name = '';
+                if (! empty($book['edition'])) {
+                    $edition = Edition::firstOrCreate(['edition' => $book['edition']], ['status' => 1]);
+                    $edition_id = $edition->id;
+                    $edition_name = $edition->edition;
+                }
+
+                $language_id = null;
+                $language_name = '';
+                if (! empty($book['language'])) {
+                    $language = Language::firstOrCreate(['name' => $book['language']], ['status' => 1]);
+                    $language_id = $language->id;
+                    $language_name = $language->name;
                 }
 
                 $author_ids = [];
@@ -527,7 +550,13 @@ class SellBookController extends Controller
                         'product_price' => $book['msrp'] ?? 0,
                         'image_url' => $book['image'] ?? null,
                         'publisher_id' => $publisher_id,
+                        'publisher_name' => $publisher_name,
                         'subject_id' => $subject_id,
+                        'subject_name' => $subject_name,
+                        'edition_id' => $edition_id,
+                        'edition_name' => $edition_name,
+                        'language_id' => $language_id,
+                        'language_name' => $language_name,
                         'author_ids' => $author_ids,
                     ],
                 ]);

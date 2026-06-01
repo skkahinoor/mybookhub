@@ -1378,9 +1378,13 @@ class ProductsController extends Controller
                     "product_description" => $product->description,
 
                     "publisher_id" => $product->publisher_id,
+                    "publisher_name" => $product->publisher->name ?? '',
                     "subject_id"   => $product->subject_id,
+                    "subject_name" => $product->subject->name ?? '',
                     "edition_id"   => $product->edition_id,
+                    "edition_name" => $product->edition->edition ?? '',
                     "language_id"  => $product->language_id,
+                    "language_name" => $product->language->name ?? '',
                     "book_type_id" => $product->book_type_id,
                     "author_ids"   => $product->authors->pluck('id')->toArray(),
                 ]
@@ -1404,27 +1408,35 @@ class ProductsController extends Controller
         $book = $response['book'];
 
         $publisher_id = null;
+        $publisher_name = '';
         if (!empty($book['publisher'])) {
             $publisher = Publisher::firstOrCreate(['name' => $book['publisher']], ['status' => 1]);
             $publisher_id = $publisher->id;
+            $publisher_name = $publisher->name;
         }
 
         $subject_id = null;
+        $subject_name = '';
         if (!empty($book['subjects'][0])) {
             $subject = Subject::firstOrCreate(['name' => $book['subjects'][0]], ['status' => 1]);
             $subject_id = $subject->id;
+            $subject_name = $subject->name;
         }
 
         $edition_id = null;
+        $edition_name = '';
         if (!empty($book['edition'])) {
             $edition = Edition::firstOrCreate(['edition' => $book['edition']], ['status' => 1]);
             $edition_id = $edition->id;
+            $edition_name = $edition->edition;
         }
 
         $language_id = null;
+        $language_name = '';
         if (!empty($book['language'])) {
             $language = Language::firstOrCreate(['name' => $book['language']], ['status' => 1]);
             $language_id = $language->id;
+            $language_name = $language->name;
         }
 
         $author_ids = [];
@@ -1464,9 +1476,13 @@ class ProductsController extends Controller
                 "product_price" => $book['msrp'] ?? '',
 
                 "publisher_id" => $publisher_id,
+                "publisher_name" => $publisher_name,
                 "subject_id"   => $subject_id,
+                "subject_name" => $subject_name,
                 "edition_id"   => $edition_id,
+                "edition_name" => $edition_name,
                 "language_id"  => $language_id,
+                "language_name" => $language_name,
                 "author_ids"   => $author_ids,
             ]
         ]);
