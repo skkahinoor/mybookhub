@@ -72,7 +72,7 @@ class ProductsController extends Controller
         }
 
         $request->validate([
-            'import' => 'required|file|mimes:xlsx,xls,csv|max:2048',
+            'import' => 'required|file|mimes:xlsx,xls,csv|max:50000',
         ]);
 
         DB::beginTransaction();
