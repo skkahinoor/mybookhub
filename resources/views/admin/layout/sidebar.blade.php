@@ -497,7 +497,7 @@
                     <a @if (Session::get('page') == 'refer_settings') style="background: #052CA3 !important; color: #FFF !important" @endif
                         class="nav-link" data-toggle="collapse" href="#ui-refer-mgmt" aria-expanded="false"
                         aria-controls="ui-refer-mgmt">
-                        <i class="icon-present menu-icon"></i>
+                        <i class="mdi mdi-gift menu-icon"></i>
                         <span class="menu-title">Refer Management</span>
                         <i class="menu-arrow"></i>
                     </a>
