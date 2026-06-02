@@ -454,9 +454,7 @@ class ProductsController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('checkbox', function ($row) {
-                    return '<input type="checkbox" class="product_checkbox" value="' . $row->id . '" style="transform: scale(1.3); cursor: pointer;">';
-                })
+
                 ->orderColumn('isbn_condition', function ($q, $order) use ($adminType) {
                     if ($adminType === 'vendor') {
                         $q->orderBy('products.product_isbn', $order);
@@ -707,7 +705,7 @@ class ProductsController extends Controller
                         return $html;
                     }
                 })
-                ->rawColumns(['checkbox', 'isbn_condition', 'image', 'price', 'condition_badge', 'stock', 'seller', 'status', 'actions'])
+                ->rawColumns(['isbn_condition', 'image', 'price', 'condition_badge', 'stock', 'seller', 'status', 'actions'])
                 ->make(true);
         }
 
