@@ -416,6 +416,11 @@
                                         @if (Session::get('page') == 'view_sales') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                         class="nav-link" href="{{ url('admin/sales-executive') }}">Sales</a></li>
                             @endcan
+                            @can('view_withdrawals')
+                                <li class="nav-item"> <a
+                                        @if (Session::get('page') == 'withdrawals') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                        class="nav-link" href="{{ route('admin.withdrawals.index') }}">Withdrawals</a></li>
+                            @endcan
                         </ul>
                     </div>
                 </li>
@@ -785,11 +790,7 @@
                                         @if (Session::get('page') == 'ratings') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                         class="nav-link" href="{{ url('admin/ratings') }}">Product Ratings</a></li>
                             @endcan
-                            @can('view_withdrawals')
-                                <li class="nav-item"> <a
-                                        @if (Session::get('page') == 'withdrawals') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                        class="nav-link" href="{{ route('admin.withdrawals.index') }}">Withdrawals</a></li>
-                            @endcan
+                            
                             @can('view_banners')
                                 <li class="nav-item"> <a
                                         @if (Session::get('page') == 'banners') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
