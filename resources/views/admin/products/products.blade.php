@@ -162,9 +162,9 @@
 
 
 
+@push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
             // Server-side DataTables
@@ -185,9 +185,11 @@
                     { data: 'edition', name: 'edition' },
                     { data: 'publisher', name: 'publisher' },
                     { data: 'language', name: 'language' },
-                    { data: 'stock', name: 'stock' },
-                    @if ($adminType !== 'vendor')
-                        { data: 'seller', name: 'seller' },
+                    @if ($adminType === 'vendor')
+                        { data: 'stock', name: 'stock' },
+                    @else
+                        { data: 'stock', name: 'stock', orderable: false, searchable: false },
+                        { data: 'seller', name: 'seller', orderable: false, searchable: false },
                     @endif
                     { data: 'status', name: 'status', orderable: false, searchable: false },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false }
@@ -358,4 +360,5 @@
             });
         });
     </script>
+@endpush
 @endsection
