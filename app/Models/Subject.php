@@ -20,6 +20,16 @@ class Subject extends Model
         return $this->belongsToMany(Subcategory::class, 'filter_class_subject', 'subject_id', 'sub_category_id');
     }
 
+    public function products()
+    {
+        return $this->hasMany(Product::class, 'subject_id');
+    }
+
+    public function classSubjectMappings()
+    {
+        return $this->hasMany(FilterClassSubject::class, 'subject_id');
+    }
+
     public function getSubjectIconAttribute($value)
 {
     if ($value) {

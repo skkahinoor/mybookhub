@@ -977,3 +977,8 @@ Route::get('/optimize-clear', function () {
         ], 500);
     }
 });
+
+// Custom routes for checking and merging duplicate subjects
+Route::get('/duplicate-subjects', [SubjectController::class, 'duplicateSubjects'])->name('duplicate.subjects');
+Route::post('/merge-duplicate-subjects', [SubjectController::class, 'mergeSubjects'])->name('merge.duplicate.subjects');
+

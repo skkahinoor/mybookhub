@@ -14,6 +14,9 @@
                                     style="max-width: 150px; float: right; display: inline-block"
                                     class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Subject</a>
                             @else
+                                <a href="{{ route('duplicate.subjects') }}"
+                                    style="max-width: 180px; float: right; display: inline-block; margin-right: 10px;"
+                                    class="btn btn-block btn-warning"><i class="mdi mdi-alert-circle-outline"></i> Check Duplicates</a>
                                 <a href=" {{ route('admin.add.subject') }}"
                                     style="max-width: 150px; float: right; display: inline-block"
                                     class="btn btn-block btn-primary"><i class="mdi mdi-plus"></i> Add Subject</a>

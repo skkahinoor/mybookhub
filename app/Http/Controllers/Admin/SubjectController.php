@@ -244,4 +244,92 @@ class SubjectController extends Controller
             'subject_id' => $data['subject_id'],
         ]);
     }
+
+    public function duplicateSubjects()
+    {
+        // Fetch all subject names that are duplicate
+        $duplicateNames = Subject::select('name')
+            ->groupBy('name')
+            ->havingRaw('COUNT(name) > 1')
+            ->pluck('name');
+
+        // Fetch duplicate subjects with their products and classSubjectMappings counts
+        $subjects = Subject::whereIn('name', $duplicateNames)
+            ->withCount(['products', 'classSubjectMappings'])
+            ->orderBy('name')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        // Group them by name for easier display in UI
+        $groupedSubjects = $subjects->groupBy('name');
+
+        return view('admin.subject.duplicate_subjects', compact('groupedSubjects'));
+    }
+
+    public function mergeSubjects(Request $request)
+    {
+        $request->validate([
+            'target_id' => 'required|exists:subjects,id',
+            'duplicate_name' => 'required|string',
+        ]);
+
+        $targetId = $request->target_id;
+        $name = $request->duplicate_name;
+
+        // Find all duplicates with this name
+        $duplicates = Subject::where('name', $name)->get();
+
+        // Separate target from others
+        $target = $duplicates->firstWhere('id', $targetId);
+        if (!$target) {
+            return redirect()->back()->with('error_message', 'Target subject not found in duplicates.');
+        }
+
+        $otherIds = $duplicates->where('id', '!=', $targetId)->pluck('id');
+
+        if ($otherIds->isEmpty()) {
+            return redirect()->back()->with('error_message', 'No duplicate subjects found to merge.');
+        }
+
+        \DB::beginTransaction();
+        try {
+            // Update products to point to target subject
+            \App\Models\Product::whereIn('subject_id', $otherIds)->update(['subject_id' => $targetId]);
+
+            // Update or merge filter_class_subject mappings
+            // To prevent key constraint / duplicate issues, read the existing mappings for target
+            $targetMappings = \App\Models\FilterClassSubject::where('subject_id', $targetId)->get();
+
+            // We iterate over the mappings of other duplicate subjects
+            $otherMappings = \App\Models\FilterClassSubject::whereIn('subject_id', $otherIds)->get();
+
+            foreach ($otherMappings as $mapping) {
+                // Check if target already has an identical mapping
+                $exists = $targetMappings->contains(function ($tMapping) use ($mapping) {
+                    return $tMapping->section_id == $mapping->section_id &&
+                           $tMapping->category_id == $mapping->category_id &&
+                           $tMapping->sub_category_id == $mapping->sub_category_id;
+                });
+
+                if ($exists) {
+                    // Redundant mapping, delete it
+                    $mapping->delete();
+                } else {
+                    // Update to target_id
+                    $mapping->update(['subject_id' => $targetId]);
+                }
+            }
+
+            // Finally, delete other subjects
+            Subject::whereIn('id', $otherIds)->delete();
+
+            \DB::commit();
+
+            return redirect()->back()->with('success_message', 'Subjects merged successfully into ID: ' . $targetId);
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return redirect()->back()->with('error_message', 'Merge failed: ' . $e->getMessage());
+        }
+    }
 }
+
