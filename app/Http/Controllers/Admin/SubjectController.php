@@ -331,5 +331,55 @@ class SubjectController extends Controller
             return redirect()->back()->with('error_message', 'Merge failed: ' . $e->getMessage());
         }
     }
+
+    public function quickStore(Request $request)
+    {
+        if (!Auth::guard('admin')->user()->can('add_subjects')) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized action.'
+            ], 403);
+        }
+
+        $name = trim($request->name);
+        if (empty($name)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Subject name is required.'
+            ], 422);
+        }
+
+        // Case-insensitive duplicate check
+        $subject = Subject::whereRaw('LOWER(name) = ?', [strtolower($name)])->first();
+        if ($subject) {
+            if ($subject->status == 0) {
+                // If it exists but is inactive, activate it and return it
+                $subject->update(['status' => 1]);
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Subject activated and added successfully!',
+                    'subject' => $subject
+                ]);
+            }
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Subject already exists.'
+            ], 422);
+        }
+
+        // Create new subject
+        $newSubject = Subject::create([
+            'name' => $name,
+            'status' => 1
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Subject created successfully!',
+            'subject' => $newSubject
+        ]);
+    }
 }
+
 

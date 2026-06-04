@@ -272,6 +272,8 @@ $adminRoutesClosure = function () {
         Route::get('edit/{id}', [SubjectController::class, 'edit'])->name('admin.edit.subject');
         Route::post('update/{id}', [SubjectController::class, 'update'])->name('admin.update.subject');
         Route::get('delete/{id}', [SubjectController::class, 'delete'])->name('admin.delete.subject');
+        Route::post('quick-store-subject', [SubjectController::class, 'quickStore'])->name('admin.quick_store_subject');
+
 
         // Class Subjects Assignment
         Route::get('class-subjects', [App\Http\Controllers\Admin\ClassSubjectController::class, 'index'])->name('admin.class_subjects.index');
