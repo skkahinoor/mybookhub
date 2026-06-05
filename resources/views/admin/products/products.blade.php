@@ -12,9 +12,6 @@
                                     $prefix = $adminType === 'vendor' ? 'vendor' : 'admin';
                                 @endphp
                                 <div class="d-flex align-items-center" style="gap: 10px;">
-                                    <button type="button" class="btn btn-danger" id="bulk-delete-products-btn" style="display: none;">
-                                        <i class="mdi mdi-delete-sweep"></i> Delete Selected (<span id="selected-products-count">0</span>)
-                                    </button>
                                     @if ($adminType == 'vendor')
                                         <a href="{{ url('vendor/add-edit-product') }}"
                                             class="btn btn-primary"><i class="mdi mdi-plus"></i> Add Book</a>
@@ -52,7 +49,6 @@
                                 <table id="products" class="table table-bordered"> {{-- using the id here for the DataTable --}}
                                     <thead>
                                         <tr>
-                                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-products" style="transform: scale(1.3); cursor: pointer;"></th>
                                             <th>#</th>
                                             <th>ISBN</th>
                                             <th>Image</th>
@@ -162,9 +158,9 @@
 
 
 
+@push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
             // Server-side DataTables
@@ -173,7 +169,6 @@
                 serverSide: true,
                 ajax: "{{ url()->current() }}",
                 columns: [
-                    { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, class: 'text-center' },
                     { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
                     { data: 'isbn_condition', name: 'isbn_condition' },
                     { data: 'image', name: 'image', orderable: false, searchable: false },
@@ -185,106 +180,17 @@
                     { data: 'edition', name: 'edition' },
                     { data: 'publisher', name: 'publisher' },
                     { data: 'language', name: 'language' },
-                    { data: 'stock', name: 'stock' },
-                    @if ($adminType !== 'vendor')
-                        { data: 'seller', name: 'seller' },
+                    @if ($adminType === 'vendor')
+                        { data: 'stock', name: 'stock' },
+                    @else
+                        { data: 'stock', name: 'stock', orderable: false, searchable: false },
+                        { data: 'seller', name: 'seller', orderable: false, searchable: false },
                     @endif
                     { data: 'status', name: 'status', orderable: false, searchable: false },
                     { data: 'actions', name: 'actions', orderable: false, searchable: false }
                 ],
-                order: [[2, 'desc']], // Default sort by isbn_condition
-                pageLength: 10,
-                drawCallback: function() {
-                    $('#select-all-products').prop('checked', false);
-                    updateBulkDeleteButton();
-                }
-            });
-
-            // Toggle select all
-            $('#select-all-products').on('click', function() {
-                var checked = this.checked;
-                $('.product_checkbox').each(function() {
-                    this.checked = checked;
-                });
-                updateBulkDeleteButton();
-            });
-
-            // Individual checkbox click
-            $(document).on('click', '.product_checkbox', function() {
-                var allChecked = $('.product_checkbox').length === $('.product_checkbox:checked').length;
-                $('#select-all-products').prop('checked', allChecked);
-                updateBulkDeleteButton();
-            });
-
-            function updateBulkDeleteButton() {
-                var checkedCount = $('.product_checkbox:checked').length;
-                if (checkedCount > 0) {
-                    $('#selected-products-count').text(checkedCount);
-                    $('#bulk-delete-products-btn').fadeIn();
-                } else {
-                    $('#bulk-delete-products-btn').fadeOut();
-                }
-            }
-
-            // Bulk delete click handler
-            $('#bulk-delete-products-btn').on('click', function() {
-                var selectedIds = [];
-                $('.product_checkbox:checked').each(function() {
-                    selectedIds.push($(this).val());
-                });
-
-                if (selectedIds.length > 0) {
-                    Swal.fire({
-                        title: "Are you sure?",
-                        text: "You want to delete " + selectedIds.length + " selected books? This action cannot be undone!",
-                        icon: "warning",
-                        showCancelButton: true,
-                        confirmButtonColor: "#d33",
-                        cancelButtonColor: "#3085d6",
-                        confirmButtonText: "Yes, delete them!",
-                        cancelButtonText: "Cancel"
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            $.ajax({
-                                url: "{{ url($prefix . '/products/bulk-delete') }}",
-                                type: "POST",
-                                data: {
-                                    ids: selectedIds,
-                                    _token: "{{ csrf_token() }}"
-                                },
-                                success: function(response) {
-                                    if (response.success) {
-                                        Swal.fire({
-                                            title: "Deleted!",
-                                            text: response.message,
-                                            icon: "success",
-                                            timer: 2000,
-                                            showConfirmButton: false
-                                        });
-                                        table.ajax.reload(null, false); // Reload table without resetting pagination
-                                    } else {
-                                        Swal.fire({
-                                            title: "Error!",
-                                            text: response.message || "An error occurred while deleting.",
-                                            icon: "error"
-                                        });
-                                    }
-                                },
-                                error: function(xhr) {
-                                    var errorMessage = "Failed to perform bulk delete action.";
-                                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                                        errorMessage = xhr.responseJSON.message;
-                                    }
-                                    Swal.fire({
-                                        title: "Error!",
-                                        text: errorMessage,
-                                        icon: "error"
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
+                order: [[1, 'desc']], // Default sort by isbn_condition
+                pageLength: 10
             });
 
             // Open modal and fill book name
@@ -358,4 +264,5 @@
             });
         });
     </script>
+@endpush
 @endsection

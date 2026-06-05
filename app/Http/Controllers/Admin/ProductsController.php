@@ -426,8 +426,10 @@ class ProductsController extends Controller
         }
         if ($request->ajax()) {
             if ($adminType === 'vendor') {
-                $query = ProductsAttribute::where('vendor_id', $vendor_id)
-                    ->where('admin_type', 'vendor')
+                $query = ProductsAttribute::select('products_attributes.*')
+                    ->join('products', 'products_attributes.product_id', '=', 'products.id')
+                    ->where('products_attributes.vendor_id', $vendor_id)
+                    ->where('products_attributes.admin_type', 'vendor')
                     ->with([
                         'product:id,product_name,product_isbn,product_image,category_id,section_id,condition,publisher_id,edition_id,language_id',
                         'product.category:id,category_name',
@@ -452,23 +454,80 @@ class ProductsController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
-                ->addColumn('checkbox', function ($row) {
-                    return '<input type="checkbox" class="product_checkbox" value="' . $row->id . '" style="transform: scale(1.3); cursor: pointer;">';
+
+                ->orderColumn('isbn_condition', function ($q, $order) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->orderBy('products.product_isbn', $order);
+                    } else {
+                        $q->orderBy('product_isbn', $order);
+                    }
+                })
+                ->orderColumn('name', function ($q, $order) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->orderBy('products.product_name', $order);
+                    } else {
+                        $q->orderBy('product_name', $order);
+                    }
+                })
+                ->orderColumn('price', function ($q, $order) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->orderBy('products.product_price', $order);
+                    } else {
+                        $q->orderBy('product_price', $order);
+                    }
+                })
+                ->orderColumn('condition_badge', function ($q, $order) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->orderBy('products.condition', $order);
+                    } else {
+                        $q->orderBy('condition', $order);
+                    }
+                })
+                ->orderColumn('section', function ($q, $order) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->orderBy('products.section_id', $order);
+                    } else {
+                        $q->orderBy('section_id', $order);
+                    }
+                })
+                ->orderColumn('category', function ($q, $order) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->orderBy('products.category_id', $order);
+                    } else {
+                        $q->orderBy('category_id', $order);
+                    }
+                })
+                ->orderColumn('edition', function ($q, $order) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->orderBy('products.edition_id', $order);
+                    } else {
+                        $q->orderBy('edition_id', $order);
+                    }
+                })
+                ->orderColumn('publisher', function ($q, $order) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->orderBy('products.publisher_id', $order);
+                    } else {
+                        $q->orderBy('publisher_id', $order);
+                    }
+                })
+                ->orderColumn('language', function ($q, $order) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->orderBy('products.language_id', $order);
+                    } else {
+                        $q->orderBy('language_id', $order);
+                    }
                 })
                 ->filterColumn('isbn_condition', function ($q, $keyword) use ($adminType) {
                     if ($adminType === 'vendor') {
-                        $q->whereHas('product', function ($pq) use ($keyword) {
-                            $pq->where('product_isbn', 'like', "%{$keyword}%");
-                        });
+                        $q->where('products.product_isbn', 'like', "%{$keyword}%");
                     } else {
                         $q->where('product_isbn', 'like', "%{$keyword}%");
                     }
                 })
                 ->filterColumn('name', function ($q, $keyword) use ($adminType) {
                     if ($adminType === 'vendor') {
-                        $q->whereHas('product', function ($pq) use ($keyword) {
-                            $pq->where('product_name', 'like', "%{$keyword}%");
-                        });
+                        $q->where('products.product_name', 'like', "%{$keyword}%");
                     } else {
                         $q->where('product_name', 'like', "%{$keyword}%");
                     }
@@ -523,7 +582,7 @@ class ProductsController extends Controller
                 })
                 ->addColumn('price', function ($row) use ($adminType) {
                     if ($adminType === 'vendor') {
-                        $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($row->id);
+                        $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($row->id, $row);
                         if ($discountDetails['discount'] > 0) {
                             $html = '<span style="text-decoration: line-through;">₹' . $discountDetails['product_price'] . '</span><br>';
                             $html .= '<span class="text-danger">₹' . $discountDetails['final_price'] . '</span>';
@@ -646,7 +705,7 @@ class ProductsController extends Controller
                         return $html;
                     }
                 })
-                ->rawColumns(['checkbox', 'isbn_condition', 'image', 'price', 'condition_badge', 'stock', 'seller', 'status', 'actions'])
+                ->rawColumns(['isbn_condition', 'image', 'price', 'condition_badge', 'stock', 'seller', 'status', 'actions'])
                 ->make(true);
         }
 
@@ -1036,7 +1095,7 @@ class ProductsController extends Controller
                     'message' => $message,
                     'product_id' => $product->id,
                     'old_book_condition_id' => $request->old_book_condition_id,
-                    'show_modal' => true
+                    'show_modal' => $user->type === 'vendor'
                 ]);
             }
 

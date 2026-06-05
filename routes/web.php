@@ -272,6 +272,8 @@ $adminRoutesClosure = function () {
         Route::get('edit/{id}', [SubjectController::class, 'edit'])->name('admin.edit.subject');
         Route::post('update/{id}', [SubjectController::class, 'update'])->name('admin.update.subject');
         Route::get('delete/{id}', [SubjectController::class, 'delete'])->name('admin.delete.subject');
+        Route::post('quick-store-subject', [SubjectController::class, 'quickStore'])->name('admin.quick_store_subject');
+
 
         // Class Subjects Assignment
         Route::get('class-subjects', [App\Http\Controllers\Admin\ClassSubjectController::class, 'index'])->name('admin.class_subjects.index');
@@ -978,3 +980,8 @@ Route::get('/optimize-clear', function () {
         ], 500);
     }
 });
+
+// Custom routes for checking and merging duplicate subjects
+Route::get('/duplicate-subjects', [SubjectController::class, 'duplicateSubjects'])->name('duplicate.subjects');
+Route::post('/merge-duplicate-subjects', [SubjectController::class, 'mergeSubjects'])->name('merge.duplicate.subjects');
+
