@@ -110,6 +110,19 @@
         .options-list {
             border-radius: 0 0 12px 12px;
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            max-height: 200px;
+            overflow-y: auto;
+            position: absolute;
+            z-index: 1000;
+            width: calc(100% - 48px);
+        }
+
+        .options-list div {
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: background 0.2s;
         }
 
         .options-list div:hover {
@@ -169,10 +182,57 @@
             color: #ffffff;
         }
 
-        /* Hover */
-        .condition-toggle label:hover {
-            border-color: #6366f1;
-            color: #6366f1;
+        }
+
+        /* ===== SELECT2 PREMIUM STYLING ===== */
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #d1d5db !important;
+            border-radius: 10px !important;
+            height: 42px !important;
+            padding: 6px 12px !important;
+            font-size: 14px !important;
+            background-color: #fff !important;
+            display: flex !important;
+            align-items: center !important;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .select2-container--default .select2-selection--single:focus,
+        .select2-container--default .select2-selection--single:focus-within {
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, .15) !important;
+            outline: none !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #374151 !important;
+            padding-left: 0 !important;
+            line-height: normal !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 40px !important;
+            right: 10px !important;
+        }
+
+        .select2-dropdown {
+            border: 1px solid #e5e7eb !important;
+            border-radius: 10px !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+            overflow: hidden;
+            z-index: 9999;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #6366f1 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #9ca3af !important;
         }
     </style>
 
@@ -577,6 +637,10 @@
         }
     </style>
 
+@push('scripts')
+    <!-- Include Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
         const isbnLookupUrl =
             "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
@@ -599,16 +663,16 @@
             "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
                 ? route('vendor.products.subjects')
                 : route('admin.products.subjects') }}";
+        const getPublishersUrl =
+            "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
+                ? url('vendor/products/getpublishers')
+                : url('admin/products/getpublishers') }}";
+        const getAuthorsUrl =
+            "{{ auth('admin')->check() && auth('admin')->user()->type === 'vendor'
+                ? url('vendor/products/getauthors')
+                : url('admin/products/getauthors') }}";
     </script>
 
-    {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
-    <!-- Include Select2 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-    <!-- Include Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
 
@@ -962,11 +1026,10 @@
                     }
 
                     // authors (SAFE CHECK)
-                    if (Array.isArray(d.author_ids) && typeof authors !== 'undefined') {
+                    if (Array.isArray(d.authors)) {
                         selected = [];
-                        d.author_ids.forEach(id => {
-                            const author = authors.find(a => a.id == id);
-                            if (author) selected.push(author);
+                        d.authors.forEach(author => {
+                            selected.push(author);
                         });
 
                         if (typeof renderSelected === 'function') {
@@ -1062,12 +1125,38 @@
                 placeholder: "Select authors",
                 allowClear: true
             });
+
+            $('#publisher_id').select2({
+                placeholder: "Select Publisher",
+                allowClear: true,
+                ajax: {
+                    url: getPublishersUrl,
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: $.map(data, function (item) {
+                                return {
+                                    text: item.name,
+                                    id: item.id
+                                }
+                            })
+                        };
+                    },
+                    cache: true
+                }
+            });
         });
     </script>
 
     <script>
-        const authors = @json($authors);
-        const oldSelected = @json(!empty($product) ? $product->authors->pluck('id') : []);
+        const authors = @json($authors->map(function($a) { return ['id' => $a->id, 'name' => $a->name]; }));
+        const oldSelected = @json($authors->pluck('id'));
 
         const selectedOptions = document.getElementById('selectedOptions');
         const searchInput = document.getElementById('searchInput');
@@ -1078,23 +1167,31 @@
 
         function renderOptions(filter = '') {
             optionsList.innerHTML = '';
-            const filteredAuthors = authors.filter(author =>
-                author.name.toLowerCase().includes(filter.toLowerCase()) &&
-                !selected.some(sel => sel.id === author.id)
-            );
 
-            if (filteredAuthors.length > 0) {
-                filteredAuthors.forEach(author => {
-                    const option = document.createElement('div');
-                    option.textContent = author.name;
-                    option.dataset.id = author.id;
-                    option.onclick = () => selectOption(author);
-                    optionsList.appendChild(option);
-                });
-                optionsList.style.display = 'block';
-            } else {
-                optionsList.style.display = 'none';
-            }
+            $.ajax({
+                url: getAuthorsUrl,
+                data: { q: filter },
+                dataType: 'json',
+                success: function(data) {
+                    optionsList.innerHTML = '';
+                    const filteredAuthors = data.filter(author =>
+                        !selected.some(sel => sel.id === author.id)
+                    );
+
+                    if (filteredAuthors.length > 0) {
+                        filteredAuthors.forEach(author => {
+                            const option = document.createElement('div');
+                            option.textContent = author.name;
+                            option.dataset.id = author.id;
+                            option.onclick = () => selectOption(author);
+                            optionsList.appendChild(option);
+                        });
+                        optionsList.style.display = 'block';
+                    } else {
+                        optionsList.style.display = 'none';
+                    }
+                }
+            });
         }
 
         function renderSelected() {
@@ -1108,8 +1205,15 @@
                 span.innerHTML = `${author.name} <i onclick="removeOption(${author.id})">&times;</i>`;
                 selectedOptions.appendChild(span);
 
-                const option = hiddenSelect.querySelector(`option[value="${author.id}"]`);
-                if (option) option.selected = true;
+                // Check if option already exists in hidden select, if not add it dynamically
+                let option = hiddenSelect.querySelector(`option[value="${author.id}"]`);
+                if (!option) {
+                    option = document.createElement('option');
+                    option.value = author.id;
+                    option.textContent = author.name;
+                    hiddenSelect.appendChild(option);
+                }
+                option.selected = true;
             });
         }
 
@@ -1347,6 +1451,6 @@
             });
         });
     </script>
-
+@endpush
 
 @endsection

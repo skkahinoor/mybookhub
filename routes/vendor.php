@@ -221,6 +221,7 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
         // Products (with vendor plan check middleware)
         Route::middleware(['vendor.plan'])->group(function () {
             Route::get('products/getauthors', [ProductsController::class, 'getAuthor']);
+            Route::get('products/getpublishers', [ProductsController::class, 'getPublisher']);
             Route::get('products', [ProductsController::class, 'products']);                                        // render products.blade.php in the Admin Panel
             Route::post('update-product-status', [ProductsController::class, 'updateProductStatus'])->name('vendor.updateproductstatus');               // Update Products Status using AJAX in products.blade.php
             Route::get('delete-product/{id}', [ProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php

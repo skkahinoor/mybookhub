@@ -1046,8 +1046,21 @@ class ProductsController extends Controller
         }
 
         $sections   = Section::where('status', 1)->get();
-        $publishers = Publisher::where('status', 1)->get()->toArray();
-        $authors    = Author::where('status', 1)->get();
+        
+        $selectedPublisherId = old('publisher_id', $product->publisher_id ?? '');
+        if ($selectedPublisherId) {
+            $publishers = Publisher::where('id', $selectedPublisherId)->get()->toArray();
+        } else {
+            $publishers = [];
+        }
+
+        $selectedAuthorIds = old('author_id', !empty($product->id) ? $product->authors->pluck('id')->toArray() : []);
+        if (!empty($selectedAuthorIds)) {
+            $authors = Author::whereIn('id', $selectedAuthorIds)->get();
+        } else {
+            $authors = collect();
+        }
+
         $categories    = Category::where('status', 1)->get();
         $subjects      = Subject::where('status', 1)->get();
         $subcategories = Subcategory::where('status', 1)->get();
@@ -1082,6 +1095,17 @@ class ProductsController extends Controller
 
         return Author::where('name', 'like', "%{$q}%")
             ->select('id', 'name')
+            ->limit(30)
+            ->get();
+    }
+
+    public function getPublisher(Request $request)
+    {
+        $q = $request->input('q');
+        return Publisher::where('status', 1)
+            ->where('name', 'like', "%{$q}%")
+            ->select('id', 'name')
+            ->limit(30)
             ->get();
     }
 
@@ -1594,6 +1618,9 @@ class ProductsController extends Controller
                     "language_name" => $product->language->name ?? '',
                     "book_type_id" => $product->book_type_id,
                     "author_ids"   => $product->authors->pluck('id')->toArray(),
+                    "authors"      => $product->authors->map(function($a) {
+                        return ['id' => $a->id, 'name' => $a->name];
+                    })->toArray(),
                 ]
             ]);
         }
@@ -1691,6 +1718,9 @@ class ProductsController extends Controller
                 "language_id"  => $language_id,
                 "language_name" => $language_name,
                 "author_ids"   => $author_ids,
+                "authors"      => !empty($author_ids) ? Author::whereIn('id', $author_ids)->get()->map(function($a) {
+                    return ['id' => $a->id, 'name' => $a->name];
+                })->toArray() : [],
             ]
         ]);
     }

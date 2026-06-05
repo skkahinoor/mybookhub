@@ -361,6 +361,7 @@ $adminRoutesClosure = function () {
         // Products (with vendor plan check middleware)
         Route::middleware(['vendor.plan'])->group(function () {
             Route::get('products/getauthors', [AdminProductsController::class, 'getAuthor']);
+            Route::get('products/getpublishers', [AdminProductsController::class, 'getPublisher']);
             Route::get('products', [AdminProductsController::class, 'products']);                                        // render products.blade.php in the Admin Panel
             Route::post('update-product-status', [AdminProductsController::class, 'updateProductStatus'])->name('admin.updateproductstatus');               // Update Products Status using AJAX in products.blade.php
             Route::get('delete-product/{id}', [AdminProductsController::class, 'deleteProduct']);                        // Delete a product in products.blade.php
