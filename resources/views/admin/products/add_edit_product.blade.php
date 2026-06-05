@@ -534,6 +534,7 @@
         <!-- partial -->
     </div>
 
+    @if(auth('admin')->user()->type === 'vendor')
     <!-- Modal for Stock and Discount -->
     <div class="modal fade" id="attributesModal" tabindex="-1" role="dialog" aria-labelledby="attributesModalLabel"
         aria-hidden="true" data-backdrop="static" data-keyboard="false">
@@ -570,6 +571,7 @@
             </div>
         </div>
     </div>
+    @endif
     <style>
         .readonly-select {
             pointer-events: none;
@@ -1179,14 +1181,14 @@
                         var userType = "{{ auth('admin')->user()->type }}";
                         var productsUrl = userType === 'vendor' ? "{{ url('vendor/products') }}" : "{{ url('admin/products') }}";
 
-                        if (response.show_modal && response.product_id) {
-                            // Show modal for new products (both Vendors and Admins)
+                        if (response.show_modal && response.product_id && userType === 'vendor') {
+                            // Show modal for new products (only Vendors)
                             $('#modal_product_id').val(response.product_id);
                             $('#modal_old_book_condition_id').val(response.old_book_condition_id || '');
                             $('#attributesModal').modal('show');
                             submitBtn.prop('disabled', false).text('Submit');
                         } else {
-                            // Redirect for existing products
+                            // Redirect for existing products or when no modal is needed
                             window.location.href = productsUrl;
                         }
                     },
@@ -1197,6 +1199,7 @@
                         if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON
                             .product_exists) {
                             const resp = xhr.responseJSON;
+                            const userType = "{{ auth('admin')->user()->type }}";
 
                             // First info message
                             Swal.fire({
@@ -1207,30 +1210,32 @@
                                 confirmButtonText: 'OK',
                                 confirmButtonColor: '#dc3545'
                             }).then(() => {
-                                // Then ask if user wants to update stock/discount
-                                Swal.fire({
-                                    icon: 'question',
-                                    title: 'Update Stock / Discount?',
-                                    text: 'Do you want to update stock and discount for this product?',
-                                    showCancelButton: true,
-                                    confirmButtonText: 'Yes',
-                                    cancelButtonText: 'No',
-                                    confirmButtonColor: '#28a745',
-                                    cancelButtonColor: '#dc3545'
-                                }).then((result) => {
-                                    if (result.isConfirmed && resp.product_id) {
-                                        // Prefill and open the same attributes modal used on products list
-                                        $('#modal_product_id').val(resp.product_id);
-                                        $('#modal_old_book_condition_id').val(resp.old_book_condition_id);
-                                        if (typeof resp.stock !== 'undefined') {
-                                            $('#modal_stock').val(resp.stock);
+                                if (userType === 'vendor') {
+                                    // Then ask if user wants to update stock/discount
+                                    Swal.fire({
+                                        icon: 'question',
+                                        title: 'Update Stock / Discount?',
+                                        text: 'Do you want to update stock and discount for this product?',
+                                        showCancelButton: true,
+                                        confirmButtonText: 'Yes',
+                                        cancelButtonText: 'No',
+                                        confirmButtonColor: '#28a745',
+                                        cancelButtonColor: '#dc3545'
+                                    }).then((result) => {
+                                        if (result.isConfirmed && resp.product_id) {
+                                            // Prefill and open the same attributes modal used on products list
+                                            $('#modal_product_id').val(resp.product_id);
+                                            $('#modal_old_book_condition_id').val(resp.old_book_condition_id);
+                                            if (typeof resp.stock !== 'undefined') {
+                                                $('#modal_stock').val(resp.stock);
+                                            }
+                                            if (typeof resp.product_discount !== 'undefined') {
+                                                $('#modal_product_discount').val(resp.product_discount);
+                                            }
+                                            $('#attributesModal').modal('show');
                                         }
-                                        if (typeof resp.product_discount !== 'undefined') {
-                                            $('#modal_product_discount').val(resp.product_discount);
-                                        }
-                                        $('#attributesModal').modal('show');
-                                    }
-                                });
+                                    });
+                                }
                             });
                             return;
                         }

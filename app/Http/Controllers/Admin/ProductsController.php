@@ -1095,7 +1095,7 @@ class ProductsController extends Controller
                     'message' => $message,
                     'product_id' => $product->id,
                     'old_book_condition_id' => $request->old_book_condition_id,
-                    'show_modal' => true
+                    'show_modal' => $user->type === 'vendor'
                 ]);
             }
 
