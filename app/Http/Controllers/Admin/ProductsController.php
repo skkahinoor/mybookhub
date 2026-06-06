@@ -918,21 +918,21 @@ class ProductsController extends Controller
 
             // Conditional validation: ISBN uniqueness is now based on ISBN + condition combination
             // Since we allow same ISBN with different conditions, we need custom validation
-            $isbnValidationRule = 'digits_between:10,13';
+            $isbnValidationRule = 'nullable|regex:/^\d{10}(\d{3})?$/';
 
             if ($id == null) {
                 // For new products, check if ISBN + condition combination already exists
                 // We'll handle this in custom validation after checking existingProduct
                 if ($existingProduct) {
                     // Product exists with same ISBN + condition - validation will pass (we already checked user doesn't have it)
-                    $isbnValidationRule = 'digits_between:10,13';
+                    $isbnValidationRule = 'nullable|regex:/^\d{10}(\d{3})?$/';
                 } else {
                     // New product - check uniqueness of ISBN + condition combination
-                    $isbnValidationRule = 'digits_between:10,13';
+                    $isbnValidationRule = 'nullable|regex:/^\d{10}(\d{3})?$/';
                 }
             } else {
                 // Editing existing product - require unique ISBN + condition except for current product
-                $isbnValidationRule = 'digits_between:10,13';
+                $isbnValidationRule = 'nullable|regex:/^\d{10}(\d{3})?$/';
             }
 
             $section = Section::find($data['section_id'] ?? null);
