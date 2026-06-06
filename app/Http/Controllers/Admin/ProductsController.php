@@ -925,14 +925,14 @@ class ProductsController extends Controller
                 // We'll handle this in custom validation after checking existingProduct
                 if ($existingProduct) {
                     // Product exists with same ISBN + condition - validation will pass (we already checked user doesn't have it)
-                    $isbnValidationRule = 'required|digits_between:10,13';
+                    $isbnValidationRule = 'digits_between:10,13';
                 } else {
                     // New product - check uniqueness of ISBN + condition combination
-                    $isbnValidationRule = 'required|digits_between:10,13';
+                    $isbnValidationRule = 'digits_between:10,13';
                 }
             } else {
                 // Editing existing product - require unique ISBN + condition except for current product
-                $isbnValidationRule = 'required|digits_between:10,13';
+                $isbnValidationRule = 'digits_between:10,13';
             }
 
             $section = Section::find($data['section_id'] ?? null);
