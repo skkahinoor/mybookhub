@@ -483,8 +483,9 @@ class ProductsController extends Controller
         ]);
     }
 
-    public function detail($slug, Request $request)
+    public function detail($id, Request $request)
     {
+        $slug = $id;
         $condition = session('condition', 'new');
 
         $category = Category::limit(10)->get();

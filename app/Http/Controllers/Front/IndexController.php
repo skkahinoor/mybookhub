@@ -445,7 +445,7 @@ class IndexController extends Controller
                 'shop'        => $shopName,
                 'address'     => $address,
                 'distance'    => $distance !== null ? $distance . ' km away' : null,
-                'url'         => $bestAttr ? route('front.products.detail', $bestAttr->id) : url('product/' . $product->id),
+                'url'         => route('front.products.detail', $product->id),
             ];
         });
 

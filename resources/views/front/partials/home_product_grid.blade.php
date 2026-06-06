@@ -13,7 +13,7 @@
         $finalPrice = $discountDetails['final_price'] ?? 0;
         $discountPercent = $discountDetails['discount_percent'] ?? 0;
 
-        $productUrl = url('product/' . \Illuminate\Support\Str::slug($product->product->product_name));
+        $productUrl = url('product/' . $product->product->id);
     @endphp
     <div class="book-item">
         <div class="cover">
