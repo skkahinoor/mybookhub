@@ -918,7 +918,7 @@ class ProductsController extends Controller
 
             // Conditional validation: ISBN uniqueness is now based on ISBN + condition combination
             // Since we allow same ISBN with different conditions, we need custom validation
-            $isbnValidationRule = 'required|digits_between:10,13';
+            $isbnValidationRule = 'digits_between:10,13';
 
             if ($id == null) {
                 // For new products, check if ISBN + condition combination already exists
