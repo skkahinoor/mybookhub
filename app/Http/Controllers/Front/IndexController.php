@@ -94,7 +94,7 @@ class IndexController extends Controller
             $sliderProducts = $sliderProductsQuery->orderBy('id', 'desc')->paginate(12);
             $homeSubjects = $this->loadHomeSubjects($currentSectionId, $currentCategoryId, $currentSubcategoryId);
             $sliderProductDiscountPrices = Product::getDiscountPricesForProductIds(
-                $sliderProducts->pluck('id')->all()
+                $sliderProducts->pluck('product_id')->all()
             );
 
             return response()->json([
@@ -127,7 +127,7 @@ class IndexController extends Controller
         );
         $sliderProducts = $sliderProductsQuery->orderBy('id', 'desc')->paginate(12);
         $sliderProductDiscountPrices = Product::getDiscountPricesForProductIds(
-            $sliderProducts->pluck('id')->all()
+            $sliderProducts->pluck('product_id')->all()
         );
 
         $homeSubjects = $this->loadHomeSubjects($currentSectionId, $currentCategoryId, $currentSubcategoryId);
@@ -168,11 +168,12 @@ class IndexController extends Controller
 
     private function homeSliderProductsBaseQuery(): Builder
     {
-        return Product::with(['authors', 'publisher'])
-            ->whereHas('attributes', function ($q) {
+        return ProductsAttribute::with(['product.authors', 'product.publisher', 'condition', 'vendor.vendorbusinessdetails'])
+            ->whereHas('product', function ($q) {
                 $q->where('status', 1);
             })
-            ->where('status', 1);
+            ->where('status', 1)
+            ->where('stock', '>', 0);
     }
 
     private function homeNewProductsQuery(string $condition): Builder
@@ -203,46 +204,49 @@ class IndexController extends Controller
         $userLat,
         $userLng
     ): void {
-        if ($currentSectionId) {
-            $sliderProductsQuery->where('section_id', $currentSectionId);
-        }
-        if ($currentCategoryId) {
-            $sliderProductsQuery->where('category_id', $currentCategoryId);
-        }
-        if ($currentSubcategoryId) {
-            $sliderProductsQuery->where('subcategory_id', $currentSubcategoryId);
-        }
-        if ($request->filled('condition')) {
-            if ($request->condition !== 'all') {
-                $sliderProductsQuery->where('condition', $request->condition);
+        $sliderProductsQuery->whereHas('product', function ($q) use ($request, $condition, $currentSectionId, $currentCategoryId, $currentSubcategoryId, $currentSubjectId) {
+            if ($currentSectionId) {
+                $q->where('section_id', $currentSectionId);
             }
-        } elseif ($condition !== 'all') {
-            $sliderProductsQuery->where('condition', $condition);
-        }
-        if ($currentSubjectId) {
-            $sliderProductsQuery->where('subject_id', $currentSubjectId);
-        }
-        if ($request->filled('book_types')) {
-            $bookTypeIds = is_array($request->input('book_types'))
-                ? $request->input('book_types')
-                : explode(',', (string) $request->input('book_types'));
-            $sliderProductsQuery->whereIn('book_type_id', $bookTypeIds);
-        }
-        if ($request->filled('languages')) {
-            $langIds = is_array($request->input('languages'))
-                ? $request->input('languages')
-                : explode(',', (string) $request->input('languages'));
-            $sliderProductsQuery->whereIn('language_id', $langIds);
-        }
+            if ($currentCategoryId) {
+                $q->where('category_id', $currentCategoryId);
+            }
+            if ($currentSubcategoryId) {
+                $q->where('subcategory_id', $currentSubcategoryId);
+            }
+            if ($request->filled('condition')) {
+                if ($request->condition !== 'all') {
+                    $q->where('condition', $request->condition);
+                }
+            } elseif ($condition !== 'all') {
+                $q->where('condition', $condition);
+            }
+            if ($currentSubjectId) {
+                $q->where('subject_id', $currentSubjectId);
+            }
+            if ($request->filled('book_types')) {
+                $bookTypeIds = is_array($request->input('book_types'))
+                    ? $request->input('book_types')
+                    : explode(',', (string) $request->input('book_types'));
+                $q->whereIn('book_type_id', $bookTypeIds);
+            }
+            if ($request->filled('languages')) {
+                $langIds = is_array($request->input('languages'))
+                    ? $request->input('languages')
+                    : explode(',', (string) $request->input('languages'));
+                $q->whereIn('language_id', $langIds);
+            }
+        });
+
         if ($userLat && $userLng && $currentDistance < 100) {
             $distance = $currentDistance;
             $sliderProductsQuery->where(function ($query) use ($userLat, $userLng, $distance) {
-                $query->whereHas('attributes.vendor.vendorbusinessdetails', function ($q) use ($userLat, $userLng, $distance) {
+                $query->whereHas('vendor.vendorbusinessdetails', function ($q) use ($userLat, $userLng, $distance) {
                     $q->whereNotNull('latitude')
                       ->whereNotNull('longitude')
                       ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))) <= ?", [$userLat, $userLng, $userLat, $distance]);
                 })
-                ->orWhereHas('attributes.vendor', function ($q) use ($userLat, $userLng, $distance) {
+                ->orWhereHas('vendor', function ($q) use ($userLat, $userLng, $distance) {
                     $q->whereDoesntHave('vendorbusinessdetails')
                       ->whereNotNull('location')
                       ->whereRaw("(6371 * acos(cos(radians(?)) * cos(radians(SUBSTRING_INDEX(location, ',', 1))) * cos(radians(SUBSTRING_INDEX(location, ',', -1)) - radians(?)) + sin(radians(?)) * sin(radians(SUBSTRING_INDEX(location, ',', 1))))) <= ?", [$userLat, $userLng, $userLat, $distance]);

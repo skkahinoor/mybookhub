@@ -1,46 +1,51 @@
 @foreach ($sliderProducts as $product)
     @php
-        if (!$product) {
+        if (!$product || !$product->product) {
             continue;
         }
 
-        $sliderPrices = $sliderProductDiscountPrices ?? [];
-        $minPrice = $sliderPrices[$product->id] ?? \App\Models\Product::getDiscountPrice($product->id);
-        $minPriceText = (isset($minPrice) && $minPrice > 0) ? number_format($minPrice, 0) : ($product->product_price ? number_format($product->product_price, 0) : null);
-        
-        $bookCondition = strtolower(trim($product->condition ?? 'new'));
-        $isNew = $bookCondition == 'new';
+        $isNew = empty($product->old_book_condition_id);
         $conditionClass = $isNew ? 'new' : 'old';
-        $conditionText = $isNew ? 'NEW' : 'OLD';
+        $conditionText = $isNew ? 'NEW' : ($product->condition ? strtoupper($product->condition->name) : 'USED');
+
+        $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($product->id, $product);
+        $originalPrice = $discountDetails['product_price'] ?? 0;
+        $finalPrice = $discountDetails['final_price'] ?? 0;
+        $discountPercent = $discountDetails['discount_percent'] ?? 0;
+
+        $productUrl = url('product/' . \Illuminate\Support\Str::slug($product->product->product_name));
     @endphp
     <div class="book-item">
         <div class="cover">
             <span class="condition {{ $conditionClass }}">
                 {{ $conditionText }}
             </span>
-            <a href="{{ url('product/' . $product->id) }}">
-                <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . ($product->product_image ?? 'no-image.png') }}"
+            <a href="{{ $productUrl }}">
+                <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . ($product->product->product_image ?? 'no-image.png') }}"
                     onerror="this.src='{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}'"
-                    alt="{{ $product->product_name }}" loading="lazy">
+                    alt="{{ $product->product->product_name }}" loading="lazy">
             </a>
         </div>
 
         <div class="info">
-            <a href="{{ url('product/' . $product->id) }}" class="title" style="text-decoration: none;">
-                {{ $product->product_name }}
+            <a href="{{ $productUrl }}" class="title" style="text-decoration: none;">
+                {{ $product->product->product_name }}
             </a>
             <div class="author">
-                {{ $product->authors && $product->authors->count() > 0 ? $product->authors->pluck('name')->implode(', ') : 'Unknown Author' }}
+                {{ $product->product->authors && $product->product->authors->count() > 0 ? $product->product->authors->pluck('name')->implode(', ') : 'Unknown Author' }}
             </div>
             <div class="price">
-                @if ($minPriceText)
-                    <span class="final-price text-danger">From ₹{{ $minPriceText }}</span>
+                @if ($finalPrice > 0)
+                    @if ($discountPercent > 0 && $originalPrice > $finalPrice)
+                        <span class="original-price">₹{{ number_format($originalPrice, 0) }}</span>
+                        <span class="final-price text-danger">₹{{ number_format($finalPrice, 0) }}</span>
+                    @else
+                        <span class="final-price">₹{{ number_format($finalPrice, 0) }}</span>
+                    @endif
                 @else
                     <span class="final-price">Price Unavailable</span>
                 @endif
             </div>
-            
-            {{-- Removed "Add to Cart" button as requested, user will click through to details to see sellers --}}
         </div>
     </div>
 @endforeach

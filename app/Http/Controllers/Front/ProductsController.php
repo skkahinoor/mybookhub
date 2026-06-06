@@ -483,7 +483,7 @@ class ProductsController extends Controller
         ]);
     }
 
-    public function detail($id, Request $request)
+    public function detail($slug, Request $request)
     {
         $condition = session('condition', 'new');
 
@@ -509,9 +509,42 @@ class ProductsController extends Controller
             'subject',
             'bookType'
         ])
-            ->where('id', $id)
             ->where('status', 1)
-            ->firstOrFail();
+            ->where(function ($q) use ($slug) {
+                if (is_numeric($slug)) {
+                    $q->where('id', $slug);
+                } else {
+                    $normalizedSlug = str_replace('-', '%', $slug);
+                    $q->where('product_name', 'like', $normalizedSlug);
+                }
+            })
+            ->get()
+            ->first(function ($p) use ($slug) {
+                return is_numeric($slug) ? ((int)$p->id === (int)$slug) : (\Illuminate\Support\Str::slug($p->product_name) === $slug);
+            });
+
+        if (!$product && !is_numeric($slug)) {
+            // Complete fallback to scan all products in case of special characters
+            $product = Product::with([
+                'section',
+                'category',
+                'language',
+                'publisher',
+                'authors',
+                'edition',
+                'subject',
+                'bookType'
+            ])
+                ->where('status', 1)
+                ->get()
+                ->first(function ($p) use ($slug) {
+                    return \Illuminate\Support\Str::slug($p->product_name) === $slug;
+                });
+        }
+
+        if (!$product) {
+            abort(404);
+        }
 
         $productId = $product->id;
 

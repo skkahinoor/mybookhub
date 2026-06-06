@@ -647,7 +647,7 @@ HTML;
 
 
     // Render Single Product Detail Page in front/products/detail.blade.php
-    Route::get('/product/{id}', 'ProductsController@detail')->name('front.products.detail');
+    Route::get('/product/{slug}', 'ProductsController@detail')->name('front.products.detail');
     Route::get('/product/{id}/all-sellers', 'ProductsController@allSellers')->name('front.products.all-sellers');
 
     // App Sharing Deep Link Fallback (Forces App Open if installed, else Play Store)
