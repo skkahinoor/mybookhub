@@ -74,6 +74,8 @@ class ProductsController extends Controller
             'import' => 'required|file|mimes:xlsx,xls,csv|max:2048',
         ]);
 
+        $isbnOption = $request->input('isbn_option', 'with_isbn');
+
         DB::beginTransaction();
 
         try {
@@ -112,9 +114,17 @@ class ProductsController extends Controller
                 $condition   = strtolower(trim($data['book condition'] ?? 'new'));
                 $imageName   = trim($data['image'] ?? '');
 
-                if (!$productName || !$isbn) {
-                    $skippedInvalid++;
-                    continue;
+                if ($isbnOption === 'without_isbn') {
+                    $isbn = $isbn ?: null;
+                    if (!$productName) {
+                        $skippedInvalid++;
+                        continue;
+                    }
+                } else {
+                    if (!$productName || !$isbn) {
+                        $skippedInvalid++;
+                        continue;
+                    }
                 }
 
                 // ---------- SECTION ----------
@@ -261,7 +271,7 @@ class ProductsController extends Controller
                 }
 
                 // ---------- DUPLICATE CHECK ----------
-                if (Product::where('product_isbn', $isbn)->where('condition', $condition)->exists()) {
+                if ($isbn && Product::where('product_isbn', $isbn)->where('condition', $condition)->exists()) {
                     $skippedDuplicate++;
                     continue;
                 }

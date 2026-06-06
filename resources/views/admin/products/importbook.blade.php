@@ -63,13 +63,24 @@
                 <!-- Upload Form -->
                 <form method="POST" action="{{ url('admin/import-product') }}" enctype="multipart/form-data">
                     @csrf
-
                     <div class="form-group">
                         <label class="font-weight-bold">Select Excel File</label>
                         <input type="file" name="import" class="form-control" required>
                         <small class="text-muted">
                             Allowed formats: .xls, .xlsx, .csv
                         </small>
+                    </div>
+
+                    <div class="form-group mt-3">
+                        <label class="font-weight-bold d-block">ISBN Option</label>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="isbn_option" id="with_isbn" value="with_isbn" checked>
+                            <label class="form-check-label" for="with_isbn">With ISBN</label>
+                        </div>
+                        <div class="form-check form-check-inline" style="margin-left: 20px;">
+                            <input class="form-check-input" type="radio" name="isbn_option" id="without_isbn" value="without_isbn">
+                            <label class="form-check-label" for="without_isbn">Without ISBN</label>
+                        </div>
                     </div>
 
                     <div class="mt-4">
