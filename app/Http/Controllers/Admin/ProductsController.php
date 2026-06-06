@@ -431,7 +431,7 @@ class ProductsController extends Controller
                     ->where('products_attributes.vendor_id', $vendor_id)
                     ->where('products_attributes.admin_type', 'vendor')
                     ->with([
-                        'product:id,product_name,product_isbn,product_image,category_id,section_id,condition,publisher_id,edition_id,language_id',
+                        'product:id,product_name,product_isbn,product_image,category_id,section_id,condition,publisher_id,edition_id,language_id,product_price',
                         'product.category:id,category_name',
                         'product.section:id,name',
                         'product.publisher:id,name',
@@ -563,6 +563,47 @@ class ProductsController extends Controller
                         $q->whereHas('publisher', function ($pbq) use ($keyword) {
                             $pbq->where('name', 'like', "%{$keyword}%");
                         });
+                    }
+                })
+                ->filterColumn('edition', function ($q, $keyword) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->whereHas('product.edition', function ($eq) use ($keyword) {
+                            $eq->where('edition', 'like', "%{$keyword}%");
+                        });
+                    } else {
+                        $q->whereHas('edition', function ($eq) use ($keyword) {
+                            $eq->where('edition', 'like', "%{$keyword}%");
+                        });
+                    }
+                })
+                ->filterColumn('language', function ($q, $keyword) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->whereHas('product.language', function ($lq) use ($keyword) {
+                            $lq->where('name', 'like', "%{$keyword}%");
+                        });
+                    } else {
+                        $q->whereHas('language', function ($lq) use ($keyword) {
+                            $lq->where('name', 'like', "%{$keyword}%");
+                        });
+                    }
+                })
+                ->filterColumn('condition_badge', function ($q, $keyword) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->whereHas('condition', function ($cq) use ($keyword) {
+                            $cq->where('name', 'like', "%{$keyword}%");
+                        })->orWhereHas('product', function ($pq) use ($keyword) {
+                            $pq->where('condition', 'like', "%{$keyword}%");
+                        });
+                    } else {
+                        $q->where('condition', 'like', "%{$keyword}%");
+                    }
+                })
+                ->filterColumn('price', function ($q, $keyword) use ($adminType) {
+                    if ($adminType === 'vendor') {
+                        $q->where('products.product_price', 'like', "%{$keyword}%")
+                          ->orWhere('products_attributes.user_product_price', 'like', "%{$keyword}%");
+                    } else {
+                        $q->where('product_price', 'like', "%{$keyword}%");
                     }
                 })
                 ->addColumn('isbn_condition', function ($row) use ($adminType) {
