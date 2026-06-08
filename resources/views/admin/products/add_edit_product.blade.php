@@ -711,7 +711,8 @@
                             res.data.forEach(book => {
                                 html += `
                         <li class="list-group-item book-title-item"
-                            data-isbn="${book.product_isbn}"
+                            data-isbn="${book.product_isbn || ''}"
+                            data-id="${book.id}"
                             style="cursor:pointer">
                             ${book.product_name}
                         </li>`;
@@ -727,12 +728,13 @@
             $(document).on('click', '.book-title-item', function() {
 
                 let isbn = $(this).data('isbn');
+                let id = $(this).data('id');
 
                 $('#product_isbn').val(isbn);
                 $('#product_name').val($(this).text().trim());
                 $('#book_name_suggestion').hide();
 
-                fetchBookByISBN(isbn);
+                fetchBookByISBN(isbn, id);
             });
 
             $(document).click(function(e) {
@@ -941,15 +943,16 @@
                 .toggleClass("readonly-select", state);
         }
 
-        function fetchBookByISBN(isbn) {
+        function fetchBookByISBN(isbn, id = null) {
 
-            if (!isbn) return;
+            if (!isbn && !id) return;
 
             $.ajax({
                 url: isbnLookupUrl,
                 type: "POST",
                 data: {
                     isbn: isbn,
+                    product_id: id,
                     _token: "{{ csrf_token() }}"
                 },
 

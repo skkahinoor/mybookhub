@@ -1692,14 +1692,21 @@ class ProductsController extends Controller
     public function lookupByIsbn(Request $request)
     {
         $request->validate([
-            'isbn' => 'required|string|max:20'
+            'isbn' => 'nullable|string|max:20',
+            'product_id' => 'nullable|integer'
         ]);
 
         $isbn = $request->isbn;
+        $productId = $request->product_id;
 
-        $product = Product::with(['publisher', 'subject', 'edition', 'language', 'authors', 'category', 'subcategory'])
-            ->where('product_isbn', $isbn)
-            ->first();
+        if ($productId) {
+            $product = Product::with(['publisher', 'subject', 'edition', 'language', 'authors', 'category', 'subcategory'])
+                ->find($productId);
+        } else {
+            $product = Product::with(['publisher', 'subject', 'edition', 'language', 'authors', 'category', 'subcategory'])
+                ->where('product_isbn', $isbn)
+                ->first();
+        }
 
         if ($product) {
             return response()->json([
@@ -1733,6 +1740,13 @@ class ProductsController extends Controller
                     })->toArray(),
                 ]
             ]);
+        }
+
+        if (!$isbn) {
+            return response()->json([
+                "status"  => false,
+                "message" => "Book not found by ID, and no ISBN provided",
+            ], 404);
         }
 
         $key = config('services.isbn.key');
@@ -1849,7 +1863,6 @@ class ProductsController extends Controller
             }
 
             $books = Product::where('product_name', 'LIKE', '%' . $query . '%')
-                ->limit(10)
                 ->get(['id', 'product_name', 'product_isbn']);
 
             return response()->json([

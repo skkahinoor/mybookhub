@@ -427,26 +427,30 @@ class SellBookController extends Controller
     public function getBookByIsbn(Request $request)
     {
         $isbn = $request->input('isbn');
-        if (empty($isbn)) {
-            return response()->json(['status' => false, 'message' => 'ISBN is required']);
+        $productId = $request->input('product_id');
+        if (empty($isbn) && empty($productId)) {
+            return response()->json(['status' => false, 'message' => 'ISBN or Product ID is required']);
         }
-        $cleanSearch = preg_replace('/[^0-9X]/i', '', $isbn);
 
-        // 1. Try to find "new" products first
-        $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'language'])
-            ->where('condition', 'new')
-            ->where(function ($query) use ($isbn, $cleanSearch) {
-                $query->where('product_isbn', $isbn)
-                    ->orWhere('product_isbn', 'like', "%{$isbn}%")
-                    ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
-                    ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
-            })
-            ->first();
-
-        // 2. Fallback to "old" products if no "new" ones found
-        if (! $product) {
+        $product = null;
+        if ($productId) {
+            // 1. Try to find "new" products first
             $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'language'])
-                ->where('condition', 'old')
+                ->where('condition', 'new')
+                ->find($productId);
+
+            // 2. Fallback to "old" products if no "new" ones found
+            if (!$product) {
+                $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'language'])
+                    ->where('condition', 'old')
+                    ->find($productId);
+            }
+        } else {
+            $cleanSearch = preg_replace('/[^0-9X]/i', '', $isbn);
+
+            // 1. Try to find "new" products first
+            $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'language'])
+                ->where('condition', 'new')
                 ->where(function ($query) use ($isbn, $cleanSearch) {
                     $query->where('product_isbn', $isbn)
                         ->orWhere('product_isbn', 'like', "%{$isbn}%")
@@ -454,6 +458,19 @@ class SellBookController extends Controller
                         ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
                 })
                 ->first();
+
+            // 2. Fallback to "old" products if no "new" ones found
+            if (! $product) {
+                $product = Product::with(['publisher', 'edition', 'authors', 'category', 'subcategory', 'subject', 'language'])
+                    ->where('condition', 'old')
+                    ->where(function ($query) use ($isbn, $cleanSearch) {
+                        $query->where('product_isbn', $isbn)
+                            ->orWhere('product_isbn', 'like', "%{$isbn}%")
+                            ->orWhere('product_isbn', 'like', "%{$cleanSearch}%")
+                            ->orWhereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanSearch]);
+                    })
+                    ->first();
+            }
         }
 
         if ($product) {
@@ -485,6 +502,9 @@ class SellBookController extends Controller
         }
 
         // External API Lookup (ISBNDB)
+        if (empty($isbn)) {
+            return response()->json(['status' => false, 'message' => 'Book not found. Please enter details manually.']);
+        }
         $key = config('services.isbn.key');
         if (! $key) {
             return response()->json(['status' => false, 'message' => 'Book not found and API key missing.']);
@@ -581,7 +601,6 @@ class SellBookController extends Controller
             ->unique(function ($item) {
                 return $item->product_name . '-' . $item->product_isbn;
             })
-            ->take(10)
             ->values();
 
         return response()->json([
