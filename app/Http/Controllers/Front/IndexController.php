@@ -35,28 +35,30 @@ class IndexController extends Controller
         $currentSubcategoryId = $request->filled('subcategory_id') ? $request->subcategory_id : null;
         $currentSubjectId = $request->filled('subject_id') ? $request->subject_id : null;
 
-        // If no direct request params, check Profile or Session
-        if (!$currentSectionId) {
-            if (Auth::check()) {
-                // Priority 2: Academic Profile for Students
-                $profile = \App\Models\AcademicProfile::where('user_id', Auth::id())->first();
-                if ($profile && $profile->education_level_id) {
-                    $currentSectionId = $profile->education_level_id;
-                    $currentCategoryId = $profile->board_id;
-                    $currentSubcategoryId = $profile->class_id;
+        // If no direct request params, check Profile or Session (only on initial/normal page load)
+        if (!$request->has('filter_update')) {
+            if (!$currentSectionId) {
+                if (Auth::check()) {
+                    // Priority 2: Academic Profile for Students
+                    $profile = \App\Models\AcademicProfile::where('user_id', Auth::id())->first();
+                    if ($profile && $profile->education_level_id) {
+                        if (!$currentSectionId) $currentSectionId = $profile->education_level_id;
+                        if (!$currentCategoryId) $currentCategoryId = $profile->board_id;
+                        if (!$currentSubcategoryId) $currentSubcategoryId = $profile->class_id;
+                    } else {
+                        // Priority 3: Fallback to Session/Cookie for logged in users without profile
+                        if (!$currentSectionId) $currentSectionId = $sessionSectionId;
+                        if (!$currentCategoryId) $currentCategoryId = $sessionCategoryId;
+                        if (!$currentSubcategoryId) $currentSubcategoryId = $sessionSubcategoryId;
+                        if (!$currentSubjectId) $currentSubjectId = $sessionSubjectId;
+                    }
                 } else {
-                    // Priority 3: Fallback to Session/Cookie for logged in users without profile
-                    $currentSectionId = $sessionSectionId;
-                    $currentCategoryId = $sessionCategoryId;
-                    $currentSubcategoryId = $sessionSubcategoryId;
-                    $currentSubjectId = $sessionSubjectId;
+                    // Priority 3: Session/Cookie for Guest Users
+                    if (!$currentSectionId) $currentSectionId = $sessionSectionId;
+                    if (!$currentCategoryId) $currentCategoryId = $sessionCategoryId;
+                    if (!$currentSubcategoryId) $currentSubcategoryId = $sessionSubcategoryId;
+                    if (!$currentSubjectId) $currentSubjectId = $sessionSubjectId;
                 }
-            } else {
-                // Priority 3: Session/Cookie for Guest Users
-                $currentSectionId = $sessionSectionId;
-                $currentCategoryId = $sessionCategoryId;
-                $currentSubcategoryId = $sessionSubcategoryId;
-                $currentSubjectId = $sessionSubjectId;
             }
         }
 

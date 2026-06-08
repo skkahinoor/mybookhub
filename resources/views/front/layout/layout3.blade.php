@@ -1096,13 +1096,11 @@
                         </div>
                         <div class="col-xl-2 col-lg-3 col-sm-4 col-4 wow fadeInUp" data-wow-delay="0.3s">
                             <div class="widget widget_services">
-                                <h5 class="footer-title">Bookhub ?</h5>
+                                <h5 class="footer-title">Quick Links</h5>
                                 <ul>
-                                    <li><a href="{{ url('/') }}">Bookhub</a></li>
-                                    <li><a href="{{ url('/services') }}">Services</a></li>
-                                    {{-- <li><a href="{{ url('product/' . $products['id']) }}">Book Details</a></li> --}}
-                                    <li><a href="blog-detail.html">Blog Details</a></li>
-                                    {{-- <li><a href="#">Shop</a></li> --}}
+                                    <li><a href="{{ url('/vendors') }}">Vendors</a></li>
+                                    <li><a href="{{ url('/sales') }}">Sales</a></li>
+                                    <li><a href="{{ url('/delivery-agent/register') }}">Delivery Agent Register</a></li>
                                 </ul>
                             </div>
                         </div>
