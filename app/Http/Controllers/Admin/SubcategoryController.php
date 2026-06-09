@@ -116,11 +116,16 @@ class SubcategoryController extends Controller
             $data = $request->all();
 
             $rules = [
-                'subcategory_name' => 'required',
+                'subcategory_name' => 'required|unique:subcategories,subcategory_name' . ($id ? ',' . $id : ''),
                 'subcategory_icon' => 'nullable|image|mimes:jpg,jpeg,png,svg|max:2048',
             ];
 
-            $this->validate($request, $rules);
+            $messages = [
+                'subcategory_name.required' => 'Class Name is required.',
+                'subcategory_name.unique' => 'This Class Name already exists.',
+            ];
+
+            $this->validate($request, $rules, $messages);
 
             // Uploading Subcategory Icon
             if ($request->hasFile('subcategory_icon')) {

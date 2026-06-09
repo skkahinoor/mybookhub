@@ -27,6 +27,11 @@
                                         <a href="{{ url('admin/import-images') }}" class="btn btn-warning">
                                             <i class="mdi mdi-camera"></i> Import Images
                                         </a>
+
+                                        <a href="{{ url($prefix . '/products/delete-all') }}" class="btn btn-danger"
+                                            onclick="return confirm('⚠️ WARNING: Are you sure you want to delete ALL books and their attributes? This action is irreversible and will delete all records from products and products_attributes tables.')">
+                                            <i class="mdi mdi-delete-forever"></i> Delete All Books
+                                        </a>
                                     @endif
                                 </div>
                             </div>

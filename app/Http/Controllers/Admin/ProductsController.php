@@ -1890,6 +1890,83 @@ class ProductsController extends Controller
         }
     }
 
+    public function deleteAllProducts()
+    {
+        $user = Auth::guard('admin')->user();
+        if ($user->type === 'vendor') {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
+        if (!$user->can('delete_products')) {
+            return redirect()->back()->with('error_message', 'You do not have permission to delete products.');
+        }
+
+        $small_image_path  = 'front/images/product_images/small/';
+        $medium_image_path = 'front/images/product_images/medium/';
+        $large_image_path  = 'front/images/product_images/large/';
+
+        // Get all products and delete main images
+        if (\Illuminate\Support\Facades\Schema::hasTable('products')) {
+            $products = Product::select('product_image')->whereNotNull('product_image')->where('product_image', '!=', '')->get();
+            foreach ($products as $product) {
+                if (file_exists($small_image_path . $product->product_image)) {
+                    @unlink($small_image_path . $product->product_image);
+                }
+                if (file_exists($medium_image_path . $product->product_image)) {
+                    @unlink($medium_image_path . $product->product_image);
+                }
+                if (file_exists($large_image_path . $product->product_image)) {
+                    @unlink($large_image_path . $product->product_image);
+                }
+            }
+        }
+
+        // Get all products secondary images and delete them
+        if (\Illuminate\Support\Facades\Schema::hasTable('products_images')) {
+            $images = ProductsImage::select('image')->whereNotNull('image')->where('image', '!=', '')->get();
+            foreach ($images as $img) {
+                if (file_exists($small_image_path . $img->image)) {
+                    @unlink($small_image_path . $img->image);
+                }
+                if (file_exists($medium_image_path . $img->image)) {
+                    @unlink($medium_image_path . $img->image);
+                }
+                if (file_exists($large_image_path . $img->image)) {
+                    @unlink($large_image_path . $img->image);
+                }
+            }
+        }
+
+        // Truncate tables safely if they exist
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        
+        if (\Illuminate\Support\Facades\Schema::hasTable('products_attributes')) {
+            ProductsAttribute::truncate();
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('products_images')) {
+            ProductsImage::truncate();
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('author_product')) {
+            DB::table('author_product')->truncate();
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('carts')) {
+            DB::table('carts')->truncate();
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('wishlists')) {
+            DB::table('wishlists')->truncate();
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('ratings')) {
+            DB::table('ratings')->truncate();
+        }
+        if (\Illuminate\Support\Facades\Schema::hasTable('products')) {
+            Product::truncate();
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        return redirect()->back()->with('success_message', 'All books, attributes, and associated listings have been deleted successfully!');
+    }
+
     public function deleteProduct($id)
     {
         $user = Auth::guard('admin')->user();
