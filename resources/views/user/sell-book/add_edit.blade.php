@@ -224,6 +224,7 @@
                                 method="post" enctype="multipart/form-data">
 
                                 @csrf
+                                <input type="hidden" name="fetched_product_id" id="fetched_product_id" value="{{ old('fetched_product_id') }}">
                                 <input type="hidden" name="condition" value="old">
 
                                 <!-- Section 1: Book Info -->
@@ -653,8 +654,13 @@
                 $('#product_isbn').val(isbn);
                 $('#product_name').val($(this).text().trim());
                 $('#book_name_suggestion').hide();
+                $('#fetched_product_id').val(id);
 
                 fetchBookByISBN(isbn, id);
+            });
+
+            $('#product_name').on('input', function() {
+                $('#fetched_product_id').val('');
             });
 
             $(document).click(function(e) {
@@ -852,6 +858,7 @@
 
         // ✅ MANUAL ISBN CHANGE
         $(document).on("change", "#product_isbn", function() {
+            $('#fetched_product_id').val('');
             fetchBookByISBN($(this).val().trim());
         });
     </script>

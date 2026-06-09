@@ -180,11 +180,21 @@ class SellBookController extends Controller
             // ==========================================
             // DEDUPLICATION: Check if product already exists globally
             // ==========================================
+            $fetchedProductId = $request->input('fetched_product_id');
             $existingProduct = null;
-            if (! empty($cleanIsbn) && empty($id)) {
-                $existingProduct = Product::whereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanIsbn])
-                    ->where('condition', 'old')
-                    ->first();
+            if (empty($id)) {
+                if (!empty($fetchedProductId)) {
+                    $fetchedProduct = Product::find($fetchedProductId);
+                    if ($fetchedProduct && $fetchedProduct->condition === 'old') {
+                        $existingProduct = $fetchedProduct;
+                    }
+                }
+
+                if (empty($existingProduct) && !empty($cleanIsbn)) {
+                    $existingProduct = Product::whereRaw("REPLACE(REPLACE(product_isbn, ' ', ''), '-', '') = ?", [$cleanIsbn])
+                        ->where('condition', 'old')
+                        ->first();
+                }
             }
 
             if ($existingProduct && empty($id)) {
