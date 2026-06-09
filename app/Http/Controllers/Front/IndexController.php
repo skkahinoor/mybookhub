@@ -226,12 +226,6 @@ class IndexController extends Controller
             if ($currentSubjectId) {
                 $q->where('subject_id', $currentSubjectId);
             }
-            if ($request->filled('book_types')) {
-                $bookTypeIds = is_array($request->input('book_types'))
-                    ? $request->input('book_types')
-                    : explode(',', (string) $request->input('book_types'));
-                $q->whereIn('book_type_id', $bookTypeIds);
-            }
             if ($request->filled('languages')) {
                 $langIds = is_array($request->input('languages'))
                     ? $request->input('languages')

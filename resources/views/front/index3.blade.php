@@ -1852,7 +1852,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="filter-group">
                     <label>Book Type</label>
                     <div class="checkbox-group">
