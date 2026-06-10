@@ -131,6 +131,8 @@ $adminRoutesClosure = function () {
         Route::post('bulk-delete-admins', [AdminController::class, 'bulkDeleteAdmins'])->name('admin.bulkDelete');
         // Delete an Admin
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails');           // View further 'vendor' details inside Admin Management table (if the authenticated user is superadmin, admin or subadmin)
+        Route::post('update-vendor-password', 'AdminController@updateVendorPassword'); // Update Vendor Password
+        Route::post('update-vendor-profile', 'AdminController@updateVendorProfileByAdmin'); // Update Vendor Profile by Admin
         Route::post('update-admin-status', 'AdminController@updateAdminStatus')->name('admin.updateadminstatus');
         
         // Delivery Agent Payouts

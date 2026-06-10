@@ -828,15 +828,16 @@ class AdminController extends Controller
                 })
                 ->addColumn('actions', function ($row) {
                     $html = '<div class="d-flex align-items-center" style="gap: 10px;">';
-                    $html .= '<a href="' . url('admin/add-edit-admin/' . $row->id) . '" title="Edit"><i style="font-size: 20px" class="mdi mdi-pencil"></i></a>';
                     
                     if ($row->type == 'vendor') {
-                        $html .= '<a href="' . url('admin/view-vendor-details/' . $row->id) . '" title="View Details"><i style="font-size: 20px" class="mdi mdi-file-document"></i></a>';
+                        $html .= '<a href="' . url('admin/view-vendor-details/' . $row->id) . '" title="View and Edit"><i style="font-size: 20px" class="mdi mdi-file-document"></i></a>';
                         
                         $html .= '<form action="' . route('admin.delete', $row->id) . '" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this admin?\')" style="display:inline;">
                                     ' . csrf_field() . '
                                     <button type="submit" style="background:none;border:none;padding:0;"><i class="mdi mdi-delete" style="font-size:20px;color:#e74c3c;"></i></button>
                                   </form>';
+                    } else {
+                        $html .= '<a href="' . url('admin/add-edit-admin/' . $row->id) . '" title="Edit"><i style="font-size: 20px" class="mdi mdi-pencil"></i></a>';
                     }
                     
                     $html .= '</div>';
@@ -859,31 +860,244 @@ class AdminController extends Controller
 
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
-        $vendorDetails = User::with('vendorPersonal', 'vendorBusiness', 'vendorBank')->where('id', $id)->first();
-        $vendorDetails = $vendorDetails ? $vendorDetails->toArray() : null;
-        // dd($vendorDetails);
+        
+        $vendorUser = User::with(['vendorPersonal', 'vendorBusiness', 'vendorBank', 'country', 'state', 'district', 'block'])->findOrFail($id);
+        $vendorDetails = $vendorUser->toArray();
 
         // Fetch countries for dropdowns
         $countries = Country::where('status', true)->get()->toArray();
 
-        // Get current location IDs from vendor personal details
-        $currentCountryId = $vendorDetails['vendor_personal']['country_id'] ?? $vendorDetails['vendor_personal']['country_id'] ?? null;
-        // The array key might be camelCase or snake_case depending on toArray behavior or manual mapping.
-        // Let's try to be safe.
-        if (isset($vendorDetails['vendorPersonal'])) {
-            $currentCountryId = $vendorDetails['vendorPersonal']['country_id'] ?? null;
-            $currentStateId = $vendorDetails['vendorPersonal']['state_id'] ?? null;
-            $currentDistrictId = $vendorDetails['vendorPersonal']['district_id'] ?? null;
-            $currentBlockId = $vendorDetails['vendorPersonal']['block_id'] ?? null;
-        } else {
-            $currentCountryId = $vendorDetails['vendor_personal']['country_id'] ?? null;
-            $currentStateId = $vendorDetails['vendor_personal']['state_id'] ?? null;
-            $currentDistrictId = $vendorDetails['vendor_personal']['district_id'] ?? null;
-            $currentBlockId = $vendorDetails['vendor_personal']['block_id'] ?? null;
+        // Get current location IDs from vendor personal details (which are on the User model)
+        $currentCountryId = $vendorUser->country_id;
+        $currentStateId = $vendorUser->state_id;
+        $currentDistrictId = $vendorUser->district_id;
+        $currentBlockId = $vendorUser->block_id;
+
+        // Fetch vendor specific books, stock and activities
+        $vendorId = $vendorUser->vendorPersonal ? $vendorUser->vendorPersonal->id : null;
+        $vendorProducts = [];
+        $totalBooks = 0;
+        $totalStock = 0;
+        $latestActivities = [];
+
+        if ($vendorId) {
+            $vendorProducts = ProductsAttribute::where('vendor_id', $vendorId)
+                ->with([
+                    'product:id,product_name,product_isbn,product_image,product_price,condition',
+                    'product.category:id,category_name'
+                ])
+                ->get();
+            
+            $totalBooks = $vendorProducts->count();
+            $totalStock = $vendorProducts->sum('stock');
+
+            $recentBooks = ProductsAttribute::where('vendor_id', $vendorId)
+                ->with('product:id,product_name,product_isbn,product_image,created_at')
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
+
+            $recentOrders = OrdersProduct::where('vendor_id', $vendorId)
+                ->orderBy('created_at', 'desc')
+                ->limit(5)
+                ->get();
+
+            $activities = collect();
+            foreach ($recentBooks as $book) {
+                if ($book->product) {
+                    $activities->push([
+                        'type' => 'book_added',
+                        'title' => 'New Book Listed',
+                        'description' => 'Listed a new book: "' . $book->product->product_name . '" (ISBN: ' . $book->product->product_isbn . ') with stock ' . $book->stock,
+                        'timestamp' => $book->created_at,
+                        'icon' => 'mdi-book-plus',
+                        'color' => 'success'
+                    ]);
+                }
+            }
+            foreach ($recentOrders as $orderProduct) {
+                $activities->push([
+                    'type' => 'order_received',
+                    'title' => 'New Order Received',
+                    'description' => 'Received order #' . $orderProduct->order_id . ' for "' . $orderProduct->product_name . '" (Qty: ' . $orderProduct->product_qty . ') - Status: ' . $orderProduct->item_status,
+                    'timestamp' => $orderProduct->created_at,
+                    'icon' => 'mdi-cart-arrow-down',
+                    'color' => 'primary'
+                ]);
+            }
+            $latestActivities = $activities->sortByDesc('timestamp')->take(10)->values()->all();
         }
 
-        return view('admin/admins/view_vendor_details', compact('vendorDetails', 'logos', 'headerLogo', 'countries', 'currentCountryId', 'currentStateId', 'currentDistrictId', 'currentBlockId'));
+        return view('admin/admins/view_vendor_details', compact(
+            'vendorDetails', 
+            'logos', 
+            'headerLogo', 
+            'countries', 
+            'currentCountryId', 
+            'currentStateId', 
+            'currentDistrictId', 
+            'currentBlockId',
+            'vendorProducts',
+            'totalBooks',
+            'totalStock',
+            'latestActivities'
+        ));
     }
+
+    public function updateVendorPassword(Request $request)
+    {
+        if (! Auth::guard('admin')->user()->can('view_vendors')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'vendor_user_id' => 'required|exists:users,id',
+            'password' => 'required|min:6|confirmed',
+        ]);
+
+        $user = User::findOrFail($request->vendor_user_id);
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return redirect()->back()->with('success_message', 'Vendor password updated successfully!');
+    }
+
+    public function updateVendorProfileByAdmin(Request $request)
+    {
+        if (! Auth::guard('admin')->user()->can('view_vendors')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $data = $request->all();
+        $vendorUserId = $data['vendor_user_id'];
+        $user = User::findOrFail($vendorUserId);
+        $vendor = Vendor::where('user_id', $user->id)->first();
+        
+        if (!$vendor) {
+            return redirect()->back()->with('error_message', 'Vendor profile not found.');
+        }
+
+        $section = $data['section'] ?? '';
+
+        if ($section === 'personal') {
+            $rules = [
+                'name' => 'required|regex:/^[\pL\s\-\&\.]+$/u',
+                'phone' => 'required|numeric',
+                'country_id' => 'nullable|exists:countries,id',
+                'state_id' => 'nullable|exists:states,id',
+                'district_id' => 'nullable|exists:districts,id',
+                'block_id' => 'nullable|exists:blocks,id',
+            ];
+            $this->validate($request, $rules);
+
+            // Handle Profile Image Upload
+            $imageName = $user->profile_image;
+            if ($request->hasFile('profile_image')) {
+                $image_tmp = $request->file('profile_image');
+                if ($image_tmp->isValid()) {
+                    $extension = $image_tmp->getClientOriginalExtension();
+                    $imageName = rand(111, 99999) . '.' . $extension;
+                    $imagePath = 'admin/images/photos/' . $imageName;
+                    Image::make($image_tmp)->save($imagePath);
+                }
+            }
+
+            $user->update([
+                'name' => $data['name'],
+                'phone' => $data['phone'],
+                'profile_image' => $imageName,
+                'address' => $data['address'] ?? null,
+                'country_id' => $data['country_id'] ?? null,
+                'state_id' => $data['state_id'] ?? null,
+                'district_id' => $data['district_id'] ?? null,
+                'block_id' => $data['block_id'] ?? null,
+                'pincode' => $data['pincode'] ?? null,
+            ]);
+
+            // Sync coordinates/location to vendors if provided
+            if (isset($data['location'])) {
+                $vendor->update(['location' => $data['location']]);
+            }
+
+        } elseif ($section === 'business') {
+            $rules = [
+                'shop_name' => 'required|regex:/^[\pL\s\-&.,\'()\/]+$/u',
+                'shop_mobile' => 'required|numeric',
+            ];
+            $this->validate($request, $rules);
+
+            // Handle Business Proof Upload
+            $businessDetails = VendorsBusinessDetail::where('vendor_id', $vendor->id)->first();
+            $imageName = $businessDetails ? $businessDetails->address_proof_image : '';
+            if ($request->hasFile('address_proof_image')) {
+                $image_tmp = $request->file('address_proof_image');
+                if ($image_tmp->isValid()) {
+                    $extension = $image_tmp->getClientOriginalExtension();
+                    $imageName = rand(111, 99999) . '.' . $extension;
+                    $imagePath = 'admin/images/proofs/' . $imageName;
+                    Image::make($image_tmp)->save($imagePath);
+                }
+            }
+
+            VendorsBusinessDetail::updateOrCreate(
+                ['vendor_id' => $vendor->id],
+                [
+                    'shop_name' => $data['shop_name'],
+                    'shop_mobile' => $data['shop_mobile'],
+                    'shop_website' => $data['shop_website'] ?? null,
+                    'shop_address' => $data['shop_address'] ?? null,
+                    'shop_pincode' => $data['shop_pincode'] ?? null,
+                    'business_license_number' => $data['business_license_number'] ?? null,
+                    'gst_number' => $data['gst_number'] ?? null,
+                    'pan_number' => $data['pan_number'] ?? null,
+                    'address_proof' => $data['address_proof'] ?? null,
+                    'address_proof_image' => $imageName,
+                ]
+            );
+
+        } elseif ($section === 'bank') {
+            $rules = [
+                'account_holder_name' => 'required|regex:/^[\pL\s\-\&\.]+$/u',
+                'bank_name' => 'required',
+                'account_number' => 'required|numeric',
+                'bank_ifsc_code' => 'required',
+            ];
+            $this->validate($request, $rules);
+
+            VendorsBankDetail::updateOrCreate(
+                ['vendor_id' => $vendor->id],
+                [
+                    'account_holder_name' => $data['account_holder_name'],
+                    'bank_name' => $data['bank_name'],
+                    'account_number' => $data['account_number'],
+                    'bank_ifsc_code' => $data['bank_ifsc_code'],
+                ]
+            );
+
+        } elseif ($section === 'settings') {
+            $rules = [
+                'plan' => 'required|in:free,pro',
+                'commission' => 'nullable|numeric|min:0|max:100',
+            ];
+            $this->validate($request, $rules);
+
+            $updateData = [
+                'plan' => $data['plan'],
+            ];
+            if (isset($data['commission'])) {
+                $updateData['commission'] = $data['commission'];
+            }
+
+            $vendor->update($updateData);
+            
+            // Also sync active/inactive status of the user
+            $status = isset($data['status']) ? 1 : 0;
+            $user->update(['status' => $status]);
+        }
+
+        return redirect()->back()->with('success_message', 'Vendor details updated successfully!');
+    }
+
 
     public function updateAdminStatus(Request $request)
     {
