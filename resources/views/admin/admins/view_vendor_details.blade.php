@@ -346,15 +346,16 @@
                                     <div class="card stat-widget stat-widget-info p-3">
                                         <div class="d-flex align-items-center">
                                             <div class="stat-icon bg-light-info text-info mr-3">
-                                                <i class="mdi mdi-percent" style="color: #17a2b8;"></i>
+                                                <i class="mdi mdi-cart-outline" style="color: #17a2b8;"></i>
                                             </div>
                                             <div>
-                                                <h3 class="font-weight-bold mb-0">{{ $vendorDetails['vendor_personal']['commission'] ?? 0 }}%</h3>
-                                                <small class="text-muted">Commission</small>
+                                                <h3 class="font-weight-bold mb-0">{{ $totalOrders }}</h3>
+                                                <small class="text-muted">Total Orders</small>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
+                               
                                 <div class="col-sm-6 col-md-3">
                                     <div class="card stat-widget stat-widget-warning p-3">
                                         <div class="d-flex align-items-center">

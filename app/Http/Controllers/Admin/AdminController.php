@@ -878,6 +878,7 @@ class AdminController extends Controller
         $vendorProducts = [];
         $totalBooks = 0;
         $totalStock = 0;
+        $totalOrders = 0;
         $latestActivities = [];
 
         if ($vendorId) {
@@ -890,6 +891,7 @@ class AdminController extends Controller
             
             $totalBooks = $vendorProducts->count();
             $totalStock = $vendorProducts->sum('stock');
+            $totalOrders = OrdersProduct::where('vendor_id', $vendorId)->count();
 
             $recentBooks = ProductsAttribute::where('vendor_id', $vendorId)
                 ->with('product:id,product_name,product_isbn,product_image,created_at')
@@ -940,6 +942,7 @@ class AdminController extends Controller
             'vendorProducts',
             'totalBooks',
             'totalStock',
+            'totalOrders',
             'latestActivities'
         ));
     }
