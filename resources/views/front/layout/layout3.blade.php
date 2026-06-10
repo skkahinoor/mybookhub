@@ -1508,425 +1508,459 @@
             align-items: center;
             justify-content: center;
             font-weight: 700;
-        }
-
-        /* BookGenie Panel */
+        }        /* BookGenie Panel */
         .bg-panel {
             position: fixed;
-            bottom: 150px;
-            left: 20px;
-            width: 340px;
-            max-height: 480px;
-            border-radius: 20px;
-            background: #fff;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+            bottom: 110px;
+            left: 25px;
+            width: 380px;
+            height: 600px;
+            max-height: 80vh;
+            border-radius: 24px;
+            background: #ffffff;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15), 0 4px 12px rgba(15, 23, 42, 0.05);
             z-index: 99991;
             display: none;
             flex-direction: column;
             overflow: hidden;
-            animation: slideUpPanel 0.3s ease;
+            border: 1px solid #f1f5f9;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(20px) scale(0.95);
+            opacity: 0;
         }
 
         .bg-panel.open {
             display: flex;
-        }
-
-        @keyframes slideUpPanel {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            transform: translateY(0) scale(1);
+            opacity: 1;
         }
 
         .bg-panel-header {
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-            padding: 16px 18px;
+            background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+            padding: 16px 20px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
             color: white;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
         }
 
         .bg-panel-header-icon {
-            width: 38px;
-            height: 38px;
-            background: rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 20px;
             flex-shrink: 0;
+            animation: pulseBgIcon 2s infinite alternate;
+        }
+
+        @keyframes pulseBgIcon {
+            from { transform: scale(1); background: rgba(255, 255, 255, 0.15); }
+            to { transform: scale(1.06); background: rgba(255, 255, 255, 0.25); }
         }
 
         .bg-panel-header-text h5 {
             margin: 0;
-            font-size: 15px;
+            font-size: 16px;
             font-weight: 700;
             color: white;
+            letter-spacing: -0.3px;
         }
 
         .bg-panel-header-text p {
             margin: 0;
             font-size: 11px;
             opacity: 0.85;
+            letter-spacing: 0.2px;
         }
 
         .bg-panel-close {
             margin-left: auto;
             cursor: pointer;
-            background: rgba(255, 255, 255, 0.15);
-            border: none;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             color: white;
             border-radius: 50%;
-            width: 28px;
-            height: 28px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 13px;
-            transition: background 0.2s;
+            font-size: 14px;
+            transition: all 0.2s ease;
             flex-shrink: 0;
         }
 
         .bg-panel-close:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.25);
+            transform: rotate(90deg);
+        }
+
+        .bg-quick-actions {
+            display: flex;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #ffffff;
+            border-bottom: 1px solid #f8fafc;
+        }
+
+        .bg-quick-actions .bg-action-btn {
+            margin: 0;
+            flex: 1;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 10px 14px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            text-transform: none;
+            letter-spacing: 0;
+            transition: all 0.2s ease;
+        }
+
+        .bg-action-btn.primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+        }
+
+        .bg-action-btn.primary:hover {
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .bg-action-btn.secondary {
+            background: #f8fafc;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .bg-action-btn.secondary:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+
+        .bg-chips-scroll {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 10px 16px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .bg-chips-scroll::-webkit-scrollbar { display: none; }
+
+        .bg-chip {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #334155;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .bg-chip:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            color: #1d4ed8;
+            transform: translateY(-1px);
         }
 
         .bg-panel-body {
-            padding: 18px;
+            padding: 16px;
             overflow-y: auto;
             flex: 1;
+            background: #f8fafc;
+        }
+
+        /* Custom Scrollbar */
+        .bg-panel-body::-webkit-scrollbar {
+            width: 5px;
+        }
+        .bg-panel-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .bg-panel-body::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .bg-panel-body::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Active Filters tag styling */
+        .bg-active-filters-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            padding: 8px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .bg-active-filter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 12px;
+        }
+
+        .bg-active-filter-badge i {
+            cursor: pointer;
+            color: #3b82f6;
+            transition: color 0.15s;
+        }
+
+        .bg-active-filter-badge i:hover {
+            color: #1d4ed8;
+        }
+
+        /* Suggestion chips default body styling */
+        .bg-body-suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 14px;
+            margin-top: 10px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .bg-body-suggestions-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .bg-body-suggestion-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .bg-body-suggestion-item:hover {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            transform: translateX(3px);
+        }
+
+        .bg-body-suggestion-item i {
+            color: #3b82f6;
+        }
+
+        /* Message Styling */
+        .bg-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .bg-msg {
+            max-width: 85%;
+            padding: 12px 16px;
+            font-size: 13.5px;
+            line-height: 1.5;
+            border-radius: 16px;
+            box-shadow: 0 2px 4px rgba(15, 23, 42, 0.02);
+            animation: bgFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes bgFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .bg-msg.bot {
-            background: #f0f4ff;
-            color: #1e3a8a;
+            background: #ffffff;
+            color: #1e293b;
             align-self: flex-start;
             border-bottom-left-radius: 4px;
-            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.05);
-            position: relative;
-            animation: fadeIn 0.3s ease;
+            border: 1px solid #e2e8f0;
         }
 
         .bg-msg.user {
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-            color: white;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: #ffffff;
             align-self: flex-end;
             border-bottom-right-radius: 4px;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
         }
 
         .bg-typing-dots {
             display: inline-flex;
             gap: 4px;
-            padding: 4px 8px;
+            padding: 6px 10px;
         }
 
         .bg-typing-dots span {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
             background: #3b82f6;
             border-radius: 50%;
-            animation: bgTyping 1s infinite alternate;
+            animation: bgTyping 1.2s infinite alternate;
         }
 
         .bg-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
         .bg-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 
         @keyframes bgTyping {
-            from { opacity: 0.3; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1.2); }
+            from { opacity: 0.3; transform: translateY(0); }
+            to { opacity: 1; transform: translateY(-4px); }
         }
 
-        .bg-quick-actions {
-            display: flex;
-            gap: 12px;
-            padding: 15px;
-            background: #ffffff;
-            border-bottom: 1px solid #f1f5f9;
-        }
-
-        .bg-quick-actions .bg-action-btn {
-            margin: 0;
-            flex: 1;
-            font-size: 11px;
-            padding: 10px 5px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .bg-chips-scroll {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 10px 15px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            background: #f8fafc;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .bg-chips-scroll::-webkit-scrollbar { display: none; }
-
-        .bg-chip {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            padding: 8px 16px;
-            border-radius: 25px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #1e3a8a;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        }
-
-        .bg-chip:hover {
-            border-color: #3b82f6;
-            background: #f0f7ff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-        }
-
-        .bg-panel-header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            padding: 18px 20px;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
-        }
-
-        .bg-action-btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .bg-action-btn.primary {
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-            color: white;
-        }
-
-        .bg-action-btn.primary:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .bg-action-btn.secondary {
-            background: #ffffff;
-            color: #1e3a8a;
-            border: 1.5px solid #e2e8f0;
-        }
-
-        .bg-action-btn.secondary:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
-        }
-
-        .bg-personalize-form {
-            display: none;
-        }
-
-        .bg-personalize-form.open {
-            display: block;
-        }
-
-        .bg-form-group {
-            margin-bottom: 12px;
-        }
-
-        .bg-form-group label {
-            font-size: 12px;
-            font-weight: 700;
-            color: #555;
-            margin-bottom: 4px;
-            display: block;
-        }
-
-        .bg-form-group select {
-            width: 100%;
-            border: 2px solid #eee;
-            border-radius: 10px;
-            padding: 9px 12px;
-            font-size: 13px;
-            color: #333;
-            background: #f8faff;
-            font-family: 'Poppins', sans-serif;
-            transition: border-color 0.2s;
-        }
-
-        .bg-form-group select:focus {
-            outline: none;
-            border-color: #3b82f6;
-        }
-
-        .bg-current-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: #eef3ff;
-            border: 1px solid #c7d9ff;
-            border-radius: 20px;
-            padding: 4px 10px;
-            font-size: 12px;
-            color: #1e3a8a;
-            font-weight: 600;
-            margin: 2px;
-        }
-
-        /* Chat Styles */
-        .bg-messages {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-top: 15px;
-        }
-
-        .bg-msg {
-            max-width: 85%;
-            padding: 10px 14px;
-            font-size: 13px;
-            line-height: 1.5;
-            border-radius: 14px;
-        }
-
-        .bg-msg.bot {
-            background: #f0f4ff;
-            color: #1e3a8a;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-        }
-
-        .bg-msg.user {
-            background: #1e3a8a;
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-
-        .bg-inline-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .bg-chip-mini {
-            background: #fff;
-            border: 1px solid #3b82f6;
-            color: #3b82f6;
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .bg-chip-mini:hover {
-            background: #3b82f6;
-            color: white;
-        }
-
+        /* Products Carousel */
         .bg-results-scroll {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             overflow-x: auto;
-            padding: 5px 0 10px;
-            margin-top: 8px;
+            padding: 4px 2px 12px;
+            margin-top: 4px;
             scrollbar-width: thin;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .bg-results-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+        .bg-results-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .bg-results-scroll::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 2px;
         }
 
         .bg-product-card {
-            flex: 0 0 160px;
-            background: #fff;
-            border: 1px solid #eee;
-            border-radius: 12px;
+            flex: 0 0 170px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
             padding: 10px;
             text-decoration: none !important;
-            color: inherit !important;
-            transition: transform 0.2s;
+            color: #1e293b !important;
+            transition: all 0.2s ease;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            display: flex;
+            flex-direction: column;
         }
 
         .bg-product-card:hover {
             border-color: #3b82f6;
             transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
         }
 
         .bg-product-img {
             width: 100%;
-            height: 120px;
+            height: 130px;
             object-fit: cover;
             border-radius: 8px;
             margin-bottom: 8px;
         }
 
         .bg-product-name {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
+            color: #1e293b;
             margin-bottom: 4px;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            height: 30px;
+            height: 32px;
+            line-height: 1.35;
         }
 
         .bg-product-price {
-            color: #ff6b00;
+            color: #f97316;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 14px;
+            margin-top: auto;
         }
 
         .bg-product-vendor {
-            font-size: 10px;
-            color: #888;
-            margin-top: 4px;
+            font-size: 10.5px;
+            color: #64748b;
+            margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .bg-product-distance {
             font-size: 10px;
-            color: #3b82f6;
+            color: #2563eb;
             font-weight: 600;
+            margin-top: 3px;
         }
 
+        .bg-apply-main-btn {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
+            transition: all 0.2s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .bg-apply-main-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Footer styling */
         .bg-chat-footer {
-            padding: 12px 18px;
-            border-top: 1px solid #eee;
-            background: #fff;
+            padding: 12px 16px;
+            border-top: 1px solid #f1f5f9;
+            background: #ffffff;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .bg-chat-input-wrapper {
@@ -1938,68 +1972,143 @@
 
         .bg-chat-input {
             width: 100%;
-            border: 2px solid #f0f0f0;
-            border-radius: 25px;
-            padding: 10px 45px 10px 15px;
-            font-size: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 24px;
+            padding: 10px 45px 10px 16px;
+            font-size: 13.5px;
             outline: none;
-            transition: all 0.2s;
-            background: #f9fafb;
+            transition: all 0.25s ease;
+            background: #f8fafc;
+            color: #1e293b;
         }
 
         .bg-chat-input:focus {
             border-color: #3b82f6;
-            background: white;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
         }
 
         .bg-voice-btn {
             position: absolute;
-            right: 12px;
+            right: 14px;
             background: none;
             border: none;
             color: #94a3b8;
             cursor: pointer;
-            font-size: 16px;
-            transition: 0.2s;
+            font-size: 15px;
+            transition: all 0.2s ease;
         }
 
         .bg-voice-btn:hover {
-            color: #3b82f6;
+            color: #2563eb;
+            transform: scale(1.1);
+        }
+
+        .bg-voice-btn.listening {
+            color: #ef4444;
+            animation: voicePulse 1s infinite alternate;
+        }
+
+        @keyframes voicePulse {
+            from { transform: scale(1); opacity: 0.8; }
+            to { transform: scale(1.2); opacity: 1; }
         }
 
         .bg-chat-send {
-            width: 40px;
-            height: 40px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
             color: white;
             border: none;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+            font-size: 14px;
         }
 
         .bg-chat-send:hover {
-            transform: scale(1.05) rotate(-10deg);
-            box-shadow: 0 6px 15px rgba(30, 58, 138, 0.3);
+            transform: scale(1.05) rotate(-5deg);
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.3);
         }
 
-        /* Mobile adjustments */
+        /* Personalization Form styling */
+        .bg-personalize-form {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #ffffff;
+            z-index: 100;
+            padding: 20px;
+            border-radius: 24px;
+            animation: bgSlideInForm 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+        }
+
+        @keyframes bgSlideInForm {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .bg-form-group {
+            margin-bottom: 14px;
+        }
+
+        .bg-form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .bg-form-group select {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 13.5px;
+            color: #1e293b;
+            background: #f8fafc;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .bg-form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Mobile adjustments (gorgeous full bottom drawer) */
         @media (max-width: 480px) {
             .bg-panel {
-                left: 10px;
-                right: 10px;
-                width: auto;
-                bottom: 140px;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 85vh !important;
+                max-height: 85vh !important;
+                border-radius: 24px 24px 0 0 !important;
+                box-shadow: 0 -10px 30px rgba(15, 23, 42, 0.15) !important;
+                transform: translateY(100%) scale(1) !important;
+                border: none !important;
+            }
+
+            .bg-panel.open {
+                transform: translateY(0) scale(1) !important;
             }
 
             .bg-fab {
-                bottom: 60px;
-                left: 16px;
+                bottom: 20px !important;
+                left: 20px !important;
             }
         }
     </style>
@@ -2020,6 +2129,9 @@
             </div>
             <button class="bg-panel-close" id="bgPanelClose" style="background:none; border:none; color:white; font-size:18px; cursor:pointer;"><i class="fas fa-times"></i></button>
         </div>
+        <!-- Active Filters bar -->
+        <div class="bg-active-filters-bar" id="bgActiveFiltersBar" style="display:none;"></div>
+        
         <!-- Main Actions -->
         <div class="bg-quick-actions">
              <button class="bg-action-btn primary" style="margin:0; flex:1; font-size:12px; padding: 10px;" onclick="document.dispatchEvent(new CustomEvent('bgOpenForm'))">
@@ -2069,17 +2181,58 @@
                     <label>Board / Domain (Category)</label>
                     <select id="bgWidgetCategory">
                         <option value="">Select Board</option>
+                        @if (session('bg_section_id'))
+                            @php
+                                $categoryIds = \App\Models\FilterClassSubject::where('section_id', session('bg_section_id'))->distinct()->pluck('category_id');
+                                if ($categoryIds->isEmpty()) {
+                                    $preCats = \App\Models\Category::where('section_id', session('bg_section_id'))->where('status', 1)->get();
+                                } else {
+                                    $preCats = \App\Models\Category::whereIn('id', $categoryIds)->where('status', 1)->get();
+                                }
+                            @endphp
+                            @foreach ($preCats as $cat)
+                                <option value="{{ $cat->id }}" {{ session('bg_category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->category_name }}</option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
                 <div class="bg-form-group">
                     <label>Class / Stream</label>
                     <select id="bgWidgetSubcategory">
                         <option value="">Select Class</option>
+                        @if (session('bg_section_id') && session('bg_category_id'))
+                            @php
+                                $subcategoryIds = \App\Models\FilterClassSubject::where('section_id', session('bg_section_id'))
+                                    ->where('category_id', session('bg_category_id'))
+                                    ->distinct()
+                                    ->pluck('sub_category_id');
+                                if (!$subcategoryIds->isEmpty()) {
+                                    $preSubcats = \App\Models\Subcategory::whereIn('id', $subcategoryIds)->where('status', 1)->get();
+                                    foreach ($preSubcats as $sub) {
+                                        echo '<option value="' . $sub->id . '" ' . (session('bg_subcategory_id') == $sub->id ? 'selected' : '') . '>' . $sub->subcategory_name . '</option>';
+                                    }
+                                }
+                            @endphp
+                        @endif
+                    </select>
                 </div>
                 <div class="bg-form-group">
                     <label>Subject</label>
                     <select id="bgWidgetSubject">
                         <option value="">Select Subject</option>
+                        @if (session('bg_section_id') && session('bg_category_id') && session('bg_subcategory_id'))
+                            @php
+                                $subjectIds = \App\Models\FilterClassSubject::where('section_id', session('bg_section_id'))
+                                    ->where('category_id', session('bg_category_id'))
+                                    ->where('sub_category_id', session('bg_subcategory_id'))
+                                    ->distinct()
+                                    ->pluck('subject_id');
+                                $preSubjs = \App\Models\Subject::whereIn('id', $subjectIds)->where('status', 1)->get();
+                            @endphp
+                            @foreach ($preSubjs as $subj)
+                                <option value="{{ $subj->id }}" {{ session('bg_subject_id') == $subj->id ? 'selected' : '' }}>{{ $subj->name }}</option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
                 <div style="margin-top: 20px;">
@@ -2119,6 +2272,9 @@
             const wCategory = document.getElementById('bgWidgetCategory');
             const wSubcategory = document.getElementById('bgWidgetSubcategory');
             const wSubject = document.getElementById('bgWidgetSubject');
+
+            window.lastBgFilters = {};
+            let currentFlowFilters = {};
 
             // --- UI Controls ---
             if (fab && panel) {
@@ -2163,6 +2319,32 @@
                     const welcomeMsg = `👋 Hi <strong>${name.trim()}</strong>! I'm BookGenie. I can help you find any book, personalize your feed, or even help you sell your old ones. What's on your mind?`;
                     appendMessage('bot', welcomeMsg);
 
+                    // Add body suggestion chips
+                    const suggestionsDiv = document.createElement('div');
+                    suggestionsDiv.className = 'bg-body-suggestions';
+                    suggestionsDiv.id = 'bgInitialSuggestions';
+                    suggestionsDiv.innerHTML = `
+                        <div class="bg-body-suggestions-title">💡 Quick Searches</div>
+                        <div class="bg-body-suggestion-item" data-query="CBSE Books"><i class="fas fa-search"></i> Search CBSE Books</div>
+                        <div class="bg-body-suggestion-item" data-query="Class 10 Mathematics"><i class="fas fa-book-open"></i> Find Class 10 Math</div>
+                        <div class="bg-body-suggestion-item" data-query="ICSE Books"><i class="fas fa-search"></i> Search ICSE Books</div>
+                        <div class="bg-body-suggestion-item" id="bgPersonalizeBtnSuggestion"><i class="fas fa-magic"></i> Personalize Feed</div>
+                    `;
+                    chatMessages.appendChild(suggestionsDiv);
+
+                    // Bind suggestion clicks
+                    suggestionsDiv.querySelectorAll('.bg-body-suggestion-item').forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            if (item.id === 'bgPersonalizeBtnSuggestion') {
+                                document.dispatchEvent(new CustomEvent('bgOpenForm'));
+                            } else {
+                                const q = item.dataset.query;
+                                suggestionsDiv.remove(); // Clear suggestions on selection
+                                handleChatSearch(q);
+                            }
+                        });
+                    });
+
                     // Show WhatsApp option
                     setTimeout(() => {
                         const waMsg = `Need urgent help? You can also <a href="https://wa.me/91XXXXXXXXXX" target="_blank" style="color:#25D366; font-weight:700; text-decoration:none;"><i class="fab fa-whatsapp"></i> Chat with us on WhatsApp</a>`;
@@ -2202,15 +2384,102 @@
                     chatMessages.appendChild(scrollDiv);
 
                     // Add Apply button
-                    if (window.lastBgFilters) {
+                    if (window.lastBgFilters && Object.keys(window.lastBgFilters).length > 0) {
                         const actionDiv = document.createElement('div');
                         actionDiv.className = 'bg-bot-actions';
-                        actionDiv.innerHTML = `<button class="bg-apply-main-btn" onclick="window.applyBgFilters()">✨ View all on Main Screen</button>`;
+                        actionDiv.style.marginTop = '6px';
+                        actionDiv.style.marginBottom = '12px';
+                        actionDiv.innerHTML = `<button class="bg-apply-main-btn" onclick="window.applyBgFilters()">✨ Apply to Homepage Feed</button>`;
                         chatMessages.appendChild(actionDiv);
                     }
                 }
                 panelBody.scrollTop = panelBody.scrollHeight;
             }
+
+            function renderActiveFilters(filters) {
+                const bar = document.getElementById('bgActiveFiltersBar');
+                if (!bar) return;
+                
+                bar.innerHTML = '';
+                let hasAny = false;
+                
+                const labels = {
+                    section_id: 'Level',
+                    category_id: 'Board',
+                    subcategory_id: 'Class',
+                    subject_id: 'Subject'
+                };
+                
+                Object.keys(filters).forEach(key => {
+                    const idVal = filters[key];
+                    if (idVal) {
+                        hasAny = true;
+                        const badge = document.createElement('div');
+                        badge.className = 'bg-active-filter-badge';
+                        
+                        let text = labels[key];
+                        if (key === 'section_id' && wSection) {
+                            const opt = Array.from(wSection.options).find(o => o.value == idVal);
+                            if (opt) text = opt.text;
+                        } else if (key === 'category_id' && wCategory) {
+                            const opt = Array.from(wCategory.options).find(o => o.value == idVal);
+                            if (opt) text = opt.text;
+                        } else if (key === 'subcategory_id' && wSubcategory) {
+                            const opt = Array.from(wSubcategory.options).find(o => o.value == idVal);
+                            if (opt) text = opt.text;
+                        } else if (key === 'subject_id' && wSubject) {
+                            const opt = Array.from(wSubject.options).find(o => o.value == idVal);
+                            if (opt) text = opt.text;
+                        }
+                        
+                        badge.innerHTML = `<span>${text}</span> <i class="fas fa-times-circle" style="cursor:pointer;" onclick="window.removeBgFilter('${key}')"></i>`;
+                        bar.appendChild(badge);
+                    }
+                });
+                
+                if (hasAny) {
+                    bar.style.display = 'flex';
+                    const clearBtn = document.createElement('button');
+                    clearBtn.style = 'margin-left: auto; background: none; border: none; color: #ef4444; font-size: 11px; font-weight: 600; cursor: pointer;';
+                    clearBtn.innerHTML = 'Clear Filters';
+                    clearBtn.onclick = () => window.clearBgFilters();
+                    bar.appendChild(clearBtn);
+                } else {
+                    bar.style.display = 'none';
+                }
+            }
+
+            window.removeBgFilter = function(key) {
+                if (window.lastBgFilters && window.lastBgFilters[key]) {
+                    delete window.lastBgFilters[key];
+                    
+                    if (key === 'section_id') { wSection.value = ''; wCategory.innerHTML = '<option value="">Select Board</option>'; wSubcategory.innerHTML = '<option value="">Select Class</option>'; wSubject.innerHTML = '<option value="">Select Subject</option>'; }
+                    if (key === 'category_id') { wCategory.value = ''; wSubcategory.innerHTML = '<option value="">Select Class</option>'; wSubject.innerHTML = '<option value="">Select Subject</option>'; }
+                    if (key === 'subcategory_id') { wSubcategory.value = ''; wSubject.innerHTML = '<option value="">Select Subject</option>'; }
+                    if (key === 'subject_id') { wSubject.value = ''; }
+                    
+                    handleChatSearch({ q: '', filters: window.lastBgFilters });
+                }
+            };
+            
+            window.clearBgFilters = function() {
+                window.lastBgFilters = {};
+                if (wSection) wSection.value = '';
+                if (wCategory) wCategory.innerHTML = '<option value="">Select Board</option>';
+                if (wSubcategory) wSubcategory.innerHTML = '<option value="">Select Class</option>';
+                if (wSubject) wSubject.innerHTML = '<option value="">Select Subject</option>';
+                
+                renderActiveFilters({});
+                appendMessage('bot', "All filters cleared. What kind of books are you looking for?");
+                
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'bg-bot-actions';
+                actionDiv.style.marginTop = '6px';
+                actionDiv.style.marginBottom = '12px';
+                actionDiv.innerHTML = `<button class="bg-apply-main-btn" onclick="window.applyBgFilters()">✨ Reset Homepage Feed</button>`;
+                chatMessages.appendChild(actionDiv);
+                panelBody.scrollTop = panelBody.scrollHeight;
+            };
 
             function handleChatSearch(input = null) {
                 let query = '';
@@ -2219,6 +2488,7 @@
 
                 if (typeof input === 'string') {
                     query = input;
+                    appendMessage('user', query);
                 } else if (input && typeof input === 'object' && input.q !== undefined) {
                     query = input.q;
                     if (input.filters) {
@@ -2227,34 +2497,47 @@
                             extraParams += `&${k}=${input.filters[k]}`;
                         });
                     }
-                    // For filter selections, the message already exists or we want to show the selected name
-                    appendMessage('user', query);
+                    if (query) {
+                        appendMessage('user', query);
+                    }
                 } else {
                     query = chatInput.value.trim();
-                }
-
-                if (!query && !extraParams) return;
-                if (query === '[object PointerEvent]' || query === '[object KeyboardEvent]') return;
-
-                if (typeof input !== 'string' && (!input || input.q === undefined)) {
+                    if (!query) return;
                     appendMessage('user', query);
                     chatInput.value = '';
                 }
 
-                window.lastBgFilters = activeFilters;
+                if (query === '[object PointerEvent]' || query === '[object KeyboardEvent]') return;
 
-                // If filters are present, we don't need text search for the subject name
-                let actualSearchQuery = Object.keys(activeFilters).length > 0 ? '' : query;
+                // Merge active filters
+                window.lastBgFilters = Object.assign({}, window.lastBgFilters, activeFilters);
+
+                let queryParams = `q=${encodeURIComponent(query)}`;
+                if (window.lastBgFilters) {
+                    Object.keys(window.lastBgFilters).forEach(k => {
+                        queryParams += `&${k}=${window.lastBgFilters[k]}`;
+                    });
+                }
+
+                // Clear body suggestions if they are visible
+                const initialSugg = document.getElementById('bgInitialSuggestions');
+                if (initialSugg) initialSugg.remove();
 
                 showBotTyping();
-                fetch(`{{ url('bookgenie-search') }}?q=${encodeURIComponent(actualSearchQuery)}${extraParams}`)
+                fetch(`{{ url('bookgenie-search') }}?${queryParams}`)
                     .then(r => r.json())
                     .then(data => {
                         hideBotTyping();
+                        
+                        if (data.active_filters) {
+                            window.lastBgFilters = data.active_filters;
+                            renderActiveFilters(data.active_filters);
+                        }
+
                         if (data.results && data.results.length > 0) {
-                            appendMessage('bot', `I found some matches for your selection:`, data.results);
+                            appendMessage('bot', data.message || `I found some matches for your selection:`, data.results);
                         } else {
-                            appendMessage('bot', `I couldn't find a direct match for this combination. Try exploring another class or subject.`);
+                            appendMessage('bot', data.message || `I couldn't find a direct match. Try exploring another class or subject.`);
                         }
                     })
                     .catch(() => {
@@ -2264,10 +2547,15 @@
             }
 
             window.applyBgFilters = function() {
-                if (!window.lastBgFilters) return;
-
-                const params = new URLSearchParams(window.lastBgFilters);
-                params.append('bookgenie_shown', 'true');
+                const payload = Object.assign(
+                    { bookgenie_shown: 'true' },
+                    {
+                        section_id: (window.lastBgFilters && window.lastBgFilters.section_id) || '',
+                        category_id: (window.lastBgFilters && window.lastBgFilters.category_id) || '',
+                        subcategory_id: (window.lastBgFilters && window.lastBgFilters.subcategory_id) || '',
+                        subject_id: (window.lastBgFilters && window.lastBgFilters.subject_id) || ''
+                    }
+                );
 
                 fetch(`{{ url('set-bookgenie-session') }}`, {
                     method: 'POST',
@@ -2275,12 +2563,11 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify(window.lastBgFilters)
+                    body: JSON.stringify(payload)
                 })
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        // Close panel and reload page to reflect filters on main screen
                         panel.classList.remove('open');
                         window.location.reload();
                     }
@@ -2288,6 +2575,10 @@
             };
 
             window.bgFlow = function(type, id, name) {
+                // Remove suggestions if visible
+                const initialSugg = document.getElementById('bgInitialSuggestions');
+                if (initialSugg) initialSugg.remove();
+
                 appendMessage('user', name);
                 showBotTyping();
 
@@ -2325,7 +2616,6 @@
                                         subcategory_id: currentFlowFilters.subcategory_id,
                                         subject_id: item.id
                                     };
-                                    // Use single quotes for attribute and double quotes for JSON, escaping double quotes for compatibility
                                     const filterStr = JSON.stringify(filters).replace(/"/g, '&quot;');
                                     html += `<div class="bg-chip-mini" onclick="handleChatSearch({q: '${itemName.replace(/'/g, "\\'")}', filters: ${filterStr}})">${itemName}</div>`;
                                 } else {
@@ -2336,14 +2626,12 @@
                             appendMessage('bot', html);
                         } else {
                            if (type === 'subcategory') {
-                                // If no subcategories found for Category, search by category
                                 appendMessage('bot', `I didn't find specific classes for this board, but I can show you all books in ${name}:`);
                                 handleChatSearch({
                                     q: name,
                                     filters: { section_id: currentFlowFilters.section_id, category_id: id }
                                 });
                            } else if (type === 'subject') {
-                                // If no subjects found for Class, search by class
                                 appendMessage('bot', `I didn't find specific subjects for ${name}, but I found these books for you:`);
                                 handleChatSearch({
                                     q: name,
@@ -2366,11 +2654,25 @@
             };
 
             // Chips click handling
-            document.querySelectorAll('.bg-chip').forEach(chip => {
+            document.querySelectorAll('.bg-chips-scroll .bg-chip').forEach(chip => {
                 chip.addEventListener('click', () => {
                     const q = chip.dataset.query;
-                    appendMessage('user', q);
-                    handleChatSearch(q);
+                    if (q === 'explore_sections') {
+                        // Explore top levels flow
+                        showBotTyping();
+                        setTimeout(() => {
+                            hideBotTyping();
+                            let html = `<p>Which Education Level are you looking for?</p><div class="bg-inline-chips">`;
+                            @foreach (\App\Models\Section::all() as $sec)
+                                html += `<div class="bg-chip-mini" onclick="window.bgFlow('category', {{ $sec->id }}, '{{ $sec->name }}')">{{ $sec->name }}</div>`;
+                            @endforeach
+                            html += '</div>';
+                            appendMessage('bot', html);
+                        }, 500);
+                    } else {
+                        // Direct category text query
+                        handleChatSearch(q);
+                    }
                 });
             });
 
@@ -2391,13 +2693,11 @@
                     if (voiceBtn.classList.contains('listening')) {
                         recognition.stop();
                     } else {
-                        // Small delay to ensure browser handles the interaction appropriately
                         setTimeout(() => {
                             try {
                                 recognition.start();
                             } catch (err) {
                                 console.error('Voice recovery:', err);
-                                // If already started, just stop and restart
                                 recognition.stop();
                                 setTimeout(() => recognition.start(), 100);
                             }
@@ -2410,7 +2710,6 @@
                     chatInput.placeholder = "Listening... speak now";
                     chatInput.style.borderColor = '#3b82f6';
                     chatInput.style.boxShadow = '0 0 12px rgba(59, 130, 246, 0.4)';
-                    // Help the user notice the permission prompt
                     if (!localStorage.getItem('bgVoiceHintShown')) {
                         appendMessage('bot', "Please click 'Allow' if your browser asks for microphone access. 🎤");
                         localStorage.setItem('bgVoiceHintShown', 'true');
@@ -2421,7 +2720,6 @@
                     const transcript = event.results[0][0].transcript;
                     if (transcript) {
                         chatInput.value = transcript;
-                        appendMessage('user', transcript);
                         handleChatSearch(transcript);
                     }
                 };
@@ -2435,20 +2733,20 @@
 
                 recognition.onerror = (event) => {
                     voiceBtn.classList.remove('listening');
-                    if (event.error === 'no-speech') return; // Ignore silent timeouts
+                    if (event.error === 'no-speech') return;
 
                     let errorMsg = "Sorry, I couldn't hear you.";
                     if (event.error === 'not-allowed') {
-                        errorMsg = "🎤 Mic access blocked! Please click the icon in your address bar to allow microphone access.";
+                        errorMsg = "🎤 Mic access blocked! Please check address bar settings to allow microphone access.";
                     } else if (event.error === 'network') {
-                        errorMsg = "Network error. Please check your connection.";
+                        errorMsg = "Network error. Please check connection.";
                     }
 
                     appendMessage('bot', errorMsg);
                 };
             } else if (voiceBtn) {
                 voiceBtn.addEventListener('click', () => {
-                   appendMessage('bot', "Voice search is not supported in this browser. Please use Chrome or Edge for the best experience.");
+                   appendMessage('bot', "Voice search is not supported in this browser. Please use Chrome or Edge.");
                 });
             }
 
@@ -2464,11 +2762,13 @@
             // --- Form Cascades ---
             wSection.addEventListener('change', function() {
                 const secId = this.value;
+                wCategory.innerHTML = '<option value="">Select Board</option>';
+                wSubcategory.innerHTML = '<option value="">Select Class</option>';
+                wSubject.innerHTML = '<option value="">Select Subject</option>';
                 if (secId) {
                     fetch(`{{ url('get-filter-categories') }}?section_id=${secId}`)
                         .then(r => r.json())
                         .then(data => {
-                            wCategory.innerHTML = '<option value="">Select Board</option>';
                             data.forEach(c => wCategory.innerHTML +=
                                 `<option value="${c.id}">${c.category_name}</option>`);
                         });
@@ -2477,11 +2777,12 @@
             wCategory.addEventListener('change', function() {
                 const catId = this.value;
                 const secId = wSection.value;
+                wSubcategory.innerHTML = '<option value="">Select Class</option>';
+                wSubject.innerHTML = '<option value="">Select Subject</option>';
                 if (catId) {
                     fetch(`{{ url('get-filter-subcategories') }}?category_id=${catId}&section_id=${secId}`)
                         .then(r => r.json())
                         .then(data => {
-                            wSubcategory.innerHTML = '<option value="">Select Class</option>';
                             data.forEach(s => wSubcategory.innerHTML +=
                                 `<option value="${s.id}">${s.category_name}</option>`);
                         });
@@ -2492,11 +2793,11 @@
                 const subId = this.value;
                 const catId = wCategory.value;
                 const secId = wSection.value;
+                wSubject.innerHTML = '<option value="">Select Subject</option>';
                 if (subId) {
                     fetch(`{{ url('get-filter-subjects') }}?subcategory_id=${subId}&category_id=${catId}&section_id=${secId}`)
                         .then(r => r.json())
                         .then(data => {
-                            wSubject.innerHTML = '<option value="">Select Subject</option>';
                             data.forEach(s => wSubject.innerHTML +=
                                 `<option value="${s.id}">${s.category_name}</option>`);
                         });
@@ -2514,7 +2815,6 @@
                     return;
                 }
 
-                // Hide the form
                 personalizeForm.style.display = 'none';
 
                 let filters = { section_id: secId };
@@ -2533,10 +2833,9 @@
                     names.push(wSubject.options[wSubject.selectedIndex].text);
                 }
 
-                const queryName = names.join(', ');
-
-                // Show in chat
+                const queryName = names.join(' > ');
                 document.getElementById('bgChatInput').value = '';
+                
                 handleChatSearch({
                     q: queryName,
                     filters: filters

@@ -1162,7 +1162,18 @@ class ProductsController extends Controller
                 ]);
             }
 
-            // For existing products, redirect normally
+            // For existing products, return JSON response if AJAX request
+            if ($request->ajax() || $request->expectsJson()) {
+                Session::flash('success_message', $message);
+                return response()->json([
+                    'status' => 'success',
+                    'message' => $message,
+                    'product_id' => $product->id,
+                    'show_modal' => false
+                ]);
+            }
+
+            // For existing products (non-AJAX fallback), redirect normally
             $redirectUrl = Auth::guard('admin')->user()->type == 'vendor' ? 'vendor/products' : 'admin/products';
             return redirect($redirectUrl)->with('success_message', $message);
         }

@@ -293,36 +293,67 @@ class IndexController extends Controller
             \Illuminate\Support\Facades\Cookie::queue('bookgenie_shown', 'true', $minutes);
         }
 
-        if ($request->filled('section_id')) {
-            $oldSectionId = session('bg_section_id') ?? \Illuminate\Support\Facades\Cookie::get('bg_section_id');
-            if ($oldSectionId != $request->section_id) {
-                // Section changed: Clear old category, subcategory, subject to prevent pollution
+        if ($request->has('section_id')) {
+            $sectionId = $request->input('section_id');
+            if (empty($sectionId)) {
+                session()->forget(['bg_section_id', 'bg_category_id', 'bg_subcategory_id', 'bg_subject_id']);
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_section_id'));
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_category_id'));
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subcategory_id'));
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subject_id'));
+            } else {
+                $oldSectionId = session('bg_section_id') ?? \Illuminate\Support\Facades\Cookie::get('bg_section_id');
+                if ($oldSectionId != $sectionId) {
+                    session()->forget(['bg_category_id', 'bg_subcategory_id', 'bg_subject_id']);
+                    \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_category_id'));
+                    \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subcategory_id'));
+                    \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subject_id'));
+                }
+                session(['bg_section_id' => $sectionId]);
+                \Illuminate\Support\Facades\Cookie::queue('bg_section_id', (string)$sectionId, $minutes);
+            }
+        }
+
+        if ($request->has('category_id')) {
+            $categoryId = $request->input('category_id');
+            if (empty($categoryId)) {
                 session()->forget(['bg_category_id', 'bg_subcategory_id', 'bg_subject_id']);
                 \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_category_id'));
                 \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subcategory_id'));
                 \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subject_id'));
+            } else {
+                $oldCategoryId = session('bg_category_id') ?? \Illuminate\Support\Facades\Cookie::get('bg_category_id');
+                if ($oldCategoryId != $categoryId) {
+                    session()->forget(['bg_subcategory_id', 'bg_subject_id']);
+                    \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subcategory_id'));
+                    \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subject_id'));
+                }
+                session(['bg_category_id' => $categoryId]);
+                \Illuminate\Support\Facades\Cookie::queue('bg_category_id', (string)$categoryId, $minutes);
             }
-            session(['bg_section_id' => $request->section_id]);
-            \Illuminate\Support\Facades\Cookie::queue('bg_section_id', (string)$request->section_id, $minutes);
         }
-        if ($request->filled('category_id')) {
-            $oldCategoryId = session('bg_category_id') ?? \Illuminate\Support\Facades\Cookie::get('bg_category_id');
-            if ($oldCategoryId != $request->category_id) {
-                // Category changed: Clear old subcategory and subject
+
+        if ($request->has('subcategory_id')) {
+            $subcategoryId = $request->input('subcategory_id');
+            if (empty($subcategoryId)) {
                 session()->forget(['bg_subcategory_id', 'bg_subject_id']);
                 \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subcategory_id'));
                 \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subject_id'));
+            } else {
+                session(['bg_subcategory_id' => $subcategoryId]);
+                \Illuminate\Support\Facades\Cookie::queue('bg_subcategory_id', (string)$subcategoryId, $minutes);
             }
-            session(['bg_category_id' => $request->category_id]);
-            \Illuminate\Support\Facades\Cookie::queue('bg_category_id', (string)$request->category_id, $minutes);
         }
-        if ($request->filled('subcategory_id')) {
-            session(['bg_subcategory_id' => $request->subcategory_id]);
-            \Illuminate\Support\Facades\Cookie::queue('bg_subcategory_id', (string)$request->subcategory_id, $minutes);
-        }
-        if ($request->filled('subject_id')) {
-            session(['bg_subject_id' => $request->subject_id]);
-            \Illuminate\Support\Facades\Cookie::queue('bg_subject_id', (string)$request->subject_id, $minutes);
+
+        if ($request->has('subject_id')) {
+            $subjectId = $request->input('subject_id');
+            if (empty($subjectId)) {
+                session()->forget('bg_subject_id');
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('bg_subject_id'));
+            } else {
+                session(['bg_subject_id' => $subjectId]);
+                \Illuminate\Support\Facades\Cookie::queue('bg_subject_id', (string)$subjectId, $minutes);
+            }
         }
 
         // Sync with AcademicProfile if logged in
@@ -351,16 +382,285 @@ class IndexController extends Controller
     public function bookgenieSearch(Request $request)
     {
         $query = trim($request->get('q', ''));
+        $sectionId = $request->get('section_id');
+        $categoryId = $request->get('category_id');
+        $subcategoryId = $request->get('subcategory_id');
+        $subjectId = $request->get('subject_id');
+
+        $botResponseText = "";
+        $refinedSearchQuery = $query;
 
         // Relax length requirement if filters are present
-        $hasFilters = $request->filled('section_id') || $request->filled('category_id') || $request->filled('subcategory_id') || $request->filled('subject_id');
+        $hasFilters = $request->filled('section_id') || $request->filled('category_id') || $request->filled('subcategory_id') || $request->filled('subject_id') || !empty($sectionId) || !empty($categoryId) || !empty($subcategoryId) || !empty($subjectId);
 
         if (strlen($query) < 2 && !$hasFilters) {
             return response()->json(['results' => [], 'message' => 'Please type at least 2 characters.']);
         }
 
+        if (!empty($query)) {
+            // Check if Gemini API key is configured in env
+            $geminiApiKey = env('GEMINI_API_KEY');
+            if (!empty($geminiApiKey)) {
+                try {
+                    // Fetch current catalog metadata for grounding/mapping (cached for performance)
+                    $metadata = \Illuminate\Support\Facades\Cache::remember('bg_search_metadata', 3600, function() {
+                        return [
+                            'sections' => Section::where('status', 1)->get(['id', 'name'])->toArray(),
+                            'categories' => Category::where('status', 1)->get(['id', 'category_name'])->toArray(),
+                            'subcategories' => Subcategory::where('status', 1)->get(['id', 'subcategory_name'])->toArray(),
+                            'subjects' => Subject::where('status', 1)->get(['id', 'name'])->toArray(),
+                        ];
+                    });
+
+                    // Prepare Prompt
+                    $prompt = "You are 'BookGenie', a helpful book assistant for BookHub. 
+User's message: \"{$query}\"
+
+We have the following catalog entities in our database:
+Sections (Education Levels): " . json_encode($metadata['sections']) . "
+Categories (Boards): " . json_encode($metadata['categories']) . "
+Subcategories (Classes/Streams): " . json_encode($metadata['subcategories']) . "
+Subjects: " . json_encode($metadata['subjects']) . "
+
+Task:
+1. Parse the user's natural query and map it to any matching Section, Category, Subcategory, or Subject.
+2. Formulate a friendly, warm, human-like chat response (maximum 2-3 sentences) explaining what you found (e.g. \"I found some CBSE Board books for Class 10. Here they are:\").
+3. Extract any specific keyword for text search (e.g. if query is \"cbse ncert math\", mapping CBSE is category, math is subject, and \"ncert\" is the remaining search query keyword).
+4. Reply ONLY in raw JSON format with no markdown blocks (do not enclose in ```json ... ```), using this exact schema:
+{
+  \"response_text\": \"Your friendly human response here.\",
+  \"section_id\": matched_section_id_or_null,
+  \"category_id\": matched_category_id_or_null,
+  \"subcategory_id\": matched_subcategory_id_or_null,
+  \"subject_id\": matched_subject_id_or_null,
+  \"search_query\": \"extracted_remaining_search_keyword_or_null\"
+}";
+
+                    $response = \Illuminate\Support\Facades\Http::withHeaders([
+                        'Content-Type' => 'application/json'
+                    ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$geminiApiKey}", [
+                        'contents' => [
+                            ['parts' => [['text' => $prompt]]]
+                        ]
+                    ]);
+
+                    if ($response->successful()) {
+                        $resData = $response->json();
+                        $text = $resData['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                        $text = trim($text);
+                        if (str_starts_with($text, '```')) {
+                            $text = preg_replace('/^```(?:json)?|```$/', '', $text);
+                            $text = trim($text);
+                        }
+                        $json = json_decode($text, true);
+                        if (is_array($json)) {
+                            if (!empty($json['section_id'])) $sectionId = $json['section_id'];
+                            if (!empty($json['category_id'])) $categoryId = $json['category_id'];
+                            if (!empty($json['subcategory_id'])) $subcategoryId = $json['subcategory_id'];
+                            if (!empty($json['subject_id'])) $subjectId = $json['subject_id'];
+                            if (!empty($json['search_query']) && strtolower($json['search_query']) !== 'null' && strtolower($json['search_query']) !== 'none') {
+                                $refinedSearchQuery = $json['search_query'];
+                            } else {
+                                $refinedSearchQuery = "";
+                            }
+                            if (!empty($refinedSearchQuery)) {
+                                $refinedSearchQuery = str_replace(['>', '-', '/', '|', '+', ':', ','], ' ', $refinedSearchQuery);
+                                $refinedSearchQuery = trim(preg_replace('/\s+/', ' ', $refinedSearchQuery));
+                                if (strlen($refinedSearchQuery) < 2) {
+                                    $refinedSearchQuery = "";
+                                }
+                            }
+                            $botResponseText = $json['response_text'] ?? "";
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Fall back to local parsing silently
+                }
+            }
+
+            // If we didn't use Gemini or it failed, use the Local NLP Rule-based Matcher
+            if (empty($botResponseText)) {
+                $matchedSection = null;
+                $matchedCategory = null;
+                $matchedSubcategory = null;
+                $matchedSubject = null;
+
+                // Simple normalization
+                $normQuery = strtolower($query);
+
+                // Fetch sections, categories, subcategories, subjects
+                $sectionsList = Section::where('status', 1)->get();
+                $categoriesList = Category::where('status', 1)->get();
+                $subcategoriesList = Subcategory::where('status', 1)->get();
+                $subjectsList = Subject::where('status', 1)->get();
+
+                $matchWord = function($q, $e) {
+                    if (empty($q) || empty($e)) return false;
+                    return preg_match('/\b' . preg_quote($e, '/') . '\b/i', $q) || preg_match('/\b' . preg_quote($q, '/') . '\b/i', $e);
+                };
+
+                // Match Category (Board)
+                foreach ($categoriesList as $cat) {
+                    $catName = strtolower($cat->category_name);
+                    if ($matchWord($normQuery, $catName)) {
+                        $matchedCategory = $cat;
+                        break;
+                    }
+                    if ($catName == 'cbse' && (str_contains($normQuery, 'cbse') || str_contains($normQuery, 'central board'))) {
+                        $matchedCategory = $cat;
+                        break;
+                    }
+                    if ($catName == 'icse' && (str_contains($normQuery, 'icse') || str_contains($normQuery, 'indian certificate'))) {
+                        $matchedCategory = $cat;
+                        break;
+                    }
+                    if (($catName == 'chse odisha' || $catName == 'chse') && (str_contains($normQuery, 'chse') || str_contains($normQuery, 'odisha'))) {
+                        $matchedCategory = $cat;
+                        break;
+                    }
+                    if ($catName == 'bse' && str_contains($normQuery, 'bse')) {
+                        $matchedCategory = $cat;
+                        break;
+                    }
+                }
+
+                // Match Subcategory (Class)
+                foreach ($subcategoriesList as $subcat) {
+                    $subName = strtolower($subcat->subcategory_name);
+                    if ($matchWord($normQuery, $subName)) {
+                        $matchedSubcategory = $subcat;
+                        break;
+                    }
+                    if (preg_match('/\b(10|10th|x|tenth)\b/', $normQuery) && preg_match('/\b(x|10)\b/i', $subName)) {
+                        $matchedSubcategory = $subcat;
+                        break;
+                    }
+                    if (preg_match('/\b(12|12th|xii|twelfth)\b/', $normQuery) && preg_match('/\b(xii|12)\b/i', $subName)) {
+                        $matchedSubcategory = $subcat;
+                        break;
+                    }
+                    if (preg_match('/\b(9|9th|ix|nineth)\b/', $normQuery) && preg_match('/\b(ix|9)\b/i', $subName)) {
+                        $matchedSubcategory = $subcat;
+                        break;
+                    }
+                    if (preg_match('/\b(11|11th|xi|eleventh)\b/', $normQuery) && preg_match('/\b(xi|11)\b/i', $subName)) {
+                        $matchedSubcategory = $subcat;
+                        break;
+                    }
+                    if (preg_match('/\b(8|8th|viii|eighth)\b/', $normQuery) && preg_match('/\b(viii|8)\b/i', $subName)) {
+                        $matchedSubcategory = $subcat;
+                        break;
+                    }
+                }
+
+                // Match Subject
+                foreach ($subjectsList as $subj) {
+                    $subjName = strtolower($subj->name);
+                    if ($matchWord($normQuery, $subjName)) {
+                        $matchedSubject = $subj;
+                        break;
+                    }
+                    if ($subjName == 'mathematics' && (str_contains($normQuery, 'math') || str_contains($normQuery, 'maths'))) {
+                        $matchedSubject = $subj;
+                        break;
+                    }
+                }
+
+                // Match Section
+                foreach ($sectionsList as $sec) {
+                    $secName = strtolower($sec->name);
+                    if ($matchWord($normQuery, $secName)) {
+                        $matchedSection = $sec;
+                        break;
+                    }
+                }
+
+                // If matched, apply to filters
+                if ($matchedSection) $sectionId = $matchedSection->id;
+                if ($matchedCategory) $categoryId = $matchedCategory->id;
+                if ($matchedSubcategory) $subcategoryId = $matchedSubcategory->id;
+                if ($matchedSubject) $subjectId = $matchedSubject->id;
+
+                // Formulate Response
+                $matchedNames = [];
+                if ($matchedCategory) $matchedNames[] = $matchedCategory->category_name;
+                if ($matchedSubcategory) $matchedNames[] = $matchedSubcategory->subcategory_name;
+                if ($matchedSubject) $matchedNames[] = $matchedSubject->name;
+
+                // Remove the matched keywords from the query to refine search
+                $cleanQuery = $query;
+                if ($matchedSection) {
+                    $cleanQuery = preg_replace('/\b' . preg_quote($matchedSection->name, '/') . '\b/i', '', $cleanQuery);
+                }
+                if ($matchedCategory) {
+                    $cleanQuery = preg_replace('/\b' . preg_quote($matchedCategory->category_name, '/') . '\b/i', '', $cleanQuery);
+                }
+                $cleanQuery = preg_replace('/\b(cbse|icse|bse|chse)\b/i', '', $cleanQuery);
+                if ($matchedSubcategory) {
+                    $cleanQuery = preg_replace('/\b' . preg_quote($matchedSubcategory->subcategory_name, '/') . '\b/i', '', $cleanQuery);
+                    $cleanQuery = preg_replace('/\b(class\s+)?(10|12|9|8|11)(th)?\b/i', '', $cleanQuery);
+                    $cleanQuery = preg_replace('/\b(x|xii|ix|xi|viii)\b/i', '', $cleanQuery);
+                }
+                if ($matchedSubject) {
+                    $cleanQuery = preg_replace('/\b' . preg_quote($matchedSubject->name, '/') . '\b/i', '', $cleanQuery);
+                    $cleanQuery = preg_replace('/\b(math|maths|physics|chemistry|biology|science)\b/i', '', $cleanQuery);
+                }
+                
+                // Replace separators and symbols
+                $cleanQuery = str_replace(['>', '-', '/', '|', '+', ':', ','], ' ', $cleanQuery);
+                
+                $refinedSearchQuery = trim(preg_replace('/\s+/', ' ', $cleanQuery));
+                if (strlen($refinedSearchQuery) < 2) {
+                    $refinedSearchQuery = "";
+                }
+
+                if (!empty($matchedNames)) {
+                    $filterDesc = implode(' > ', array_filter($matchedNames));
+                    if (!empty($refinedSearchQuery)) {
+                        $botResponseText = "🔍 I've filtered the catalog for **{$filterDesc}** and searched for \"{$refinedSearchQuery}\". Here are the matching books:";
+                    } else {
+                        $botResponseText = "📚 I've filtered the catalog for **{$filterDesc}** books. Check out the options available below:";
+                    }
+                } else {
+                    if (in_array($normQuery, ['hi', 'hello', 'hey', 'greetings'])) {
+                        $botResponseText = "👋 Hello! I'm BookGenie, your virtual helper. I can help you search, filter, and discover books easily. Ask me anything, like *\"CBSE Class 10 Science\"*!";
+                        $refinedSearchQuery = "";
+                    } else {
+                        $botResponseText = "Here are the books matching your search query \"{$query}\":";
+                        $refinedSearchQuery = $query;
+                    }
+                }
+            }
+        } else {
+            // No q param but filters are present (e.g. from selecting chips/dropdowns directly)
+            $matchedNames = [];
+            if ($sectionId) $matchedNames[] = Section::where('id', $sectionId)->value('name');
+            if ($categoryId) $matchedNames[] = Category::where('id', $categoryId)->value('category_name');
+            if ($subcategoryId) $matchedNames[] = Subcategory::where('id', $subcategoryId)->value('subcategory_name');
+            if ($subjectId) $matchedNames[] = Subject::where('id', $subjectId)->value('name');
+
+            if (!empty($matchedNames)) {
+                $botResponseText = "📚 Showing results for: **" . implode(' > ', array_filter($matchedNames)) . "**";
+            } else {
+                $botResponseText = "Here are some books I found in our database:";
+            }
+        }
+
         $userLat = session('user_latitude');
         $userLng = session('user_longitude');
+
+        \Illuminate\Support\Facades\Log::info('BookGenie Search Debug', [
+            'q' => $request->get('q'),
+            'section_id' => $request->get('section_id'),
+            'category_id' => $request->get('category_id'),
+            'subcategory_id' => $request->get('subcategory_id'),
+            'subject_id' => $request->get('subject_id'),
+            'matched_section' => $sectionId,
+            'matched_category' => $categoryId,
+            'matched_subcategory' => $subcategoryId,
+            'matched_subject' => $subjectId,
+            'refined_query' => $refinedSearchQuery,
+        ]);
 
         $results = Product::with([
                 'publisher',
@@ -372,20 +672,30 @@ class IndexController extends Controller
             ->whereHas('attributes', function($q) {
                 $q->where('status', 1);
             })
-            ->where(function ($q) use ($query, $request) {
-                if ($request->filled('section_id')) $q->where('section_id', $request->section_id);
-                if ($request->filled('category_id')) $q->where('category_id', $request->category_id);
-                if ($request->filled('subcategory_id')) $q->where('subcategory_id', $request->subcategory_id);
-                if ($request->filled('subject_id')) $q->where('subject_id', $request->subject_id);
+            ->where(function ($q) use ($refinedSearchQuery, $sectionId, $categoryId, $subcategoryId, $subjectId) {
+                if ($sectionId) $q->where('section_id', $sectionId);
+                if ($categoryId) $q->where('category_id', $categoryId);
+                if ($subcategoryId) $q->where('subcategory_id', $subcategoryId);
+                if ($subjectId) $q->where('subject_id', $subjectId);
 
-                if ($query) {
-                    $q->where(function ($q2) use ($query) {
-                        $q2->where('product_name', 'like', "%{$query}%")
-                            ->orWhere('product_isbn', 'like', "%{$query}%");
+                if (!empty($refinedSearchQuery)) {
+                    $q->where(function ($q2) use ($refinedSearchQuery) {
+                        $q2->where('product_name', 'like', "%{$refinedSearchQuery}%")
+                            ->orWhere('product_isbn', 'like', "%{$refinedSearchQuery}%")
+                            ->orWhere('description', 'like', "%{$refinedSearchQuery}%")
+                            ->orWhereHas('category', function($q3) use ($refinedSearchQuery) {
+                                $q3->where('category_name', 'like', "%{$refinedSearchQuery}%");
+                            })
+                            ->orWhereHas('subcategory', function($q3) use ($refinedSearchQuery) {
+                                $q3->where('subcategory_name', 'like', "%{$refinedSearchQuery}%");
+                            })
+                            ->orWhereHas('subject', function($q3) use ($refinedSearchQuery) {
+                                $q3->where('name', 'like', "%{$refinedSearchQuery}%");
+                            });
                     });
                 }
             })
-            ->limit(8)
+            ->limit(10)
             ->get();
 
         $formatted = $results->map(function ($product) use ($userLat, $userLng) {
@@ -445,11 +755,20 @@ class IndexController extends Controller
             ];
         });
 
-        $message = $results->isEmpty()
-            ? "Sorry, I couldn't find any books matching \"" . e($query) . "\". Try a different name or ISBN."
-            : null;
+        if ($results->isEmpty() && empty($botResponseText)) {
+            $botResponseText = "Sorry, I couldn't find any books matching \"" . e($query) . "\". Try another search or browse by category.";
+        }
 
-        return response()->json(['results' => $formatted, 'message' => $message]);
+        return response()->json([
+            'results' => $formatted,
+            'message' => $botResponseText,
+            'active_filters' => [
+                'section_id' => $sectionId,
+                'category_id' => $categoryId,
+                'subcategory_id' => $subcategoryId,
+                'subject_id' => $subjectId,
+            ]
+        ]);
     }
 
     public function getFilterCategories(Request $request)
@@ -479,9 +798,7 @@ class IndexController extends Controller
             ->pluck('sub_category_id');
 
         if ($subcategoryIds->isEmpty()) {
-            $subcategories = Subcategory::where('category_id', $request->category_id)
-                ->where('status', 1)
-                ->get(['id', 'subcategory_name as category_name']);
+            $subcategories = collect();
         } else {
             $subcategories = Subcategory::whereIn('id', $subcategoryIds)
                 ->where('status', 1)
