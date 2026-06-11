@@ -5,7 +5,7 @@
             <div class="position-relative">
                 @if (!empty($product['product_image']))
                     <a href="{{ url('product/' . $product['id']) }}">
-                        <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product['product_image'] }}"
+                        <img src="{{ getBookCoverUrl($product['product_image']) }}"
                             class="card-img-top" alt="product_name" style="height: 200px; object-fit: cover;">
                     </a>
                 @endif

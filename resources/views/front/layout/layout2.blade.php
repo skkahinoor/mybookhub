@@ -488,7 +488,7 @@
                                         <div class="thumb-wrap">
                                             <a href="{{ url('product/' . $product['id']) }}">
                                                 <img
-                                                    src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product['product_image'] }}">
+                                                    src="{{ getBookCoverUrl($product['product_image']) }}">
                                             </a>
                                         </div>
                                         <div class="content-entry-wrap">

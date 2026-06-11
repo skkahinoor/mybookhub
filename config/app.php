@@ -212,4 +212,14 @@ return [
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Book Covers CDN / Base URL
+    |--------------------------------------------------------------------------
+    |
+    | The base URL where book cover images are served from.
+    |
+    */
+    'book_covers_base_url' => env('BOOK_COVERS_BASE_URL', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/'),
+
 ];

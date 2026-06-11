@@ -97,7 +97,7 @@
                                     $getProductImage = \App\Models\Product::getProductImage($product['product_id']);
                                 @endphp
                                 <a target="_blank" href="{{ url('product/' . $product['product_id']) }}">
-                                    <img style="width: 80px" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $getProductImage }}">
+                                    <img style="width: 80px" src="{{ getBookCoverUrl($getProductImage) }}">
                                 </a>
                             </td>
 

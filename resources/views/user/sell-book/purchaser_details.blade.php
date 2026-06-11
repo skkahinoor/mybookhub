@@ -25,11 +25,7 @@
                                             <hr>
                                             <div class="d-flex mb-3">
                                                 <div class="mr-3">
-                                                    @if(!empty($attribute->user_old_book_image))
-                                                        <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/').$attribute->user_old_book_image }}" alt="image" style="width:100px; height:130px; object-fit: cover; border-radius: 4px;">
-                                                    @else
-                                                        <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}" alt="image" style="width:100px; height:130px; object-fit: cover; border-radius: 4px;">
-                                                    @endif
+                                                    <img src="{{ getBookCoverUrl($attribute->user_old_book_image) }}" alt="image" style="width:100px; height:130px; object-fit: cover; border-radius: 4px;">
                                                 </div>
                                                 <div>
                                                     <h6>{{ $attribute->product->product_name }}</h6>

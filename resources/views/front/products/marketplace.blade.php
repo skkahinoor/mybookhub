@@ -335,7 +335,7 @@
 
                 <div class="mp-book-card">
                     <div class="mp-img-wrap">
-                        <img src="{{ $sbook->product->product_image ? config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/').$sbook->product->product_image : asset('front/images/product/default.jpg') }}"
+                        <img src="{{ $sbook->product->product_image ? getBookCoverUrl($sbook->product->product_image) : asset('front/images/product/default.jpg') }}"
                              alt="{{ $sbook->product->product_name }}"
                              class="{{ $sbook->stock == 0 ? 'grayscale' : '' }}"
                              style="{{ $sbook->stock == 0 ? 'filter:grayscale(80%)' : '' }}">
