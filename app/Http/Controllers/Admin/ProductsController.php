@@ -380,11 +380,6 @@ class ProductsController extends Controller
                     $constraint->upsize();
                 })->save('front/images/product_images/small/' . $imageName);
 
-                // Also save to book_covers
-                Image::make($image_tmp)->resize(500, 500, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                })->save(public_path('book_covers/' . $imageName));
 
                 // Centralized S3 upload via Service
                 app(\App\Services\BookCoverUploadService::class)->uploadBookCoverWithOriginalName($image);
@@ -1035,9 +1030,6 @@ class ProductsController extends Controller
                         Image::make($image_tmp)->resize(250, 250)
                             ->save('front/images/product_images/small/' . $imageName);
 
-                        // Also save to book_covers
-                        Image::make($image_tmp)->resize(500, 500)
-                            ->save(public_path('book_covers/' . $imageName));
 
                         $product->product_image = $imageName;
                     }
