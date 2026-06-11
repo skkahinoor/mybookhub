@@ -21,8 +21,8 @@
                 {{ $conditionText }}
             </span>
             <a href="{{ $productUrl }}">
-                <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . ($product->product->product_image ?? 'no-image.png') }}"
-                    onerror="this.src='{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}'"
+                <img src="{{ getBookCoverUrl(($product->product->product_image ?? 'no-image.png')) }}"
+                    onerror="this.src='{{ getBookCoverUrl('no-image.png') }}'"
                     alt="{{ $product->product->product_name }}" loading="lazy">
             </a>
         </div>

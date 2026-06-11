@@ -380,11 +380,9 @@ class ProductsController extends Controller
                     $constraint->upsize();
                 })->save('front/images/product_images/small/' . $imageName);
 
-                // Also save to book_covers
-                Image::make($image_tmp)->resize(500, 500, function ($constraint) {
-                    $constraint->aspectRatio();
-                    $constraint->upsize();
-                })->save(public_path('book_covers/' . $imageName));
+
+                // Centralized S3 upload via Service
+                app(\App\Services\BookCoverUploadService::class)->uploadBookCoverWithOriginalName($image);
             }
         }
 
@@ -624,7 +622,7 @@ class ProductsController extends Controller
                 })
                 ->addColumn('image', function ($row) use ($adminType) {
                     $item = ($adminType === 'vendor') ? $row->product : $row;
-                    $img = !empty($item->product_image) ? config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $item->product_image : config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png';
+                    $img = getBookCoverUrl($item->product_image);
                     return '<img style="width:120px; height:100px" src="' . $img . '">';
                 })
                 ->addColumn('name', function ($row) use ($adminType) {
@@ -1022,8 +1020,8 @@ class ProductsController extends Controller
                 if ($request->hasFile('product_image')) {
                     $image_tmp = $request->file('product_image');
                     if ($image_tmp->isValid()) {
-                        $extension = $image_tmp->getClientOriginalExtension();
-                        $imageName = rand(111, 99999) . '.' . $extension;
+                        // Centralized S3 upload via Service
+                        $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
 
                         Image::make($image_tmp)->resize(1000, 1000)
                             ->save('front/images/product_images/large/' . $imageName);
@@ -1032,9 +1030,6 @@ class ProductsController extends Controller
                         Image::make($image_tmp)->resize(250, 250)
                             ->save('front/images/product_images/small/' . $imageName);
 
-                        // Also save to book_covers
-                        Image::make($image_tmp)->resize(500, 500)
-                            ->save(public_path('book_covers/' . $imageName));
 
                         $product->product_image = $imageName;
                     }

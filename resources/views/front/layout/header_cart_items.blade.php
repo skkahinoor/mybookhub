@@ -25,10 +25,10 @@
                 <li class="clearfix">
                     <a href="{{ url('product/' . $item['product_id']) }}">
                         @if (!empty($item['product']['product_image']))
-                            <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $item['product']['product_image'] }}"
+                            <img src="{{ getBookCoverUrl($item['product']['product_image']) }}"
                                 alt="{{ $item['product']['product_name'] ?? 'Product' }}">
                         @else
-                            <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}"
+                            <img src="{{ getBookCoverUrl('no-image.png') }}"
                                 alt="No Image">
                         @endif
                         <span class="mini-item-name">{{ $item['product']['product_name'] ?? 'Product' }}</span>

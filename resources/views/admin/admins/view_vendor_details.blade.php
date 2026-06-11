@@ -646,8 +646,8 @@
                                                     @php
                                                         $discountDetails = \App\Models\Product::getDiscountPriceDetailsByAttribute($prodAttr->id, $prodAttr);
                                                         $imageUrl = !empty($prodAttr->product->product_image) 
-                                                            ? config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $prodAttr->product->product_image 
-                                                            : config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png';
+                                                            ? getBookCoverUrl($prodAttr->product->product_image) 
+                                                            : getBookCoverUrl('no-image.png');
                                                     @endphp
                                                     <tr>
                                                         <td>

@@ -77,9 +77,9 @@
                                             <div class="image-container">
                                                 <a class="item-img-wrapper-link" href="{{ url('product/' . $product->id) }}">
                                                     @if (!empty($product->product_image) && file_exists($product_image_path))
-                                                        <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product->product_image }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ getBookCoverUrl($product->product_image) }}" alt="Product">
                                                     @else
-                                                        <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ getBookCoverUrl('no-image.png') }}" alt="Product">
                                                     @endif
                                                 </a>
                                                 <div class="item-action-behaviors">
@@ -135,9 +135,9 @@
                                             <div class="image-container">
                                                 <a class="item-img-wrapper-link" href="{{ url('product/' . $product->id) }}">
                                                     @if (!empty($product->product_image) && file_exists($product_image_path))
-                                                        <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product->product_image }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ getBookCoverUrl($product->product_image) }}" alt="Product">
                                                     @else
-                                                        <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ getBookCoverUrl('no-image.png') }}" alt="Product">
                                                     @endif
                                                 </a>
                                                 <div class="item-action-behaviors">
@@ -193,9 +193,9 @@
                                             <div class="image-container">
                                                 <a class="item-img-wrapper-link" href="{{ url('product/' . $product->id) }}">
                                                     @if (!empty($product->product_image) && file_exists($product_image_path))
-                                                        <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product->product_image }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ getBookCoverUrl($product->product_image) }}" alt="Product">
                                                     @else
-                                                        <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ getBookCoverUrl('no-image.png') }}" alt="Product">
                                                     @endif
                                                 </a>
                                                 <div class="item-action-behaviors">
@@ -248,9 +248,9 @@
                                             <div class="image-container">
                                                 <a class="item-img-wrapper-link" href="{{ url('product/' . $product->id) }}">
                                                     @if (!empty($product->product_image) && file_exists($product_image_path))
-                                                        <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $product->product_image }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ getBookCoverUrl($product->product_image) }}" alt="Product">
                                                     @else
-                                                        <img class="img-fluid" src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . 'no-image.png' }}" alt="Product">
+                                                        <img class="img-fluid" src="{{ getBookCoverUrl('no-image.png') }}" alt="Product">
                                                     @endif
                                                 </a>
                                                 <div class="item-action-behaviors">

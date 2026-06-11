@@ -234,9 +234,9 @@ class SellBookController extends Controller
                 if ($request->hasFile('user_old_book_image')) {
                     $image_tmp = $request->file('user_old_book_image');
                     if ($image_tmp->isValid()) {
-                        $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
-                        $extension = $image_tmp->getClientOriginalExtension();
-                        $imageName = $image_name.'-'.rand(111, 99999).'.'.$extension;
+                        // Centralized S3 upload via Service
+                        $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
+
                         $largeImagePath = public_path('front/images/product_images/large/'.$imageName);
                         $mediumImagePath = public_path('front/images/product_images/medium/'.$imageName);
                         $smallImagePath = public_path('front/images/product_images/small/'.$imageName);
@@ -320,9 +320,9 @@ class SellBookController extends Controller
             if ($request->hasFile('user_old_book_image')) {
                 $image_tmp = $request->file('user_old_book_image');
                 if ($image_tmp->isValid()) {
-                    $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = $image_name.'-'.rand(111, 99999).'.'.$extension;
+                    // Centralized S3 upload via Service
+                    $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
+
                     $largeImagePath = public_path('front/images/product_images/large/'.$imageName);
                     $mediumImagePath = public_path('front/images/product_images/medium/'.$imageName);
                     $smallImagePath = public_path('front/images/product_images/small/'.$imageName);

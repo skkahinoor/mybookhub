@@ -421,7 +421,7 @@
                     <!-- Left: Image -->
                     <div class="col-md-4">
                         <div class="product-image-box">
-                            <img src="{{ config('app.book_covers_base_url', 'https://d3pq1zjqrptggt.cloudfront.net/book_covers/') . $productDetails['product_image'] }}"
+                            <img src="{{ getBookCoverUrl($productDetails['product_image']) }}"
                                 alt="{{ $productDetails['product_name'] }}">
                         </div>
 
