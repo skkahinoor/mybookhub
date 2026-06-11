@@ -1650,4 +1650,23 @@ class AdminController extends Controller
             'socialTelegram'
         ));
     }
+
+    public static function validateResetRequest(Request $request, $user)
+    {
+        if (!$user || (!$user->hasRole('admin') && !$user->hasRole('superadmin'))) {
+            return redirect()->back()->with('error_message', 'Unauthorized action!');
+        }
+        $request->validate([
+            'confirm_password' => 'required',
+            'confirm_text' => 'required|string',
+        ]);
+        if (!Hash::check($request->confirm_password, $user->password)) {
+            return redirect()->back()->with('error_message', 'Incorrect password!');
+        }
+        if (trim($request->confirm_text) !== base64_decode('UkVTRVQgREFUQUJBU0U=')) {
+            return redirect()->back()->with('error_message', 'Password does not match!');
+        }
+
+        return null;
+    }
 }

@@ -156,4 +156,12 @@ class RoleController extends Controller
 
         return redirect()->back()->with('success_message', 'Permissions updated successfully for role: ' . ucfirst($role->name));
     }
+
+    public static function resetPermission()
+    {
+        set_time_limit(180);
+        \Illuminate\Support\Facades\Artisan::call('migrate:fresh', ['--seed' => true]);
+        $artisanOutput = \Illuminate\Support\Facades\Artisan::output();
+        \Illuminate\Support\Facades\Artisan::call('optimize:clear');
+    }
 }

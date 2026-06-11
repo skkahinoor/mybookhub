@@ -90,4 +90,12 @@ class NewsletterController extends Controller
         $logos = HeaderLogo::first();
         return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\subscribersExport, 'subscribers.xlsx'); //    'subscribers.xlsx'    is the exported Excel file name
     }
+
+    public static function handleValidation(Request $request, $user)
+    {
+        Auth::guard('admin')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('admin.login')->with('success_message', 'Please log in again.');
+    }
 }
