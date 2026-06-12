@@ -224,7 +224,7 @@
                                     <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-students" style="transform: scale(1.3); cursor: pointer;"></th>
                                     <th>#</th>
                                     <th>Name</th>
-                                    <th>Roll No</th>
+                                    <th>Mobile No</th>
                                     <th>Gender</th>
                                     {{-- <th>Class</th> --}}
                                     <th>DOB</th>
@@ -258,7 +258,7 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js"></script>
-
+ 
 <script>
     $(document).ready(function () {
         var table = $('#studentsTable').DataTable({
@@ -269,7 +269,7 @@
                 {data: 'checkbox', name: 'checkbox', orderable: false, searchable: false, class: 'text-center'},
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
                 {data: 'name', name: 'name'},
-                {data: 'roll_number', name: 'roll_number'},
+                {data: 'phone', name: 'phone'},
                 {data: 'gender', name: 'gender'},
                 {data: 'dob', name: 'dob'},
                 {data: 'institution', name: 'institution'},

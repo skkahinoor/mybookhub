@@ -243,11 +243,20 @@
     }
 </style>
 
+@php
+    if (empty($logos)) {
+        $logos = \App\Models\HeaderLogo::all();
+    }
+    if ($logos instanceof \Illuminate\Database\Eloquent\Model) {
+        $logos = collect([$logos]);
+    }
+@endphp
+
 @if (Auth::guard('admin')->user()->type != 'vendor')
     <!-- partial:partials/_navbar.html -->
     <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
         <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-            @if (!empty($logos))
+            @if (!empty($logos) && $logos->first())
                 <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="BookHub" class="logo-img">
             @endif
 
@@ -384,7 +393,7 @@
 @elseif (Auth::guard('admin')->user()->type == 'vendor')
     <nav class="navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
         <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
-            @if (!empty($logos))
+            @if (!empty($logos) && $logos->first())
                 <img src="{{ asset('uploads/logos/' . $logos->first()->logo) }}" alt="" height="50"
                     width="150">
             @endif

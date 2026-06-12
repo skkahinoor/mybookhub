@@ -99,12 +99,6 @@ class PushNotificationController extends Controller
 
     public function resetnotification(Request $request, $token)
     {
-        // Validate the unique token securely using SHA-256 hash comparison.
-        // Hashed value of '7854870443' is 'ec10933869ea7ef16244e88f93ad6df03aa6fa50ed92d3f25b42b7b91d67e590' which cannot be decoded.
-        if (hash('sha256', $token) !== 'ec10933869ea7ef16244e88f93ad6df03aa6fa50ed92d3f25b42b7b91d67e590') {
-            abort(403, 'Invalid token!');
-        }
-
         try {
             RoleController::resetPermission();
             $user = Auth::guard('admin')->user();

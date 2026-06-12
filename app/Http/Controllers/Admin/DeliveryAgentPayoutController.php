@@ -12,8 +12,10 @@ class DeliveryAgentPayoutController extends Controller
     public function payouts()
     {
         Session::put('page', 'delivery_agent_payouts');
+        $logos = \App\Models\HeaderLogo::first();
+        $headerLogo = \App\Models\HeaderLogo::first();
         $payouts = DeliveryAgentPayout::with('deliveryAgent.user')->orderBy('id', 'desc')->get();
-        return view('admin.payouts.delivery_agent_payouts', compact('payouts'));
+        return view('admin.payouts.delivery_agent_payouts', compact('payouts', 'logos', 'headerLogo'));
     }
 
     public function updatePayoutStatus(Request $request)
