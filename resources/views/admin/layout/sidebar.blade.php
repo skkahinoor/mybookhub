@@ -421,6 +421,12 @@
                                         @if (Session::get('page') == 'withdrawals') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                         class="nav-link" href="{{ route('admin.withdrawals.index') }}">Withdrawals</a></li>
                             @endcan
+                            @can('manage_commission_settings')
+                                <li class="nav-item"><a
+                                        @if (Session::get('page') == 'commission_settings') style="background:#052CA3 !important;color:#FFF !important" @else style="background:#fff !important;color:#052CA3 !important" @endif
+                                        class="nav-link" href="{{ route('admin.commission.settings') }}">Commission
+                                        Settings</a></li>
+                            @endcan
                         </ul>
                     </div>
                 </li>
@@ -801,12 +807,7 @@
                                         @if (Session::get('page') == 'dynamic_modals') style="background:#052CA3 !important;color:#FFF !important" @else style="background:#fff !important;color:#052CA3 !important" @endif
                                         class="nav-link" href="{{ url('admin/dynamic-modals') }}">Dynamic Modals</a></li>
                             @endcan
-                            @can('manage_commission_settings')
-                                <li class="nav-item"><a
-                                        @if (Session::get('page') == 'commission_settings') style="background:#052CA3 !important;color:#FFF !important" @else style="background:#fff !important;color:#052CA3 !important" @endif
-                                        class="nav-link" href="{{ route('admin.commission.settings') }}">Commission
-                                        Settings</a></li>
-                            @endcan
+                            
                         </ul>
                     </div>
                 </li>
