@@ -55,6 +55,7 @@ return [
         'template' => env('WHATSAPP_BOOK_REQUEST_TEMPLATE', 'book_request_alert_v2'),
         'order_template' => env('WHATSAPP_NEW_ORDER_TEMPLATE', 'vendor_new_order_alert_v2'),
         'user_order_template' => env('WHATSAPP_USER_ORDER_TEMPLATE', 'user_order_confirmation_v2'),
+        'sell_rejection_template' => env('WHATSAPP_SELL_REJECTION_TEMPLATE', 'sell_book_rejection'),
         'language' => env('WHATSAPP_TEMPLATE_LANG', 'en'),
     ],
 

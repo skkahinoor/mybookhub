@@ -166,11 +166,22 @@ class SellBookRequestController extends Controller
         return redirect()->back()->with('success_message', 'Old book listing approved successfully!');
     }
 
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
-        $attribute = ProductsAttribute::with('product')->findOrFail($id);
+        $attribute = ProductsAttribute::with(['product', 'user', 'vendor.user'])->findOrFail($id);
         $userId = $attribute->user_id;
         $productName = $attribute->product->product_name ?? 'your book';
+
+        $reason = $request->input('reason', 'Please check our guidelines or contact support.');
+
+        // Get seller details for WhatsApp
+        $sellerName = $attribute->admin_type === 'vendor'
+            ? ($attribute->vendor->user->name ?? 'Vendor')
+            : ($attribute->user->name ?? 'User');
+
+        $sellerPhone = $attribute->admin_type === 'vendor'
+            ? ($attribute->vendor->user->phone ?? $attribute->vendor->user->mobile ?? $attribute->vendor->whatsapp_phone ?? null)
+            : ($attribute->user->phone ?? $attribute->user->mobile ?? null);
 
         $attribute->delete();
 
@@ -179,11 +190,42 @@ class SellBookRequestController extends Controller
             Notification::create([
                 'type' => 'sell_book_rejected',
                 'title' => 'Sell request not approved',
-                'message' => "Your listing for '{$productName}' could not be approved. Please check our guidelines or contact support.",
+                'message' => "Your listing for '{$productName}' could not be approved. Reason: {$reason}",
                 'related_id' => (int) $userId,
                 'related_type' => User::class,
                 'is_read' => false,
             ]);
+        }
+
+        // Send WhatsApp notification
+        if (!empty($sellerPhone) && $sellerPhone !== 'N/A') {
+            $template = config('services.whatsapp.sell_rejection_template', 'sell_book_rejection');
+            $params = [
+                $sellerName,
+                $productName,
+                $reason
+            ];
+
+            try {
+                $whatsappSent = app(\App\Services\WhatsAppService::class)->sendTemplate(
+                    $sellerPhone,
+                    $template,
+                    $params
+                );
+                if (!$whatsappSent) {
+                    \Illuminate\Support\Facades\Log::warning('Failed to send sell book rejection WhatsApp message.', [
+                        'phone' => $sellerPhone,
+                        'template' => $template,
+                        'params' => $params
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Exception sending sell book rejection WhatsApp message: ' . $e->getMessage(), [
+                    'phone' => $sellerPhone,
+                    'template' => $template,
+                    'params' => $params
+                ]);
+            }
         }
 
         return redirect()->back()->with('success_message', 'Sell request rejected and removed.');

@@ -599,7 +599,7 @@
                                                         // Prep data for modal
                                                         $sellerName = $request->admin_type === 'vendor' ? ($request->vendor->user->name ?? 'Vendor') : ($request->user->name ?? 'N/A');
                                                         $sellerEmail = $request->admin_type === 'vendor' ? ($request->vendor->user->email ?? 'N/A') : ($request->user->email ?? 'N/A');
-                                                        $sellerPhone = $request->admin_type === 'vendor' ? ($request->vendor->user->mobile ?? 'N/A') : ($request->user->mobile ?? 'N/A');
+                                                        $sellerPhone = $request->admin_type === 'vendor' ? ($request->vendor->user->phone ?? $request->vendor->user->mobile ?? $request->vendor->whatsapp_phone ?? 'N/A') : ($request->user->phone ?? $request->user->mobile ?? 'N/A');
                                                         $bookImg = $request->user_old_book_image ? getBookCoverUrl($request->user_old_book_image) : '';
                                                         $bookVid = $request->video_upload ? asset('front/videos/product_videos/'.$request->video_upload) : '';
 
@@ -735,14 +735,43 @@
                                         @csrf
                                         <button type="submit" class="btn btn-success" style="border-radius: 8px; font-weight: 600; padding: 10px 20px;"><i class="fas fa-check-circle mr-1"></i> Approve Listing</button>
                                     </form>
+                                    <button type="button" class="btn btn-outline-danger" id="reject-trigger-btn" style="border-radius: 8px; font-weight: 600; padding: 10px 20px;"><i class="fas fa-times-circle mr-1"></i> Reject</button>
+                                </div>
+                            </div>
+
+                            <div id="rejection-reason-section" style="display: none; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 12px; padding: 20px; margin-top: 15px;">
+                                <h6 class="text-danger font-weight-bold mb-3" style="font-size: 0.95rem;"><i class="fas fa-exclamation-circle mr-1"></i> Rejection Reason</h6>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="reject_reason_dropdown" class="font-weight-bold text-muted mb-1" style="font-size: 0.8rem; text-transform: uppercase;">Select Preset Reason:</label>
+                                    <select class="form-control" id="reject_reason_dropdown" style="border-radius: 8px; border: 1px solid #ced4da; height: calc(1.5em + .75rem + 2px);">
+                                        <option value="">-- Choose predefined reason --</option>
+                                        <option value="Area not serviceable">Area not serviceable</option>
+                                        <option value="Incomplete/Poor quality book images">Incomplete/Poor quality book images</option>
+                                        <option value="Damaged book condition">Damaged book condition</option>
+                                        <option value="Invalid ISBN / Book details match">Invalid ISBN / Book details match</option>
+                                        <option value="Duplicate book listing">Duplicate book listing</option>
+                                        <option value="Other">Other (Enter custom reason below)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label for="reject_reason_input" class="font-weight-bold text-muted mb-1" style="font-size: 0.8rem; text-transform: uppercase;">Custom / Detailed Reason:</label>
+                                    <textarea class="form-control" id="reject_reason_input" rows="3" style="border-radius: 8px; border: 1px solid #ced4da;" placeholder="Select a preset reason above or type here..."></textarea>
+                                </div>
+
+                                <div class="d-flex justify-content-end" style="gap: 8px;">
                                     <form id="m-reject-form" method="POST" action="" style="display:inline;">
                                         @csrf
-                                        <button type="submit" class="btn btn-outline-danger" style="border-radius: 8px; font-weight: 600; padding: 10px 20px;" onclick="return confirm('Reject and delete this request?')"><i class="fas fa-times-circle mr-1"></i> Reject</button>
+                                        <input type="hidden" name="reason" id="hidden_reject_reason">
+                                        <button type="button" class="btn btn-light mr-2" id="cancel-reject-btn" style="border-radius: 8px; font-weight: 600; padding: 8px 18px;">Cancel</button>
+                                        <button type="submit" class="btn btn-danger" id="confirm-reject-btn" style="border-radius: 8px; font-weight: 600; padding: 8px 18px;">Confirm Reject & WhatsApp</button>
                                     </form>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
             </div>
             @endcan
             @endif
@@ -897,7 +926,16 @@
                 }
             });
 
+            var activeSellRequestData = null;
+
             function openSellRequestModal(data) {
+                activeSellRequestData = data;
+
+                // Reset Rejection Reason form UI
+                document.getElementById('rejection-reason-section').style.display = 'none';
+                document.getElementById('reject_reason_dropdown').value = '';
+                document.getElementById('reject_reason_input').value = '';
+
                 // Populate text fields
                 document.getElementById('m-bookName').innerText = data.bookName;
                 document.getElementById('m-isbn').innerText = data.isbn;
@@ -966,7 +1004,7 @@
                 $('#sellRequestModal').modal('show');
             }
 
-            // Stop video on modal close
+            // Stop video on modal close and manage reject form details
             document.addEventListener('DOMContentLoaded', function() {
                 $('#sellRequestModal').on('hidden.bs.modal', function () {
                     var videoPlayer = document.getElementById('m-video');
@@ -975,6 +1013,57 @@
                         videoPlayer.currentTime = 0;
                     }
                 });
+
+                var rejectTrigger = document.getElementById('reject-trigger-btn');
+                var cancelReject = document.getElementById('cancel-reject-btn');
+                var confirmReject = document.getElementById('confirm-reject-btn');
+                var reasonSection = document.getElementById('rejection-reason-section');
+                var actionsDiv = document.getElementById('m-actions');
+                var dropdown = document.getElementById('reject_reason_dropdown');
+                var textInput = document.getElementById('reject_reason_input');
+                var rejectForm = document.getElementById('m-reject-form');
+                var hiddenReason = document.getElementById('hidden_reject_reason');
+
+                if (rejectTrigger) {
+                    rejectTrigger.addEventListener('click', function() {
+                        actionsDiv.style.display = 'none';
+                        reasonSection.style.display = 'block';
+                    });
+                }
+
+                if (cancelReject) {
+                    cancelReject.addEventListener('click', function() {
+                        reasonSection.style.display = 'none';
+                        actionsDiv.style.display = 'flex';
+                    });
+                }
+
+                if (dropdown) {
+                    dropdown.addEventListener('change', function() {
+                        var val = dropdown.value;
+                        if (val === 'Other') {
+                            textInput.value = '';
+                            textInput.focus();
+                        } else if (val) {
+                            textInput.value = val;
+                        } else {
+                            textInput.value = '';
+                        }
+                    });
+                }
+
+                if (rejectForm) {
+                    rejectForm.addEventListener('submit', function(e) {
+                        var reason = textInput.value.trim();
+                        if (!reason) {
+                            e.preventDefault();
+                            alert('Please select or specify a rejection reason.');
+                            return false;
+                        }
+
+                        hiddenReason.value = reason;
+                    });
+                }
             });
         </script>
 
