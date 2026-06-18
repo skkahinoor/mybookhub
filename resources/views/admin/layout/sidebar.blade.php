@@ -626,6 +626,7 @@
                             'sellBookRequests',
                             'old_book_commissions_crud',
                             'old_book_payouts',
+                            'old_book_settings',
                         ])) style="background:#052CA3 !important;color:#FFF !important" @endif
                         class="nav-link" data-toggle="collapse" href="#ui-old-book-mgmt" aria-expanded="false"
                         aria-controls="ui-old-book-mgmt">
@@ -638,6 +639,7 @@
                             'sellBookRequests',
                             'old_book_commissions_crud',
                             'old_book_payouts',
+                            'old_book_settings',
                         ])) show @endif" id="ui-old-book-mgmt">
                         <ul class="nav flex-column sub-menu"
                             style="background: #fff !important; color: #052CA3 !important">
@@ -663,6 +665,12 @@
                                 <li class="nav-item"><a
                                         @if (Session::get('page') == 'old_book_payouts') style="background:#052CA3 !important;color:#FFF !important" @else style="background:#fff !important;color:#052CA3 !important" @endif
                                         class="nav-link" href="{{ route('admin.old_book_payouts') }}">Old Book Payout</a>
+                                </li>
+                            @endcan
+                            @can('view_old_book_conditions')
+                                <li class="nav-item"><a
+                                        @if (Session::get('page') == 'old_book_settings') style="background:#052CA3 !important;color:#FFF !important" @else style="background:#fff !important;color:#052CA3 !important" @endif
+                                        class="nav-link" href="{{ route('admin.old-book-settings.index') }}">Settings</a>
                                 </li>
                             @endcan
                         </ul>

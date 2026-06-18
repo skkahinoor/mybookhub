@@ -35,6 +35,12 @@ class SellBookController extends Controller
      */
     public function index()
     {
+        if (!\App\Models\Setting::getValue('sell_book_concept_enabled', 1)) {
+            $logos = HeaderLogo::first();
+            $headerLogo = HeaderLogo::first();
+            return view('user.sell-book.disabled', compact('logos', 'headerLogo'));
+        }
+
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
         $user_id = Auth::id();
@@ -58,6 +64,10 @@ class SellBookController extends Controller
      */
     public function create()
     {
+        if (!\App\Models\Setting::getValue('sell_book_concept_enabled', 1)) {
+            return redirect()->route('student.sell-book.index');
+        }
+
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
 
@@ -84,6 +94,10 @@ class SellBookController extends Controller
      */
     public function edit($id)
     {
+        if (!\App\Models\Setting::getValue('sell_book_concept_enabled', 1)) {
+            return redirect()->route('student.sell-book.index');
+        }
+
         $user = Auth::user();
         $logos = HeaderLogo::first();
         $headerLogo = HeaderLogo::first();
@@ -130,6 +144,13 @@ class SellBookController extends Controller
      */
     public function store(Request $request, $id = null)
     {
+        if (!\App\Models\Setting::getValue('sell_book_concept_enabled', 1)) {
+            if ($request->ajax()) {
+                return response()->json(['status' => false, 'message' => 'Selling books is currently disabled.'], 403);
+            }
+            return redirect()->route('student.sell-book.index')->with('error_message', 'Selling books is currently disabled.');
+        }
+
         try {
             $user = Auth::user();
 

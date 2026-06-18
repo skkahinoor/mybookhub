@@ -267,6 +267,10 @@ $adminRoutesClosure = function () {
         Route::post('sell-book-requests/{id}/approve', [SellBookRequestController::class, 'approve'])->name('admin.sell-book-requests.approve');
         Route::post('sell-book-requests/{id}/reject', [SellBookRequestController::class, 'reject'])->name('admin.sell-book-requests.reject');
 
+        // Old Book Settings
+        Route::get('old-book-settings', [App\Http\Controllers\Admin\OldBookSettingsController::class, 'index'])->name('admin.old-book-settings.index');
+        Route::post('old-book-settings/update', [App\Http\Controllers\Admin\OldBookSettingsController::class, 'update'])->name('admin.old-book-settings.update');
+
         // Subject
         Route::get('subjects', [SubjectController::class, 'index'])->name('admin.subject');
         Route::get('add_subject', [SubjectController::class, 'add'])->name('admin.add.subject');
