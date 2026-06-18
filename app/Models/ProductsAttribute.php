@@ -47,7 +47,8 @@ class ProductsAttribute extends Model
         'platform_charge',
         'is_sold',
         'user_location',
-        'user_location_name'
+        'user_location_name',
+        'reject_reason'
     ];
 
     /**

@@ -84,6 +84,12 @@ class SellBookRequestController extends Controller
                 ->addColumn('status', function ($row) {
                     if ($row->admin_approved == 1) {
                         return '<span class="badge badge-success">Approved</span>';
+                    } elseif ($row->admin_approved == 2) {
+                        $statusHtml = '<span class="badge badge-danger">Rejected</span>';
+                        if (!empty($row->reject_reason)) {
+                            $statusHtml .= '<br><small class="text-danger font-weight-bold" style="display:block; max-width:180px; white-space:normal; margin-top:4px;">Reason: ' . e($row->reject_reason) . '</small>';
+                        }
+                        return $statusHtml;
                     } else {
                         return '<span class="badge badge-warning">Pending</span>';
                     }
@@ -104,11 +110,10 @@ class SellBookRequestController extends Controller
                     }
                 })
                 ->addColumn('actions', function ($row) {
-                    $html = '<a href="' . route('admin.sell-book-requests.show', $row->id) . '" class="btn btn-sm btn-outline-primary">View</a>';
-                    $html .= ' <form action="' . route('admin.sell-book-requests.reject', $row->id) . '" method="POST" style="display:inline;">
-                                ' . csrf_field() . '
-                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm(\'Reject and delete this request?\')">Reject</button>
-                               </form>';
+                    $html = '<a href="' . route('admin.sell-book-requests.show', $row->id) . '" class="btn btn-sm btn-outline-primary mr-1">View</a>';
+                    if ($row->admin_approved == 0) {
+                        $html .= ' <button type="button" class="btn btn-sm btn-outline-danger" onclick="openListRejectModal(' . $row->id . ')">Reject</button>';
+                    }
                     return $html;
                 })
                 ->rawColumns(['type', 'seller_name', 'book_condition', 'selling_price', 'location', 'status', 'payout', 'actions'])
@@ -183,7 +188,10 @@ class SellBookRequestController extends Controller
             ? ($attribute->vendor->user->phone ?? $attribute->vendor->user->mobile ?? $attribute->vendor->whatsapp_phone ?? null)
             : ($attribute->user->phone ?? $attribute->user->mobile ?? null);
 
-        $attribute->delete();
+        $attribute->admin_approved = 2; // 2 = Rejected
+        $attribute->status = 0; // Inactive
+        $attribute->reject_reason = $reason;
+        $attribute->save();
 
         // Notify student/user who submitted the sell request
         if (!empty($userId)) {

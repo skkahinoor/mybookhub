@@ -107,6 +107,11 @@
                                                             <span class="badge badge-secondary">Sold Out</span>
                                                         @elseif($attribute->admin_approved == 1)
                                                             <span class="badge badge-success">Approved</span>
+                                                        @elseif($attribute->admin_approved == 2)
+                                                            <span class="badge badge-danger">Rejected</span>
+                                                            @if(!empty($attribute->reject_reason))
+                                                                <br><small class="text-danger" style="display:block; max-width:180px; white-space:normal; margin-top:4px; font-weight:700;">Reason: {{ $attribute->reject_reason }}</small>
+                                                            @endif
                                                         @else
                                                             <span class="badge badge-warning">Pending Review</span>
                                                         @endif
@@ -141,6 +146,8 @@
                                                             <a href="{{ route('student.sell-book.purchase-details', $attribute->id) }}" class="btn btn-info btn-xs">
                                                                 <i class="mdi mdi-eye"></i> Buyer Details
                                                             </a>
+                                                        @elseif($attribute->admin_approved == 2)
+                                                            <span class="text-danger font-weight-bold">Rejected</span>
                                                         @else
                                                             <span class="text-muted">Wait for Approval</span>
                                                         @endif

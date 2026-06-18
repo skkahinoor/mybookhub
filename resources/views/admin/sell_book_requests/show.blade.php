@@ -123,11 +123,19 @@
                                             <td>
                                                 @if($requestData->admin_approved == 1)
                                                     <span class="badge badge-success">Approved</span>
+                                                @elseif($requestData->admin_approved == 2)
+                                                    <span class="badge badge-danger">Rejected</span>
                                                 @else
                                                     <span class="badge badge-warning">Pending Approval</span>
                                                 @endif
                                             </td>
                                         </tr>
+                                        @if($requestData->admin_approved == 2 && !empty($requestData->reject_reason))
+                                        <tr>
+                                            <th>Rejection Reason:</th>
+                                            <td class="text-danger font-weight-bold">{{ $requestData->reject_reason }}</td>
+                                        </tr>
+                                        @endif
                                     </table>
 
                                     @if($requestData->user_location_name)
@@ -156,11 +164,11 @@
                                                 @csrf
                                                 <button type="submit" class="btn btn-success mr-2">Approve Listing</button>
                                             </form>
+                                            <form action="{{ route('admin.sell-book-requests.reject', $requestData->id) }}" method="POST" style="display:inline;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-danger" onclick="return confirm('Reject this request?')">Reject Request</button>
+                                            </form>
                                         @endif
-                                        <form action="{{ route('admin.sell-book-requests.reject', $requestData->id) }}" method="POST" style="display:inline;">
-                                            @csrf
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Reject and delete this request?')">Reject Request</button>
-                                        </form>
                                     </div>
                                 </div>
                             </div>
