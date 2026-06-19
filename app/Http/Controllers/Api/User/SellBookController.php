@@ -61,7 +61,7 @@ class SellBookController extends Controller
                     'name' => $attribute->condition->name,
                     'percentage' => $attribute->condition->percentage,
                 ] : null,
-                'status' => $attribute ? $attribute->status : 0,
+                'status' => $attribute ? (int) $attribute->admin_approved : 0,
                 'admin_approved' => $attribute ? $attribute->admin_approved : 0,
                 'reject_reason' => $attribute ? $attribute->reject_reason : null,
                 'status_text' => $attribute->is_sold == 1 
@@ -225,7 +225,7 @@ class SellBookController extends Controller
                     'old_book_condition_id' => $attribute->old_book_condition_id,
                     'user_product_price' => round($attribute->user_product_price),
                     'stock' => $attribute->stock,
-                    'status' => $attribute->status,
+                    'status' => (int) $attribute->admin_approved,
                     'admin_approved' => $attribute->admin_approved,
                     'reject_reason' => $attribute->reject_reason,
                     'status_text' => $attribute->is_sold == 1 
