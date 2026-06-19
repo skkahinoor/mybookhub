@@ -34,6 +34,7 @@ class Vendor extends Model
         'razorpay_order_id',
         'razorpay_payment_id',
         'razorpay_signature',
+        'low_stock_threshold',
     ];
 
     protected $casts = [

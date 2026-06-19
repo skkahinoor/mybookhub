@@ -121,6 +121,25 @@
                 font-size: 1.3rem;
             }
         }
+
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 121, 118, 0.7);
+            }
+            70% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(255, 121, 118, 0);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 121, 118, 0);
+            }
+        }
     </style>
 
     <div class="main-panel">
@@ -329,6 +348,26 @@
                                         <div class="metric-details">
                                             <div class="metric-label">Coupons</div>
                                             <div class="metric-value">{{ number_format($couponsCount) }}</div>
+                                        </div>
+                                    </a>
+                                </div>
+                            @endif
+
+                            {{-- Low Stock Warning Card --}}
+                            @if (Auth::guard('admin')->user()->can('view_products'))
+                                <div class="metric-card" style="{{ $lowStockCount > 0 ? 'border: 1px solid rgba(255, 121, 118, 0.4); background-color: #fffafb;' : '' }}">
+                                    <a href="{{ route('vendor.products.lowStock') }}">
+                                        <div class="metric-icon-wrapper {{ $lowStockCount > 0 ? 'icon-red animate-pulse' : 'icon-cyan' }}">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="metric-details">
+                                            <div class="metric-label" style="{{ $lowStockCount > 0 ? 'color: #dc3545;' : '' }}">Low Stock Warning</div>
+                                            <div class="metric-value" style="{{ $lowStockCount > 0 ? 'color: #dc3545;' : '' }}">
+                                                {{ number_format($lowStockCount) }}
+                                                @if ($lowStockCount > 0)
+                                                    <span class="badge badge-danger ml-1" style="font-size: 0.7rem; border-radius: 6px; padding: 3px 6px;">Alert</span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </a>
                                 </div>

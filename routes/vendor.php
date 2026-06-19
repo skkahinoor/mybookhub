@@ -234,6 +234,11 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
             Route::post('save-product-attributes', [ProductsController::class, 'saveProductAttributes'])->name('vendor.products.saveAttributes'); // Save product attributes (stock and discount) via AJAX
             Route::get('delete-product-image/{id}', [ProductsController::class, 'deleteProductImage']);             // Delete a product images (in the three folders: small, medium and large) in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
             Route::get('delete-product-video/{id}', [ProductsController::class, 'deleteProductVideo']);             // Delete a product video in add_edit_product.blade.php page from BOTH SERVER (FILESYSTEM) & DATABASE
+
+            // Low Stock Products Warning and Configuration
+            Route::get('low-stock-products', [ProductsController::class, 'lowStockProducts'])->name('vendor.products.lowStock');
+            Route::post('update-low-stock-threshold', [ProductsController::class, 'updateLowStockThreshold'])->name('vendor.products.updateThreshold');
+            Route::post('update-attribute-stock', [ProductsController::class, 'updateAttributeStock'])->name('vendor.products.updateAttributeStock');
         });
 
 
