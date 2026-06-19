@@ -63,6 +63,14 @@ class SellBookController extends Controller
                 ] : null,
                 'status' => $attribute ? $attribute->status : 0,
                 'admin_approved' => $attribute ? $attribute->admin_approved : 0,
+                'reject_reason' => $attribute ? $attribute->reject_reason : null,
+                'status_text' => $attribute->is_sold == 1 
+                    ? 'Sold Out' 
+                    : ($attribute->admin_approved == 1 
+                        ? 'Approved' 
+                        : ($attribute->admin_approved == 2 
+                            ? 'Rejected' 
+                            : 'Pending Review')),
                 'stock' => $attribute ? $attribute->stock : 0,
                 'show_contact' => $attribute ? $attribute->show_contact : 0,
                 'contact_details_paid' => $attribute ? $attribute->contact_details_paid : 0,
@@ -219,6 +227,14 @@ class SellBookController extends Controller
                     'stock' => $attribute->stock,
                     'status' => $attribute->status,
                     'admin_approved' => $attribute->admin_approved,
+                    'reject_reason' => $attribute->reject_reason,
+                    'status_text' => $attribute->is_sold == 1 
+                        ? 'Sold Out' 
+                        : ($attribute->admin_approved == 1 
+                            ? 'Approved' 
+                            : ($attribute->admin_approved == 2 
+                                ? 'Rejected' 
+                                : 'Pending Review')),
                     'show_contact' => $attribute->show_contact,
                     'contact_details_paid' => $attribute->contact_details_paid,
                     'platform_charge' => $attribute->platform_charge,
@@ -385,9 +401,9 @@ class SellBookController extends Controller
                 if ($request->hasFile('user_old_book_image')) {
                     $image_tmp = $request->file('user_old_book_image');
                     if ($image_tmp->isValid()) {
-                        $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
-                        $extension = $image_tmp->getClientOriginalExtension();
-                        $imageName = $image_name . '-' . rand(111, 99999) . '.' . $extension;
+                        Helper::ensureImageDirectoriesExist();
+                        // Centralized S3 upload via Service
+                        $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
                         $largeImagePath = public_path('front/images/product_images/large/' . $imageName);
                         $mediumImagePath = public_path('front/images/product_images/medium/' . $imageName);
                         $smallImagePath = public_path('front/images/product_images/small/' . $imageName);
@@ -450,9 +466,9 @@ class SellBookController extends Controller
             if ($request->hasFile('user_old_book_image')) {
                 $image_tmp = $request->file('user_old_book_image');
                 if ($image_tmp->isValid()) {
-                    $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = $image_name . '-' . rand(111, 99999) . '.' . $extension;
+                    Helper::ensureImageDirectoriesExist();
+                    // Centralized S3 upload via Service
+                    $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
                     $largeImagePath = public_path('front/images/product_images/large/' . $imageName);
                     $mediumImagePath = public_path('front/images/product_images/medium/' . $imageName);
                     $smallImagePath = public_path('front/images/product_images/small/' . $imageName);
@@ -635,9 +651,9 @@ class SellBookController extends Controller
             if ($request->hasFile('user_old_book_image')) {
                 $image_tmp = $request->file('user_old_book_image');
                 if ($image_tmp->isValid()) {
-                    $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = $image_name . '-' . rand(111, 99999) . '.' . $extension;
+                    Helper::ensureImageDirectoriesExist();
+                    // Centralized S3 upload via Service
+                    $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
                     $largeImagePath = public_path('front/images/product_images/large/' . $imageName);
                     $mediumImagePath = public_path('front/images/product_images/medium/' . $imageName);
                     $smallImagePath = public_path('front/images/product_images/small/' . $imageName);
@@ -665,9 +681,9 @@ class SellBookController extends Controller
             if ($request->hasFile('user_old_book_image')) {
                 $image_tmp = $request->file('user_old_book_image');
                 if ($image_tmp->isValid()) {
-                    $image_name = pathinfo($image_tmp->getClientOriginalName(), PATHINFO_FILENAME);
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = $image_name . '-' . rand(111, 99999) . '.' . $extension;
+                    Helper::ensureImageDirectoriesExist();
+                    // Centralized S3 upload via Service
+                    $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
                     $largeImagePath = public_path('front/images/product_images/large/' . $imageName);
                     $mediumImagePath = public_path('front/images/product_images/medium/' . $imageName);
                     $smallImagePath = public_path('front/images/product_images/small/' . $imageName);
