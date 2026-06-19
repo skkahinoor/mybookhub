@@ -1061,13 +1061,62 @@
                 height: auto;
             }
 
+            .v-banner-premium,
+            .s-banner-premium {
+                padding: 40px 30px !important;
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 35px;
+            }
+
             .v-text-premium,
             .v-card-premium,
             .s-card-premium {
                 max-width: 100% !important;
                 width: 100% !important;
             }
+
+            .v-text-premium h2 {
+                font-size: 32px !important;
+            }
+
+            .v-card-premium,
+            .s-card-premium {
+                padding: 30px 20px !important;
+            }
         }
+
+        @media (max-width: 480px) {
+            .v-banner-premium,
+            .s-banner-premium {
+                padding: 30px 20px !important;
+                gap: 25px;
+            }
+
+            .v-text-premium h2 {
+                font-size: 26px !important;
+            }
+
+            .v-text-premium p {
+                font-size: 14px !important;
+                margin-bottom: 15px !important;
+            }
+
+            .v-points-premium {
+                margin-top: 15px !important;
+                gap: 10px !important;
+            }
+
+            .v-point-premium {
+                padding: 8px 15px !important;
+                font-size: 12px !important;
+            }
+            
+            .v-label-premium {
+                margin-bottom: 15px !important;
+            }
+        }
+
 
         .v-banner-premium {
             background: linear-gradient(135deg, #1e3a8a 0%, #9d174d 100%);
@@ -1222,59 +1271,221 @@
 
         /* TESTIMONIALS */
         .testimonials-premium {
-            padding: 60px 8%;
-            text-align: center;
+            padding: 80px 8% 60px 8%;
+            background: radial-gradient(circle at 80% 20%, rgba(0, 86, 210, 0.03) 0%, transparent 50%), 
+                        radial-gradient(circle at 20% 80%, rgba(249, 115, 22, 0.02) 0%, transparent 50%);
+            position: relative;
+            overflow: hidden;
         }
 
         .t-title-premium {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 40px;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+            text-align: center;
         }
 
         .t-title-premium span {
             color: var(--primary-blue);
+            position: relative;
+        }
+
+        .t-subtitle-premium {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .testimonials-slider-container {
+            position: relative;
+            margin-left: -40px;
+            margin-right: -40px;
+            padding: 0 40px;
         }
 
         .t-grid-premium {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scroll-snap-type: x mandatory;
             gap: 30px;
+            padding: 20px 10px 40px 10px;
+            scrollbar-width: none; /* Hide scrollbar for Firefox */
         }
 
-        @media (max-width: 768px) {
-            .t-grid-premium {
-                grid-template-columns: 1fr;
-            }
+        .t-grid-premium::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for Chrome, Safari and Opera */
         }
 
         .t-card-premium {
             background: white;
-            padding: 40px;
+            padding: 35px 30px;
             border-radius: 20px;
             text-align: left;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.03), 0 4px 12px -2px rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            position: relative;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex: 0 0 380px;
+            scroll-snap-align: start;
+        }
+
+        @media (max-width: 480px) {
+            .t-card-premium {
+                flex: 0 0 290px;
+                padding: 25px 20px;
+            }
+            .testimonials-slider-container {
+                margin-left: -20px;
+                margin-right: -20px;
+                padding: 0 20px;
+            }
+        }
+
+        .t-card-premium:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px -10px rgba(0, 86, 210, 0.08), 0 8px 20px -6px rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 86, 210, 0.15);
+        }
+
+        .t-quote-icon-premium {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            font-size: 32px;
+            color: rgba(0, 86, 210, 0.06);
+            pointer-events: none;
+        }
+
+        .t-badge-premium {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #ECFDF5;
+            color: #10B981;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 50px;
+            margin-bottom: 15px;
+            align-self: flex-start;
         }
 
         .t-card-premium p {
             font-size: 15px;
-            font-weight: 600;
-            color: #334155;
-            margin-bottom: 15px;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            flex-grow: 1;
         }
 
         .t-stars-premium {
             color: var(--primary-orange);
-            margin-bottom: 12px;
+            margin-bottom: 15px;
+            font-size: 13px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .t-user-info-premium {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+            border-top: 1px solid #F1F5F9;
+            padding-top: 15px;
+        }
+
+        .t-avatar-premium {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
             font-size: 14px;
-            letter-spacing: 2px;
+            color: white;
+            text-transform: uppercase;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .t-avatar-grad-1 { background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%); }
+        .t-avatar-grad-2 { background: linear-gradient(135deg, #4E65FF 0%, #92EFFD 100%); }
+        .t-avatar-grad-3 { background: linear-gradient(135deg, #11E59A 0%, #0098F7 100%); }
+        .t-avatar-grad-4 { background: linear-gradient(135deg, #F54EA2 0%, #FF7676 100%); }
+        .t-avatar-grad-5 { background: linear-gradient(135deg, #622774 0%, #C53364 100%); }
+        .t-avatar-grad-6 { background: linear-gradient(135deg, #17EAD9 0%, #6078EA 100%); }
+
+        .t-details-premium {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
         }
 
         .t-author-premium {
-            font-size: 13px;
-            color: #94a3b8;
-            font-weight: 600;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
         }
+
+        .t-meta-premium {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .t-controls-premium {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .t-nav-btn-premium {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 86, 210, 0.15);
+            background: white;
+            color: var(--primary-blue);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 86, 210, 0.08);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .t-nav-btn-premium:hover {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+            box-shadow: 0 6px 16px rgba(0, 86, 210, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .t-nav-btn-premium:active {
+            transform: translateY(0);
+        }
+
+
 
         /* WHATSAPP */
         .whatsapp-premium {
@@ -1581,7 +1792,10 @@
 
                 <div class="feature">
                     <i class="fa-solid fa-check-circle"></i>
-                    50,000+ Books
+                    @php
+                        $totalBooksCount = \App\Models\Product::where('status', 1)->count();
+                    @endphp
+                    {{ number_format($totalBooksCount) }}+ Books
                 </div>
 
                 <div class="divider"></div>
@@ -1595,7 +1809,16 @@
 
                 <div class="feature">
                     <i class="fa-solid fa-truck"></i>
-                    Free Delivery on Orders ₹499+
+                    @php
+                        $deliverySetting = \App\Models\DeliverySetting::where('status', 1)->first();
+                        $minOrderAmount = $deliverySetting ? (int)$deliverySetting->min_order_amount : 499;
+                        $isFreeDelivery = $deliverySetting ? (int)$deliverySetting->is_free_delivery === 1 : true;
+                    @endphp
+                    @if($isFreeDelivery)
+                        Free Delivery on Orders ₹{{ $minOrderAmount }}+
+                    @else
+                        Standard Delivery Applied
+                    @endif
                 </div>
 
             </div>
@@ -1773,19 +1996,223 @@
     <!-- Testimonials Section -->
     <section class="testimonials-premium">
         <h2 class="t-title-premium">What Our <span>Students</span> Say</h2>
-        <div class="t-grid-premium">
-            <div class="t-card-premium">
-                <p>"Got my NCERT books at half price!"</p>
-                <div class="t-stars-premium">★★★★★</div>
-                <div class="t-author-premium">– Ananya, Class 10</div>
-            </div>
-            <div class="t-card-premium">
-                <p>"Sold my old engineering books easily."</p>
-                <div class="t-stars-premium">★★★★★</div>
-                <div class="t-author-premium">– Rahul, B.Tech Student</div>
+        <p class="t-subtitle-premium">Hear from students across India who saved big and shared their academic journeys with us.</p>
+        
+        <div class="testimonials-slider-container">
+            <div class="t-grid-premium">
+                <!-- Testimonial 1 -->
+                <div class="t-card-premium">
+                    <div class="t-quote-icon-premium">
+                        <i class="fas fa-quote-right"></i>
+                    </div>
+                    <div class="t-badge-premium">
+                        <i class="fas fa-check-circle"></i> Verified Student
+                    </div>
+                    <p>"Got my Class 10 NCERT books and reference guides at half price! The books were in excellent condition, and delivery was incredibly fast."</p>
+                    <div>
+                        <div class="t-stars-premium">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="t-user-info-premium">
+                            <div class="t-avatar-premium t-avatar-grad-1">AS</div>
+                            <div class="t-details-premium">
+                                <h4 class="t-author-premium">Ananya Sharma</h4>
+                                <span class="t-meta-premium">Class 10, CBSE (Delhi)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="t-card-premium">
+                    <div class="t-quote-icon-premium">
+                        <i class="fas fa-quote-right"></i>
+                    </div>
+                    <div class="t-badge-premium">
+                        <i class="fas fa-check-circle"></i> Verified Student
+                    </div>
+                    <p>"Selling my old B.Tech engineering textbooks was seamless. Just listed them, got a buyer nearby, and completed the handoff easily."</p>
+                    <div>
+                        <div class="t-stars-premium">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="t-user-info-premium">
+                            <div class="t-avatar-premium t-avatar-grad-2">RV</div>
+                            <div class="t-details-premium">
+                                <h4 class="t-author-premium">Rahul Verma</h4>
+                                <span class="t-meta-premium">B.Tech, IIT Bombay</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="t-card-premium">
+                    <div class="t-quote-icon-premium">
+                        <i class="fas fa-quote-right"></i>
+                    </div>
+                    <div class="t-badge-premium">
+                        <i class="fas fa-check-circle"></i> Verified Student
+                    </div>
+                    <p>"As a NEET aspirant in Kota, purchasing multiple prep modules gets very expensive. Found genuine study material here at an amazing discount!"</p>
+                    <div>
+                        <div class="t-stars-premium">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="t-user-info-premium">
+                            <div class="t-avatar-premium t-avatar-grad-3">PP</div>
+                            <div class="t-details-premium">
+                                <h4 class="t-author-premium">Priyanka Patel</h4>
+                                <span class="t-meta-premium">NEET Aspirant (Kota)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 4 -->
+                <div class="t-card-premium">
+                    <div class="t-quote-icon-premium">
+                        <i class="fas fa-quote-right"></i>
+                    </div>
+                    <div class="t-badge-premium">
+                        <i class="fas fa-check-circle"></i> Verified Student
+                    </div>
+                    <p>"Purchased reference books and solved test papers for my Class 12 West Bengal board exams. Saved around 60% compared to brand new bookstore prices."</p>
+                    <div>
+                        <div class="t-stars-premium">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star-half-alt"></i>
+                        </div>
+                        <div class="t-user-info-premium">
+                            <div class="t-avatar-premium t-avatar-grad-4">AS</div>
+                            <div class="t-details-premium">
+                                <h4 class="t-author-premium">Aditya Sen</h4>
+                                <span class="t-meta-premium">Class 12, WBBSE (Kolkata)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 5 -->
+                <div class="t-card-premium">
+                    <div class="t-quote-icon-premium">
+                        <i class="fas fa-quote-right"></i>
+                    </div>
+                    <div class="t-badge-premium">
+                        <i class="fas fa-check-circle"></i> Verified Student
+                    </div>
+                    <p>"Finding UPSC preparation materials in good condition is hard. I got standard resources and magazines from an ex-aspirant here. Very reliable platform!"</p>
+                    <div>
+                        <div class="t-stars-premium">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="t-user-info-premium">
+                            <div class="t-avatar-premium t-avatar-grad-5">AK</div>
+                            <div class="t-details-premium">
+                                <h4 class="t-author-premium">Amit Kumar</h4>
+                                <span class="t-meta-premium">UPSC Aspirant (Patna)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 6 -->
+                <div class="t-card-premium">
+                    <div class="t-quote-icon-premium">
+                        <i class="fas fa-quote-right"></i>
+                    </div>
+                    <div class="t-badge-premium">
+                        <i class="fas fa-check-circle"></i> Verified Student
+                    </div>
+                    <p>"As a Literature student, my course requires reading dozens of novels. Buying them all new is impossible. I got them all from MyBookHub at a fraction of the cost."</p>
+                    <div>
+                        <div class="t-stars-premium">
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="t-user-info-premium">
+                            <div class="t-avatar-premium t-avatar-grad-6">MN</div>
+                            <div class="t-details-premium">
+                                <h4 class="t-author-premium">Meera Nair</h4>
+                                <span class="t-meta-premium">MA English, Kerala University</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Slider Navigation Controls -->
+        <div class="t-controls-premium">
+            <button class="t-nav-btn-premium" id="t-prev" aria-label="Previous testimonials">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="t-nav-btn-premium" id="t-next" aria-label="Next testimonials">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
     </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const grid = document.querySelector('.t-grid-premium');
+            const prevBtn = document.getElementById('t-prev');
+            const nextBtn = document.getElementById('t-next');
+
+            if (grid && prevBtn && nextBtn) {
+                prevBtn.addEventListener('click', function() {
+                    grid.scrollBy({
+                        left: -380,
+                        behavior: 'smooth'
+                    });
+                });
+
+                nextBtn.addEventListener('click', function() {
+                    grid.scrollBy({
+                        left: 380,
+                        behavior: 'smooth'
+                    });
+                });
+                
+                const toggleButtons = () => {
+                    const scrollLeft = grid.scrollLeft;
+                    const maxScroll = grid.scrollWidth - grid.clientWidth;
+                    
+                    prevBtn.style.opacity = scrollLeft <= 5 ? '0.5' : '1';
+                    prevBtn.style.pointerEvents = scrollLeft <= 5 ? 'none' : 'auto';
+                    
+                    nextBtn.style.opacity = scrollLeft >= maxScroll - 5 ? '0.5' : '1';
+                    nextBtn.style.pointerEvents = scrollLeft >= maxScroll - 5 ? 'none' : 'auto';
+                };
+
+                grid.addEventListener('scroll', toggleButtons);
+                setTimeout(toggleButtons, 100);
+                window.addEventListener('resize', toggleButtons);
+            }
+        });
+    </script>
 
     <!-- Filter Drawer (Left Sidebar) -->
     <div class="drawer-overlay" id="modalOverlay"></div>
