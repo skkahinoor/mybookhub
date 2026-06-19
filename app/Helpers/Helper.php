@@ -69,6 +69,21 @@ namespace App\Helpers {
                 return false;
             }
         }
+
+        public static function ensureImageDirectoriesExist()
+        {
+            $dirs = [
+                public_path('front/images/product_images/large'),
+                public_path('front/images/product_images/medium'),
+                public_path('front/images/product_images/small'),
+                public_path('book_covers'),
+            ];
+            foreach ($dirs as $dir) {
+                if (!file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+            }
+        }
     }
 }
 
