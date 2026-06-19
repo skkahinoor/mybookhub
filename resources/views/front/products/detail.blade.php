@@ -473,8 +473,8 @@
                                     <i class="fas fa-exclamation-circle" style="margin-left: 8px;"></i>
                                 </div>
                                 <div class="price-range-text">
-                                    @if (session('distance', 10) < 100 && (session('user_latitude') && session('user_longitude')))
-                                        Currently no active sellers within {{ session('distance', 10) }} km.
+                                    @if (session('distance', 20) < 100 && (session('user_latitude') && session('user_longitude')))
+                                        Currently no active sellers within {{ session('distance', 20) }} km.
                                     @else
                                         Currently no active sellers for this book.
                                     @endif
@@ -488,7 +488,7 @@
                                     <a href="{{ url()->current() . '?sort=price' }}"
                                         style="{{ request('sort') == 'price' ? 'font-weight:bold; color:#2d3748;' : '' }}">Lowest
                                         Price</a> |
-                                    <a href="{{ url()->current() . '?sort=distance&distance=' . session('distance', 10) }}"
+                                    <a href="{{ url()->current() . '?sort=distance&distance=' . session('distance', 20) }}"
                                         style="{{ request('sort') == 'distance' ? 'font-weight:bold; color:#2d3748;' : '' }}">Distance</a>
                                     <span class="ms-3 text-muted">|</span>
                                     <div class="radius-selector d-inline-block ms-4" style="vertical-align: middle;">
@@ -498,12 +498,12 @@
                                             <span id="rangeValue"
                                                 style="color: #f97316; font-weight: 700; font-size: 11px;">
                                                 Within
-                                                {{ session('distance', 10) >= 100 ? '100 km+' : session('distance', 10) . ' km' }}
+                                                {{ session('distance', 20) >= 100 ? '100 km+' : session('distance', 20) . ' km' }}
                                             </span>
                                         </div>
                                         <div class="range-container">
                                             <input type="range" class="range-slider" id="distanceRange" min="1"
-                                                max="100" value="{{ session('distance', 10) }}"
+                                                max="100" value="{{ session('distance', 20) }}"
                                                 oninput="updateRangeText(this.value)"
                                                 onchange="window.location.href = '{{ url()->current() }}?distance=' + this.value + '&sort={{ request('sort') }}'">
                                             <div class="range-labels">
