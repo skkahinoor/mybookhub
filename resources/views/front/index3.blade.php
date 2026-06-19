@@ -1839,11 +1839,11 @@
                                 title="Detect my location"></i>
                         </div>
                         <span id="rangeValue"
-                            style="color: var(--primary-orange); font-weight: 700; font-size: 13px;">Within {{ session('distance', 10) >= 100 ? '100 km+' : session('distance', 10) . ' km' }}</span>
+                            style="color: var(--primary-orange); font-weight: 700; font-size: 13px;">Within {{ session('distance', 20) >= 100 ? '100 km+' : session('distance', 20) . ' km' }}</span>
                     </div>
                     <div class="range-container">
                         <input type="range" class="range-slider" id="distanceRange" min="1" max="100"
-                            value="{{ session('distance', 10) }}">
+                            value="{{ session('distance', 20) }}">
                         <div class="range-labels">
                             <span>1 km</span>
                             <span>25 km</span>
