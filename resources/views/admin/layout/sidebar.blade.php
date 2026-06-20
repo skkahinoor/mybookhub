@@ -524,6 +524,28 @@
                 </li>
             @endif
 
+            {{-- Wallet Management --}}
+            @if (in_array(Auth::guard('admin')->user()->type, ['superadmin', 'admin']))
+                <li class="nav-item">
+                    <a @if (Session::get('page') == 'wallet_settings') style="background: #052CA3 !important; color: #FFF !important" @endif
+                        class="nav-link" data-toggle="collapse" href="#ui-wallet-mgmt" aria-expanded="false"
+                        aria-controls="ui-wallet-mgmt">
+                        <i class="mdi mdi-wallet menu-icon"></i>
+                        <span class="menu-title">Wallet Management</span>
+                        <i class="menu-arrow"></i>
+                    </a>
+                    <div class="collapse @if (Session::get('page') == 'wallet_settings') show @endif" id="ui-wallet-mgmt">
+                        <ul class="nav flex-column sub-menu"
+                            style="background: #fff !important; color: #052CA3 !important">
+                            <li class="nav-item">
+                                <a @if (Session::get('page') == 'wallet_settings') style="background:#052CA3 !important;color:#FFF !important" @else style="background:#fff !important;color:#052CA3 !important" @endif
+                                    class="nav-link" href="{{ route('admin.wallet.settings') }}">Wallet Setting</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            @endif
+
             {{-- Catalogue Management (Remaining Items) --}}
             @canany(['view_sections', 'view_categories', 'view_publishers', 'view_authors', 'view_subjects',
                 'view_languages', 'view_types', 'view_products', 'view_editions', 'view_coupons', 'view_requested_books'])

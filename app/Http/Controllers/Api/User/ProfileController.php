@@ -165,6 +165,29 @@ class ProfileController extends Controller
 
         $user->assignRole($role);
 
+        // Credit dynamic Sign-up Bonus
+        $signupBonus = (float) \App\Models\Setting::getValue('signup_bonus', 100);
+        if ($signupBonus > 0) {
+            $user->wallet_balance += $signupBonus;
+            $user->save();
+
+            WalletTransaction::create([
+                'user_id'     => $user->id,
+                'amount'      => $signupBonus,
+                'type'        => 'credit',
+                'description' => 'Sign-up Bonus',
+            ]);
+
+            Notification::create([
+                'type'         => 'wallet_credit',
+                'title'        => 'Sign-up Bonus Credited',
+                'message'      => '₹' . number_format($signupBonus, 2) . ' has been added to your wallet as a sign-up bonus.',
+                'related_id'   => (int) $user->id,
+                'related_type' => 'App\Models\User',
+                'is_read'      => false,
+            ]);
+        }
+
         Notification::create([
             'type' => 'student_registration',
             'title' => 'New Student Registered',

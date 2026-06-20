@@ -192,6 +192,29 @@ class UserController extends Controller
                                         'class_id' => request()->cookie('bg_subcategory_id') ?? session('bg_subcategory_id'),
                                     ]
                                 );
+
+                                // Credit dynamic Sign-up Bonus
+                                $signupBonus = (float) \App\Models\Setting::getValue('signup_bonus', 100);
+                                if ($signupBonus > 0) {
+                                    $user->wallet_balance += $signupBonus;
+                                    $user->save();
+
+                                    \App\Models\WalletTransaction::create([
+                                        'user_id'     => $user->id,
+                                        'amount'      => $signupBonus,
+                                        'type'        => 'credit',
+                                        'description' => 'Sign-up Bonus',
+                                    ]);
+
+                                    \App\Models\Notification::create([
+                                        'type'         => 'wallet_credit',
+                                        'title'        => 'Sign-up Bonus Credited',
+                                        'message'      => '₹' . number_format($signupBonus, 2) . ' has been added to your wallet as a sign-up bonus.',
+                                        'related_id'   => (int) $user->id,
+                                        'related_type' => \App\Models\User::class,
+                                        'is_read'      => false,
+                                    ]);
+                                }
                             }
                         }
                     }

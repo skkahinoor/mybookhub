@@ -227,6 +227,10 @@ $adminRoutesClosure = function () {
         Route::get('refer-settings', [App\Http\Controllers\Admin\ReferSettingsController::class, 'index'])->name('admin.refer.settings');
         Route::post('refer-settings/update', [App\Http\Controllers\Admin\ReferSettingsController::class, 'update'])->name('admin.refer.settings.update');
 
+        // Wallet Settings
+        Route::get('wallet-settings', [App\Http\Controllers\Admin\WalletSettingsController::class, 'index'])->name('admin.wallet.settings');
+        Route::post('wallet-settings/update', [App\Http\Controllers\Admin\WalletSettingsController::class, 'update'])->name('admin.wallet.settings.update');
+
         // Publishers
         Route::get('publisher', 'PublisherController@publisher')->name('admin.publisher');
         Route::post('update-publisher-status', 'PublisherController@updatePublisherStatus')->name('admin.updatepublisherstatus'); // Update Publisher Status using AJAX in publisher.blade.php
