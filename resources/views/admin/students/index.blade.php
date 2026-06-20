@@ -225,7 +225,7 @@
                                     <th>#</th>
                                     <th>Name</th>
                                     <th>Mobile No</th>
-                                    <th>Gender</th>
+                                    <th>Location</th>
                                     {{-- <th>Class</th> --}}
                                     <th>DOB</th>
                                     <th>Institution</th>
@@ -270,7 +270,7 @@
                 {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
                 {data: 'name', name: 'name'},
                 {data: 'phone', name: 'phone'},
-                {data: 'gender', name: 'gender'},
+                {data: 'location', name: 'location', orderable: false, searchable: false},
                 {data: 'dob', name: 'dob'},
                 {data: 'institution', name: 'institution'},
                 {data: 'status', name: 'status', orderable: false, searchable: false},

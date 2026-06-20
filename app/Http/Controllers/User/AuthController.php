@@ -186,6 +186,8 @@ class AuthController extends Controller
             'phone'          => $request->phone,
             'password_hash' => Hash::make($request->password),
             'role_id'        => $roleId,
+            'latitude'       => $request->latitude,
+            'longitude'      => $request->longitude,
         ]);
 
         // Generate and Send OTP

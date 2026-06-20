@@ -119,6 +119,8 @@
 
                         <form id="registerForm" action="{{ route('user.register') }}" method="post">
                             @csrf
+                            <input type="hidden" name="latitude" id="front_reg_latitude">
+                            <input type="hidden" name="longitude" id="front_reg_longitude">
 
                             <div class="form-group mb-3">
                                 <label for="username" class="font-weight-bold">
@@ -259,4 +261,18 @@
             }
         }
     </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const latField = document.getElementById('front_reg_latitude');
+                    const lngField = document.getElementById('front_reg_longitude');
+                    if (latField) latField.value = position.coords.latitude;
+                    if (lngField) lngField.value = position.coords.longitude;
+                }, function(error) {
+                    console.warn("Geolocation access denied or unavailable: ", error);
+                });
+            }
+        });
+    </script>
 @endsection

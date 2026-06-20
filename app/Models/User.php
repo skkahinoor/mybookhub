@@ -52,7 +52,9 @@ class User extends Authenticatable
         'ifsc_code',
         'upi_id',
         'referral_code',
-        'referred_by'
+        'referred_by',
+        'latitude',
+        'longitude'
     ];
 
     /**

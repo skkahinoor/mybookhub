@@ -35,8 +35,32 @@ class StudentController extends Controller
                 ->addColumn('dob', function ($row) {
                     return $row->dob ? \Carbon\Carbon::parse($row->dob)->format('d M Y') : 'N/A';
                 })
-                ->addColumn('gender', function ($row) {
-                    return ucfirst($row->gender);
+                ->addColumn('location', function ($row) {
+                    if (empty($row->latitude) || empty($row->longitude)) {
+                        return 'N/A';
+                    }
+
+                    // Format address name
+                    $block = $row->block->name ?? null;
+                    $district = $row->district->name ?? null;
+                    $state = $row->state->name ?? null;
+                    $country = $row->country->name ?? null;
+                    $addressParts = array_filter([$row->address, $block, $district, $state, $row->pincode, $country]);
+                    $locationName = !empty($addressParts) ? implode(', ', $addressParts) : 'N/A';
+
+                    $googleMapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' . $row->latitude . ',' . $row->longitude;
+
+                    $html = '<div style="font-size: 13px; max-width: 250px; white-space: normal;">';
+                    $html .= '<div style="font-weight: 600; margin-bottom: 4px; color: #1f2937;">' . e($locationName) . '</div>';
+                    $html .= '<div class="d-flex align-items-center flex-wrap" style="font-size: 11px; color: #6b7280; gap: 8px;">';
+                    $html .= '<span><i class="mdi mdi-target"></i> ' . $row->latitude . ',' . $row->longitude . '</span>';
+                    $html .= '<a href="' . $googleMapsUrl . '" target="_blank" class="text-primary font-weight-bold" style="text-decoration: none; font-size: 11px; display: inline-flex; align-items: center; gap: 2px;">';
+                    $html .= '<i class="mdi mdi-map-marker text-danger"></i> VIEW MAP';
+                    $html .= '</a>';
+                    $html .= '</div>';
+                    $html .= '</div>';
+
+                    return $html;
                 })
                 ->addColumn('status', function ($row) {
                     $statusIcon = $row->status == 1 ? 'mdi-bookmark-check' : 'mdi-bookmark-outline';
@@ -60,7 +84,7 @@ class StudentController extends Controller
                                 <i class="fas fa-trash"></i>
                             </button>';
                 })
-                ->rawColumns(['checkbox', 'status', 'actions'])
+                ->rawColumns(['checkbox', 'location', 'status', 'actions'])
                 ->make(true);
         }
 

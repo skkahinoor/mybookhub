@@ -34,7 +34,7 @@
                             <th>Roll No</th>
                             <th>Email</th>
                             <th>Phone</th>
-                            <th>Gender</th>
+                            <th>Location</th>
                             <th>Class</th>
                             <th>DOB</th>
                             <th>Institution</th>
@@ -49,7 +49,29 @@
                                 <td>{{ $student->roll_number ?? 'N/A' }}</td>
                                 <td>{{ $student->email ?? 'N/A' }}</td>
                                 <td>{{ $student->phone ?? 'N/A' }}</td>
-                                <td>{{ $student->gender ? ucfirst($student->gender) : 'N/A' }}</td>
+                                <td>
+                                    @if($student->latitude && $student->longitude)
+                                        @php
+                                            $blockName = $student->block->name ?? null;
+                                            $districtName = $student->district->name ?? null;
+                                            $stateName = $student->state->name ?? null;
+                                            $countryName = $student->country->name ?? null;
+                                            $addressParts = array_filter([$student->address, $blockName, $districtName, $stateName, $student->pincode, $countryName]);
+                                            $locationName = !empty($addressParts) ? implode(', ', $addressParts) : 'N/A';
+                                        @endphp
+                                        <div style="font-size: 13px; max-width: 250px; white-space: normal;">
+                                            <div style="font-weight: 600; margin-bottom: 4px; color: #1f2937;">{{ $locationName }}</div>
+                                            <div class="d-flex align-items-center flex-wrap" style="font-size: 11px; color: #6b7280; gap: 8px;">
+                                                <span><i class="fas fa-crosshairs"></i> {{ $student->latitude }}, {{ $student->longitude }}</span>
+                                                <a href="https://www.google.com/maps/dir/?api=1&destination={{ $student->latitude }},{{ $student->longitude }}" target="_blank" class="text-primary font-weight-bold" style="text-decoration: none; display: inline-flex; align-items: center; gap: 2px;">
+                                                    <i class="fas fa-map-marker-alt text-danger"></i> VIEW MAP
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @else
+                                        N/A
+                                    @endif
+                                </td>
                                 <td>{{ $student->class ?? 'N/A' }}</td>
                                 <td>{{ $student->dob ? \Carbon\Carbon::parse($student->dob)->format('d M Y') : 'N/A' }}</td>
                                 <td>{{ $student->institution?->name ?? 'No Institution' }}</td>
