@@ -711,24 +711,34 @@ class ProductsController extends Controller
         }
 
 
-        if (!$product->category) {
-            abort(404, 'Product category not found');
+        $categoryDetails = null;
+        $categoryId = null;
+        if ($product->category) {
+            $categoryDetails = Category::categoryDetails($product->category->url);
+            $categoryId = $product->category->id;
         }
 
-        $categoryDetails = Category::categoryDetails($product->category->url);
-        $categoryId = $product->category->id;
-
-        $similarProducts = ProductsAttribute::with([
+        $similarProductsQuery = ProductsAttribute::with([
             'product.publisher',
             'product.authors',
         ])
             ->where('status', 1)              // attribute active
-            ->where('stock', '>', 0)          // optional but recommended
-            ->whereHas('product', function ($query) use ($categoryId, $productId) {
+            ->where('stock', '>', 0);         // optional but recommended
+
+        if ($categoryId) {
+            $similarProductsQuery->whereHas('product', function ($query) use ($categoryId, $productId) {
                 $query->where('status', 1)
                     ->where('category_id', $categoryId)
                     ->where('id', '!=', $productId);
-            })
+            });
+        } else {
+            $similarProductsQuery->whereHas('product', function ($query) use ($productId) {
+                $query->where('status', 1)
+                    ->where('id', '!=', $productId);
+            });
+        }
+
+        $similarProducts = $similarProductsQuery
             ->inRandomOrder()
             ->get()
             ->groupBy('product_id')            // 🔥 remove duplicates

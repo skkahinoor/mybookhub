@@ -1127,7 +1127,7 @@
                                     </li>
                                     <li>
                                         <i class="flaticon-phone"></i>
-                                        <span>+91-9876543210</span>
+                                        <span>+91-8018433463</span>
                                     </li>
                                     <li>
                                         <i class="flaticon-email"></i>

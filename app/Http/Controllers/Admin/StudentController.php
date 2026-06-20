@@ -76,12 +76,16 @@ class StudentController extends Controller
                 })
                 ->addColumn('actions', function ($row) {
                     return '<a href="' . url('admin/students/'.$row->id.'/edit') . '"
-                               class="btn btn-sm btn-success">
+                               class="btn btn-sm btn-success" title="Edit Student">
                                 <i class="fas fa-edit"></i>
                             </a>
                             <button onclick="confirmDelete(' . $row->id . ')"
-                                    class="btn btn-sm btn-danger">
+                                    class="btn btn-sm btn-danger" title="Delete Student">
                                 <i class="fas fa-trash"></i>
+                            </button>
+                            <button onclick="openCreditModal(' . $row->id . ', \'' . addslashes(e($row->name)) . '\', ' . $row->wallet_balance . ')"
+                                    class="btn btn-sm btn-info text-white" title="Credit Wallet">
+                                <i class="fas fa-wallet"></i>
                             </button>';
                 })
                 ->rawColumns(['checkbox', 'location', 'status', 'actions'])
@@ -344,5 +348,53 @@ class StudentController extends Controller
             ->get();
 
         return response()->json($classes);
+    }
+
+    public function creditWallet(Request $request)
+    {
+        $admin = Auth::guard('admin')->user();
+
+        // Only superadmin and admin can access
+        if (!$admin || !in_array($admin->type, ['superadmin', 'admin'])) {
+            return redirect('admin/login')
+                ->with('error_message', 'Unauthorized access.');
+        }
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'nullable|string|max:255',
+        ]);
+
+        $student = User::where('id', $request->user_id)
+            ->where('role_id', RoleHelper::studentId())
+            ->firstOrFail();
+
+        $amount = (float) $request->amount;
+        $description = $request->description ?: 'Manual credit by admin';
+
+        // Credit balance
+        $student->wallet_balance += $amount;
+        $student->save();
+
+        // Create transaction log
+        \App\Models\WalletTransaction::create([
+            'user_id' => $student->id,
+            'amount' => $amount,
+            'type' => 'credit',
+            'description' => $description,
+        ]);
+
+        // Create notification
+        \App\Models\Notification::create([
+            'type' => 'wallet_credit',
+            'title' => 'Wallet Credited by Admin',
+            'message' => '₹' . number_format($amount, 2) . ' has been manually credited to your wallet by the administrator. Reason: ' . $description,
+            'related_id' => (int) $student->id,
+            'related_type' => User::class,
+            'is_read' => false,
+        ]);
+
+        return redirect()->back()->with('success_message', '₹' . number_format($amount, 2) . ' has been successfully credited to ' . $student->name . '\'s wallet.');
     }
 }

@@ -119,6 +119,7 @@ $adminRoutesClosure = function () {
         Route::get('notifications/get', 'NotificationController@getNotifications')->name('notifications.get');
         Route::post('notifications/{id}/read', 'NotificationController@markAsRead')->name('notifications.read');
         Route::post('notifications/mark-all-read', 'NotificationController@markAllAsRead')->name('notifications.mark_all_read');
+        Route::post('notifications/delete-all', 'NotificationController@deleteAll')->name('notifications.delete_all');
 
         // Push Notifications
         Route::get('push-notifications', 'PushNotificationController@create')->name('admin.push-notifications.create');
@@ -356,6 +357,7 @@ $adminRoutesClosure = function () {
         Route::get('students/{id}/details', 'StudentController@details')->name('admin.students.details');
         Route::post('students/{id}/update-status', 'StudentController@updateStatus')->name('admin.students.updateStatus');
         Route::post('students/bulk-delete', 'StudentController@bulkDelete')->name('admin.students.bulkDelete');
+        Route::post('students/credit-wallet', 'StudentController@creditWallet')->name('admin.students.creditWallet');
         Route::get('get-institution-classes', 'StudentController@getInstitutionClasses')->name('admin.get_institution_classes');
         Route::get('get-institution-boards', 'StudentController@getInstitutionBoards')->name('admin.get_institution_boards');
 
