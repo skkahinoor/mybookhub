@@ -948,18 +948,18 @@ class ProductsController extends Controller
             $isReligious = $section && in_array($section->name, $noSubjectsSections);
 
             $rules = [
-                'section_id'    => 'required|exists:sections,id',
-                'category_id'   => 'required|exists:categories,id',
-                'condition'     => 'required|in:new,old',
+                'section_id'    => 'exists:sections,id',
+                'category_id'   => 'exists:categories,id',
+                'condition'     => 'in:new,old',
                 'product_name'  => 'required',
                 'product_isbn'  => $isbnValidationRule,
                 'product_price' => 'required|numeric',
-                'language_id'   => 'required',
+                'language_id'   => 'nullable',
             ];
 
             if (!$isReligious) {
-                $rules['subcategory_id'] = 'required|exists:subcategories,id';
-                $rules['subject_id'] = 'required|exists:subjects,id';
+                $rules['subcategory_id'] = 'exists:subcategories,id';
+                $rules['subject_id'] = 'exists:subjects,id';
             }
 
             $validator = Validator::make($request->all(), $rules);
