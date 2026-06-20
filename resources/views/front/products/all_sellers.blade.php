@@ -294,18 +294,18 @@
                     <div class="sort-links">
                         Sort by: 
                         <a href="{{ url()->current() . '?sort=price' }}" style="{{ request('sort') == 'price' ? 'font-weight:bold; color:#2d3748;' : '' }}">Lowest Price</a> | 
-                        <a href="{{ url()->current() . '?sort=distance&distance=' . session('distance', 10) }}" style="{{ request('sort') == 'distance' ? 'font-weight:bold; color:#2d3748;' : '' }}">Distance</a>
+                        <a href="{{ url()->current() . '?sort=distance&distance=' . session('distance', 20) }}" style="{{ request('sort') == 'distance' ? 'font-weight:bold; color:#2d3748;' : '' }}">Distance</a>
                         <span class="ms-3 text-muted">|</span>
                         <div class="radius-selector d-inline-block ms-4" style="vertical-align: middle;">
                             <div class="d-flex justify-content-between align-items-center mb-1">
                                 <span style="font-size: 11px; font-weight: 700; color: #64748b;">Distance Range</span>
                                 <span id="rangeValue" style="color: #f97316; font-weight: 700; font-size: 11px;">
-                                    Within {{ session('distance', 10) >= 100 ? '100 km+' : session('distance', 10) . ' km' }}
+                                    Within {{ session('distance', 20) >= 100 ? '100 km+' : session('distance', 20) . ' km' }}
                                 </span>
                             </div>
                             <div class="range-container">
                                 <input type="range" class="range-slider" id="distanceRange" min="1" max="100" 
-                                    value="{{ session('distance', 10) }}"
+                                    value="{{ session('distance', 20) }}"
                                     oninput="updateRangeText(this.value)"
                                     onchange="window.location.href = '{{ url()->current() }}?distance=' + this.value + '&sort={{ request('sort') }}'">
                                 <div class="range-labels">

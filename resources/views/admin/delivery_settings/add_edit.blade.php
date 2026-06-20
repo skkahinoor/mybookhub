@@ -83,6 +83,56 @@
                         </div>
                     </div>
                 </div>
+                
+                {{-- Explanation and Guide Card on the Right Side --}}
+                <div class="col-md-6 grid-margin stretch-card">
+                    <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+                        <div class="card-body">
+                            <h4 class="card-title" style="color: #25396f; font-weight: 800;">
+                                <i class="fas fa-info-circle text-primary mr-2"></i> Field Explanations
+                            </h4>
+                            <p class="text-muted" style="font-weight: 600; font-size: 0.9rem; border-bottom: 1px solid #f1f3f7; padding-bottom: 12px; margin-bottom: 15px;">
+                                Use these settings to control shipping costs and delivery agent payouts.
+                            </p>
+                            
+                            <ul class="list-unstyled" style="font-family: 'Nunito', sans-serif;">
+                                <li class="mb-4">
+                                    <h6 style="color: #435ebe; font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+                                        <i class="fas fa-shopping-basket text-success mr-2"></i> Minimum Order Amount (₹)
+                                    </h6>
+                                    <p class="text-muted mb-0" style="font-size: 0.85rem; font-weight: 600; padding-left: 24px; line-height: 1.4;">
+                                        The minimum order value required for a customer to qualify for free delivery (e.g., ₹499.00). Only applies if the <strong>Is Free Delivery?</strong> checkbox is enabled.
+                                    </p>
+                                </li>
+                                <li class="mb-4">
+                                    <h6 style="color: #435ebe; font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+                                        <i class="fas fa-coins text-warning mr-2"></i> Delivery Charge (₹)
+                                    </h6>
+                                    <p class="text-muted mb-0" style="font-size: 0.85rem; font-weight: 600; padding-left: 24px; line-height: 1.4;">
+                                        The default shipping fee charged to customers if their total order amount falls below the minimum order threshold (e.g., ₹30.00).
+                                    </p>
+                                </li>
+                                <li class="mb-4">
+                                    <h6 style="color: #435ebe; font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+                                        <i class="fas fa-route text-info mr-2"></i> Delivery Agent Rate (per KM) (₹)
+                                    </h6>
+                                    <p class="text-muted mb-0" style="font-size: 0.85rem; font-weight: 600; padding-left: 24px; line-height: 1.4;">
+                                        The mileage rate paid to delivery agents per kilometer traveled for order delivery (e.g., ₹10.00). Useful for automatic agent earnings calculation.
+                                    </p>
+                                </li>
+                                <li class="mb-4">
+                                    <h6 style="color: #435ebe; font-weight: 800; font-size: 0.95rem; margin-bottom: 6px;">
+                                        <i class="fas fa-toggle-on text-primary mr-2"></i> Is Free Delivery? & Status
+                                    </h6>
+                                    <p class="text-muted mb-0" style="font-size: 0.85rem; font-weight: 600; padding-left: 24px; line-height: 1.4;">
+                                        <strong>Is Free Delivery:</strong> If checked, qualifying orders above the threshold get free shipping. If unchecked, standard charges apply to all orders.<br>
+                                        <strong>Status:</strong> Enables/Disables this entire shipping charge setting on the website.
+                                    </p>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         @include('admin.layout.footer')

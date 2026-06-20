@@ -44,6 +44,8 @@
                             <form class="pt-3" action="{{ route('student.registerstore') }}" method="post">
                                 @csrf
                                 <input type="hidden" name="role_id" value="{{ \App\Helpers\RoleHelper::studentId() ?? \App\Helpers\RoleHelper::userId() }}">
+                                <input type="hidden" name="latitude" id="reg_latitude">
+                                <input type="hidden" name="longitude" id="reg_longitude">
                                 @if ($errors->any())
                                     <div class="alert alert-danger">
                                         <ul class="mb-0 pl-3">
@@ -105,6 +107,18 @@
     <script src="{{ asset('user/js/settings.js') }}"></script>
     <script src="{{ asset('user/js/todolist.js') }}"></script>
     <!-- endinject -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('reg_latitude').value = position.coords.latitude;
+                    document.getElementById('reg_longitude').value = position.coords.longitude;
+                }, function(error) {
+                    console.warn("Geolocation access denied or unavailable: ", error);
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

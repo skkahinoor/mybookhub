@@ -555,7 +555,7 @@ class ProductsController extends Controller
         }
         $userLat = session('user_latitude');
         $userLng = session('user_longitude');
-        $distanceRadius = session('distance', 10);
+        $distanceRadius = session('distance', 20);
 
         // Fetch ALL active sellers for this product to calculate Price Range and Buy Box
         $allSellersQuery = ProductsAttribute::with(['vendor.vendorbusinessdetails', 'user', 'vendor', 'ratings', 'condition'])
@@ -799,7 +799,7 @@ class ProductsController extends Controller
         }
         $userLat = session('user_latitude');
         $userLng = session('user_longitude');
-        $distanceRadius = session('distance', 10);
+        $distanceRadius = session('distance', 20);
 
         $allSellersQuery = ProductsAttribute::with(['vendor.vendorbusinessdetails', 'user', 'vendor', 'ratings', 'condition'])
             ->where('product_id', $productId)

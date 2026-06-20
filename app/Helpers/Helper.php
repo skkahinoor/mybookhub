@@ -84,6 +84,81 @@ namespace App\Helpers {
                 }
             }
         }
+
+        public static function geocodeAddress($address, $blockName = null, $districtName = null, $stateName = null, $countryName = null, $pincode = null)
+        {
+            $queryParts = [];
+            if (!empty($address)) $queryParts[] = $address;
+            if (!empty($blockName)) $queryParts[] = $blockName;
+            if (!empty($districtName)) $queryParts[] = $districtName;
+            if (!empty($stateName)) $queryParts[] = $stateName;
+            if (!empty($countryName)) $queryParts[] = $countryName;
+            if (!empty($pincode)) $queryParts[] = $pincode;
+
+            $q = implode(', ', $queryParts);
+            if (empty($q)) {
+                return null;
+            }
+
+            try {
+                $client = new \GuzzleHttp\Client();
+                $response = $client->request('GET', 'https://nominatim.openstreetmap.org/search', [
+                    'query' => [
+                        'q' => $q,
+                        'format' => 'json',
+                        'limit' => 1
+                    ],
+                    'headers' => [
+                        'User-Agent' => 'MyBookHub/1.0 (skkahinoor/mybookhub)'
+                    ],
+                    'timeout' => 5
+                ]);
+
+                if ($response->getStatusCode() === 200) {
+                    $data = json_decode($response->getBody()->getContents(), true);
+                    if (!empty($data) && isset($data[0]['lat']) && isset($data[0]['lon'])) {
+                        return [
+                            'latitude' => (float)$data[0]['lat'],
+                            'longitude' => (float)$data[0]['lon']
+                        ];
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error("Geocoding failed for address '{$q}': " . $e->getMessage());
+            }
+
+            // Fallback: search by pincode only
+            if (!empty($pincode)) {
+                try {
+                    $client = new \GuzzleHttp\Client();
+                    $response = $client->request('GET', 'https://nominatim.openstreetmap.org/search', [
+                        'query' => [
+                            'q' => $pincode . ($countryName ? ', ' . $countryName : ''),
+                            'format' => 'json',
+                            'limit' => 1
+                        ],
+                        'headers' => [
+                            'User-Agent' => 'MyBookHub/1.0 (skkahinoor/mybookhub)'
+                        ],
+                        'timeout' => 5
+                    ]);
+
+                    if ($response->getStatusCode() === 200) {
+                        $data = json_decode($response->getBody()->getContents(), true);
+                        if (!empty($data) && isset($data[0]['lat']) && isset($data[0]['lon'])) {
+                            return [
+                                'latitude' => (float)$data[0]['lat'],
+                                'longitude' => (float)$data[0]['lon']
+                            ];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Fallback geocoding failed for pincode '{$pincode}': " . $e->getMessage());
+                }
+            }
+
+            return null;
+        }
     }
 }
 

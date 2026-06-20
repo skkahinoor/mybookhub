@@ -61,6 +61,8 @@ class AdminController extends Controller
         $staffsCount = !empty($staffRoles) ? User::role($staffRoles, 'web')->count() : 0;
 
         // Vendor-specific counts
+        $lowStockCount = 0;
+        $vendor = null;
         if ($adminType === 'vendor' && $vendorId) {
 
             // Vendors should NOT see vendor count
@@ -87,6 +89,17 @@ class AdminController extends Controller
             // Users & sales executives usually remain global
             $usersCount = User::where('role_id', $studentrole->id ?? 0)->count();
             $salesExecutivesCount = User::where('role_id', $salesrole->id ?? 0)->count();
+
+            // Fetch vendor and calculate low stock products count
+            $vendor = Vendor::find($vendorId);
+            $threshold = $vendor ? ($vendor->low_stock_threshold ?? 10) : 10;
+            $lowStockCount = ProductsAttribute::where('vendor_id', $vendorId)
+                ->where('status', 1)
+                ->where('stock', '<=', $threshold)
+                ->whereHas('product', function ($q) {
+                    $q->where('status', 1);
+                })
+                ->count();
         }
 
         // Monthly orders data for the chart
@@ -160,12 +173,6 @@ class AdminController extends Controller
                 ->values();
         }
 
-        // Vendor plan info
-        $vendor = null;
-        if ($adminType === 'vendor' && $vendorId) {
-            $vendor = Vendor::find($vendorId);
-        }
-
         return view('admin.dashboard', compact(
             'productsCount',
             'ordersCount',
@@ -181,7 +188,8 @@ class AdminController extends Controller
             'ordersPerMonth',
             'recentOrders',
             'sellBookRequests',
-            'eligibleVendorPayoutItems'
+            'eligibleVendorPayoutItems',
+            'lowStockCount'
         ));
     }
 

@@ -75,7 +75,7 @@ class IndexController extends Controller
         if ($request->filled('distance')) {
             session(['distance' => (int) $request->distance]);
         }
-        $currentDistance = session('distance', 10);
+        $currentDistance = session('distance', 20);
         $userLat = session('user_latitude');
         $userLng = session('user_longitude');
 

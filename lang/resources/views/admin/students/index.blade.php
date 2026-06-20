@@ -244,6 +244,34 @@
                                         </div>
                                     </div>
 
+                                    @if($student->latitude && $student->longitude)
+                                        @php
+                                            $blockName = $student->block->name ?? null;
+                                            $districtName = $student->district->name ?? null;
+                                            $stateName = $student->state->name ?? null;
+                                            $countryName = $student->country->name ?? null;
+                                            $addressParts = array_filter([$student->address, $blockName, $districtName, $stateName, $student->pincode, $countryName]);
+                                            $locationName = !empty($addressParts) ? implode(', ', $addressParts) : 'N/A';
+                                        @endphp
+                                        <div class="mt-3" style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; border-left: 3px solid #f59e0b;">
+                                            <div class="text-uppercase font-weight-bold mb-1" style="font-size: 10px; color: #92400e; letter-spacing: 0.5px;">
+                                                Capture Location
+                                            </div>
+                                            <div style="font-size: 13px; color: #1f2937; line-height: 1.4; margin-bottom: 6px; white-space: normal;">
+                                                {{ $locationName }}
+                                            </div>
+                                            <div class="d-flex align-items-center flex-wrap" style="font-size: 11px; color: #6b7280; gap: 8px;">
+                                                <i class="mdi mdi-target" style="font-size: 15px;"></i>
+                                                <span>{{ $student->latitude }}, {{ $student->longitude }}</span>
+                                                
+                                                <a href="https://www.google.com/maps/dir/?api=1&destination={{ $student->latitude }},{{ $student->longitude }}" target="_blank" 
+                                                   class="text-primary font-weight-bold text-uppercase d-flex align-items-center" style="text-decoration: none; font-size: 11px; gap: 2px;">
+                                                    <i class="mdi mdi-map-marker text-danger" style="font-size: 15px;"></i> VIEW MAP
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endif
+
                                     @if($student->institution)
                                         <div class="mt-3">
                                             <span class="institution-badge">

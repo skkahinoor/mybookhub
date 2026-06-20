@@ -104,6 +104,26 @@ class AccountController extends Controller
                 if ($request->has('pincode')) $updateData['pincode'] = $validated['pincode'];
                 if ($request->has('address')) $updateData['address'] = $validated['address'];
 
+                // Geocode and update latitude/longitude
+                $block = !empty($validated['block_id']) ? \App\Models\Block::find($validated['block_id'])?->name : null;
+                $district = !empty($validated['district_id']) ? \App\Models\District::find($validated['district_id'])?->name : null;
+                $state = !empty($validated['state_id']) ? \App\Models\State::find($validated['state_id'])?->name : null;
+                $country = !empty($validated['country_id']) ? \App\Models\Country::find($validated['country_id'])?->name : null;
+
+                $coords = \App\Helpers\Helper::geocodeAddress(
+                    $validated['address'] ?? null,
+                    $block,
+                    $district,
+                    $state,
+                    $country,
+                    $validated['pincode'] ?? null
+                );
+
+                if ($coords) {
+                    $updateData['latitude'] = $coords['latitude'];
+                    $updateData['longitude'] = $coords['longitude'];
+                }
+
                 $user->update($updateData);
 
                 // Update academic profile

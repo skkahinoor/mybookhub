@@ -2081,4 +2081,89 @@ class ProductsController extends Controller
             ]);
         }
     }
+
+    public function lowStockProducts(Request $request)
+    {
+        $logos      = HeaderLogo::first();
+        $headerLogo = HeaderLogo::first();
+
+        $admin     = Auth::guard('admin')->user();
+        $adminType = $admin->type;
+        $vendor_id = $admin->vendor_id;
+
+        if ($adminType !== 'vendor' || !$vendor_id) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $vendor = \App\Models\Vendor::findOrFail($vendor_id);
+        $threshold = $vendor->low_stock_threshold ?? 10;
+
+        $lowStockProducts = ProductsAttribute::where('vendor_id', $vendor_id)
+            ->where('status', 1)
+            ->where('stock', '<=', $threshold)
+            ->with([
+                'product' => function ($q) {
+                    $q->select('id', 'product_name', 'product_isbn', 'product_price', 'product_image');
+                }
+            ])
+            ->whereHas('product', function ($q) {
+                $q->where('status', 1);
+            })
+            ->get();
+
+        return view('admin.products.low_stock', compact('logos', 'headerLogo', 'vendor', 'lowStockProducts', 'threshold'));
+    }
+
+    public function updateLowStockThreshold(Request $request)
+    {
+        $admin     = Auth::guard('admin')->user();
+        $adminType = $admin->type;
+        $vendor_id = $admin->vendor_id;
+
+        if ($adminType !== 'vendor' || !$vendor_id) {
+            return redirect()->back()->with('error_message', 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'low_stock_threshold' => 'required|integer|min:0',
+        ]);
+
+        $vendor = \App\Models\Vendor::findOrFail($vendor_id);
+        $vendor->low_stock_threshold = $request->low_stock_threshold;
+        $vendor->save();
+
+        return redirect()->back()->with('success_message', 'Low stock threshold updated successfully!');
+    }
+
+    public function updateAttributeStock(Request $request)
+    {
+        $admin     = Auth::guard('admin')->user();
+        $adminType = $admin->type;
+        $vendor_id = $admin->vendor_id;
+
+        if ($adminType !== 'vendor' || !$vendor_id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized action.'], 403);
+        }
+
+        $request->validate([
+            'attribute_id' => 'required|exists:products_attributes,id',
+            'stock'        => 'required|integer|min:0',
+        ]);
+
+        $attribute = ProductsAttribute::where('id', $request->attribute_id)
+            ->where('vendor_id', $vendor_id)
+            ->first();
+
+        if (!$attribute) {
+            return response()->json(['success' => false, 'message' => 'Product attribute not found or does not belong to you.'], 404);
+        }
+
+        $attribute->stock = $request->stock;
+        $attribute->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Stock updated successfully!'
+        ]);
+    }
 }

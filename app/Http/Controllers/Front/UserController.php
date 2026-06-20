@@ -80,6 +80,8 @@ class UserController extends Controller
             'phone'          => $data['phone'],
             'password_hash' => bcrypt($data['password']),
             'role_id'        => $roleId,
+            'latitude'       => $data['latitude'] ?? null,
+            'longitude'      => $data['longitude'] ?? null,
         ]);
 
         // Generate and Send OTP
@@ -172,6 +174,8 @@ class UserController extends Controller
                         'password' => $pending['password_hash'],
                         'role_id'  => $roleId,
                         'status'   => 1, // Activated after OTP verified
+                        'latitude'  => $pending['latitude'] ?? null,
+                        'longitude' => $pending['longitude'] ?? null,
                     ]);
 
                     // Assign role + create academic profile (only for student role).
@@ -690,14 +694,45 @@ class UserController extends Controller
                     $address->latitude = (float) trim($parts[0]);
                     $address->longitude = (float) trim($parts[1]);
                 }
+            } else {
+                // Geocode the address using our helper!
+                $block = !empty($data['block_id']) ? \App\Models\Block::find($data['block_id'])?->name : null;
+                $district = !empty($data['district_id']) ? \App\Models\District::find($data['district_id'])?->name : null;
+                $state = !empty($data['state_id']) ? \App\Models\State::find($data['state_id'])?->name : null;
+                $country = !empty($data['country_id']) ? \App\Models\Country::find($data['country_id'])?->name : null;
+                
+                $coords = \App\Helpers\Helper::geocodeAddress(
+                    $data['address'],
+                    $block,
+                    $district,
+                    $state,
+                    $country,
+                    $data['pincode']
+                );
+                if ($coords) {
+                    $address->latitude = $coords['latitude'];
+                    $address->longitude = $coords['longitude'];
+                }
             }
             $address->save();
 
-            // Handle Profile Sync
-            if (!empty($data['update_profile'])) {
+            // If it's the first address, set it as default
+            if (\App\Models\UserAddress::where('user_id', Auth::user()->id)->count() == 1) {
+                $address->is_default = 1;
+                $address->save();
+            }
+
+            // Sync location details to user profile if update_profile is checked or if it is the default address
+            if (!empty($data['update_profile']) || $address->is_default == 1) {
                 $updateData = [
-                    'name'  => $data['name'],
-                    'phone' => $data['mobile']
+                    'name'        => $data['name'],
+                    'phone'       => $data['mobile'],
+                    'address'     => $data['address'],
+                    'pincode'     => $data['pincode'],
+                    'country_id'  => $data['country_id'],
+                    'state_id'    => $data['state_id'],
+                    'district_id' => $data['district_id'],
+                    'block_id'    => $data['block_id'] ?? null,
                 ];
                 if (!empty($address->latitude) && !empty($address->longitude)) {
                     $updateData['latitude'] = $address->latitude;
@@ -705,12 +740,6 @@ class UserController extends Controller
                 }
                 User::where('id', Auth::id())->update($updateData);
                 $message .= " Profile also updated!";
-            }
-
-            // If it's the first address, set it as default
-            if (\App\Models\UserAddress::where('user_id', Auth::user()->id)->count() == 1) {
-                $address->is_default = 1;
-                $address->save();
             }
 
             return response()->json(['type' => 'success', 'message' => $message]);
@@ -731,7 +760,23 @@ class UserController extends Controller
         if ($request->ajax()) {
             $data = $request->all();
             \App\Models\UserAddress::where('user_id', Auth::id())->update(['is_default' => 0]);
-            \App\Models\UserAddress::where('id', $data['address_id'])->update(['is_default' => 1]);
+            $addr = \App\Models\UserAddress::where('id', $data['address_id'])->first();
+            if ($addr) {
+                $addr->is_default = 1;
+                $addr->save();
+
+                // Sync default address location to users table
+                User::where('id', Auth::id())->update([
+                    'address'     => $addr->address,
+                    'pincode'     => $addr->pincode,
+                    'country_id'  => $addr->country_id,
+                    'state_id'    => $addr->state_id,
+                    'district_id' => $addr->district_id,
+                    'block_id'    => $addr->block_id,
+                    'latitude'    => $addr->latitude,
+                    'longitude'   => $addr->longitude,
+                ]);
+            }
             return response()->json(['type' => 'success', 'message' => 'Default address updated!']);
         }
     }
