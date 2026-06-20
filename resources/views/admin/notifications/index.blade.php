@@ -9,9 +9,14 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 class="card-title mb-0">{{ $title }}</h4>
-                                <button id="markAllReadBtn" class="btn btn-info d-flex align-items-center gap-2 shadow-sm">
-                                    <i class="mdi mdi-check-all fs-5"></i> Mark All as Read
-                                </button>
+                                <div class="d-flex align-items-center" style="gap: 10px;">
+                                    <button id="markAllReadBtn" class="btn btn-info d-flex align-items-center gap-2 shadow-sm">
+                                        <i class="mdi mdi-check-all fs-5"></i> Mark All as Read
+                                    </button>
+                                    <button id="deleteAllNotificationsBtn" class="btn btn-danger d-flex align-items-center gap-2 shadow-sm">
+                                        <i class="mdi mdi-delete-forever fs-5"></i> Delete All
+                                    </button>
+                                </div>
                             </div>
 
                             @if (Session::has('success_message'))
@@ -854,6 +859,31 @@
                         error: function(xhr) {
                             console.error('Error marking all notifications as read:', xhr);
                             alert('Error marking all notifications as read');
+                        }
+                    });
+                });
+
+                // Delete all notifications
+                $('#deleteAllNotificationsBtn').on('click', function() {
+                    if (!confirm('Are you sure you want to delete all notifications? This action cannot be undone.')) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: baseNotificationsUrl + '/delete-all',
+                        type: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Reload the page to refresh notifications list
+                                location.reload();
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Error deleting all notifications:', xhr);
+                            alert('Error deleting all notifications');
                         }
                     });
                 });

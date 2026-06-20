@@ -119,6 +119,7 @@ $adminRoutesClosure = function () {
         Route::get('notifications/get', 'NotificationController@getNotifications')->name('notifications.get');
         Route::post('notifications/{id}/read', 'NotificationController@markAsRead')->name('notifications.read');
         Route::post('notifications/mark-all-read', 'NotificationController@markAllAsRead')->name('notifications.mark_all_read');
+        Route::post('notifications/delete-all', 'NotificationController@deleteAll')->name('notifications.delete_all');
 
         // Push Notifications
         Route::get('push-notifications', 'PushNotificationController@create')->name('admin.push-notifications.create');

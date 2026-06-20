@@ -247,4 +247,22 @@ class NotificationController extends Controller
             'logos'      => $logos,
         ]);
     }
+
+    /**
+     * Delete all notifications for the authenticated user
+     */
+    public function deleteAll()
+    {
+        $admin = Auth::guard('admin')->user();
+        
+        $query = Notification::query();
+        
+        if ($this->isVendorUser($admin)) {
+            $query->where('vendor_id', $admin->vendor_id);
+        }
+        
+        $query->delete();
+ 
+        return response()->json(['success' => true]);
+    }
 }
