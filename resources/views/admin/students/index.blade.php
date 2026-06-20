@@ -367,4 +367,62 @@ function confirmDelete(id) {
 }
 </script>
 
+<!-- Credit Wallet Modal -->
+<div class="modal fade" id="creditWalletModal" tabindex="-1" role="dialog" aria-labelledby="creditWalletModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 16px;">
+            <div class="modal-header bg-primary text-white" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                <h5 class="modal-title font-weight-bold" id="creditWalletModalLabel">
+                    <i class="fas fa-wallet mr-2"></i> Credit Student Wallet
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="creditWalletForm" method="POST" action="{{ route('admin.students.creditWallet') }}">
+                @csrf
+                <input type="hidden" name="user_id" id="credit_student_id">
+                <div class="modal-body p-4">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold text-muted small text-uppercase">Student Name</label>
+                        <input type="text" class="form-control bg-light border-0" id="credit_student_name" readonly style="font-weight: 600; border-radius: 8px;">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold text-muted small text-uppercase">Current Balance</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-light border-0">₹</span>
+                            </div>
+                            <input type="text" class="form-control bg-light border-0" id="credit_student_balance" readonly style="font-weight: 600; border-radius: 8px;">
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="credit_amount" class="font-weight-bold text-dark">Amount to Credit (₹) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="credit_amount" name="amount" min="0.01" step="0.01" required style="border-radius: 8px;" placeholder="e.g. 100">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label for="credit_description" class="font-weight-bold text-dark">Description / Remark</label>
+                        <textarea class="form-control" id="credit_description" name="description" rows="2" style="border-radius: 8px;" placeholder="e.g. Manual credit by admin"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
+                    <button type="button" class="btn btn-secondary font-weight-bold px-4" data-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                    <button type="submit" class="btn btn-primary font-weight-bold px-4" style="border-radius: 8px; background-color: #253858; border-color: #253858;">Credit Wallet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openCreditModal(id, name, balance) {
+    $('#credit_student_id').val(id);
+    $('#credit_student_name').val(name);
+    $('#credit_student_balance').val(parseFloat(balance).toFixed(2));
+    $('#credit_amount').val('');
+    $('#credit_description').val('Manual credit by admin');
+    $('#creditWalletModal').modal('show');
+}
+</script>
+
 @endsection
