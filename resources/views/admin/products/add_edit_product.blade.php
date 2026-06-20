@@ -389,7 +389,7 @@
 
                                     <label for="section_id">Education Level</label>
                                     <select name="section_id" id="section_id" class="form-control text-dark">
-                                        <option value="">Select Education Level</option>
+                                        <option value="">Select Education Level (Section)</option>
                                         @foreach ($sections as $section)
                                             <option value="{{ $section->id }}"
                                                 {{ old('section_id', $product->section_id ?? '') == $section->id ? 'selected' : '' }}>
@@ -400,7 +400,7 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="category_id">Board</label>
+                                    <label for="category_id">Board (Category)</label>
                                     <select name="category_id" id="category_id" class="form-control text-dark">
                                         <option value="">Select Board</option>
                                         @foreach($categories as $cat)
@@ -412,7 +412,7 @@
                                 </div>
 
                                 <div class="form-group" id="class_wrapper">
-                                    <label for="subcategory_id">Class</label>
+                                    <label for="subcategory_id">Class (Sub Category)</label>
                                     <select name="subcategory_id" id="subcategory_id" class="form-control text-dark">
                                         <option value="">Select Class</option>
                                         @foreach($subcategories as $sub)

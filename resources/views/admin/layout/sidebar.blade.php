@@ -575,15 +575,15 @@
                             @can('view_sections')
                                 <li class="nav-item"> <a
                                         @if (Session::get('page') == 'education-levels') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                        class="nav-link" href="{{ url('admin/education-levels') }}">Education Levels</a></li>
+                                        class="nav-link" href="{{ url('admin/education-levels') }}">Education Levels (Sections)</a></li>
                             @endcan
                             @can('view_categories')
                                 <li class="nav-item"> <a
                                         @if (Session::get('page') == 'categories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                        class="nav-link" href="{{ url('admin/categories') }}">Board</a></li>
+                                        class="nav-link" href="{{ url('admin/categories') }}">Board (Categories)</a></li>
                                 <li class="nav-item"> <a
                                         @if (Session::get('page') == 'subcategories') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
-                                        class="nav-link" href="{{ url('admin/subcategories') }}">Class</a></li>
+                                        class="nav-link" href="{{ url('admin/subcategories') }}">Class (Sub Categories)</a></li>
                             @endcan
                             @can('view_publishers')
                                 <li class="nav-item"> <a
