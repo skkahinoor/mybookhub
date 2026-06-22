@@ -38,6 +38,7 @@
         @endif
 
     </title>
+    @yield('meta')
     <!-- Standard Favicon -->
     <link href="favicon.ico" rel="shortcut icon">
     <!-- Base Google Font for Web-app -->

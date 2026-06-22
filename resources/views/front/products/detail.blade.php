@@ -1,5 +1,17 @@
 @extends('front.layout.layout3')
 
+@section('meta')
+    <meta property="og:title" content="{{ $productDetails['product_name'] ?? 'BookHub' }}" />
+    <meta property="og:description" content="{{ $meta_description ?? 'Buy and sell books at BookHub' }}" />
+    @if(!empty($productDetails['product_image']))
+        <meta property="og:image" content="{{ getBookCoverUrl($productDetails['product_image']) }}" />
+    @else
+        <meta property="og:image" content="{{ asset('assets/images/logo.png') }}" />
+    @endif
+    <meta property="og:url" content="{{ url()->current() }}" />
+    <meta property="og:type" content="product" />
+@endsection
+
 @section('content')
     <style>
         .product-card-container {

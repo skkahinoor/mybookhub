@@ -16,9 +16,15 @@
         <meta name="keywords" content="{{ $meta_keywords }}">
     @endif
 
-    <meta property="og:title" content="" />
-    <meta property="og:description" content="" />
-    <meta property="og:image" content="" />
+    @hasSection('meta')
+        @yield('meta')
+    @else
+        <meta property="og:title" content="{{ $meta_title ?? 'BookHub' }}" />
+        <meta property="og:description" content="{{ $meta_description ?? 'BookHub - The place to Buy & sell Books' }}" />
+        <meta property="og:image" content="{{ asset('assets/images/logo.png') }}" />
+        <meta property="og:url" content="{{ url()->current() }}" />
+        <meta property="og:type" content="website" />
+    @endif
     <meta name="format-detection" content="telephone=no">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
