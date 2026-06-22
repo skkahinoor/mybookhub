@@ -211,6 +211,11 @@
     </div>
     <button type="submit" class="btn-apply"><i class="fas fa-filter"></i> Apply</button>
     <a href="{{ url('admin/reports/analytics') }}" class="btn-reset"><i class="fas fa-undo"></i> Reset</a>
+    
+    <div style="margin-left: auto; display: flex; gap: 10px;">
+        <button type="submit" formaction="{{ route('admin.reports.analytics.export_csv') }}" class="btn-apply" style="background: linear-gradient(135deg, #059669, #10b981);"><i class="fas fa-file-csv"></i> Export CSV</button>
+        <button type="submit" formaction="{{ route('admin.reports.analytics.export_pdf') }}" formtarget="_blank" class="btn-apply" style="background: linear-gradient(135deg, #dc2626, #ef4444);"><i class="fas fa-file-pdf"></i> Export PDF</button>
+    </div>
 </div>
 </form>
 
@@ -250,15 +255,44 @@
     </div>
 </div>
 
-{{-- ═══ CHARTS ═══ --}}
+{{-- ═══ GLOBAL DEVICE BREAKDOWN ═══ --}}
+@php
+    $totalDevices = ($deviceBreakdown->desktop_views ?? 0) + ($deviceBreakdown->mobile_views ?? 0) + ($deviceBreakdown->tablet_views ?? 0);
+    $dPct = $totalDevices > 0 ? round((($deviceBreakdown->desktop_views ?? 0) / $totalDevices) * 100) : 0;
+    $mPct = $totalDevices > 0 ? round((($deviceBreakdown->mobile_views ?? 0) / $totalDevices) * 100) : 0;
+    $tPct = $totalDevices > 0 ? round((($deviceBreakdown->tablet_views ?? 0) / $totalDevices) * 100) : 0;
+@endphp
+<div class="analytics-table" style="padding: 24px;">
+    <div class="analytics-table-header" style="padding: 0 0 15px 0; border-bottom: none;">
+        <h5><i class="fas fa-laptop-mobile" style="color:#6366f1;"></i> Global Device Breakdown</h5>
+    </div>
+    <div style="background: #f3f4f6; border-radius: 12px; height: 24px; display: flex; overflow: hidden; margin-bottom: 12px;">
+        <div style="width: {{ $dPct }}%; background: #3b82f6; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold;">@if($dPct > 5){{ $dPct }}%@endif</div>
+        <div style="width: {{ $mPct }}%; background: #10b981; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold;">@if($mPct > 5){{ $mPct }}%@endif</div>
+        <div style="width: {{ $tPct }}%; background: #f59e0b; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: bold;">@if($tPct > 5){{ $tPct }}%@endif</div>
+    </div>
+    <div style="display: flex; gap: 20px; justify-content: center; font-size: 13px; font-weight: 600; color: #4b5563;">
+        <div><i class="fas fa-desktop" style="color:#3b82f6;"></i> Desktop: {{ number_format($deviceBreakdown->desktop_views ?? 0) }}</div>
+        <div><i class="fas fa-mobile-alt" style="color:#10b981;"></i> Mobile: {{ number_format($deviceBreakdown->mobile_views ?? 0) }}</div>
+        <div><i class="fas fa-tablet-alt" style="color:#f59e0b;"></i> Tablet: {{ number_format($deviceBreakdown->tablet_views ?? 0) }}</div>
+    </div>
+</div>
+
+{{-- ═══ CHARTS GRID ═══ --}}
 <div class="charts-grid">
-    {{-- Daily Trend Line Chart --}}
-    <div class="chart-card">
-        <h5><i class="fas fa-chart-area" style="color:#3b82f6;"></i> Daily Unique Views Trend</h5>
-        <canvas id="trendChart" height="100"></canvas>
+    {{-- Trend Line --}}
+    <div class="chart-card" style="grid-column: span 2;">
+        <h5><i class="fas fa-chart-area" style="color:#3b82f6;"></i> Views Trend (Last 30 Days)</h5>
+        <canvas id="trendChart" height="80"></canvas>
     </div>
 
-    {{-- Module Pie Chart --}}
+    {{-- Peak Hours --}}
+    <div class="chart-card">
+        <h5><i class="fas fa-clock" style="color:#ec4899;"></i> Peak Active Hours</h5>
+        <canvas id="peakHoursChart" height="200"></canvas>
+    </div>
+
+    {{-- Module Distribution --}}
     <div class="chart-card">
         <h5><i class="fas fa-chart-pie" style="color:#8b5cf6;"></i> Views by Module</h5>
         <canvas id="moduleChart" height="200"></canvas>
@@ -282,30 +316,96 @@
         <h5><i class="fas fa-list-ol" style="color:#3b82f6;"></i> Top Pages by Unique Views</h5>
     </div>
     <div class="table-responsive">
-        <table id="topPagesTable" class="table table-hover table-bordered" style="width:100%;">
+        <table class="table table-hover table-bordered" style="width:100%;">
             <thead>
                 <tr>
                     <th style="width: 50px;">#</th>
                     <th>Page</th>
                     <th>URL</th>
                     <th>Module</th>
-                    <th>Countries</th>
-                    <th>Unique Views</th>
+                    <th class="text-center">Countries</th>
+                    <th class="text-center">Unique Views</th>
                     <th>Device Breakdown</th>
                 </tr>
             </thead>
             <tbody>
+                @forelse($topPages as $index => $page)
+                <tr>
+                    <td>{{ $topPages->firstItem() + $index }}</td>
+                    <td>{{ $page->page_title ?? 'Unknown' }}</td>
+                    <td><a href="{{ url($page->url) }}" target="_blank" class="text-primary text-decoration-none">{{ Str::limit($page->url, 40) }}</a></td>
+                    <td>
+                        @php
+                            $colors = [
+                                'frontend' => 'mod-badge frontend',
+                                'student' => 'mod-badge student',
+                                'vendor' => 'mod-badge vendor',
+                                'sales' => 'mod-badge sales',
+                            ];
+                            $cls = $colors[strtolower($page->module)] ?? 'mod-badge other';
+                        @endphp
+                        <span class="{{ $cls }}">{{ ucfirst($page->module) }}</span>
+                    </td>
+                    <td class="text-center">{{ number_format($page->countries) }}</td>
+                    <td class="fw-bold text-primary text-center">{{ number_format($page->unique_views) }}</td>
+                    <td>
+                        @php
+                            $desktop = (int) $page->desktop_views;
+                            $mobile = (int) $page->mobile_views;
+                            $tablet = (int) $page->tablet_views;
+                            $total = $desktop + $mobile + $tablet;
+                        @endphp
+                        @if($total == 0)
+                            <span class="text-muted">None</span>
+                        @else
+                            @php
+                                $desktopPercent = $total > 0 ? round(($desktop / $total) * 100) : 0;
+                                $mobilePercent = $total > 0 ? round(($mobile / $total) * 100) : 0;
+                                $tabletPercent = $total > 0 ? round(($tablet / $total) * 100) : 0;
+                            @endphp
+                            <div class="d-flex flex-column gap-1" style="font-size: 0.8rem; min-width: 140px; text-align: left; line-height: 1.4;">
+                                @if($desktop > 0)
+                                <div class="d-flex align-items-center justify-content-between text-secondary">
+                                    <span><i class="fas fa-desktop text-primary me-1" style="width: 14px;"></i> Desktop</span>
+                                    <span class="fw-bold ms-2">{{ number_format($desktop) }} ({{ $desktopPercent }}%)</span>
+                                </div>
+                                @endif
+                                @if($mobile > 0)
+                                <div class="d-flex align-items-center justify-content-between text-secondary">
+                                    <span><i class="fas fa-mobile-alt text-success me-1" style="width: 14px;"></i> Mobile</span>
+                                    <span class="fw-bold ms-2">{{ number_format($mobile) }} ({{ $mobilePercent }}%)</span>
+                                </div>
+                                @endif
+                                @if($tablet > 0)
+                                <div class="d-flex align-items-center justify-content-between text-secondary">
+                                    <span><i class="fas fa-tablet-alt text-warning me-1" style="width: 14px;"></i> Tablet</span>
+                                    <span class="fw-bold ms-2">{{ number_format($tablet) }} ({{ $tabletPercent }}%)</span>
+                                </div>
+                                @endif
+                            </div>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">No page views found.</td>
+                </tr>
+                @endforelse
             </tbody>
         </table>
+        
+        <div class="mt-3">
+            {{ $topPages->links('pagination::bootstrap-5') }}
+        </div>
     </div>
 </div>
 
 {{-- ═══ GEO BREAKDOWN ═══ --}}
-<div class="geo-grid">
+<div class="geo-grid" style="grid-template-columns: 1fr 1fr 1fr;">
     {{-- Country + State breakdown --}}
     <div class="analytics-table">
         <div class="analytics-table-header">
-            <h5><i class="fas fa-map-marker-alt" style="color:#f59e0b;"></i> Country & State Breakdown</h5>
+            <h5><i class="fas fa-map-marker-alt" style="color:#f59e0b;"></i> Country & State</h5>
         </div>
         @php $maxGeo = $countryBreakdown->max('views') ?: 1; @endphp
         <div style="overflow-x:auto; max-height:420px; overflow-y:auto;">
@@ -334,6 +434,42 @@
                 </tr>
                 @empty
                 <tr><td colspan="4"><div class="empty-state"><i class="fas fa-globe"></i> No geo data yet</div></td></tr>
+                @endforelse
+            </tbody>
+        </table>
+        </div>
+    </div>
+
+    {{-- Top Cities breakdown --}}
+    <div class="analytics-table">
+        <div class="analytics-table-header">
+            <h5><i class="fas fa-city" style="color:#ef4444;"></i> Top Cities</h5>
+        </div>
+        @php $maxCityGeo = $topCities->max('views') ?: 1; @endphp
+        <div style="overflow-x:auto; max-height:420px; overflow-y:auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>City</th>
+                    <th>Unique Views</th>
+                    <th style="min-width:80px;">Share</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($topCities as $city)
+                <tr>
+                    <td style="font-weight:600;">
+                        {{ $city->city ?? '—' }} <span style="font-size:10px; color:#999;">({{ $city->country }})</span>
+                    </td>
+                    <td style="font-weight:700; color:#ef4444;">{{ number_format($city->views) }}</td>
+                    <td>
+                        <div class="prog-bar-wrap">
+                            <div class="prog-bar" style="width:{{ min(100, round($city->views / $maxCityGeo * 100)) }}%; background: linear-gradient(135deg,#ef4444,#b91c1c);"></div>
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr><td colspan="3"><div class="empty-state"><i class="fas fa-city"></i> No city data yet</div></td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -474,41 +610,39 @@
     });
 })();
 
-// ── Top Pages DataTable ──
-$(document).ready(function() {
-    $('#topPagesTable').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: "{{ url('admin/reports/analytics') }}",
-            data: function (d) {
-                d.date_from = "{{ $dateFrom }}";
-                d.date_to = "{{ $dateTo }}";
-                d.module = "{{ $module }}";
-                d.country = "{{ $country }}";
+// ── Peak Hours Chart ──
+(function() {
+    const ctx = document.getElementById('peakHoursChart').getContext('2d');
+    const peakData = @json($peakHoursData);
+    const labels = Array.from({length: 24}, (_, i) => i + ':00');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Unique Views',
+                data: peakData,
+                backgroundColor: '#ec4899',
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ' ' + ctx.parsed.y.toLocaleString() + ' views'
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                x: { grid: { display: false } }
             }
-        },
-        columns: [
-            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'page_title', name: 'page_title', defaultContent: 'Unknown' },
-            { data: 'url', name: 'url' },
-            { data: 'module_badge', name: 'module', orderable: true },
-            { data: 'countries', name: 'countries', searchable: false, className: 'text-center' },
-            { data: 'unique_views', name: 'unique_views', className: 'fw-bold text-primary text-center', searchable: false },
-            { data: 'device_breakdown', name: 'device_breakdown', orderable: false, searchable: false }
-        ],
-        order: [[5, 'desc']], // Order by unique_views by default
-        language: {
-            searchPlaceholder: "Search pages...",
-            search: ""
-        },
-        pageLength: 10,
-        lengthMenu: [10, 25, 50, 100],
-        drawCallback: function(settings) {
-            $('.dataTables_filter input').addClass('form-control shadow-sm border-0 bg-light px-3 py-2');
-            $('.dataTables_length select').addClass('form-select shadow-sm border-0 bg-light');
         }
     });
-});
+})();
 </script>
 @endsection
