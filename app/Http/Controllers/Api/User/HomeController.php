@@ -72,6 +72,7 @@ class HomeController extends Controller
             'data' => [
                 'banners' => $banners,
                 'subjects' => $subject,
+                'default_location_limit' => 20,
             ]
         ]);
     }

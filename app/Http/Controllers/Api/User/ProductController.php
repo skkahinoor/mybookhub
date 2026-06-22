@@ -151,6 +151,7 @@ class ProductController extends Controller
     private function sqlSearch($request, $limit, $page, $lat, $lng, $location_limit = null)
     {
         $user = auth('sanctum')->user();
+        $location_limit = $location_limit ?? 20;
 
         $query = Product::with([
             'category:id,category_name',
