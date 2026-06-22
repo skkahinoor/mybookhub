@@ -15,5 +15,6 @@ class PageView extends Model
         'state',
         'city',
         'user_agent',
+        'device',
     ];
 }

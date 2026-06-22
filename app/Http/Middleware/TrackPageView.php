@@ -83,6 +83,8 @@ class TrackPageView
 
         // Get geolocation (cached per IP in session)
         $geo = $this->getGeo($request, $ip);
+        $userAgent = $request->userAgent() ?? '';
+        $device = $this->detectDevice($userAgent);
 
         PageView::create([
             'url'        => $url,
@@ -92,8 +94,21 @@ class TrackPageView
             'country'    => $geo['country'] ?? null,
             'state'      => $geo['state'] ?? null,
             'city'       => $geo['city'] ?? null,
-            'user_agent' => substr($request->userAgent() ?? '', 0, 500),
+            'user_agent' => substr($userAgent, 0, 500),
+            'device'     => $device,
         ]);
+    }
+
+    protected function detectDevice(string $userAgent): string
+    {
+        $userAgentLower = strtolower($userAgent);
+        if (preg_match('/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i', $userAgentLower)) {
+            return 'Tablet';
+        }
+        if (preg_match('/(up\.browser|up\.link|mmp|symbian|smartphone|midp|wap|phone|android|iemobile|iphone|ipod|blackberry|nokia|opera mini|mini|windows ce|webos|meego|palmsource|bb10)/i', $userAgentLower)) {
+            return 'Mobile';
+        }
+        return 'Desktop';
     }
 
     protected function detectModule(Request $request): string

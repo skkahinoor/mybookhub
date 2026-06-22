@@ -277,52 +277,26 @@
 </div>
 
 {{-- ═══ TOP PAGES TABLE ═══ --}}
-<div class="analytics-table">
-    <div class="analytics-table-header">
+<div class="analytics-table" style="padding: 24px;">
+    <div class="analytics-table-header" style="padding: 0 0 20px 0; border-bottom: none;">
         <h5><i class="fas fa-list-ol" style="color:#3b82f6;"></i> Top Pages by Unique Views</h5>
-        <span style="font-size:0.8rem; color:#9ca3af;">Showing top 50 pages</span>
     </div>
-    @php $maxViews = $topPages->max('unique_views') ?: 1; @endphp
-    <div style="overflow-x:auto;">
-    <table>
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Page</th>
-                <th>URL</th>
-                <th>Module</th>
-                <th>Countries</th>
-                <th>Unique Views</th>
-                <th style="min-width:120px;">Share</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($topPages as $i => $page)
-            <tr>
-                <td style="color:#9ca3af; font-weight:600;">{{ $i+1 }}</td>
-                <td style="font-weight:600; max-width:200px; word-break:break-word;">{{ $page->page_title ?: 'Unknown' }}</td>
-                <td style="color:#6b7280; font-size:0.8rem; max-width:220px; word-break:break-all;">{{ $page->url }}</td>
-                <td><span class="mod-badge {{ $page->module }}">{{ ucfirst($page->module) }}</span></td>
-                <td style="color:#6b7280; text-align:center;">{{ $page->countries }}</td>
-                <td style="font-weight:800; color:#1d4ed8; font-size:1rem;">{{ number_format($page->unique_views) }}</td>
-                <td>
-                    <div class="prog-bar-wrap">
-                        <div class="prog-bar" style="width:{{ min(100, round($page->unique_views / $maxViews * 100)) }}%"></div>
-                    </div>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="7">
-                    <div class="empty-state">
-                        <i class="fas fa-chart-bar"></i>
-                        No page view data yet. Pages will appear here once visitors browse your site.
-                    </div>
-                </td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table id="topPagesTable" class="table table-hover table-bordered" style="width:100%;">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    <th>Page</th>
+                    <th>URL</th>
+                    <th>Module</th>
+                    <th>Countries</th>
+                    <th>Unique Views</th>
+                    <th>Device Breakdown</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -499,5 +473,42 @@
         }
     });
 })();
+
+// ── Top Pages DataTable ──
+$(document).ready(function() {
+    $('#topPagesTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{{ url('admin/reports/analytics') }}",
+            data: function (d) {
+                d.date_from = "{{ $dateFrom }}";
+                d.date_to = "{{ $dateTo }}";
+                d.module = "{{ $module }}";
+                d.country = "{{ $country }}";
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'page_title', name: 'page_title', defaultContent: 'Unknown' },
+            { data: 'url', name: 'url' },
+            { data: 'module_badge', name: 'module', orderable: true },
+            { data: 'countries', name: 'countries', searchable: false, className: 'text-center' },
+            { data: 'unique_views', name: 'unique_views', className: 'fw-bold text-primary text-center', searchable: false },
+            { data: 'device_breakdown', name: 'device_breakdown', orderable: false, searchable: false }
+        ],
+        order: [[5, 'desc']], // Order by unique_views by default
+        language: {
+            searchPlaceholder: "Search pages...",
+            search: ""
+        },
+        pageLength: 10,
+        lengthMenu: [10, 25, 50, 100],
+        drawCallback: function(settings) {
+            $('.dataTables_filter input').addClass('form-control shadow-sm border-0 bg-light px-3 py-2');
+            $('.dataTables_length select').addClass('form-select shadow-sm border-0 bg-light');
+        }
+    });
+});
 </script>
 @endsection
