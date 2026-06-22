@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\InstitutionClass;
 use App\Helpers\RoleHelper;
 
@@ -37,20 +39,40 @@ class StudentController extends Controller
                 })
                 ->addColumn('location', function ($row) {
                     if (empty($row->latitude) || empty($row->longitude)) {
-                        return 'N/A';
+                        return '<span class="text-muted">N/A</span>';
                     }
 
-                    // Format address name
-                    $block = $row->block->name ?? null;
+                    // Try to build location name from stored address fields first
+                    $block    = $row->block->name ?? null;
                     $district = $row->district->name ?? null;
-                    $state = $row->state->name ?? null;
-                    $country = $row->country->name ?? null;
+                    $state    = $row->state->name ?? null;
+                    $country  = $row->country->name ?? null;
                     $addressParts = array_filter([$row->address, $block, $district, $state, $row->pincode, $country]);
-                    $locationName = !empty($addressParts) ? implode(', ', $addressParts) : 'N/A';
+                    $locationName = !empty($addressParts) ? implode(', ', $addressParts) : null;
 
+                    // If no address fields, use Google Maps Geocoding API (reverse geocoding)
+                    if (empty($locationName)) {
+                        $apiKey = config('services.google.maps_key');
+                        if ($apiKey) {
+                            try {
+                                $response = Http::timeout(5)->get('https://maps.googleapis.com/maps/api/geocode/json', [
+                                    'latlng' => $row->latitude . ',' . $row->longitude,
+                                    'key'    => $apiKey,
+                                ]);
+                                $geo = $response->json();
+                                if (($geo['status'] ?? '') === 'OK' && !empty($geo['results'][0]['formatted_address'])) {
+                                    $locationName = $geo['results'][0]['formatted_address'];
+                                }
+                            } catch (\Exception $e) {
+                                Log::error('Student location geocoding failed: ' . $e->getMessage());
+                            }
+                        }
+                    }
+
+                    $locationName = $locationName ?: ('Lat: ' . $row->latitude . ', Lng: ' . $row->longitude);
                     $googleMapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' . $row->latitude . ',' . $row->longitude;
 
-                    $html = '<div style="font-size: 13px; max-width: 250px; white-space: normal;">';
+                    $html  = '<div style="font-size: 13px; max-width: 250px; white-space: normal;">';
                     $html .= '<div style="font-weight: 600; margin-bottom: 4px; color: #1f2937;">' . e($locationName) . '</div>';
                     $html .= '<div class="d-flex align-items-center flex-wrap" style="font-size: 11px; color: #6b7280; gap: 8px;">';
                     $html .= '<span><i class="mdi mdi-target"></i> ' . $row->latitude . ',' . $row->longitude . '</span>';

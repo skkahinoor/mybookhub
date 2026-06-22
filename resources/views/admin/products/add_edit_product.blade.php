@@ -389,7 +389,7 @@
 
                                     <label for="section_id">Education Level</label>
                                     <select name="section_id" id="section_id" class="form-control text-dark">
-                                        <option value="">Select Education Level</option>
+                                        <option value="">Select Education Level (Section)</option>
                                         @foreach ($sections as $section)
                                             <option value="{{ $section->id }}"
                                                 {{ old('section_id', $product->section_id ?? '') == $section->id ? 'selected' : '' }}>
@@ -400,7 +400,7 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="category_id">Board</label>
+                                    <label for="category_id">Board (Category)</label>
                                     <select name="category_id" id="category_id" class="form-control text-dark">
                                         <option value="">Select Board</option>
                                         @foreach($categories as $cat)
@@ -412,7 +412,7 @@
                                 </div>
 
                                 <div class="form-group" id="class_wrapper">
-                                    <label for="subcategory_id">Class</label>
+                                    <label for="subcategory_id">Class (Sub Category)</label>
                                     <select name="subcategory_id" id="subcategory_id" class="form-control text-dark">
                                         <option value="">Select Class</option>
                                         @foreach($subcategories as $sub)
@@ -886,11 +886,21 @@
                 var noSubjectsSections = ['religious book', 'religious', 'technical book', 'technical', 'novel & story book', 'novel & story', 'competitive books', 'competitive'];
                 
                 if (noSubjectsSections.includes(sectionName)) {
+                    // Only hide/clear Class, Subject, Edition, BookType — Board stays visible
+                    $("#subcategory_id").val('').prop('disabled', true);
+                    $("#subject_id").val('').prop('disabled', true);
+                    $("#edition_id").val('').prop('disabled', true);
+                    $("#book_type_id").val('').prop('disabled', true);
                     $("#class_wrapper").hide();
                     $("#subject_wrapper").hide();
                     $("#edition_wrapper").hide();
                     $("#booktype_wrapper").hide();
                 } else {
+                    // Re-enable all fields
+                    $("#subcategory_id").prop('disabled', false);
+                    $("#subject_id").prop('disabled', false);
+                    $("#edition_id").prop('disabled', false);
+                    $("#book_type_id").prop('disabled', false);
                     $("#class_wrapper").show();
                     $("#subject_wrapper").show();
                     $("#edition_wrapper").show();

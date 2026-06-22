@@ -948,8 +948,8 @@ class ProductsController extends Controller
             $isReligious = $section && in_array($section->name, $noSubjectsSections);
 
             $rules = [
-                'section_id'    => 'exists:sections,id',
-                'category_id'   => 'exists:categories,id',
+                'section_id'    => 'nullable|exists:sections,id',
+                'category_id'   => 'nullable|exists:categories,id',
                 'condition'     => 'in:new,old',
                 'product_name'  => 'required',
                 'product_isbn'  => $isbnValidationRule,
@@ -958,8 +958,8 @@ class ProductsController extends Controller
             ];
 
             if (!$isReligious) {
-                $rules['subcategory_id'] = 'exists:subcategories,id';
-                $rules['subject_id'] = 'exists:subjects,id';
+                $rules['subcategory_id'] = 'nullable|exists:subcategories,id';
+                $rules['subject_id'] = 'nullable|exists:subjects,id';
             }
 
             $validator = Validator::make($request->all(), $rules);
@@ -1120,6 +1120,71 @@ class ProductsController extends Controller
                 $product->save();
                 // Only sync authors if we're saving the product (not reusing)
                 $product->authors()->sync($request->author_id ?? []);
+            }
+
+            // When reusing an existing product (skipProductSave = true), backfill any
+            // previously NULL fields in the `products` table with vendor-supplied data.
+            // This ensures that books imported by admin (with missing metadata) get
+            // enriched when a vendor fills in education level, category, board, class,
+            // edition, book type, etc. — without overwriting data that already exists.
+            if ($skipProductSave && $existingProduct) {
+                $fillIfNull = [];
+
+                if (empty($existingProduct->section_id) && !empty($data['section_id'])) {
+                    $fillIfNull['section_id'] = $data['section_id'];
+                }
+                if (empty($existingProduct->category_id) && !empty($data['category_id'])) {
+                    $fillIfNull['category_id'] = $data['category_id'];
+                }
+                if (empty($existingProduct->subcategory_id) && !empty($data['subcategory_id'])) {
+                    $fillIfNull['subcategory_id'] = $data['subcategory_id'];
+                }
+                if (empty($existingProduct->subject_id) && !empty($data['subject_id'])) {
+                    $fillIfNull['subject_id'] = $data['subject_id'];
+                }
+                if (empty($existingProduct->edition_id) && !empty($data['edition_id'])) {
+                    $fillIfNull['edition_id'] = $data['edition_id'];
+                }
+                if (empty($existingProduct->book_type_id) && !empty($data['book_type_id'])) {
+                    $fillIfNull['book_type_id'] = $data['book_type_id'];
+                }
+                if (empty($existingProduct->language_id) && !empty($data['language_id'])) {
+                    $fillIfNull['language_id'] = $data['language_id'];
+                }
+                if (empty($existingProduct->publisher_id)) {
+                    if (!empty($data['new_publisher'])) {
+                        $publisher = new Publisher();
+                        $publisher->name   = $data['new_publisher'];
+                        $publisher->status = 1;
+                        $publisher->save();
+                        $fillIfNull['publisher_id'] = $publisher->id;
+                    } elseif (!empty($data['publisher_id'])) {
+                        $fillIfNull['publisher_id'] = $data['publisher_id'];
+                    }
+                }
+                if (empty($existingProduct->description) && !empty($data['description'])) {
+                    $fillIfNull['description'] = $data['description'];
+                }
+                // Backfill image only if the existing product has none and vendor uploaded one
+                if (empty($existingProduct->product_image) && $request->hasFile('product_image')) {
+                    $image_tmp = $request->file('product_image');
+                    if ($image_tmp->isValid()) {
+                        $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
+                        Image::make($image_tmp)->resize(1000, 1000)->save('front/images/product_images/large/' . $imageName);
+                        Image::make($image_tmp)->resize(500, 500)->save('front/images/product_images/medium/' . $imageName);
+                        Image::make($image_tmp)->resize(250, 250)->save('front/images/product_images/small/' . $imageName);
+                        $fillIfNull['product_image'] = $imageName;
+                    }
+                }
+
+                if (!empty($fillIfNull)) {
+                    $existingProduct->update($fillIfNull);
+                }
+
+                // Backfill authors if none exist yet
+                if ($existingProduct->authors()->count() === 0 && !empty($request->author_id)) {
+                    $existingProduct->authors()->sync($request->author_id);
+                }
             }
 
             // For new products, return JSON to show modal for stock/discount
