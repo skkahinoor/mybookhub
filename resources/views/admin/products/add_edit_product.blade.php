@@ -886,15 +886,30 @@
                 var noSubjectsSections = ['religious book', 'religious', 'technical book', 'technical', 'novel & story book', 'novel & story', 'competitive books', 'competitive'];
                 
                 if (noSubjectsSections.includes(sectionName)) {
+                    // Hide and CLEAR + DISABLE so empty values are submitted (skip server validation)
+                    $("#category_id").val('').prop('disabled', true);
+                    $("#subcategory_id").val('').prop('disabled', true);
+                    $("#subject_id").val('').prop('disabled', true);
+                    $("#edition_id").val('').prop('disabled', true);
+                    $("#book_type_id").val('').prop('disabled', true);
                     $("#class_wrapper").hide();
                     $("#subject_wrapper").hide();
                     $("#edition_wrapper").hide();
                     $("#booktype_wrapper").hide();
+                    // Also hide board wrapper
+                    $("#category_id").closest('.form-group').hide();
                 } else {
+                    // Re-enable fields
+                    $("#category_id").prop('disabled', false);
+                    $("#subcategory_id").prop('disabled', false);
+                    $("#subject_id").prop('disabled', false);
+                    $("#edition_id").prop('disabled', false);
+                    $("#book_type_id").prop('disabled', false);
                     $("#class_wrapper").show();
                     $("#subject_wrapper").show();
                     $("#edition_wrapper").show();
                     $("#booktype_wrapper").show();
+                    $("#category_id").closest('.form-group').show();
                 }
             }
 

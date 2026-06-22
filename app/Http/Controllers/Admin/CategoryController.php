@@ -151,7 +151,7 @@ class CategoryController extends Controller
             $data = $request->all();
 
             $rules = [
-                'category_name' => 'required|regex:/^[\pL\s\-]+$/u', // only alphabetical characters and spaces
+                'category_name' => 'required|string|regex:/^[\pL\s\-\&\.]+$/u', // letters, spaces, hyphens, & and .
                 'section_id'    => 'required',
             ];
 
