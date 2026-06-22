@@ -290,14 +290,14 @@
             {{-- Report --}}
             @can('view_reports')
                 <li class="nav-item">
-                    <a @if (Session::get('page') == 'sales_reports' || Session::get('page') == 'stock_report') style="background: #052CA3 !important; color: #FFF !important" @endif
+                    <a @if (Session::get('page') == 'sales_reports' || Session::get('page') == 'stock_report' || Session::get('page') == 'analytics') style="background: #052CA3 !important; color: #FFF !important" @endif
                         class="nav-link" data-toggle="collapse" href="#ui-reports" aria-expanded="false"
                         aria-controls="ui-reports">
                         <i class="icon-bar-graph menu-icon"></i>
                         <span class="menu-title">Report</span>
                         <i class="menu-arrow"></i>
                     </a>
-                    <div class="collapse" id="ui-reports">
+                    <div class="collapse @if(in_array(Session::get('page'), ['sales_reports','stock_report','analytics'])) show @endif" id="ui-reports">
                         <ul class="nav flex-column sub-menu"
                             style="background: #fff !important; color: #052CA3 !important">
                             @can('view_reports')
@@ -309,11 +309,18 @@
                                         @if (Session::get('page') == 'stock_report') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
                                         class="nav-link" href="{{ route('admin.reports.stock_report') }}">Stock Report</a>
                                 </li>
+                                <li class="nav-item"> <a
+                                        @if (Session::get('page') == 'analytics') style="background: #052CA3 !important; color: #FFF !important" @else style="background: #fff !important; color: #052CA3 !important" @endif
+                                        class="nav-link" href="{{ route('admin.reports.analytics') }}">
+                                        <i class="fas fa-chart-line" style="margin-right:4px; font-size:0.85rem;"></i> Page Analytics
+                                    </a>
+                                </li>
                             @endcan
                         </ul>
                     </div>
                 </li>
             @endcan
+
 
             {{-- Admin Management --}}
             @canany(['view_admins', 'manage_staff', 'manage_admin_password', 'manage_admin_details'])

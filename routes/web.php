@@ -114,6 +114,10 @@ $adminRoutesClosure = function () {
         // Stock Report (Admin)
         Route::get('reports/stock_report', [App\Http\Controllers\Admin\StockReportController::class, 'index'])->name('admin.reports.stock_report');
 
+        // Page Analytics Report (Admin)
+        Route::get('reports/analytics', [App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('admin.reports.analytics');
+
+
         // Notifications
         Route::get('notifications', 'NotificationController@index')->name('notifications.index');
         Route::get('notifications/get', 'NotificationController@getNotifications')->name('notifications.get');
