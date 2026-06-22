@@ -449,7 +449,8 @@ class ProductController extends Controller
                 'order_id' => $order_ids[0],
                 'order_ids' => $order_ids,
                 'razorpay_order_id' => $razorpayOrder['id'],
-                'amount' => $total_grand_total
+                'amount' => $total_grand_total,
+                'key' => env('RAZORPAY_KEY_ID')
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1968,7 +1969,8 @@ class ProductController extends Controller
                     'order_id' => $order_ids[0],
                     'order_ids' => $order_ids,
                     'razorpay_order_id' => $razorpayOrder['id'],
-                    'amount' => $total_grand_total
+                    'amount' => $total_grand_total,
+                    'key' => env('RAZORPAY_KEY_ID')
                 ]);
             }
 
