@@ -80,10 +80,50 @@
                                     $badgeClass = 'badge-info';
                                 }
                             @endphp
-                            <div class="d-flex align-items-center mb-3">
-                                <span class="badge {{ $badgeClass }} p-3" style="font-size: 14px;">
-                                    {{ $orderDetails->order_status }}
-                                </span>
+                            <div class="d-flex flex-column mb-3">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge {{ $badgeClass }} p-3" style="font-size: 14px;">
+                                        {{ $orderDetails->order_status }}
+                                    </span>
+                                </div>
+                                @if(in_array($orderDetails->order_status, ['Pending', 'New']) && !in_array($orderDetails->payment_gateway, ['COD', 'PICKUP']))
+                                    @php
+                                        $createdAt = strtotime($orderDetails->created_at);
+                                        $expireAt = $createdAt + (30 * 60);
+                                        $secondsLeft = $expireAt - time();
+                                    @endphp
+                                    @if($secondsLeft > 0)
+                                        <div id="payment-timer-container" class="mt-2 text-danger">
+                                            <small><i class="fa fa-clock-o"></i> Awaiting payment. Order will be cancelled in <span id="payment-timer" style="font-weight:bold;"></span> if unpaid.</small>
+                                        </div>
+                                        <script>
+                                            document.addEventListener("DOMContentLoaded", function() {
+                                                var secondsLeft = {{ $secondsLeft }};
+                                                var timerElement = document.getElementById('payment-timer');
+                                                
+                                                var timerInterval = setInterval(function() {
+                                                    if(secondsLeft <= 0) {
+                                                        clearInterval(timerInterval);
+                                                        timerElement.innerHTML = "Time expired. Checking status...";
+                                                        setTimeout(function() {
+                                                            location.reload();
+                                                        }, 3000);
+                                                        return;
+                                                    }
+                                                    
+                                                    var minutes = Math.floor(secondsLeft / 60);
+                                                    var seconds = secondsLeft % 60;
+                                                    
+                                                    minutes = minutes < 10 ? '0' + minutes : minutes;
+                                                    seconds = seconds < 10 ? '0' + seconds : seconds;
+                                                    
+                                                    timerElement.innerHTML = minutes + ":" + seconds;
+                                                    secondsLeft--;
+                                                }, 1000);
+                                            });
+                                        </script>
+                                    @endif
+                                @endif
                             </div>
 
                             <!-- Order Timeline -->

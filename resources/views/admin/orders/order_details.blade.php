@@ -299,6 +299,7 @@
                                         @endif
                                         <th>Distributed Discount</th>
                                         <th>Wallet Deduction</th>
+                                        <th>Shipping Charges</th>
                                         <th>Item Total</th>
                                         <th>Commission</th>
                                         <th>Final Amount</th>
@@ -371,14 +372,21 @@
                                                     ? round($walletTotal * ($product['product_qty'] / ($total_items ?: 1)), 2)
                                                     : 0;
 
-                                                $total_price = $originalTotalPrice - $appliedDistributedDiscount - $appliedWallet;
+                                                $shippingTotal = (float) ($orderDetails['shipping_charges'] ?? 0);
+                                                $appliedShipping = $shippingTotal > 0 && $total_items > 0
+                                                    ? round($shippingTotal * ($product['product_qty'] / ($total_items ?: 1)), 2)
+                                                    : 0;
+
+                                                $item_price = $originalTotalPrice - $appliedDistributedDiscount - $appliedWallet;
+                                                $total_price = $item_price + $appliedShipping;
                                             @endphp
                                             <td>₹{{ round($appliedDistributedDiscount, 2) }}</td>
                                             <td class="text-success">-₹{{ round($appliedWallet, 2) }}</td>
+                                            <td>₹{{ round($appliedShipping, 2) }}</td>
                                             <td>₹{{ round($total_price, 2) }}</td>
 
                                             @if ($product['vendor_id'] > 0)
-                                                @php $commission = round(($total_price * $product['commission']) / 100, 2); @endphp
+                                                @php $commission = round(($item_price * $product['commission']) / 100, 2); @endphp
                                                 <td>₹{{ $commission }}</td>
                                                 <td>₹{{ round($total_price - $commission, 2) }}</td>
                                                 @if ($showVendorPayout)
