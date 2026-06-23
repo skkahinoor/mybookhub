@@ -47,7 +47,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        $role = $user->getRoleNames()->first();
+        $role = $user->assignedRole?->name ?? $user->getRoleNames()->first();
 
         // ✅ If student → load ALL related data
         if ($role === 'student') {
