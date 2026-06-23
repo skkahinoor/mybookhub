@@ -71,17 +71,35 @@ class CatalogueController extends Controller
     {
         if ($resp = $this->checkAccess($request)) return $resp;
 
+        $authorSearch = $request->query('author_search');
+        $publisherSearch = $request->query('publisher_search');
+
+        $authorsQuery = Author::query();
+        if (!empty($authorSearch)) {
+            $authorsQuery->where('name', 'LIKE', "%{$authorSearch}%");
+        }
+        // Limit results to avoid massive JSON sizes causing slow load
+        $authors = $authorsQuery->orderBy('name', 'asc')->limit(50)->get();
+
+        $publishersQuery = Publisher::where('status', 1);
+        if (!empty($publisherSearch)) {
+            $publishersQuery->where('name', 'LIKE', "%{$publisherSearch}%");
+        }
+        $publishers = $publishersQuery->orderBy('name', 'asc')->limit(50)->get();
+
         return response()->json([
             'status' => true,
             'message' => 'Data fetched successfully',
             'data' => [
                 'sections' => Section::where('status', 1)->orderBy('name', 'asc')->get(),
                 'categories' => Category::where('status', 1)->orderBy('category_name', 'asc')->get(),
-                'publishers' => Publisher::where('status', 1)->orderBy('name', 'asc')->get(),
+                'subcategories' => \App\Models\Subcategory::where('status', 1)->orderBy('subcategory_name', 'asc')->get(),
+                'filter_class_subject' => \App\Models\FilterClassSubject::all(),
+                'publishers' => $publishers,
                 'subjects' => Subject::where('status', 1)->orderBy('name', 'asc')->get(),
                 'languages' => Language::orderBy('name', 'asc')->get(),
                 'editions' => Edition::orderBy('edition', 'asc')->get(),
-                'authors' => Author::orderBy('name', 'asc')->get(),
+                'authors' => $authors,
                 'book_conditions' => \App\Models\OldBookCondition::orderBy('id', 'asc')->get(),
             ]
         ]);
