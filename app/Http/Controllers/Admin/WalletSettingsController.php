@@ -32,9 +32,13 @@ class WalletSettingsController extends Controller
 
         // Get current setting for signup bonus
         $signupBonus = Setting::getValue('signup_bonus', 100);
+        
+        // Get current setting for wallet min cart amount
+        $walletMinCartAmount = Setting::getValue('wallet_min_cart_amount', 0);
 
         return view('admin.wallet_settings.index', [
             'signupBonus' => $signupBonus,
+            'walletMinCartAmount' => $walletMinCartAmount,
             'logos'       => $logos,
             'headerLogo'  => $headerLogo,
         ]);
@@ -55,9 +59,11 @@ class WalletSettingsController extends Controller
 
         $request->validate([
             'signup_bonus' => 'required|numeric|min:0',
+            'wallet_min_cart_amount' => 'required|numeric|min:0',
         ]);
 
         Setting::setValue('signup_bonus', $request->signup_bonus);
+        Setting::setValue('wallet_min_cart_amount', $request->wallet_min_cart_amount);
 
         return redirect()->route('admin.wallet.settings')
             ->with('success_message', 'Wallet settings updated successfully.');

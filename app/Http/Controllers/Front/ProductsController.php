@@ -1737,7 +1737,8 @@ class ProductsController extends Controller
             }
             $total_coupon_amount = Session::get('couponAmount') ?? 0;
             $total_wallet_amount = 0;
-            if (isset($data['use_wallet']) && $data['use_wallet'] == 1 && Auth::user()->wallet_balance > 0) {
+            $walletMinCartAmount = \App\Models\Setting::getValue('wallet_min_cart_amount', 0);
+            if (isset($data['use_wallet']) && $data['use_wallet'] == 1 && Auth::user()->wallet_balance > 0 && $total_price >= $walletMinCartAmount) {
                 $total_wallet_amount = min(Auth::user()->wallet_balance, 20);
             }
 

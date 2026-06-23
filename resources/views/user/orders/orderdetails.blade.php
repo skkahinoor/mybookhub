@@ -122,6 +122,10 @@
                                                 }, 1000);
                                             });
                                         </script>
+                                    @else
+                                        <div class="mt-2 text-danger">
+                                            <small><i class="fa fa-exclamation-circle"></i> Payment time expired. Order will be cancelled shortly.</small>
+                                        </div>
                                     @endif
                                 @endif
                             </div>

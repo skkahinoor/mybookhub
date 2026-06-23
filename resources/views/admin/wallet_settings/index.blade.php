@@ -84,6 +84,34 @@
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <div class="card bg-light border-0 mb-4" style="border-radius: 12px;">
+                                    <div class="card-body p-4">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-7">
+                                                <div class="form-group mb-0">
+                                                    <label for="wallet_min_cart_amount" class="font-weight-bold text-dark mb-2" style="font-size: 1.1rem;">
+                                                        Minimum Cart Amount to Use Wallet (₹)
+                                                    </label>
+                                                    <input type="number" class="form-control form-control-lg border-0 shadow-sm"
+                                                        id="wallet_min_cart_amount" name="wallet_min_cart_amount"
+                                                        value="{{ $walletMinCartAmount ?? 0 }}" min="0" step="0.01"
+                                                        required
+                                                        style="border-radius: 10px; padding: 15px; height: 50px; font-size: 1.1rem; font-weight: 600; color: #435ebe; background: #fff;">
+                                                    <small class="form-text text-muted mt-2">
+                                                        Users can only apply their wallet balance if the cart subtotal is greater than or equal to this amount. Set 0 to allow for any amount.
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-5 text-center d-none d-md-block">
+                                                <div class="p-3">
+                                                    <h3 class="text-primary font-weight-bold mb-1">₹<span id="display_min_cart">{{ number_format($walletMinCartAmount ?? 0, 0) }}</span></h3>
+                                                    <p class="text-muted small mb-0">Current minimum threshold</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <div class="d-flex justify-content-end align-items-center">
                                     <a href="{{ url('admin/dashboard') }}" class="btn btn-light mr-2 font-weight-bold px-4 py-2" style="border-radius: 10px; font-size: 0.95rem;">
@@ -108,6 +136,15 @@
                 document.getElementById('display_amount').innerText = val.toLocaleString('en-IN', { maximumFractionDigits: 2 });
             } else {
                 document.getElementById('display_amount').innerText = '0';
+            }
+        });
+
+        document.getElementById('wallet_min_cart_amount').addEventListener('input', function(e) {
+            var val = parseFloat(e.target.value);
+            if (!isNaN(val) && val >= 0) {
+                document.getElementById('display_min_cart').innerText = val.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+            } else {
+                document.getElementById('display_min_cart').innerText = '0';
             }
         });
     </script>

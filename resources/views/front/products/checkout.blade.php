@@ -744,6 +744,9 @@
                                                 @endforeach
                                             </div>
 
+                                            @php
+                                                $walletMinCartAmount = \App\Models\Setting::getValue('wallet_min_cart_amount', 0);
+                                            @endphp
                                             @if (Auth::check() && Auth::user()->wallet_balance > 0)
                                                 <div class="wallet-promo mb-4 p-3 rounded-3"
                                                     style="background: #f0f7ff; border: 1px solid #dbeafe;">
@@ -751,13 +754,16 @@
                                                         <input class="form-check-input me-3" type="checkbox"
                                                             id="useWallet" name="use_wallet" value="1"
                                                             data-balance="{{ Auth::user()->wallet_balance }}"
-                                                            data-max-use="20">
+                                                            data-max-use="20" {{ $total_price < $walletMinCartAmount ? 'disabled' : '' }}>
                                                         <label class="form-check-label" for="useWallet">
                                                             <span class="d-block fw-bold"
                                                                 style="font-size: 14px; color: #1e3a8a;">Use Wallet
                                                                 Credit</span>
                                                             <small class="text-muted">Balance:
                                                                 ₹{{ number_format(Auth::user()->wallet_balance, 2) }}</small>
+                                                            @if($total_price < $walletMinCartAmount)
+                                                                <small class="text-danger d-block mt-1"><i class="fas fa-info-circle"></i> Minimum cart value of ₹{{ $walletMinCartAmount }} required to use wallet balance.</small>
+                                                            @endif
                                                         </label>
                                                     </div>
                                                 </div>

@@ -83,7 +83,39 @@ class OrderController extends Controller
                     return '<span class="badge ' . $badgeClass . '" style="padding: 6px 12px; font-size: 12px;">' . $order->order_status . '</span>';
                 })
                 ->addColumn('payment_method', function ($order) {
-                    return $order->payment_method;
+                    $method = $order->payment_method;
+                    $gateway = $order->payment_gateway;
+                    $status = $order->order_status;
+                    
+                    $paymentStatus = 'Pending';
+                    $badgeClass = 'badge-warning';
+
+                    if (in_array($gateway, ['COD', 'PICKUP'])) {
+                        if (strtolower($status) === 'delivered') {
+                            $paymentStatus = 'Paid';
+                            $badgeClass = 'badge-success';
+                        } elseif (strpos(strtolower($status), 'cancel') !== false) {
+                            $paymentStatus = 'Cancelled';
+                            $badgeClass = 'badge-danger';
+                        } else {
+                            $paymentStatus = 'Pending';
+                            $badgeClass = 'badge-warning';
+                        }
+                    } else {
+                        // Online payments
+                        if (in_array($status, ['Pending', 'New'])) {
+                            $paymentStatus = 'Unpaid';
+                            $badgeClass = 'badge-danger';
+                        } elseif (strpos(strtolower($status), 'cancel') !== false) {
+                            $paymentStatus = 'Cancelled / Refunded';
+                            $badgeClass = 'badge-danger';
+                        } else {
+                            $paymentStatus = 'Paid';
+                            $badgeClass = 'badge-success';
+                        }
+                    }
+
+                    return '<strong>' . $method . '</strong><br><span class="badge ' . $badgeClass . ' mt-1" style="font-size: 11px; padding: 4px 8px;">' . $paymentStatus . '</span>';
                 })
                 ->addColumn('grand_total', function ($order) {
                     return '<strong>₹' . number_format($order->grand_total, 2) . '</strong>';
@@ -94,7 +126,7 @@ class OrderController extends Controller
                 ->addColumn('action', function ($order) {
                     return '<a href="' . route('student.orders.show', $order->id) . '" class="btn btn-sm btn-primary" style="color: white; padding: 1.1rem 1rem !important;">View Details</a>';
                 })
-                ->rawColumns(['order_id', 'products', 'order_status', 'grand_total', 'action'])
+                ->rawColumns(['order_id', 'products', 'order_status', 'payment_method', 'grand_total', 'action'])
                 ->make(true);
         }
 
