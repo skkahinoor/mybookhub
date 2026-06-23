@@ -161,7 +161,7 @@ class ProfileController extends Controller
             'role_id' => $role->id,
             'status' => 1,
             'referred_by' => $referredBy,
-            'wallet_balance' => 100,
+            'wallet_balance' => 0,
         ]);
 
         $user->assignRole($role);
