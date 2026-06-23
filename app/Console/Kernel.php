@@ -21,6 +21,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('vendor:renew-subscriptions')
                  ->daily()
                  ->at('00:00');
+
+        // Cancel pending online orders older than 30 minutes
+        $schedule->command('orders:cancel-pending')->everyMinute();
     }
 
     /**

@@ -1663,8 +1663,10 @@ class ProductController extends Controller
         $grand_total = $total_price + $shipping_charges - $coupon_amount;
 
         $wallet_amount = 0;
+        
+        $walletMinCartAmount = \App\Models\Setting::getValue('wallet_min_cart_amount', 0);
 
-        if ($request->use_wallet && $user->wallet_balance > 0 && $grand_total > 150) {
+        if ($request->use_wallet && $user->wallet_balance > 0 && $total_price >= $walletMinCartAmount) {
 
             $wallet_amount = min($user->wallet_balance, 20);
 
