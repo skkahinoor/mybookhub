@@ -388,6 +388,7 @@ class StudentController extends Controller
             'transaction_type' => 'required|in:credit,debit',
             'description' => 'nullable|string|max:255',
             'send_notification' => 'nullable',
+            'show_in_history' => 'nullable',
         ]);
 
         $student = User::where('id', $request->user_id)
@@ -410,13 +411,15 @@ class StudentController extends Controller
 
         $student->save();
 
-        // Create transaction log
-        \App\Models\WalletTransaction::create([
-            'user_id' => $student->id,
-            'amount' => $amount,
-            'type' => $type,
-            'description' => $description,
-        ]);
+        // Create transaction log if requested
+        if ($request->has('show_in_history') && $request->show_in_history == '1') {
+            \App\Models\WalletTransaction::create([
+                'user_id' => $student->id,
+                'amount' => $amount,
+                'type' => $type,
+                'description' => $description,
+            ]);
+        }
 
         // Create notification if requested
         if ($request->has('send_notification') && $request->send_notification == '1') {

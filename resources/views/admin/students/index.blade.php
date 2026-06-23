@@ -411,10 +411,16 @@ function confirmDelete(id) {
                         <label for="credit_description" class="font-weight-bold text-dark">Description / Remark</label>
                         <textarea class="form-control" id="credit_description" name="description" rows="2" style="border-radius: 8px;" placeholder="e.g. Manual credit by admin"></textarea>
                     </div>
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-3">
                         <div class="custom-control custom-checkbox">
                             <input type="checkbox" class="custom-control-input" id="send_notification" name="send_notification" value="1" checked>
                             <label class="custom-control-label font-weight-bold text-dark" for="send_notification" style="cursor: pointer;">Send Notification to Student</label>
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="show_in_history" name="show_in_history" value="1" checked>
+                            <label class="custom-control-label font-weight-bold text-dark" for="show_in_history" style="cursor: pointer;">Display in Transaction History</label>
                         </div>
                     </div>
                 </div>
@@ -437,6 +443,7 @@ function openCreditModal(id, name, balance) {
     $('#amount_label').html('Amount to Credit (₹) <span class="text-danger">*</span>');
     $('#credit_description').val('Manual credit by admin');
     $('#send_notification').prop('checked', true);
+    $('#show_in_history').prop('checked', true);
     $('#submit_btn').text('Credit Wallet').removeClass('btn-danger').addClass('btn-primary').css({'background-color': '#253858', 'border-color': '#253858'});
     $('#creditWalletModalLabel').html('<i class="fas fa-wallet mr-2"></i> Manage Student Wallet');
     $('#creditWalletModal').modal('show');
