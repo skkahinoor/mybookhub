@@ -198,16 +198,6 @@ class ProfileController extends Controller
             'is_read' => false,
         ]);
 
-        // Send a notification about the welcome bonus
-        Notification::create([
-            'type' => 'wallet_credit',
-            'title' => 'Welcome Bonus Credited',
-            'message' => '₹100 has been credited to your wallet as a registration welcome bonus.',
-            'related_id' => (int) $user->id,
-            'related_type' => User::class,
-            'is_read' => false,
-        ]);
-
         Cache::forget('student_reg_name_' . $phone);
         Cache::forget('student_reg_email_' . $phone);
         Cache::forget('student_reg_phone_' . $phone);
