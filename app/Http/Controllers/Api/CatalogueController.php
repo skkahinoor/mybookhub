@@ -67,6 +67,26 @@ class CatalogueController extends Controller
         ]);
     }
 
+    public function getManualAddData(Request $request)
+    {
+        if ($resp = $this->checkAccess($request)) return $resp;
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Data fetched successfully',
+            'data' => [
+                'sections' => Section::where('status', 1)->orderBy('name', 'asc')->get(),
+                'categories' => Category::where('status', 1)->orderBy('category_name', 'asc')->get(),
+                'publishers' => Publisher::where('status', 1)->orderBy('name', 'asc')->get(),
+                'subjects' => Subject::where('status', 1)->orderBy('name', 'asc')->get(),
+                'languages' => Language::orderBy('name', 'asc')->get(),
+                'editions' => Edition::orderBy('edition', 'asc')->get(),
+                'authors' => Author::orderBy('name', 'asc')->get(),
+                'book_conditions' => \App\Models\OldBookCondition::orderBy('id', 'asc')->get(),
+            ]
+        ]);
+    }
+
     public function storeSection(Request $request)
     {
         if ($resp = $this->checkAccess($request)) return $resp;
