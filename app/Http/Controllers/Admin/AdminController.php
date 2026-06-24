@@ -789,6 +789,8 @@ class AdminController extends Controller
 
             if ($role === 'admin') {
                 $query->where('role_id', RoleHelper::adminId());
+            } elseif ($role === 'vendor') {
+                $query->where('role_id', RoleHelper::vendorId());
             } else {
                 $query->role($role, 'web');
             }
@@ -798,7 +800,7 @@ class AdminController extends Controller
         } else {
             // Show all staff: admins, vendors, etc. (excluding basic users/students if desired?)
             // Assuming "Admins/Vendors" page usually implies staff.
-            $query->role(['admin', 'vendor'], 'web');
+            $query->whereIn('role_id', [RoleHelper::adminId(), RoleHelper::vendorId()]);
             $title = 'All Admins/Vendors';
             Session::put('page', 'view_all');
         }
@@ -837,7 +839,7 @@ class AdminController extends Controller
                 ->addColumn('actions', function ($row) {
                     $html = '<div class="d-flex align-items-center" style="gap: 10px;">';
                     
-                    if ($row->type == 'vendor') {
+                    if ($row->type == 'vendor' || $row->role_id == \App\Helpers\RoleHelper::vendorId()) {
                         $html .= '<a href="' . url('admin/view-vendor-details/' . $row->id) . '" title="View and Edit"><i style="font-size: 20px" class="mdi mdi-file-document"></i></a>';
                         
                         $html .= '<form action="' . route('admin.delete', $row->id) . '" method="POST" onsubmit="return confirm(\'Are you sure you want to delete this admin?\')" style="display:inline;">
