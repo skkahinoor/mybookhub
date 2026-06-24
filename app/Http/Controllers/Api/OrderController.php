@@ -231,13 +231,30 @@ class OrderController extends Controller
             'tracking_number' => $request->tracking_number
         ]);
 
+        if ($request->order_status == 'Delivered') {
+            $now = now();
+            $order->update(['delivered_at' => $now]);
+            OrdersProduct::where('order_id', $order->id)->update(['item_status' => 'Delivered', 'item_delivered_at' => $now]);
+            \App\Models\WalletTransaction::checkAndCreditWallet($order->id);
+        }
+
+        if ($request->order_status == 'Returned') {
+            OrdersProduct::where('order_id', $order->id)->update(['item_status' => 'Returned', 'return_status' => 'Returned']);
+            \App\Models\WalletTransaction::revertWallet($order->id);
+        }
+
+        if (in_array(strtolower($request->order_status), ['canceled', 'cancelled'])) {
+            OrdersProduct::where('order_id', $order->id)->update(['item_status' => 'Cancelled']);
+            \App\Models\WalletTransaction::revertWallet($order->id);
+        }
+
         OrdersLog::create([
             'order_id' => $order->id,
             'order_status' => $request->order_status
         ]);
 
         // ✅ Send Push Notification for specific status changes
-        $targetStatuses = ['Shipped', 'Delivered', 'Canceled', 'Cancelled'];
+        $targetStatuses = ['Shipped', 'Delivered', 'Canceled', 'Cancelled', 'Returned', 'Return Approved', 'Return Rejected', 'Return Requested'];
         if (in_array($request->order_status, $targetStatuses)) {
             // Only notify if there's a registered user (not guest)
             if ($order->user_id > 0) {
@@ -251,6 +268,14 @@ class OrderController extends Controller
                     $body = "Success! Your order #{$order->id} has been delivered.";
                 } elseif (in_array(strtolower($request->order_status), ['canceled', 'cancelled'])) {
                     $body = "Notice: Your order #{$order->id} has been cancelled.";
+                } elseif (strtolower($request->order_status) == 'returned') {
+                    $body = "Notice: Your order #{$order->id} return has been processed.";
+                } elseif (strtolower($request->order_status) == 'return approved') {
+                    $body = "Great news! Return request approved for your order #{$order->id}.";
+                } elseif (strtolower($request->order_status) == 'return rejected') {
+                    $body = "Notice: Return request rejected for your order #{$order->id}.";
+                } elseif (strtolower($request->order_status) == 'return requested') {
+                    $body = "Return requested successfully for your order #{$order->id}.";
                 }
 
                 $this->firebaseService->sendToUsers(
@@ -296,10 +321,76 @@ class OrderController extends Controller
             ], 403);
         }
 
-        // ✅ ONLY update status
-        $item->update([
-            'item_status' => $request->item_status
+        $updateData = ['item_status' => $request->item_status];
+
+        // Sync return_status if it's return-related
+        if (in_array($request->item_status, ['Return Approved', 'Return Rejected', 'Returned'])) {
+            $updateData['return_status'] = str_replace('Return ', '', $request->item_status); // Approved, Rejected, Returned
+            if ($request->item_status == 'Returned') {
+                $updateData['return_status'] = 'Returned';
+            }
+        }
+
+        if ($request->item_status == 'Delivered') {
+            $updateData['item_delivered_at'] = now();
+        }
+
+        $item->update($updateData);
+
+        $orderId = $item->order_id;
+        $totalItems = OrdersProduct::where('order_id', $orderId)->count();
+        $deliveredItems = OrdersProduct::where('order_id', $orderId)->where('item_status', 'Delivered')->count();
+        $returnedItems = OrdersProduct::where('order_id', $orderId)->where('item_status', 'Returned')->count();
+        $cancelledItems = OrdersProduct::where('order_id', $orderId)->where('item_status', 'Cancelled')->count();
+        
+        if ($totalItems == $deliveredItems) {
+            Order::where('id', $orderId)->update(['order_status' => 'Delivered', 'delivered_at' => now()]);
+        } elseif ($deliveredItems > 0 && ($deliveredItems + $returnedItems + $cancelledItems) < $totalItems) {
+            Order::where('id', $orderId)->update(['order_status' => 'Partially Delivered']);
+        } elseif ($totalItems == $returnedItems) {
+            Order::where('id', $orderId)->update(['order_status' => 'Returned']);
+        } elseif ($totalItems == $cancelledItems) {
+            Order::where('id', $orderId)->update(['order_status' => 'Cancelled']);
+        }
+
+        if ($request->item_status == 'Delivered') {
+            \App\Models\WalletTransaction::checkAndCreditWallet($orderId);
+        }
+
+        if ($request->item_status == 'Returned') {
+            \App\Models\WalletTransaction::revertWallet($orderId);
+        }
+
+        if ($request->item_status == 'Cancelled') {
+            \App\Models\WalletTransaction::revertWallet($orderId);
+        }
+
+        OrdersLog::create([
+            'order_id' => $orderId,
+            'order_item_id' => $item->id,
+            'order_status' => $request->item_status
         ]);
+
+        $order = Order::find($orderId);
+        if ($order && $order->user_id > 0) {
+            $pushTitle = 'Order Item Update';
+            $pushBody = "Your order item '{$item->product_name}' status changed to: {$request->item_status}";
+
+            try {
+                $this->firebaseService->sendToUsers(
+                    [(int) $order->user_id],
+                    $pushTitle,
+                    $pushBody,
+                    [
+                        'order_id' => (string) $order->id,
+                        'type' => 'order_update',
+                        'status' => $request->item_status,
+                    ]
+                );
+            } catch (\Exception $e) {
+                \Log::error('FCM push failed for order item status update: ' . $e->getMessage());
+            }
+        }
 
         return response()->json([
             'status' => true,

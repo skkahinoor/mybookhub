@@ -1838,6 +1838,22 @@ class ProductController extends Controller
                     ]);
 
                     $vendor = Vendor::with(['user', 'vendorbusinessdetails'])->find($attribute->vendor_id);
+                    if ($vendor && $vendor->user) {
+                        try {
+                            app(\App\Services\FirebaseService::class)->sendToUsers(
+                                [$vendor->user->id],
+                                'New Order Received',
+                                'A customer placed an order containing your product: ' . ($attribute->product->product_name ?? 'Product') . '.',
+                                [
+                                    'type' => 'order_placed',
+                                    'order_id' => (string) $order->id,
+                                ],
+                                true // Skip DB notification - it is already created above as type 'order_placed'
+                            );
+                        } catch (\Exception $e) {
+                            \Log::error('FCM push failed for new order to vendor (api): ' . $e->getMessage());
+                        }
+                    }
                     if ($vendor && $vendor->whatsapp_opt_in && !empty($vendor->whatsapp_phone)) {
                         $vendorDisplayName = $vendor->vendorbusinessdetails->shop_name
                             ?? $vendor->user->name

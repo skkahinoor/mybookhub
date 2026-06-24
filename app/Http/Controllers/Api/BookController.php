@@ -300,7 +300,7 @@ class BookController extends Controller
                 $q->where('product_name', 'LIKE', "%{$term}%")
                   ->orWhere('product_isbn', 'LIKE', "%{$term}%");
             })
-            ->select('id', 'product_name', 'product_isbn')
+            ->select('id', 'product_name', 'product_isbn', 'condition')
             ->orderByRaw("CASE 
                 WHEN product_name = ? THEN 0
                 WHEN product_isbn = ? THEN 1
@@ -481,7 +481,8 @@ class BookController extends Controller
 
             'meta_title'       => 'nullable|string',
             'meta_keywords'    => 'nullable|string',
-            'meta_description' => 'nullable|string'
+            'meta_description' => 'nullable|string',
+            'copy_image_from_product_id' => 'nullable|integer|exists:products,id'
         ]);
 
         /*
@@ -532,10 +533,8 @@ class BookController extends Controller
             }
 
             if ($existingAttributeQuery->exists()) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Product with same ISBN and condition already exists in your account.'
-                ], 422);
+                $updateAttribute = true;
+                $existingAttribute = $existingAttributeQuery->first();
             }
 
             $product = $existingProduct;
@@ -583,8 +582,8 @@ class BookController extends Controller
                 $image_tmp = $request->file('product_image');
 
                 if ($image_tmp->isValid()) {
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = rand(111, 99999) . '.' . $extension;
+                    // Centralized S3 upload via Service
+                    $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
 
                     Image::make($image_tmp)->resize(1000, 1000)
                         ->save(public_path('front/images/product_images/large/' . $imageName));
@@ -595,12 +594,27 @@ class BookController extends Controller
                     Image::make($image_tmp)->resize(250, 250)
                         ->save(public_path('front/images/product_images/small/' . $imageName));
 
-                    // Also save to book_covers
-                    Image::make($image_tmp)->resize(500, 500)
-                        ->save(public_path('book_covers/' . $imageName));
-
                     $product->update([
                         'product_image' => $imageName
+                    ]);
+                }
+            } else if ($request->filled('copy_image_from_product_id')) {
+                $sourceProduct = Product::find($request->copy_image_from_product_id);
+                if ($sourceProduct && $sourceProduct->product_image) {
+                    $product->update([
+                        'product_image' => $sourceProduct->product_image
+                    ]);
+                }
+            } elseif ($request->condition === 'old' && !empty($request->product_isbn)) {
+                // Auto-copy image from new book with same ISBN when no image provided
+                $newBookSource = Product::where('product_isbn', $request->product_isbn)
+                    ->where('condition', 'new')
+                    ->whereNotNull('product_image')
+                    ->first();
+
+                if ($newBookSource) {
+                    $product->update([
+                        'product_image' => $newBookSource->product_image
                     ]);
                 }
             }
@@ -669,17 +683,63 @@ class BookController extends Controller
             }
         }
 
-        ProductsAttribute::create([
-            'product_id' => $product->id,
-            'vendor_id'  => $vendorId,
-            'admin_id'   => $adminId,
-            'admin_type' => $adminType,
-            'stock'      => $stock,
-            'sku'        => 'BH-P' . $product->id . '-' . ($adminType === 'vendor' ? 'V' . $vendorId : 'A' . $adminId),
-            'status'     => 1,
-            'product_discount'      => $discount,
-            'old_book_condition_id' => $request->old_book_condition_id,
-        ]);
+        if (isset($updateAttribute) && $updateAttribute && isset($existingAttribute)) {
+            $existingAttribute->update([
+                'stock' => $stock,
+                'product_discount' => $discount,
+                'old_book_condition_id' => $request->old_book_condition_id,
+            ]);
+            $product->update([
+                'product_price' => $request->product_price
+            ]);
+
+            // Handle image on update: upload new image if provided
+            if ($request->hasFile('product_image')) {
+                $image_tmp = $request->file('product_image');
+
+                if ($image_tmp->isValid()) {
+                    // Centralized S3 upload via Service
+                    $imageName = app(\App\Services\BookCoverUploadService::class)->uploadBookCover($image_tmp);
+
+                    Image::make($image_tmp)->resize(1000, 1000)
+                        ->save(public_path('front/images/product_images/large/' . $imageName));
+
+                    Image::make($image_tmp)->resize(500, 500)
+                        ->save(public_path('front/images/product_images/medium/' . $imageName));
+
+                    Image::make($image_tmp)->resize(250, 250)
+                        ->save(public_path('front/images/product_images/small/' . $imageName));
+
+                    $product->update([
+                        'product_image' => $imageName
+                    ]);
+                }
+            } elseif (!$product->product_image && !empty($request->product_isbn)) {
+                // No image uploaded and product has no image: copy from "new" book with same ISBN
+                $newBookSource = Product::where('product_isbn', $request->product_isbn)
+                    ->where('condition', 'new')
+                    ->whereNotNull('product_image')
+                    ->first();
+
+                if ($newBookSource) {
+                    $product->update([
+                        'product_image' => $newBookSource->product_image
+                    ]);
+                }
+            }
+        } else {
+            ProductsAttribute::create([
+                'product_id' => $product->id,
+                'vendor_id'  => $vendorId,
+                'admin_id'   => $adminId,
+                'admin_type' => $adminType,
+                'stock'      => $stock,
+                'sku'        => 'BH-P' . $product->id . '-' . ($adminType === 'vendor' ? 'V' . $vendorId : 'A' . $adminId),
+                'status'     => 1,
+                'product_discount'      => $discount,
+                'old_book_condition_id' => $request->old_book_condition_id,
+            ]);
+        }
 
         return response()->json([
             'status'  => true,

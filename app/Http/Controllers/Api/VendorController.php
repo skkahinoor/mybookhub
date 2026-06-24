@@ -457,6 +457,13 @@ class VendorController extends Controller
             'business_license_number' => 'nullable|string|max:100',
             'gst_number' => 'nullable|string|max:50',
             'pan_number' => 'nullable|string|max:20',
+            'latitude' => 'nullable|string',
+            'longitude' => 'nullable|string',
+
+            'country_id' => 'nullable|integer',
+            'state_id' => 'nullable|integer',
+            'district_id' => 'nullable|integer',
+            'block_id' => 'nullable|integer',
         ]);
 
         // 🖼 Handle Address Proof Image Upload
@@ -486,12 +493,26 @@ class VendorController extends Controller
                 'shop_email' => $request->shop_email,
                 'shop_website' => $request->shop_website,
                 'address_proof' => $request->address_proof,
-                'address_proof_image' => $addressProofImage,
+                'address_proof_image' => $addressProofImage ?: ($vendor->business_details->address_proof_image ?? null),
                 'business_license_number' => $request->business_license_number,
                 'gst_number' => $request->gst_number,
                 'pan_number' => $request->pan_number,
+                'latitude' => $request->latitude,
+                'longitude' => $request->longitude,
+                'country_id' => $request->country_id,
+                'state_id' => $request->state_id,
+                'district_id' => $request->district_id,
+                'block_id' => $request->block_id,
             ]
         );
+
+        // Synchronize coordinates back to vendors table's location field to fix distance filtering
+        if (!empty($request->latitude) && !empty($request->longitude)) {
+            $locationStr = $request->latitude . ',' . $request->longitude;
+            \App\Models\Vendor::where('id', $vendor->id)->update([
+                'location' => $locationStr
+            ]);
+        }
 
         return response()->json([
             'status' => true,

@@ -79,13 +79,13 @@ class CatalogueController extends Controller
             $authorsQuery->where('name', 'LIKE', "%{$authorSearch}%");
         }
         // Limit results to avoid massive JSON sizes causing slow load
-        $authors = $authorsQuery->orderBy('name', 'asc')->limit(50)->get();
+        $authors = $authorsQuery->orderBy('id', 'asc')->limit(50)->get();
 
         $publishersQuery = Publisher::where('status', 1);
         if (!empty($publisherSearch)) {
             $publishersQuery->where('name', 'LIKE', "%{$publisherSearch}%");
         }
-        $publishers = $publishersQuery->orderBy('name', 'asc')->limit(50)->get();
+        $publishers = $publishersQuery->orderBy('id', 'asc')->limit(50)->get();
 
         return response()->json([
             'status' => true,
