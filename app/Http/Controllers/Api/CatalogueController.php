@@ -101,6 +101,7 @@ class CatalogueController extends Controller
                 'editions' => Edition::orderBy('edition', 'asc')->get(),
                 'authors' => $authors,
                 'book_conditions' => \App\Models\OldBookCondition::orderBy('id', 'asc')->get(),
+                'book_types' => BookType::where('status', 1)->orderBy('book_type', 'asc')->get(),
             ]
         ]);
     }
