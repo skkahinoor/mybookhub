@@ -295,7 +295,7 @@ class AnalyticsController extends Controller
         $headerLogo = HeaderLogo::first();
         $logos      = HeaderLogo::first();
 
-        $searchQueries = \App\Models\SearchQuery::with('user')->latest()->paginate(50);
+        $searchQueries = \App\Models\SearchQuery::with('user')->latest()->paginate(10);
 
         return view('admin.reports.search_queries', compact('searchQueries', 'headerLogo', 'logos'));
     }

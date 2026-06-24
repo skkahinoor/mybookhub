@@ -22,4 +22,17 @@ class SearchQuery extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    protected static function booted()
+    {
+        static::created(function ($query) {
+            $count = static::count();
+            if ($count > 100) {
+                // Delete oldest
+                $excess = $count - 100;
+                $oldestIds = static::orderBy('id', 'asc')->limit($excess)->pluck('id');
+                static::whereIn('id', $oldestIds)->delete();
+            }
+        });
+    }
 }

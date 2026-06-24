@@ -63,6 +63,9 @@
     <div style="position: relative; z-index: 1;">
         <h1><i class="fas fa-search" style="margin-right:10px;"></i>Search Analytics</h1>
         <p>Monitor keywords and books students are searching for on the platform</p>
+        <div class="mt-3" style="background: #ffc107; padding: 10px 15px; border-radius: 8px; display: inline-block; font-size: 0.85rem; color: #000; font-weight: 500; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <i class="fas fa-exclamation-triangle me-1"></i> <strong>Note:</strong> To maintain clean storage, a maximum of 100 recent searches are stored. Oldest queries are automatically deleted as new ones arrive.
+        </div>
     </div>
 </div>
 
