@@ -367,13 +367,13 @@ function confirmDelete(id) {
 }
 </script>
 
-<!-- Credit Wallet Modal -->
+<!-- Manage Wallet Modal -->
 <div class="modal fade" id="creditWalletModal" tabindex="-1" role="dialog" aria-labelledby="creditWalletModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content shadow-lg border-0" style="border-radius: 16px;">
             <div class="modal-header bg-primary text-white" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
                 <h5 class="modal-title font-weight-bold" id="creditWalletModalLabel">
-                    <i class="fas fa-wallet mr-2"></i> Credit Student Wallet
+                    <i class="fas fa-wallet mr-2"></i> Manage Student Wallet
                 </h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -397,17 +397,36 @@ function confirmDelete(id) {
                         </div>
                     </div>
                     <div class="form-group mb-3">
-                        <label for="credit_amount" class="font-weight-bold text-dark">Amount to Credit (₹) <span class="text-danger">*</span></label>
+                        <label for="transaction_type" class="font-weight-bold text-dark">Action Type <span class="text-danger">*</span></label>
+                        <select class="form-control" id="transaction_type" name="transaction_type" style="border-radius: 8px; font-weight: 600;">
+                            <option value="credit">Credit (+)</option>
+                            <option value="debit">Debit (-)</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="credit_amount" class="font-weight-bold text-dark" id="amount_label">Amount to Credit (₹) <span class="text-danger">*</span></label>
                         <input type="number" class="form-control" id="credit_amount" name="amount" min="0.01" step="0.01" required style="border-radius: 8px;" placeholder="e.g. 100">
                     </div>
-                    <div class="form-group mb-0">
+                    <div class="form-group mb-3">
                         <label for="credit_description" class="font-weight-bold text-dark">Description / Remark</label>
                         <textarea class="form-control" id="credit_description" name="description" rows="2" style="border-radius: 8px;" placeholder="e.g. Manual credit by admin"></textarea>
+                    </div>
+                    <div class="form-group mb-3">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="send_notification" name="send_notification" value="1" checked>
+                            <label class="custom-control-label font-weight-bold text-dark" for="send_notification" style="cursor: pointer;">Send Notification to Student</label>
+                        </div>
+                    </div>
+                    <div class="form-group mb-0">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="show_in_history" name="show_in_history" value="1" checked>
+                            <label class="custom-control-label font-weight-bold text-dark" for="show_in_history" style="cursor: pointer;">Display in Transaction History</label>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light" style="border-bottom-left-radius: 16px; border-bottom-right-radius: 16px;">
                     <button type="button" class="btn btn-secondary font-weight-bold px-4" data-dismiss="modal" style="border-radius: 8px;">Cancel</button>
-                    <button type="submit" class="btn btn-primary font-weight-bold px-4" style="border-radius: 8px; background-color: #253858; border-color: #253858;">Credit Wallet</button>
+                    <button type="submit" id="submit_btn" class="btn btn-primary font-weight-bold px-4" style="border-radius: 8px; background-color: #253858; border-color: #253858;">Credit Wallet</button>
                 </div>
             </form>
         </div>
@@ -420,9 +439,30 @@ function openCreditModal(id, name, balance) {
     $('#credit_student_name').val(name);
     $('#credit_student_balance').val(parseFloat(balance).toFixed(2));
     $('#credit_amount').val('');
+    $('#transaction_type').val('credit');
+    $('#amount_label').html('Amount to Credit (₹) <span class="text-danger">*</span>');
     $('#credit_description').val('Manual credit by admin');
+    $('#send_notification').prop('checked', true);
+    $('#show_in_history').prop('checked', true);
+    $('#submit_btn').text('Credit Wallet').removeClass('btn-danger').addClass('btn-primary').css({'background-color': '#253858', 'border-color': '#253858'});
+    $('#creditWalletModalLabel').html('<i class="fas fa-wallet mr-2"></i> Manage Student Wallet');
     $('#creditWalletModal').modal('show');
 }
+
+$(document).ready(function() {
+    $('#transaction_type').on('change', function() {
+        var val = $(this).val();
+        if (val === 'credit') {
+            $('#amount_label').html('Amount to Credit (₹) <span class="text-danger">*</span>');
+            $('#credit_description').val('Manual credit by admin');
+            $('#submit_btn').text('Credit Wallet').removeClass('btn-danger').addClass('btn-primary').css({'background-color': '#253858', 'border-color': '#253858'});
+        } else {
+            $('#amount_label').html('Amount to Debit (₹) <span class="text-danger">*</span>');
+            $('#credit_description').val('Manual debit by admin');
+            $('#submit_btn').text('Debit Wallet').removeClass('btn-primary').addClass('btn-danger').css({'background-color': '#b91c1c', 'border-color': '#b91c1c'});
+        }
+    });
+});
 </script>
 
 @endsection

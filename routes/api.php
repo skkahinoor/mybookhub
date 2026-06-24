@@ -140,6 +140,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // Catalogue Management
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/vendor/sections', [CatalogueController::class, 'getSection']);
+    Route::get('/vendor/manual-add-data', [CatalogueController::class, 'getManualAddData']);
     Route::post('/vendor/sections', [CatalogueController::class, 'storeSection']);
     Route::put('/vendor/sections/{id}', [CatalogueController::class, 'updateSection']);
     Route::delete('/vendor/sections/{id}', [CatalogueController::class, 'destroySection']);
@@ -205,6 +206,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // Order Management
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('vendor/orders', [OrderController::class, 'index']);
+    Route::get('vendor/orders/incoming-count', [OrderController::class, 'incomingCount']);
     Route::get('vendor/orders/{order_id}', [OrderController::class, 'show']);
     Route::patch('vendor/orders/{order_id}/status', [OrderController::class, 'updateOrderStatus']);
     Route::patch('vendor/order-items/{order_item_id}/status', [OrderController::class, 'updateOrderItemStatus']);

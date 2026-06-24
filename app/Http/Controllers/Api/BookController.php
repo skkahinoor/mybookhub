@@ -294,9 +294,22 @@ class BookController extends Controller
             'title' => 'required|string|min:2'
         ]);
 
-        $books = Product::where('product_name', 'LIKE', "%{$request->title}%")
+        $term = $request->title;
+
+        $books = Product::where(function ($q) use ($term) {
+                $q->where('product_name', 'LIKE', "%{$term}%")
+                  ->orWhere('product_isbn', 'LIKE', "%{$term}%");
+            })
             ->select('id', 'product_name', 'product_isbn')
-            ->limit(10)
+            ->orderByRaw("CASE 
+                WHEN product_name = ? THEN 0
+                WHEN product_isbn = ? THEN 1
+                WHEN product_name LIKE ? THEN 2
+                WHEN product_isbn LIKE ? THEN 3
+                ELSE 4 
+            END", [$term, $term, "{$term}%", "{$term}%"])
+            ->orderBy('product_name')
+            ->limit(50)
             ->get();
 
         return response()->json([
@@ -441,11 +454,8 @@ class BookController extends Controller
             'condition' => 'required|in:new,old',
 
             'product_isbn' => [
-                'required',
+                'nullable',
                 'string',
-                Rule::unique('products')->where(function ($query) use ($request) {
-                    return $query->where('condition', $request->condition);
-                }),
                 'regex:/^(?:\d{10}|\d{13})$/',
             ],
 
@@ -472,8 +482,6 @@ class BookController extends Controller
             'meta_title'       => 'nullable|string',
             'meta_keywords'    => 'nullable|string',
             'meta_description' => 'nullable|string'
-        ], [
-            'product_isbn.unique' => 'Product with same ISBN and condition already exists'
         ]);
 
         /*
@@ -496,19 +504,42 @@ class BookController extends Controller
 
         /*
     |--------------------------------------------------------------------------
-    | Check duplicate ISBN
+    | Check duplicate/reusability of ISBN
     |--------------------------------------------------------------------------
     */
 
-        $exists = Product::where('product_isbn', $request->product_isbn)
-            ->where('condition', $request->condition)
-            ->exists();
+        $user = $request->user();
+        $vendorId = ($user->type === 'vendor') ? $user->vendor_id : null;
+        $adminId = ($user->type !== 'vendor') ? $user->id : null;
+        $adminType = $user->type === 'vendor' ? 'vendor' : 'admin';
 
-        if ($exists) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Product with same ISBN and condition already exists'
-            ], 422);
+        $existingProduct = null;
+        if (!empty($request->product_isbn)) {
+            $existingProduct = Product::where('product_isbn', $request->product_isbn)
+                ->where('condition', $request->condition)
+                ->first();
+        }
+
+        $skipProductSave = false;
+
+        if ($existingProduct) {
+            // Check if current user already has this product attribute
+            $existingAttributeQuery = ProductsAttribute::where('product_id', $existingProduct->id);
+            if ($adminType === 'vendor') {
+                $existingAttributeQuery->where('vendor_id', $vendorId)->where('admin_type', 'vendor');
+            } else {
+                $existingAttributeQuery->where('admin_id', $adminId)->where('admin_type', 'admin');
+            }
+
+            if ($existingAttributeQuery->exists()) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Product with same ISBN and condition already exists in your account.'
+                ], 422);
+            }
+
+            $product = $existingProduct;
+            $skipProductSave = true;
         }
 
         /*
@@ -517,72 +548,72 @@ class BookController extends Controller
     |--------------------------------------------------------------------------
     */
 
-        $product = Product::create([
-            'condition'      => $request->condition,
-            'product_isbn'   => $request->product_isbn,
-            'product_name'   => $request->product_name,
-            'description'    => $request->description,
-            'product_price'  => $request->product_price,
+        if (!$skipProductSave) {
+            $product = Product::create([
+                'condition'      => $request->condition,
+                'product_isbn'   => $request->product_isbn,
+                'product_name'   => $request->product_name,
+                'description'    => $request->description,
+                'product_price'  => $request->product_price,
 
-            'section_id'     => $request->section_id,
-            'category_id'    => $request->category_id,
-            'subcategory_id' => $request->subcategory_id,
+                'section_id'     => $request->section_id,
+                'category_id'    => $request->category_id,
+                'subcategory_id' => $request->subcategory_id,
 
-            'publisher_id' => $request->publisher_id,
-            'subject_id'   => $request->subject_id,
-            'edition_id'   => $request->edition_id,
-            'language_id'  => $request->language_id,
-            'book_type_id' => $request->book_type_id,
+                'publisher_id' => $request->publisher_id,
+                'subject_id'   => $request->subject_id,
+                'edition_id'   => $request->edition_id,
+                'language_id'  => $request->language_id,
+                'book_type_id' => $request->book_type_id,
 
-            'meta_title'       => $request->meta_title,
-            'meta_keywords'    => $request->meta_keywords,
-            'meta_description' => $request->meta_description,
+                'meta_title'       => $request->meta_title,
+                'meta_keywords'    => $request->meta_keywords,
+                'meta_description' => $request->meta_description,
 
-            'status' => 1
-        ]);
+                'status' => 1
+            ]);
 
-        /*
-    |--------------------------------------------------------------------------
-    | Upload Product Image
-    |--------------------------------------------------------------------------
-    */
+            /*
+        |--------------------------------------------------------------------------
+        | Upload Product Image
+        |--------------------------------------------------------------------------
+        */
 
-        if ($request->hasFile('product_image')) {
+            if ($request->hasFile('product_image')) {
+                $image_tmp = $request->file('product_image');
 
-            $image_tmp = $request->file('product_image');
+                if ($image_tmp->isValid()) {
+                    $extension = $image_tmp->getClientOriginalExtension();
+                    $imageName = rand(111, 99999) . '.' . $extension;
 
-            if ($image_tmp->isValid()) {
+                    Image::make($image_tmp)->resize(1000, 1000)
+                        ->save(public_path('front/images/product_images/large/' . $imageName));
 
-                $extension = $image_tmp->getClientOriginalExtension();
-                $imageName = rand(111, 99999) . '.' . $extension;
+                    Image::make($image_tmp)->resize(500, 500)
+                        ->save(public_path('front/images/product_images/medium/' . $imageName));
 
-                Image::make($image_tmp)->resize(1000, 1000)
-                    ->save(public_path('front/images/product_images/large/' . $imageName));
+                    Image::make($image_tmp)->resize(250, 250)
+                        ->save(public_path('front/images/product_images/small/' . $imageName));
 
-                Image::make($image_tmp)->resize(500, 500)
-                    ->save(public_path('front/images/product_images/medium/' . $imageName));
+                    // Also save to book_covers
+                    Image::make($image_tmp)->resize(500, 500)
+                        ->save(public_path('book_covers/' . $imageName));
 
-                Image::make($image_tmp)->resize(250, 250)
-                    ->save(public_path('front/images/product_images/small/' . $imageName));
-
-                // Also save to book_covers
-                Image::make($image_tmp)->resize(500, 500)
-                    ->save(public_path('book_covers/' . $imageName));
-
-                $product->update([
-                    'product_image' => $imageName
-                ]);
+                    $product->update([
+                        'product_image' => $imageName
+                    ]);
+                }
             }
-        }
 
-        /*
-    |--------------------------------------------------------------------------
-    | Attach Authors
-    |--------------------------------------------------------------------------
-    */
+            /*
+        |--------------------------------------------------------------------------
+        | Attach Authors
+        |--------------------------------------------------------------------------
+        */
 
-        if ($request->filled('author_ids')) {
-            $product->authors()->sync($request->author_ids);
+            if ($request->filled('author_ids')) {
+                $product->authors()->sync($request->author_ids);
+            }
         }
 
         /*

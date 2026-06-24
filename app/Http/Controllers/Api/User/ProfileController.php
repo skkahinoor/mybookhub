@@ -161,7 +161,7 @@ class ProfileController extends Controller
             'role_id' => $role->id,
             'status' => 1,
             'referred_by' => $referredBy,
-            'wallet_balance' => 100,
+            'wallet_balance' => 0,
         ]);
 
         $user->assignRole($role);
@@ -195,16 +195,6 @@ class ProfileController extends Controller
             'message' => 'A new student ' . $user->name . ' has registered.',
             'related_id' => $user->id,
             'related_type' => 'App\Models\User',
-            'is_read' => false,
-        ]);
-
-        // Send a notification about the welcome bonus
-        Notification::create([
-            'type' => 'wallet_credit',
-            'title' => 'Welcome Bonus Credited',
-            'message' => '₹100 has been credited to your wallet as a registration welcome bonus.',
-            'related_id' => (int) $user->id,
-            'related_type' => User::class,
             'is_read' => false,
         ]);
 

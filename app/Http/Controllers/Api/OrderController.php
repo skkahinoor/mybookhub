@@ -99,6 +99,38 @@ class OrderController extends Controller
         ], 200);
     }
 
+    public function incomingCount(Request $request)
+    {
+        if ($resp = $this->checkAccess($request, ['vendor'])) {
+            return $resp;
+        }
+
+        $admin = $request->user();
+        $role = \Spatie\Permission\Models\Role::find($admin->role_id);
+
+        if ($role->name === 'vendor') {
+            if (empty($admin->vendor_id)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Vendor account not linked properly.'
+                ], 403);
+            }
+
+            $count = Order::where('order_status', 'New')
+                ->whereHas('orders_products', function ($query) use ($admin) {
+                    $query->where('vendor_id', $admin->vendor_id);
+                })
+                ->count();
+        } else {
+            $count = Order::where('order_status', 'New')->count();
+        }
+
+        return response()->json([
+            'status' => true,
+            'count' => $count
+        ], 200);
+    }
+
 
     public function show(Request $request, $id)
     {

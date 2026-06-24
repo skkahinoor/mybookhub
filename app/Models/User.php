@@ -118,6 +118,15 @@ class User extends Authenticatable
 
     public function getTypeAttribute()
     {
+        // Prioritize the role defined by role_id if set
+        if ($this->assignedRole) {
+            $roleName = $this->assignedRole->name;
+            if ($roleName === 'superadmin') {
+                return 'admin';
+            }
+            return $roleName;
+        }
+
         // Check Spatie Roles first
         if ($this->hasRole('admin') || $this->hasRole('superadmin')) {
             return 'admin';

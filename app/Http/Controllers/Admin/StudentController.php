@@ -385,7 +385,10 @@ class StudentController extends Controller
         $request->validate([
             'user_id' => 'required|exists:users,id',
             'amount' => 'required|numeric|min:0.01',
+            'transaction_type' => 'required|in:credit,debit',
             'description' => 'nullable|string|max:255',
+            'send_notification' => 'nullable',
+            'show_in_history' => 'nullable',
         ]);
 
         $student = User::where('id', $request->user_id)
@@ -393,30 +396,52 @@ class StudentController extends Controller
             ->firstOrFail();
 
         $amount = (float) $request->amount;
-        $description = $request->description ?: 'Manual credit by admin';
+        $type = $request->transaction_type;
 
-        // Credit balance
-        $student->wallet_balance += $amount;
+        if ($type === 'debit') {
+            if ($student->wallet_balance < $amount) {
+                return redirect()->back()->with('error_message', 'Insufficient wallet balance. Current balance: ₹' . number_format($student->wallet_balance, 2));
+            }
+            $student->wallet_balance -= $amount;
+            $description = $request->description ?: 'Manual debit by admin';
+        } else {
+            $student->wallet_balance += $amount;
+            $description = $request->description ?: 'Manual credit by admin';
+        }
+
         $student->save();
 
-        // Create transaction log
-        \App\Models\WalletTransaction::create([
-            'user_id' => $student->id,
-            'amount' => $amount,
-            'type' => 'credit',
-            'description' => $description,
-        ]);
+        // Create transaction log if requested
+        if ($request->has('show_in_history') && $request->show_in_history == '1') {
+            \App\Models\WalletTransaction::create([
+                'user_id' => $student->id,
+                'amount' => $amount,
+                'type' => $type,
+                'description' => $description,
+            ]);
+        }
 
-        // Create notification
-        \App\Models\Notification::create([
-            'type' => 'wallet_credit',
-            'title' => 'Wallet Credited by Admin',
-            'message' => '₹' . number_format($amount, 2) . ' has been manually credited to your wallet by the administrator. Reason: ' . $description,
-            'related_id' => (int) $student->id,
-            'related_type' => User::class,
-            'is_read' => false,
-        ]);
+        // Create notification if requested
+        if ($request->has('send_notification') && $request->send_notification == '1') {
+            $title = $type === 'debit' ? 'Wallet Debited by Admin' : 'Wallet Credited by Admin';
+            $msg = $type === 'debit'
+                ? '₹' . number_format($amount, 2) . ' has been manually debited from your wallet by the administrator. Reason: ' . $description
+                : '₹' . number_format($amount, 2) . ' has been manually credited to your wallet by the administrator. Reason: ' . $description;
 
-        return redirect()->back()->with('success_message', '₹' . number_format($amount, 2) . ' has been successfully credited to ' . $student->name . '\'s wallet.');
+            \App\Models\Notification::create([
+                'type' => $type === 'debit' ? 'wallet_debit' : 'wallet_credit',
+                'title' => $title,
+                'message' => $msg,
+                'related_id' => (int) $student->id,
+                'related_type' => User::class,
+                'is_read' => false,
+            ]);
+        }
+
+        $successMsg = $type === 'debit'
+            ? '₹' . number_format($amount, 2) . ' has been successfully debited from ' . $student->name . '\'s wallet.'
+            : '₹' . number_format($amount, 2) . ' has been successfully credited to ' . $student->name . '\'s wallet.';
+
+        return redirect()->back()->with('success_message', $successMsg);
     }
 }
