@@ -333,7 +333,14 @@
                 <tr>
                     <td>{{ $topPages->firstItem() + $index }}</td>
                     <td>{{ $page->page_title ?? 'Unknown' }}</td>
-                    <td><a href="{{ url($page->url) }}" target="_blank" class="text-primary text-decoration-none">{{ Str::limit($page->url, 40) }}</a></td>
+                    <td>
+                        <a href="{{ url($page->url) }}" target="_blank" class="text-primary text-decoration-none">{{ Str::limit($page->url, 40) }}</a>
+                        @if($page->url === '/search-products')
+                            <a href="{{ route('admin.reports.analytics.search_queries') }}" class="btn btn-sm btn-info text-white" style="margin-left: 8px; padding: 2px 8px; font-size: 0.75rem;" title="View Search Keywords">
+                                <i class="fas fa-search"></i> View Keywords
+                            </a>
+                        @endif
+                    </td>
                     <td>
                         @php
                             $colors = [

@@ -288,4 +288,15 @@ class AnalyticsController extends Controller
 
         return $dompdf->stream("analytics_report_" . date('Ymd_His') . ".pdf", ["Attachment" => true]);
     }
+
+    public function searchQueries(Request $request)
+    {
+        Session::put('page', 'analytics');
+        $headerLogo = HeaderLogo::first();
+        $logos      = HeaderLogo::first();
+
+        $searchQueries = \App\Models\SearchQuery::with('user')->latest()->paginate(50);
+
+        return view('admin.reports.search_queries', compact('searchQueries', 'headerLogo', 'logos'));
+    }
 }
