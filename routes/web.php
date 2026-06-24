@@ -116,6 +116,7 @@ $adminRoutesClosure = function () {
 
         // Page Analytics Report (Admin)
         Route::get('reports/analytics', [App\Http\Controllers\Admin\AnalyticsController::class, 'index'])->name('admin.reports.analytics');
+        Route::get('reports/analytics/search-queries', [App\Http\Controllers\Admin\AnalyticsController::class, 'searchQueries'])->name('admin.reports.analytics.search_queries');
         Route::get('reports/analytics/export-csv', [App\Http\Controllers\Admin\AnalyticsController::class, 'exportCsv'])->name('admin.reports.analytics.export_csv');
         Route::get('reports/analytics/export-pdf', [App\Http\Controllers\Admin\AnalyticsController::class, 'exportPdf'])->name('admin.reports.analytics.export_pdf');
 

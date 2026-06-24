@@ -945,6 +945,18 @@ Task:
             ->get()
             ->toArray();
 
+        /* LOG SEARCH QUERY */
+        if ($request->filled('search')) {
+            \App\Models\SearchQuery::create([
+                'keyword'       => $request->search,
+                'user_id'       => Auth::id(),
+                'ip_address'    => $request->ip(),
+                'latitude'      => session('user_latitude'),
+                'longitude'     => session('user_longitude'),
+                'results_count' => $products->total(),
+            ]);
+        }
+
         return view(
             'front.products.search',
             compact(
