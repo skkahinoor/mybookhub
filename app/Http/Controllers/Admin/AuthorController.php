@@ -210,4 +210,41 @@ class AuthorController extends Controller
             }
         }
     }
+
+    public function addAuthorAjax(Request $request)
+    {
+        if (!Auth::guard('admin')->user()->can('add_authors')) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized action.'], 403);
+        }
+        if ($request->ajax()) {
+            $request->validate([
+                'name' => 'required|string|max:255|regex:/^[\pL\s\-]+$/u',
+            ]);
+
+            // Check if already exists
+            $existing = Author::where('name', $request->name)->first();
+            if ($existing) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Author already exists.'
+                ]);
+            }
+
+            $author = new Author();
+            $author->name = $request->name;
+            $author->status = 1; // Or default status
+            $author->save();
+
+            return response()->json([
+                'status' => 'success',
+                'id' => $author->id,
+                'name' => $author->name
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Invalid request.'
+        ]);
+    }
 }

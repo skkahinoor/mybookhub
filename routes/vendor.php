@@ -105,7 +105,7 @@ Route::prefix('/vendor')->namespace('App\Http\Controllers\Admin')->group(functio
 
 
         Route::post('/admin/add-publisher-ajax', [App\Http\Controllers\Admin\PublisherController::class, 'addPublisherAjax'])->name('vendor.addPublisherAjax');
-
+        Route::post('/admin/add-author-ajax', [App\Http\Controllers\Admin\AuthorController::class, 'addAuthorAjax'])->name('vendor.addAuthorAjax');
 
         // Authors
         Route::post('update-author-status', [AuthorController::class, 'updateStatus'])->name('vendor.updateauthorstatus');

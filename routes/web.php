@@ -246,6 +246,7 @@ $adminRoutesClosure = function () {
         Route::post('import-publishers', 'PublisherController@importPublishers')->name('admin.import.publishers');
 
         Route::post('/admin/add-publisher-ajax', [App\Http\Controllers\Admin\PublisherController::class, 'addPublisherAjax'])->name('admin.addPublisherAjax');
+        Route::post('/admin/add-author-ajax', [App\Http\Controllers\Admin\AuthorController::class, 'addAuthorAjax'])->name('admin.addAuthorAjax');
 
         // Authors
         Route::post('update-author-status', [AuthorController::class, 'updateStatus'])->name('admin.updateauthorstatus');

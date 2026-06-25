@@ -495,6 +495,14 @@
                                         <div class="options-list" id="optionsList"></div>
                                     </div>
                                 </div>
+                                <div class="form-group">
+                                    <label for="new_author">Or Add New Author</label>
+                                    <div class="input-group">
+                                        <input type="text" name="new_author" id="new_author"
+                                            class="form-control" placeholder="Type new author name">
+                                        <button type="button" id="addAuthorBtn" class="btn btn-primary">Add</button>
+                                    </div>
+                                </div>
                                 <!-- Hidden Select Field (Just like old structure) -->
                                 <select name="author_id[]" id="authors-select" multiple class="d-none">
                                     @foreach ($authors as $author)
@@ -1116,7 +1124,7 @@
             }
 
             $.ajax({
-                url: '{{ route('admin.addPublisherAjax') }}',
+                url: '{{ route(auth('admin')->check() && auth('admin')->user()->type === 'vendor' ? 'vendor.addPublisherAjax' : 'admin.addPublisherAjax') }}',
                 method: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
@@ -1129,6 +1137,39 @@
                             response.name + '</option>');
                         $('#new_publisher').val(''); // Clear input
                         alert('Publisher added!');
+                    } else {
+                        alert(response.message || 'Something went wrong.');
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error occurred. See console.');
+                    console.log(xhr.responseText);
+                }
+            });
+        });
+
+        $('#addAuthorBtn').click(function() {
+            let authorName = $('#new_author').val().trim();
+            if (authorName === '') {
+                alert('Please enter an author name.');
+                return;
+            }
+
+            $.ajax({
+                url: '{{ route(auth('admin')->check() && auth('admin')->user()->type === 'vendor' ? 'vendor.addAuthorAjax' : 'admin.addAuthorAjax') }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    name: authorName
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        // Add to authors select by simulating selection
+                        let newAuthor = { id: response.id, name: response.name };
+                        authors.push(newAuthor);
+                        selectOption(newAuthor);
+                        $('#new_author').val(''); // Clear input
+                        alert('Author added and selected!');
                     } else {
                         alert(response.message || 'Something went wrong.');
                     }
