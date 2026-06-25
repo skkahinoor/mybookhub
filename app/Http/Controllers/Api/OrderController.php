@@ -190,12 +190,43 @@ class OrderController extends Controller
         $totalDiscount = ($orderArray['coupon_amount'] ?? 0) + ($orderArray['extra_discount'] ?? 0);
         $item_discount = ($total_items > 0) ? round($totalDiscount / $total_items, 2) : 0;
 
+        $orderStatuses = OrderStatus::where('status', 1)->get();
+        if ($orderStatuses->isEmpty()) {
+            $orderStatuses = collect([
+                ['id' => 1, 'name' => 'New', 'status' => 1],
+                ['id' => 2, 'name' => 'Pending', 'status' => 1],
+                ['id' => 3, 'name' => 'Canceled', 'status' => 1],
+                ['id' => 4, 'name' => 'In Progress', 'status' => 1],
+                ['id' => 5, 'name' => 'Shipped', 'status' => 1],
+                ['id' => 6, 'name' => 'Partially Shipped', 'status' => 1],
+                ['id' => 7, 'name' => 'Delivered', 'status' => 1],
+                ['id' => 8, 'name' => 'Partially Delivered', 'status' => 1],
+                ['id' => 9, 'name' => 'Return Requested', 'status' => 1],
+                ['id' => 10, 'name' => 'Return Approved', 'status' => 1],
+                ['id' => 11, 'name' => 'Return Rejected', 'status' => 1],
+                ['id' => 12, 'name' => 'Returned', 'status' => 1],
+            ])->map(fn($item) => (object)$item);
+        }
+
+        $itemStatuses = OrderItemStatus::where('status', 1)->get();
+        if ($itemStatuses->isEmpty()) {
+            $itemStatuses = collect([
+                ['id' => 1, 'name' => 'New', 'status' => 1],
+                ['id' => 2, 'name' => 'Pending', 'status' => 1],
+                ['id' => 3, 'name' => 'In Progress', 'status' => 1],
+                ['id' => 4, 'name' => 'Shipped', 'status' => 1],
+                ['id' => 5, 'name' => 'Delivered', 'status' => 1],
+                ['id' => 6, 'name' => 'Canceled', 'status' => 1],
+                ['id' => 7, 'name' => 'Out of Stock', 'status' => 1],
+            ])->map(fn($item) => (object)$item);
+        }
+
         return response()->json([
             'status' => true,
             'order' => $order,
             'user' => $userDetails,
-            'order_statuses' => OrderStatus::where('status', 1)->get(),
-            'item_statuses' => OrderItemStatus::where('status', 1)->get(),
+            'order_statuses' => $orderStatuses,
+            'item_statuses' => $itemStatuses,
             'logs' => OrdersLog::with('orders_products')
                 ->where('order_id', $id)
                 ->latest()
