@@ -10,6 +10,7 @@ use App\Models\Country;
 use Spatie\Permission\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use App\Helpers\RoleHelper;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,7 +28,7 @@ class SalesExecutiveController extends Controller
         $title = 'Sales Executives';
 
         if ($request->ajax()) {
-            $data = User::role('sales', 'web')->with('salesExecutive')->orderBy('id', 'desc');
+            $data = User::where('role_id', RoleHelper::salesId())->with('salesExecutive')->orderBy('id', 'desc');
 
             return \Yajra\DataTables\Facades\DataTables::of($data)
                 ->addIndexColumn()
@@ -214,7 +215,7 @@ class SalesExecutiveController extends Controller
 
         $deletedCount = 0;
         foreach ($ids as $id) {
-            $user = User::role('sales', 'web')->find($id);
+            $user = User::where('role_id', RoleHelper::salesId())->find($id);
             if ($user) {
                 // Delete profile
                 SalesExecutive::where('user_id', $user->id)->delete();
