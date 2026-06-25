@@ -918,7 +918,8 @@ class BookController extends Controller
         $request->validate([
             'product_id'       => 'required|exists:products,id',
             'total_stock'      => 'required|integer|min:0',
-            'product_discount' => 'nullable|numeric|min:0'
+            'product_discount' => 'nullable|numeric|min:0',
+            'old_book_condition_id' => 'nullable|exists:old_book_conditions,id'
         ]);
 
         $user = $request->user();
@@ -968,17 +969,31 @@ class BookController extends Controller
             }
         }
 
-        if ($existingAttribute) {
+        // Calculate standard discount (or use old book condition percentage)
+        $discount = $request->product_discount ?? 0;
+        if ($product->condition === 'old') {
+            $conditionId = $request->old_book_condition_id ?? ($existingAttribute ? $existingAttribute->old_book_condition_id : null);
+            if ($conditionId) {
+                $condition = OldBookCondition::find($conditionId);
+                if ($condition) {
+                    $discount = $condition->percentage;
+                }
+            }
+        }
 
+        if ($existingAttribute) {
             $existingAttribute->stock += (int) $request->total_stock;
-            $existingAttribute->product_discount = $request->product_discount ?? 0;
+            $existingAttribute->product_discount = $discount;
+            if ($request->filled('old_book_condition_id')) {
+                $existingAttribute->old_book_condition_id = $request->old_book_condition_id;
+            }
             $existingAttribute->save();
         } else {
-
             $attribute = new ProductsAttribute();
             $attribute->product_id       = $product->id;
             $attribute->stock            = $request->total_stock;
-            $attribute->product_discount = $request->product_discount ?? 0;
+            $attribute->product_discount = $discount;
+            $attribute->old_book_condition_id = $request->old_book_condition_id;
             $attribute->status           = 1;
 
             if ($user->type === 'vendor') {

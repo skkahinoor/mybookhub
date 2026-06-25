@@ -503,30 +503,18 @@ class SellBookController extends Controller
                 }
             }
 
-            // Explicitly calculate selling price (user_product_price) based on condition
+            // Calculate Price based on condition percentage (same as web)
             if (!empty($data['old_book_condition_id'])) {
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
-                if ($condition) {
-                    $attribute->product_discount = $condition->percentage; // Store condition percentage
-
-                    // Priority: Use the price provided by the frontend if available, else calculate it
-                    if (isset($data['user_product_price'])) {
-                        $attribute->user_product_price = round((float) $data['user_product_price']);
-                    } else {
-                        // Crucial: Use the HIGHEST known MRP to avoid "double calculation" (600 -> 300 -> 150)
-                        $mrp = max((float) $product->product_price, (float) ($data['product_price'] ?? 0));
-                        if ($mrp > 0) {
-                            $attribute->user_product_price = round(($mrp * $condition->percentage) / 100);
-                        } else {
-                            $attribute->user_product_price = 0;
-                        }
-                    }
+                if ($condition && $product->product_price > 0) {
+                    $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
+                    $attribute->product_discount = $condition->percentage;
                 } else {
-                    $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
-                    $attribute->product_discount = 100; // Default to 100% of MRP if condition not found
+                    $attribute->user_product_price = $product->product_price;
+                    $attribute->product_discount = 100;
                 }
             } else {
-                $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
+                $attribute->user_product_price = $product->product_price;
                 $attribute->product_discount = 100;
             }
             
@@ -718,30 +706,18 @@ class SellBookController extends Controller
                 }
             }
 
-            // Explicitly calculate final selling price (user_product_price) based on condition
+            // Calculate Price based on condition percentage (same as web)
             if (!empty($data['old_book_condition_id'])) {
                 $condition = OldBookCondition::find($data['old_book_condition_id']);
-                if ($condition) {
-                    $attribute->product_discount = $condition->percentage; // Store condition percentage
-
-                    // Priority: Use provided selling price if available
-                    if (isset($data['user_product_price'])) {
-                        $attribute->user_product_price = round((float) $data['user_product_price']);
-                    } else {
-                        // Use the most accurate MRP available for fallback calculation
-                        $mrp = max((float) $product->product_price, (float) ($data['product_price'] ?? 0));
-                        if ($mrp > 0) {
-                            $attribute->user_product_price = round(($mrp * $condition->percentage) / 100);
-                        } else {
-                            $attribute->user_product_price = 0;
-                        }
-                    }
+                if ($condition && $product->product_price > 0) {
+                    $attribute->user_product_price = ($product->product_price * $condition->percentage) / 100;
+                    $attribute->product_discount = $condition->percentage;
                 } else {
-                    $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
-                    $attribute->product_discount = 100; // Default to 100% if condition not found
+                    $attribute->user_product_price = $product->product_price;
+                    $attribute->product_discount = 100;
                 }
             } else {
-                $attribute->user_product_price = $data['user_product_price'] ?? $product->product_price;
+                $attribute->user_product_price = $product->product_price;
                 $attribute->product_discount = 100;
             }
 
