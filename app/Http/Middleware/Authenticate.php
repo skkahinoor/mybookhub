@@ -8,6 +8,10 @@ class Authenticate extends Middleware
 {
     protected function redirectTo($request)
     {
+        if ($request->expectsJson() || $request->is('api/*') || str_contains($request->getRequestUri(), '/api/')) {
+            return null;
+        }
+
         // If admin routes → admin login
         if ($request->is('admin/*')) {
             return route('admin.login');

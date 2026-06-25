@@ -41,10 +41,31 @@ class Handler extends ExceptionHandler
      *
      * @return void
      */
+    /**
+     * Register the exception handling callbacks for the application.
+     *
+     * @return void
+     */
     public function register()
     {
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    /**
+     * Convert an authentication exception into a response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Auth\AuthenticationException  $exception
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    protected function unauthenticated($request, \Illuminate\Auth\AuthenticationException $exception)
+    {
+        if ($request->expectsJson() || $request->is('api/*') || str_contains($request->getRequestUri(), '/api/')) {
+            return response()->json(['message' => $exception->getMessage()], 401);
+        }
+
+        return redirect()->guest($exception->redirectTo() ?? route('login'));
     }
 }
